@@ -1,8 +1,8 @@
 from collections import Counter
-from collections.abc import Callable, Iterator, Mapping, Sequence
-from functools import partial
+from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
+from functools import partial, wraps
 from math import inf, log, log2, nan, sqrt
-from typing import ClassVar, NamedTuple
+from typing import Any, ClassVar, NamedTuple, TypeVar, cast
 
 import numpy as np
 from numpy.lib.stride_tricks import sliding_window_view
@@ -25,6 +25,27 @@ from .exceptions import ParameterError, SourceError, SourceTypeError, UnknownSta
 from .utils import check_sequence, check_words, safe_divide
 
 Calculator = Callable[[Sequence[str]], float]
+Function = TypeVar("Function", bound=Callable[..., Any])
+_UNCHECKED: dict[Callable[..., Any], Callable[..., Any]] = {}
+
+
+def _checks_words(func: Function) -> Function:
+    """Checking the words of a function with check_words before calling it"""
+
+    @wraps(func)
+    def checked(text: Any, *args: Any, **kwargs: Any) -> Any:
+        check_words(text)
+        return func(text, *args, **kwargs)
+
+    _UNCHECKED[checked] = func
+    return cast(Function, checked)
+
+
+def _unchecked(func: Function) -> Function:
+    """The function without the check of its words, for words already checked"""
+    if isinstance(func, partial):
+        return cast(Function, partial(_unchecked(func.func), *func.args, **func.keywords))
+    return cast(Function, _UNCHECKED.get(func, func))
 
 
 class WindowStats(NamedTuple):
@@ -178,7 +199,7 @@ class DiversityStats:
 
     def __init__(
         self,
-        words: Sequence[str],
+        words: Iterable[str],
         window_len: int = MATTR_WINDOW_LEN,
         mtld_threshold: float = MTLD_TTR_THRESHOLD,
         mtld_min_len: int = MTLD_MIN_LEN,
@@ -244,11 +265,11 @@ class DiversityStats:
         }
 
     def _calc(self, stat: str) -> float:
-        return self._calculators[stat](self.words)
+        return _unchecked(self._calculators[stat])(self.words)
 
     @property
     def frequency_spectrum(self) -> dict[int, int]:
-        return calc_frequency_spectrum(self.words)
+        return _unchecked(calc_frequency_spectrum)(self.words)
 
     @property
     def ttr(self) -> float:
@@ -434,6 +455,7 @@ class DiversityStats:
             print(f"{self.stats_desc[stat]:75}|{value:^10.2f}")
 
 
+@_checks_words
 def calc_frequency_spectrum(text: Sequence[str]) -> dict[int, int]:
     """
     Computing the frequency spectrum
@@ -450,10 +472,10 @@ def calc_frequency_spectrum(text: Sequence[str]) -> dict[int, int]:
     Raises:
         SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_words(text)
     return dict(sorted(Counter(Counter(text).values()).items()))
 
 
+@_checks_words
 def calc_ttr(text: Sequence[str]) -> float:
     """
     Computing the Type-Token Ratio (TTR)
@@ -471,12 +493,12 @@ def calc_ttr(text: Sequence[str]) -> float:
     Raises:
         SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_words(text)
     n_words = len(text)
     n_lexemes = len(set(text))
     return safe_divide(n_lexemes, n_words)
 
 
+@_checks_words
 def calc_rttr(text: Sequence[str]) -> float:
     """
     Computing the Root Type-Token Ratio (RTTR)
@@ -493,12 +515,12 @@ def calc_rttr(text: Sequence[str]) -> float:
     Raises:
         SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_words(text)
     n_words = len(text)
     n_lexemes = len(set(text))
     return safe_divide(n_lexemes, sqrt(n_words))
 
 
+@_checks_words
 def calc_cttr(text: Sequence[str]) -> float:
     """
     Computing the Corrected Type-Token Ratio (CTTR)
@@ -515,12 +537,12 @@ def calc_cttr(text: Sequence[str]) -> float:
     Raises:
         SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_words(text)
     n_words = len(text)
     n_lexemes = len(set(text))
     return safe_divide(n_lexemes, sqrt(2 * n_words))
 
 
+@_checks_words
 def calc_httr(text: Sequence[str]) -> float:
     """
     Computing the Herdan Type-Token Ratio (HTTR)
@@ -538,7 +560,6 @@ def calc_httr(text: Sequence[str]) -> float:
     Raises:
         SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_words(text)
     n_words = len(text)
     if not n_words:
         return 0
@@ -546,6 +567,7 @@ def calc_httr(text: Sequence[str]) -> float:
     return safe_divide(log(n_lexemes), log(n_words))
 
 
+@_checks_words
 def calc_sttr(text: Sequence[str], base: float = DIVERSITY_LOG_BASE) -> float:
     """
     Computing the Summer Type-Token Ratio (STTR)
@@ -565,7 +587,6 @@ def calc_sttr(text: Sequence[str], base: float = DIVERSITY_LOG_BASE) -> float:
         ParameterError: If the logarithm base is not greater than 1
         SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_words(text)
     _check_log_base(base)
     n_words = len(text)
     n_lexemes = len(set(text))
@@ -574,6 +595,7 @@ def calc_sttr(text: Sequence[str], base: float = DIVERSITY_LOG_BASE) -> float:
     return safe_divide(log(log(n_lexemes, base), base), log(log(n_words, base), base))
 
 
+@_checks_words
 def calc_mttr(text: Sequence[str], base: float = DIVERSITY_LOG_BASE) -> float:
     """
     Computing the Maas Type-Token Ratio (MTTR)
@@ -593,7 +615,6 @@ def calc_mttr(text: Sequence[str], base: float = DIVERSITY_LOG_BASE) -> float:
         ParameterError: If the logarithm base is not greater than 1
         SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_words(text)
     _check_log_base(base)
     n_words = len(text)
     if not n_words:
@@ -603,6 +624,7 @@ def calc_mttr(text: Sequence[str], base: float = DIVERSITY_LOG_BASE) -> float:
     return safe_divide(log_words - log(n_lexemes, base), log_words**2)
 
 
+@_checks_words
 def calc_dttr(text: Sequence[str], base: float = DIVERSITY_LOG_BASE) -> float:
     """
     Computing the Dugast Type-Token Ratio (DTTR)
@@ -623,7 +645,6 @@ def calc_dttr(text: Sequence[str], base: float = DIVERSITY_LOG_BASE) -> float:
         ParameterError: If the logarithm base is not greater than 1
         SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_words(text)
     _check_log_base(base)
     n_words = len(text)
     if not n_words:
@@ -633,6 +654,7 @@ def calc_dttr(text: Sequence[str], base: float = DIVERSITY_LOG_BASE) -> float:
     return safe_divide(log_words**2, log_words - log(n_lexemes, base))
 
 
+@_checks_words
 def calc_mattr(text: Sequence[str], window_len: int = MATTR_WINDOW_LEN) -> float:
     """
     Computing the Moving Average Type-Token Ratio (MATTR)
@@ -652,12 +674,11 @@ def calc_mattr(text: Sequence[str], window_len: int = MATTR_WINDOW_LEN) -> float
         ParameterError: If the window size is less than one
         SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_words(text)
     if window_len < 1:
         raise ParameterError("The window size must be greater than 0")
     n_words = len(text)
     if n_words < (window_len + 1):
-        return calc_ttr(text)
+        return _unchecked(calc_ttr)(text)
     counts = Counter(text[:window_len])
     window_ttr = len(counts) / window_len
     for n in range(window_len, n_words):
@@ -670,6 +691,7 @@ def calc_mattr(text: Sequence[str], window_len: int = MATTR_WINDOW_LEN) -> float
     return window_ttr / (n_words - window_len + 1)
 
 
+@_checks_words
 def calc_msttr(text: Sequence[str], segment_len: int = MATTR_WINDOW_LEN) -> float:
     """
     Computing the Mean Segmental Type-Token Ratio (MSTTR)
@@ -690,15 +712,15 @@ def calc_msttr(text: Sequence[str], segment_len: int = MATTR_WINDOW_LEN) -> floa
         ParameterError: If the segment size is less than one
         SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_words(text)
     if segment_len < 1:
         raise ParameterError("The segment size must be greater than 0")
     n_words = len(text)
     if n_words < (segment_len + 1):
-        return calc_ttr(text)
+        return _unchecked(calc_ttr)(text)
     segments = [text[start : start + segment_len] for start in range(0, n_words, segment_len)]
     segments = [segment for segment in segments if len(segment) == segment_len]
-    return sum(calc_ttr(segment) for segment in segments) / len(segments)
+    ttr = _unchecked(calc_ttr)
+    return sum(ttr(segment) for segment in segments) / len(segments)
 
 
 def _check_mtld_params(threshold: float, min_len: int) -> None:
@@ -727,6 +749,7 @@ def _count_mtld_factors(text: Sequence[str], threshold: float, min_len: int) -> 
     return factors
 
 
+@_checks_words
 def calc_mtld(
     text: Sequence[str], min_len: int = MTLD_MIN_LEN, threshold: float = MTLD_TTR_THRESHOLD
 ) -> float:
@@ -755,7 +778,6 @@ def calc_mtld(
             or the minimum factor length is negative
         SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_words(text)
     _check_mtld_params(threshold, min_len)
     n_words = len(text)
     forward = safe_divide(n_words, _count_mtld_factors(text, threshold, min_len), inf)
@@ -833,6 +855,7 @@ def _mtld_factor_lengths(
     return [int(length) for length in lengths[lengths > 0]]
 
 
+@_checks_words
 def calc_mamtld(
     text: Sequence[str], min_len: int = MTLD_MIN_LEN, threshold: float = MTLD_TTR_THRESHOLD
 ) -> float:
@@ -858,13 +881,13 @@ def calc_mamtld(
             or the minimum factor length is negative
         SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_words(text)
     _check_mtld_params(threshold, min_len)
     lengths = _mtld_factor_lengths(text, threshold, min_len, wrap=False)
     lengths += _mtld_factor_lengths(text[::-1], threshold, min_len, wrap=False)
     return safe_divide(sum(lengths), len(lengths), nan)
 
 
+@_checks_words
 def calc_mtldw(
     text: Sequence[str], min_len: int = MTLD_MIN_LEN, threshold: float = MTLD_TTR_THRESHOLD
 ) -> float:
@@ -890,12 +913,12 @@ def calc_mtldw(
             or the minimum factor length is negative
         SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_words(text)
     _check_mtld_params(threshold, min_len)
     lengths = _mtld_factor_lengths(text, threshold, min_len, wrap=True)
     return safe_divide(sum(lengths), len(lengths), nan)
 
 
+@_checks_words
 def calc_hdd(text: Sequence[str], sample_size: int = HDD_SAMPLE_SIZE) -> float:
     """
     Computing the Hypergeometric Distribution D (HD-D)
@@ -916,7 +939,6 @@ def calc_hdd(text: Sequence[str], sample_size: int = HDD_SAMPLE_SIZE) -> float:
         ParameterError: If the sample size is less than one
         SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_words(text)
     if sample_size < 1:
         raise ParameterError("The HD-D sample size must be greater than 0")
     n_words = len(text)
@@ -934,6 +956,7 @@ def calc_hdd(text: Sequence[str], sample_size: int = HDD_SAMPLE_SIZE) -> float:
     return float(np.sum(1.0 - absent) / sample_size)
 
 
+@_checks_words
 def calc_simpson_index(text: Sequence[str]) -> float:
     """
     Computing Simpson's index (D)
@@ -954,7 +977,6 @@ def calc_simpson_index(text: Sequence[str]) -> float:
     Raises:
         SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_words(text)
     n_words = len(text)
     if n_words < 2:
         return nan
@@ -962,6 +984,7 @@ def calc_simpson_index(text: Sequence[str]) -> float:
     return num / (n_words * (n_words - 1))
 
 
+@_checks_words
 def calc_inverse_simpson_index(text: Sequence[str]) -> float:
     """
     Computing the inverse Simpson's index (1/D)
@@ -982,10 +1005,10 @@ def calc_inverse_simpson_index(text: Sequence[str]) -> float:
     Raises:
         SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_words(text)
-    return safe_divide(1, calc_simpson_index(text), inf)
+    return safe_divide(1, _unchecked(calc_simpson_index)(text), inf)
 
 
+@_checks_words
 def calc_gini_simpson_index(text: Sequence[str]) -> float:
     """
     Computing the Gini-Simpson index (1-D)
@@ -1006,10 +1029,10 @@ def calc_gini_simpson_index(text: Sequence[str]) -> float:
     Raises:
         SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_words(text)
-    return 1 - calc_simpson_index(text)
+    return 1 - _unchecked(calc_simpson_index)(text)
 
 
+@_checks_words
 def calc_hapax_index(text: Sequence[str]) -> float:
     """
     Computing the hapax index (Honoré's R)
@@ -1032,13 +1055,12 @@ def calc_hapax_index(text: Sequence[str]) -> float:
     Raises:
         SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_words(text)
     n_words = len(text)
     if n_words < 2:
         return nan
     n_lexemes = len(set(text))
     num = 100 * log(n_words)
-    hapaxes = calc_frequency_spectrum(text).get(1, 0)
+    hapaxes = _unchecked(calc_frequency_spectrum)(text).get(1, 0)
     den = 1 - (safe_divide(hapaxes, n_lexemes))
     return safe_divide(num, den, inf)
 
@@ -1046,6 +1068,7 @@ def calc_hapax_index(text: Sequence[str]) -> float:
 calc_honore_r = calc_hapax_index
 
 
+@_checks_words
 def calc_yule_k(text: Sequence[str]) -> float:
     """
     Computing Yule's characteristic (Yule's K)
@@ -1067,15 +1090,15 @@ def calc_yule_k(text: Sequence[str]) -> float:
     Raises:
         SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_words(text)
     n_words = len(text)
     if n_words < 2:
         return nan
-    spectrum = calc_frequency_spectrum(text)
+    spectrum = _unchecked(calc_frequency_spectrum)(text)
     sum_squares = sum(freq**2 * count for freq, count in spectrum.items())
     return 1e4 * (sum_squares - n_words) / n_words**2
 
 
+@_checks_words
 def calc_yule_i(text: Sequence[str]) -> float:
     """
     Computing the inverse Yule's characteristic (Yule's I)
@@ -1094,15 +1117,15 @@ def calc_yule_i(text: Sequence[str]) -> float:
     Raises:
         SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_words(text)
     if len(text) < 2:
         return nan
     n_lexemes = len(set(text))
-    spectrum = calc_frequency_spectrum(text)
+    spectrum = _unchecked(calc_frequency_spectrum)(text)
     sum_squares = sum(freq**2 * count for freq, count in spectrum.items())
     return safe_divide(n_lexemes**2, sum_squares - n_lexemes, inf)
 
 
+@_checks_words
 def calc_herdan_vm(text: Sequence[str]) -> float:
     """
     Computing Herdan's measure (Herdan's Vm)
@@ -1121,16 +1144,16 @@ def calc_herdan_vm(text: Sequence[str]) -> float:
     Raises:
         SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_words(text)
     n_words = len(text)
     if n_words < 2:
         return nan
     n_lexemes = len(set(text))
-    spectrum = calc_frequency_spectrum(text)
+    spectrum = _unchecked(calc_frequency_spectrum)(text)
     sum_probs = sum(count * (freq / n_words) ** 2 for freq, count in spectrum.items())
     return sqrt(max(sum_probs - 1 / n_lexemes, 0))
 
 
+@_checks_words
 def calc_sichel_s(text: Sequence[str]) -> float:
     """
     Computing Sichel's measure (Sichel's S)
@@ -1148,11 +1171,11 @@ def calc_sichel_s(text: Sequence[str]) -> float:
     Raises:
         SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_words(text)
-    spectrum = calc_frequency_spectrum(text)
+    spectrum = _unchecked(calc_frequency_spectrum)(text)
     return safe_divide(spectrum.get(2, 0), len(set(text)))
 
 
+@_checks_words
 def calc_michea_m(text: Sequence[str]) -> float:
     """
     Computing Michéa's measure (Michéa's M)
@@ -1170,11 +1193,11 @@ def calc_michea_m(text: Sequence[str]) -> float:
     Raises:
         SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_words(text)
-    spectrum = calc_frequency_spectrum(text)
+    spectrum = _unchecked(calc_frequency_spectrum)(text)
     return safe_divide(len(set(text)), spectrum.get(2, 0), inf)
 
 
+@_checks_words
 def calc_brunet_w(text: Sequence[str], a: float = BRUNET_W_EXPONENT) -> float:
     """
     Computing Brunet's measure (Brunet's W)
@@ -1193,7 +1216,6 @@ def calc_brunet_w(text: Sequence[str], a: float = BRUNET_W_EXPONENT) -> float:
     Raises:
         SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_words(text)
     n_words = len(text)
     n_lexemes = len(set(text))
     if not n_words:
@@ -1201,6 +1223,7 @@ def calc_brunet_w(text: Sequence[str], a: float = BRUNET_W_EXPONENT) -> float:
     return float(n_words ** (n_lexemes**-a))
 
 
+@_checks_words
 def calc_dugast_k(text: Sequence[str], base: float = DIVERSITY_LOG_BASE) -> float:
     """
     Computing Dugast's measure (Dugast's k)
@@ -1221,7 +1244,6 @@ def calc_dugast_k(text: Sequence[str], base: float = DIVERSITY_LOG_BASE) -> floa
         ParameterError: If the logarithm base is not greater than 1
         SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_words(text)
     _check_log_base(base)
     n_words = len(text)
     n_lexemes = len(set(text))
@@ -1230,6 +1252,7 @@ def calc_dugast_k(text: Sequence[str], base: float = DIVERSITY_LOG_BASE) -> floa
     return log(n_lexemes, base) / log(log(n_words, base), base)
 
 
+@_checks_words
 def calc_baayen_p(text: Sequence[str]) -> float:
     """
     Computing Baayen's measure (Baayen's P)
@@ -1248,11 +1271,11 @@ def calc_baayen_p(text: Sequence[str]) -> float:
     Raises:
         SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_words(text)
-    spectrum = calc_frequency_spectrum(text)
+    spectrum = _unchecked(calc_frequency_spectrum)(text)
     return safe_divide(spectrum.get(1, 0), len(text))
 
 
+@_checks_words
 def calc_hapax_ratio(text: Sequence[str]) -> float:
     """
     Computing the hapax ratio
@@ -1269,11 +1292,11 @@ def calc_hapax_ratio(text: Sequence[str]) -> float:
     Raises:
         SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_words(text)
-    spectrum = calc_frequency_spectrum(text)
+    spectrum = _unchecked(calc_frequency_spectrum)(text)
     return safe_divide(spectrum.get(1, 0), len(set(text)))
 
 
+@_checks_words
 def calc_alpha2(text: Sequence[str]) -> float:
     """
     Computing the α₂ exponent
@@ -1291,14 +1314,14 @@ def calc_alpha2(text: Sequence[str]) -> float:
     Raises:
         SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_words(text)
-    spectrum = calc_frequency_spectrum(text)
+    spectrum = _unchecked(calc_frequency_spectrum)(text)
     hapaxes = spectrum.get(1, 0)
     if not hapaxes:
         return nan
     return 1 - 2 * spectrum.get(2, 0) / hapaxes
 
 
+@_checks_words
 def calc_entropy(text: Sequence[str]) -> float:
     """
     Computing the Shannon entropy
@@ -1319,13 +1342,13 @@ def calc_entropy(text: Sequence[str]) -> float:
     Raises:
         SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_words(text)
     n_words = len(text)
     if not n_words:
         return nan
     return -sum(freq / n_words * log2(freq / n_words) for freq in Counter(text).values()) or 0.0
 
 
+@_checks_words
 def calc_evenness(text: Sequence[str]) -> float:
     """
     Computing evenness
@@ -1343,13 +1366,13 @@ def calc_evenness(text: Sequence[str]) -> float:
     Raises:
         SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_words(text)
     n_lexemes = len(set(text))
     if n_lexemes < 2:
         return nan
-    return calc_entropy(text) / log2(n_lexemes)
+    return _unchecked(calc_entropy)(text) / log2(n_lexemes)
 
 
+@_checks_words
 def calc_perplexity(text: Sequence[str]) -> float:
     """
     Computing perplexity
@@ -1367,10 +1390,10 @@ def calc_perplexity(text: Sequence[str]) -> float:
     Raises:
         SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_words(text)
-    return float(2 ** calc_entropy(text))
+    return float(2 ** _unchecked(calc_entropy)(text))
 
 
+@_checks_words
 def calc_zipf_alpha(text: Sequence[str]) -> float:
     """
     Computing the slope of Zipf's law
@@ -1392,7 +1415,6 @@ def calc_zipf_alpha(text: Sequence[str]) -> float:
     Raises:
         SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_words(text)
     frequencies = sorted(Counter(text).values(), reverse=True)
     if len(frequencies) < 2:
         return nan
@@ -1418,6 +1440,7 @@ class ZipfMandelbrot(NamedTuple):
     r2: float
 
 
+@_checks_words
 def fit_zipf_mandelbrot(text: Sequence[str] | Mapping[str, int]) -> ZipfMandelbrot:
     """
     Fitting the Zipf-Mandelbrot law to the frequency distribution
@@ -1441,7 +1464,6 @@ def fit_zipf_mandelbrot(text: Sequence[str] | Mapping[str, int]) -> ZipfMandelbr
     Raises:
         SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_words(text)
     frequencies = np.array(
         sorted((count for count in Counter(text).values() if count > 0), reverse=True),
         dtype=float,
@@ -1490,6 +1512,7 @@ class HeapsFit(NamedTuple):
     r2: float
 
 
+@_checks_words
 def fit_heaps(text: Sequence[str]) -> HeapsFit:
     """
     Fitting Heaps' law to the vocabulary growth curve
@@ -1511,11 +1534,10 @@ def fit_heaps(text: Sequence[str]) -> HeapsFit:
     Raises:
         SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_words(text)
     n_words = len(text)
     if n_words < 2:
         return HeapsFit(nan, nan, nan)
-    growth = np.log(vocabulary_growth(text))
+    growth = np.log(_unchecked(vocabulary_growth)(text))
     lengths = np.log(np.arange(1, n_words + 1))
     slope, intercept = np.polyfit(lengths, growth, 1)
     residual = float(((growth - (intercept + slope * lengths)) ** 2).sum())
@@ -1524,6 +1546,7 @@ def fit_heaps(text: Sequence[str]) -> HeapsFit:
     return HeapsFit(float(np.exp(intercept)), float(slope) or 0.0, r2)
 
 
+@_checks_words
 def vocabulary_growth(text: Sequence[str]) -> list[int]:
     """
     Computing the vocabulary growth curve
@@ -1537,7 +1560,6 @@ def vocabulary_growth(text: Sequence[str]) -> list[int]:
     Raises:
         SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_words(text)
     seen: set[str] = set()
     growth = []
     for word in text:
@@ -1546,6 +1568,7 @@ def vocabulary_growth(text: Sequence[str]) -> list[int]:
     return growth
 
 
+@_checks_words
 def calc_heaps_beta(text: Sequence[str]) -> float:
     """
     Computing the exponent of Heaps' law
@@ -1567,10 +1590,10 @@ def calc_heaps_beta(text: Sequence[str]) -> float:
     Raises:
         SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_words(text)
-    return fit_heaps(text).beta
+    return _unchecked(fit_heaps)(text).beta
 
 
+@_checks_words
 def calc_windowed(
     text: Sequence[str],
     func: Calculator,
@@ -1603,7 +1626,6 @@ def calc_windowed(
         ParameterError: If the window size, the step or the confidence level are set incorrectly
         SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_words(text)
     if window_len < 1:
         raise ParameterError("The window size must be greater than 0")
     if step is None:
@@ -1613,6 +1635,8 @@ def calc_windowed(
     if not 0 < confidence < 1:
         raise ParameterError("The confidence level must lie in the interval (0, 1)")
     starts = range(0, max(len(text) - window_len, 0) + 1, step)
+    # The windows are slices of words checked on the way in
+    func = _unchecked(func)
     values = np.array([func(text[start : start + window_len]) for start in starts], dtype=float)
     values = values[~np.isnan(values)]
     n_windows = int(values.size)

@@ -2,6 +2,7 @@ import inspect
 import random
 import warnings
 from collections import Counter
+from functools import partial
 from math import e, inf, isnan, log, log2, log10, nan, nextafter, sqrt
 from typing import ClassVar
 
@@ -123,6 +124,51 @@ def test_init_words_as_given():
     assert DiversityStats(word for word in riddle).words == riddle
     assert DiversityStats(map(str.lower, riddle)).words == riddle
     assert DiversityStats(list(riddle)).words == riddle
+
+
+@pytest.fixture
+def checks(monkeypatch):
+    calls = []
+    check = diversity_stats.check_words
+
+    def counting(value, what="words"):
+        calls.append(len(value))
+        check(value, what)
+
+    monkeypatch.setattr(diversity_stats, "check_words", counting)
+    return calls
+
+
+def test_words_checked_once(checks):
+    ds = DiversityStats(WORDS)
+    assert checks == [94]
+    ds.get_stats()
+    assert ds.frequency_spectrum == {1: 39, 2: 10, 3: 2, 5: 2, 9: 1, 10: 1}
+    ds.windowed("mtld", window_len=20, step=1)
+    assert checks == [94, 94]
+
+
+@pytest.mark.parametrize(
+    "call",
+    [
+        lambda: calc_sichel_s(WORDS),
+        lambda: calc_evenness(WORDS),
+        lambda: calc_gini_simpson_index(WORDS),
+        lambda: calc_msttr(WORDS, 20),
+        lambda: calc_heaps_beta(WORDS),
+        lambda: calc_windowed(WORDS, calc_ttr, window_len=10, step=1),
+        lambda: calc_windowed(WORDS, partial(calc_mtld, threshold=0.8), window_len=30),
+    ],
+)
+def test_functions_check_once(checks, call):
+    call()
+    assert checks == [94]
+
+
+def test_windowed_custom_function(checks):
+    stats = calc_windowed(WORDS, lambda words: len(set(words)), window_len=10)
+    assert checks == [94]
+    assert stats.n_windows == 9
 
 
 def test_init_tokens():

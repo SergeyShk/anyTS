@@ -1,6 +1,7 @@
 import unicodedata
 from collections.abc import Iterable, Iterator
 from functools import lru_cache
+from itertools import repeat
 
 from spacy.tokens import Doc, Span, Token
 
@@ -157,9 +158,9 @@ def check_words(value: Iterable[object], what: str = "words") -> None:
         anyts.exceptions.SourceTypeError: The words must be strings, not Token
     """
     check_sequence(value, what)
-    for item in value:
-        if not isinstance(item, str):
-            raise SourceTypeError(f"The {what} must be strings, not {type(item).__name__}")
+    if not all(map(isinstance, value, repeat(str))):
+        item = next(item for item in value if not isinstance(item, str))
+        raise SourceTypeError(f"The {what} must be strings, not {type(item).__name__}")
 
 
 def iter_doc_tokens(source: Doc | Span) -> Iterator[Token]:
