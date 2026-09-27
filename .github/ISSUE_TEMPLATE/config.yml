@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Documentation
+    url: https://sergeyshk.github.io/anyTS/
+    about: Description of all statistics with formulas and examples
+  - name: ruTS, a bug in Russian texts
+    url: https://github.com/SergeyShk/ruTS/issues
+    about: Tokenization, lemmas and the statistics that depend on Russian
+  - name: esTS, a bug in Spanish texts
+    url: https://github.com/SergeyShk/esTS/issues
+    about: Tokenization, lemmas and the statistics that depend on Spanish
