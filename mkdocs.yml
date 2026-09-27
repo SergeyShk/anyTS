@@ -19,6 +19,12 @@ nav:
         - Metric functions: stats/diversity_stats_funcs.md
       - Cohesion helpers: stats/cohesion.md
       - Dependency tree helpers: stats/syntax.md
+    - Corpus measures:
+      - Keywords: corpus/keyness.md
+      - Collocations: corpus/collocations.md
+      - Word dispersion: corpus/dispersion.md
+      - Stylometry: corpus/stylometry.md
+      - Corpus comparison: corpus/compare.md
     - Utilities: utils.md
 
 theme:

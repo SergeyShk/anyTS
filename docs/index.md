@@ -3,7 +3,7 @@
 **anyTS** is the language-independent core of the text statistics libraries [ruTS](https://github.com/SergeyShk/ruTS) (Russian) and [esTS](https://github.com/SergeyShk/esTS) (Spanish). It holds the code that does not depend on a language, so that it is written, tested and documented once; a language library adds its tokenizer, lemmatizer, [spaCy](https://github.com/explosion/spaCy) model and rules and re-exports the core under its own names.
 
 !!! warning "Status"
-    The project is in development: the [exceptions](exceptions.md), the [utilities](utils.md) and the extractors of [sentences](extractors/sentences.md), [words](extractors/words.md) and [character N-grams](extractors/char_ngrams.md) are in place, and so are the [lexical diversity metrics](stats/diversity_stats.md) and the helpers of [cohesion](stats/cohesion.md) and of the [dependency tree](stats/syntax.md); the corpus measures follow.
+    The project is in development: the [exceptions](exceptions.md), the [utilities](utils.md) and the extractors of [sentences](extractors/sentences.md), [words](extractors/words.md) and [character N-grams](extractors/char_ngrams.md) are in place, and so are the [lexical diversity metrics](stats/diversity_stats.md), the helpers of [cohesion](stats/cohesion.md) and of the [dependency tree](stats/syntax.md), and the corpus measures: [keywords](corpus/keyness.md), [collocations](corpus/collocations.md), [dispersion](corpus/dispersion.md), [stylometry](corpus/stylometry.md) and [comparison of corpora](corpus/compare.md).
 
 ## Planned scope
 
