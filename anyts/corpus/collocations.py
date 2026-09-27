@@ -5,7 +5,7 @@ from typing import NamedTuple
 
 from ..constants import COLLOCATION_MEASURES
 from ..exceptions import ParameterError, SourceError
-from ..utils import check_words
+from ..utils import check_integer, check_words
 
 
 class Collocation(NamedTuple):
@@ -46,7 +46,7 @@ def collocations(
         window = 1 gives bigrams. Inside the measure the frequency of the pair
         is divided by the window (Church and Hanks 1990, as in NLTK), while
         freq_pair keeps the undivided frequency; so with window > 1 a pair
-        always side by side gets a logDice of 14 − log2(window), not 14
+        always side by side gets a logDice of 14 − log2(window), not 14.
         Words are compared as they are: case, lemmatization and stop words
         belong to the extraction
 
@@ -79,8 +79,11 @@ def collocations(
     """
     if measure not in COLLOCATION_MEASURES:
         raise ParameterError(f"Unknown measure of association: {measure}")
+    check_integer(window, "window")
     if window < 1:
         raise ParameterError("The window must be at least one")
+    if top_n is not None:
+        check_integer(top_n, "number of collocations")
     if top_n is not None and top_n < 1:
         raise ParameterError("The number of collocations must be greater than 0")
     check_words(words)
@@ -206,8 +209,7 @@ def calc_logdice(freq_a: int, freq_b: int, freq_ab: float, n: int) -> float:
 
     Description:
         14 + log2(2 · f_ab / (f_a + f_b)) by Rychlý (2008); does not depend on
-        the size of the text, at most 14 (14 − log2(window) in collocations),
-        values below zero - a weak link
+        the size of the text, at most 14, values below zero - a weak link
 
     References:
         https://www.sketchengine.eu/glossary/logdice/

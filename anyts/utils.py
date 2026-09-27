@@ -2,10 +2,11 @@ import unicodedata
 from collections.abc import Iterable, Iterator
 from functools import lru_cache
 from itertools import repeat
+from numbers import Integral
 
 from spacy.tokens import Doc, Span, Token
 
-from .exceptions import SourceTypeError
+from .exceptions import ParameterError, SourceTypeError
 
 # Punctuation, symbols, combining marks and invisible format characters
 PUNCTUATION_CATEGORIES = frozenset(
@@ -115,7 +116,8 @@ def check_sequence(value: object, what: str = "words") -> None:
         what (str): What is expected, for the message of the error
 
     Raises:
-        SourceTypeError: If a string, a Doc, a Span or an iterator is passed
+        SourceTypeError: If a string, a Doc, a Span, an iterator or a non-iterable
+            object is passed
 
     Example:
         >>> from anyts.utils import check_sequence
@@ -134,6 +136,8 @@ def check_sequence(value: object, what: str = "words") -> None:
         )
     if isinstance(value, Iterator):
         raise SourceTypeError(f"A list of {what} is expected, not an iterator")
+    if not isinstance(value, Iterable):
+        raise SourceTypeError(f"A list of {what} is expected, not {type(value).__name__}")
 
 
 def check_words(value: Iterable[object], what: str = "words") -> None:
@@ -161,6 +165,33 @@ def check_words(value: Iterable[object], what: str = "words") -> None:
     if not all(map(isinstance, value, repeat(str))):
         item = next(item for item in value if not isinstance(item, str))
         raise SourceTypeError(f"The {what} must be strings, not {type(item).__name__}")
+
+
+def check_integer(value: object, what: str) -> None:
+    """
+    Checking that a parameter is an integer
+
+    Description:
+        A bool or a float, even a whole one, is not taken for an integer, since it
+        would fail only later, as an index or a count
+
+    Arguments:
+        value (object): Value to check
+        what (str): Name of the parameter, for the message of the error
+
+    Raises:
+        ParameterError: If the value is not an integer
+
+    Example:
+        >>> from anyts.utils import check_integer
+        >>> check_integer(5, "window size")
+        >>> check_integer(5.0, "window size")
+        Traceback (most recent call last):
+        ...
+        anyts.exceptions.ParameterError: The window size must be an integer, not float
+    """
+    if isinstance(value, bool) or not isinstance(value, Integral):
+        raise ParameterError(f"The {what} must be an integer, not {type(value).__name__}")
 
 
 def iter_doc_tokens(source: Doc | Span) -> Iterator[Token]:
@@ -227,7 +258,9 @@ def iter_doc_words(
     Extracting words with positions from a Doc or Span object
 
     Description:
-        The words of iter_doc_units with the positions of their tokens
+        The words of iter_doc_units with the positions of their tokens; a byte
+        order mark glued to the start of a word, as in a file read with utf-8
+        instead of utf-8-sig, is dropped
 
     Arguments:
         source (Doc|Span): Doc or Span object
@@ -247,4 +280,6 @@ def iter_doc_words(
         [(0, 1, 'A'), (2, 12, 'well-known'), (13, 16, 'cat')]
     """
     for unit in iter_doc_units(source, join_hyphens):
-        yield unit[0].idx, unit[-1].idx + len(unit[-1]), "".join(token.text for token in unit)
+        text = "".join(token.text for token in unit)
+        word = text.lstrip("\ufeff")
+        yield unit[0].idx + len(text) - len(word), unit[-1].idx + len(unit[-1]), word

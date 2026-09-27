@@ -77,7 +77,7 @@ Checks whether a text, a `Doc` or a `Span` holds a word: an empty text or one of
 ## check_sequence
 
 <!-- --8<-- [start:check_sequence] -->
-Checks that an argument is a sequence and not a text or an iterator: a string, a `Doc`, a `Span` or an iterator raises `SourceTypeError`, since a string would be iterated character by character and an iterator would be exhausted by the first pass over it.
+Checks that an argument is a sequence and not a text or an iterator: a string, a `Doc`, a `Span`, an iterator or an object that cannot be iterated raises `SourceTypeError`, since a string would be iterated character by character and an iterator would be exhausted by the first pass over it.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
@@ -95,6 +95,17 @@ Checks that an argument is a list of words: it passes `check_sequence` and every
 | `value` | Iterable | `-` | Value to check |
 | `what` | str | `"words"` | What is expected, for the message of the error |
 <!-- --8<-- [end:check_words] -->
+
+## check_integer
+
+<!-- --8<-- [start:check_integer] -->
+Checks that a parameter is an integer: a `bool` or a `float`, even a whole one like `5.0`, raises `ParameterError`, since it would fail only later, as an index or a count.
+
+| Parameter | Type | Default | Description |
+| :-------: | :--: | :-----: | :---------: |
+| `value` | object | `-` | Value to check |
+| `what` | str | `-` | Name of the parameter, for the message of the error |
+<!-- --8<-- [end:check_integer] -->
 
 ## iter_doc_tokens
 
@@ -120,7 +131,7 @@ Yields the words of a `Doc` or a `Span` as lists of tokens: one token each, as i
 ## iter_doc_words
 
 <!-- --8<-- [start:iter_doc_words] -->
-Yields the words of `iter_doc_units` as tuples: the position of the first character, the position after the last character and the text of the word.
+Yields the words of `iter_doc_units` as tuples: the position of the first character, the position after the last character and the text of the word. A byte order mark glued to the start of a word, as in a file read with `utf-8` instead of `utf-8-sig`, is dropped.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |

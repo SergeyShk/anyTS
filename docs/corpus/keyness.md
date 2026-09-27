@@ -25,7 +25,7 @@ For a word of frequency $a$ in a target corpus of size $c$ and of frequency $b$ 
 | %DIFF | `diff` | $\frac{NF_a - NF_b}{NF_b} \cdot 100$ | [Gabrielatos and Marchi (2011)](http://eprints.lancs.ac.uk/51449/4/Gabrielatos_Marchi_Keyness.pdf); $NF$ - frequency per million words |
 | Log Ratio | `log_ratio` | $\log_2 \frac{NF_a}{NF_b}$ | [Hardie (2014)](http://cass.lancs.ac.uk/log-ratio-an-informal-introduction/); one means the word is twice as frequent in the target corpus |
 | BIC | `bic` | $\operatorname{sign}(G^2) \cdot (\lvert G^2 \rvert - \ln N)$ | Wilson (2013); in absolute value above 2 - positive evidence of a difference, above 6 - strong, above 10 - very strong; a negative value with $\lvert G^2 \rvert < \ln N$ means no evidence, not the opposite direction |
-| ELL | `ell` | $\frac{G^2}{N \ln \min(E_1, E_2)}$ | Johnson, Culpeper and Rayson (2007); size of the effect of $G^2$ from 0 to 1, `nan` when the least expected frequency is below $e$ - then $\ln \min(E_1, E_2) < 1$ and the measure exceeds one |
+| ELL | `ell` | $\frac{G^2}{N \ln \min(E_1, E_2)}$ | Johnston, Berry and Mielke (2006); size of the effect of $G^2$, the share of the greatest possible departure from the expected frequencies, from 0 to 1; `nan` when the least expected frequency is at most one - then the logarithm is zero or negative; just above one the measure grows without bound |
 | Odds ratio | `odds_ratio` | $\frac{a / (c - a)}{b / (d - b)}$ | one means equal odds; `inf` if the word fills the whole target corpus, 0 - the whole reference |
 
 A zero frequency in one of the corpora is replaced with 0.5 for %DIFF, Log Ratio and the odds ratio (Hardie 2014). The p-value of $G^2$ comes from the chi-square distribution with one degree of freedom (`calc_p_value`). The measures are available as the functions `calc_log_likelihood`, `calc_chi2`, `calc_diff`, `calc_log_ratio`, `calc_bic`, `calc_ell` and `calc_odds_ratio` with the arguments `(a, b, c, d)` of the module `anyts.corpus.keyness`; their names and descriptions are in `anyts.constants.KEYNESS_MEASURES`.
@@ -57,7 +57,7 @@ A zero frequency in one of the corpora is replaced with 0.5 for %DIFF, Log Ratio
 | `key` | callable | `None` | Key of a word of the target corpus in `counts`, such as its lemma; `None` - the word itself |
 | `keep` | callable | `None` | Whether a word of the target corpus is counted; `None` - every word |
 
-The words of the target that `keep` passes are counted under their `key`, and the words it leaves out do not count in the size of the target either. The frequency of a key missing from `counts` is `missing`: a dictionary gives its least frequency, an upper bound of the true one, so such a word may be a positive keyword but never a negative one.
+The words of the target that `keep` passes are counted under their `key`, and the words it leaves out do not count in the size of the target either; negative keywords come only from the keys of `counts` that `keep` passes. The frequency of a key missing from `counts` is `missing`: a dictionary gives its least frequency, an upper bound of the true one, so such a word may be a positive keyword but never a negative one.
 <!-- --8<-- [end:FrequencyReference] -->
 
 ## Result

@@ -3,13 +3,15 @@ import string
 import sys
 import unicodedata
 
+import numpy as np
 import pytest
 import spacy
 from spacy.tokens import Doc
 
-from anyts.exceptions import SourceTypeError
+from anyts.exceptions import ParameterError, SourceTypeError
 from anyts.utils import (
     PUNCTUATION_CATEGORIES,
+    check_integer,
     check_sequence,
     check_words,
     count_letters,
@@ -132,9 +134,17 @@ def test_has_words_of_a_span(nlp):
     assert [has_words(span) for span in (doc[0:3], doc[4:])] == [True, False]
 
 
-@pytest.mark.parametrize("value", [["the", "cat"], ("the",), [], None, 42])
+@pytest.mark.parametrize("value", [["the", "cat"], ("the",), []])
 def test_check_sequence(value):
     assert check_sequence(value) is None
+
+
+@pytest.mark.parametrize(("value", "name"), [(None, "NoneType"), (42, "int")])
+def test_check_sequence_not_iterable(value, name):
+    with pytest.raises(SourceTypeError, match=rf"^A list of words is expected, not {name}$"):
+        check_sequence(value)
+    with pytest.raises(SourceTypeError, match=rf"^A list of words is expected, not {name}$"):
+        check_words(value)
 
 
 def test_check_sequence_errors(nlp):
@@ -169,6 +179,20 @@ def test_check_words_errors(nlp):
         check_words("the cat")
     with pytest.raises(SourceTypeError, match=r"not an iterator$"):
         check_words(iter(["the"]))
+
+
+@pytest.mark.parametrize("value", [5, 0, -3, np.int64(5)])
+def test_check_integer(value):
+    assert check_integer(value, "window size") is None
+
+
+@pytest.mark.parametrize(
+    ("value", "name"),
+    [(5.0, "float"), (True, "bool"), ("5", "str"), (None, "NoneType"), (math.nan, "float")],
+)
+def test_check_integer_errors(value, name):
+    with pytest.raises(ParameterError, match=rf"^The window size must be an integer, not {name}$"):
+        check_integer(value, "window size")
 
 
 def test_iter_doc_tokens(nlp):
@@ -220,6 +244,17 @@ def test_iter_doc_words(nlp):
     ]
     assert list(iter_doc_words(doc[1:4], join_hyphens=True)) == [(2, 12, "well-known")]
     assert list(iter_doc_words(nlp("- . ,"), join_hyphens=True)) == []
+
+
+def test_iter_doc_words_drops_byte_order_mark(nlp):
+    doc = nlp("\ufeffThe cat. \ufeff\ufeffThe dog.")
+    assert doc[0].text == "\ufeffThe"
+    assert list(iter_doc_words(doc)) == [
+        (1, 4, "The"),
+        (5, 8, "cat"),
+        (12, 15, "The"),
+        (16, 19, "dog"),
+    ]
 
 
 @pytest.mark.parametrize(

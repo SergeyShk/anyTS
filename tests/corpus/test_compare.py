@@ -1,4 +1,4 @@
-from math import isnan, sqrt
+from math import inf, isnan, nan, sqrt
 
 import numpy as np
 import pandas as pd
@@ -33,6 +33,19 @@ def test_compare_values():
     assert compare_values(a, b, 100, np.random.default_rng(0), texts, texts)[13:] == (4, 4, 2, 2)
 
 
+def test_compare_values_of_lists_with_undefined_values():
+    rng = np.random.default_rng(0)
+    expected = compare_values(np.array([1.0, 2.0, 3.0]), np.array([4.0, 5.0, 6.0]), 50, rng)
+    rng = np.random.default_rng(0)
+    values = compare_values([1.0, nan, 2, 3, inf], [4.0, 5, -inf, 6], 50, rng)
+    assert values == pytest.approx(expected, nan_ok=True)
+    # The texts of the dropped values go with them: the first text keeps no value
+    texts = compare_values([nan, nan, 2.0, 3.0], [4.0, 5.0], 10, None, ["x", "x", "y", "z"])
+    assert texts[13:] == (2, 2, 2, 2)
+    with pytest.raises(ParameterError, match=r"^The texts must match the values one to one"):
+        compare_values([1.0, nan], [2.0, 3.0], texts_a=["x"])
+
+
 def test_effect_sizes():
     a = [2.0, 4.0, 6.0, 8.0]
     b = [1.0, 3.0, 5.0, 7.0]
@@ -43,12 +56,17 @@ def test_effect_sizes():
     assert calc_cliff_delta([1, 1], [1, 1]) == 0.0
     assert calc_cliff_delta([5, 6], [1, 2]) == 1.0
     assert isnan(calc_cliff_delta([], [1.0]))
+    assert isnan(calc_cliff_delta([1.0, nan], [0.0]))
+    assert isnan(calc_cliff_delta([1.0], [0.0, nan]))
+    assert calc_cliff_delta([inf], [inf, 1.0]) == 0.5
     low, high = bootstrap_median_diff(a, b, n_bootstrap=500, rng=np.random.default_rng(0))
     assert low <= 1.0 <= high
     assert bootstrap_median_diff([3.0, 3.0, 3.0], [1.0, 1.0, 1.0], n_bootstrap=10) == (2.0, 2.0)
     assert all(isnan(value) for value in bootstrap_median_diff([], [1.0]))
     with pytest.raises(ParameterError):
         bootstrap_median_diff(a, b, n_bootstrap=0)
+    with pytest.raises(ParameterError, match=r"must be an integer, not float$"):
+        bootstrap_median_diff(a, b, n_bootstrap=10.0)
     with pytest.raises(ParameterError):
         bootstrap_median_diff(a, b, confidence=1.0)
 
@@ -138,6 +156,8 @@ def test_compare_features_seed_and_errors():
     assert first.equals(compare_features(SHORT, LONG, n_bootstrap=50, seed=1))
     with pytest.raises(ParameterError, match=r"^The number of bootstrap samples"):
         compare_features(SHORT, LONG, n_bootstrap=0)
+    with pytest.raises(ParameterError, match=r"must be an integer, not float$"):
+        compare_features(SHORT, LONG, n_bootstrap=50.0)
 
 
 def test_compare_features_undefined_values():

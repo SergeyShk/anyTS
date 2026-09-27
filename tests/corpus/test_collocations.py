@@ -135,7 +135,15 @@ def test_collocations_measures(measure):
 
 
 @pytest.mark.parametrize(
-    "kwargs", [{"measure": "pmi"}, {"window": 0}, {"top_n": 0}, {"top_n": -1}]
+    "kwargs",
+    [
+        {"measure": "pmi"},
+        {"window": 0},
+        {"window": 2.0},
+        {"top_n": 0},
+        {"top_n": -1},
+        {"top_n": 1.5},
+    ],
 )
 def test_collocations_errors(kwargs):
     with pytest.raises(ParameterError):

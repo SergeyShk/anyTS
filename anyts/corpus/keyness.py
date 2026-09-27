@@ -1,6 +1,6 @@
 from collections import Counter
-from collections.abc import Callable, Mapping, Sequence
-from math import e, inf, isnan, log, log2, nan
+from collections.abc import Callable, Iterable, Mapping, Sequence
+from math import inf, isnan, log, log2, nan
 from typing import Any, NamedTuple
 
 import numpy as np
@@ -8,7 +8,7 @@ from scipy.stats import chi2 as chi2_distribution
 
 from ..constants import KEYNESS_MEASURES
 from ..exceptions import ParameterError, SourceError
-from ..utils import check_words
+from ..utils import check_integer, check_words
 
 ZERO_ADJUSTMENT = 0.5
 
@@ -21,7 +21,9 @@ class FrequencyReference(NamedTuple):
         The words of the target corpus that keep passes are counted by their key,
         and the frequency of a key missing from counts is missing: a dictionary
         gives its least frequency, an upper bound, so such a word may be a
-        positive keyword but never a negative one
+        positive keyword but never a negative one. Negative keywords come only
+        from the keys of counts that keep passes, since the words it leaves out
+        are not counted in the target
 
     Attributes:
         counts (dict[str, float]): Frequencies of the keys in the reference corpus
@@ -125,15 +127,19 @@ def keyness(
     """
     if measure not in KEYNESS_MEASURES:
         raise ParameterError(f"Unknown measure of keyness: {measure}")
+    if top_n is not None:
+        check_integer(top_n, "number of keywords")
     if top_n is not None and top_n < 1:
         raise ParameterError("The number of keywords must be greater than 0")
     check_words(target)
     counts_reference: Mapping[str, float]
+    keep = None
     if isinstance(reference, FrequencyReference):
         counts_target = _count(target, key=reference.key, keep=reference.keep)
         size_reference = float(reference.size)
         counts_reference = reference.counts
         missing = float(reference.missing)
+        keep = reference.keep
     else:
         check_words(reference)
         counts_target = _count(target)
@@ -147,7 +153,10 @@ def keyness(
     rows = []
     # A positive keyword occurs in the target; a negative one needs a frequency of its own
     # in the reference, since that of a missing key only bounds it from above
-    for word in counts_target if positive else counts_reference:
+    candidates: Iterable[str] = counts_target
+    if not positive:
+        candidates = counts_reference if keep is None else filter(keep, counts_reference)
+    for word in candidates:
         a = counts_target.get(word, 0)
         b = float(counts_reference.get(word, missing))
         ipm_target = a / size_target * 1e6
@@ -368,8 +377,10 @@ def calc_ell(a: float, b: float, c: float, d: float) -> float:
     Computing the effect size for the log-likelihood ELL
 
     Description:
-        By Johnson, Culpeper and Rayson (2007): ELL = G² / (N · ln(min(E1, E2))),
-        N = c + d; lies between 0 and 1. Signed as G²
+        By Johnston, Berry and Mielke (2006): ELL = G² / (N · ln(min(E1, E2))),
+        N = c + d; the share of the greatest possible departure from the expected
+        frequencies, from 0 to 1, though it grows without bound as the least
+        expected frequency nears one. Signed as G²
 
     Arguments:
         a (float): Frequency of the word in the target corpus
@@ -378,12 +389,12 @@ def calc_ell(a: float, b: float, c: float, d: float) -> float:
         d (float): Size of the reference corpus
 
     Returns:
-        float: Signed ELL, nan when the least expected frequency is below e
-            (ELL would leave the interval from 0 to 1)
+        float: Signed ELL, nan when the least expected frequency is at most one
+            (its logarithm is zero or negative)
     """
     total = a + b
     expected_min = min(c, d) * total / (c + d)
-    if expected_min < e:
+    if expected_min <= 1:
         return nan
     return calc_log_likelihood(a, b, c, d) / ((c + d) * log(expected_min))
 

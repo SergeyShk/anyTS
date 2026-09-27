@@ -180,6 +180,8 @@ def test_delta_errors():
         delta(corpus, n_mfw=0)
     with pytest.raises(ParameterError):
         frequency_table(corpus, n_mfw=-1)
+    with pytest.raises(ParameterError, match=r"must be an integer, not float$"):
+        delta(corpus, n_mfw=5.0)
     with pytest.raises(SourceError):
         frequency_table({})
     with pytest.raises(SourceError):
@@ -222,6 +224,10 @@ def test_zeta_errors():
         zeta(corpus["A"], [[]])
     with pytest.raises(ParameterError):
         zeta(corpus["A"], corpus["B"], top_n=0)
+    with pytest.raises(ParameterError, match=r"^The size of a segment must be an integer"):
+        zeta(corpus["A"], corpus["B"], segment_size=5.0)
+    with pytest.raises(ParameterError, match=r"^The number of words must be an integer"):
+        zeta(corpus["A"], corpus["B"], top_n=2.0)
     with pytest.raises(SourceTypeError):
         zeta(texts["A"], corpus["B"])
     # A text among lists of words, a Doc among the texts
@@ -245,6 +251,8 @@ def test_kilgarriff_chi2():
         kilgarriff_chi2([], words_b)
     with pytest.raises(ParameterError):
         kilgarriff_chi2(words_a, words_b, n_mfw=0)
+    with pytest.raises(ParameterError, match=r"must be an integer, not float$"):
+        kilgarriff_chi2(words_a, words_b, n_mfw=2.0)
     with pytest.raises(SourceTypeError):
         kilgarriff_chi2(texts["A"], words_b)
 

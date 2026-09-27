@@ -16,7 +16,7 @@ The language enters the extractor through three hooks that a language library ov
 
 | Hook | Kind | Default | Used for |
 | :--: | :--: | :-----: | :------: |
-| `tokenize(text)` | method | runs of word characters `\w+` | the tokenizer when `tokenizer` is not given |
+| `tokenize(text)` | method | a word character `\w` followed by word characters, combining marks, zero-width joiners and non-joiners and soft hyphens, so that a word in NFD, in Devanagari or in Persian with `U+200C` stays whole | the tokenizer when `tokenizer` is not given |
 | `lemmatize(word)` | method | the word itself | `use_lexemes=True` |
 | `number_pattern` | class attribute | a signed number with separators and an optional percent sign: `-5`, `1990-1995`, `1,500.50`, `12/03/2020`, `3:30`, `10%` | `filter_nums=True`, matched against the whole lower-cased word |
 <!-- --8<-- [end:WordsExtractor-hooks] -->
@@ -61,7 +61,7 @@ The language enters the extractor through three hooks that a language library ov
 | `max_len` | int | `0` | Maximum length of an extracted word, `0` for no bound |
 
 !!! note "Note"
-    A regular expression as the tokenizer is a separator: the text is split with `re.split`. The filters are applied in order: punctuation, numbers, lemmatization, lower case, stop words, word length. A lower-case stop word list also filters a capitalized word at the start of a sentence. A punctuation mark is a token consisting entirely of marks and symbols, including multi-character ones: `?!`, `--`, `…`, `€` (see `is_punctuation`). Empty tokens are dropped before the filters. N-grams join the words with `_`.
+    A regular expression as the tokenizer is a separator: the text is split with `re.split`. The filters are applied in order: punctuation, numbers, lemmatization, lower case, stop words, word length. A lower-case stop word list also filters a capitalized word at the start of a sentence. A punctuation mark is a token consisting entirely of marks and symbols, including multi-character ones: `?!`, `--`, `…`, `€` (see `is_punctuation`). Empty and whitespace tokens are dropped before the filters. N-grams join the words with `_`.
 <!-- --8<-- [end:WordsExtractor-parameters] -->
 
 ## Methods

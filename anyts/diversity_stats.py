@@ -21,8 +21,8 @@ from .constants import (
     MTLD_TTR_THRESHOLD,
     MTLD_WINDOW_LEN,
 )
-from .exceptions import ParameterError, SourceError, SourceTypeError, UnknownStatError
-from .utils import check_sequence, check_words, safe_divide
+from .exceptions import ParameterError, SourceError, UnknownStatError
+from .utils import check_integer, check_sequence, check_words, safe_divide
 
 Calculator = Callable[[Sequence[str]], float]
 Function = TypeVar("Function", bound=Callable[..., Any])
@@ -86,9 +86,11 @@ def check_params(
     Raises:
         ParameterError: If a parameter is out of range
     """
+    check_integer(window_len, "window size")
     if window_len < 1:
         raise ParameterError("The window size must be greater than 0")
     _check_mtld_params(mtld_threshold, mtld_min_len)
+    check_integer(hdd_sample_size, "HD-D sample size")
     if hdd_sample_size < 1:
         raise ParameterError("The HD-D sample size must be greater than 0")
     _check_log_base(log_base)
@@ -96,7 +98,7 @@ def check_params(
 
 def _check_log_base(base: float) -> None:
     """Checking the logarithm base of the Summer, Maas and Dugast metrics"""
-    if base <= 1:
+    if not base > 1:
         raise ParameterError("The logarithm base must be greater than 1")
 
 
@@ -208,12 +210,7 @@ class DiversityStats:
         check_params(window_len, mtld_threshold, mtld_min_len, hdd_sample_size, log_base)
         if not isinstance(words, Iterator):
             check_sequence(words)
-        try:
-            self.words = tuple(words)
-        except TypeError as e:
-            raise SourceTypeError(
-                f"A list of words is expected, not {type(words).__name__}"
-            ) from e
+        self.words = tuple(words)
         check_words(self.words)
         if not self.words:
             raise SourceError("The data source has no words")
@@ -677,6 +674,7 @@ def calc_mattr(text: Sequence[str], window_len: int = MATTR_WINDOW_LEN) -> float
         ParameterError: If the window size is less than one
         SourceTypeError: If the words are not a list of strings (check_words)
     """
+    check_integer(window_len, "window size")
     if window_len < 1:
         raise ParameterError("The window size must be greater than 0")
     n_words = len(text)
@@ -715,6 +713,7 @@ def calc_msttr(text: Sequence[str], segment_len: int = MATTR_WINDOW_LEN) -> floa
         ParameterError: If the segment size is less than one
         SourceTypeError: If the words are not a list of strings (check_words)
     """
+    check_integer(segment_len, "segment size")
     if segment_len < 1:
         raise ParameterError("The segment size must be greater than 0")
     n_words = len(text)
@@ -730,6 +729,7 @@ def _check_mtld_params(threshold: float, min_len: int) -> None:
     """Checking the TTR threshold and the minimum factor length of MTLD"""
     if not 0 < threshold < 1:
         raise ParameterError("The TTR threshold of MTLD must lie in the interval (0, 1)")
+    check_integer(min_len, "minimum factor length of MTLD")
     if min_len < 0:
         raise ParameterError("The minimum factor length of MTLD cannot be negative")
 
@@ -824,7 +824,10 @@ def _mtld_factor_lengths(
         The number of lexemes on the stretch [start, pos] is the number of its
         positions whose previous occurrence of the word lies before start; the
         starts are processed in blocks over windows of MTLD_WINDOW_LEN offsets,
-        and the threshold is compared in integers through _max_types
+        and the threshold is compared in integers through _max_types. A factor
+        of length L closes only with at least L − max_types[L] repeated words,
+        so the repeats after a start bound the length of its factor: those of
+        the rest of the text, or of the whole text with wrap
     """
     n_words = len(text)
     if not n_words:
@@ -833,10 +836,21 @@ def _mtld_factor_lengths(
     padded = np.concatenate([previous, np.full(MTLD_WINDOW_LEN, previous.size)])
     windows = sliding_window_view(padded, MTLD_WINDOW_LEN)
     max_types = _max_types(threshold, n_words + MTLD_WINDOW_LEN)
+    # Number of the factor lengths that need at most so many repeats
+    fits = np.cumsum(np.bincount(np.arange(1, max_types.size) - max_types[1:]))
+    if wrap:
+        repeats = np.full(n_words, n_words - np.count_nonzero(previous[:n_words] < 0))
+    else:
+        repeated = np.bincount(previous[previous >= 0], minlength=n_words)
+        repeats = np.cumsum(repeated[::-1])[::-1]
+    reach = fits[np.minimum(repeats, fits.size - 1)]
     lengths = np.zeros(n_words, dtype=np.int64)
     for block_start in range(0, n_words, MTLD_BLOCK_SIZE):
         pending = np.arange(block_start, min(block_start + MTLD_BLOCK_SIZE, n_words))
-        limits = np.full_like(pending, n_words) if wrap else n_words - pending
+        limits = np.minimum(reach[pending], n_words if wrap else n_words - pending)
+        reachable = limits >= max(min_len, 1)
+        pending = pending[reachable]
+        limits = limits[reachable]
         counts = np.zeros(pending.size, dtype=np.int32)
         offset = 0
         while pending.size:
@@ -866,10 +880,12 @@ def calc_mamtld(
     Computing the Moving Average Measure of Textual Lexical Diversity (MA-MTLD)
 
     Description:
-        A moving-window modification of MTLD (MTLD-MA of koRpus): a factor starts
-        at every position of the text, the value is the mean length of the completed
-        factors over a forward and a backward pass; factors close as in calc_mtld,
-        those not completed by the end of the text are ignored
+        A moving-window modification of MTLD after MTLD-MA of koRpus: a factor
+        starts at every position of the text, the value is the mean length of the
+        completed factors over a forward and a backward pass; factors close as in
+        calc_mtld, those not completed by the end of the text are ignored. koRpus
+        makes the forward pass only, closes a factor at TTR strictly below the
+        threshold and drops the factors shorter than the minimum length
 
     Arguments:
         text (list[str]): List of words
@@ -927,13 +943,13 @@ def calc_hdd(text: Sequence[str], sample_size: int = HDD_SAMPLE_SIZE) -> float:
     Computing the Hypergeometric Distribution D (HD-D)
 
     Description:
-        An implementation of the VocD algorithm (McCarthy & Jarvis, 2010): the
-        expected TTR of a random sample of sample_size words of the text, computed
-        from the hypergeometric distribution
+        An alternative to vocd-D (McCarthy & Jarvis, 2010): the expected TTR of a
+        random sample of sample_size words of the text, computed exactly from the
+        hypergeometric distribution, without drawing samples
 
     Arguments:
         text (list[str]): List of words
-        sample_size (int): Segment length
+        sample_size (int): Sample size in words
 
     Returns:
         float: Value of the metric, nan for texts shorter than 50 words or the sample size
@@ -942,6 +958,7 @@ def calc_hdd(text: Sequence[str], sample_size: int = HDD_SAMPLE_SIZE) -> float:
         ParameterError: If the sample size is less than one
         SourceTypeError: If the words are not a list of strings (check_words)
     """
+    check_integer(sample_size, "HD-D sample size")
     if sample_size < 1:
         raise ParameterError("The HD-D sample size must be greater than 0")
     n_words = len(text)
@@ -1629,10 +1646,12 @@ def calc_windowed(
         ParameterError: If the window size, the step or the confidence level are set incorrectly
         SourceTypeError: If the words are not a list of strings (check_words)
     """
+    check_integer(window_len, "window size")
     if window_len < 1:
         raise ParameterError("The window size must be greater than 0")
     if step is None:
         step = window_len
+    check_integer(step, "window step")
     if step < 1:
         raise ParameterError("The window step must be greater than 0")
     if not 0 < confidence < 1:

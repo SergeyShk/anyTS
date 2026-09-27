@@ -9,7 +9,7 @@ from scipy.spatial.distance import cdist, jensenshannon, pdist, squareform
 
 from ..constants import DELTA_VARIANTS
 from ..exceptions import ParameterError, SourceError
-from ..utils import check_sequence, check_words
+from ..utils import check_integer, check_sequence, check_words
 
 ZERO_SEGMENTS = 0.5
 
@@ -76,6 +76,8 @@ def frequency_table(
         raise SourceError("The corpus holds a text without units")
     if not 0 <= culling <= 1:
         raise ParameterError("The share of texts for culling must lie between 0 and 1")
+    if n_mfw is not None:
+        check_integer(n_mfw, "number of the most frequent units")
     if n_mfw is not None and n_mfw < 1:
         raise ParameterError("The number of the most frequent units must be greater than 0")
     rows = {
@@ -357,8 +359,11 @@ def zeta(
         >>> [(score.word, score.zeta) for score in zeta(target, comparison, segment_size=3, top_n=2)]
         [('cat', 1.0), ('sleeps', 0.5)]
     """
+    check_integer(segment_size, "size of a segment")
     if segment_size < 1:
         raise ParameterError("The size of a segment must be greater than 0")
+    if top_n is not None:
+        check_integer(top_n, "number of words")
     if top_n is not None and top_n < 1:
         raise ParameterError("The number of words must be greater than 0")
     check_sequence(target)
@@ -434,6 +439,7 @@ def kilgarriff_chi2(words_a: Sequence[str], words_b: Sequence[str], n_mfw: int =
         >>> round(kilgarriff_chi2(["the", "cat", "the"], ["the", "dog", "a"], n_mfw=1), 3)
         0.333
     """
+    check_integer(n_mfw, "number of the most frequent words")
     if n_mfw < 1:
         raise ParameterError("The number of the most frequent words must be greater than 0")
     check_words(words_a)

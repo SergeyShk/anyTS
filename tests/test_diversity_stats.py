@@ -84,6 +84,10 @@ def ds():
         {"mtld_min_len": -1},
         {"hdd_sample_size": 0},
         {"log_base": 1},
+        {"log_base": float("nan")},
+        {"window_len": 50.0},
+        {"mtld_min_len": 10.0},
+        {"hdd_sample_size": 42.0},
     ],
 )
 def test_init_params_error(kwargs):
@@ -118,6 +122,26 @@ def test_init_empty():
 def test_init_type_error(words, message):
     with pytest.raises(SourceTypeError, match=message):
         DiversityStats(words)
+
+
+def test_init_generator_errors_propagate():
+    with pytest.raises(TypeError, match="unsupported operand") as error:
+        DiversityStats(word + "" for word in ["a", None])  # type: ignore[operator]
+    assert not isinstance(error.value, SourceTypeError)
+
+
+@pytest.mark.parametrize(
+    ("func", "kwargs", "message"),
+    [
+        (calc_mattr, {"window_len": 50.0}, "The window size must be an integer, not float"),
+        (calc_msttr, {"segment_len": 50.0}, "The segment size must be an integer, not float"),
+        (calc_mtld, {"min_len": 10.0}, "The minimum factor length of MTLD must be an integer"),
+        (calc_hdd, {"sample_size": 42.0}, "The HD-D sample size must be an integer, not float"),
+    ],
+)
+def test_integer_params(func, kwargs, message):
+    with pytest.raises(ParameterError, match=f"^{message}"):
+        func(WORDS, **kwargs)
 
 
 def test_init_words_as_given():
@@ -377,6 +401,17 @@ def test_mtld_factor_lengths_blocks():
         assert _mtld_factor_lengths(words, 0.72, 10, wrap) == (
             mtld_factor_lengths_by_sets(words, 0.72, 10, wrap)
         )
+
+
+@pytest.mark.parametrize("threshold", [0.72, 0.9])
+@pytest.mark.parametrize("wrap", [False, True])
+def test_mtld_factor_lengths_with_few_repeats(threshold, wrap):
+    # Only the factors over the repeats close; the other starts are cut short
+    words = [f"w{i}" for i in range(300)]
+    words[100:110:2] = ["r"] * 5
+    lengths = _mtld_factor_lengths(words, threshold, 10, wrap)
+    assert lengths
+    assert lengths == mtld_factor_lengths_by_sets(words, threshold, 10, wrap)
 
 
 def test_mtld_factor_lengths_edges():
@@ -645,6 +680,10 @@ def test_windowed_errors(ds):
         calc_windowed(riddle, calc_ttr, step=0)
     with pytest.raises(ValueError):
         calc_windowed(riddle, calc_ttr, confidence=1)
+    with pytest.raises(ParameterError, match=r"^The window size must be an integer, not float$"):
+        calc_windowed(riddle, calc_ttr, window_len=5.0)
+    with pytest.raises(ParameterError, match=r"^The window step must be an integer, not float$"):
+        calc_windowed(riddle, calc_ttr, step=2.0)
 
 
 def test_sttr_base():

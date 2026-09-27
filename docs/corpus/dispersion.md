@@ -20,9 +20,9 @@ For $n$ parts of shares $s_i$ of the text, frequencies of the word by part $v_i$
 
 | Measure | Field | Formula | Values |
 | :------ | :---- | :------ | :----- |
-| Deviation of proportions DP | `dp` | $\frac{1}{2} \sum \left\lvert \frac{v_i}{f} - s_i \right\rvert$ | 0 - in proportion to the sizes of the parts, tends to 1 - in one part; Gries (2008) |
+| Deviation of proportions DP | `dp` | $\frac{1}{2} \sum \left\lvert \frac{v_i}{f} - s_i \right\rvert$ | 0 - in proportion to the sizes of the parts, $1 - s_i$ - all in part $i$, so at most $1 - \min s_i$; Gries (2008) |
 | Normalized DP | `dp_norm` | $\frac{DP}{1 - \min s_i}$ | the maximum is one whatever the split; Lijffijt and Gries (2012) |
-| Juilland's D | `juilland_d` | $1 - \frac{V}{\sqrt{n - 1}}$, $V = \frac{\sigma(p)}{\mu(p)}$ | 1 - even, 0 - in one part; Juilland and Chang-Rodríguez (1964) |
+| Juilland's D | `juilland_d` | $1 - \frac{V}{\sqrt{n - 1}}$, $V = \frac{\sigma(p)}{\mu(p)}$ | 1 - even, 0 - in one part; Juilland and Chang-Rodríguez (1964), with the population standard deviation $\sigma$ as in Gries (2020); Gries (2008) takes the sample one |
 | Carroll's D2 | `carroll_d2` | $\frac{H(p)}{\log_2 n}$ | entropy of the distribution $p_i$; 1 - even, 0 - in one part; Carroll (1970) |
 | Rosengren's S | `rosengren_s` | $\frac{(\sum \sqrt{s_i v_i})^2}{f}$ | 1 - in proportion, tends to $1/n$ when gathered in one of equal parts; Rosengren (1971) |
 | Kullback-Leibler divergence | `kl_divergence` | $\sum \frac{v_i}{f} \log_2 \frac{v_i / f}{s_i}$ | in bits; 0 - in proportion, grows when gathered in small parts; Gries (2020) |
