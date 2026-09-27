@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://sergeyshk.github.io/anyTS/extractors/sentences/">
+        <link rel="canonical" href="https://sergeyshk.github.io/anyTS/stats/syntax/">
       
       
-        <link rel="prev" href="../../authors/">
+        <link rel="prev" href="../cohesion/">
       
       
-        <link rel="next" href="../words/">
+        <link rel="next" href="../../utils/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Sentence extraction - anyTS</title>
+        <title>Dependency tree helpers - anyTS</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#sentence-extraction" class="md-skip">
+        <a href="#dependency-tree-helpers" class="md-skip">
           Skip to content
         </a>
       
@@ -112,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Sentence extraction
+              Dependency tree helpers
             
           </span>
         </div>
@@ -215,13 +215,11 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="./" class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../../extractors/sentences/" class="md-tabs__link">
           
   
   
@@ -237,6 +235,8 @@
   
   
   
+    
+  
   
     
     
@@ -244,11 +244,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../../stats/diversity_stats/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../diversity_stats/" class="md-tabs__link">
           
   
   
@@ -500,29 +502,24 @@
       
   
   
-    
   
   
-  
     
     
     
     
       
-        
-        
-      
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
         
           
-          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
             
   
   
@@ -540,7 +537,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -555,37 +552,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Sentence extraction
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../extractors/sentences/" class="md-nav__link">
         
   
   
@@ -601,87 +571,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#description" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Description
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#language-hooks" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Language hooks
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#parameters" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Parameters
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#methods" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Methods
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Methods">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#extract" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        extract
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -694,7 +583,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../words/" class="md-nav__link">
+      <a href="../../extractors/words/" class="md-nav__link">
         
   
   
@@ -722,7 +611,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../char_ngrams/" class="md-nav__link">
+      <a href="../../extractors/char_ngrams/" class="md-nav__link">
         
   
   
@@ -754,24 +643,29 @@
       
   
   
+    
   
   
+  
     
     
     
     
-      
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
         
           
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
             
   
   
@@ -789,7 +683,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
             
@@ -857,7 +751,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../stats/diversity_stats/" class="md-nav__link">
+      <a href="../diversity_stats/" class="md-nav__link">
         
   
   
@@ -885,7 +779,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../stats/diversity_stats_funcs/" class="md-nav__link">
+      <a href="../diversity_stats_funcs/" class="md-nav__link">
         
   
   
@@ -921,7 +815,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../stats/cohesion/" class="md-nav__link">
+      <a href="../cohesion/" class="md-nav__link">
         
   
   
@@ -946,10 +840,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../stats/syntax/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dependency tree helpers
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -965,6 +886,125 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#is_word" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        is_word
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#is_root" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        is_root
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#base_dep" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        base_dep
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#get_children-count_children-subtree_len" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_children, count_children, subtree_len
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#calc_dependency_distances" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        calc_dependency_distances
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#calc_tree_depth" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        calc_tree_depth
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#has_feature" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        has_feature
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#calc_valency" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        calc_valency
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#calc_coordination_chains" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        calc_coordination_chains
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1031,10 +1071,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#description" class="md-nav__link">
+  <a href="#is_word" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Description
+        is_word
       
     </span>
   </a>
@@ -1042,10 +1082,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#language-hooks" class="md-nav__link">
+  <a href="#is_root" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Language hooks
+        is_root
       
     </span>
   </a>
@@ -1053,10 +1093,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#parameters" class="md-nav__link">
+  <a href="#base_dep" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Parameters
+        base_dep
       
     </span>
   </a>
@@ -1064,30 +1104,68 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#methods" class="md-nav__link">
+  <a href="#get_children-count_children-subtree_len" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Methods
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Methods">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#extract" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        extract
+        get_children, count_children, subtree_len
       
     </span>
   </a>
   
 </li>
-        
-      </ul>
-    </nav>
+      
+        <li class="md-nav__item">
+  <a href="#calc_dependency_distances" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        calc_dependency_distances
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#calc_tree_depth" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        calc_tree_depth
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#has_feature" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        has_feature
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#calc_valency" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        calc_valency
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#calc_coordination_chains" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        calc_coordination_chains
+      
+    </span>
+  </a>
   
 </li>
       
@@ -1111,26 +1189,46 @@
   
 
 
-<h1 id="sentence-extraction">Sentence extraction<a class="headerlink" href="#sentence-extraction" title="Permanent link">&para;</a></h1>
+<h1 id="dependency-tree-helpers">Dependency tree helpers<a class="headerlink" href="#dependency-tree-helpers" title="Permanent link">&para;</a></h1>
 <div class="admonition info">
-<p><strong>anyts.extractors.SentsExtractor</strong></p>
+<p><strong>anyts.syntax</strong></p>
 </div>
-<h2 id="description">Description<a class="headerlink" href="#description" title="Permanent link">&para;</a></h2>
-<!-- --8<-- [start:SentsExtractor] -->
-<p>A class for extracting sentences from a text. It allows using different tokenizers and setting the minimum and maximum length of extracted sentences.</p>
-<!-- --8<-- [end:SentsExtractor] -->
+<p>Functions over the dependency tree of a spaCy <code>Doc</code>, a <code>Span</code> or a list of tokens. They use only what Universal Dependencies and the ClearNLP labels of the English models share: the head of a token, the relations <code>cc</code>, <code>conj</code>, <code>parataxis</code> and <code>punct</code>, and the root; everything else is up to a language library.</p>
+<h2 id="is_word">is_word<a class="headerlink" href="#is_word" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:is_word] -->
+<p>Checks whether a token is a word: not whitespace and not a token of <a href="../../utils/#is_punctuation"><code>is_punctuation</code></a>, so symbols like <code>%</code>, <code>€</code>, <code>+</code> and invisible characters are no words either.</p>
+<!-- --8<-- [end:is_word] -->
 
-<h2 id="language-hooks">Language hooks<a class="headerlink" href="#language-hooks" title="Permanent link">&para;</a></h2>
-<!-- --8<-- [start:SentsExtractor-hooks] -->
-<p>The default tokenizer is the method <code>sentenize(text)</code>, which a language library overrides in a subclass. Here it splits the text at whitespace after <code>.</code>, <code>!</code>, <code>?</code> or <code>…</code>, optionally followed by a closing quote or bracket; it knows no abbreviations, so <code>e.g. this</code> is two sentences.</p>
-<!-- --8<-- [end:SentsExtractor-hooks] -->
+<!-- --8<-- [start:get_words] -->
+<p><code>get_words(tokens)</code> returns the words of a sequence of tokens in their order.</p>
+<!-- --8<-- [end:get_words] -->
 
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>A spaCy pipeline can be passed as the tokenizer: <code>tokenizer=lambda text: (sent.text for sent in nlp(text).sents)</code>.</p>
-</div>
-<h2 id="parameters">Parameters<a class="headerlink" href="#parameters" title="Permanent link">&para;</a></h2>
-<!-- --8<-- [start:SentsExtractor-parameters] -->
+<h2 id="is_root">is_root<a class="headerlink" href="#is_root" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:is_root] -->
+<p>Checks whether a token is the head of its sentence: its head is the token itself.</p>
+<!-- --8<-- [end:is_root] -->
+
+<h2 id="base_dep">base_dep<a class="headerlink" href="#base_dep" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:base_dep] -->
+<p>The relation of a token without its subtype, which Universal Dependencies separates by a colon: <code>nsubj:pass</code> gives <code>nsubj</code>, <code>expl:pass</code> gives <code>expl</code>.</p>
+<!-- --8<-- [end:base_dep] -->
+
+<h2 id="get_children-count_children-subtree_len">get_children, count_children, subtree_len<a class="headerlink" href="#get_children-count_children-subtree_len" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:get_children] -->
+<p><code>get_children(token)</code> returns the dependent words of a token, punctuation and whitespace left out.</p>
+<!-- --8<-- [end:get_children] -->
+
+<!-- --8<-- [start:count_children] -->
+<p><code>count_children(token)</code> counts the dependent words of a token.</p>
+<!-- --8<-- [end:count_children] -->
+
+<!-- --8<-- [start:subtree_len] -->
+<p><code>subtree_len(token)</code> is the number of words in the subtree of a token: the token itself and all of its direct and indirect dependents.</p>
+<!-- --8<-- [end:subtree_len] -->
+
+<h2 id="calc_dependency_distances">calc_dependency_distances<a class="headerlink" href="#calc_dependency_distances" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:calc_dependency_distances] -->
+<p>The dependency distances (Liu 2008): the distance between a word and its head in positions of words, punctuation left out, in the order of the words. The head of a sentence has no dependency and is skipped, as is a word whose head lies outside the given sequence.</p>
 <table>
 <thead>
 <tr>
@@ -1142,35 +1240,18 @@
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;"><code>tokenizer</code></td>
-<td style="text-align: center;">Pattern/Callable</td>
-<td style="text-align: center;"><code>None</code></td>
-<td style="text-align: center;">Tokenizer or regular expression; by default the <code>sentenize</code> method</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>min_len</code></td>
-<td style="text-align: center;">int</td>
-<td style="text-align: center;"><code>0</code></td>
-<td style="text-align: center;">Minimum length of an extracted sentence, <code>0</code> for no bound</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>max_len</code></td>
-<td style="text-align: center;">int</td>
-<td style="text-align: center;"><code>0</code></td>
-<td style="text-align: center;">Maximum length of an extracted sentence, <code>0</code> for no bound</td>
+<td style="text-align: center;"><code>tokens</code></td>
+<td style="text-align: center;">Doc/Span/list[Token]</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Sequence of tokens</td>
 </tr>
 </tbody>
 </table>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>A regular expression as the tokenizer is a separator: the text is split with <code>re.split</code>. Empty and whitespace-only sentences are dropped.</p>
-</div>
-<!-- --8<-- [end:SentsExtractor-parameters] -->
+<!-- --8<-- [end:calc_dependency_distances] -->
 
-<h2 id="methods">Methods<a class="headerlink" href="#methods" title="Permanent link">&para;</a></h2>
-<h3 id="extract">extract<a class="headerlink" href="#extract" title="Permanent link">&para;</a></h3>
-<!-- --8<-- [start:SentsExtractor-extract] -->
-<p>Extracts sentences from a text.</p>
+<h2 id="calc_tree_depth">calc_tree_depth<a class="headerlink" href="#calc_tree_depth" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:calc_tree_depth] -->
+<p>The depth of the dependency tree: the longest path from the head of a sentence to a leaf, in relations between words. For a sequence of several sentences the maximum is taken; a sentence of one word has depth 0.</p>
 <table>
 <thead>
 <tr>
@@ -1182,41 +1263,77 @@
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;"><code>text</code></td>
+<td style="text-align: center;"><code>tokens</code></td>
+<td style="text-align: center;">Doc/Span/list[Token]</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Sequence of tokens</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:calc_tree_depth] -->
+
+<h2 id="has_feature">has_feature<a class="headerlink" href="#has_feature" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:has_feature] -->
+<p>Checks whether a token carries a morphological feature with a given value: <code>has_feature(token, "VerbForm", "Fin")</code>.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>token</code></td>
+<td style="text-align: center;">Token</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Token</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>field</code></td>
 <td style="text-align: center;">str</td>
 <td style="text-align: center;"><code>-</code></td>
-<td style="text-align: center;">Text string</td>
+<td style="text-align: center;">Name of the feature</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>value</code></td>
+<td style="text-align: center;">str</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Value of the feature</td>
 </tr>
 </tbody>
 </table>
-<!-- --8<-- [end:SentsExtractor-extract] -->
+<!-- --8<-- [end:has_feature] -->
 
-<p>An example of sentence extraction with the default tokenizer:</p>
-<div class="admonition example">
-<p class="admonition-title">Example</p>
-<p><em>Code</em>:</p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts</span><span class="w"> </span><span class="kn">import</span> <span class="n">SentsExtractor</span>
+<h2 id="calc_valency">calc_valency<a class="headerlink" href="#calc_valency" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:calc_valency] -->
+<p>The valency of a token: the number of its dependent words, the relations <code>cc</code>, <code>conj</code> and <code>parataxis</code> left out.</p>
+<!-- --8<-- [end:calc_valency] -->
 
-<span class="n">SentsExtractor</span><span class="p">()</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="s1">'It rains. Does it? He said "Yes!" Then he left.'</span><span class="p">)</span>
-</code></pre></div>
-<p><em>Result</em>:</p>
-<div class="highlight"><pre><span></span><code><span class="o">(</span><span class="s1">'It rains.'</span>,<span class="w"> </span><span class="s1">'Does it?'</span>,<span class="w"> </span><span class="s1">'He said "Yes!"'</span>,<span class="w"> </span><span class="s1">'Then he left.'</span><span class="o">)</span>
-</code></pre></div>
-</div>
-<p>An example of sentence extraction with a regular expression as the tokenizer:</p>
-<div class="admonition example">
-<p class="admonition-title">Example</p>
-<p><em>Code</em>:</p>
-<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
-
-<span class="kn">from</span><span class="w"> </span><span class="nn">anyts</span><span class="w"> </span><span class="kn">import</span> <span class="n">SentsExtractor</span>
-
-<span class="n">SentsExtractor</span><span class="p">(</span><span class="n">tokenizer</span><span class="o">=</span><span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">", "</span><span class="p">))</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="s2">"Rain today, sun tomorrow"</span><span class="p">)</span>
-</code></pre></div>
-<p><em>Result</em>:</p>
-<div class="highlight"><pre><span></span><code><span class="o">(</span><span class="s1">'Rain today'</span>,<span class="w"> </span><span class="s1">'sun tomorrow'</span><span class="o">)</span>
-</code></pre></div>
-</div>
+<h2 id="calc_coordination_chains">calc_coordination_chains<a class="headerlink" href="#calc_coordination_chains" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:calc_coordination_chains] -->
+<p>The lengths of the coordination chains, in the order of their first words. A chain is a group of words linked by the relation <code>conj</code>, whichever word each conjunct hangs on: Universal Dependencies attaches every conjunct to the first one (<code>pears → apples</code>, <code>plums → apples</code>), ClearNLP to the previous one (<code>pears → apples</code>, <code>plums → pears</code>), and both give one chain of three for <code>apples, pears and plums</code>. A nested coordination (<code>cats and dogs, or birds</code>) and an enumeration that the parser splits between several heads are one chain as well. The length of a chain is the number of its words; a conjunct whose head lies outside the sequence belongs to no chain with it.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>tokens</code></td>
+<td style="text-align: center;">Doc/Span/list[Token]</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Sequence of tokens</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:calc_coordination_chains] -->
 
 
 

@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://sergeyshk.github.io/anyTS/extractors/sentences/">
+        <link rel="canonical" href="https://sergeyshk.github.io/anyTS/stats/cohesion/">
       
       
-        <link rel="prev" href="../../authors/">
+        <link rel="prev" href="../diversity_stats_funcs/">
       
       
-        <link rel="next" href="../words/">
+        <link rel="next" href="../syntax/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Sentence extraction - anyTS</title>
+        <title>Cohesion helpers - anyTS</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#sentence-extraction" class="md-skip">
+        <a href="#cohesion-helpers" class="md-skip">
           Skip to content
         </a>
       
@@ -112,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Sentence extraction
+              Cohesion helpers
             
           </span>
         </div>
@@ -215,13 +215,11 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="./" class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../../extractors/sentences/" class="md-tabs__link">
           
   
   
@@ -237,6 +235,8 @@
   
   
   
+    
+  
   
     
     
@@ -244,11 +244,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../../stats/diversity_stats/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../diversity_stats/" class="md-tabs__link">
           
   
   
@@ -500,29 +502,24 @@
       
   
   
-    
   
   
-  
     
     
     
     
       
-        
-        
-      
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
         
           
-          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
             
   
   
@@ -540,7 +537,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -555,37 +552,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Sentence extraction
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../extractors/sentences/" class="md-nav__link">
         
   
   
@@ -601,87 +571,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#description" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Description
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#language-hooks" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Language hooks
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#parameters" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Parameters
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#methods" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Methods
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Methods">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#extract" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        extract
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -694,7 +583,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../words/" class="md-nav__link">
+      <a href="../../extractors/words/" class="md-nav__link">
         
   
   
@@ -722,7 +611,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../char_ngrams/" class="md-nav__link">
+      <a href="../../extractors/char_ngrams/" class="md-nav__link">
         
   
   
@@ -754,24 +643,29 @@
       
   
   
+    
   
   
+  
     
     
     
     
-      
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
         
           
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
             
   
   
@@ -789,7 +683,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
             
@@ -857,7 +751,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../stats/diversity_stats/" class="md-nav__link">
+      <a href="../diversity_stats/" class="md-nav__link">
         
   
   
@@ -885,7 +779,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../stats/diversity_stats_funcs/" class="md-nav__link">
+      <a href="../diversity_stats_funcs/" class="md-nav__link">
         
   
   
@@ -918,10 +812,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../stats/cohesion/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cohesion helpers
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -937,6 +858,103 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#calc_overlap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        calc_overlap
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#calc_proportional_overlap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        calc_proportional_overlap
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dice" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        dice
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#calc_overlaps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        calc_overlaps
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#count_given" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        count_given
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dominant" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        dominant
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#calc_repetition" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        calc_repetition
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -949,7 +967,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../stats/syntax/" class="md-nav__link">
+      <a href="../syntax/" class="md-nav__link">
         
   
   
@@ -1031,10 +1049,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#description" class="md-nav__link">
+  <a href="#calc_overlap" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Description
+        calc_overlap
       
     </span>
   </a>
@@ -1042,10 +1060,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#language-hooks" class="md-nav__link">
+  <a href="#calc_proportional_overlap" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Language hooks
+        calc_proportional_overlap
       
     </span>
   </a>
@@ -1053,10 +1071,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#parameters" class="md-nav__link">
+  <a href="#dice" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Parameters
+        dice
       
     </span>
   </a>
@@ -1064,30 +1082,46 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#methods" class="md-nav__link">
+  <a href="#calc_overlaps" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Methods
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Methods">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#extract" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        extract
+        calc_overlaps
       
     </span>
   </a>
   
 </li>
-        
-      </ul>
-    </nav>
+      
+        <li class="md-nav__item">
+  <a href="#count_given" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        count_given
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dominant" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        dominant
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#calc_repetition" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        calc_repetition
+      
+    </span>
+  </a>
   
 </li>
       
@@ -1111,26 +1145,18 @@
   
 
 
-<h1 id="sentence-extraction">Sentence extraction<a class="headerlink" href="#sentence-extraction" title="Permanent link">&para;</a></h1>
+<h1 id="cohesion-helpers">Cohesion helpers<a class="headerlink" href="#cohesion-helpers" title="Permanent link">&para;</a></h1>
 <div class="admonition info">
-<p><strong>anyts.extractors.SentsExtractor</strong></p>
+<p><strong>anyts.cohesion</strong></p>
 </div>
-<h2 id="description">Description<a class="headerlink" href="#description" title="Permanent link">&para;</a></h2>
-<!-- --8<-- [start:SentsExtractor] -->
-<p>A class for extracting sentences from a text. It allows using different tokenizers and setting the minimum and maximum length of extracted sentences.</p>
-<!-- --8<-- [end:SentsExtractor] -->
+<p>Functions that measure how the sentences of a text are tied together by shared elements, in the manner of Coh-Metrix. A sentence is given as the collection of its elements - lemmas of nouns, arguments or content words, values of a feature of its verbs - so the functions see no language: a library chooses the elements.</p>
+<!-- --8<-- [start:cohesion-checks] -->
+<p>A list of sentences that is a string, a <code>Doc</code> or an iterator raises <code>SourceTypeError</code>, and so does a sentence that is not a list of strings (<a href="../../utils/#check_words"><code>check_words</code></a>): a string would be read character by character, an iterator exhausted by the first pass, and spaCy tokens never match, since a token equals only itself.</p>
+<!-- --8<-- [end:cohesion-checks] -->
 
-<h2 id="language-hooks">Language hooks<a class="headerlink" href="#language-hooks" title="Permanent link">&para;</a></h2>
-<!-- --8<-- [start:SentsExtractor-hooks] -->
-<p>The default tokenizer is the method <code>sentenize(text)</code>, which a language library overrides in a subclass. Here it splits the text at whitespace after <code>.</code>, <code>!</code>, <code>?</code> or <code>…</code>, optionally followed by a closing quote or bracket; it knows no abbreviations, so <code>e.g. this</code> is two sentences.</p>
-<!-- --8<-- [end:SentsExtractor-hooks] -->
-
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>A spaCy pipeline can be passed as the tokenizer: <code>tokenizer=lambda text: (sent.text for sent in nlp(text).sents)</code>.</p>
-</div>
-<h2 id="parameters">Parameters<a class="headerlink" href="#parameters" title="Permanent link">&para;</a></h2>
-<!-- --8<-- [start:SentsExtractor-parameters] -->
+<h2 id="calc_overlap">calc_overlap<a class="headerlink" href="#calc_overlap" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:calc_overlap] -->
+<p>The binary overlap of Coh-Metrix (CRFNO1, CRFAO1, CRFSO1 over the adjacent pairs, CRFNOa, CRFAOa, CRFSOa over all of them): the share of the pairs of sentences that share at least one element; <code>nan</code> for a text shorter than two sentences. All the pairs are counted as in <code>calc_overlaps</code>, without going through them.</p>
 <table>
 <thead>
 <tr>
@@ -1142,79 +1168,191 @@
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;"><code>tokenizer</code></td>
-<td style="text-align: center;">Pattern/Callable</td>
-<td style="text-align: center;"><code>None</code></td>
-<td style="text-align: center;">Tokenizer or regular expression; by default the <code>sentenize</code> method</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>min_len</code></td>
-<td style="text-align: center;">int</td>
-<td style="text-align: center;"><code>0</code></td>
-<td style="text-align: center;">Minimum length of an extracted sentence, <code>0</code> for no bound</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>max_len</code></td>
-<td style="text-align: center;">int</td>
-<td style="text-align: center;"><code>0</code></td>
-<td style="text-align: center;">Maximum length of an extracted sentence, <code>0</code> for no bound</td>
-</tr>
-</tbody>
-</table>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>A regular expression as the tokenizer is a separator: the text is split with <code>re.split</code>. Empty and whitespace-only sentences are dropped.</p>
-</div>
-<!-- --8<-- [end:SentsExtractor-parameters] -->
-
-<h2 id="methods">Methods<a class="headerlink" href="#methods" title="Permanent link">&para;</a></h2>
-<h3 id="extract">extract<a class="headerlink" href="#extract" title="Permanent link">&para;</a></h3>
-<!-- --8<-- [start:SentsExtractor-extract] -->
-<p>Extracts sentences from a text.</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: center;">Parameter</th>
-<th style="text-align: center;">Type</th>
-<th style="text-align: center;">Default</th>
-<th style="text-align: center;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: center;"><code>text</code></td>
-<td style="text-align: center;">str</td>
+<td style="text-align: center;"><code>sets</code></td>
+<td style="text-align: center;">list[set[str]]</td>
 <td style="text-align: center;"><code>-</code></td>
-<td style="text-align: center;">Text string</td>
+<td style="text-align: center;">Elements of every sentence</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>adjacent</code></td>
+<td style="text-align: center;">bool</td>
+<td style="text-align: center;"><code>True</code></td>
+<td style="text-align: center;">Count the adjacent pairs only, otherwise all the pairs</td>
 </tr>
 </tbody>
 </table>
-<!-- --8<-- [end:SentsExtractor-extract] -->
+<!-- --8<-- [end:calc_overlap] -->
 
-<p>An example of sentence extraction with the default tokenizer:</p>
+<h2 id="calc_proportional_overlap">calc_proportional_overlap<a class="headerlink" href="#calc_proportional_overlap" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:calc_proportional_overlap] -->
+<p>The proportional overlap of Coh-Metrix (CRFCWO1, CRFCWOa): the Dice coefficient of a pair of sentences averaged over the pairs; <code>nan</code> for a text shorter than two sentences. Over all the pairs the sum is computed as in <code>calc_overlaps</code>, without going through them.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>sets</code></td>
+<td style="text-align: center;">list[set[str]]</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Elements of every sentence</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>adjacent</code></td>
+<td style="text-align: center;">bool</td>
+<td style="text-align: center;"><code>True</code></td>
+<td style="text-align: center;">Count the adjacent pairs only, otherwise all the pairs</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:calc_proportional_overlap] -->
+
+<h2 id="dice">dice<a class="headerlink" href="#dice" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:dice] -->
+<p>The Dice coefficient of two sets:</p>
+<div class="arithmatex">\[
+\frac{2 \times |A \cap B|}{|A| + |B|}
+\]</div>
+<p>and 0 for two empty sets.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>first</code></td>
+<td style="text-align: center;">frozenset[str]</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">First set</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>second</code></td>
+<td style="text-align: center;">frozenset[str]</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Second set</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:dice] -->
+
+<h2 id="calc_overlaps">calc_overlaps<a class="headerlink" href="#calc_overlaps" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:calc_overlaps] -->
+<p>The values of <code>calc_overlap</code> and <code>calc_proportional_overlap</code> over the adjacent and over all the pairs at once, as an <code>Overlap</code> named tuple with the fields <code>adjacent</code>, <code>all</code>, <code>prop_adjacent</code> and <code>prop_all</code>. The values over all the pairs are computed without going through every pair: the pairs sharing an element are counted over bit masks of the sentences, and the sum of the Dice coefficients over the histograms of the lengths of the sentences holding every element. That sum is added by <code>math.fsum</code>, so it is exactly rounded and does not depend on the order of the elements. Without <code>proportional</code> the fields <code>prop_adjacent</code> and <code>prop_all</code> are <code>nan</code>.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>sets</code></td>
+<td style="text-align: center;">list[set[str]]</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Elements of every sentence</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>proportional</code></td>
+<td style="text-align: center;">bool</td>
+<td style="text-align: center;"><code>True</code></td>
+<td style="text-align: center;">Compute the proportional overlap as well</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:calc_overlaps] -->
+
+<h2 id="count_given">count_given<a class="headerlink" href="#count_given" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:count_given] -->
+<p>The number of given elements: an element is given when the same lemma was used earlier in any sentence, the current one included; the first occurrence is new.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>sents</code></td>
+<td style="text-align: center;">list[list[str]]</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Lemmas of every sentence in the order of the text</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:count_given] -->
+
+<h2 id="dominant">dominant<a class="headerlink" href="#dominant" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:dominant] -->
+<p>The dominant value: the most frequent one, the first of the equally frequent; <code>None</code> for an empty list.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>values</code></td>
+<td style="text-align: center;">list[str]</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Values</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:dominant] -->
+
+<h2 id="calc_repetition">calc_repetition<a class="headerlink" href="#calc_repetition" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:calc_repetition] -->
+<p>The repetition of the tense and of the mood of Coh-Metrix (SMTEMP): the share of the adjacent pairs of sentences whose verbs have the same dominant value of the feature; a pair where one of the sentences has no verb with the feature is skipped, and without a single such pair the value is <code>nan</code>.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>sents</code></td>
+<td style="text-align: center;">list[list[str]]</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Values of the feature of the verbs of every sentence</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:calc_repetition] -->
+
 <div class="admonition example">
 <p class="admonition-title">Example</p>
-<p><em>Code</em>:</p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts</span><span class="w"> </span><span class="kn">import</span> <span class="n">SentsExtractor</span>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts.cohesion</span><span class="w"> </span><span class="kn">import</span> <span class="n">calc_overlaps</span><span class="p">,</span> <span class="n">calc_repetition</span><span class="p">,</span> <span class="n">count_given</span>
 
-<span class="n">SentsExtractor</span><span class="p">()</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="s1">'It rains. Does it? He said "Yes!" Then he left.'</span><span class="p">)</span>
-</code></pre></div>
-<p><em>Result</em>:</p>
-<div class="highlight"><pre><span></span><code><span class="o">(</span><span class="s1">'It rains.'</span>,<span class="w"> </span><span class="s1">'Does it?'</span>,<span class="w"> </span><span class="s1">'He said "Yes!"'</span>,<span class="w"> </span><span class="s1">'Then he left.'</span><span class="o">)</span>
-</code></pre></div>
-</div>
-<p>An example of sentence extraction with a regular expression as the tokenizer:</p>
-<div class="admonition example">
-<p class="admonition-title">Example</p>
-<p><em>Code</em>:</p>
-<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
-
-<span class="kn">from</span><span class="w"> </span><span class="nn">anyts</span><span class="w"> </span><span class="kn">import</span> <span class="n">SentsExtractor</span>
-
-<span class="n">SentsExtractor</span><span class="p">(</span><span class="n">tokenizer</span><span class="o">=</span><span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">", "</span><span class="p">))</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="s2">"Rain today, sun tomorrow"</span><span class="p">)</span>
-</code></pre></div>
-<p><em>Result</em>:</p>
-<div class="highlight"><pre><span></span><code><span class="o">(</span><span class="s1">'Rain today'</span>,<span class="w"> </span><span class="s1">'sun tomorrow'</span><span class="o">)</span>
+<span class="n">calc_overlaps</span><span class="p">([{</span><span class="s2">"cat"</span><span class="p">,</span> <span class="s2">"house"</span><span class="p">},</span> <span class="p">{</span><span class="s2">"cat"</span><span class="p">,</span> <span class="s2">"dog"</span><span class="p">},</span> <span class="p">{</span><span class="s2">"bird"</span><span class="p">}])</span>
+<span class="c1"># Overlap(adjacent=0.5, all=0.3333333333333333, prop_adjacent=0.25, prop_all=0.16666666666666666)</span>
+<span class="n">count_given</span><span class="p">([[</span><span class="s2">"cat"</span><span class="p">,</span> <span class="s2">"house"</span><span class="p">],</span> <span class="p">[</span><span class="s2">"cat"</span><span class="p">,</span> <span class="s2">"dog"</span><span class="p">],</span> <span class="p">[</span><span class="s2">"house"</span><span class="p">]])</span>
+<span class="c1"># 2</span>
+<span class="n">calc_repetition</span><span class="p">([[</span><span class="s2">"Pres"</span><span class="p">],</span> <span class="p">[</span><span class="s2">"Pres"</span><span class="p">,</span> <span class="s2">"Past"</span><span class="p">,</span> <span class="s2">"Pres"</span><span class="p">],</span> <span class="p">[</span><span class="s2">"Past"</span><span class="p">]])</span>
+<span class="c1"># 0.5</span>
 </code></pre></div>
 </div>
 
