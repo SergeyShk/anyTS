@@ -13,7 +13,7 @@
         <link rel="canonical" href="https://sergeyshk.github.io/anyTS/utils/">
       
       
-        <link rel="prev" href="../extractors/char_ngrams/">
+        <link rel="prev" href="../stats/diversity_stats_funcs/">
       
       
       
@@ -225,6 +225,36 @@
 
         </a>
       </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../stats/diversity_stats/" class="md-tabs__link">
+          
+  
+  
+  Statistics
+
+        </a>
+      </li>
+    
+  
+
     
   
 
@@ -609,6 +639,177 @@
       
   
   
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Statistics
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Statistics
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_1" id="__nav_3_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Lexical diversity metrics
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Lexical diversity metrics
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../stats/diversity_stats/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Metrics module
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../stats/diversity_stats_funcs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Metric functions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
     
   
   
@@ -720,6 +921,17 @@
     <span class="md-ellipsis">
       
         check_sequence
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#check_words" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        check_words
       
     </span>
   </a>
@@ -842,6 +1054,17 @@
     <span class="md-ellipsis">
       
         check_sequence
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#check_words" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        check_words
       
     </span>
   </a>
@@ -1036,7 +1259,7 @@
 </div>
 <h2 id="check_sequence">check_sequence<a class="headerlink" href="#check_sequence" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:check_sequence] -->
-<p>Checks that an argument is a sequence of strings and not a text: a string, a <code>Doc</code> or a <code>Span</code> raises <code>SourceTypeError</code>, since a string would be iterated character by character.</p>
+<p>Checks that an argument is a sequence and not a text or an iterator: a string, a <code>Doc</code>, a <code>Span</code> or an iterator raises <code>SourceTypeError</code>, since a string would be iterated character by character and an iterator would be exhausted by the first pass over it.</p>
 <table>
 <thead>
 <tr>
@@ -1062,6 +1285,35 @@
 </tbody>
 </table>
 <!-- --8<-- [end:check_sequence] -->
+
+<h2 id="check_words">check_words<a class="headerlink" href="#check_words" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:check_words] -->
+<p>Checks that an argument is a list of words: it passes <code>check_sequence</code> and every item is a string, so that a list of spaCy tokens, which would count every token as a lexeme of its own, raises <code>SourceTypeError</code>.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>value</code></td>
+<td style="text-align: center;">Iterable</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Value to check</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>what</code></td>
+<td style="text-align: center;">str</td>
+<td style="text-align: center;"><code>"words"</code></td>
+<td style="text-align: center;">What is expected, for the message of the error</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:check_words] -->
 
 <h2 id="iter_doc_tokens">iter_doc_tokens<a class="headerlink" href="#iter_doc_tokens" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:iter_doc_tokens] -->
