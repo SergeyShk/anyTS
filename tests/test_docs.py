@@ -1,5 +1,6 @@
 """The named sections of the documentation that the language libraries include"""
 
+import importlib
 import inspect
 import re
 from pathlib import Path
@@ -9,17 +10,24 @@ import pytest
 from anyts import cohesion, diversity_stats, exceptions, extractors, syntax, utils
 
 DOCS = Path(__file__).parents[1] / "docs"
+# The subpackage rebinds the names of some of its modules to their functions
+CORPUS_MODULES = [
+    importlib.import_module(f"anyts.corpus.{name}")
+    for name in ("collocations", "compare", "dispersion", "keyness", "stylometry")
+]
 PAGES = sorted(DOCS.rglob("*.md"))
 # The marker and the name rule of pymdownx.snippets
 MARKER = re.compile(r"-{1,}8<-{1,}[ \t]+\[[ \t]*(start|end)[ \t]*:[ \t]*([^\]\s]*)[ \t]*\]")
 NAME = re.compile(r"[a-z][-_0-9a-z]*", re.IGNORECASE)
 
 
-def sections(page: Path) -> list[str]:
-    """Names of the sections of a page, checked for pairing"""
-    names: list[str] = []
+def sections(page: Path) -> dict[str, str]:
+    """Sections of a page by their names, checked for pairing"""
+    names: dict[str, str] = {}
     open_name = None
     for line_no, line in enumerate(page.read_text(encoding="utf-8").splitlines(), 1):
+        if open_name is not None:
+            names[open_name] += line + "\n"
         for kind, name in MARKER.findall(line):
             where = f"{page.relative_to(DOCS)}:{line_no}"
             assert NAME.fullmatch(name), f"{where}: invalid section name {name!r}"
@@ -27,7 +35,7 @@ def sections(page: Path) -> list[str]:
                 assert open_name is None, f"{where}: {name} starts inside {open_name}"
                 assert name not in names, f"{where}: duplicate section {name}"
                 open_name = name
-                names.append(name)
+                names[name] = ""
             else:
                 assert open_name == name, f"{where}: end of {name} closes {open_name}"
                 open_name = None
@@ -54,7 +62,16 @@ def public_names(module) -> list[str]:
 
 
 def test_public_api_has_sections():
-    documented = {name for page in PAGES for name in sections(page)}
+    pages = [sections(page) for page in PAGES]
+    documented = {name for page in pages for name in page}
+    # A family of measure functions is documented by the table of its measures section
+    documented |= {
+        mention
+        for page in pages
+        for name, text in page.items()
+        if name.endswith("-measures")
+        for mention in re.findall(r"`(\w+)`", text)
+    }
     required = {
         "exceptions",
         *public_names(utils),
@@ -62,6 +79,7 @@ def test_public_api_has_sections():
         *public_names(diversity_stats),
         *public_names(cohesion),
         *public_names(syntax),
+        *(name for module in CORPUS_MODULES for name in public_names(module)),
     }
     assert public_names(exceptions) == []
     assert required <= documented, sorted(required - documented)

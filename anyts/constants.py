@@ -45,3 +45,40 @@ DIVERSITY_STATS_DESC = {
 
 # Relations that are not arguments of a word: coordination, parataxis, punctuation
 VALENCY_IGNORED_DEPS = frozenset({"cc", "conj", "parataxis", "punct"})
+
+# Measures of keyness, of association of collocations, of dispersion of words and of stylometry
+KEYNESS_MEASURES = {
+    "log_likelihood": "Log-likelihood G²",
+    "chi2": "Chi-square with Yates's correction",
+    "diff": "Difference of normalized frequencies %DIFF",
+    "log_ratio": "Binary logarithm of the ratio of normalized frequencies",
+    "bic": "Bayesian information criterion",
+    "ell": "Effect size for the log-likelihood",
+    "odds_ratio": "Odds ratio",
+}
+# Critical values of G² with one degree of freedom, by the level of significance
+G2_CRITICAL_VALUES = {0.05: 3.84, 0.01: 6.63, 0.001: 10.83, 0.0001: 15.13}
+COLLOCATION_MEASURES = {
+    "mi": "Mutual information MI",
+    "mi3": "Cubic mutual information MI³",
+    "t_score": "t-score",
+    "dice": "Dice coefficient",
+    "logdice": "logDice",
+    "log_likelihood": "Log-likelihood G²",
+    "npmi": "Normalized pointwise mutual information",
+    "min_sensitivity": "Minimum sensitivity",
+}
+DISPERSION_STATS_DESC = {
+    "dp": "Deviation of proportions DP of Gries",
+    "dp_norm": "Normalized DP",
+    "juilland_d": "Juilland's D",
+    "carroll_d2": "Carroll's D2",
+    "rosengren_s": "Rosengren's S",
+    "kl_divergence": "Kullback-Leibler divergence",
+}
+DELTA_VARIANTS = {
+    "burrows": "Burrows's Delta - Manhattan distance of the z-scores divided by the number of units",
+    "quadratic": "Argamon's quadratic Delta - Euclidean distance of the z-scores divided by the number of units",
+    "eder": "Eder's Delta - Manhattan distance of the z-scores weighted by rank",
+    "cosine": "Cosine Delta - cosine distance of the z-scores",
+}
