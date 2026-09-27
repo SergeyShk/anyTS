@@ -45,7 +45,7 @@ def public_names(module) -> list[str]:
         name
         for name, value in vars(module).items()
         if not name.startswith("_")
-        and (inspect.isfunction(value) or inspect.isclass(value))
+        and (inspect.isfunction(inspect.unwrap(value)) or inspect.isclass(value))
         and value.__module__ == module.__name__
         and not inspect.isabstract(value)
         and not (inspect.isclass(value) and issubclass(value, BaseException))

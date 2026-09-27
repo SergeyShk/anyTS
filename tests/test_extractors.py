@@ -1,4 +1,6 @@
+import gc
 import re
+import weakref
 
 import pytest
 
@@ -22,6 +24,27 @@ def test_extractor_is_abstract():
         Extractor()  # type: ignore[abstract]
 
 
+@pytest.mark.parametrize(
+    "extractor",
+    [
+        SentsExtractor,
+        WordsExtractor,
+        CharNgramsExtractor,
+        lambda: CharNgramsExtractor(within_words=True),
+    ],
+)
+def test_extractor_freed_without_gc(extractor):
+    gc.disable()
+    try:
+        instance = extractor()
+        instance.extract(TEXT)
+        ref = weakref.ref(instance)
+        del instance
+        assert ref() is None
+    finally:
+        gc.enable()
+
+
 class TestSentsExtractor:
     def test_extract(self):
         se = SentsExtractor()
@@ -29,7 +52,7 @@ class TestSentsExtractor:
         assert len(se.sents) == 2
         assert se.sents[0].startswith("Thesauri are")
         assert se.sents[1].startswith("The difference")
-        assert se.tokenizer == se.sentenize
+        assert se.tokenizer is None
 
     @pytest.mark.parametrize(
         ("text", "expected"),
@@ -118,7 +141,7 @@ class TestWordsExtractor:
         assert we.extract(TEXT) == we.words
         assert len(we.words) == 85
         assert we.words[:3] == ("Thesauri", "are", "a")
-        assert we.tokenizer == we.tokenize
+        assert we.tokenizer is None
 
     def test_extract_default_tokenizer(self):
         text = "A well-known, don't: 3.5% of 1,500 — naïve _x_!"
@@ -286,7 +309,6 @@ class TestWordsExtractor:
 
         we = Language(filter_nums=True, use_lexemes=True)
         assert we.extract("The 3rd Cats, 5 dogs") == ("the", "cats,", "dog")
-        assert we.tokenizer == we.tokenize
         assert Language(tokenizer=re.compile(r"\W+")).extract("3rd cats") == ("3rd", "cats")
         assert NUMBER_PATTERN.fullmatch("3rd") is None
 
@@ -306,7 +328,7 @@ class TestCharNgramsExtractor:
         assert ngrams[:8] == ("Th", "he", "e ", " c", "ca", "at", "t ", " s")
         assert len(ngrams) == len(" ".join(self.text.split())) - 1
         assert ce.ngrams == ngrams
-        assert ce.tokenizer == ce.tokenize
+        assert ce.tokenizer is None
         assert CharNgramsExtractor(n=1).extract("ñu") == ("ñ", "u")
         assert CharNgramsExtractor(n=4).extract("ñu") == ()
         assert CharNgramsExtractor().extract("") == ()

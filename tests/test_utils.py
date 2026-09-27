@@ -1,5 +1,7 @@
 import math
 import string
+import sys
+import unicodedata
 
 import pytest
 import spacy
@@ -7,6 +9,7 @@ from spacy.tokens import Doc
 
 from anyts.exceptions import SourceTypeError
 from anyts.utils import (
+    PUNCTUATION_CATEGORIES,
     check_sequence,
     count_letters,
     has_words,
@@ -41,6 +44,12 @@ def nlp():
         ("%", True),
         ("№", True),
         ("°", True),
+        ("\u200b", True),
+        ("\ufeff", True),
+        ("\u200d", True),
+        ("\ufe0f", True),
+        ("\u0301", True),
+        ("\u200b\u200b", True),
         ("", True),
         ("a", False),
         ("ñ", False),
@@ -49,10 +58,20 @@ def nlp():
         ("ʼ", False),
         ("no.", False),
         ("well-known", False),
+        ("e\u0301", False),
+        ("\ufeffStart", False),
+        ("٣", False),
     ],
 )
 def test_is_punctuation(token, expected):
     assert is_punctuation(token) is expected
+
+
+def test_punctuation_categories():
+    categories = {unicodedata.category(chr(code)) for code in range(sys.maxunicode + 1)}
+    assert {category for category in categories if category[0] in "PSM"} | {"Cf"} == (
+        PUNCTUATION_CATEGORIES
+    )
 
 
 def test_is_punctuation_ascii():
@@ -93,6 +112,8 @@ def test_safe_divide():
         ("«»", False),
         ("€ + %", False),
         ("   ", False),
+        ("\u200b \ufeff", False),
+        ("\u200b a", True),
         ("", False),
     ],
 )
@@ -174,3 +195,11 @@ def test_iter_doc_words(nlp):
     ]
     assert list(iter_doc_words(doc[1:4], join_hyphens=True)) == [(2, 12, "well-known")]
     assert list(iter_doc_words(nlp("- . ,"), join_hyphens=True)) == []
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [("Hello \u200b world", ["Hello", "world"]), ("I \u2764\ufe0f it", ["I", "it"])],
+)
+def test_iter_doc_words_skips_invisible(nlp, text, expected):
+    assert [word for _, _, word in iter_doc_words(nlp(text))] == expected

@@ -6,15 +6,22 @@ from spacy.tokens import Doc, Span, Token
 
 from .exceptions import SourceTypeError
 
+# Punctuation, symbols, combining marks and invisible format characters
+PUNCTUATION_CATEGORIES = frozenset(
+    ("Pc", "Pd", "Ps", "Pe", "Pi", "Pf", "Po", "Sm", "Sc", "Sk", "So", "Mn", "Mc", "Me", "Cf")
+)
+
 
 def is_punctuation(token: str) -> bool:
     """
     Checking whether a token consists only of punctuation marks and symbols
 
     Description:
-        Characters of the Unicode categories P (punctuation) and S (symbols),
-        so "?!", "--", "«", "€" and "№" are punctuation too; an empty token is
-        punctuation as well
+        Characters of the Unicode categories P (punctuation), S (symbols),
+        M (combining marks) and Cf (invisible format characters: the zero-width
+        space, the byte order mark, the zero-width joiner), so "?!", "--", "«",
+        "€", "№" and a lone zero-width space are punctuation too, while a token
+        with a letter or a digit is not; an empty token is punctuation as well
 
     Arguments:
         token (str): Token
@@ -27,7 +34,7 @@ def is_punctuation(token: str) -> bool:
         >>> is_punctuation("?!"), is_punctuation("€"), is_punctuation("no.")
         (True, True, False)
     """
-    return all(unicodedata.category(char)[0] in "PS" for char in token)
+    return all(unicodedata.category(char) in PUNCTUATION_CATEGORIES for char in token)
 
 
 @lru_cache(maxsize=1 << 16)
@@ -76,8 +83,8 @@ def has_words(source: str | Doc | Span) -> bool:
     Checking whether a text holds a word
 
     Description:
-        An empty text or one of whitespace and punctuation alone (?!, ...)
-        holds no word
+        An empty text or one of whitespace and the characters of is_punctuation
+        alone (?!, ..., a zero-width space) holds no word
 
     Arguments:
         source (str|Doc|Span): Text, Doc or Span object

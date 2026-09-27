@@ -71,12 +71,17 @@ class Extractor(metaclass=ABCMeta):
     def extract(self, text: str) -> tuple[str, ...]:
         raise NotImplementedError
 
-    def _tokenize(self, text: str) -> Iterator[str]:
+    def _tokenize(self, text: str, default: Callable[[str], Iterable[str]]) -> Iterator[str]:
         """
         Splitting a text with the tokenizer
 
+        Description:
+            The default tokenizer is resolved at the call, so the extractor keeps
+            no reference to its own bound method
+
         Arguments:
             text (str): Text string
+            default (callable): Tokenizer used when none is given
 
         Returns:
             iterator[str]: Iterator of tokens
@@ -86,11 +91,12 @@ class Extractor(metaclass=ABCMeta):
                 or returns a non-iterable object; the tokenizer's own errors are not caught
         """
         _check_text(text)
-        if isinstance(self.tokenizer, Pattern):
-            return iter(re.split(self.tokenizer, text))
-        if not callable(self.tokenizer):
+        tokenizer = self.tokenizer or default
+        if isinstance(tokenizer, Pattern):
+            return iter(re.split(tokenizer, text))
+        if not callable(tokenizer):
             raise SourceTypeError("The tokenizer is set incorrectly")
-        tokens = self.tokenizer(text)
+        tokens = tokenizer(text)
         try:
             return iter(tokens)
         except TypeError as e:
@@ -136,8 +142,6 @@ class SentsExtractor(Extractor):
         super().__init__(tokenizer, min_len, max_len)
         _check_length_bounds(min_len, max_len, "sentence")
         self.sents: tuple[str, ...] = ()
-        if not self.tokenizer:
-            self.tokenizer = self.sentenize
 
     def sentenize(self, text: str) -> Iterable[str]:
         """
@@ -165,7 +169,7 @@ class SentsExtractor(Extractor):
         Raises:
             SourceTypeError: If the text is not a string or the tokenizer is set incorrectly
         """
-        sents = (sent for sent in self._tokenize(text) if sent.strip())
+        sents = (sent for sent in self._tokenize(text, self.sentenize) if sent.strip())
         if self.min_len > 0:
             sents = (sent for sent in sents if len(sent) >= self.min_len)
         if self.max_len > 0:
@@ -246,8 +250,6 @@ class WordsExtractor(Extractor):
             raise ParameterError("The lower N-gram bound is greater than the upper")
         _check_length_bounds(min_len, max_len, "word")
         self.words: tuple[str, ...] = ()
-        if not self.tokenizer:
-            self.tokenizer = self.tokenize
 
     def tokenize(self, text: str) -> Iterable[str]:
         """
@@ -287,7 +289,7 @@ class WordsExtractor(Extractor):
             SourceTypeError: If the text is not a string or the tokenizer is set incorrectly
         """
         # re.split leaves an empty string after a final separator
-        words = (word for word in self._tokenize(text) if word)
+        words = (word for word in self._tokenize(text, self.tokenize) if word)
         if self.filter_punct:
             words = (word for word in words if not is_punctuation(word))
         if self.filter_nums:
@@ -392,8 +394,6 @@ class CharNgramsExtractor(Extractor):
         self.lowercase = lowercase
         self.within_words = within_words
         self.ngrams: tuple[str, ...] = ()
-        if not self.tokenizer:
-            self.tokenizer = self.tokenize
 
     def tokenize(self, text: str) -> Iterable[str]:
         """
@@ -424,7 +424,9 @@ class CharNgramsExtractor(Extractor):
         if self.lowercase:
             text = text.lower()
         if self.within_words:
-            units = [word for word in self._tokenize(text) if not is_punctuation(word)]
+            units = [
+                word for word in self._tokenize(text, self.tokenize) if not is_punctuation(word)
+            ]
         else:
             units = [" ".join(text.split())]
         self.ngrams = tuple(

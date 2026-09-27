@@ -61,7 +61,7 @@ The language enters the extractor through three hooks that a language library ov
 | `max_len` | int | `0` | Maximum length of an extracted word, `0` for no bound |
 
 !!! note "Note"
-    A regular expression as the tokenizer is a separator: the text is split with `re.split`. The filters are applied in order: punctuation, numbers, lemmatization, lower case, stop words, word length. A lower-case stop word list also filters a capitalized word at the start of a sentence. A punctuation mark is a token consisting entirely of marks and symbols (the Unicode categories P and S), including multi-character ones: `?!`, `--`, `…`, `€`. Empty tokens are dropped before the filters. N-grams join the words with `_`.
+    A regular expression as the tokenizer is a separator: the text is split with `re.split`. The filters are applied in order: punctuation, numbers, lemmatization, lower case, stop words, word length. A lower-case stop word list also filters a capitalized word at the start of a sentence. A punctuation mark is a token consisting entirely of marks and symbols, including multi-character ones: `?!`, `--`, `…`, `€` (see `is_punctuation`). Empty tokens are dropped before the filters. N-grams join the words with `_`.
 <!-- --8<-- [end:WordsExtractor-parameters] -->
 
 ## Methods
