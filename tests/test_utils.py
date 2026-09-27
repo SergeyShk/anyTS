@@ -11,6 +11,7 @@ from anyts.exceptions import SourceTypeError
 from anyts.utils import (
     PUNCTUATION_CATEGORIES,
     check_sequence,
+    check_words,
     count_letters,
     has_words,
     is_punctuation,
@@ -144,6 +145,30 @@ def test_check_sequence_errors(nlp):
         check_sequence(doc)
     with pytest.raises(SourceTypeError, match="not a Span"):
         check_sequence(doc[:1])
+
+
+@pytest.mark.parametrize("value", [iter([]), (word for word in "ab"), map(str.lower, "ab")])
+def test_check_sequence_iterators(value):
+    with pytest.raises(
+        SourceTypeError, match=r"^A list of stopwords is expected, not an iterator$"
+    ):
+        check_sequence(value, "stopwords")
+
+
+@pytest.mark.parametrize("value", [["the", "cat"], ("the",), [], {"the": 1}])
+def test_check_words(value):
+    assert check_words(value) is None
+
+
+def test_check_words_errors(nlp):
+    with pytest.raises(SourceTypeError, match=r"^The words must be strings, not Token$"):
+        check_words(list(nlp("the cat")))
+    with pytest.raises(SourceTypeError, match=r"^The texts must be strings, not int$"):
+        check_words(["the", 1], "texts")
+    with pytest.raises(SourceTypeError, match=r"not a string$"):
+        check_words("the cat")
+    with pytest.raises(SourceTypeError, match=r"not an iterator$"):
+        check_words(iter(["the"]))
 
 
 def test_iter_doc_tokens(nlp):

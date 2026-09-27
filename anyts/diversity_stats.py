@@ -1,5 +1,5 @@
 from collections import Counter
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Iterator, Mapping, Sequence
 from functools import partial
 from math import inf, log, log2, nan, sqrt
 from typing import ClassVar, NamedTuple
@@ -22,7 +22,7 @@ from .constants import (
     MTLD_WINDOW_LEN,
 )
 from .exceptions import ParameterError, SourceError, SourceTypeError, UnknownStatError
-from .utils import check_sequence, safe_divide
+from .utils import check_sequence, check_words, safe_divide
 
 Calculator = Callable[[Sequence[str]], float]
 
@@ -107,7 +107,7 @@ class DiversityStats:
         WindowStats(mean=0.9333333333333332, std=0.11547005383792512, lower=0.6464898180167025, upper=1.220176848649964, n_windows=3)
 
     Arguments:
-        words (sequence[str]): Words of the text, used as given: a language library
+        words (iterable[str]): Words of the text, used as given: a language library
             extracts them from its sources and lower-cases them
         window_len (int): Window size for MATTR and segment size for MSTTR
         mtld_threshold (float): TTR threshold for MTLD, MA-MTLD and MTLD-W
@@ -168,7 +168,7 @@ class DiversityStats:
         stats_headers (tuple[str, str]): Headers of the columns for print_stats
 
     Raises:
-        SourceTypeError: If the words are a string, a Doc or not iterable
+        SourceTypeError: If the words are a string, a Doc, not iterable or not strings
         SourceError: If there are no words
         ParameterError: If the parameters of the metrics are set incorrectly
     """
@@ -186,13 +186,15 @@ class DiversityStats:
         log_base: float = DIVERSITY_LOG_BASE,
     ):
         check_params(window_len, mtld_threshold, mtld_min_len, hdd_sample_size, log_base)
-        check_sequence(words)
+        if not isinstance(words, Iterator):
+            check_sequence(words)
         try:
             self.words = tuple(words)
         except TypeError as e:
             raise SourceTypeError(
                 f"A list of words is expected, not {type(words).__name__}"
             ) from e
+        check_words(self.words)
         if not self.words:
             raise SourceError("The data source has no words")
         self.window_len = window_len
@@ -425,12 +427,11 @@ class DiversityStats:
 
     def print_stats(self) -> None:
         """Printing the computed lexical diversity metrics with descriptions"""
-        metric, value = self.stats_headers
-        print(f"{metric:^75}|{value:^10}")
+        metric_header, value_header = self.stats_headers
+        print(f"{metric_header:^75}|{value_header:^10}")
         print("-" * 85)
-        stats = self.get_stats()
-        for stat, desc in self.stats_desc.items():
-            print(f"{desc:75}|{stats[stat]:^10.2f}")
+        for stat, value in self.get_stats().items():
+            print(f"{self.stats_desc[stat]:75}|{value:^10.2f}")
 
 
 def calc_frequency_spectrum(text: Sequence[str]) -> dict[int, int]:
@@ -447,9 +448,9 @@ def calc_frequency_spectrum(text: Sequence[str]) -> dict[int, int]:
         dict[int, int]: Number of lexemes by frequency
 
     Raises:
-        SourceTypeError: If a string or a Doc is passed instead of a list of words
+        SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_sequence(text)
+    check_words(text)
     return dict(sorted(Counter(Counter(text).values()).items()))
 
 
@@ -468,9 +469,9 @@ def calc_ttr(text: Sequence[str]) -> float:
         float: Value of the metric
 
     Raises:
-        SourceTypeError: If a string or a Doc is passed instead of a list of words
+        SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_sequence(text)
+    check_words(text)
     n_words = len(text)
     n_lexemes = len(set(text))
     return safe_divide(n_lexemes, n_words)
@@ -490,9 +491,9 @@ def calc_rttr(text: Sequence[str]) -> float:
         float: Value of the metric
 
     Raises:
-        SourceTypeError: If a string or a Doc is passed instead of a list of words
+        SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_sequence(text)
+    check_words(text)
     n_words = len(text)
     n_lexemes = len(set(text))
     return safe_divide(n_lexemes, sqrt(n_words))
@@ -512,9 +513,9 @@ def calc_cttr(text: Sequence[str]) -> float:
         float: Value of the metric
 
     Raises:
-        SourceTypeError: If a string or a Doc is passed instead of a list of words
+        SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_sequence(text)
+    check_words(text)
     n_words = len(text)
     n_lexemes = len(set(text))
     return safe_divide(n_lexemes, sqrt(2 * n_words))
@@ -535,9 +536,9 @@ def calc_httr(text: Sequence[str]) -> float:
         float: Value of the metric, 0 for an empty text
 
     Raises:
-        SourceTypeError: If a string or a Doc is passed instead of a list of words
+        SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_sequence(text)
+    check_words(text)
     n_words = len(text)
     if not n_words:
         return 0
@@ -562,9 +563,9 @@ def calc_sttr(text: Sequence[str], base: float = DIVERSITY_LOG_BASE) -> float:
 
     Raises:
         ParameterError: If the logarithm base is not greater than 1
-        SourceTypeError: If a string or a Doc is passed instead of a list of words
+        SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_sequence(text)
+    check_words(text)
     _check_log_base(base)
     n_words = len(text)
     n_lexemes = len(set(text))
@@ -590,9 +591,9 @@ def calc_mttr(text: Sequence[str], base: float = DIVERSITY_LOG_BASE) -> float:
 
     Raises:
         ParameterError: If the logarithm base is not greater than 1
-        SourceTypeError: If a string or a Doc is passed instead of a list of words
+        SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_sequence(text)
+    check_words(text)
     _check_log_base(base)
     n_words = len(text)
     if not n_words:
@@ -620,9 +621,9 @@ def calc_dttr(text: Sequence[str], base: float = DIVERSITY_LOG_BASE) -> float:
 
     Raises:
         ParameterError: If the logarithm base is not greater than 1
-        SourceTypeError: If a string or a Doc is passed instead of a list of words
+        SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_sequence(text)
+    check_words(text)
     _check_log_base(base)
     n_words = len(text)
     if not n_words:
@@ -649,9 +650,9 @@ def calc_mattr(text: Sequence[str], window_len: int = MATTR_WINDOW_LEN) -> float
 
     Raises:
         ParameterError: If the window size is less than one
-        SourceTypeError: If a string or a Doc is passed instead of a list of words
+        SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_sequence(text)
+    check_words(text)
     if window_len < 1:
         raise ParameterError("The window size must be greater than 0")
     n_words = len(text)
@@ -687,9 +688,9 @@ def calc_msttr(text: Sequence[str], segment_len: int = MATTR_WINDOW_LEN) -> floa
 
     Raises:
         ParameterError: If the segment size is less than one
-        SourceTypeError: If a string or a Doc is passed instead of a list of words
+        SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_sequence(text)
+    check_words(text)
     if segment_len < 1:
         raise ParameterError("The segment size must be greater than 0")
     n_words = len(text)
@@ -752,9 +753,9 @@ def calc_mtld(
     Raises:
         ParameterError: If the TTR threshold is outside the interval (0, 1)
             or the minimum factor length is negative
-        SourceTypeError: If a string or a Doc is passed instead of a list of words
+        SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_sequence(text)
+    check_words(text)
     _check_mtld_params(threshold, min_len)
     n_words = len(text)
     forward = safe_divide(n_words, _count_mtld_factors(text, threshold, min_len), inf)
@@ -855,9 +856,9 @@ def calc_mamtld(
     Raises:
         ParameterError: If the TTR threshold is outside the interval (0, 1)
             or the minimum factor length is negative
-        SourceTypeError: If a string or a Doc is passed instead of a list of words
+        SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_sequence(text)
+    check_words(text)
     _check_mtld_params(threshold, min_len)
     lengths = _mtld_factor_lengths(text, threshold, min_len, wrap=False)
     lengths += _mtld_factor_lengths(text[::-1], threshold, min_len, wrap=False)
@@ -887,9 +888,9 @@ def calc_mtldw(
     Raises:
         ParameterError: If the TTR threshold is outside the interval (0, 1)
             or the minimum factor length is negative
-        SourceTypeError: If a string or a Doc is passed instead of a list of words
+        SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_sequence(text)
+    check_words(text)
     _check_mtld_params(threshold, min_len)
     lengths = _mtld_factor_lengths(text, threshold, min_len, wrap=True)
     return safe_divide(sum(lengths), len(lengths), nan)
@@ -913,9 +914,9 @@ def calc_hdd(text: Sequence[str], sample_size: int = HDD_SAMPLE_SIZE) -> float:
 
     Raises:
         ParameterError: If the sample size is less than one
-        SourceTypeError: If a string or a Doc is passed instead of a list of words
+        SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_sequence(text)
+    check_words(text)
     if sample_size < 1:
         raise ParameterError("The HD-D sample size must be greater than 0")
     n_words = len(text)
@@ -951,9 +952,9 @@ def calc_simpson_index(text: Sequence[str]) -> float:
         float: Value of the index, nan for texts shorter than two words
 
     Raises:
-        SourceTypeError: If a string or a Doc is passed instead of a list of words
+        SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_sequence(text)
+    check_words(text)
     n_words = len(text)
     if n_words < 2:
         return nan
@@ -979,9 +980,9 @@ def calc_inverse_simpson_index(text: Sequence[str]) -> float:
         float: Value of the index, nan for texts shorter than two words
 
     Raises:
-        SourceTypeError: If a string or a Doc is passed instead of a list of words
+        SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_sequence(text)
+    check_words(text)
     return safe_divide(1, calc_simpson_index(text), inf)
 
 
@@ -1003,9 +1004,9 @@ def calc_gini_simpson_index(text: Sequence[str]) -> float:
         float: Value of the index, nan for texts shorter than two words
 
     Raises:
-        SourceTypeError: If a string or a Doc is passed instead of a list of words
+        SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_sequence(text)
+    check_words(text)
     return 1 - calc_simpson_index(text)
 
 
@@ -1029,9 +1030,9 @@ def calc_hapax_index(text: Sequence[str]) -> float:
         float: Value of the index, nan for texts shorter than two words
 
     Raises:
-        SourceTypeError: If a string or a Doc is passed instead of a list of words
+        SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_sequence(text)
+    check_words(text)
     n_words = len(text)
     if n_words < 2:
         return nan
@@ -1064,9 +1065,9 @@ def calc_yule_k(text: Sequence[str]) -> float:
         float: Value of the characteristic, nan for texts shorter than two words
 
     Raises:
-        SourceTypeError: If a string or a Doc is passed instead of a list of words
+        SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_sequence(text)
+    check_words(text)
     n_words = len(text)
     if n_words < 2:
         return nan
@@ -1091,9 +1092,9 @@ def calc_yule_i(text: Sequence[str]) -> float:
         float: Value of the characteristic, nan for texts shorter than two words
 
     Raises:
-        SourceTypeError: If a string or a Doc is passed instead of a list of words
+        SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_sequence(text)
+    check_words(text)
     if len(text) < 2:
         return nan
     n_lexemes = len(set(text))
@@ -1118,9 +1119,9 @@ def calc_herdan_vm(text: Sequence[str]) -> float:
         float: Value of the measure, nan for texts shorter than two words
 
     Raises:
-        SourceTypeError: If a string or a Doc is passed instead of a list of words
+        SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_sequence(text)
+    check_words(text)
     n_words = len(text)
     if n_words < 2:
         return nan
@@ -1145,9 +1146,9 @@ def calc_sichel_s(text: Sequence[str]) -> float:
         float: Value of the measure
 
     Raises:
-        SourceTypeError: If a string or a Doc is passed instead of a list of words
+        SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_sequence(text)
+    check_words(text)
     spectrum = calc_frequency_spectrum(text)
     return safe_divide(spectrum.get(2, 0), len(set(text)))
 
@@ -1167,9 +1168,9 @@ def calc_michea_m(text: Sequence[str]) -> float:
         float: Value of the measure
 
     Raises:
-        SourceTypeError: If a string or a Doc is passed instead of a list of words
+        SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_sequence(text)
+    check_words(text)
     spectrum = calc_frequency_spectrum(text)
     return safe_divide(len(set(text)), spectrum.get(2, 0), inf)
 
@@ -1190,9 +1191,9 @@ def calc_brunet_w(text: Sequence[str], a: float = BRUNET_W_EXPONENT) -> float:
         float: Value of the measure
 
     Raises:
-        SourceTypeError: If a string or a Doc is passed instead of a list of words
+        SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_sequence(text)
+    check_words(text)
     n_words = len(text)
     n_lexemes = len(set(text))
     if not n_words:
@@ -1218,9 +1219,9 @@ def calc_dugast_k(text: Sequence[str], base: float = DIVERSITY_LOG_BASE) -> floa
 
     Raises:
         ParameterError: If the logarithm base is not greater than 1
-        SourceTypeError: If a string or a Doc is passed instead of a list of words
+        SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_sequence(text)
+    check_words(text)
     _check_log_base(base)
     n_words = len(text)
     n_lexemes = len(set(text))
@@ -1245,9 +1246,9 @@ def calc_baayen_p(text: Sequence[str]) -> float:
         float: Value of the measure
 
     Raises:
-        SourceTypeError: If a string or a Doc is passed instead of a list of words
+        SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_sequence(text)
+    check_words(text)
     spectrum = calc_frequency_spectrum(text)
     return safe_divide(spectrum.get(1, 0), len(text))
 
@@ -1266,9 +1267,9 @@ def calc_hapax_ratio(text: Sequence[str]) -> float:
         float: Value of the ratio
 
     Raises:
-        SourceTypeError: If a string or a Doc is passed instead of a list of words
+        SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_sequence(text)
+    check_words(text)
     spectrum = calc_frequency_spectrum(text)
     return safe_divide(spectrum.get(1, 0), len(set(text)))
 
@@ -1288,9 +1289,9 @@ def calc_alpha2(text: Sequence[str]) -> float:
         float: Value of the exponent, nan if the text has no hapaxes
 
     Raises:
-        SourceTypeError: If a string or a Doc is passed instead of a list of words
+        SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_sequence(text)
+    check_words(text)
     spectrum = calc_frequency_spectrum(text)
     hapaxes = spectrum.get(1, 0)
     if not hapaxes:
@@ -1316,9 +1317,9 @@ def calc_entropy(text: Sequence[str]) -> float:
         float: Value of the entropy
 
     Raises:
-        SourceTypeError: If a string or a Doc is passed instead of a list of words
+        SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_sequence(text)
+    check_words(text)
     n_words = len(text)
     if not n_words:
         return nan
@@ -1340,9 +1341,9 @@ def calc_evenness(text: Sequence[str]) -> float:
         float: Value of the evenness, nan for texts of a single lexeme
 
     Raises:
-        SourceTypeError: If a string or a Doc is passed instead of a list of words
+        SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_sequence(text)
+    check_words(text)
     n_lexemes = len(set(text))
     if n_lexemes < 2:
         return nan
@@ -1364,9 +1365,9 @@ def calc_perplexity(text: Sequence[str]) -> float:
         float: Value of the perplexity
 
     Raises:
-        SourceTypeError: If a string or a Doc is passed instead of a list of words
+        SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_sequence(text)
+    check_words(text)
     return float(2 ** calc_entropy(text))
 
 
@@ -1389,9 +1390,9 @@ def calc_zipf_alpha(text: Sequence[str]) -> float:
         float: Value of the exponent, nan for texts of a single lexeme
 
     Raises:
-        SourceTypeError: If a string or a Doc is passed instead of a list of words
+        SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_sequence(text)
+    check_words(text)
     frequencies = sorted(Counter(text).values(), reverse=True)
     if len(frequencies) < 2:
         return nan
@@ -1438,9 +1439,9 @@ def fit_zipf_mandelbrot(text: Sequence[str] | Mapping[str, int]) -> ZipfMandelbr
             with identical frequencies of all lexemes or if the fit diverges
 
     Raises:
-        SourceTypeError: If a string or a Doc is passed instead of a list of words
+        SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_sequence(text)
+    check_words(text)
     frequencies = np.array(
         sorted((count for count in Counter(text).values() if count > 0), reverse=True),
         dtype=float,
@@ -1508,9 +1509,9 @@ def fit_heaps(text: Sequence[str]) -> HeapsFit:
         HeapsFit: Parameters of the law, nan for texts shorter than two words
 
     Raises:
-        SourceTypeError: If a string or a Doc is passed instead of a list of words
+        SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_sequence(text)
+    check_words(text)
     n_words = len(text)
     if n_words < 2:
         return HeapsFit(nan, nan, nan)
@@ -1534,9 +1535,9 @@ def vocabulary_growth(text: Sequence[str]) -> list[int]:
         list[int]: Vocabulary size after every word of the text
 
     Raises:
-        SourceTypeError: If a string or a Doc is passed instead of a list of words
+        SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_sequence(text)
+    check_words(text)
     seen: set[str] = set()
     growth = []
     for word in text:
@@ -1564,9 +1565,9 @@ def calc_heaps_beta(text: Sequence[str]) -> float:
         float: Value of the exponent, nan for texts shorter than two words
 
     Raises:
-        SourceTypeError: If a string or a Doc is passed instead of a list of words
+        SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_sequence(text)
+    check_words(text)
     return fit_heaps(text).beta
 
 
@@ -1600,9 +1601,9 @@ def calc_windowed(
 
     Raises:
         ParameterError: If the window size, the step or the confidence level are set incorrectly
-        SourceTypeError: If a string or a Doc is passed instead of a list of words
+        SourceTypeError: If the words are not a list of strings (check_words)
     """
-    check_sequence(text)
+    check_words(text)
     if window_len < 1:
         raise ParameterError("The window size must be greater than 0")
     if step is None:

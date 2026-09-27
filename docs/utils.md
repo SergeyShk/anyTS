@@ -77,13 +77,24 @@ Checks whether a text, a `Doc` or a `Span` holds a word: an empty text or one of
 ## check_sequence
 
 <!-- --8<-- [start:check_sequence] -->
-Checks that an argument is a sequence of strings and not a text: a string, a `Doc` or a `Span` raises `SourceTypeError`, since a string would be iterated character by character.
+Checks that an argument is a sequence and not a text or an iterator: a string, a `Doc`, a `Span` or an iterator raises `SourceTypeError`, since a string would be iterated character by character and an iterator would be exhausted by the first pass over it.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
 | `value` | object | `-` | Value to check |
 | `what` | str | `"words"` | What is expected, for the message of the error |
 <!-- --8<-- [end:check_sequence] -->
+
+## check_words
+
+<!-- --8<-- [start:check_words] -->
+Checks that an argument is a list of words: it passes `check_sequence` and every item is a string, so that a list of spaCy tokens, which would count every token as a lexeme of its own, raises `SourceTypeError`.
+
+| Parameter | Type | Default | Description |
+| :-------: | :--: | :-----: | :---------: |
+| `value` | Iterable | `-` | Value to check |
+| `what` | str | `"words"` | What is expected, for the message of the error |
+<!-- --8<-- [end:check_words] -->
 
 ## iter_doc_tokens
 

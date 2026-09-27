@@ -23,7 +23,7 @@ The class takes the words as given: a language library extracts them from its so
 <!-- --8<-- [start:DiversityStats-parameters] -->
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
-| `words` | Sequence[str] | `-` | Words of the text |
+| `words` | Iterable[str] | `-` | Words of the text: a sequence or an iterator of strings |
 | `window_len` | int | `50` | Window size for MATTR and segment size for MSTTR |
 | `mtld_threshold` | float | `0.72` | TTR threshold for MTLD, MA-MTLD and MTLD-W |
 | `mtld_min_len` | int | `10` | Minimum factor length for MTLD, MA-MTLD and MTLD-W |

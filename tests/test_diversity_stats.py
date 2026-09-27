@@ -121,7 +121,14 @@ def test_init_type_error(words, message):
 def test_init_words_as_given():
     assert DiversityStats(["The", "the"]).ttr == 1.0
     assert DiversityStats(word for word in riddle).words == riddle
+    assert DiversityStats(map(str.lower, riddle)).words == riddle
     assert DiversityStats(list(riddle)).words == riddle
+
+
+def test_init_tokens():
+    doc = spacy.blank("xx")("the cat and the dog")
+    with pytest.raises(SourceTypeError, match=r"^The words must be strings, not Token$"):
+        DiversityStats(list(doc))
 
 
 def test_init_params_checked_first():
@@ -627,6 +634,21 @@ def test_print_stats_class_attributes(capsys):
     assert "Yule's characteristic K" not in "\n".join(lines)
 
 
+def test_print_stats_order_and_missing_descriptions(capsys):
+    class Reversed(DiversityStats):
+        stats_desc: ClassVar[dict[str, str]] = dict(reversed(DIVERSITY_STATS_DESC.items()))
+
+    Reversed(riddle).print_stats()
+    rows = capsys.readouterr().out.splitlines()[2:]
+    assert [row.split("|")[0].strip() for row in rows] == list(DIVERSITY_STATS_DESC.values())
+
+    class Partial(DiversityStats):
+        stats_desc: ClassVar[dict[str, str]] = {"ttr": "TTR"}
+
+    with pytest.raises(KeyError, match="rttr"):
+        Partial(riddle).print_stats()
+
+
 WORD_FUNCTIONS = list(
     {
         func: None
@@ -643,10 +665,19 @@ def test_word_functions_count():
 
 
 @pytest.mark.parametrize("func", WORD_FUNCTIONS, ids=lambda func: func.__name__)
-def test_word_functions_reject_text(func):
+@pytest.mark.parametrize(
+    ("words", "message"),
+    [
+        (lambda: "some text", r"^A list of words is expected, not a string$"),
+        (lambda: (word for word in riddle), r"^A list of words is expected, not an iterator$"),
+        (lambda: list(spacy.blank("xx")("the cat")), r"^The words must be strings, not Token$"),
+    ],
+    ids=["string", "iterator", "tokens"],
+)
+def test_word_functions_reject(func, words, message):
     args = (calc_ttr,) if func is calc_windowed else ()
-    with pytest.raises(SourceTypeError, match=r"^A list of words is expected, not a string$"):
-        func("some text", *args)
+    with pytest.raises(SourceTypeError, match=message):
+        func(words(), *args)
 
 
 def test_mtld_factor_closes_at_the_end():

@@ -1,5 +1,5 @@
 import unicodedata
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator
 from functools import lru_cache
 
 from spacy.tokens import Doc, Span, Token
@@ -103,14 +103,18 @@ def has_words(source: str | Doc | Span) -> bool:
 
 def check_sequence(value: object, what: str = "words") -> None:
     """
-    Checking that an argument is a sequence of strings and not a text
+    Checking that an argument is a sequence and not a text or an iterator
+
+    Description:
+        A string would be iterated character by character and an iterator
+        would be exhausted by the first pass over it
 
     Arguments:
         value (object): Value to check
         what (str): What is expected, for the message of the error
 
     Raises:
-        SourceTypeError: If a string, a Doc or a Span is passed
+        SourceTypeError: If a string, a Doc, a Span or an iterator is passed
 
     Example:
         >>> from anyts.utils import check_sequence
@@ -127,6 +131,35 @@ def check_sequence(value: object, what: str = "words") -> None:
             f"A list of {what} is expected, not a {type(value).__name__}: "
             "extract the words with WordsExtractor"
         )
+    if isinstance(value, Iterator):
+        raise SourceTypeError(f"A list of {what} is expected, not an iterator")
+
+
+def check_words(value: Iterable[object], what: str = "words") -> None:
+    """
+    Checking that an argument is a list of words: a sequence of strings
+
+    Arguments:
+        value (object): Value to check
+        what (str): What is expected, for the message of the error
+
+    Raises:
+        SourceTypeError: If the value fails check_sequence or holds an item
+            that is not a string, such as a spaCy token
+
+    Example:
+        >>> import spacy
+        >>> from anyts.utils import check_words
+        >>> check_words(["the", "cat"])
+        >>> check_words(list(spacy.blank("xx")("the cat")))
+        Traceback (most recent call last):
+        ...
+        anyts.exceptions.SourceTypeError: The words must be strings, not Token
+    """
+    check_sequence(value, what)
+    for item in value:
+        if not isinstance(item, str):
+            raise SourceTypeError(f"The {what} must be strings, not {type(item).__name__}")
 
 
 def iter_doc_tokens(source: Doc | Span) -> Iterator[Token]:
