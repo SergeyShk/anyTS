@@ -8,7 +8,7 @@ Functions over the dependency tree of a spaCy `Doc`, a `Span` or a list of token
 ## is_word
 
 <!-- --8<-- [start:is_word] -->
-Checks whether a token is a word: not whitespace and not a token of [`is_punctuation`](../utils.md#is_punctuation), so symbols like `%`, `€`, `+` and invisible characters are no words either.
+Checks whether a token is a word: not whitespace and not a token of `is_punctuation`, so symbols like `%`, `€`, `+` and invisible characters are no words either.
 <!-- --8<-- [end:is_word] -->
 
 <!-- --8<-- [start:get_words] -->

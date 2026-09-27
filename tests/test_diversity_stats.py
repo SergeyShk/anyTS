@@ -2,6 +2,7 @@ import inspect
 import random
 import warnings
 from collections import Counter
+from dataclasses import dataclass
 from functools import partial
 from math import e, inf, isnan, log, log2, log10, nan, nextafter, sqrt
 from typing import ClassVar
@@ -648,7 +649,34 @@ def test_windowed_errors(ds):
 
 def test_sttr_base():
     assert calc_sttr(riddle, e) != pytest.approx(calc_sttr(riddle))
-    assert calc_sttr(["a"], e) == 0
+    assert isnan(calc_sttr(["a"], e))
+
+
+@pytest.mark.parametrize(
+    "words",
+    [["a"], ["a"] * 100, [f"w{i}" for i in range(10)], ["a", "b"] * 4 + ["a"]],
+)
+def test_sttr_undefined(words):
+    # One lexeme, or no more words than the base: the logarithm of the logarithm is undefined
+    assert isnan(calc_sttr(words))
+
+
+def test_sttr_windows_of_ten_words():
+    stats = calc_windowed(WORDS, calc_sttr, window_len=10)
+    assert stats.n_windows == 0
+    assert isnan(stats.mean)
+
+
+def test_dttr_without_repeated_words():
+    assert calc_dttr([f"w{i}" for i in range(500)]) == inf
+    assert calc_dttr(["a"]) == inf
+    assert calc_dttr([f"w{i}" for i in range(499)] + ["w0"]) == pytest.approx(8378.13, rel=1e-6)
+    words = [f"w{i}" for i in range(40)] + ["a", "b"] * 20
+    assert calc_windowed(words, calc_dttr, window_len=10).mean == inf
+
+
+def test_zipf_alpha_without_repeated_words():
+    assert str(calc_zipf_alpha([f"w{i}" for i in range(20)])) == "0.0"
 
 
 def test_get_stats(ds):
@@ -751,3 +779,17 @@ def test_fit_zipf_mandelbrot_divergence(monkeypatch):
 
     monkeypatch.setattr(diversity_stats, "least_squares", lambda *args, **kwargs: Unconverged())
     assert all(isnan(value) for value in fit_zipf_mandelbrot(words))
+
+
+def test_windowed_unhashable_function():
+    @dataclass
+    class TopShare:
+        top: int = 1
+
+        def __call__(self, words):
+            return sum(count for _, count in Counter(words).most_common(self.top)) / len(words)
+
+    words = ["a", "b", "c", "a", "b", "d"] * 10
+    stats = calc_windowed(words, TopShare(2), window_len=20)
+    assert stats == calc_windowed(words, lambda window: TopShare(2)(window), window_len=20)
+    assert stats.n_windows == 3

@@ -279,3 +279,21 @@ def test_arrays_of_words(container):
     assert mendenhall_distance(container(words), container(["dd", "e"])) == pytest.approx(
         mendenhall_distance(words, ["dd", "e"])
     )
+
+
+def test_frequency_table_ties_do_not_depend_on_the_order_of_the_texts():
+    def tokens(n, prefix):
+        return [f"{prefix}{i}" for i in range(n)]
+
+    corpus = {
+        "A": ["a"] * 3 + ["b"] + tokens(6, "x"),
+        "B": ["a"] * 2 + ["b"] * 2 + tokens(6, "y"),
+        "C": ["a"] + ["b"] * 3 + tokens(6, "z"),
+    }
+    reversed_corpus = dict(reversed(corpus.items()))
+    assert frequency_table(corpus, n_mfw=1).columns.tolist() == ["a"]
+    assert frequency_table(reversed_corpus, n_mfw=1).columns.tolist() == ["a"]
+    for variant in DELTA_VARIANTS:
+        distances = delta(corpus, n_mfw=2, variant=variant)
+        backwards = delta(reversed_corpus, n_mfw=2, variant=variant)
+        assert distances.loc["A", "C"] == backwards.loc["A", "C"]

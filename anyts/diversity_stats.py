@@ -26,7 +26,6 @@ from .utils import check_sequence, check_words, safe_divide
 
 Calculator = Callable[[Sequence[str]], float]
 Function = TypeVar("Function", bound=Callable[..., Any])
-_UNCHECKED: dict[Callable[..., Any], Callable[..., Any]] = {}
 
 
 def _checks_words(func: Function) -> Function:
@@ -37,7 +36,7 @@ def _checks_words(func: Function) -> Function:
         check_words(text)
         return func(text, *args, **kwargs)
 
-    _UNCHECKED[checked] = func
+    checked.__unchecked__ = func  # type: ignore[attr-defined]
     return cast(Function, checked)
 
 
@@ -45,7 +44,7 @@ def _unchecked(func: Function) -> Function:
     """The function without the check of its words, for words already checked"""
     if isinstance(func, partial):
         return cast(Function, partial(_unchecked(func.func), *func.args, **func.keywords))
-    return cast(Function, _UNCHECKED.get(func, func))
+    return cast(Function, getattr(func, "__unchecked__", func))
 
 
 class WindowStats(NamedTuple):
@@ -581,7 +580,8 @@ def calc_sttr(text: Sequence[str], base: float = DIVERSITY_LOG_BASE) -> float:
         base (float): Logarithm base
 
     Returns:
-        float: Value of the metric, 0 for an empty text
+        float: Value of the metric, 0 for an empty text, nan for a text of one
+            lexeme or of no more words than the logarithm base
 
     Raises:
         ParameterError: If the logarithm base is not greater than 1
@@ -589,10 +589,12 @@ def calc_sttr(text: Sequence[str], base: float = DIVERSITY_LOG_BASE) -> float:
     """
     _check_log_base(base)
     n_words = len(text)
-    n_lexemes = len(set(text))
-    if n_words < 2 or n_lexemes == 1:
+    if not n_words:
         return 0
-    return safe_divide(log(log(n_lexemes, base), base), log(log(n_words, base), base))
+    n_lexemes = len(set(text))
+    if n_lexemes == 1 or log(n_words, base) <= 1:
+        return nan
+    return log(log(n_lexemes, base), base) / log(log(n_words, base), base)
 
 
 @_checks_words
@@ -639,7 +641,8 @@ def calc_dttr(text: Sequence[str], base: float = DIVERSITY_LOG_BASE) -> float:
         base (float): Logarithm base
 
     Returns:
-        float: Value of the metric, 0 for an empty text
+        float: Value of the metric, 0 for an empty text, inf for a text without
+            repeated words
 
     Raises:
         ParameterError: If the logarithm base is not greater than 1
@@ -651,7 +654,7 @@ def calc_dttr(text: Sequence[str], base: float = DIVERSITY_LOG_BASE) -> float:
         return 0
     n_lexemes = len(set(text))
     log_words = log(n_words, base)
-    return safe_divide(log_words**2, log_words - log(n_lexemes, base))
+    return safe_divide(log_words**2, log_words - log(n_lexemes, base), inf)
 
 
 @_checks_words
@@ -1420,7 +1423,7 @@ def calc_zipf_alpha(text: Sequence[str]) -> float:
         return nan
     ranks = np.arange(1, len(frequencies) + 1)
     slope = np.polyfit(np.log(ranks), np.log(frequencies), 1)[0]
-    return float(-slope)
+    return float(-slope) or 0.0
 
 
 class ZipfMandelbrot(NamedTuple):

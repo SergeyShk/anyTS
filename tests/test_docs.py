@@ -48,6 +48,21 @@ def test_sections_are_paired(page):
     sections(page)
 
 
+# The pages a section may link to: a library has them under the same names
+SHARED_PAGES = {"diversity_stats.md", "diversity_stats_funcs.md"}
+LINK = re.compile(r"\]\(([^)\s]+)\)")
+
+
+@pytest.mark.parametrize("page", PAGES, ids=[str(page.relative_to(DOCS)) for page in PAGES])
+def test_sections_link_to_shared_pages(page):
+    for name, text in sections(page).items():
+        for target in LINK.findall(text):
+            path = target.split("#")[0]
+            assert (
+                not path or target.startswith(("http://", "https://")) or path in SHARED_PAGES
+            ), f"{page.relative_to(DOCS)}: section {name} links to {target}"
+
+
 def public_names(module) -> list[str]:
     return [
         name

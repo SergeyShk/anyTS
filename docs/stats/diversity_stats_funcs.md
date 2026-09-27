@@ -103,7 +103,7 @@ Computation of the Summer Type-Token Ratio (STTR).
 A logarithmic modification of TTR (Summer, 1966).
 
 !!! note "Note"
-    The value depends on the logarithm base, 10 by default. See [conventions](diversity_stats.md#conventions).
+    The value depends on the logarithm base, 10 by default. See [conventions](diversity_stats.md#conventions). The logarithm of the logarithm is undefined for a text of one lexeme or of no more words than the base, so the value is `nan` there, and so is every window of `calc_windowed` that short.
 
 Formula:
 
@@ -154,10 +154,10 @@ Parameters:
 <!-- --8<-- [start:calc_dttr] -->
 Computation of the Dugast Type-Token Ratio (DTTR).
 
-A logarithmic modification of TTR (Dugast, 1978).
+A logarithmic modification of TTR (Dugast, 1978), the reciprocal of the Maas metric.
 
 !!! note "Note"
-    The value depends on the logarithm base, 10 by default. See [conventions](diversity_stats.md#conventions).
+    The value depends on the logarithm base, 10 by default. See [conventions](diversity_stats.md#conventions). A text without repeated words has an infinite value, like the other reciprocal measures.
 
 Formula:
 

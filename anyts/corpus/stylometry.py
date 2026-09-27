@@ -1,6 +1,6 @@
 from collections import Counter
 from collections.abc import Mapping, Sequence
-from math import floor, log2
+from math import floor, fsum, log2
 from typing import NamedTuple
 
 import numpy as np
@@ -82,15 +82,17 @@ def frequency_table(
         name: {unit: count / len(units) for unit, count in Counter(units).items()}
         for name, units in corpus.items()
     }
-    means: Counter[str] = Counter()
-    documents: Counter[str] = Counter()
+    shares: dict[str, list[float]] = {}
     for row in rows.values():
-        means.update(row)
-        documents.update(row.keys())
+        for unit, share in row.items():
+            shares.setdefault(unit, []).append(share)
     n_texts = len(rows)
+    # fsum keeps the mean free of the order of the texts, and 12 significant digits
+    # let equal rational means tie, so that they go alphabetically
+    means = {unit: float(f"{fsum(values) / n_texts:.12g}") for unit, values in shares.items()}
     selected = sorted(
-        (unit for unit in means if documents[unit] / n_texts >= culling),
-        key=lambda unit: (-means[unit] / n_texts, unit),
+        (unit for unit in means if len(shares[unit]) / n_texts >= culling),
+        key=lambda unit: (-means[unit], unit),
     )
     if n_mfw:
         selected = selected[:n_mfw]
