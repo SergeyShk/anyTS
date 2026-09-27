@@ -1,5 +1,7 @@
 import gc
 import re
+import subprocess
+import sys
 import unicodedata
 import weakref
 
@@ -8,7 +10,7 @@ import spacy
 
 from anyts import CharNgramsExtractor, SentsExtractor, WordsExtractor
 from anyts.exceptions import ParameterError, SourceTypeError
-from anyts.extractors import NUMBER_PATTERN, WORD_PATTERN, Extractor
+from anyts.extractors import NUMBER_PATTERN, Extractor, _word_pattern
 
 TEXT = (
     "Thesauri are a special class of lexicographic resources marked by the following"
@@ -30,13 +32,26 @@ def test_extractor_is_abstract():
     "mark", ["\u0301", "\u0903", "\u20dd", "\U000e0100", "\u00ad", "\u200c", "\u200d"]
 )
 def test_word_pattern_continues_with_marks_and_joiners(mark):
-    assert WORD_PATTERN.fullmatch(f"a{mark}b")
-    assert WORD_PATTERN.findall(f"{mark}ab") == ["ab"]
+    assert _word_pattern().fullmatch(f"a{mark}b")
+    assert _word_pattern().findall(f"{mark}ab") == ["ab"]
 
 
 @pytest.mark.parametrize("char", ["\u200b", "\ufeff", "-", "'", " "])
 def test_word_pattern_breaks_at_other_characters(char):
-    assert WORD_PATTERN.findall(f"a{char}b") == ["a", "b"]
+    assert _word_pattern().findall(f"a{char}b") == ["a", "b"]
+
+
+def test_word_pattern_built_on_first_use():
+    code = (
+        "from anyts import extractors; "
+        "print(extractors._word_pattern.cache_info().currsize); "
+        "extractors.WordsExtractor().extract('cat'); "
+        "print(extractors._word_pattern.cache_info().currsize)"
+    )
+    result = subprocess.run(
+        [sys.executable, "-c", code], capture_output=True, text=True, check=True
+    )
+    assert result.stdout.split() == ["0", "1"]
 
 
 @pytest.mark.parametrize(

@@ -103,7 +103,7 @@ Computation of the Summer Type-Token Ratio (STTR).
 A logarithmic modification of TTR (Summer, 1966).
 
 !!! note "Note"
-    The value depends on the logarithm base, 10 by default. See [conventions](diversity_stats.md#conventions). The logarithm of the logarithm is undefined for a text of one lexeme or of no more words than the base, so the value is `nan` there, and so is every window of `calc_windowed` that short.
+    The value depends on the logarithm base, 10 by default. See [conventions](diversity_stats.md#conventions). For a text of one lexeme the numerator is undefined, and for a text of no more words than the base the denominator $\log \log N$ is zero or negative, so the value is `nan` there, and so is every window of `calc_windowed` that short.
 
 Formula:
 

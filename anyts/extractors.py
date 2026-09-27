@@ -4,6 +4,7 @@ import unicodedata
 from abc import ABCMeta, abstractmethod
 from collections import Counter
 from collections.abc import Callable, Collection, Iterable, Iterator
+from functools import cache
 from re import Pattern
 from typing import Any, ClassVar
 
@@ -36,13 +37,28 @@ def _char_class(chars: Iterable[str]) -> str:
     )
 
 
-# Combining marks, the zero-width non-joiner and joiner and the soft hyphen
-WORD_CONTINUATION = _char_class(
-    char
-    for char in map(chr, range(sys.maxunicode + 1))
-    if unicodedata.category(char)[0] == "M" or char in "\u00ad\u200c\u200d"
-)
-WORD_PATTERN = re.compile(rf"\w[\w{WORD_CONTINUATION}]*")
+@cache
+def _word_pattern() -> Pattern[str]:
+    """
+    Pattern of a word of the default tokenizers
+
+    Description:
+        A word character \\w followed by word characters, combining marks, the
+        zero-width non-joiner and joiner and the soft hyphen. The combining marks
+        are read from unicodedata on first use, which takes tens of milliseconds,
+        so a library that overrides the tokenizers does not pay for it on import
+
+    Returns:
+        Pattern: Compiled regular expression
+    """
+    continuation = _char_class(
+        char
+        for char in map(chr, range(sys.maxunicode + 1))
+        if unicodedata.category(char)[0] == "M" or char in "\u00ad\u200c\u200d"
+    )
+    return re.compile(rf"\w[\w{continuation}]*")
+
+
 NUMBER_PATTERN = re.compile(r"[+\-−]?\d+(?:[.,:/-]\d+)*%?")
 
 
@@ -339,7 +355,7 @@ class WordsExtractor(Extractor):
         Returns:
             iterable[str]: Words
         """
-        return WORD_PATTERN.findall(text)
+        return _word_pattern().findall(text)
 
     def lemmatize(self, word: str) -> str:
         """
@@ -483,7 +499,7 @@ class CharNgramsExtractor(Extractor):
         Returns:
             iterable[str]: Words
         """
-        return WORD_PATTERN.findall(text)
+        return _word_pattern().findall(text)
 
     def extract(self, text: str) -> tuple[str, ...]:
         """

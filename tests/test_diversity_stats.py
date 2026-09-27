@@ -696,7 +696,7 @@ def test_sttr_base():
     [["a"], ["a"] * 100, [f"w{i}" for i in range(10)], ["a", "b"] * 4 + ["a"]],
 )
 def test_sttr_undefined(words):
-    # One lexeme, or no more words than the base: the logarithm of the logarithm is undefined
+    # One lexeme: the numerator is undefined; no more words than the base: log log N <= 0
     assert isnan(calc_sttr(words))
 
 
