@@ -467,10 +467,32 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#planned-scope" class="md-nav__link">
+  <a href="#features" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Planned scope
+        Features
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Installation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick start
       
     </span>
   </a>
@@ -1196,10 +1218,32 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#planned-scope" class="md-nav__link">
+  <a href="#features" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Planned scope
+        Features
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Installation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick start
       
     </span>
   </a>
@@ -1228,19 +1272,49 @@
 
 <h1 id="any-texts-statistics-anyts">Any Texts Statistics (anyTS)<a class="headerlink" href="#any-texts-statistics-anyts" title="Permanent link">&para;</a></h1>
 <p><strong>anyTS</strong> is the language-independent core of the text statistics libraries <a href="https://github.com/SergeyShk/ruTS">ruTS</a> (Russian) and <a href="https://github.com/SergeyShk/esTS">esTS</a> (Spanish). It holds the code that does not depend on a language, so that it is written, tested and documented once; a language library adds its tokenizer, lemmatizer, <a href="https://github.com/explosion/spaCy">spaCy</a> model and rules and re-exports the core under its own names.</p>
-<div class="admonition warning">
-<p class="admonition-title">Status</p>
-<p>The project is in development: the <a href="exceptions/">exceptions</a>, the <a href="utils/">utilities</a> and the extractors of <a href="extractors/sentences/">sentences</a>, <a href="extractors/words/">words</a> and <a href="extractors/char_ngrams/">character N-grams</a> are in place, and so are the <a href="stats/diversity_stats/">lexical diversity metrics</a>, the helpers of <a href="stats/cohesion/">cohesion</a> and of the <a href="stats/syntax/">dependency tree</a>, and the corpus measures: <a href="corpus/keyness/">keywords</a>, <a href="corpus/collocations/">collocations</a>, <a href="corpus/dispersion/">dispersion</a>, <a href="corpus/stylometry/">stylometry</a> and <a href="corpus/compare/">comparison of corpora</a>.</p>
-</div>
-<h2 id="planned-scope">Planned scope<a class="headerlink" href="#planned-scope" title="Permanent link">&para;</a></h2>
+<h2 id="features">Features<a class="headerlink" href="#features" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Extraction</strong> - the base of the sentence, word and character N-gram extractors with the tokenizer, the lemmatizer and the number pattern as hooks a language library overrides</li>
-<li><strong>Lexical diversity</strong> - TTR and its variants, MATTR, MSTTR, MTLD, HD-D, the indices of Simpson and Yule, entropy, the laws of Zipf and Heaps, windowed computation</li>
-<li><strong>Cohesion and syntax helpers</strong> - overlaps, Dice, givenness and repetition; dependency distances, tree depth, valency and coordination on the labels shared by Universal Dependencies and ClearNLP</li>
-<li><strong>Corpus measures</strong> - collocations, dispersion, keyness, Burrows's Delta, Zeta, the Mendenhall curve and the comparison of corpora with effect sizes, bootstrap and the Holm correction</li>
-<li><strong>Exceptions</strong> - one hierarchy whose classes are also built-in exceptions</li>
+<li>extract <a href="extractors/sentences/">sentences</a>, <a href="extractors/words/">words</a> and <a href="extractors/char_ngrams/">character N-grams</a> with extractors whose tokenizer, lemmatizer and number pattern are hooks a language library overrides</li>
+<li>compute <a href="stats/diversity_stats/">lexical diversity metrics</a> (Type-Token Ratio and its variants, MATTR, MSTTR, MTLD, MA-MTLD, MTLD-W, HD-D, the indices of Simpson and Yule, entropy, the laws of Zipf and Heaps), over the whole text or over windows with confidence intervals</li>
+<li>measure <a href="stats/cohesion/">cohesion</a> between sentences: overlaps, adjacent and over all pairs, Dice, givenness and repetition</li>
+<li>walk the <a href="stats/syntax/">dependency tree</a>: dependency distances, tree depth, valency and coordination chains on the labels shared by Universal Dependencies and ClearNLP</li>
+<li>compare corpora with the measures of corpus linguistics: <a href="corpus/keyness/">keywords</a> against a corpus or a frequency dictionary, <a href="corpus/collocations/">collocations</a>, the <a href="corpus/dispersion/">dispersion</a> of a word, <a href="corpus/stylometry/">stylometry</a> (Burrows's Delta and its variants, Zeta, Kilgarriff's chi-square, the Mendenhall curve) and the <a href="corpus/compare/">comparison</a> of corpora feature by feature with effect sizes, a bootstrap by texts and the Holm correction</li>
+<li>catch errors of one <a href="exceptions/">hierarchy</a> whose classes are also built-in exceptions</li>
 </ul>
 <p>The reference of every function is a named section that the libraries include in their own documentation, so a formula is described in one place.</p>
+<h2 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">&para;</a></h2>
+<p>Requires Python 3.11 or newer.</p>
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>anyts
+</code></pre></div>
+<p>The dependencies are on the <a href="installation/">Installation</a> page.</p>
+<h2 id="quick-start">Quick start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">anyts</span><span class="w"> </span><span class="kn">import</span> <span class="n">DiversityStats</span><span class="p">,</span> <span class="n">SentsExtractor</span><span class="p">,</span> <span class="n">WordsExtractor</span>
+
+<span class="o">&gt;&gt;&gt;</span> <span class="n">text</span> <span class="o">=</span> <span class="s2">"The cat sat on the mat. The dog sat on the log! The cat and the dog slept."</span>
+
+<span class="o">&gt;&gt;&gt;</span> <span class="n">SentsExtractor</span><span class="p">()</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+<span class="p">(</span><span class="s1">'The cat sat on the mat.'</span><span class="p">,</span> <span class="s1">'The dog sat on the log!'</span><span class="p">,</span> <span class="s1">'The cat and the dog slept.'</span><span class="p">)</span>
+
+<span class="o">&gt;&gt;&gt;</span> <span class="n">ds</span> <span class="o">=</span> <span class="n">DiversityStats</span><span class="p">(</span><span class="n">WordsExtractor</span><span class="p">(</span><span class="n">lowercase</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="n">text</span><span class="p">))</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">ds</span><span class="o">.</span><span class="n">ttr</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">entropy</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+<span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">2.864</span><span class="p">)</span>
+</code></pre></div>
+<p>A language library subclasses the extractors and overrides their hooks:</p>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="k">class</span><span class="w"> </span><span class="nc">Words</span><span class="p">(</span><span class="n">WordsExtractor</span><span class="p">):</span>
+<span class="o">...</span>     <span class="k">def</span><span class="w"> </span><span class="nf">lemmatize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">word</span><span class="p">):</span>
+<span class="o">...</span>         <span class="k">return</span> <span class="p">{</span><span class="s2">"sat"</span><span class="p">:</span> <span class="s2">"sit"</span><span class="p">,</span> <span class="s2">"slept"</span><span class="p">:</span> <span class="s2">"sleep"</span><span class="p">}</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">word</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="n">word</span><span class="p">)</span>
+
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Words</span><span class="p">(</span><span class="n">lowercase</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">use_lexemes</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="s2">"The cat sat. The dog slept."</span><span class="p">)</span>
+<span class="p">(</span><span class="s1">'the'</span><span class="p">,</span> <span class="s1">'cat'</span><span class="p">,</span> <span class="s1">'sit'</span><span class="p">,</span> <span class="s1">'the'</span><span class="p">,</span> <span class="s1">'dog'</span><span class="p">,</span> <span class="s1">'sleep'</span><span class="p">)</span>
+</code></pre></div>
+<p>The corpus measures take lists of words:</p>
+<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">anyts.corpus</span><span class="w"> </span><span class="kn">import</span> <span class="n">keyness</span>
+
+<span class="o">&gt;&gt;&gt;</span> <span class="n">cats</span> <span class="o">=</span> <span class="n">WordsExtractor</span><span class="p">(</span><span class="n">lowercase</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="s2">"The cat sat on the mat. The cat saw a bird. The cat slept."</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">dogs</span> <span class="o">=</span> <span class="n">WordsExtractor</span><span class="p">(</span><span class="n">lowercase</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="s2">"The dog sat on the log. The dog saw a cat. The dog barked."</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="p">[(</span><span class="n">keyword</span><span class="o">.</span><span class="n">word</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="n">keyword</span><span class="o">.</span><span class="n">log_ratio</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span> <span class="k">for</span> <span class="n">keyword</span> <span class="ow">in</span> <span class="n">keyness</span><span class="p">(</span><span class="n">cats</span><span class="p">,</span> <span class="n">dogs</span><span class="p">,</span> <span class="n">min_freq</span><span class="o">=</span><span class="mi">2</span><span class="p">)]</span>
+<span class="p">[(</span><span class="s1">'cat'</span><span class="p">,</span> <span class="mf">1.58</span><span class="p">)]</span>
+</code></pre></div>
 
 
 
