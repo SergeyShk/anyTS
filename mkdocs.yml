@@ -13,6 +13,10 @@ nav:
       - Sentence extraction: extractors/sentences.md
       - Word extraction: extractors/words.md
       - Character N-gram extraction: extractors/char_ngrams.md
+    - Statistics:
+      - Lexical diversity metrics:
+        - Metrics module: stats/diversity_stats.md
+        - Metric functions: stats/diversity_stats_funcs.md
     - Utilities: utils.md
 
 theme:

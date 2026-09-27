@@ -7,6 +7,7 @@
 import logging
 from importlib.metadata import PackageNotFoundError, version
 
+from .diversity_stats import DiversityStats
 from .exceptions import (
     AnyTSError,
     DataFileError,
@@ -36,6 +37,7 @@ __all__ = [
     "CharNgramsExtractor",
     "DataFileError",
     "DatasetNotFoundError",
+    "DiversityStats",
     "DownloadError",
     "ParameterError",
     "SentsExtractor",

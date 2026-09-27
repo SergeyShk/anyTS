@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from anyts import exceptions, extractors, utils
+from anyts import diversity_stats, exceptions, extractors, utils
 
 DOCS = Path(__file__).parents[1] / "docs"
 PAGES = sorted(DOCS.rglob("*.md"))
@@ -48,12 +48,18 @@ def public_names(module) -> list[str]:
         and (inspect.isfunction(inspect.unwrap(value)) or inspect.isclass(value))
         and value.__module__ == module.__name__
         and not inspect.isabstract(value)
-        and not (inspect.isclass(value) and issubclass(value, BaseException))
+        and getattr(value, "__name__", name) == name
+        and not (inspect.isclass(value) and issubclass(value, BaseException | tuple))
     ]
 
 
 def test_public_api_has_sections():
     documented = {name for page in PAGES for name in sections(page)}
-    required = {"exceptions", *public_names(utils), *public_names(extractors)}
+    required = {
+        "exceptions",
+        *public_names(utils),
+        *public_names(extractors),
+        *public_names(diversity_stats),
+    }
     assert public_names(exceptions) == []
     assert required <= documented, sorted(required - documented)
