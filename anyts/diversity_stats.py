@@ -21,12 +21,11 @@ from .constants import (
     MTLD_TTR_THRESHOLD,
     MTLD_WINDOW_LEN,
 )
-from .exceptions import ParameterError, SourceError, SourceTypeError, UnknownStatError
-from .utils import check_sequence, check_words, safe_divide
+from .exceptions import ParameterError, SourceError, UnknownStatError
+from .utils import check_integer, check_sequence, check_words, safe_divide
 
 Calculator = Callable[[Sequence[str]], float]
 Function = TypeVar("Function", bound=Callable[..., Any])
-_UNCHECKED: dict[Callable[..., Any], Callable[..., Any]] = {}
 
 
 def _checks_words(func: Function) -> Function:
@@ -37,7 +36,7 @@ def _checks_words(func: Function) -> Function:
         check_words(text)
         return func(text, *args, **kwargs)
 
-    _UNCHECKED[checked] = func
+    checked.__unchecked__ = func  # type: ignore[attr-defined]
     return cast(Function, checked)
 
 
@@ -45,7 +44,7 @@ def _unchecked(func: Function) -> Function:
     """The function without the check of its words, for words already checked"""
     if isinstance(func, partial):
         return cast(Function, partial(_unchecked(func.func), *func.args, **func.keywords))
-    return cast(Function, _UNCHECKED.get(func, func))
+    return cast(Function, getattr(func, "__unchecked__", func))
 
 
 class WindowStats(NamedTuple):
@@ -87,9 +86,11 @@ def check_params(
     Raises:
         ParameterError: If a parameter is out of range
     """
+    check_integer(window_len, "window size")
     if window_len < 1:
         raise ParameterError("The window size must be greater than 0")
     _check_mtld_params(mtld_threshold, mtld_min_len)
+    check_integer(hdd_sample_size, "HD-D sample size")
     if hdd_sample_size < 1:
         raise ParameterError("The HD-D sample size must be greater than 0")
     _check_log_base(log_base)
@@ -97,7 +98,7 @@ def check_params(
 
 def _check_log_base(base: float) -> None:
     """Checking the logarithm base of the Summer, Maas and Dugast metrics"""
-    if base <= 1:
+    if not base > 1:
         raise ParameterError("The logarithm base must be greater than 1")
 
 
@@ -209,12 +210,7 @@ class DiversityStats:
         check_params(window_len, mtld_threshold, mtld_min_len, hdd_sample_size, log_base)
         if not isinstance(words, Iterator):
             check_sequence(words)
-        try:
-            self.words = tuple(words)
-        except TypeError as e:
-            raise SourceTypeError(
-                f"A list of words is expected, not {type(words).__name__}"
-            ) from e
+        self.words = tuple(words)
         check_words(self.words)
         if not self.words:
             raise SourceError("The data source has no words")
@@ -581,7 +577,8 @@ def calc_sttr(text: Sequence[str], base: float = DIVERSITY_LOG_BASE) -> float:
         base (float): Logarithm base
 
     Returns:
-        float: Value of the metric, 0 for an empty text
+        float: Value of the metric, 0 for an empty text, nan for a text of one
+            lexeme or of no more words than the logarithm base
 
     Raises:
         ParameterError: If the logarithm base is not greater than 1
@@ -589,10 +586,12 @@ def calc_sttr(text: Sequence[str], base: float = DIVERSITY_LOG_BASE) -> float:
     """
     _check_log_base(base)
     n_words = len(text)
-    n_lexemes = len(set(text))
-    if n_words < 2 or n_lexemes == 1:
+    if not n_words:
         return 0
-    return safe_divide(log(log(n_lexemes, base), base), log(log(n_words, base), base))
+    n_lexemes = len(set(text))
+    if n_lexemes == 1 or log(n_words, base) <= 1:
+        return nan
+    return log(log(n_lexemes, base), base) / log(log(n_words, base), base)
 
 
 @_checks_words
@@ -639,7 +638,8 @@ def calc_dttr(text: Sequence[str], base: float = DIVERSITY_LOG_BASE) -> float:
         base (float): Logarithm base
 
     Returns:
-        float: Value of the metric, 0 for an empty text
+        float: Value of the metric, 0 for an empty text, inf for a text without
+            repeated words
 
     Raises:
         ParameterError: If the logarithm base is not greater than 1
@@ -651,7 +651,7 @@ def calc_dttr(text: Sequence[str], base: float = DIVERSITY_LOG_BASE) -> float:
         return 0
     n_lexemes = len(set(text))
     log_words = log(n_words, base)
-    return safe_divide(log_words**2, log_words - log(n_lexemes, base))
+    return safe_divide(log_words**2, log_words - log(n_lexemes, base), inf)
 
 
 @_checks_words
@@ -674,6 +674,7 @@ def calc_mattr(text: Sequence[str], window_len: int = MATTR_WINDOW_LEN) -> float
         ParameterError: If the window size is less than one
         SourceTypeError: If the words are not a list of strings (check_words)
     """
+    check_integer(window_len, "window size")
     if window_len < 1:
         raise ParameterError("The window size must be greater than 0")
     n_words = len(text)
@@ -712,6 +713,7 @@ def calc_msttr(text: Sequence[str], segment_len: int = MATTR_WINDOW_LEN) -> floa
         ParameterError: If the segment size is less than one
         SourceTypeError: If the words are not a list of strings (check_words)
     """
+    check_integer(segment_len, "segment size")
     if segment_len < 1:
         raise ParameterError("The segment size must be greater than 0")
     n_words = len(text)
@@ -727,6 +729,7 @@ def _check_mtld_params(threshold: float, min_len: int) -> None:
     """Checking the TTR threshold and the minimum factor length of MTLD"""
     if not 0 < threshold < 1:
         raise ParameterError("The TTR threshold of MTLD must lie in the interval (0, 1)")
+    check_integer(min_len, "minimum factor length of MTLD")
     if min_len < 0:
         raise ParameterError("The minimum factor length of MTLD cannot be negative")
 
@@ -821,7 +824,10 @@ def _mtld_factor_lengths(
         The number of lexemes on the stretch [start, pos] is the number of its
         positions whose previous occurrence of the word lies before start; the
         starts are processed in blocks over windows of MTLD_WINDOW_LEN offsets,
-        and the threshold is compared in integers through _max_types
+        and the threshold is compared in integers through _max_types. A factor
+        of length L closes only with at least L − max_types[L] repeated words,
+        so the repeats after a start bound the length of its factor: those of
+        the rest of the text, or of the whole text with wrap
     """
     n_words = len(text)
     if not n_words:
@@ -830,10 +836,21 @@ def _mtld_factor_lengths(
     padded = np.concatenate([previous, np.full(MTLD_WINDOW_LEN, previous.size)])
     windows = sliding_window_view(padded, MTLD_WINDOW_LEN)
     max_types = _max_types(threshold, n_words + MTLD_WINDOW_LEN)
+    # Number of the factor lengths that need at most so many repeats
+    fits = np.cumsum(np.bincount(np.arange(1, max_types.size) - max_types[1:]))
+    if wrap:
+        repeats = np.full(n_words, n_words - np.count_nonzero(previous[:n_words] < 0))
+    else:
+        repeated = np.bincount(previous[previous >= 0], minlength=n_words)
+        repeats = np.cumsum(repeated[::-1])[::-1]
+    reach = fits[np.minimum(repeats, fits.size - 1)]
     lengths = np.zeros(n_words, dtype=np.int64)
     for block_start in range(0, n_words, MTLD_BLOCK_SIZE):
         pending = np.arange(block_start, min(block_start + MTLD_BLOCK_SIZE, n_words))
-        limits = np.full_like(pending, n_words) if wrap else n_words - pending
+        limits = np.minimum(reach[pending], n_words if wrap else n_words - pending)
+        reachable = limits >= max(min_len, 1)
+        pending = pending[reachable]
+        limits = limits[reachable]
         counts = np.zeros(pending.size, dtype=np.int32)
         offset = 0
         while pending.size:
@@ -863,10 +880,12 @@ def calc_mamtld(
     Computing the Moving Average Measure of Textual Lexical Diversity (MA-MTLD)
 
     Description:
-        A moving-window modification of MTLD (MTLD-MA of koRpus): a factor starts
-        at every position of the text, the value is the mean length of the completed
-        factors over a forward and a backward pass; factors close as in calc_mtld,
-        those not completed by the end of the text are ignored
+        A moving-window modification of MTLD after MTLD-MA of koRpus: a factor
+        starts at every position of the text, the value is the mean length of the
+        completed factors over a forward and a backward pass; factors close as in
+        calc_mtld, those not completed by the end of the text are ignored. koRpus
+        makes the forward pass only, closes a factor at TTR strictly below the
+        threshold and drops the factors shorter than the minimum length
 
     Arguments:
         text (list[str]): List of words
@@ -924,13 +943,13 @@ def calc_hdd(text: Sequence[str], sample_size: int = HDD_SAMPLE_SIZE) -> float:
     Computing the Hypergeometric Distribution D (HD-D)
 
     Description:
-        An implementation of the VocD algorithm (McCarthy & Jarvis, 2010): the
-        expected TTR of a random sample of sample_size words of the text, computed
-        from the hypergeometric distribution
+        An alternative to vocd-D (McCarthy & Jarvis, 2010): the expected TTR of a
+        random sample of sample_size words of the text, computed exactly from the
+        hypergeometric distribution, without drawing samples
 
     Arguments:
         text (list[str]): List of words
-        sample_size (int): Segment length
+        sample_size (int): Sample size in words
 
     Returns:
         float: Value of the metric, nan for texts shorter than 50 words or the sample size
@@ -939,6 +958,7 @@ def calc_hdd(text: Sequence[str], sample_size: int = HDD_SAMPLE_SIZE) -> float:
         ParameterError: If the sample size is less than one
         SourceTypeError: If the words are not a list of strings (check_words)
     """
+    check_integer(sample_size, "HD-D sample size")
     if sample_size < 1:
         raise ParameterError("The HD-D sample size must be greater than 0")
     n_words = len(text)
@@ -1420,7 +1440,7 @@ def calc_zipf_alpha(text: Sequence[str]) -> float:
         return nan
     ranks = np.arange(1, len(frequencies) + 1)
     slope = np.polyfit(np.log(ranks), np.log(frequencies), 1)[0]
-    return float(-slope)
+    return float(-slope) or 0.0
 
 
 class ZipfMandelbrot(NamedTuple):
@@ -1626,10 +1646,12 @@ def calc_windowed(
         ParameterError: If the window size, the step or the confidence level are set incorrectly
         SourceTypeError: If the words are not a list of strings (check_words)
     """
+    check_integer(window_len, "window size")
     if window_len < 1:
         raise ParameterError("The window size must be greater than 0")
     if step is None:
         step = window_len
+    check_integer(step, "window step")
     if step < 1:
         raise ParameterError("The window step must be greater than 0")
     if not 0 < confidence < 1:

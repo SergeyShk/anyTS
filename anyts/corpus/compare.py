@@ -7,6 +7,7 @@ import pandas as pd
 from scipy.stats import mannwhitneyu
 
 from ..exceptions import ParameterError
+from ..utils import check_integer
 
 Values = Sequence[float] | np.ndarray[Any, Any]
 
@@ -77,13 +78,14 @@ def compare_features(
     Raises:
         ParameterError: If the number of samples is below one
     """
+    check_integer(n_bootstrap, "number of bootstrap samples")
     if n_bootstrap < 1:
         raise ParameterError("The number of bootstrap samples must be greater than 0")
     rng = np.random.default_rng(seed)
     rows = {}
     for name in table_a.columns.union(table_b.columns, sort=False):
-        values_a, texts_a = _finite(table_a, name)
-        values_b, texts_b = _finite(table_b, name)
+        values_a, texts_a = _column(table_a, name)
+        values_b, texts_b = _column(table_b, name)
         rows[name] = compare_values(values_a, values_b, n_bootstrap, rng, texts_a, texts_b)
     result = pd.DataFrame.from_dict(rows, orient="index", columns=list(COMPARISON_COLUMNS))
     result["p_holm"] = holm_correction(result["p_value"].to_numpy())
@@ -105,41 +107,50 @@ def compare_features(
     )
 
 
-def _finite(table: pd.DataFrame, name: str) -> tuple[np.ndarray, np.ndarray | None]:
+def _column(table: pd.DataFrame, name: str) -> tuple[np.ndarray, np.ndarray | None]:
     """
-    Finite values of a column and the texts of their windows (level text of the index, or None)
+    Values of a column and the texts of their windows (level text of the index, or None)
     """
     if name not in table:
         return np.array([]), None
-    values = table[name].to_numpy(dtype=float)
-    finite = np.isfinite(values)
     texts = (
-        table.index.get_level_values("text").to_numpy()[finite]
-        if "text" in table.index.names
-        else None
+        table.index.get_level_values("text").to_numpy() if "text" in table.index.names else None
     )
-    return np.asarray(values[finite], dtype=float), texts
+    return table[name].to_numpy(dtype=float), texts
+
+
+def _finite(values: Values, texts: Values | None) -> tuple[np.ndarray, np.ndarray | None]:
+    """
+    Finite values and their texts
+    """
+    array = np.asarray(values, dtype=float)
+    _check_texts(array, texts)
+    finite = np.isfinite(array)
+    return array[finite], None if texts is None else np.asarray(texts)[finite]
 
 
 def compare_values(
-    values_a: np.ndarray,
-    values_b: np.ndarray,
+    values_a: Values,
+    values_b: Values,
     n_bootstrap: int = 1000,
     rng: np.random.Generator | None = None,
-    texts_a: np.ndarray | None = None,
-    texts_b: np.ndarray | None = None,
+    texts_a: Values | None = None,
+    texts_b: Values | None = None,
 ) -> tuple[float, ...]:
     """
     Comparing two sets of values of a feature
 
+    Description:
+        Undefined and infinite values are dropped together with their texts
+
     Arguments:
-        values_a (ndarray): Finite values in the first corpus
-        values_b (ndarray): Finite values in the second corpus
+        values_a (list[float]): Values in the first corpus
+        values_b (list[float]): Values in the second corpus
         n_bootstrap (int): Number of bootstrap samples
         rng (Generator): Random number generator
-        texts_a (ndarray): Texts of the values in the first corpus for the
+        texts_a (list): Texts of the values in the first corpus for the
             bootstrap; None - every value a text of its own
-        texts_b (ndarray): Texts of the values in the second corpus
+        texts_b (list): Texts of the values in the second corpus
 
     Returns:
         tuple[float, ...]: Values in the order of COMPARISON_COLUMNS, p_holm - nan
@@ -147,8 +158,8 @@ def compare_values(
     Raises:
         ParameterError: If the texts are given and are not as many as the values
     """
-    _check_texts(values_a, texts_a)
-    _check_texts(values_b, texts_b)
+    values_a, texts_a = _finite(values_a, texts_a)
+    values_b, texts_b = _finite(values_b, texts_b)
     n_a, n_b = len(values_a), len(values_b)
     n_texts_a = n_a if texts_a is None else len(np.unique(texts_a))
     n_texts_b = n_b if texts_b is None else len(np.unique(texts_b))
@@ -226,7 +237,7 @@ def calc_cliff_delta(values_a: Values, values_b: Values) -> float:
         values_b (list[float]): Values in the second corpus
 
     Returns:
-        float: Cliff's delta, nan for an empty set
+        float: Cliff's delta, nan for an empty set or an undefined value
 
     Example:
         >>> from anyts.corpus import calc_cliff_delta
@@ -234,11 +245,12 @@ def calc_cliff_delta(values_a: Values, values_b: Values) -> float:
         0.25
     """
     a = np.asarray(values_a, dtype=float)
-    b = np.asarray(values_b, dtype=float)
-    if not len(a) or not len(b):
+    b = np.sort(np.asarray(values_b, dtype=float))
+    if not len(a) or not len(b) or np.isnan(a).any() or np.isnan(b).any():
         return nan
-    comparison = np.sign(a[:, None] - b[None, :])
-    return float(comparison.mean())
+    greater = np.searchsorted(b, a, "left").sum()
+    less = (len(b) - np.searchsorted(b, a, "right")).sum()
+    return float((greater - less) / (len(a) * len(b)))
 
 
 def bootstrap_median_diff(
@@ -284,6 +296,7 @@ def bootstrap_median_diff(
         >>> bootstrap_median_diff([3.0, 3.0, 3.0], [1.0, 1.0, 1.0], n_bootstrap=10)
         (2.0, 2.0)
     """
+    check_integer(n_bootstrap, "number of bootstrap samples")
     if n_bootstrap < 1:
         raise ParameterError("The number of bootstrap samples must be greater than 0")
     if not 0 < confidence < 1:

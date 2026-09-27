@@ -6,7 +6,7 @@
 Functions that measure how the sentences of a text are tied together by shared elements, in the manner of Coh-Metrix. A sentence is given as the collection of its elements - lemmas of nouns, arguments or content words, values of a feature of its verbs - so the functions see no language: a library chooses the elements.
 
 <!-- --8<-- [start:cohesion-checks] -->
-A list of sentences that is a string, a `Doc` or an iterator raises `SourceTypeError`, and so does a sentence that is not a list of strings ([`check_words`](../utils.md#check_words)): a string would be read character by character, an iterator exhausted by the first pass, and spaCy tokens never match, since a token equals only itself.
+A list of sentences that is a string, a `Doc` or an iterator raises `SourceTypeError`, and so does a sentence that is not a list of strings (`check_words`): a string would be read character by character, an iterator exhausted by the first pass, and spaCy tokens never match, since a token equals only itself.
 <!-- --8<-- [end:cohesion-checks] -->
 
 ## calc_overlap
@@ -51,7 +51,7 @@ and 0 for two empty sets.
 ## calc_overlaps
 
 <!-- --8<-- [start:calc_overlaps] -->
-The values of `calc_overlap` and `calc_proportional_overlap` over the adjacent and over all the pairs at once, as an `Overlap` named tuple with the fields `adjacent`, `all`, `prop_adjacent` and `prop_all`. The values over all the pairs are computed without going through every pair: the pairs sharing an element are counted over bit masks of the sentences, and the sum of the Dice coefficients over the histograms of the lengths of the sentences holding every element. That sum is added by `math.fsum`, so it is exactly rounded and does not depend on the order of the elements. Without `proportional` the fields `prop_adjacent` and `prop_all` are `nan`.
+The values of `calc_overlap` and `calc_proportional_overlap` over the adjacent and over all the pairs at once, as an `Overlap` named tuple with the fields `adjacent`, `all`, `prop_adjacent` and `prop_all`. The values over all the pairs are computed without going through every pair: the pairs sharing an element are counted over bit masks of the sentences, and the sum of the Dice coefficients over the histograms of the lengths of the sentences holding every element. That sum is added by `math.fsum`, so it does not depend on the order of the elements. Without `proportional` the fields `prop_adjacent` and `prop_all` are `nan`.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |

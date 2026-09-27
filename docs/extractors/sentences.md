@@ -12,7 +12,7 @@ A class for extracting sentences from a text. It allows using different tokenize
 ## Language hooks
 
 <!-- --8<-- [start:SentsExtractor-hooks] -->
-The default tokenizer is the method `sentenize(text)`, which a language library overrides in a subclass. Here it splits the text at whitespace after `.`, `!`, `?` or `…`, optionally followed by a closing quote or bracket; it knows no abbreviations, so `e.g. this` is two sentences.
+The default tokenizer is the method `sentenize(text)`, which a language library overrides in a subclass. Here it splits the text at whitespace after `.`, `!`, `?` or `…`, optionally followed by a closing quote or bracket; it knows no abbreviations, so `e.g. this` is two sentences. A piece without words, such as the dots of a spaced ellipsis `. . .` or a lone `!`, stays with the sentence before it, or with the one after it at the start of the text.
 <!-- --8<-- [end:SentsExtractor-hooks] -->
 
 !!! note "Note"
@@ -28,7 +28,7 @@ The default tokenizer is the method `sentenize(text)`, which a language library 
 | `max_len` | int | `0` | Maximum length of an extracted sentence, `0` for no bound |
 
 !!! note "Note"
-    A regular expression as the tokenizer is a separator: the text is split with `re.split`. Empty and whitespace-only sentences are dropped.
+    A regular expression as the tokenizer is a separator: the text is split with `re.split`. The sentences of any tokenizer are stripped of whitespace at the edges, before the length bounds, and empty ones are dropped.
 <!-- --8<-- [end:SentsExtractor-parameters] -->
 
 ## Methods

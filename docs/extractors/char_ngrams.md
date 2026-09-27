@@ -14,7 +14,7 @@ Whitespace runs are collapsed into a single space beforehand, punctuation marks 
 ## Language hooks
 
 <!-- --8<-- [start:CharNgramsExtractor-hooks] -->
-The default word tokenizer for `within_words` is the method `tokenize(text)`, which a language library overrides in a subclass. Here it takes the runs of word characters `\w+`, so `don't` gives the words `don` and `t`.
+The default word tokenizer for `within_words` is the method `tokenize(text)`, which a language library overrides in a subclass. Here it is the default tokenizer of `WordsExtractor`: a word character `\w` followed by word characters, combining marks, zero-width joiners and non-joiners and soft hyphens, so `don't` gives the words `don` and `t`.
 <!-- --8<-- [end:CharNgramsExtractor-hooks] -->
 
 ## Parameters

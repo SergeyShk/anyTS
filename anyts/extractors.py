@@ -1,16 +1,64 @@
 import re
+import sys
+import unicodedata
 from abc import ABCMeta, abstractmethod
 from collections import Counter
 from collections.abc import Callable, Collection, Iterable, Iterator
+from functools import cache
 from re import Pattern
 from typing import Any, ClassVar
 
 from .exceptions import ParameterError, SourceTypeError
-from .utils import check_sequence, is_punctuation
+from .utils import check_integer, check_words, has_words, is_punctuation
 
 Tokenizer = Pattern[str] | Callable[[str], Iterable[str]]
 SENTENCE_BOUNDARY = re.compile(r"(?<=[.!?…])\s+|(?<=[.!?…][\"'»”’)\]])\s+")
-WORD_PATTERN = re.compile(r"\w+")
+
+
+def _char_class(chars: Iterable[str]) -> str:
+    """
+    Building the body of a regular expression class from characters
+
+    Arguments:
+        chars (iterable[str]): Characters in ascending order
+
+    Returns:
+        str: Ranges of consecutive characters, escaped
+    """
+    ranges: list[list[int]] = []
+    for code in map(ord, chars):
+        if ranges and ranges[-1][1] == code - 1:
+            ranges[-1][1] = code
+        else:
+            ranges.append([code, code])
+    return "".join(
+        re.escape(chr(first)) + ("-" + re.escape(chr(last)) if last > first else "")
+        for first, last in ranges
+    )
+
+
+@cache
+def _word_pattern() -> Pattern[str]:
+    """
+    Pattern of a word of the default tokenizers
+
+    Description:
+        A word character \\w followed by word characters, combining marks, the
+        zero-width non-joiner and joiner and the soft hyphen. The combining marks
+        are read from unicodedata on first use, which takes tens of milliseconds,
+        so a library that overrides the tokenizers does not pay for it on import
+
+    Returns:
+        Pattern: Compiled regular expression
+    """
+    continuation = _char_class(
+        char
+        for char in map(chr, range(sys.maxunicode + 1))
+        if unicodedata.category(char)[0] == "M" or char in "\u00ad\u200c\u200d"
+    )
+    return re.compile(rf"\w[\w{continuation}]*")
+
+
 NUMBER_PATTERN = re.compile(r"[+\-−]?\d+(?:[.,:/-]\d+)*%?")
 
 
@@ -24,8 +72,11 @@ def _check_length_bounds(min_len: int, max_len: int, unit: str) -> None:
         unit (str): Name of the unit, for the message of the error
 
     Raises:
-        ParameterError: If a bound is negative or the minimum is greater than the maximum
+        ParameterError: If a bound is not an integer, is negative or the minimum
+            is greater than the maximum
     """
+    check_integer(min_len, f"minimum {unit} length")
+    check_integer(max_len, f"maximum {unit} length")
     if min_len < 0 or max_len < 0:
         raise ParameterError(f"The {unit} length bounds cannot be negative")
     if min_len and max_len and min_len > max_len:
@@ -44,6 +95,25 @@ def _check_text(text: object) -> None:
     """
     if not isinstance(text, str):
         raise SourceTypeError(f"A text string is expected, not {type(text).__name__}")
+
+
+def _check_tokens(tokens: Iterator[object]) -> Iterator[str]:
+    """
+    Checking that the tokenizer gives strings
+
+    Arguments:
+        tokens (iterator[object]): Tokens of the tokenizer
+
+    Returns:
+        iterator[str]: The same tokens
+
+    Raises:
+        SourceTypeError: If a token is not a string, such as a spaCy token
+    """
+    for token in tokens:
+        if not isinstance(token, str):
+            raise SourceTypeError(f"The tokenizer must return strings, not {type(token).__name__}")
+        yield token
 
 
 class Extractor(metaclass=ABCMeta):
@@ -88,17 +158,19 @@ class Extractor(metaclass=ABCMeta):
 
         Raises:
             SourceTypeError: If the text is not a string, the tokenizer is not callable
-                or returns a non-iterable object; the tokenizer's own errors are not caught
+                or returns something other than strings; the tokenizer's own errors
+                are not caught
         """
         _check_text(text)
         tokenizer = self.tokenizer or default
         if isinstance(tokenizer, Pattern):
-            return iter(re.split(tokenizer, text))
+            # re.split gives None for a group that took no part in the match
+            return (token for token in tokenizer.split(text) if token is not None)
         if not callable(tokenizer):
             raise SourceTypeError("The tokenizer is set incorrectly")
         tokens = tokenizer(text)
         try:
-            return iter(tokens)
+            return _check_tokens(iter(tokens))
         except TypeError as e:
             raise SourceTypeError("The tokenizer must return an iterable object") from e
 
@@ -118,7 +190,8 @@ class SentsExtractor(Extractor):
     Description:
         The default tokenizer is the method sentenize, which a language library
         overrides; here it splits the text at whitespace after ., !, ? or …,
-        optionally followed by a closing quote or bracket
+        optionally followed by a closing quote or bracket. The sentences are
+        stripped of whitespace at the edges
 
     Arguments:
         tokenizer (pattern|callable): Tokenizer or regular expression
@@ -130,7 +203,8 @@ class SentsExtractor(Extractor):
         extract: Extracting sentences from a text
 
     Raises:
-        ParameterError: If a length bound is negative or the minimum is greater than the maximum
+        ParameterError: If a length bound is not an integer, is negative or the minimum
+            is greater than the maximum
     """
 
     def __init__(
@@ -147,13 +221,25 @@ class SentsExtractor(Extractor):
         """
         Splitting a text into sentences by default
 
+        Description:
+            A piece without words, such as the dots of a spaced ellipsis or a lone
+            "!", stays with the sentence before it, or with the one after it at
+            the start of the text
+
         Arguments:
             text (str): Text string
 
         Returns:
             iterable[str]: Sentences
         """
-        return SENTENCE_BOUNDARY.split(text)
+        pieces = SENTENCE_BOUNDARY.split(text)
+        sents = pieces[:1]
+        for separator, piece in zip(SENTENCE_BOUNDARY.findall(text), pieces[1:], strict=True):
+            if has_words(piece) and has_words(sents[-1]):
+                sents.append(piece)
+            else:
+                sents[-1] += separator + piece
+        return sents
 
     def extract(self, text: str) -> tuple[str, ...]:
         """
@@ -163,13 +249,12 @@ class SentsExtractor(Extractor):
             text (str): Text string
 
         Returns:
-            sents (tuple[str]): Tuple of extracted sentences without empty
-                and whitespace-only ones
+            sents (tuple[str]): Tuple of extracted sentences, stripped, without empty ones
 
         Raises:
             SourceTypeError: If the text is not a string or the tokenizer is set incorrectly
         """
-        sents = (sent for sent in self._tokenize(text, self.sentenize) if sent.strip())
+        sents = (sent for sent in map(str.strip, self._tokenize(text, self.sentenize)) if sent)
         if self.min_len > 0:
             sents = (sent for sent in sents if len(sent) >= self.min_len)
         if self.max_len > 0:
@@ -192,12 +277,13 @@ class WordsExtractor(Extractor):
 
     Description:
         The language comes through three hooks a language library overrides:
-        the method tokenize (by default the runs of word characters \\w+), the
-        method lemmatize (by default the word itself) and the class attribute
-        number_pattern (by default signed numbers with separators and an optional
-        percent sign: -5, 1990-1995, 1,500.50, 12/03/2020, 3:30, 10%). The filters
-        are applied in order: punctuation, numbers, lemmatization, lower case,
-        stop words, word length
+        the method tokenize (by default a word character \\w followed by word
+        characters, combining marks, zero-width joiners and non-joiners and soft
+        hyphens), the method lemmatize (by default the word itself) and the class
+        attribute number_pattern (by default signed numbers with separators and an
+        optional percent sign: -5, 1990-1995, 1,500.50, 12/03/2020, 3:30, 10%). The
+        filters are applied in order: punctuation, numbers, lemmatization, lower
+        case, stop words, word length
 
     Arguments:
         tokenizer (pattern|callable): Tokenizer or regular expression
@@ -217,9 +303,11 @@ class WordsExtractor(Extractor):
         get_most_common: Getting a counter of the top words
 
     Raises:
-        ParameterError: If the lower N-gram bound is less than one or greater than the upper
-        ParameterError: If a length bound is negative or the minimum is greater than the maximum
-        SourceTypeError: If the stop words are a string
+        ParameterError: If the N-gram range is not a pair of integers, its lower bound
+            is less than one or greater than the upper
+        ParameterError: If a length bound is not an integer, is negative or the minimum
+            is greater than the maximum
+        SourceTypeError: If the stop words are not a list of strings
     """
 
     number_pattern: ClassVar[Pattern[str]] = NUMBER_PATTERN
@@ -240,14 +328,20 @@ class WordsExtractor(Extractor):
         self.filter_punct = filter_punct
         self.filter_nums = filter_nums
         self.use_lexemes = use_lexemes
-        check_sequence(stopwords, "stopwords")
+        if stopwords is not None:
+            check_words(stopwords, "stopwords")
         self.stopwords = frozenset(word.lower() for word in stopwords) if stopwords else None
         self.lowercase = lowercase
-        self.ngram_range = ngram_range
-        if self.ngram_range[0] < 1:
+        if not isinstance(ngram_range, tuple | list) or len(ngram_range) != 2:
+            raise ParameterError("The N-gram range must be a pair of integers")
+        lower, upper = ngram_range
+        check_integer(lower, "lower N-gram bound")
+        check_integer(upper, "upper N-gram bound")
+        if lower < 1:
             raise ParameterError("The lower N-gram bound must be greater than 0")
-        if self.ngram_range[0] > self.ngram_range[1]:
+        if lower > upper:
             raise ParameterError("The lower N-gram bound is greater than the upper")
+        self.ngram_range = (lower, upper)
         _check_length_bounds(min_len, max_len, "word")
         self.words: tuple[str, ...] = ()
 
@@ -261,7 +355,7 @@ class WordsExtractor(Extractor):
         Returns:
             iterable[str]: Words
         """
-        return WORD_PATTERN.findall(text)
+        return _word_pattern().findall(text)
 
     def lemmatize(self, word: str) -> str:
         """
@@ -283,13 +377,12 @@ class WordsExtractor(Extractor):
             text (str): Text string
 
         Returns:
-            words (tuple[str]): Tuple of extracted words without empty ones
+            words (tuple[str]): Tuple of extracted words without empty and whitespace ones
 
         Raises:
             SourceTypeError: If the text is not a string or the tokenizer is set incorrectly
         """
-        # re.split leaves an empty string after a final separator
-        words = (word for word in self._tokenize(text, self.tokenize) if word)
+        words = (word for word in self._tokenize(text, self.tokenize) if word.strip())
         if self.filter_punct:
             words = (word for word in words if not is_punctuation(word))
         if self.filter_nums:
@@ -320,8 +413,9 @@ class WordsExtractor(Extractor):
             list: List of the top words
 
         Raises:
-            ParameterError: If the number of words is less than 1
+            ParameterError: If the number of words is not an integer or is less than 1
         """
+        check_integer(n, "number of words")
         if n < 1:
             raise ParameterError("The number of words must be greater than 0")
         return Counter(self.words).most_common(n)
@@ -361,8 +455,7 @@ class CharNgramsExtractor(Extractor):
         space and punctuation kept (Stamatatos 2009); with within_words, over
         each word of the tokenizer, punctuation dropped, so words shorter than
         N yield no N-grams. The default word tokenizer is the method tokenize,
-        which a language library overrides; here it takes the runs of word
-        characters \\w+
+        which a language library overrides; here it is that of WordsExtractor
 
     Arguments:
         n (int): N-gram length in characters
@@ -377,7 +470,7 @@ class CharNgramsExtractor(Extractor):
         get_most_common: Getting a counter of the top N-grams
 
     Raises:
-        ParameterError: If the N-gram length is less than one
+        ParameterError: If the N-gram length is not an integer or is less than one
     """
 
     def __init__(
@@ -388,6 +481,7 @@ class CharNgramsExtractor(Extractor):
         tokenizer: Tokenizer | None = None,
     ) -> None:
         super().__init__(tokenizer)
+        check_integer(n, "N-gram length")
         if n < 1:
             raise ParameterError("The N-gram length must be greater than 0")
         self.n = n
@@ -405,7 +499,7 @@ class CharNgramsExtractor(Extractor):
         Returns:
             iterable[str]: Words
         """
-        return WORD_PATTERN.findall(text)
+        return _word_pattern().findall(text)
 
     def extract(self, text: str) -> tuple[str, ...]:
         """
@@ -447,8 +541,9 @@ class CharNgramsExtractor(Extractor):
             list: List of the top N-grams
 
         Raises:
-            ParameterError: If the number of N-grams is less than 1
+            ParameterError: If the number of N-grams is not an integer or is less than 1
         """
+        check_integer(n, "number of N-grams")
         if n < 1:
             raise ParameterError("The number of N-grams must be greater than 0")
         return Counter(self.ngrams).most_common(n)

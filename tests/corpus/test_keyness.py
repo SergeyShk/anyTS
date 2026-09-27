@@ -53,11 +53,16 @@ def test_effect_sizes():
     assert calc_ell(10, 5, 1000, 2000) == pytest.approx(
         calc_log_likelihood(10, 5, 1000, 2000) / (3000 * log(5))
     )
+    # The least expected frequencies are 1/3 and 1: the logarithm is negative and zero
     assert isnan(calc_ell(1, 0, 1000, 2000))
-    assert isnan(calc_ell(5, 0, 1000, 2000))
-    assert not isnan(calc_ell(9, 0, 1000, 2000))
-    assert isnan(calc_ell(4, 0, 4, 2))
+    assert isnan(calc_ell(3, 0, 1000, 2000))
+    assert calc_ell(5, 0, 1000, 2000) == pytest.approx(
+        calc_log_likelihood(5, 0, 1000, 2000) / (3000 * log(5 / 3))
+    )
+    assert 0 < calc_ell(5, 0, 1000, 1000) < 0.01
     assert 0 < calc_ell(30, 5, 60, 60) < 1
+    # Just above one on tiny corpora the measure exceeds one
+    assert calc_ell(4, 0, 4, 2) > 1
     assert calc_odds_ratio(10, 5, 1000, 2000) == pytest.approx((10 / 990) / (5 / 1995))
     assert calc_odds_ratio(10, 10, 10, 20) == inf
     assert calc_odds_ratio(10, 20, 20, 20) == 0
@@ -176,6 +181,18 @@ def test_frequency_reference_missing_keys_are_never_negative():
     assert "xylophone" in {keyword.word for keyword in positive}
 
 
+def test_frequency_reference_negative_keywords_are_kept_keys():
+    reference = FrequencyReference(
+        {"the": 60_000.0, "cat": 50.0, "sleeps": 20.0, "and": 28_000.0},
+        1_000_000,
+        keep=lambda word: word not in {"the", "and"},
+    )
+    # "the" and "and" are not counted in the target, so they are no negative keywords
+    assert keyness(["the", "cat", "sleeps", "and", "the", "cat"], reference, positive=False) == []
+    negative = keyness(["cat"] * 3, reference._replace(keep=None), positive=False)
+    assert [keyword.word for keyword in negative] == ["the", "and", "sleeps"]
+
+
 class Lookups(Mapping):
     """Frequencies that may be looked up but not iterated"""
 
@@ -222,8 +239,11 @@ def test_keyness_measures(measure):
 
 def test_keyness_of_small_corpora_by_the_effect_size():
     keywords = keyness(target, reference, measure="ell")
-    assert all(isnan(keyword.score) for keyword in keywords)
-    assert [keyword.word for keyword in keywords[:2]] == ["in", "kitty"]
+    # Only "in" is expected more than once in the smaller corpus: 8 · 3 / 18 times
+    assert keywords[0].word == "in"
+    assert keywords[0].score == calc_ell(2, 1, 10, 8)
+    assert all(isnan(keyword.score) for keyword in keywords[1:])
+    assert keywords[1].word == "kitty"
     found = keyness(["a"] * 30 + ["b"] * 30, ["a"] * 5 + ["b"] * 55, measure="ell")
     assert found[0].score == pytest.approx(calc_ell(30, 5, 60, 60))
 
@@ -239,6 +259,7 @@ def test_keyness_by_the_odds_ratio():
         ({"measure": "mi"}, ParameterError),
         ({"top_n": 0}, ParameterError),
         ({"top_n": -1}, ParameterError),
+        ({"top_n": 2.0}, ParameterError),
     ],
 )
 def test_keyness_errors(kwargs, error):

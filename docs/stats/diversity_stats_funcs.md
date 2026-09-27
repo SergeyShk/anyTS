@@ -103,7 +103,7 @@ Computation of the Summer Type-Token Ratio (STTR).
 A logarithmic modification of TTR (Summer, 1966).
 
 !!! note "Note"
-    The value depends on the logarithm base, 10 by default. See [conventions](diversity_stats.md#conventions).
+    The value depends on the logarithm base, 10 by default. See [conventions](diversity_stats.md#conventions). For a text of one lexeme the numerator is undefined, and for a text of no more words than the base the denominator $\log \log N$ is zero or negative, so the value is `nan` there, and so is every window of `calc_windowed` that short.
 
 Formula:
 
@@ -154,10 +154,10 @@ Parameters:
 <!-- --8<-- [start:calc_dttr] -->
 Computation of the Dugast Type-Token Ratio (DTTR).
 
-A logarithmic modification of TTR (Dugast, 1978).
+A logarithmic modification of TTR (Dugast, 1978), the reciprocal of the Maas metric.
 
 !!! note "Note"
-    The value depends on the logarithm base, 10 by default. See [conventions](diversity_stats.md#conventions).
+    The value depends on the logarithm base, 10 by default. See [conventions](diversity_stats.md#conventions). A text without repeated words has an infinite value, like the other reciprocal measures.
 
 Formula:
 
@@ -265,7 +265,7 @@ Parameters:
 <!-- --8<-- [start:calc_mamtld] -->
 Computation of the Moving Average Measure of Textual Lexical Diversity (MA-MTLD).
 
-A moving-window modification of MTLD (koRpus MTLD-MA): a factor starts at every position of the text, the value is the mean length of completed factors over two passes, forward and backward. Factors not completed by the end of the text are ignored.
+A moving-window modification of MTLD after MTLD-MA of koRpus: a factor starts at every position of the text, the value is the mean length of completed factors over two passes, forward and backward. Factors not completed by the end of the text are ignored. The values differ from those of koRpus, which makes the forward pass only, closes a factor at TTR strictly below the threshold and drops the factors shorter than its minimum length instead of extending them to it.
 
 !!! warning "Warning"
     If no factor completes, the function returns `nan`. The metric is unstable on short texts.
@@ -309,13 +309,7 @@ Parameters:
 <!-- --8<-- [start:calc_hdd] -->
 Computation of the Hypergeometric Distribution D (HD-D).
 
-The most reliable implementation of the VocD algorithm (McCarthy & Jarvis, 2010).
-
-Algorithm:
-
-1. Random sampling of segments of 32 to 50 words from the text
-2. Computing TTR for every segment
-3. Averaging the values
+An alternative to vocd-D (McCarthy & Jarvis, 2010): instead of drawing random segments of the text, it computes the expected TTR of a random sample of `sample_size` words exactly. For every lexeme the hypergeometric distribution gives the probability that the sample holds it at least once; the sum of these probabilities is the expected number of lexemes in the sample, and HD-D is that number divided by the sample size. The value involves no randomness.
 
 !!! warning "Warning"
     For texts shorter than 50 words and shorter than the sample size the metric is undefined; the function returns `nan`.
@@ -325,7 +319,7 @@ Parameters:
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
 | `text` | list[str] | `-` | List of words |
-| `sample_size` | int | `42` | Segment length, 35 to 50 in the literature |
+| `sample_size` | int | `42` | Sample size in words, 35 to 50 in the literature |
 <!-- --8<-- [end:calc_hdd] -->
 
 ## Simpson's index (D)

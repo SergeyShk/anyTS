@@ -46,7 +46,7 @@ The values of some metrics depend on conventions that differ between libraries. 
 | MATTR window and MSTTR segment | 50 | quanteda and koRpus - 100 |
 | TTR threshold for MTLD | 0.72 | 0.66-0.75 in the literature |
 | Comparison with the MTLD threshold | a factor closes at TTR ≤ 0.72 (McCarthy & Jarvis, 2010) | lexical-diversity and TAALED - strict `<`; the values differ when TTR hits the threshold exactly |
-| Minimum MTLD factor length | 10 | koRpus applies it only to MA-MTLD, LexicalRichness and textcomplexity do not apply it |
+| Minimum MTLD factor length | 10 | koRpus applies it only to MTLD-MA and drops the shorter factors instead of extending them, LexicalRichness and textcomplexity do not apply it |
 | HD-D sample size | 42 | 35-50 in the literature |
 
 By Zenker and Kyle (2021) MATTR, MTLD and HD-D are stable on texts of 50-200 words and longer, MTLD-W, MA-MTLD and Maas are unstable on short texts, and the TTR family never stabilizes. To compare texts of different lengths use the [windowed computation](#windowed) with confidence intervals.

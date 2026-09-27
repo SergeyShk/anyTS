@@ -2,6 +2,7 @@ import inspect
 import random
 import warnings
 from collections import Counter
+from dataclasses import dataclass
 from functools import partial
 from math import e, inf, isnan, log, log2, log10, nan, nextafter, sqrt
 from typing import ClassVar
@@ -83,6 +84,10 @@ def ds():
         {"mtld_min_len": -1},
         {"hdd_sample_size": 0},
         {"log_base": 1},
+        {"log_base": float("nan")},
+        {"window_len": 50.0},
+        {"mtld_min_len": 10.0},
+        {"hdd_sample_size": 42.0},
     ],
 )
 def test_init_params_error(kwargs):
@@ -117,6 +122,26 @@ def test_init_empty():
 def test_init_type_error(words, message):
     with pytest.raises(SourceTypeError, match=message):
         DiversityStats(words)
+
+
+def test_init_generator_errors_propagate():
+    with pytest.raises(TypeError, match="unsupported operand") as error:
+        DiversityStats(word + "" for word in ["a", None])  # type: ignore[operator]
+    assert not isinstance(error.value, SourceTypeError)
+
+
+@pytest.mark.parametrize(
+    ("func", "kwargs", "message"),
+    [
+        (calc_mattr, {"window_len": 50.0}, "The window size must be an integer, not float"),
+        (calc_msttr, {"segment_len": 50.0}, "The segment size must be an integer, not float"),
+        (calc_mtld, {"min_len": 10.0}, "The minimum factor length of MTLD must be an integer"),
+        (calc_hdd, {"sample_size": 42.0}, "The HD-D sample size must be an integer, not float"),
+    ],
+)
+def test_integer_params(func, kwargs, message):
+    with pytest.raises(ParameterError, match=f"^{message}"):
+        func(WORDS, **kwargs)
 
 
 def test_init_words_as_given():
@@ -376,6 +401,17 @@ def test_mtld_factor_lengths_blocks():
         assert _mtld_factor_lengths(words, 0.72, 10, wrap) == (
             mtld_factor_lengths_by_sets(words, 0.72, 10, wrap)
         )
+
+
+@pytest.mark.parametrize("threshold", [0.72, 0.9])
+@pytest.mark.parametrize("wrap", [False, True])
+def test_mtld_factor_lengths_with_few_repeats(threshold, wrap):
+    # Only the factors over the repeats close; the other starts are cut short
+    words = [f"w{i}" for i in range(300)]
+    words[100:110:2] = ["r"] * 5
+    lengths = _mtld_factor_lengths(words, threshold, 10, wrap)
+    assert lengths
+    assert lengths == mtld_factor_lengths_by_sets(words, threshold, 10, wrap)
 
 
 def test_mtld_factor_lengths_edges():
@@ -644,11 +680,42 @@ def test_windowed_errors(ds):
         calc_windowed(riddle, calc_ttr, step=0)
     with pytest.raises(ValueError):
         calc_windowed(riddle, calc_ttr, confidence=1)
+    with pytest.raises(ParameterError, match=r"^The window size must be an integer, not float$"):
+        calc_windowed(riddle, calc_ttr, window_len=5.0)
+    with pytest.raises(ParameterError, match=r"^The window step must be an integer, not float$"):
+        calc_windowed(riddle, calc_ttr, step=2.0)
 
 
 def test_sttr_base():
     assert calc_sttr(riddle, e) != pytest.approx(calc_sttr(riddle))
-    assert calc_sttr(["a"], e) == 0
+    assert isnan(calc_sttr(["a"], e))
+
+
+@pytest.mark.parametrize(
+    "words",
+    [["a"], ["a"] * 100, [f"w{i}" for i in range(10)], ["a", "b"] * 4 + ["a"]],
+)
+def test_sttr_undefined(words):
+    # One lexeme: the numerator is undefined; no more words than the base: log log N <= 0
+    assert isnan(calc_sttr(words))
+
+
+def test_sttr_windows_of_ten_words():
+    stats = calc_windowed(WORDS, calc_sttr, window_len=10)
+    assert stats.n_windows == 0
+    assert isnan(stats.mean)
+
+
+def test_dttr_without_repeated_words():
+    assert calc_dttr([f"w{i}" for i in range(500)]) == inf
+    assert calc_dttr(["a"]) == inf
+    assert calc_dttr([f"w{i}" for i in range(499)] + ["w0"]) == pytest.approx(8378.13, rel=1e-6)
+    words = [f"w{i}" for i in range(40)] + ["a", "b"] * 20
+    assert calc_windowed(words, calc_dttr, window_len=10).mean == inf
+
+
+def test_zipf_alpha_without_repeated_words():
+    assert str(calc_zipf_alpha([f"w{i}" for i in range(20)])) == "0.0"
 
 
 def test_get_stats(ds):
@@ -751,3 +818,17 @@ def test_fit_zipf_mandelbrot_divergence(monkeypatch):
 
     monkeypatch.setattr(diversity_stats, "least_squares", lambda *args, **kwargs: Unconverged())
     assert all(isnan(value) for value in fit_zipf_mandelbrot(words))
+
+
+def test_windowed_unhashable_function():
+    @dataclass
+    class TopShare:
+        top: int = 1
+
+        def __call__(self, words):
+            return sum(count for _, count in Counter(words).most_common(self.top)) / len(words)
+
+    words = ["a", "b", "c", "a", "b", "d"] * 10
+    stats = calc_windowed(words, TopShare(2), window_len=20)
+    assert stats == calc_windowed(words, lambda window: TopShare(2)(window), window_len=20)
+    assert stats.n_windows == 3

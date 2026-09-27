@@ -63,7 +63,7 @@ The names of the columns are `COMPARISON_COLUMNS`, with `A` and `B` replaced by 
 ## Functions of the statistics
 
 <!-- --8<-- [start:compare_values] -->
-`compare_values(values_a, values_b, n_bootstrap=1000, rng=None, texts_a=None, texts_b=None)` compares two arrays of finite values of one feature and returns the values of one row in the order of `COMPARISON_COLUMNS`, `p_holm` left `nan`; `texts_a` and `texts_b` give the text of every value for the bootstrap.
+`compare_values(values_a, values_b, n_bootstrap=1000, rng=None, texts_a=None, texts_b=None)` compares two sets of values of one feature, undefined and infinite values dropped together with their texts, and returns the values of one row in the order of `COMPARISON_COLUMNS`, `p_holm` left `nan`; `texts_a` and `texts_b` give the text of every value for the bootstrap.
 <!-- --8<-- [end:compare_values] -->
 
 <!-- --8<-- [start:calc_cohen_d] -->
@@ -71,7 +71,7 @@ The names of the columns are `COMPARISON_COLUMNS`, with `A` and `B` replaced by 
 <!-- --8<-- [end:calc_cohen_d] -->
 
 <!-- --8<-- [start:calc_cliff_delta] -->
-`calc_cliff_delta(values_a, values_b)` - Cliff's delta, the share of the pairs where the first value is greater minus the share where it is smaller; `nan` for an empty set.
+`calc_cliff_delta(values_a, values_b)` - Cliff's delta, the share of the pairs where the first value is greater minus the share where it is smaller; `nan` for an empty set or an undefined value. It is computed by sorting, in $O((n_A + n_B) \log n_B)$ time and linear memory.
 <!-- --8<-- [end:calc_cliff_delta] -->
 
 <!-- --8<-- [start:bootstrap_median_diff] -->

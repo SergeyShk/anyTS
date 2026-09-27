@@ -136,7 +136,9 @@ def test_dispersion_options():
     assert set(Dispersion._fields[2:]) == set(DISPERSION_STATS_DESC)
 
 
-@pytest.mark.parametrize("parts", [1, 13, [6, 5], [12, 0], [12], ["a", "b"], 2.5])
+@pytest.mark.parametrize(
+    "parts", [1, 13, [6, 5], [12, 0], [12], ["a", "b"], 2.5, [2.5, 9.5], [True, 11]]
+)
 def test_dispersion_errors(parts):
     with pytest.raises(ParameterError):
         dispersion(words, parts=parts)

@@ -1,5 +1,5 @@
 from collections import Counter
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from math import log2, nan, sqrt
 from numbers import Integral
 from typing import NamedTuple
@@ -7,7 +7,7 @@ from typing import NamedTuple
 import numpy as np
 
 from ..exceptions import ParameterError, SourceError
-from ..utils import check_words
+from ..utils import check_integer, check_words
 
 
 class Dispersion(NamedTuple):
@@ -17,8 +17,10 @@ class Dispersion(NamedTuple):
     Attributes:
         word (str): Word
         freq (int): Frequency of the word
-        dp (float): Deviation of proportions DP of Gries: 0 - even, 1 - in one part
-        dp_norm (float): DP normalized to its greatest possible value
+        dp (float): Deviation of proportions DP of Gries: 0 - even, 1 − s_i - all in
+            part i of share s_i, at most 1 − min(s_i)
+        dp_norm (float): DP normalized to its greatest possible value: 1 - all in the
+            smallest part
         juilland_d (float): Juilland's D: 1 - even, 0 - in one part
         carroll_d2 (float): Carroll's D2: 1 - even, 0 - in one part
         rosengren_s (float): Rosengren's S: 1 - even, tends to 0 when concentrated
@@ -113,12 +115,13 @@ def _sizes(n_words: int, parts: int | Sequence[int]) -> list[int]:
         if not 2 <= n_parts <= n_words:
             raise ParameterError("There must be at least two parts and no more parts than words")
         return [len(part) for part in np.array_split(np.arange(n_words), n_parts)]
-    try:
-        sizes = [int(size) for size in parts]  # type: ignore[union-attr]
-    except (TypeError, ValueError) as error:
+    if not isinstance(parts, Iterable):
         raise ParameterError(
             "The number of parts must be an integer and the sizes of the parts a list of integers"
-        ) from error
+        )
+    sizes = list(parts)
+    for size in sizes:
+        check_integer(size, "size of a part")
     if len(sizes) < 2 or sum(sizes) != n_words or min(sizes) < 1:
         raise ParameterError("The sizes of the parts must be positive and add up to the words")
     return sizes
@@ -190,7 +193,7 @@ def calc_dp(frequencies: Sequence[int], sizes: Sequence[int]) -> float:
         By Gries (2008): 0.5 · Σ |v_i / f − s_i|, where v_i is the frequency of
         the word in part i, f the frequency of the word and s_i the share of
         part i in the text; 0 - the word is spread in proportion to the sizes
-        of the parts, tends to 1 - it is concentrated in one part
+        of the parts, 1 − s_i - it is all in part i, so at most 1 − min(s_i)
 
     Arguments:
         frequencies (list[int]): Frequencies of the word by part
@@ -235,9 +238,10 @@ def calc_juilland_d(frequencies: Sequence[int], sizes: Sequence[int]) -> float:
     Computing Juilland's D
 
     Description:
-        By Juilland and Chang-Rodríguez (1964) as written by Gries (2008):
+        By Juilland and Chang-Rodríguez (1964) as written by Gries (2020):
         1 − V / sqrt(n − 1), where V is the coefficient of variation (the ratio
-        of the standard deviation to the mean) of the relative frequencies of
+        of the population standard deviation to the mean; Gries (2008) takes
+        the sample one) of the relative frequencies of
         the word by part v_i / n_i and n the number of parts; 1 - even,
         0 - in one part
 

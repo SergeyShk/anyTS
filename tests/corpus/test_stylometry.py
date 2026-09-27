@@ -180,6 +180,8 @@ def test_delta_errors():
         delta(corpus, n_mfw=0)
     with pytest.raises(ParameterError):
         frequency_table(corpus, n_mfw=-1)
+    with pytest.raises(ParameterError, match=r"must be an integer, not float$"):
+        delta(corpus, n_mfw=5.0)
     with pytest.raises(SourceError):
         frequency_table({})
     with pytest.raises(SourceError):
@@ -222,6 +224,10 @@ def test_zeta_errors():
         zeta(corpus["A"], [[]])
     with pytest.raises(ParameterError):
         zeta(corpus["A"], corpus["B"], top_n=0)
+    with pytest.raises(ParameterError, match=r"^The size of a segment must be an integer"):
+        zeta(corpus["A"], corpus["B"], segment_size=5.0)
+    with pytest.raises(ParameterError, match=r"^The number of words must be an integer"):
+        zeta(corpus["A"], corpus["B"], top_n=2.0)
     with pytest.raises(SourceTypeError):
         zeta(texts["A"], corpus["B"])
     # A text among lists of words, a Doc among the texts
@@ -245,6 +251,8 @@ def test_kilgarriff_chi2():
         kilgarriff_chi2([], words_b)
     with pytest.raises(ParameterError):
         kilgarriff_chi2(words_a, words_b, n_mfw=0)
+    with pytest.raises(ParameterError, match=r"must be an integer, not float$"):
+        kilgarriff_chi2(words_a, words_b, n_mfw=2.0)
     with pytest.raises(SourceTypeError):
         kilgarriff_chi2(texts["A"], words_b)
 
@@ -279,3 +287,21 @@ def test_arrays_of_words(container):
     assert mendenhall_distance(container(words), container(["dd", "e"])) == pytest.approx(
         mendenhall_distance(words, ["dd", "e"])
     )
+
+
+def test_frequency_table_ties_do_not_depend_on_the_order_of_the_texts():
+    def tokens(n, prefix):
+        return [f"{prefix}{i}" for i in range(n)]
+
+    corpus = {
+        "A": ["a"] * 3 + ["b"] + tokens(6, "x"),
+        "B": ["a"] * 2 + ["b"] * 2 + tokens(6, "y"),
+        "C": ["a"] + ["b"] * 3 + tokens(6, "z"),
+    }
+    reversed_corpus = dict(reversed(corpus.items()))
+    assert frequency_table(corpus, n_mfw=1).columns.tolist() == ["a"]
+    assert frequency_table(reversed_corpus, n_mfw=1).columns.tolist() == ["a"]
+    for variant in DELTA_VARIANTS:
+        distances = delta(corpus, n_mfw=2, variant=variant)
+        backwards = delta(reversed_corpus, n_mfw=2, variant=variant)
+        assert distances.loc["A", "C"] == backwards.loc["A", "C"]

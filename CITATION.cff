@@ -9,7 +9,7 @@ authors:
 repository-code: "https://github.com/SergeyShk/anyTS"
 url: "https://sergeyshk.github.io/anyTS/"
 license: MIT
-version: 0.1.0.dev5
+version: 0.1.0.dev6
 date-released: 2026-09-27
 keywords:
   - nlp
