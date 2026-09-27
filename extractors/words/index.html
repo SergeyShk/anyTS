@@ -1375,7 +1375,7 @@
 <tr>
 <td style="text-align: center;"><code>tokenize(text)</code></td>
 <td style="text-align: center;">method</td>
-<td style="text-align: center;">runs of word characters <code>\w+</code></td>
+<td style="text-align: center;">a word character <code>\w</code> followed by word characters, combining marks, zero-width joiners and non-joiners and soft hyphens, so that a word in NFD, in Devanagari or in Persian with <code>U+200C</code> stays whole</td>
 <td style="text-align: center;">the tokenizer when <code>tokenizer</code> is not given</td>
 </tr>
 <tr>
@@ -1484,7 +1484,7 @@
 </table>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>A regular expression as the tokenizer is a separator: the text is split with <code>re.split</code>. The filters are applied in order: punctuation, numbers, lemmatization, lower case, stop words, word length. A lower-case stop word list also filters a capitalized word at the start of a sentence. A punctuation mark is a token consisting entirely of marks and symbols, including multi-character ones: <code>?!</code>, <code>--</code>, <code>…</code>, <code>€</code> (see <code>is_punctuation</code>). Empty tokens are dropped before the filters. N-grams join the words with <code>_</code>.</p>
+<p>A regular expression as the tokenizer is a separator: the text is split with <code>re.split</code>. The filters are applied in order: punctuation, numbers, lemmatization, lower case, stop words, word length. A lower-case stop word list also filters a capitalized word at the start of a sentence. A punctuation mark is a token consisting entirely of marks and symbols, including multi-character ones: <code>?!</code>, <code>--</code>, <code>…</code>, <code>€</code> (see <code>is_punctuation</code>). Empty and whitespace tokens are dropped before the filters. N-grams join the words with <code>_</code>.</p>
 </div>
 <!-- --8<-- [end:WordsExtractor-parameters] -->
 

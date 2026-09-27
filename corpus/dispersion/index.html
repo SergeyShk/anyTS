@@ -1344,7 +1344,7 @@
 <td style="text-align: left;">Deviation of proportions DP</td>
 <td style="text-align: left;"><code>dp</code></td>
 <td style="text-align: left;"><span class="arithmatex">\(\frac{1}{2} \sum \left\lvert \frac{v_i}{f} - s_i \right\rvert\)</span></td>
-<td style="text-align: left;">0 - in proportion to the sizes of the parts, tends to 1 - in one part; Gries (2008)</td>
+<td style="text-align: left;">0 - in proportion to the sizes of the parts, <span class="arithmatex">\(1 - s_i\)</span> - all in part <span class="arithmatex">\(i\)</span>, so at most <span class="arithmatex">\(1 - \min s_i\)</span>; Gries (2008)</td>
 </tr>
 <tr>
 <td style="text-align: left;">Normalized DP</td>
@@ -1356,7 +1356,7 @@
 <td style="text-align: left;">Juilland's D</td>
 <td style="text-align: left;"><code>juilland_d</code></td>
 <td style="text-align: left;"><span class="arithmatex">\(1 - \frac{V}{\sqrt{n - 1}}\)</span>, <span class="arithmatex">\(V = \frac{\sigma(p)}{\mu(p)}\)</span></td>
-<td style="text-align: left;">1 - even, 0 - in one part; Juilland and Chang-Rodríguez (1964)</td>
+<td style="text-align: left;">1 - even, 0 - in one part; Juilland and Chang-Rodríguez (1964), with the population standard deviation <span class="arithmatex">\(\sigma\)</span> as in Gries (2020); Gries (2008) takes the sample one</td>
 </tr>
 <tr>
 <td style="text-align: left;">Carroll's D2</td>

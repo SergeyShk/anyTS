@@ -1362,7 +1362,7 @@
 
 <h2 id="language-hooks">Language hooks<a class="headerlink" href="#language-hooks" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:CharNgramsExtractor-hooks] -->
-<p>The default word tokenizer for <code>within_words</code> is the method <code>tokenize(text)</code>, which a language library overrides in a subclass. Here it takes the runs of word characters <code>\w+</code>, so <code>don't</code> gives the words <code>don</code> and <code>t</code>.</p>
+<p>The default word tokenizer for <code>within_words</code> is the method <code>tokenize(text)</code>, which a language library overrides in a subclass. Here it is the default tokenizer of <code>WordsExtractor</code>: a word character <code>\w</code> followed by word characters, combining marks, zero-width joiners and non-joiners and soft hyphens, so <code>don't</code> gives the words <code>don</code> and <code>t</code>.</p>
 <!-- --8<-- [end:CharNgramsExtractor-hooks] -->
 
 <h2 id="parameters">Parameters<a class="headerlink" href="#parameters" title="Permanent link">&para;</a></h2>

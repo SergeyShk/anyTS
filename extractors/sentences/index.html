@@ -1339,7 +1339,7 @@
 
 <h2 id="language-hooks">Language hooks<a class="headerlink" href="#language-hooks" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:SentsExtractor-hooks] -->
-<p>The default tokenizer is the method <code>sentenize(text)</code>, which a language library overrides in a subclass. Here it splits the text at whitespace after <code>.</code>, <code>!</code>, <code>?</code> or <code>…</code>, optionally followed by a closing quote or bracket; it knows no abbreviations, so <code>e.g. this</code> is two sentences.</p>
+<p>The default tokenizer is the method <code>sentenize(text)</code>, which a language library overrides in a subclass. Here it splits the text at whitespace after <code>.</code>, <code>!</code>, <code>?</code> or <code>…</code>, optionally followed by a closing quote or bracket; it knows no abbreviations, so <code>e.g. this</code> is two sentences. A piece without words, such as the dots of a spaced ellipsis <code>. . .</code> or a lone <code>!</code>, stays with the sentence before it, or with the one after it at the start of the text.</p>
 <!-- --8<-- [end:SentsExtractor-hooks] -->
 
 <div class="admonition note">
@@ -1380,7 +1380,7 @@
 </table>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>A regular expression as the tokenizer is a separator: the text is split with <code>re.split</code>. Empty and whitespace-only sentences are dropped.</p>
+<p>A regular expression as the tokenizer is a separator: the text is split with <code>re.split</code>. The sentences of any tokenizer are stripped of whitespace at the edges, before the length bounds, and empty ones are dropped.</p>
 </div>
 <!-- --8<-- [end:SentsExtractor-parameters] -->
 

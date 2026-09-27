@@ -1212,6 +1212,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#check_integer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        check_integer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#iter_doc_tokens" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1338,6 +1349,17 @@
     <span class="md-ellipsis">
       
         check_words
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#check_integer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        check_integer
       
     </span>
   </a>
@@ -1532,7 +1554,7 @@
 </div>
 <h2 id="check_sequence">check_sequence<a class="headerlink" href="#check_sequence" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:check_sequence] -->
-<p>Checks that an argument is a sequence and not a text or an iterator: a string, a <code>Doc</code>, a <code>Span</code> or an iterator raises <code>SourceTypeError</code>, since a string would be iterated character by character and an iterator would be exhausted by the first pass over it.</p>
+<p>Checks that an argument is a sequence and not a text or an iterator: a string, a <code>Doc</code>, a <code>Span</code>, an iterator or an object that cannot be iterated raises <code>SourceTypeError</code>, since a string would be iterated character by character and an iterator would be exhausted by the first pass over it.</p>
 <table>
 <thead>
 <tr>
@@ -1588,6 +1610,35 @@
 </table>
 <!-- --8<-- [end:check_words] -->
 
+<h2 id="check_integer">check_integer<a class="headerlink" href="#check_integer" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:check_integer] -->
+<p>Checks that a parameter is an integer: a <code>bool</code> or a <code>float</code>, even a whole one like <code>5.0</code>, raises <code>ParameterError</code>, since it would fail only later, as an index or a count.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>value</code></td>
+<td style="text-align: center;">object</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Value to check</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>what</code></td>
+<td style="text-align: center;">str</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Name of the parameter, for the message of the error</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:check_integer] -->
+
 <h2 id="iter_doc_tokens">iter_doc_tokens<a class="headerlink" href="#iter_doc_tokens" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:iter_doc_tokens] -->
 <p>Yields the tokens of the words of a <code>Doc</code> or a <code>Span</code>: whitespace tokens and the tokens of <code>is_punctuation</code>, symbols like <code>%</code> and <code>€</code> included, are skipped.</p>
@@ -1642,7 +1693,7 @@
 
 <h2 id="iter_doc_words">iter_doc_words<a class="headerlink" href="#iter_doc_words" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:iter_doc_words] -->
-<p>Yields the words of <code>iter_doc_units</code> as tuples: the position of the first character, the position after the last character and the text of the word.</p>
+<p>Yields the words of <code>iter_doc_units</code> as tuples: the position of the first character, the position after the last character and the text of the word. A byte order mark glued to the start of a word, as in a file read with <code>utf-8</code> instead of <code>utf-8-sig</code>, is dropped.</p>
 <table>
 <thead>
 <tr>

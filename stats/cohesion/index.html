@@ -1368,7 +1368,7 @@
 </div>
 <p>Functions that measure how the sentences of a text are tied together by shared elements, in the manner of Coh-Metrix. A sentence is given as the collection of its elements - lemmas of nouns, arguments or content words, values of a feature of its verbs - so the functions see no language: a library chooses the elements.</p>
 <!-- --8<-- [start:cohesion-checks] -->
-<p>A list of sentences that is a string, a <code>Doc</code> or an iterator raises <code>SourceTypeError</code>, and so does a sentence that is not a list of strings (<a href="../../utils/#check_words"><code>check_words</code></a>): a string would be read character by character, an iterator exhausted by the first pass, and spaCy tokens never match, since a token equals only itself.</p>
+<p>A list of sentences that is a string, a <code>Doc</code> or an iterator raises <code>SourceTypeError</code>, and so does a sentence that is not a list of strings (<code>check_words</code>): a string would be read character by character, an iterator exhausted by the first pass, and spaCy tokens never match, since a token equals only itself.</p>
 <!-- --8<-- [end:cohesion-checks] -->
 
 <h2 id="calc_overlap">calc_overlap<a class="headerlink" href="#calc_overlap" title="Permanent link">&para;</a></h2>
@@ -1464,7 +1464,7 @@
 
 <h2 id="calc_overlaps">calc_overlaps<a class="headerlink" href="#calc_overlaps" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:calc_overlaps] -->
-<p>The values of <code>calc_overlap</code> and <code>calc_proportional_overlap</code> over the adjacent and over all the pairs at once, as an <code>Overlap</code> named tuple with the fields <code>adjacent</code>, <code>all</code>, <code>prop_adjacent</code> and <code>prop_all</code>. The values over all the pairs are computed without going through every pair: the pairs sharing an element are counted over bit masks of the sentences, and the sum of the Dice coefficients over the histograms of the lengths of the sentences holding every element. That sum is added by <code>math.fsum</code>, so it is exactly rounded and does not depend on the order of the elements. Without <code>proportional</code> the fields <code>prop_adjacent</code> and <code>prop_all</code> are <code>nan</code>.</p>
+<p>The values of <code>calc_overlap</code> and <code>calc_proportional_overlap</code> over the adjacent and over all the pairs at once, as an <code>Overlap</code> named tuple with the fields <code>adjacent</code>, <code>all</code>, <code>prop_adjacent</code> and <code>prop_all</code>. The values over all the pairs are computed without going through every pair: the pairs sharing an element are counted over bit masks of the sentences, and the sum of the Dice coefficients over the histograms of the lengths of the sentences holding every element. That sum is added by <code>math.fsum</code>, so it does not depend on the order of the elements. Without <code>proportional</code> the fields <code>prop_adjacent</code> and <code>prop_all</code> are <code>nan</code>.</p>
 <table>
 <thead>
 <tr>
