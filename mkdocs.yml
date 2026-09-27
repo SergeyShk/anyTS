@@ -17,6 +17,8 @@ nav:
       - Lexical diversity metrics:
         - Metrics module: stats/diversity_stats.md
         - Metric functions: stats/diversity_stats_funcs.md
+      - Cohesion helpers: stats/cohesion.md
+      - Dependency tree helpers: stats/syntax.md
     - Utilities: utils.md
 
 theme:

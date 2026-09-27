@@ -42,3 +42,6 @@ DIVERSITY_STATS_DESC = {
     "zipf_alpha": "Zipf's law slope (α)",
     "heaps_beta": "Heaps' law exponent (β)",
 }
+
+# Relations that are not arguments of a word: coordination, parataxis, punctuation
+VALENCY_IGNORED_DEPS = frozenset({"cc", "conj", "parataxis", "punct"})

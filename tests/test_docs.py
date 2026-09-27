@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from anyts import diversity_stats, exceptions, extractors, utils
+from anyts import cohesion, diversity_stats, exceptions, extractors, syntax, utils
 
 DOCS = Path(__file__).parents[1] / "docs"
 PAGES = sorted(DOCS.rglob("*.md"))
@@ -60,6 +60,8 @@ def test_public_api_has_sections():
         *public_names(utils),
         *public_names(extractors),
         *public_names(diversity_stats),
+        *public_names(cohesion),
+        *public_names(syntax),
     }
     assert public_names(exceptions) == []
     assert required <= documented, sorted(required - documented)
