@@ -10,13 +10,11 @@
       
       
       
-        <link rel="canonical" href="https://sergeyshk.github.io/anyTS/installation/">
+        <link rel="canonical" href="https://sergeyshk.github.io/anyTS/utils/">
       
       
-        <link rel="prev" href="..">
+        <link rel="prev" href="../extractors/char_ngrams/">
       
-      
-        <link rel="next" href="../exceptions/">
       
       
         
@@ -27,7 +25,7 @@
     
     
       
-        <title>Installation - anyTS</title>
+        <title>Utilities - anyTS</title>
       
     
     
@@ -78,7 +76,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#installation" class="md-skip">
+        <a href="#utilities" class="md-skip">
           Skip to content
         </a>
       
@@ -112,7 +110,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Installation
+              Utilities
             
           </span>
         </div>
@@ -195,12 +193,10 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
+      <li class="md-tabs__item">
         <a href=".." class="md-tabs__link">
           
   
@@ -237,9 +233,11 @@
   
   
   
+    
   
-    <li class="md-tabs__item">
-      <a href="../utils/" class="md-tabs__link">
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
         
   
   
@@ -301,29 +299,24 @@
       
   
   
-    
   
   
-  
     
     
     
     
       
-        
-        
-      
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
         
           
-          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="">
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
             
   
   
@@ -341,7 +334,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_1">
             <span class="md-nav__icon md-icon"></span>
             
@@ -384,37 +377,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Installation
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../installation/" class="md-nav__link">
         
   
   
@@ -430,59 +396,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#requirements" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Requirements
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#from-pypi" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        From PyPI
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#from-the-repository" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        From the repository
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -696,10 +609,37 @@
       
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../utils/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Utilities
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -715,6 +655,114 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#is_punctuation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        is_punctuation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#count_letters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        count_letters
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#safe_divide" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        safe_divide
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#has_words" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        has_words
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#check_sequence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        check_sequence
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#iter_doc_tokens" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        iter_doc_tokens
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#iter_doc_units" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        iter_doc_units
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#iter_doc_words" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        iter_doc_words
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -746,10 +794,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#requirements" class="md-nav__link">
+  <a href="#is_punctuation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Requirements
+        is_punctuation
       
     </span>
   </a>
@@ -757,10 +805,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#from-pypi" class="md-nav__link">
+  <a href="#count_letters" class="md-nav__link">
     <span class="md-ellipsis">
       
-        From PyPI
+        count_letters
       
     </span>
   </a>
@@ -768,10 +816,65 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#from-the-repository" class="md-nav__link">
+  <a href="#safe_divide" class="md-nav__link">
     <span class="md-ellipsis">
       
-        From the repository
+        safe_divide
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#has_words" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        has_words
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#check_sequence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        check_sequence
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#iter_doc_tokens" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        iter_doc_tokens
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#iter_doc_units" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        iter_doc_units
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#iter_doc_words" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        iter_doc_words
       
     </span>
   </a>
@@ -798,22 +901,262 @@
   
 
 
-<h1 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">&para;</a></h1>
-<h2 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">&para;</a></h2>
-<ul>
-<li><code>python</code> 3.11 or newer</li>
-<li><code>spaCy</code> 3.7 or newer</li>
-<li><code>numpy</code>, <code>scipy</code>, <code>pandas</code></li>
-</ul>
-<p>The dependencies are installed with the package. A language library built on anyTS installs it as its own dependency.</p>
-<h2 id="from-pypi">From PyPI<a class="headerlink" href="#from-pypi" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>anyts
+<h1 id="utilities">Utilities<a class="headerlink" href="#utilities" title="Permanent link">&para;</a></h1>
+<div class="admonition info">
+<p><strong>anyts.utils</strong></p>
+</div>
+<p>Helper functions shared by the extractors and the statistics.</p>
+<h2 id="is_punctuation">is_punctuation<a class="headerlink" href="#is_punctuation" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:is_punctuation] -->
+<p>Checks whether a token consists only of punctuation marks and symbols: the characters of the Unicode categories P (punctuation), S (symbols), M (combining marks) and Cf (invisible format characters such as the zero-width space <code>U+200B</code>, the byte order mark <code>U+FEFF</code> and the zero-width joiner <code>U+200D</code>). Multi-character tokens like <code>?!</code> and <code>--</code>, symbols like <code>€</code> and <code>№</code> and a lone invisible character that a tokenizer splits off are punctuation too, while a token with a letter or a digit is not (<code>e</code> with a combining acute accent is a word); an empty token is punctuation as well.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>token</code></td>
+<td style="text-align: center;">str</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Token</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:is_punctuation] -->
+
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_punctuation</span>
+
+<span class="n">is_punctuation</span><span class="p">(</span><span class="s2">"?!"</span><span class="p">),</span> <span class="n">is_punctuation</span><span class="p">(</span><span class="s2">"€"</span><span class="p">),</span> <span class="n">is_punctuation</span><span class="p">(</span><span class="s2">"no."</span><span class="p">)</span>
+<span class="c1"># (True, True, False)</span>
 </code></pre></div>
-<h2 id="from-the-repository">From the repository<a class="headerlink" href="#from-the-repository" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/SergeyShk/anyTS.git
-<span class="nb">cd</span><span class="w"> </span>anyTS
-uv<span class="w"> </span>sync<span class="w"> </span>--all-groups
+</div>
+<h2 id="count_letters">count_letters<a class="headerlink" href="#count_letters" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:count_letters] -->
+<p>Counts the letters of a word: the characters of any alphabet (<code>str.isalpha</code>), without digits, hyphens and marks. The results are cached by word form, so the function is meant for words, not whole texts.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>word</code></td>
+<td style="text-align: center;">str</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Word form</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:count_letters] -->
+
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">count_letters</span>
+
+<span class="n">count_letters</span><span class="p">(</span><span class="s2">"well-known"</span><span class="p">),</span> <span class="n">count_letters</span><span class="p">(</span><span class="s2">"3rd"</span><span class="p">)</span>
+<span class="c1"># (9, 2)</span>
 </code></pre></div>
+</div>
+<h2 id="safe_divide">safe_divide<a class="headerlink" href="#safe_divide" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:safe_divide] -->
+<p>Divides two numbers and returns <code>default</code> for a zero denominator.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>num</code></td>
+<td style="text-align: center;">float/int</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Numerator</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>den</code></td>
+<td style="text-align: center;">float/int</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Denominator</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>default</code></td>
+<td style="text-align: center;">float/int</td>
+<td style="text-align: center;"><code>0</code></td>
+<td style="text-align: center;">Value returned for a zero denominator</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:safe_divide] -->
+
+<h2 id="has_words">has_words<a class="headerlink" href="#has_words" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:has_words] -->
+<p>Checks whether a text, a <code>Doc</code> or a <code>Span</code> holds a word: an empty text or one of whitespace and the characters of <code>is_punctuation</code> alone holds none.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>source</code></td>
+<td style="text-align: center;">str/Doc/Span</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Text, Doc or Span object</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:has_words] -->
+
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">has_words</span>
+
+<span class="n">has_words</span><span class="p">(</span><span class="s2">"The cat sleeps"</span><span class="p">),</span> <span class="n">has_words</span><span class="p">(</span><span class="s2">"?!"</span><span class="p">),</span> <span class="n">has_words</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span>
+<span class="c1"># (True, False, False)</span>
+</code></pre></div>
+</div>
+<h2 id="check_sequence">check_sequence<a class="headerlink" href="#check_sequence" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:check_sequence] -->
+<p>Checks that an argument is a sequence of strings and not a text: a string, a <code>Doc</code> or a <code>Span</code> raises <code>SourceTypeError</code>, since a string would be iterated character by character.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>value</code></td>
+<td style="text-align: center;">object</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Value to check</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>what</code></td>
+<td style="text-align: center;">str</td>
+<td style="text-align: center;"><code>"words"</code></td>
+<td style="text-align: center;">What is expected, for the message of the error</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:check_sequence] -->
+
+<h2 id="iter_doc_tokens">iter_doc_tokens<a class="headerlink" href="#iter_doc_tokens" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:iter_doc_tokens] -->
+<p>Yields the tokens of the words of a <code>Doc</code> or a <code>Span</code>: whitespace tokens and the tokens of <code>is_punctuation</code>, symbols like <code>%</code> and <code>€</code> included, are skipped.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>source</code></td>
+<td style="text-align: center;">Doc/Span</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Doc or Span object</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:iter_doc_tokens] -->
+
+<h2 id="iter_doc_units">iter_doc_units<a class="headerlink" href="#iter_doc_units" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:iter_doc_units] -->
+<p>Yields the words of a <code>Doc</code> or a <code>Span</code> as lists of tokens: one token each, as in <code>iter_doc_tokens</code>. With <code>join_hyphens=True</code> a word that the tokenizer split at its hyphens (<code>well-known</code> into <code>well</code>, <code>-</code>, <code>known</code>) is joined back when no whitespace separates its parts; a language library whose own tokenizer keeps such words whole turns it on, so that a string and a <code>Doc</code> give the same words.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>source</code></td>
+<td style="text-align: center;">Doc/Span</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Doc or Span object</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>join_hyphens</code></td>
+<td style="text-align: center;">bool</td>
+<td style="text-align: center;"><code>False</code></td>
+<td style="text-align: center;">Join the parts of hyphenated words</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:iter_doc_units] -->
+
+<h2 id="iter_doc_words">iter_doc_words<a class="headerlink" href="#iter_doc_words" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:iter_doc_words] -->
+<p>Yields the words of <code>iter_doc_units</code> as tuples: the position of the first character, the position after the last character and the text of the word.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>source</code></td>
+<td style="text-align: center;">Doc/Span</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Doc or Span object</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>join_hyphens</code></td>
+<td style="text-align: center;">bool</td>
+<td style="text-align: center;"><code>False</code></td>
+<td style="text-align: center;">Join the parts of hyphenated words</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:iter_doc_words] -->
+
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">spacy</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">anyts.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">iter_doc_words</span>
+
+<span class="n">doc</span> <span class="o">=</span> <span class="n">spacy</span><span class="o">.</span><span class="n">blank</span><span class="p">(</span><span class="s2">"xx"</span><span class="p">)(</span><span class="s2">"A well-known cat"</span><span class="p">)</span>
+<span class="p">[</span><span class="n">word</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">iter_doc_words</span><span class="p">(</span><span class="n">doc</span><span class="p">)]</span>
+<span class="c1"># ['A', 'well', 'known', 'cat']</span>
+<span class="nb">list</span><span class="p">(</span><span class="n">iter_doc_words</span><span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">join_hyphens</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+<span class="c1"># [(0, 1, 'A'), (2, 12, 'well-known'), (13, 16, 'cat')]</span>
+</code></pre></div>
+</div>
 
 
 

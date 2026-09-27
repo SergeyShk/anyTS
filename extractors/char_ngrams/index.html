@@ -10,25 +10,31 @@
       
       
       
+        <link rel="canonical" href="https://sergeyshk.github.io/anyTS/extractors/char_ngrams/">
       
+      
+        <link rel="prev" href="../words/">
+      
+      
+        <link rel="next" href="../../utils/">
       
       
         
       
       
-      <link rel="icon" href="/anyTS/assets/images/favicon.png">
+      <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
-        <title>anyTS</title>
+        <title>Character N-gram extraction - anyTS</title>
       
     
     
-      <link rel="stylesheet" href="/anyTS/assets/stylesheets/main.ec1eaa64.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
-        <link rel="stylesheet" href="/anyTS/assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -47,9 +53,9 @@
       
     
     
-      <link rel="stylesheet" href="/anyTS/css/extra.css">
+      <link rel="stylesheet" href="../../css/extra.css">
     
-    <script>__md_scope=new URL("/anyTS/",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -71,6 +77,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#character-n-gram-extraction" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -81,7 +92,7 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="/anyTS/." title="anyTS" class="md-header__button md-logo" aria-label="anyTS" data-md-component="logo">
+    <a href="../.." title="anyTS" class="md-header__button md-logo" aria-label="anyTS" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -101,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              
+              Character N-gram extraction
             
           </span>
         </div>
@@ -188,7 +199,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="/anyTS/." class="md-tabs__link">
+        <a href="../.." class="md-tabs__link">
           
   
   
@@ -204,11 +215,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="/anyTS/extractors/sentences/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../sentences/" class="md-tabs__link">
           
   
   
@@ -226,7 +239,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="/anyTS/utils/" class="md-tabs__link">
+      <a href="../../utils/" class="md-tabs__link">
         
   
   
@@ -261,7 +274,7 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="/anyTS/." title="anyTS" class="md-nav__button md-logo" aria-label="anyTS" data-md-component="logo">
+    <a href="../.." title="anyTS" class="md-nav__button md-logo" aria-label="anyTS" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -341,7 +354,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/anyTS/." class="md-nav__link">
+      <a href="../.." class="md-nav__link">
         
   
   
@@ -369,7 +382,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/anyTS/installation/" class="md-nav__link">
+      <a href="../../installation/" class="md-nav__link">
         
   
   
@@ -397,7 +410,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/anyTS/exceptions/" class="md-nav__link">
+      <a href="../../exceptions/" class="md-nav__link">
         
   
   
@@ -425,7 +438,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/anyTS/authors/" class="md-nav__link">
+      <a href="../../authors/" class="md-nav__link">
         
   
   
@@ -457,24 +470,29 @@
       
   
   
+    
   
   
+  
     
     
     
     
-      
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
         
           
-          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
             
   
   
@@ -492,7 +510,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -510,7 +528,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/anyTS/extractors/sentences/" class="md-nav__link">
+      <a href="../sentences/" class="md-nav__link">
         
   
   
@@ -538,7 +556,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/anyTS/extractors/words/" class="md-nav__link">
+      <a href="../words/" class="md-nav__link">
         
   
   
@@ -563,10 +581,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="/anyTS/extractors/char_ngrams/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Character N-gram extraction
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -582,6 +627,98 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#description" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Description
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#language-hooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Language hooks
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parameters
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#methods" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Methods
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Methods">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#extract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        extract
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get_most_common" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_most_common
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -601,7 +738,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/anyTS/utils/" class="md-nav__link">
+      <a href="../../utils/" class="md-nav__link">
         
   
   
@@ -638,6 +775,88 @@
   
   
   
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#description" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Description
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#language-hooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Language hooks
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parameters
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#methods" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Methods
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Methods">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#extract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        extract
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get_most_common" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_most_common
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
   
 </nav>
                   </div>
@@ -650,8 +869,148 @@
               
               <article class="md-content__inner md-typeset">
                 
-  <h1>404 - Not found</h1>
+                  
 
+
+  
+  
+
+
+<h1 id="character-n-gram-extraction">Character N-gram extraction<a class="headerlink" href="#character-n-gram-extraction" title="Permanent link">&para;</a></h1>
+<div class="admonition info">
+<p><strong>anyts.extractors.CharNgramsExtractor</strong></p>
+</div>
+<h2 id="description">Description<a class="headerlink" href="#description" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:CharNgramsExtractor] -->
+<p>A class for extracting character N-grams from a text - sequences of N characters taken with a sliding window over the string. Character N-grams are a standard feature of stylometry and authorship attribution (Stamatatos 2009) and can replace words as the units of a text in measures such as Burrows's Delta.</p>
+<p>Whitespace runs are collapsed into a single space beforehand, punctuation marks are kept. With <code>within_words=True</code> N-grams do not cross word boundaries: the text is split into words by the tokenizer, punctuation is dropped, and words shorter than N yield no N-grams.</p>
+<!-- --8<-- [end:CharNgramsExtractor] -->
+
+<h2 id="language-hooks">Language hooks<a class="headerlink" href="#language-hooks" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:CharNgramsExtractor-hooks] -->
+<p>The default word tokenizer for <code>within_words</code> is the method <code>tokenize(text)</code>, which a language library overrides in a subclass. Here it takes the runs of word characters <code>\w+</code>, so <code>don't</code> gives the words <code>don</code> and <code>t</code>.</p>
+<!-- --8<-- [end:CharNgramsExtractor-hooks] -->
+
+<h2 id="parameters">Parameters<a class="headerlink" href="#parameters" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:CharNgramsExtractor-parameters] -->
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>n</code></td>
+<td style="text-align: center;">int</td>
+<td style="text-align: center;"><code>2</code></td>
+<td style="text-align: center;">N-gram length in characters</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>lowercase</code></td>
+<td style="text-align: center;">bool</td>
+<td style="text-align: center;"><code>False</code></td>
+<td style="text-align: center;">Convert the text to lower case</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>within_words</code></td>
+<td style="text-align: center;">bool</td>
+<td style="text-align: center;"><code>False</code></td>
+<td style="text-align: center;">Take N-grams only inside words</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>tokenizer</code></td>
+<td style="text-align: center;">Pattern/Callable</td>
+<td style="text-align: center;"><code>None</code></td>
+<td style="text-align: center;">Word tokenizer for <code>within_words</code> or a regular expression; by default the <code>tokenize</code> method</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:CharNgramsExtractor-parameters] -->
+
+<h2 id="methods">Methods<a class="headerlink" href="#methods" title="Permanent link">&para;</a></h2>
+<h3 id="extract">extract<a class="headerlink" href="#extract" title="Permanent link">&para;</a></h3>
+<!-- --8<-- [start:CharNgramsExtractor-extract] -->
+<p>Extracts N-grams from a text.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>text</code></td>
+<td style="text-align: center;">str</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Text string</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:CharNgramsExtractor-extract] -->
+
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<p><em>Code</em>:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts</span><span class="w"> </span><span class="kn">import</span> <span class="n">CharNgramsExtractor</span>
+
+<span class="n">text</span> <span class="o">=</span> <span class="s2">"The cat slept  on the sill, and the dog - on the floor."</span>
+
+<span class="n">CharNgramsExtractor</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">lowercase</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="n">text</span><span class="p">)[:</span><span class="mi">6</span><span class="p">]</span>
+</code></pre></div>
+<p><em>Result</em>:</p>
+<div class="highlight"><pre><span></span><code><span class="o">(</span><span class="s1">'the'</span>,<span class="w"> </span><span class="s1">'he '</span>,<span class="w"> </span><span class="s1">'e c'</span>,<span class="w"> </span><span class="s1">' ca'</span>,<span class="w"> </span><span class="s1">'cat'</span>,<span class="w"> </span><span class="s1">'at '</span><span class="o">)</span>
+</code></pre></div>
+</div>
+<p>N-grams inside words only:</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<p><em>Code</em>:</p>
+<div class="highlight"><pre><span></span><code><span class="n">CharNgramsExtractor</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">lowercase</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">within_words</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+</code></pre></div>
+<p><em>Result</em>:</p>
+<div class="highlight"><pre><span></span><code><span class="o">(</span><span class="s1">'slep'</span>,<span class="w"> </span><span class="s1">'lept'</span>,<span class="w"> </span><span class="s1">'sill'</span>,<span class="w"> </span><span class="s1">'floo'</span>,<span class="w"> </span><span class="s1">'loor'</span><span class="o">)</span>
+</code></pre></div>
+</div>
+<h3 id="get_most_common">get_most_common<a class="headerlink" href="#get_most_common" title="Permanent link">&para;</a></h3>
+<!-- --8<-- [start:CharNgramsExtractor-get_most_common] -->
+<p>Returns a counter of the top N-grams of the text. It takes the number of top N-grams to return as a parameter.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>The method must be called after N-grams have been extracted with <code>extract</code>.</p>
+</div>
+<!-- --8<-- [end:CharNgramsExtractor-get_most_common] -->
+
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<p><em>Code</em>:</p>
+<div class="highlight"><pre><span></span><code><span class="n">ce</span> <span class="o">=</span> <span class="n">CharNgramsExtractor</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">lowercase</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">ce</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+<span class="n">ce</span><span class="o">.</span><span class="n">get_most_common</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+</code></pre></div>
+<p><em>Result</em>:</p>
+<div class="highlight"><pre><span></span><code><span class="o">[(</span><span class="s1">'the'</span>,<span class="w"> </span><span class="m">4</span><span class="o">)</span>,<span class="w"> </span><span class="o">(</span><span class="s1">'he '</span>,<span class="w"> </span><span class="m">4</span><span class="o">)]</span>
+</code></pre></div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
               </article>
             </div>
           
@@ -715,12 +1074,12 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "/anyTS/", "features": ["navigation.tabs"], "search": "/anyTS/assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="/anyTS/assets/javascripts/bundle.d7400e89.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
-        <script src="/anyTS/js/config.js"></script>
+        <script src="../../js/config.js"></script>
       
         <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
       
