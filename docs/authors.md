@@ -12,13 +12,4 @@ Bug reports, ideas and pull requests are welcome. The workflow and the checks to
 
 ## Citation
 
-Please use the following BibTeX entry for citing **anyTS** if you use it in your research or software. The same metadata is in [CITATION.cff](https://github.com/SergeyShk/anyTS/blob/master/CITATION.cff) ("Cite this repository" on GitHub).
-
-``` bibtex
-@software{anyTS,
-  author = {Sergey Shkarin},
-  title = {{anyTS, the language-independent core of text statistics libraries}},
-  year = 2026,
-  url = {https://github.com/SergeyShk/anyTS}
-}
-```
+anyTS is the core of [ruTS](https://github.com/SergeyShk/ruTS) and [esTS](https://github.com/SergeyShk/esTS) and has no citation of its own. In research, please cite the library you use: ruTS ([10.5281/zenodo.22837587](https://doi.org/10.5281/zenodo.22837587)) or esTS ([10.5281/zenodo.22924655](https://doi.org/10.5281/zenodo.22924655)); the metadata of each is in the [CITATION.cff of ruTS](https://github.com/SergeyShk/ruTS/blob/master/CITATION.cff) and the [CITATION.cff of esTS](https://github.com/SergeyShk/esTS/blob/master/CITATION.cff).
