@@ -1,4 +1,5 @@
 site_name: anyTS
+site_url: https://sergeyshk.github.io/anyTS/
 site_description: "The language-independent core of text statistics libraries"
 repo_url: https://github.com/SergeyShk/anyTS
 
