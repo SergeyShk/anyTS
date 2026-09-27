@@ -1,0 +1,12 @@
+.center {
+    display: block;
+    margin: 0 auto;
+}
+
+.md-typeset .contact {
+    height: 40px;
+}
+
+.md-typeset .contact svg {
+    width: 40px;
+}

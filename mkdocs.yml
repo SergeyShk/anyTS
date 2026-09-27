@@ -1,0 +1,52 @@
+site_name: anyTS
+site_url: https://sergeyshk.github.io/anyTS/
+site_description: "The language-independent core of text statistics libraries"
+repo_url: https://github.com/SergeyShk/anyTS
+
+nav:
+    - Home:
+      - About: index.md
+      - Installation: installation.md
+      - Authors: authors.md
+
+theme:
+  name: material
+  language: en
+  palette:
+    primary: teal
+    accent: teal
+  font:
+    text: Source Sans Pro
+  features:
+    - navigation.tabs
+
+plugins:
+  - search
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/SergeyShk
+    - icon: fontawesome/brands/linkedin
+      link: https://www.linkedin.com/in/kouki91/
+
+extra_css:
+  - css/extra.css
+
+extra_javascript:
+  - js/config.js
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js
+
+markdown_extensions:
+  - toc:
+      permalink: True
+  - attr_list
+  - admonition
+  - pymdownx.highlight
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.arithmatex:
+      generic: True
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg

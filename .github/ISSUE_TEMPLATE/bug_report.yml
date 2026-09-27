@@ -1,0 +1,46 @@
+name: Bug report
+description: Wrong result, exception or crash
+labels: ["bug"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: What happens
+      description: What you expected and what you got
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: How to reproduce
+      description: Minimal code with the input that triggers the bug and the full traceback, if any
+      render: python
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: anyTS version
+      description: "`python -c \"import anyts; print(anyts.__version__)\"`"
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: input
+    id: library
+    attributes:
+      label: Language library
+      description: If the bug shows through a library built on anyTS, its name and version
+      placeholder: "esTS 0.5.0"
+  - type: input
+    id: environment
+    attributes:
+      label: Python and OS
+      placeholder: "Python 3.12, macOS 15"
+    validations:
+      required: true
+  - type: input
+    id: spacy
+    attributes:
+      label: spaCy model
+      description: If the bug involves a Doc object
+      placeholder: "en_core_web_sm 3.8.0"

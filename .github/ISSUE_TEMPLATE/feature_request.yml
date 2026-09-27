@@ -1,0 +1,27 @@
+name: Feature request
+description: A new statistic, measure or improvement
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does it solve
+      description: What you want to compute or do and why the current features are not enough
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: How it could look in the API - a class, a function, a parameter
+  - type: textarea
+    id: sources
+    attributes:
+      label: Sources
+      description: A paper, formula or library where it is already implemented - the library follows published definitions
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      options:
+        - label: I am willing to submit a pull request
