@@ -2,15 +2,60 @@
 
 **anyTS** is the language-independent core of the text statistics libraries [ruTS](https://github.com/SergeyShk/ruTS) (Russian) and [esTS](https://github.com/SergeyShk/esTS) (Spanish). It holds the code that does not depend on a language, so that it is written, tested and documented once; a language library adds its tokenizer, lemmatizer, [spaCy](https://github.com/explosion/spaCy) model and rules and re-exports the core under its own names.
 
-!!! warning "Status"
-    The project is in development: the [exceptions](exceptions.md), the [utilities](utils.md) and the extractors of [sentences](extractors/sentences.md), [words](extractors/words.md) and [character N-grams](extractors/char_ngrams.md) are in place, and so are the [lexical diversity metrics](stats/diversity_stats.md), the helpers of [cohesion](stats/cohesion.md) and of the [dependency tree](stats/syntax.md), and the corpus measures: [keywords](corpus/keyness.md), [collocations](corpus/collocations.md), [dispersion](corpus/dispersion.md), [stylometry](corpus/stylometry.md) and [comparison of corpora](corpus/compare.md).
+## Features
 
-## Planned scope
-
-*   **Extraction** - the base of the sentence, word and character N-gram extractors with the tokenizer, the lemmatizer and the number pattern as hooks a language library overrides
-*   **Lexical diversity** - TTR and its variants, MATTR, MSTTR, MTLD, HD-D, the indices of Simpson and Yule, entropy, the laws of Zipf and Heaps, windowed computation
-*   **Cohesion and syntax helpers** - overlaps, Dice, givenness and repetition; dependency distances, tree depth, valency and coordination on the labels shared by Universal Dependencies and ClearNLP
-*   **Corpus measures** - collocations, dispersion, keyness, Burrows's Delta, Zeta, the Mendenhall curve and the comparison of corpora with effect sizes, bootstrap and the Holm correction
-*   **Exceptions** - one hierarchy whose classes are also built-in exceptions
+*   extract [sentences](extractors/sentences.md), [words](extractors/words.md) and [character N-grams](extractors/char_ngrams.md) with extractors whose tokenizer, lemmatizer and number pattern are hooks a language library overrides
+*   compute [lexical diversity metrics](stats/diversity_stats.md) (Type-Token Ratio and its variants, MATTR, MSTTR, MTLD, MA-MTLD, MTLD-W, HD-D, the indices of Simpson and Yule, entropy, the laws of Zipf and Heaps), over the whole text or over windows with confidence intervals
+*   measure [cohesion](stats/cohesion.md) between sentences: overlaps, adjacent and over all pairs, Dice, givenness and repetition
+*   walk the [dependency tree](stats/syntax.md): dependency distances, tree depth, valency and coordination chains on the labels shared by Universal Dependencies and ClearNLP
+*   compare corpora with the measures of corpus linguistics: [keywords](corpus/keyness.md) against a corpus or a frequency dictionary, [collocations](corpus/collocations.md), the [dispersion](corpus/dispersion.md) of a word, [stylometry](corpus/stylometry.md) (Burrows's Delta and its variants, Zeta, Kilgarriff's chi-square, the Mendenhall curve) and the [comparison](corpus/compare.md) of corpora feature by feature with effect sizes, a bootstrap by texts and the Holm correction
+*   catch errors of one [hierarchy](exceptions.md) whose classes are also built-in exceptions
 
 The reference of every function is a named section that the libraries include in their own documentation, so a formula is described in one place.
+
+## Installation
+
+Requires Python 3.11 or newer.
+
+``` bash
+pip install anyts
+```
+
+The dependencies are on the [Installation](installation.md) page.
+
+## Quick start
+
+``` python
+>>> from anyts import DiversityStats, SentsExtractor, WordsExtractor
+
+>>> text = "The cat sat on the mat. The dog sat on the log! The cat and the dog slept."
+
+>>> SentsExtractor().extract(text)
+('The cat sat on the mat.', 'The dog sat on the log!', 'The cat and the dog slept.')
+
+>>> ds = DiversityStats(WordsExtractor(lowercase=True).extract(text))
+>>> ds.ttr, round(ds.entropy, 3)
+(0.5, 2.864)
+```
+
+A language library subclasses the extractors and overrides their hooks:
+
+``` python
+>>> class Words(WordsExtractor):
+...     def lemmatize(self, word):
+...         return {"sat": "sit", "slept": "sleep"}.get(word.lower(), word)
+
+>>> Words(lowercase=True, use_lexemes=True).extract("The cat sat. The dog slept.")
+('the', 'cat', 'sit', 'the', 'dog', 'sleep')
+```
+
+The corpus measures take lists of words:
+
+``` python
+>>> from anyts.corpus import keyness
+
+>>> cats = WordsExtractor(lowercase=True).extract("The cat sat on the mat. The cat saw a bird. The cat slept.")
+>>> dogs = WordsExtractor(lowercase=True).extract("The dog sat on the log. The dog saw a cat. The dog barked.")
+>>> [(keyword.word, round(keyword.log_ratio, 2)) for keyword in keyness(cats, dogs, min_freq=2)]
+[('cat', 1.58)]
+```

@@ -1,23 +1,82 @@
 # Any Texts Statistics (anyTS)
 
+[![Version](https://img.shields.io/pypi/v/anyts?logo=pypi&logoColor=FFE873)](https://pypi.org/project/anyts/)
+[![Supported Python versions](https://img.shields.io/pypi/pyversions/anyts.svg?logo=python&logoColor=FFE873)](https://pypi.org/project/anyts/)
 [![Build](https://github.com/SergeyShk/anyTS/actions/workflows/ci.yml/badge.svg)](https://github.com/SergeyShk/anyTS/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/SergeyShk/anyTS/blob/master/LICENSE.txt)
 
-**anyTS** is the language-independent core of the text statistics libraries [ruTS](https://github.com/SergeyShk/ruTS) (Russian) and [esTS](https://github.com/SergeyShk/esTS) (Spanish). It holds the code that does not depend on a language, so that it is written, tested and documented once; a language library adds its tokenizer, lemmatizer, spaCy model and rules and re-exports the core under its own names.
+**anyTS** is the language-independent core of the text statistics libraries [ruTS](https://github.com/SergeyShk/ruTS) (Russian) and [esTS](https://github.com/SergeyShk/esTS) (Spanish). It holds the code that does not depend on a language, so that it is written, tested and documented once; a language library adds its tokenizer, lemmatizer, [spaCy](https://github.com/explosion/spaCy) model and rules and re-exports the core under its own names.
 
-> **Status:** in development. The exceptions, the utilities, the extractors, the lexical diversity metrics, the cohesion and dependency tree helpers and the corpus measures are in place.
+[Documentation](https://sergeyshk.github.io/anyTS/) · [PyPI](https://pypi.org/project/anyts/)
 
-## Planned scope
+## Features
 
-* **Extraction** - the base of the sentence, word and character N-gram extractors with the tokenizer, the lemmatizer and the number pattern as hooks a language library overrides
-* **Lexical diversity** - TTR and its variants, MATTR, MSTTR, MTLD, HD-D, the indices of Simpson and Yule, entropy, the laws of Zipf and Heaps, windowed computation
-* **Cohesion and syntax helpers** - overlaps, Dice, givenness and repetition; dependency distances, tree depth, valency and coordination on the labels shared by Universal Dependencies and ClearNLP
-* **Corpus measures** - collocations, dispersion, keyness, Burrows's Delta, Zeta, the Mendenhall curve and the comparison of corpora with effect sizes, bootstrap and the Holm correction
-* **Exceptions** - one hierarchy whose classes are also built-in exceptions
+* **[Extraction](https://sergeyshk.github.io/anyTS/extractors/sentences/)** - sentence, word and character N-gram extractors whose tokenizer, lemmatizer and number pattern are hooks a language library overrides
+* **[Lexical diversity](https://sergeyshk.github.io/anyTS/stats/diversity_stats/)** - 32 metrics: TTR and its variants, MATTR, MSTTR, MTLD, MA-MTLD, MTLD-W, HD-D, the indices of Simpson and Yule, entropy, the laws of Zipf and Heaps, over the whole text or over windows with confidence intervals
+* **[Cohesion helpers](https://sergeyshk.github.io/anyTS/stats/cohesion/)** - the overlap of sentences, adjacent and over all pairs, Dice, givenness and repetition
+* **[Dependency tree helpers](https://sergeyshk.github.io/anyTS/stats/syntax/)** - dependency distances, tree depth, valency and coordination chains on the labels shared by Universal Dependencies and ClearNLP
+* **[Corpus measures](https://sergeyshk.github.io/anyTS/corpus/keyness/)** - keywords against a corpus or a frequency dictionary, collocations, the dispersion of a word, Burrows's Delta and its variants, Zeta, Kilgarriff's chi-square, the Mendenhall curve and the comparison of corpora with effect sizes, a bootstrap by texts and the Holm correction
+* **[Exceptions](https://sergeyshk.github.io/anyTS/exceptions/)** - one hierarchy whose classes are also built-in exceptions
+
+The reference of every function is a named section that the libraries include in their own documentation, so a formula is described in one place.
+
+## Installation
+
+Requires Python 3.11 or newer.
+
+```bash
+pip install anyts
+```
+
+Or with [uv](https://docs.astral.sh/uv/):
+
+```bash
+uv add anyts
+```
+
+The dependencies are numpy, pandas, scipy and spaCy; no trained spaCy model is needed.
+
+## Quick start
+
+```python
+>>> from anyts import DiversityStats, SentsExtractor, WordsExtractor
+
+>>> text = "The cat sat on the mat. The dog sat on the log! The cat and the dog slept."
+
+>>> SentsExtractor().extract(text)
+('The cat sat on the mat.', 'The dog sat on the log!', 'The cat and the dog slept.')
+
+>>> ds = DiversityStats(WordsExtractor(lowercase=True).extract(text))
+>>> ds.ttr, round(ds.entropy, 3)
+(0.5, 2.864)
+```
+
+A language library subclasses the extractors and overrides their hooks:
+
+```python
+>>> class Words(WordsExtractor):
+...     def lemmatize(self, word):
+...         return {"sat": "sit", "slept": "sleep"}.get(word.lower(), word)
+
+>>> Words(lowercase=True, use_lexemes=True).extract("The cat sat. The dog slept.")
+('the', 'cat', 'sit', 'the', 'dog', 'sleep')
+```
+
+The corpus measures take lists of words:
+
+```python
+>>> from anyts.corpus import keyness
+
+>>> cats = WordsExtractor(lowercase=True).extract("The cat sat on the mat. The cat saw a bird. The cat slept.")
+>>> dogs = WordsExtractor(lowercase=True).extract("The dog sat on the log. The dog saw a cat. The dog barked.")
+>>> [(keyword.word, round(keyword.log_ratio, 2)) for keyword in keyness(cats, dogs, min_freq=2)]
+[('cat', 1.58)]
+```
 
 ## Development
 
-The project uses [uv](https://docs.astral.sh/uv/) for dependencies and [ruff](https://docs.astral.sh/ruff/) for linting and formatting. Python 3.11 or newer is required.
+The project uses [uv](https://docs.astral.sh/uv/) for dependencies and [ruff](https://docs.astral.sh/ruff/) for linting and formatting.
 
 ```bash
 git clone https://github.com/SergeyShk/anyTS.git
@@ -30,8 +89,8 @@ make test-cov               # pytest with doctests and full coverage
 make docs-build             # mkdocs build --strict
 ```
 
-The full list of commands is in `make help`. Contribution guidelines are in [CONTRIBUTING.md](CONTRIBUTING.md).
+The full list of commands is in `make help`. Contribution guidelines are in [CONTRIBUTING.md](https://github.com/SergeyShk/anyTS/blob/master/CONTRIBUTING.md).
 
 ## License
 
-[MIT](LICENSE.txt)
+[MIT](https://github.com/SergeyShk/anyTS/blob/master/LICENSE.txt)
