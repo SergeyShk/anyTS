@@ -7,7 +7,13 @@ nav:
     - Home:
       - About: index.md
       - Installation: installation.md
+      - Exceptions: exceptions.md
       - Authors: authors.md
+    - Extraction:
+      - Sentence extraction: extractors/sentences.md
+      - Word extraction: extractors/words.md
+      - Character N-gram extraction: extractors/char_ngrams.md
+    - Utilities: utils.md
 
 theme:
   name: material

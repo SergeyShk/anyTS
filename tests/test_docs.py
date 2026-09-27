@@ -1,0 +1,59 @@
+"""The named sections of the documentation that the language libraries include"""
+
+import inspect
+import re
+from pathlib import Path
+
+import pytest
+
+from anyts import exceptions, extractors, utils
+
+DOCS = Path(__file__).parents[1] / "docs"
+PAGES = sorted(DOCS.rglob("*.md"))
+# The marker and the name rule of pymdownx.snippets
+MARKER = re.compile(r"-{1,}8<-{1,}[ \t]+\[[ \t]*(start|end)[ \t]*:[ \t]*([^\]\s]*)[ \t]*\]")
+NAME = re.compile(r"[a-z][-_0-9a-z]*", re.IGNORECASE)
+
+
+def sections(page: Path) -> list[str]:
+    """Names of the sections of a page, checked for pairing"""
+    names: list[str] = []
+    open_name = None
+    for line_no, line in enumerate(page.read_text(encoding="utf-8").splitlines(), 1):
+        for kind, name in MARKER.findall(line):
+            where = f"{page.relative_to(DOCS)}:{line_no}"
+            assert NAME.fullmatch(name), f"{where}: invalid section name {name!r}"
+            if kind == "start":
+                assert open_name is None, f"{where}: {name} starts inside {open_name}"
+                assert name not in names, f"{where}: duplicate section {name}"
+                open_name = name
+                names.append(name)
+            else:
+                assert open_name == name, f"{where}: end of {name} closes {open_name}"
+                open_name = None
+    assert open_name is None, f"{page.relative_to(DOCS)}: {open_name} is not closed"
+    return names
+
+
+@pytest.mark.parametrize("page", PAGES, ids=[str(page.relative_to(DOCS)) for page in PAGES])
+def test_sections_are_paired(page):
+    sections(page)
+
+
+def public_names(module) -> list[str]:
+    return [
+        name
+        for name, value in vars(module).items()
+        if not name.startswith("_")
+        and (inspect.isfunction(value) or inspect.isclass(value))
+        and value.__module__ == module.__name__
+        and not inspect.isabstract(value)
+        and not (inspect.isclass(value) and issubclass(value, BaseException))
+    ]
+
+
+def test_public_api_has_sections():
+    documented = {name for page in PAGES for name in sections(page)}
+    required = {"exceptions", *public_names(utils), *public_names(extractors)}
+    assert public_names(exceptions) == []
+    assert required <= documented, sorted(required - documented)

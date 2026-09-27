@@ -5,7 +5,7 @@
 
 **anyTS** is the language-independent core of the text statistics libraries [ruTS](https://github.com/SergeyShk/ruTS) (Russian) and [esTS](https://github.com/SergeyShk/esTS) (Spanish). It holds the code that does not depend on a language, so that it is written, tested and documented once; a language library adds its tokenizer, lemmatizer, spaCy model and rules and re-exports the core under its own names.
 
-> **Status:** scaffolding. The repository, tooling, CI and documentation skeleton are in place; the modules are not written yet.
+> **Status:** in development. The exceptions, the utilities and the extractors are in place; the statistics and the corpus measures follow.
 
 ## Planned scope
 
