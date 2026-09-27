@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://sergeyshk.github.io/anyTS/extractors/words/">
+        <link rel="canonical" href="https://sergeyshk.github.io/anyTS/corpus/stylometry/">
       
       
-        <link rel="prev" href="../sentences/">
+        <link rel="prev" href="../dispersion/">
       
       
-        <link rel="next" href="../char_ngrams/">
+        <link rel="next" href="../compare/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Word extraction - anyTS</title>
+        <title>Stylometry - anyTS</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#word-extraction" class="md-skip">
+        <a href="#stylometry" class="md-skip">
           Skip to content
         </a>
       
@@ -112,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Word extraction
+              Stylometry
             
           </span>
         </div>
@@ -215,13 +215,11 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="../sentences/" class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../../extractors/sentences/" class="md-tabs__link">
           
   
   
@@ -267,11 +265,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../../corpus/keyness/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../keyness/" class="md-tabs__link">
           
   
   
@@ -520,29 +520,24 @@
       
   
   
-    
   
   
-  
     
     
     
     
       
-        
-        
-      
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
         
           
-          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
             
   
   
@@ -560,7 +555,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -578,7 +573,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../sentences/" class="md-nav__link">
+      <a href="../../extractors/sentences/" class="md-nav__link">
         
   
   
@@ -603,37 +598,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Word extraction
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../extractors/words/" class="md-nav__link">
         
   
   
@@ -649,98 +617,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#description" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Description
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#language-hooks" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Language hooks
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#parameters" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Parameters
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#methods" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Methods
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Methods">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#extract" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        extract
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#get_most_common" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        get_most_common
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -753,7 +629,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../char_ngrams/" class="md-nav__link">
+      <a href="../../extractors/char_ngrams/" class="md-nav__link">
         
   
   
@@ -1012,24 +888,29 @@
       
   
   
+    
   
   
+  
     
     
     
     
-      
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
         
           
-          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
             
   
   
@@ -1047,7 +928,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1065,7 +946,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../corpus/keyness/" class="md-nav__link">
+      <a href="../keyness/" class="md-nav__link">
         
   
   
@@ -1093,7 +974,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../corpus/collocations/" class="md-nav__link">
+      <a href="../collocations/" class="md-nav__link">
         
   
   
@@ -1121,7 +1002,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../corpus/dispersion/" class="md-nav__link">
+      <a href="../dispersion/" class="md-nav__link">
         
   
   
@@ -1146,10 +1027,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../corpus/stylometry/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stylometry
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1165,6 +1073,81 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#description" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Description
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#delta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Burrows's Delta
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#zeta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Zeta
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#kilgarriff_chi2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Kilgarriff's chi-square
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mendenhall" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mendenhall curve
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1177,7 +1160,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../corpus/compare/" class="md-nav__link">
+      <a href="../compare/" class="md-nav__link">
         
   
   
@@ -1270,10 +1253,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#language-hooks" class="md-nav__link">
+  <a href="#delta" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Language hooks
+        Burrows's Delta
       
     </span>
   </a>
@@ -1281,10 +1264,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#parameters" class="md-nav__link">
+  <a href="#zeta" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Parameters
+        Zeta
       
     </span>
   </a>
@@ -1292,41 +1275,24 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#methods" class="md-nav__link">
+  <a href="#kilgarriff_chi2" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Methods
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Methods">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#extract" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        extract
+        Kilgarriff's chi-square
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#get_most_common" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#mendenhall" class="md-nav__link">
     <span class="md-ellipsis">
       
-        get_most_common
+        Mendenhall curve
       
     </span>
   </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -1350,72 +1316,64 @@
   
 
 
-<h1 id="word-extraction">Word extraction<a class="headerlink" href="#word-extraction" title="Permanent link">&para;</a></h1>
+<h1 id="stylometry">Stylometry<a class="headerlink" href="#stylometry" title="Permanent link">&para;</a></h1>
 <div class="admonition info">
-<p><strong>anyts.extractors.WordsExtractor</strong></p>
+<p><strong>anyts.corpus.delta()</strong>, <strong>anyts.corpus.delta_profiles()</strong>, <strong>anyts.corpus.frequency_table()</strong>, <strong>anyts.corpus.z_scores()</strong>, <strong>anyts.corpus.zeta()</strong>, <strong>anyts.corpus.kilgarriff_chi2()</strong>, <strong>anyts.corpus.mendenhall_curve()</strong>, <strong>anyts.corpus.mendenhall_distance()</strong></p>
 </div>
 <h2 id="description">Description<a class="headerlink" href="#description" title="Permanent link">&para;</a></h2>
-<!-- --8<-- [start:WordsExtractor] -->
-<p>A class for extracting words from a text. It allows using different tokenizers, filtering stop words, numbers and punctuation, lemmatizing, building N-grams, and setting the minimum and maximum length of extracted words.</p>
-<!-- --8<-- [end:WordsExtractor] -->
+<!-- --8<-- [start:stylometry] -->
+<p>Measures of stylometry and authorship attribution: distances between texts by the frequencies of the most frequent words (Burrows's Delta and its variants, as in <a href="https://github.com/computationalstylistics/stylo">stylo</a>), markers of preferred and avoided words (Zeta), Kilgarriff's chi-square distance between corpora and the Mendenhall curve. The functions work on lists of units of a text: lower-case word forms (the usual choice for Delta), lemmas or character N-grams - case and lemmatization belong to the extractors.</p>
+<!-- --8<-- [end:stylometry] -->
 
-<h2 id="language-hooks">Language hooks<a class="headerlink" href="#language-hooks" title="Permanent link">&para;</a></h2>
-<!-- --8<-- [start:WordsExtractor-hooks] -->
-<p>The language enters the extractor through three hooks that a language library overrides in a subclass:</p>
+<h2 id="delta">Burrows's Delta<a class="headerlink" href="#delta" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:frequency_table] -->
+<p>A corpus is a dictionary "name of a text → units". <code>frequency_table(corpus, n_mfw=100, culling=0.0)</code> builds the table of relative frequencies: rows are the texts, columns the <code>n_mfw</code> most frequent units by descending mean relative frequency (alphabetically when equal); <code>culling</code> keeps the units that occur in at least the given share of the texts, as in stylo.</p>
+<!-- --8<-- [end:frequency_table] -->
+
+<!-- --8<-- [start:z_scores] -->
+<p><code>z_scores(table)</code> standardizes the columns with the sample standard deviation, like <code>scale()</code> of R; a column with the same frequency in every text gives zeros.</p>
+<!-- --8<-- [end:z_scores] -->
+
+<!-- --8<-- [start:delta] -->
+<p><code>delta</code> computes a symmetric matrix of distances from the z-scores (a <code>DataFrame</code> with the names of the texts); at least three texts are needed - with two, the z-scores degenerate to ±1/√2 and the distances do not depend on the frequencies.</p>
+<p>Variants (<code>DELTA_VARIANTS</code>), with the formulas of the sources of stylo; <span class="arithmatex">\(n\)</span> is the number of units, <span class="arithmatex">\(z_A\)</span> and <span class="arithmatex">\(z_B\)</span> the vectors of z-scores of the texts:</p>
 <table>
 <thead>
 <tr>
-<th style="text-align: center;">Hook</th>
-<th style="text-align: center;">Kind</th>
-<th style="text-align: center;">Default</th>
-<th style="text-align: center;">Used for</th>
+<th style="text-align: left;">Variant</th>
+<th style="text-align: left;">Key</th>
+<th style="text-align: left;">Formula</th>
+<th style="text-align: left;">Source</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;"><code>tokenize(text)</code></td>
-<td style="text-align: center;">method</td>
-<td style="text-align: center;">runs of word characters <code>\w+</code></td>
-<td style="text-align: center;">the tokenizer when <code>tokenizer</code> is not given</td>
+<td style="text-align: left;">Burrows's Delta</td>
+<td style="text-align: left;"><code>burrows</code></td>
+<td style="text-align: left;"><span class="arithmatex">\(\frac{1}{n} \sum_i \lvert z_{A,i} - z_{B,i} \rvert\)</span></td>
+<td style="text-align: left;">Burrows (2002), <code>dist.delta</code></td>
 </tr>
 <tr>
-<td style="text-align: center;"><code>lemmatize(word)</code></td>
-<td style="text-align: center;">method</td>
-<td style="text-align: center;">the word itself</td>
-<td style="text-align: center;"><code>use_lexemes=True</code></td>
+<td style="text-align: left;">Quadratic Delta</td>
+<td style="text-align: left;"><code>quadratic</code></td>
+<td style="text-align: left;"><span class="arithmatex">\(\frac{1}{n} \sqrt{\sum_i (z_{A,i} - z_{B,i})^2}\)</span></td>
+<td style="text-align: left;">Argamon (2008), <code>dist.argamon</code></td>
 </tr>
 <tr>
-<td style="text-align: center;"><code>number_pattern</code></td>
-<td style="text-align: center;">class attribute</td>
-<td style="text-align: center;">a signed number with separators and an optional percent sign: <code>-5</code>, <code>1990-1995</code>, <code>1,500.50</code>, <code>12/03/2020</code>, <code>3:30</code>, <code>10%</code></td>
-<td style="text-align: center;"><code>filter_nums=True</code>, matched against the whole lower-cased word</td>
+<td style="text-align: left;">Eder's Delta</td>
+<td style="text-align: left;"><code>eder</code></td>
+<td style="text-align: left;"><span class="arithmatex">\(\sum_i \frac{n - i + 2}{n} \lvert z_{A,i} - z_{B,i} \rvert\)</span>, <span class="arithmatex">\(i\)</span> - rank of the unit by frequency</td>
+<td style="text-align: left;">Eder, <code>dist.eder</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Cosine Delta</td>
+<td style="text-align: left;"><code>cosine</code></td>
+<td style="text-align: left;"><span class="arithmatex">\(1 - \frac{z_A \cdot z_B}{\lVert z_A \rVert \lVert z_B \rVert}\)</span></td>
+<td style="text-align: left;">Smith and Aldridge (2011), <a href="https://aclanthology.org/W15-0709.pdf">Evert et al. (2015)</a>, <code>dist.wurzburg</code></td>
 </tr>
 </tbody>
 </table>
-<!-- --8<-- [end:WordsExtractor-hooks] -->
-
-<div class="admonition example">
-<p class="admonition-title">Example</p>
-<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
-
-<span class="kn">from</span><span class="w"> </span><span class="nn">anyts</span><span class="w"> </span><span class="kn">import</span> <span class="n">WordsExtractor</span>
-
-
-<span class="k">class</span><span class="w"> </span><span class="nc">EnglishWords</span><span class="p">(</span><span class="n">WordsExtractor</span><span class="p">):</span>
-    <span class="n">number_pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\d+(?:st|nd|rd|th)?"</span><span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">tokenize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
-
-
-<span class="n">EnglishWords</span><span class="p">(</span><span class="n">filter_nums</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="s2">"The 3rd time"</span><span class="p">)</span>
-</code></pre></div>
-<p><em>Result</em>:</p>
-<div class="highlight"><pre><span></span><code><span class="o">(</span><span class="s1">'The'</span>,<span class="w"> </span><span class="s1">'time'</span><span class="o">)</span>
-</code></pre></div>
-</div>
-<h2 id="parameters">Parameters<a class="headerlink" href="#parameters" title="Permanent link">&para;</a></h2>
-<!-- --8<-- [start:WordsExtractor-parameters] -->
+<p>Cosine Delta clusters the texts by author best in the experiments of Evert et al. The usual number of units is 100 to 500 most frequent words, 100-200 for character N-grams.</p>
 <table>
 <thead>
 <tr>
@@ -1427,126 +1385,192 @@
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;"><code>tokenizer</code></td>
-<td style="text-align: center;">Pattern/Callable</td>
-<td style="text-align: center;"><code>None</code></td>
-<td style="text-align: center;">Tokenizer or regular expression; by default the <code>tokenize</code> method</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>filter_punct</code></td>
-<td style="text-align: center;">bool</td>
-<td style="text-align: center;"><code>True</code></td>
-<td style="text-align: center;">Filter punctuation marks</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>filter_nums</code></td>
-<td style="text-align: center;">bool</td>
-<td style="text-align: center;"><code>False</code></td>
-<td style="text-align: center;">Filter numbers matched by <code>number_pattern</code></td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>use_lexemes</code></td>
-<td style="text-align: center;">bool</td>
-<td style="text-align: center;"><code>False</code></td>
-<td style="text-align: center;">Use word lemmas of the <code>lemmatize</code> method</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>stopwords</code></td>
-<td style="text-align: center;">Collection[str]</td>
-<td style="text-align: center;"><code>None</code></td>
-<td style="text-align: center;">Stop words, compared case-insensitively</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>lowercase</code></td>
-<td style="text-align: center;">bool</td>
-<td style="text-align: center;"><code>False</code></td>
-<td style="text-align: center;">Convert words to lower case</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>ngram_range</code></td>
-<td style="text-align: center;">Tuple[int, int]</td>
-<td style="text-align: center;"><code>(1, 1)</code></td>
-<td style="text-align: center;">Lower and upper bound of the N-gram size</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>min_len</code></td>
-<td style="text-align: center;">int</td>
-<td style="text-align: center;"><code>0</code></td>
-<td style="text-align: center;">Minimum length of an extracted word, <code>0</code> for no bound</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>max_len</code></td>
-<td style="text-align: center;">int</td>
-<td style="text-align: center;"><code>0</code></td>
-<td style="text-align: center;">Maximum length of an extracted word, <code>0</code> for no bound</td>
-</tr>
-</tbody>
-</table>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>A regular expression as the tokenizer is a separator: the text is split with <code>re.split</code>. The filters are applied in order: punctuation, numbers, lemmatization, lower case, stop words, word length. A lower-case stop word list also filters a capitalized word at the start of a sentence. A punctuation mark is a token consisting entirely of marks and symbols, including multi-character ones: <code>?!</code>, <code>--</code>, <code>…</code>, <code>€</code> (see <code>is_punctuation</code>). Empty tokens are dropped before the filters. N-grams join the words with <code>_</code>.</p>
-</div>
-<!-- --8<-- [end:WordsExtractor-parameters] -->
-
-<h2 id="methods">Methods<a class="headerlink" href="#methods" title="Permanent link">&para;</a></h2>
-<h3 id="extract">extract<a class="headerlink" href="#extract" title="Permanent link">&para;</a></h3>
-<!-- --8<-- [start:WordsExtractor-extract] -->
-<p>Extracts words from a text.</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: center;">Parameter</th>
-<th style="text-align: center;">Type</th>
-<th style="text-align: center;">Default</th>
-<th style="text-align: center;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: center;"><code>text</code></td>
-<td style="text-align: center;">str</td>
+<td style="text-align: center;"><code>corpus</code></td>
+<td style="text-align: center;">dict[str, list[str]]</td>
 <td style="text-align: center;"><code>-</code></td>
-<td style="text-align: center;">Text string</td>
+<td style="text-align: center;">Units of the texts by the names of the texts</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>n_mfw</code></td>
+<td style="text-align: center;">int</td>
+<td style="text-align: center;"><code>100</code></td>
+<td style="text-align: center;">Number of the most frequent units; <code>None</code> - all of them</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>variant</code></td>
+<td style="text-align: center;">str</td>
+<td style="text-align: center;"><code>burrows</code></td>
+<td style="text-align: center;">Variant of Delta of <code>DELTA_VARIANTS</code></td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>culling</code></td>
+<td style="text-align: center;">float</td>
+<td style="text-align: center;"><code>0.0</code></td>
+<td style="text-align: center;">Smallest share of the texts a unit occurs in</td>
 </tr>
 </tbody>
 </table>
-<!-- --8<-- [end:WordsExtractor-extract] -->
+<!-- --8<-- [end:delta] -->
 
-<p>An example of word extraction with bigrams as tokens, after filtering numbers and stop words:</p>
-<div class="admonition example">
-<p class="admonition-title">Example</p>
-<p><em>Code</em>:</p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts</span><span class="w"> </span><span class="kn">import</span> <span class="n">WordsExtractor</span>
-
-<span class="n">text</span> <span class="o">=</span> <span class="s2">"Better 100 friends than 100 dollars"</span>
-
-<span class="n">we</span> <span class="o">=</span> <span class="n">WordsExtractor</span><span class="p">(</span><span class="n">lowercase</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">stopwords</span><span class="o">=</span><span class="p">[</span><span class="s2">"than"</span><span class="p">],</span> <span class="n">filter_nums</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ngram_range</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
-<span class="n">we</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
-</code></pre></div>
-<p><em>Result</em>:</p>
-<div class="highlight"><pre><span></span><code><span class="o">(</span><span class="s1">'better'</span>,<span class="w"> </span><span class="s1">'friends'</span>,<span class="w"> </span><span class="s1">'dollars'</span>,<span class="w"> </span><span class="s1">'better_friends'</span>,<span class="w"> </span><span class="s1">'friends_dollars'</span><span class="o">)</span>
-</code></pre></div>
-</div>
-<h3 id="get_most_common">get_most_common<a class="headerlink" href="#get_most_common" title="Permanent link">&para;</a></h3>
-<!-- --8<-- [start:WordsExtractor-get_most_common] -->
-<p>Returns a counter of the top words of the text. It takes the number of top words to return as a parameter.</p>
-<div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<p>The method must be called after words have been extracted with <code>extract</code>.</p>
-</div>
-<!-- --8<-- [end:WordsExtractor-get_most_common] -->
+<!-- --8<-- [start:delta_profiles] -->
+<p>For authorship attribution there is <code>delta_profiles(reference, samples, n_mfw, variant, culling, statistics)</code>: the most frequent units, the culling and the statistics of the z-scores come from the reference texts <code>reference</code> (the profiles of the authors) or from a separate set <code>statistics</code> - for instance, the training windows when the profiles are too few to estimate the spread of the frequencies; the texts under test <code>samples</code> are described by the same units and scaled by the same statistics. The result is the distances from the texts under test to the reference ones, and the nearest reference in a row is the presumed author. Unlike in <code>delta</code>, the texts under test affect neither the units nor the scaling, so the result for a text does not depend on the texts passed along with it.</p>
+<!-- --8<-- [end:delta_profiles] -->
 
 <div class="admonition example">
 <p class="admonition-title">Example</p>
-<p><em>Code</em>:</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts</span><span class="w"> </span><span class="kn">import</span> <span class="n">WordsExtractor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">anyts.corpus</span><span class="w"> </span><span class="kn">import</span> <span class="n">delta</span><span class="p">,</span> <span class="n">delta_profiles</span><span class="p">,</span> <span class="n">frequency_table</span>
 
+<span class="n">texts</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"A"</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">"The cat was at the window and watched the birds. "</span>
+        <span class="s2">"The birds flew away and the cat slept at the window."</span>
+    <span class="p">),</span>
+    <span class="s2">"B"</span><span class="p">:</span> <span class="s2">"The dog was on the floor and slept. Then the dog ate and slept again on the floor."</span><span class="p">,</span>
+    <span class="s2">"C"</span><span class="p">:</span> <span class="s2">"Tomorrow the cat will come back to the window and watch the birds, but the dog will sleep."</span><span class="p">,</span>
+<span class="p">}</span>
 <span class="n">we</span> <span class="o">=</span> <span class="n">WordsExtractor</span><span class="p">(</span><span class="n">lowercase</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="n">we</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="s2">"The cat saw the dog and the bird"</span><span class="p">)</span>
-<span class="n">we</span><span class="o">.</span><span class="n">get_most_common</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">corpus</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">we</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="n">text</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">texts</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+<span class="n">frequency_table</span><span class="p">(</span><span class="n">corpus</span><span class="p">,</span> <span class="n">n_mfw</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+<span class="c1">#      the    and    dog  slept  birds</span>
+<span class="c1"># A  0.286  0.095  0.000  0.048  0.095</span>
+<span class="c1"># B  0.222  0.111  0.111  0.111  0.000</span>
+<span class="c1"># C  0.222  0.056  0.056  0.000  0.056</span>
+
+<span class="n">delta</span><span class="p">(</span><span class="n">corpus</span><span class="p">,</span> <span class="n">n_mfw</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+<span class="c1">#        A      B      C</span>
+<span class="c1"># A  0.000  1.483  1.161</span>
+<span class="c1"># B  1.483  0.000  1.219</span>
+<span class="c1"># C  1.161  1.219  0.000</span>
+
+<span class="n">delta</span><span class="p">(</span><span class="n">corpus</span><span class="p">,</span> <span class="n">n_mfw</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">variant</span><span class="o">=</span><span class="s2">"cosine"</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+<span class="c1">#        A      B      C</span>
+<span class="c1"># A  0.000  1.676  1.273</span>
+<span class="c1"># B  1.676  0.000  1.525</span>
+<span class="c1"># C  1.273  1.525  0.000</span>
+
+<span class="n">sample</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"?"</span><span class="p">:</span> <span class="n">we</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="s2">"The cat woke up at the window and watched the birds again."</span><span class="p">)}</span>
+<span class="n">delta_profiles</span><span class="p">(</span><span class="n">corpus</span><span class="p">,</span> <span class="n">sample</span><span class="p">,</span> <span class="n">n_mfw</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+<span class="c1">#        A      B      C</span>
+<span class="c1"># ?  0.499  1.493  0.662</span>
 </code></pre></div>
-<p><em>Result</em>:</p>
-<div class="highlight"><pre><span></span><code><span class="o">[(</span><span class="s1">'the'</span>,<span class="w"> </span><span class="m">3</span><span class="o">)</span>,<span class="w"> </span><span class="o">(</span><span class="s1">'cat'</span>,<span class="w"> </span><span class="m">1</span><span class="o">)]</span>
+</div>
+<h2 id="zeta">Zeta<a class="headerlink" href="#zeta" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:zeta] -->
+<p>Markers of preferred and avoided words after Burrows (2007) and Craig and Kinney (2009). Every text of both corpora is split into segments of about <code>segment_size</code> words (the number of segments is the ratio of the length to the size rounded half up, at least one), and for a word the share of the segments of each corpus where it occurs (<span class="arithmatex">\(DP\)</span>) is computed. Zeta is the difference of the shares <span class="arithmatex">\(DP_{target} - DP_{comparison}\)</span> from −1 to 1 (<code>zeta.craig</code> in the notation of stylo; the classic Zeta of Craig <span class="arithmatex">\(DP_{target} + (1 - DP_{comparison})\)</span> is greater by one), the logarithmic Zeta is <span class="arithmatex">\(\log_2 \frac{DP_{target}}{DP_{comparison}}\)</span> (<a href="https://zeta-project.eu/en/keyness-measures/burrows-zeta-logarithmic-zeta/">Schöch et al. 2018</a>), a zero share replaced by half a segment. The list starts with the words the target corpus prefers and ends with the avoided ones.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>target</code></td>
+<td style="text-align: center;">list[str]/list[list[str]]</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Words of the target corpus - one text or a list of texts</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>comparison</code></td>
+<td style="text-align: center;">list[str]/list[list[str]]</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Words of the comparison corpus</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>segment_size</code></td>
+<td style="text-align: center;">int</td>
+<td style="text-align: center;"><code>2000</code></td>
+<td style="text-align: center;">Size of a segment in words</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>top_n</code></td>
+<td style="text-align: center;">int</td>
+<td style="text-align: center;"><code>None</code></td>
+<td style="text-align: center;">Number of words from the start of the list; <code>None</code> - all of them</td>
+</tr>
+</tbody>
+</table>
+<p>The result is a list of <code>ZetaScore(word, dp_target, dp_comparison, zeta, log_zeta)</code> named tuples by descending Zeta, by descending logarithmic Zeta and alphabetically when equal.</p>
+<!-- --8<-- [end:zeta] -->
+
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts.corpus</span><span class="w"> </span><span class="kn">import</span> <span class="n">zeta</span>
+
+<span class="n">zeta</span><span class="p">(</span><span class="n">corpus</span><span class="p">[</span><span class="s2">"A"</span><span class="p">],</span> <span class="n">corpus</span><span class="p">[</span><span class="s2">"B"</span><span class="p">],</span> <span class="n">segment_size</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">top_n</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="c1"># [ZetaScore(word='at', dp_target=0.5, dp_comparison=0.0, zeta=0.5, log_zeta=2.0),</span>
+<span class="c1">#  ZetaScore(word='birds', dp_target=0.5, dp_comparison=0.0, zeta=0.5, log_zeta=2.0)]</span>
+
+<span class="n">zeta</span><span class="p">(</span><span class="n">corpus</span><span class="p">[</span><span class="s2">"A"</span><span class="p">],</span> <span class="n">corpus</span><span class="p">[</span><span class="s2">"B"</span><span class="p">],</span> <span class="n">segment_size</span><span class="o">=</span><span class="mi">5</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+<span class="c1"># ZetaScore(word='on', dp_target=0.0, dp_comparison=0.5, zeta=-0.5, log_zeta=-2.0)</span>
+</code></pre></div>
+</div>
+<h2 id="kilgarriff_chi2">Kilgarriff's chi-square<a class="headerlink" href="#kilgarriff_chi2" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:kilgarriff_chi2] -->
+<p>The distance between two corpora after <a href="https://www.sketchengine.eu/wp-content/uploads/comparing_corpora_2001.pdf">Kilgarriff (2001)</a>: for the <code>n_mfw</code> most frequent words of the joint corpus the expected frequencies in the corpora are proportional to their sizes, <span class="arithmatex">\(\chi^2 = \sum (O - E)^2 / E\)</span> over the words and both corpora. The greater the value, the more the corpora differ; the value grows with the size of the corpora, so pairs of corpora are comparable with each other at equal sizes.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>words_a</code></td>
+<td style="text-align: center;">list[str]</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Words of the first corpus</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>words_b</code></td>
+<td style="text-align: center;">list[str]</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Words of the second corpus</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>n_mfw</code></td>
+<td style="text-align: center;">int</td>
+<td style="text-align: center;"><code>500</code></td>
+<td style="text-align: center;">Number of the most frequent words of the joint corpus</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:kilgarriff_chi2] -->
+
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts.corpus</span><span class="w"> </span><span class="kn">import</span> <span class="n">kilgarriff_chi2</span>
+
+<span class="nb">round</span><span class="p">(</span><span class="n">kilgarriff_chi2</span><span class="p">(</span><span class="n">corpus</span><span class="p">[</span><span class="s2">"A"</span><span class="p">],</span> <span class="n">corpus</span><span class="p">[</span><span class="s2">"B"</span><span class="p">],</span> <span class="n">n_mfw</span><span class="o">=</span><span class="mi">5</span><span class="p">),</span> <span class="mi">3</span><span class="p">)</span>
+<span class="c1"># 4.113</span>
+</code></pre></div>
+</div>
+<h2 id="mendenhall">Mendenhall curve<a class="headerlink" href="#mendenhall" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:mendenhall_curve] -->
+<p><code>mendenhall_curve(words)</code> - the shares of the words of every length in characters (Mendenhall 1887), a profile of the author comparable between texts whatever their size.</p>
+<!-- --8<-- [end:mendenhall_curve] -->
+
+<!-- --8<-- [start:mendenhall_distance] -->
+<p><code>mendenhall_distance(words_a, words_b)</code> - the Jensen-Shannon distance with base 2 between the curves, from 0 (the distributions coincide) to 1.</p>
+<!-- --8<-- [end:mendenhall_distance] -->
+
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts.corpus</span><span class="w"> </span><span class="kn">import</span> <span class="n">mendenhall_curve</span><span class="p">,</span> <span class="n">mendenhall_distance</span>
+
+<span class="p">{</span><span class="n">length</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">share</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span> <span class="k">for</span> <span class="n">length</span><span class="p">,</span> <span class="n">share</span> <span class="ow">in</span> <span class="n">mendenhall_curve</span><span class="p">(</span><span class="n">corpus</span><span class="p">[</span><span class="s2">"A"</span><span class="p">])</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+<span class="c1"># {2: 0.095, 3: 0.524, 4: 0.095, 5: 0.143, 6: 0.095, 7: 0.048}</span>
+
+<span class="nb">round</span><span class="p">(</span><span class="n">mendenhall_distance</span><span class="p">(</span><span class="n">corpus</span><span class="p">[</span><span class="s2">"A"</span><span class="p">],</span> <span class="n">corpus</span><span class="p">[</span><span class="s2">"B"</span><span class="p">]),</span> <span class="mi">3</span><span class="p">)</span>
+<span class="c1"># 0.303</span>
 </code></pre></div>
 </div>
 
