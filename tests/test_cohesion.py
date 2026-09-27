@@ -3,7 +3,7 @@ import random
 import subprocess
 import sys
 from fractions import Fraction
-from itertools import combinations
+from itertools import combinations, pairwise
 from math import isnan
 
 import pytest
@@ -67,13 +67,23 @@ def test_dice(first, second, expected):
 
 def test_calc_overlaps_matches_the_direct_computation():
     rng = random.Random(17)
-    sets = [{str(rng.randrange(12)) for _ in range(rng.randrange(5))} for _ in range(40)]
+    sets = [frozenset(str(rng.randrange(12)) for _ in range(rng.randrange(5))) for _ in range(40)]
+    adjacent = list(pairwise(sets))
+    all_pairs = list(combinations(sets, 2))
+    shared = [sum(1 for a, b in pairs if a & b) / len(pairs) for pairs in (adjacent, all_pairs)]
+    dices = [
+        sum(Fraction(2 * len(a & b), len(a) + len(b)) if a or b else 0 for a, b in pairs)
+        / len(pairs)
+        for pairs in (adjacent, all_pairs)
+    ]
     overlap = calc_overlaps(sets)
     assert isinstance(overlap, Overlap)
-    assert overlap.adjacent == pytest.approx(calc_overlap(sets))
-    assert overlap.all == pytest.approx(calc_overlap(sets, adjacent=False))
-    assert overlap.prop_adjacent == pytest.approx(calc_proportional_overlap(sets))
-    assert overlap.prop_all == pytest.approx(calc_proportional_overlap(sets, adjacent=False))
+    assert overlap.adjacent == calc_overlap(sets) == pytest.approx(shared[0])
+    assert overlap.all == calc_overlap(sets, adjacent=False) == pytest.approx(shared[1])
+    assert overlap.prop_adjacent == calc_proportional_overlap(sets)
+    assert overlap.prop_adjacent == pytest.approx(float(dices[0]), rel=1e-15)
+    assert overlap.prop_all == calc_proportional_overlap(sets, adjacent=False)
+    assert overlap.prop_all == pytest.approx(float(dices[1]), rel=1e-15)
 
 
 def test_sum_dice_exact():
@@ -171,6 +181,12 @@ def test_sentences_checked(func):
         func(iter([["a"], ["b"]]))
     with pytest.raises(SourceTypeError, match=r"^A list of \w+ of a sentence is expected"):
         func(["the cat", "the dog"])
+    doc = spacy.blank("xx")("the cat and the cat")
+    tokens = [list(doc[:2]), list(doc[3:])]
+    with pytest.raises(
+        SourceTypeError, match=r"^The \w+ of a sentence must be strings, not Token$"
+    ):
+        func(tokens)
     doc = spacy.blank("xx")("The cat. The dog.")
     with pytest.raises(SourceTypeError, match=r"not a Doc"):
         func(doc)
@@ -179,3 +195,5 @@ def test_sentences_checked(func):
 def test_dominant_checked():
     with pytest.raises(SourceTypeError, match=r"^A list of values is expected, not a string$"):
         dominant("Pres")
+    with pytest.raises(SourceTypeError, match=r"^The values must be strings, not Token$"):
+        dominant(list(spacy.blank("xx")("Pres Pres")))

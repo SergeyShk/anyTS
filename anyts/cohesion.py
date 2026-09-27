@@ -1,19 +1,19 @@
 from collections import Counter
 from collections.abc import Collection, Iterable, Sequence
-from itertools import combinations, pairwise
+from itertools import pairwise
 from math import fsum, nan
 from typing import NamedTuple
 
 import numpy as np
 
-from .utils import check_sequence, safe_divide
+from .utils import check_sequence, check_words, safe_divide
 
 
-def _check_sents(sents: Iterable[object], what: str) -> None:
+def _check_sents(sents: Iterable[Iterable[object]], what: str) -> None:
     """Checking a list of sentences given as collections of their elements"""
     check_sequence(sents, "sentences")
     for sent in sents:
-        check_sequence(sent, what)
+        check_words(sent, what)
 
 
 class Overlap(NamedTuple):
@@ -40,7 +40,8 @@ def calc_overlap(sets: Sequence[Collection[str]], adjacent: bool = True) -> floa
     Description:
         The binary overlap of Coh-Metrix (CRFNO1, CRFAO1, CRFSO1 over the
         adjacent pairs, CRFNOa, CRFAOa, CRFSOa over all): a pair of sentences is
-        cohesive when they share at least one element
+        cohesive when they share at least one element; all the pairs are counted
+        over bit masks of the sentences, without going through them
 
     Arguments:
         sets (list[set[str]]): Elements of every sentence
@@ -51,16 +52,19 @@ def calc_overlap(sets: Sequence[Collection[str]], adjacent: bool = True) -> floa
             than two sentences
 
     Raises:
-        SourceTypeError: If the sentences or one of them are a string, a Doc or an iterator
+        SourceTypeError: If the sentences are a string, a Doc or an iterator, or a sentence
+            is not a list of strings (check_words)
     """
     _check_sents(sets, "elements of a sentence")
     frozen = [frozenset(elements) for elements in sets]
     n_sents = len(frozen)
     if n_sents < 2:
         return nan
-    pairs = pairwise(frozen) if adjacent else combinations(frozen, 2)
-    n_pairs = n_sents - 1 if adjacent else n_sents * (n_sents - 1) // 2
-    return sum(1 for first, second in pairs if not first.isdisjoint(second)) / n_pairs
+    if adjacent:
+        return sum(1 for first, second in pairwise(frozen) if not first.isdisjoint(second)) / (
+            n_sents - 1
+        )
+    return _count_sharing_pairs(frozen) / (n_sents * (n_sents - 1) // 2)
 
 
 def calc_proportional_overlap(sets: Sequence[Collection[str]], adjacent: bool = True) -> float:
@@ -69,7 +73,9 @@ def calc_proportional_overlap(sets: Sequence[Collection[str]], adjacent: bool = 
 
     Description:
         The proportional overlap of Coh-Metrix (CRFCWO1, CRFCWOa): the Dice
-        coefficient of a pair of sentences (dice) averaged over the pairs
+        coefficient of a pair of sentences (dice) averaged over the pairs; over all
+        the pairs the sum comes from the histograms of the lengths of the sentences
+        holding every element (see calc_overlaps), without going through them
 
     Arguments:
         sets (list[set[str]]): Elements of every sentence
@@ -79,16 +85,17 @@ def calc_proportional_overlap(sets: Sequence[Collection[str]], adjacent: bool = 
         float: Mean share of shared elements, nan for a text shorter than two sentences
 
     Raises:
-        SourceTypeError: If the sentences or one of them are a string, a Doc or an iterator
+        SourceTypeError: If the sentences are a string, a Doc or an iterator, or a sentence
+            is not a list of strings (check_words)
     """
     _check_sents(sets, "elements of a sentence")
     frozen = [frozenset(elements) for elements in sets]
     n_sents = len(frozen)
     if n_sents < 2:
         return nan
-    pairs = pairwise(frozen) if adjacent else combinations(frozen, 2)
-    n_pairs = n_sents - 1 if adjacent else n_sents * (n_sents - 1) // 2
-    return sum(dice(first, second) for first, second in pairs) / n_pairs
+    if adjacent:
+        return sum(dice(first, second) for first, second in pairwise(frozen)) / (n_sents - 1)
+    return _sum_dice(frozen) / (n_sents * (n_sents - 1) // 2)
 
 
 def dice(first: frozenset[str], second: frozenset[str]) -> float:
@@ -110,8 +117,8 @@ def calc_overlaps(sets: Sequence[Collection[str]], proportional: bool = True) ->
     Computing the binary and the proportional overlap over adjacent and all pairs
 
     Description:
-        Gives the values of calc_overlap and calc_proportional_overlap without
-        going through every pair of sentences
+        Gives the values of calc_overlap and calc_proportional_overlap over the
+        adjacent and all the pairs at once
 
     Arguments:
         sets (list[set[str]]): Elements of every sentence
@@ -123,7 +130,8 @@ def calc_overlaps(sets: Sequence[Collection[str]], proportional: bool = True) ->
             coefficients, nan for a text shorter than two sentences
 
     Raises:
-        SourceTypeError: If the sentences or one of them are a string, a Doc or an iterator
+        SourceTypeError: If the sentences are a string, a Doc or an iterator, or a sentence
+            is not a list of strings (check_words)
     """
     _check_sents(sets, "elements of a sentence")
     frozen = [frozenset(elements) for elements in sets]
@@ -217,7 +225,8 @@ def count_given(sents: Sequence[Sequence[str]]) -> int:
         int: Number of given elements
 
     Raises:
-        SourceTypeError: If the sentences or one of them are a string, a Doc or an iterator
+        SourceTypeError: If the sentences are a string, a Doc or an iterator, or a sentence
+            is not a list of strings (check_words)
     """
     _check_sents(sents, "lemmas of a sentence")
     seen: set[str] = set()
@@ -244,9 +253,9 @@ def dominant(values: Sequence[str]) -> str | None:
         str|None: Dominant value, None for an empty list
 
     Raises:
-        SourceTypeError: If the values are a string, a Doc or an iterator
+        SourceTypeError: If the values are not a list of strings (check_words)
     """
-    check_sequence(values, "values")
+    check_words(values, "values")
     if not values:
         return None
     return Counter(values).most_common(1)[0][0]
@@ -269,7 +278,8 @@ def calc_repetition(sents: Sequence[Sequence[str]]) -> float:
         float: Share of the cohesive pairs, nan without a single pair with the feature
 
     Raises:
-        SourceTypeError: If the sentences or one of them are a string, a Doc or an iterator
+        SourceTypeError: If the sentences are a string, a Doc or an iterator, or a sentence
+            is not a list of strings (check_words)
     """
     _check_sents(sents, "values of a sentence")
     pairs = [
