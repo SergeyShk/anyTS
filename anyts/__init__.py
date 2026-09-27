@@ -7,6 +7,18 @@
 import logging
 from importlib.metadata import PackageNotFoundError, version
 
+from .exceptions import (
+    AnyTSError,
+    DataFileError,
+    DatasetNotFoundError,
+    DownloadError,
+    ParameterError,
+    SourceError,
+    SourceTypeError,
+    UnknownStatError,
+)
+from .extractors import CharNgramsExtractor, SentsExtractor, WordsExtractor
+
 logging.getLogger(__name__).addHandler(logging.NullHandler())
 
 try:
@@ -19,4 +31,17 @@ __description__ = (
 __author__ = "Sergey Shkarin"
 __author_email__ = "kouki.sergey@gmail.com"
 
-__all__ = ["__version__"]
+__all__ = [
+    "AnyTSError",
+    "CharNgramsExtractor",
+    "DataFileError",
+    "DatasetNotFoundError",
+    "DownloadError",
+    "ParameterError",
+    "SentsExtractor",
+    "SourceError",
+    "SourceTypeError",
+    "UnknownStatError",
+    "WordsExtractor",
+    "__version__",
+]
