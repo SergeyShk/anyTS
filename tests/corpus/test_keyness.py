@@ -1,4 +1,5 @@
 from collections import Counter
+from collections.abc import Mapping
 from math import inf, isnan, log
 
 import numpy as np
@@ -173,6 +174,30 @@ def test_frequency_reference_missing_keys_are_never_negative():
     assert {keyword.word for keyword in negative} == {"the", "window"}
     positive = keyness({"cat": 10, "xylophone": 1}, REFERENCE)
     assert "xylophone" in {keyword.word for keyword in positive}
+
+
+class Lookups(Mapping):
+    """Frequencies that may be looked up but not iterated"""
+
+    def __init__(self, counts):
+        self.counts = counts
+
+    def __getitem__(self, key):
+        return self.counts[key]
+
+    def __len__(self):
+        return len(self.counts)
+
+    def __iter__(self):
+        raise AssertionError("the keys of the reference are iterated")
+
+
+def test_positive_keywords_do_not_iterate_the_reference():
+    reference = REFERENCE._replace(counts=Lookups(REFERENCE.counts))
+    words = ["cats", "window", "xylophone"]
+    assert keyness(words, reference) == keyness(words, REFERENCE)
+    with pytest.raises(AssertionError, match="iterated"):
+        keyness(words, reference, positive=False)
 
 
 def test_frequency_reference_defaults():

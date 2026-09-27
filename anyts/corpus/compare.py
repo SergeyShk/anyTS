@@ -143,7 +143,12 @@ def compare_values(
 
     Returns:
         tuple[float, ...]: Values in the order of COMPARISON_COLUMNS, p_holm - nan
+
+    Raises:
+        ParameterError: If the texts are given and are not as many as the values
     """
+    _check_texts(values_a, texts_a)
+    _check_texts(values_b, texts_b)
     n_a, n_b = len(values_a), len(values_b)
     n_texts_a = n_a if texts_a is None else len(np.unique(texts_a))
     n_texts_b = n_b if texts_b is None else len(np.unique(texts_b))
@@ -270,8 +275,9 @@ def bootstrap_median_diff(
             with the texts given, fewer than two texts on a side
 
     Raises:
-        ParameterError: If the number of samples is below one or the confidence
-            level is outside the interval (0, 1)
+        ParameterError: If the number of samples is below one, the confidence
+            level is outside the interval (0, 1) or the texts are given and are
+            not as many as the values
 
     Example:
         >>> from anyts.corpus import bootstrap_median_diff
@@ -282,6 +288,8 @@ def bootstrap_median_diff(
         raise ParameterError("The number of bootstrap samples must be greater than 0")
     if not 0 < confidence < 1:
         raise ParameterError("The confidence level must lie in the interval (0, 1)")
+    _check_texts(values_a, texts_a)
+    _check_texts(values_b, texts_b)
     a = np.asarray(values_a, dtype=float)
     b = np.asarray(values_b, dtype=float)
     if not len(a) or not len(b):
@@ -295,6 +303,14 @@ def bootstrap_median_diff(
     tail = (1 - confidence) / 2 * 100
     low, high = np.percentile(differences, [tail, 100 - tail])
     return float(low), float(high)
+
+
+def _check_texts(values: Values, texts: Values | None) -> None:
+    """Checking that the texts of the values are as many as the values"""
+    if texts is not None and len(texts) != len(values):
+        raise ParameterError(
+            f"The texts must match the values one to one: {len(texts)} texts, {len(values)} values"
+        )
 
 
 def _resampled_medians(

@@ -145,11 +145,9 @@ def keyness(
         raise SourceError("The data source has no words")
     calc = MEASURES[measure]
     rows = []
-    words = set(counts_target) | set(counts_reference)
-    for word in words:
-        # The frequency of a missing key only bounds it from above
-        if not positive and word not in counts_reference:
-            continue
+    # A positive keyword occurs in the target; a negative one needs a frequency of its own
+    # in the reference, since that of a missing key only bounds it from above
+    for word in counts_target if positive else counts_reference:
         a = counts_target.get(word, 0)
         b = float(counts_reference.get(word, missing))
         ipm_target = a / size_target * 1e6

@@ -1,5 +1,6 @@
 """The named sections of the documentation that the language libraries include"""
 
+import importlib
 import inspect
 import re
 from pathlib import Path
@@ -7,9 +8,13 @@ from pathlib import Path
 import pytest
 
 from anyts import cohesion, diversity_stats, exceptions, extractors, syntax, utils
-from anyts.corpus import collocations, compare, dispersion, keyness, stylometry
 
 DOCS = Path(__file__).parents[1] / "docs"
+# The subpackage rebinds the names of some of its modules to their functions
+CORPUS_MODULES = [
+    importlib.import_module(f"anyts.corpus.{name}")
+    for name in ("collocations", "compare", "dispersion", "keyness", "stylometry")
+]
 PAGES = sorted(DOCS.rglob("*.md"))
 # The marker and the name rule of pymdownx.snippets
 MARKER = re.compile(r"-{1,}8<-{1,}[ \t]+\[[ \t]*(start|end)[ \t]*:[ \t]*([^\]\s]*)[ \t]*\]")
@@ -74,11 +79,7 @@ def test_public_api_has_sections():
         *public_names(diversity_stats),
         *public_names(cohesion),
         *public_names(syntax),
-        *(
-            name
-            for module in (collocations, compare, dispersion, keyness, stylometry)
-            for name in public_names(module)
-        ),
+        *(name for module in CORPUS_MODULES for name in public_names(module)),
     }
     assert public_names(exceptions) == []
     assert required <= documented, sorted(required - documented)

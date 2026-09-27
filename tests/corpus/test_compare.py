@@ -162,3 +162,15 @@ def test_compare_features_texts():
     assert result.loc["length", "n_A"] == 12
     flat = compare_features(table_a.reset_index(drop=True), table_b, n_bootstrap=50)
     assert flat.loc["length", "n_texts_A"] == flat.loc["length", "n_A"] == 12
+
+
+@pytest.mark.parametrize("texts", [np.array([0, 0, 1, 1, 2, 3]), np.array([0, 1])])
+def test_texts_match_the_values(texts):
+    values = np.array([1.0, 2.0, 3.0, 4.0])
+    message = rf"^The texts must match the values one to one: {len(texts)} texts, 4 values$"
+    with pytest.raises(ParameterError, match=message):
+        bootstrap_median_diff(values, values, texts_a=texts)
+    with pytest.raises(ParameterError, match=message):
+        compare_values(values, values, texts_b=texts)
+    with pytest.raises(ParameterError, match=message):
+        compare_values(values[:1], values, texts_b=texts)
