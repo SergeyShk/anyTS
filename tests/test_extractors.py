@@ -203,6 +203,8 @@ class TestWordsExtractor:
     def test_stopwords_string(self):
         with pytest.raises(SourceTypeError, match=r"^A list of stopwords is expected"):
             WordsExtractor(stopwords="the")
+        with pytest.raises(SourceTypeError, match=r"not an iterator$"):
+            WordsExtractor(stopwords=iter(["the"]))
 
     def test_stopwords_stored_as_frozenset(self):
         assert WordsExtractor(stopwords=["A", "b"]).stopwords == frozenset({"a", "b"})
