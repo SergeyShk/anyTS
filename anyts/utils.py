@@ -317,8 +317,22 @@ def merge_labels(defaults: Mapping[str, str], labels: Mapping[str, str] | None) 
 
 
 def _format_fields(label: str) -> set[str]:
-    """Names of the fields of a format string"""
-    return {name for _, name, _, _ in Formatter().parse(label) if name is not None}
+    """
+    Names of the fields of a format string, those in the format specs included
+
+    Raises:
+        ValueError: If the string is not a format string or has an unknown conversion
+    """
+    fields = set()
+    for _, name, spec, conversion in Formatter().parse(label):
+        if name is None:
+            continue
+        if conversion not in (None, "r", "s", "a"):
+            raise ValueError(f"Unknown conversion specifier {conversion}")
+        fields.add(name)
+        if spec:
+            fields |= _format_fields(spec)
+    return fields
 
 
 def iter_doc_tokens(source: Doc | Span) -> Iterator[Token]:

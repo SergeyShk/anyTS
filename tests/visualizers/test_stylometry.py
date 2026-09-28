@@ -41,6 +41,9 @@ def test_dendrogram_plot():
         dendrogram_plot(distances.replace(0.0, np.nan))
     with pytest.raises(ParameterError, match="Unknown method of linkage: wrad"):
         dendrogram_plot(distances, method="wrad")
+    for method in (["ward"], {"ward": 1}):
+        with pytest.raises(ParameterError, match="Unknown method of linkage"):
+            dendrogram_plot(distances, method=method)
     for plot in (dendrogram_plot, mds_plot):
         with pytest.raises(SourceTypeError, match="must be a DataFrame"):
             plot(distances.to_numpy())

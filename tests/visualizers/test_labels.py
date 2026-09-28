@@ -40,6 +40,7 @@ def test_merge_labels_format_strings():
     defaults = {"title": "Plot", "fit": "q={q:.2f}, s={s:.2f}"}
     assert merge_labels(defaults, {"fit": "s={s:.1f}"})["fit"] == "s={s:.1f}"
     assert merge_labels(defaults, {"fit": "{{q}}"})["fit"] == "{{q}}"
+    assert merge_labels(defaults, {"fit": "{q!r:>{s}}"})["fit"] == "{q!r:>{s}}"
     assert merge_labels(defaults, {"title": "f(r) = {C}"})["title"] == "f(r) = {C}"
     for label, message in (
         (
@@ -49,6 +50,8 @@ def test_merge_labels_format_strings():
         ("K={0}", r"unknown fields \['0'\]"),
         ("|{}|", r"unknown fields \[''\]"),
         ("q={q} {", r"^The label 'fit' is not a format string"),
+        ("{q:{x}}", r"unknown fields \['x'\]"),
+        ("{q!z}", r"^The label 'fit' is not a format string: Unknown conversion specifier z$"),
     ):
         with pytest.raises(ParameterError, match=message):
             merge_labels(defaults, {"fit": label})

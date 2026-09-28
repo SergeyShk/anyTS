@@ -48,7 +48,7 @@ def dendrogram_plot(
             (merge_labels)
     """
     captions = merge_labels(VISUALIZER_LABELS["dendrogram_plot"], labels)
-    if method not in LINKAGE_METHODS:
+    if not isinstance(method, str) or method not in LINKAGE_METHODS:
         raise ParameterError(f"Unknown method of linkage: {method}")
     values = _distance_matrix(distances, "a dendrogram")
     if ax is None:
