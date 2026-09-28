@@ -438,6 +438,32 @@ def test_extract_archive_flat_merges_into_the_directory(tmp_path):
     assert (out / "empty").is_dir()
 
 
+@pytest.mark.parametrize(
+    ("members", "existing"),
+    [
+        ({"data": "file", "README": "new"}, "data/mine.txt"),
+        ({"README/a.txt": "new", "b.txt": "new"}, "README"),
+    ],
+)
+def test_extract_archive_flat_keeps_the_other_kind(tmp_path, members, existing):
+    # A file never replaces a directory, nor a directory a file, and nothing is merged
+    archive = tmp_path / "flat.zip"
+    with zipfile.ZipFile(archive, "w") as zip_file:
+        for name, content in members.items():
+            zip_file.writestr(name, content)
+    out = tmp_path / "out"
+    (out / existing).parent.mkdir(parents=True, exist_ok=True)
+    (out / existing).write_text("mine", encoding="utf-8")
+    if existing != "README":
+        (out / "README").write_text("old", encoding="utf-8")
+    with pytest.raises(DataFileError, match=r"would put a (file|directory) in the place of"):
+        extract_archive(archive, out)
+    assert (out / existing).read_text(encoding="utf-8") == "mine"
+    if existing != "README":
+        assert (out / "README").read_text(encoding="utf-8") == "old"
+    assert sorted(path.name for path in out.iterdir() if path.name.startswith(".")) == []
+
+
 @pytest.mark.parametrize("members", [["main-abc/a.txt"], ["main", "other.txt"]])
 def test_extract_archive_never_replaces_itself(tmp_path, members):
     # An archive without an extension, a GitHub zipball saved as main

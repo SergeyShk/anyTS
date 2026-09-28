@@ -102,6 +102,8 @@ def test_lazy_packages():
             package.missing  # noqa: B018
         with pytest.raises(AttributeError, match="has no attribute '__missing__'"):
             package.__missing__  # noqa: B018
+        for name in ("", "a.b"):
+            assert not hasattr(package, name)
 
 
 def test_modules_of_lazy_packages_are_attributes():

@@ -22,7 +22,7 @@ class LazyPackage(ModuleType):
             value = getattr(import_module(f".{modules[name]}", self.__name__), name)
             super().__setattr__(name, value)
             return value
-        if not name.startswith("__"):
+        if name.isidentifier() and not name.startswith("__"):
             try:
                 return import_module(f".{name}", self.__name__)
             except ModuleNotFoundError as error:

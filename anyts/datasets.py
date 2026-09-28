@@ -445,7 +445,8 @@ def extract_archive(archive_file: str | Path, extract_dir: str | Path | None = N
         place only once complete: a single root directory takes the name of
         the archive without its extensions, replacing an earlier extraction;
         the files of an archive without one root go into the directory,
-        replacing those of the same names and keeping the others
+        replacing those of the same names and keeping the others, once none of
+        them would replace a directory or the other way round
 
     Arguments:
         archive_file (str|Path): Path to the archive
@@ -457,7 +458,8 @@ def extract_archive(archive_file: str | Path, extract_dir: str | Path | None = N
     Raises:
         DataFileError: If the file is missing or is not a ZIP or TAR archive, the archive is
             corrupted, empty, has paths outside the directory or links, its files
-            would replace it, or the directory cannot be created or its files
+            would replace it or put a file in the place of a directory or the
+            other way round, or the directory cannot be created or its files
             replaced
     """
     archive_path = to_path(archive_file).resolve()
@@ -483,12 +485,16 @@ def extract_archive(archive_file: str | Path, extract_dir: str | Path | None = N
             _check_not_the_archive(destination, archive_path)
             _replace(partial / root, destination)
             return str(destination)
-        for entry in sorted(partial.rglob("*")):
-            destination = extract_path / entry.relative_to(partial)
+        entries = [
+            (entry, extract_path / entry.relative_to(partial))
+            for entry in sorted(partial.rglob("*"))
+        ]
+        for entry, destination in entries:
+            _check_merge(entry, destination, archive_path)
+        for entry, destination in entries:
             if entry.is_dir():
                 destination.mkdir(parents=True, exist_ok=True)
             else:
-                _check_not_the_archive(destination, archive_path)
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 _replace(entry, destination)
         return str(extract_path)
@@ -496,6 +502,17 @@ def extract_archive(archive_file: str | Path, extract_dir: str | Path | None = N
         raise DataFileError(f"Cannot extract the archive {archive_path}") from e
     finally:
         shutil.rmtree(partial, ignore_errors=True)
+
+
+def _check_merge(entry: Path, destination: Path, archive_path: Path) -> None:
+    """Refusing a file or a directory of the archive that would replace one of the other kind"""
+    if entry.is_file():
+        _check_not_the_archive(destination, archive_path)
+    if destination.exists() and entry.is_dir() != destination.is_dir():
+        kind = "directory" if entry.is_dir() else "file"
+        raise DataFileError(
+            f"The archive {archive_path} would put a {kind} in the place of {destination}"
+        )
 
 
 def _check_not_the_archive(destination: Path, archive_path: Path) -> None:
