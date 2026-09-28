@@ -1,7 +1,7 @@
 # Text highlighting
 
 !!! info ""
-    **anyts.visualizers.HighlightedText**, **anyts.visualizers.Highlight**
+    **anyts.visualizers.HighlightedText**, **anyts.visualizers.Highlight**; the helpers of the layers are in **anyts.visualizers.highlight**
 
 ## Description
 
@@ -16,17 +16,19 @@ The core has no layers of its own: a language library subclasses `HighlightedTex
 
 | Hook | Kind | Description |
 | :--: | :--: | :---------: |
-| `layers_desc` | dict[str, str] | The layers in the order of drawing with their names in the legend |
-| `default_layers` | tuple[str] | The layers on by default, among those the source allows |
-| `layer_annotations` | dict[str, tuple[str]] | The annotations of a `Doc` a layer needs (`DEP`, `POS`, `LEMMA`...); a layer without them is available for a string too |
-| `layer_styles` | dict[str, str] | The CSS declarations of every layer; the text of a layer with a background keeps a dark colour on it |
-| `css_prefix` | str | The prefix of the CSS classes, `anyts` by default |
+| `layers_desc` | class attribute | The layers in the order of drawing with their names in the legend, `dict[str, str]` |
+| `default_layers` | class attribute | The layers on by default, among those the source allows, `tuple[str]` |
+| `layer_annotations` | class attribute | The annotations of a `Doc` a layer needs (`DEP`, `POS`, `LEMMA`...), `dict[str, tuple[str]]`; a layer without them is available for a string too |
+| `layer_styles` | class attribute | The CSS declarations of every layer, `dict[str, str]`; the text of a layer with a background keeps a dark colour on it |
+| `css_prefix` | class attribute | The prefix of the CSS classes, `str` |
 | `find(layer, words, sents, doc)` | method | The fragments of a layer: a list of `Highlight` from the words and the sentences of the text and the `Doc` (`None` for a string) |
 | `iter_words(text)`, `iter_sents(text)` | methods | The words and the sentences of a string as triples of the start, the end and the text; by default those of the default tokenizers of `WordsExtractor` and `SentsExtractor` |
 | `doc_words(doc)` | method | The words of a `Doc`; by default `get_doc_words` |
 
-The sentences of a `Doc` come from its boundaries, or from `iter_sents` over its text when it has none, and the words of a sentence are those of `doc_words` or `iter_words` that start in it. `find` runs in `__init__`, so a subclass with parameters of its own stores them before it calls the `__init__` of the base; a fragment of another layer raises `ValueError`.
+The sentences of a `Doc` come from its boundaries, or from `iter_sents` over its text when it has none, and the words of a sentence are those of `doc_words` or `iter_words` that start in it. `find` runs in `__init__`, so a subclass with parameters of its own stores them before it calls the `__init__` of the base; a fragment of another layer or one outside the text raises `ParameterError`.
 <!-- --8<-- [end:HighlightedText-hooks] -->
+
+In the core the layers are empty and `css_prefix` is `anyts`.
 
 ## Parameters
 
@@ -84,7 +86,7 @@ The class method `css()` returns the styles `to_html` adds: the container, the l
 <!-- --8<-- [end:Sent] -->
 
 <!-- --8<-- [start:get_doc_words] -->
-`get_doc_words(doc)` - the words of `iter_doc_tokens` with their positions, and with the part of speech and the lemma when the `Doc` has both.
+`get_doc_words(doc)` - the words of `iter_doc_tokens` with their positions, a byte order mark at the start of the text left out, with the part of speech and the lemma when the `Doc` has them.
 <!-- --8<-- [end:get_doc_words] -->
 
 <!-- --8<-- [start:iter_doc_sents] -->

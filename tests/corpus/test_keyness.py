@@ -288,6 +288,12 @@ def test_keyness_of_a_string_or_a_set():
         keyness(Counter({1: 2}), reference)
     with pytest.raises(SourceTypeError, match=r"^The frequencies must be numbers, not str$"):
         keyness({"a": "3"}, ["a", "b"])
+    with pytest.raises(SourceTypeError, match=r"target corpus must be whole numbers$"):
+        keyness({"cat": 2.5, "the": 3}, reference)
+    assert keyness({"cat": 2.0, "the": 3.0}, reference) == keyness({"cat": 2, "the": 3}, reference)
+    for count in (-1, float("nan"), float("inf")):
+        with pytest.raises(SourceError, match="finite and not negative"):
+            keyness({"cat": count, "the": 5}, reference)
     with pytest.raises(SourceTypeError, match=r"^The frequencies must be numbers, not NoneType$"):
         keyness(["a"], {"a": None, "b": 1})
     with pytest.raises(

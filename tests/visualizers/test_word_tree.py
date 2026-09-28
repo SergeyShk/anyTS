@@ -40,6 +40,14 @@ def test_wordtree_html_like_words():
     assert "\t<script>" not in g.source
 
 
+def test_wordtree_backslashes():
+    # A backslash is a character, not an escape of graphviz (\N, \G, \l)
+    g = wordtree([["a\\", "\\N", "b"], ["x", "a\\", "\\G"]], "a\\")
+    assert g.source.splitlines()[0] == 'digraph "a\\\\" {'
+    assert '\tn0 [label="a\\\\"' in g.source
+    assert '[label="\\\\N"' in g.source and '[label="\\\\G"' in g.source
+
+
 def test_wordtree(texts):
     g = wordtree(texts, "class", max_n=2)
     assert isinstance(g, Digraph)

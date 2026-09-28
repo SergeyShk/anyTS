@@ -6,7 +6,7 @@
 Functions that measure how the sentences of a text are tied together by shared elements, in the manner of Coh-Metrix. A sentence is given as the collection of its elements - lemmas of nouns, arguments or content words, values of a feature of its verbs - so the functions see no language: a library chooses the elements.
 
 <!-- --8<-- [start:cohesion-checks] -->
-A list of sentences that is a string, a `Doc` or an iterator raises `SourceTypeError`, and so does a sentence that is not a list of strings (`check_words`): a string would be read character by character, an iterator exhausted by the first pass, and spaCy tokens never match, since a token equals only itself.
+A list of sentences that is a string, a `Doc`, an iterator, a set or a table raises `SourceTypeError`, and so does a sentence that is not a list of strings (`check_words`): a string would be read character by character, an iterator exhausted by the first pass, and spaCy tokens never match, since a token equals only itself. The overlaps (`calc_overlap`, `calc_proportional_overlap`, `calc_overlaps`) compare sets of words and take a sentence as a set too; `count_given` and `calc_repetition` count the words in order and refuse a set.
 <!-- --8<-- [end:cohesion-checks] -->
 
 ## calc_overlap

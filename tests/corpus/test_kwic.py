@@ -190,3 +190,63 @@ def test_kwic_byte_order_mark():
     sample = "\ufeffCat and cat."
     assert len(kwic(sample, "cat")) == len(kwic(spacy.blank("xx")(sample), "cat")) == 2
     assert kwic(spacy.blank("xx")(sample), "cat")[0].start == 1
+
+
+def test_kwic_join_hyphens_with_the_default_tokenizer():
+    sample = "Кто-то пришёл, и кто-то ушёл."
+    for source in (sample, spacy.blank("ru")(sample)):
+        found = kwic(source, "кто-то", join_hyphens=True)
+        assert [line.keyword for line in found] == ["Кто-то", "кто-то"]
+        assert kwic(source, "то", join_hyphens=True) == []
+    assert len(kwic(sample, "то")) == 2
+
+
+def test_kwic_composed_forms():
+    decomposed = unicodedata.normalize("NFD", "El café está aquí.")
+    assert [line.keyword for line in kwic(decomposed, "café")] == [decomposed[3:8]]
+    assert len(kwic(decomposed, "café", ignore_case=False)) == 1
+    doc = spacy.blank("xx")("Die Ge­schichte ist lang.")
+    assert [line.keyword for line in kwic(doc, "Geschichte", ignore_case=False)] == ["Ge­schichte"]
+    lemmas = kwic(doc, "geschichte", by_lemma=True, lemmatize=lambda word, tokens: word)
+    assert len(lemmas) == 1
+
+
+def test_kwic_phrase_stops_at_the_end_of_a_sentence():
+    text = "He saw the window.\n\nThe cat sat. A dog! Cat food and dog cat."
+    assert kwic(text, "window the cat") == []
+    assert [line.keyword for line in kwic(text, "window. The cat")] == ["window. The cat"]
+    assert [line.keyword for line in kwic(text, "dog cat")] == ["dog cat"]
+    assert kwic("A line\n\nanother line", "line another") == []
+    assert len(kwic("A line\nanother line", "line another")) == 1
+    assert [line.keyword for line in kwic("The U.S. Army came.", "U.S. Army")] == ["U.S. Army"]
+    nlp = spacy.blank("xx")
+    nlp.add_pipe("sentencizer")
+    assert kwic(nlp("A dog. Cat here and dog cat."), "dog cat")[0].start == 20
+    assert kwic(spacy.blank("xx")("A dog. Cat here."), "dog cat") == []
+
+
+def test_format_kwic_iterables_and_composed_forms():
+    lines = kwic(text, "cat", window=2)
+    assert format_kwic(line for line in lines) == format_kwic(lines)
+    decomposed = unicodedata.normalize("NFD", "El niño come. El perro come.")
+    formatted = format_kwic(kwic(decomposed, "come", window=1), width=6).split("\n")
+    assert formatted == ["  niño  come  . El", " perro  come  "]
+    assert [line.index("come") for line in formatted] == [8, 8]
+
+
+def test_kwic_phrase_stops_at_a_sentence_start_on_a_mark():
+    # The parser starts the sentence at the opening mark before the word
+    words = ["Vino", "ayer", ".", "¿", "Qué", "tal", "?"]
+    doc = Doc(
+        spacy.blank("xx").vocab,
+        words=words,
+        spaces=[True, False, True, False, True, False, False],
+        sent_starts=[True, False, False, True, False, False, False],
+    )
+    assert kwic(doc, "ayer qué") == []
+    assert len(kwic(doc, "qué tal")) == 1
+    # A paragraph ends a phrase in a Doc with boundaries too
+    nlp = spacy.blank("xx")
+    nlp.add_pipe("sentencizer")
+    assert kwic(nlp("Dijo uno\n\nEl otro vino."), "uno el") == []
+    assert len(kwic(nlp("Dijo uno\nEl otro vino."), "uno el")) == 1

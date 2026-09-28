@@ -337,7 +337,11 @@ class WordsExtractor(Extractor):
         self.use_lexemes = use_lexemes
         if stopwords is not None:
             check_words(stopwords, "stopwords", ordered=False)
-        self.stopwords = frozenset(word.lower() for word in stopwords) if stopwords else None
+        self.stopwords = (
+            frozenset(word.lower() for word in stopwords) or None
+            if stopwords is not None
+            else None
+        )
         self.lowercase = lowercase
         if not isinstance(ngram_range, tuple | list) or len(ngram_range) != 2:
             raise ParameterError("The N-gram range must be a pair of integers")

@@ -28,7 +28,7 @@ A language library subclasses `ReadabilityStats`:
 | `lix_long_word_letter_factor` | class attribute | Minimum number of letters in a long word of LIX and RIX |
 | `grade_age_levels`, `postgraduate_level` | class attributes | School stages and ages of `describe_grade` |
 | `reading_speed`, `reading_speed_norms` | class attributes | Reading speed of `reading_time` and the speeds of the norms, words per minute |
-| `reading_ease_to_grade(value)` | method | Years of schooling for the reading ease in the consensus grade |
+| `reading_ease_to_grade(flesch_reading_easy)` | method | Years of schooling for the reading ease in the consensus grade |
 
 A formula of the library is a property of the subclass named in `stats_desc`, and in `grade_stats` when it gives years of schooling; its coefficients may live in the presets under its name. The preset is a parameter: a library sets its own default in its `__init__` and passes it on.
 <!-- --8<-- [end:ReadabilityStats-hooks] -->

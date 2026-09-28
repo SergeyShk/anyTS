@@ -10,11 +10,11 @@ Plots for [stylometry](../corpus/stylometry.md): a dendrogram and the multidimen
 ## Dendrogram { #dendrogram_plot }
 
 <!-- --8<-- [start:dendrogram_plot] -->
-Hierarchical clustering by `scipy.cluster.hierarchy` over the matrix of distances between texts; Ward's method by default, as in [Evert et al. (2015)](https://aclanthology.org/W15-0709.pdf); the labels of the leaves are the names of the texts of the index of the matrix.
+Hierarchical clustering by `scipy.cluster.hierarchy` over the matrix of distances between texts; Ward's method by default, as in [Evert et al. (2015)](https://aclanthology.org/W15-0709.pdf); the labels of the leaves are the names of the texts of the index of the matrix. The columns are taken in the order of the rows; a matrix with other texts in the columns than in the rows, fewer than two texts, an infinite or negative distance, asymmetry or a distance on the diagonal raises `SourceError` before a figure is created.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
-| `distances` | DataFrame | `-` | Symmetric matrix of distances with the names of the texts |
+| `distances` | DataFrame | `-` | Symmetric matrix of distances with the names of the texts in the rows and the columns, in any order |
 | `method` | str | `ward` | Method of `scipy.cluster.hierarchy.linkage` to join the clusters: `single`, `complete`, `average`, `weighted`, `centroid`, `median` or `ward` |
 | `ax` | Axes | `None` | Axes for the plot |
 | `labels` | dict[str, str] | `None` | Labels over the defaults: `title`, `xlabel` |
@@ -37,11 +37,11 @@ Principal component analysis of the z-scores of the relative frequencies of the 
 ## Multidimensional scaling { #mds_plot }
 
 <!-- --8<-- [start:mds_plot] -->
-Classical multidimensional scaling (Torgerson 1952) of any matrix of distances: the double centering of the matrix of squared distances and the two leading eigenvectors; the distances between the points approximate the distances of the matrix.
+Classical multidimensional scaling (Torgerson 1952) of any matrix of distances: the double centering of the matrix of squared distances and the two leading eigenvectors; the distances between the points approximate the distances of the matrix. The columns are taken in the order of the rows; a matrix with other texts in the columns than in the rows, fewer than two texts, an infinite or negative distance, asymmetry or a distance on the diagonal raises `SourceError` before a figure is created.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
-| `distances` | DataFrame | `-` | Symmetric matrix of distances with the names of the texts |
+| `distances` | DataFrame | `-` | Symmetric matrix of distances with the names of the texts in the rows and the columns, in any order |
 | `ax` | Axes | `None` | Axes for the plot |
 | `labels` | dict[str, str] | `None` | Labels over the defaults: `title`, `xlabel`, `ylabel` |
 <!-- --8<-- [end:mds_plot] -->

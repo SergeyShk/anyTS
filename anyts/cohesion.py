@@ -256,7 +256,7 @@ def dominant(values: Sequence[str]) -> str | None:
         SourceTypeError: If the values are not a list of strings (check_words)
     """
     check_words(values, "values")
-    if not values:
+    if not len(values):
         return None
     return Counter(values).most_common(1)[0][0]
 

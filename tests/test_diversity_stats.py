@@ -7,6 +7,7 @@ from functools import partial
 from math import e, inf, isnan, log, log2, log10, nan, nextafter, sqrt
 from typing import ClassVar
 
+import pandas as pd
 import pytest
 import spacy
 from scipy.special import comb
@@ -848,3 +849,12 @@ def test_windowed_unhashable_function():
     stats = calc_windowed(words, TopShare(2), window_len=20)
     assert stats == calc_windowed(words, lambda window: TopShare(2)(window), window_len=20)
     assert stats.n_windows == 3
+
+
+def test_calc_mattr_by_position():
+    words = list("abcabdabcdeabcfgabch") * 5
+    expected = calc_mattr(words, 10)
+    assert calc_mattr(pd.Series(words, index=range(99, -1, -1)), 10) == expected
+    series = pd.Series(words)
+    kept = [word for word in words if word != "a"]
+    assert calc_mattr(series[series != "a"], 10) == calc_mattr(kept, 10)

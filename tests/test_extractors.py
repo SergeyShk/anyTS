@@ -5,6 +5,8 @@ import sys
 import unicodedata
 import weakref
 
+import numpy as np
+import pandas as pd
 import pytest
 import spacy
 
@@ -280,6 +282,11 @@ class TestWordsExtractor:
     def test_length_bounds(self, min_len, max_len, message):
         with pytest.raises(ParameterError, match=f"^{message}$"):
             WordsExtractor(min_len=min_len, max_len=max_len)
+
+    def test_stopwords_arrays(self):
+        assert WordsExtractor(stopwords=pd.Series(["The"])).stopwords == frozenset({"the"})
+        assert WordsExtractor(stopwords=np.array(["the", "a"])).stopwords == {"the", "a"}
+        assert WordsExtractor(stopwords=np.array([], dtype=str)).stopwords is None
 
     def test_stopwords_string(self):
         with pytest.raises(SourceTypeError, match=r"^A list of stopwords is expected"):

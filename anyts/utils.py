@@ -1,3 +1,4 @@
+import math
 import unicodedata
 from collections.abc import Iterable, Iterator, Mapping, Sequence, Set
 from functools import lru_cache
@@ -7,7 +8,7 @@ from string import Formatter
 
 from spacy.tokens import Doc, Span, Token
 
-from .exceptions import ParameterError, SourceTypeError
+from .exceptions import ParameterError, SourceError, SourceTypeError
 
 # Punctuation, symbols, combining marks and invisible format characters
 PUNCTUATION_CATEGORIES = frozenset(
@@ -122,8 +123,9 @@ def check_sequence(value: object, what: str = "words", ordered: bool = True) -> 
         ordered (bool): Whether the order and the repeats of the items matter
 
     Raises:
-        SourceTypeError: If a string, a Doc, a Span, an iterator, a non-iterable
-            object, a table or, with ordered, a set or a mapping is passed
+        SourceTypeError: If a string (of characters or bytes), a Doc, a Span, an
+            iterator, a non-iterable object, a table or, with ordered, a set or a
+            mapping is passed
 
     Example:
         >>> from anyts.utils import check_sequence
@@ -134,7 +136,7 @@ def check_sequence(value: object, what: str = "words", ordered: bool = True) -> 
         ...
         anyts.exceptions.SourceTypeError: A list of words is expected, not a string
     """
-    if isinstance(value, str):
+    if isinstance(value, str | bytes | bytearray):
         raise SourceTypeError(f"A list of {what} is expected, not a string")
     if isinstance(value, Doc | Span):
         raise SourceTypeError(
@@ -192,6 +194,7 @@ def check_counts(value: object) -> None:
     Raises:
         SourceTypeError: If the value is not a mapping, a word is not a string
             or a frequency is not a number
+        SourceError: If a frequency is negative, nan or infinite
 
     Example:
         >>> from collections import Counter
@@ -209,6 +212,8 @@ def check_counts(value: object) -> None:
             raise SourceTypeError(f"The words must be strings, not {type(word).__name__}")
         if isinstance(count, bool) or not isinstance(count, Real):
             raise SourceTypeError(f"The frequencies must be numbers, not {type(count).__name__}")
+        if not math.isfinite(count) or count < 0:
+            raise SourceError(f"The frequencies must be finite and not negative, not {count}")
 
 
 def check_integer(value: object, what: str) -> None:
@@ -240,17 +245,17 @@ def check_integer(value: object, what: str) -> None:
 
 def check_number(value: object, what: str) -> None:
     """
-    Checking that a parameter is a real number
+    Checking that a parameter is a finite real number
 
     Description:
-        A bool is not taken for a number
+        A bool is not taken for a number, nor are nan and infinity
 
     Arguments:
         value (object): Value to check
         what (str): Name of the parameter, for the message of the error
 
     Raises:
-        ParameterError: If the value is not a real number
+        ParameterError: If the value is not a finite real number
 
     Example:
         >>> from anyts.utils import check_number
@@ -262,9 +267,13 @@ def check_number(value: object, what: str) -> None:
     """
     if isinstance(value, bool) or not isinstance(value, Real):
         raise ParameterError(f"The {what} must be a number, not {type(value).__name__}")
+    if not math.isfinite(value):
+        raise ParameterError(f"The {what} must be a finite number, not {value}")
 
 
-def merge_labels(defaults: Mapping[str, str], labels: Mapping[str, str] | None) -> dict[str, str]:
+def merge_labels(
+    defaults: Mapping[str, str], labels: Mapping[str, str] | None, **samples: object
+) -> dict[str, str]:
     """
     Merging the labels given for a plot over its default ones
 
@@ -272,11 +281,15 @@ def merge_labels(defaults: Mapping[str, str], labels: Mapping[str, str] | None) 
         A label that is not given keeps its default, so a single label can be
         changed alone. A default with fields in braces is a format string: a
         label given for it may use only those fields, and a literal brace in it
-        is doubled ({{); the other labels are taken as they are
+        is doubled ({{); it is tried on the samples of its fields, so that a
+        format spec the values do not take fails before the plot. The other
+        labels are taken as they are
 
     Arguments:
         defaults (dict[str, str]): Default labels by key
         labels (dict[str, str]): Labels given; None - the default ones
+        samples (object): Values of the fields of the format labels, of the types
+            the plot gives them
 
     Returns:
         dict[str, str]: Labels by key
@@ -284,7 +297,7 @@ def merge_labels(defaults: Mapping[str, str], labels: Mapping[str, str] | None) 
     Raises:
         ParameterError: If the labels are not a mapping of strings, have an
             unknown key, or a format label is not a format string of the fields
-            of its default
+            of its default or does not format their values
 
     Example:
         >>> from anyts.utils import merge_labels
@@ -313,6 +326,13 @@ def merge_labels(defaults: Mapping[str, str], labels: Mapping[str, str] | None) 
                 f"The label {key!r} has unknown fields {sorted(extra)}; "
                 f"available fields: {sorted(fields)}"
             )
+        if fields <= samples.keys():
+            try:
+                label.format(**samples)
+            except (ValueError, TypeError, IndexError, KeyError, AttributeError) as error:
+                raise ParameterError(
+                    f"The label {key!r} does not format its fields: {error}"
+                ) from None
     return {**defaults, **labels}
 
 
@@ -361,7 +381,8 @@ def iter_doc_units(source: Doc | Span, join_hyphens: bool = False) -> Iterator[l
     Description:
         The words of iter_doc_tokens, one token each; with join_hyphens, a word
         the tokenizer split at its hyphens (well-known into well, -, known) is
-        joined back when no whitespace separates its parts
+        joined back when no whitespace separates its parts and no sentence
+        starts at a hyphen or a part
 
     Arguments:
         source (Doc|Span): Doc or Span object
@@ -386,6 +407,8 @@ def iter_doc_units(source: Doc | Span, join_hyphens: bool = False) -> Iterator[l
             and not tokens[last + 1].whitespace_
             and not tokens[last + 2].is_space
             and not is_punctuation(tokens[last + 2].text)
+            and not tokens[last + 1].is_sent_start
+            and not tokens[last + 2].is_sent_start
         ):
             last += 2
         yield tokens[index : last + 1]

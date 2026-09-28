@@ -5,7 +5,7 @@
 
 ## Description
 
-Plots for the [corpus measures](../corpus/keyness.md): the lexical dispersion - where in a text a word occurs, a chart of the keywords found by `keyness` and a network of the collocations found by `collocations`. The matplotlib functions take the axes `ax` and return `Axes`: without `ax` a new figure is created, with it the plot goes into a grid of one's own; the network of collocations is built by graphviz and returns a `Graph`, as the [word tree](word_tree.md).
+Plots for the [corpus measures](../corpus/keyness.md): the lexical dispersion - where in a text a word occurs, a chart of the keywords found by `keyness` and a network of the collocations found by `collocations`. The matplotlib functions take the axes `ax` and return `Axes`: without `ax` a new figure is created, with it the plot goes into a grid of one's own; the network of collocations is built by graphviz and returns a `Graph`, as the [word tree](word_tree.md) returns a `Digraph`.
 
 ## Lexical dispersion { #dispersion_plot }
 

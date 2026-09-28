@@ -52,6 +52,32 @@ def test_zipf_checks_before_plotting():
     assert plt.get_fignums() == []
 
 
+@pytest.mark.parametrize(
+    ("counter", "error"),
+    [
+        (Counter([1, 2, 2, 3, 3, 3]), SourceTypeError),
+        (Counter({("the", "cat"): 2, ("a", "dog"): 1}), SourceTypeError),
+        (Counter({"the": 3, "cat": 0}), SourceError),
+        (Counter({"the": 3, "cat": -1}), SourceError),
+        (Counter({"the": float("nan")}), SourceError),
+    ],
+)
+def test_zipf_counter_checked_before_plotting(counter, error):
+    plt.close("all")
+    with pytest.raises(error):
+        zipf(counter)
+    assert plt.get_fignums() == []
+
+
+def test_zipf_alpha_not_finite():
+    for alpha in (float("nan"), float("inf")):
+        with pytest.raises(ParameterError, match="exponent"):
+            zipf(Counter(a=3, b=1), show_theory=True, alpha=alpha)
+        with pytest.raises(ParameterError, match="exponent"):
+            zipf_theory(10, 5, alpha=alpha)
+    assert plt.get_fignums() == []
+
+
 def test_zipf_type_error():
     with pytest.raises(SourceTypeError):
         zipf(1)

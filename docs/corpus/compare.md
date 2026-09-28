@@ -67,7 +67,7 @@ The names of the columns are `anyts.corpus.COMPARISON_COLUMNS`, with `A` and `B`
 ## Functions of the statistics
 
 <!-- --8<-- [start:compare_values] -->
-`compare_values(values_a, values_b, n_bootstrap=1000, rng=None, texts_a=None, texts_b=None)` compares two sets of values of one feature, undefined and infinite values dropped together with their texts, and returns the values of one row in the order of `anyts.corpus.COMPARISON_COLUMNS`, `p_holm` left `nan`; `texts_a` and `texts_b` give the text of every value for the bootstrap.
+`compare_values(values_a, values_b, n_bootstrap=1000, rng=None, texts_a=None, texts_b=None)` compares two sets of values of one feature, undefined and infinite values - a missing value (`None`, `NA`) included - dropped together with their texts, and returns the values of one row in the order of `anyts.corpus.COMPARISON_COLUMNS`, `p_holm` left `nan`; `texts_a` and `texts_b` give the text of every value for the bootstrap.
 <!-- --8<-- [end:compare_values] -->
 
 <!-- --8<-- [start:calc_cohen_d] -->

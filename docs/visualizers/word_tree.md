@@ -18,7 +18,7 @@ Building a [word tree](https://www.weblyzard.com/word-tree/) that shows the cont
 | `keyword` | str | `-` | Keyword whose contexts are shown |
 | `max_n` | int | `5` | Largest size of the context |
 | `max_per_n` | int | `8` | Largest number of examples for every size of the context |
-| `**kwargs` | - | `-` | Drawing parameters: `max_font_size` (default `30`), `min_font_size` (`12`), `font_interp` - a function interpolating the size of the font from the frequency |
+| `**kwargs` | - | `-` | Drawing parameters: `max_font_size` (default `30`), `min_font_size` (`12`), `font_interp` - a function of the relative frequency of a node, its frequency over the greatest one (0 to 1], that gives the share of the range from `min_font_size` to `max_font_size`, from 0 to 1; the cube root by default |
 
 The function returns a `Digraph` of graphviz.
 <!-- --8<-- [end:wordtree-parameters] -->

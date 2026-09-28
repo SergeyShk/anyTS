@@ -6,7 +6,7 @@
 ## Description
 
 <!-- --8<-- [start:kwic] -->
-A KWIC concordance (keyword in context) - every occurrence of a word or a phrase with its context on the left and on the right. The occurrences are looked for among the words of the text by the word form, ignoring case or respecting it (`ignore_case=False`), or by the lemma (`by_lemma=True`), where a phrase is given by lemmas or as it is written, since every word of it is lemmatized. The text and the keyword are split into words the same way, and punctuation and symbols are words of neither. The context is `window` words on each side as they are written in the text, with the punctuation between them; whitespace collapses into one space, and occurrences do not overlap.
+A KWIC concordance (keyword in context) - every occurrence of a word or a phrase with its context on the left and on the right. The occurrences are looked for among the words of the text by the word form, ignoring case or respecting it (`ignore_case=False`), or by the lemma (`by_lemma=True`), where the words of the keyword are lemmatized as words of a string: with a lemmatizer a phrase may be written in any form, without one it is given by lemmas. The words of a string and of the keyword come from the tokenizer, those of a `Doc` from its tokens, so a tokenizer that splits a string as the pipeline does finds in a `Doc` what it finds in its text; punctuation and symbols are not words. The forms are compared in the composed form of Unicode (NFC), without soft hyphens. A phrase does not run across the end of a paragraph or of a sentence - a boundary of a `Doc` anywhere between its words, an opening mark included, or a final mark before whitespace in a text without boundaries - unless the keyword has one in the same place (`U.S. Army`). The context is `window` words on each side as they are written in the text, with the punctuation between them; whitespace collapses into one space, and occurrences do not overlap.
 <!-- --8<-- [end:kwic] -->
 
 ## Language hooks
@@ -19,7 +19,7 @@ The language enters through four parameters, which a language library fills in i
 | `tokenize` | a run of word characters | The words of a string and of the keyword as triples of the start, the end and the text |
 | `lemmatize` | the word and the lemma of the model | The lemmas of a word, given its text and its tokens in a `Doc` (none for a string and the keyword), or one lemma as a string; a word matches when one of its lemmas is one of those of the keyword |
 | `fold` | `str.lower` | The folding of a word form (with `ignore_case`) or a lemma before the comparison, such as the letters a language takes for the same |
-| `join_hyphens` | `False` | Join the parts of the hyphenated words of a `Doc` the tokenizer split (`iter_doc_units`) |
+| `join_hyphens` | `False` | Join the parts of the hyphenated words of a `Doc` the tokenizer split (`iter_doc_units`); the default tokenizer then keeps them whole in a string and in the keyword too |
 
 The words of a `Doc` are its tokens, a byte order mark at the start of a word left out. By default the lemmas of a word are the word itself and, for a word of one token of a `Doc` with lemmas, the lemma of the model, so a word is found by its own form and a `Doc` of a pipeline with a lemmatizer is searched by its lemmas.
 <!-- --8<-- [end:kwic-hooks] -->
@@ -39,7 +39,7 @@ A keyword without words and a negative window raise `ParameterError`; a source t
 <!-- --8<-- [end:kwic-parameters] -->
 
 <!-- --8<-- [start:format_kwic] -->
-`format_kwic(concordances, width=40)` aligns the lines on the keyword: the left context is cut on the left and aligned to the right, the right one is cut on the right; `width` is the width of a context in characters, at least one.
+`format_kwic(concordances, width=40)` aligns the lines on the keyword: the left context is cut on the left and aligned to the right, the right one is cut on the right; `width` is the width of a context in characters, at least one. The lines may come from any iterable and are taken in the composed form of Unicode (NFC), so that the widths count the characters as they are shown.
 <!-- --8<-- [end:format_kwic] -->
 
 <!-- --8<-- [start:print_kwic] -->

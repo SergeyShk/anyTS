@@ -336,8 +336,9 @@ def calc_flesch_reading_easy(
     Description:
         c - a * ASL - b * ASW with the mean sentence length in words and the
         mean word length in syllables; the higher the value, the easier the
-        text, the scale runs from 0 to 100. The defaults are those of Flesch
-        (1948) for English
+        text, nominally from 0 to 100, though the simplest texts go above 100
+        and the hardest below 0. The defaults are those of Flesch (1948) for
+        English
 
     References:
         Flesch, R. A new readability yardstick. Journal of Applied Psychology,
@@ -668,11 +669,14 @@ def calc_consensus_grade(
 
     Raises:
         SourceTypeError: If to_grade is not callable
-        ParameterError: If there are no values
+        ParameterError: If there are no values or a grade is not a finite number
     """
     if not callable(to_grade):
         raise SourceTypeError(f"to_grade must be callable, not {type(to_grade).__name__}")
-    values = [float(floor(grade + 0.5)) for grade in grades]
+    values = []
+    for grade in grades:
+        check_number(grade, "grade")
+        values.append(float(floor(grade + 0.5)))
     if flesch_reading_easy is not None:
         values.append(to_grade(flesch_reading_easy))
     if not values:
@@ -706,7 +710,11 @@ def grade_to_age(
 
     Returns:
         str: School stage and reader age
+
+    Raises:
+        ParameterError: If the grade is not a finite number
     """
+    check_number(grade, "grade")
     rounded = floor(grade + 0.5)
     for _, high, education, age in levels:
         if rounded <= high:

@@ -1,3 +1,4 @@
+from fractions import Fraction
 from math import inf, isnan, nan, sqrt
 
 import numpy as np
@@ -13,7 +14,12 @@ from anyts.corpus import (
     compare_features,
     holm_correction,
 )
-from anyts.corpus.compare import COMPARISON_COLUMNS, _resampled_medians, compare_values
+from anyts.corpus.compare import (
+    COMPARISON_COLUMNS,
+    _check_table,
+    _resampled_medians,
+    compare_values,
+)
 from anyts.exceptions import ParameterError, SourceTypeError
 
 
@@ -119,11 +125,30 @@ def test_holm_correction():
 
 
 @pytest.mark.parametrize(
-    "p_values", ["0.5", 0.5, [[0.1, 0.2]], ["a"], ["0.1"], [True], [0.1, None], {0.1, 0.2}, None]
+    "p_values",
+    ["0.5", 0.5, [[0.1, 0.2]], ["a"], ["0.1"], [True], [0.1, [0.2, 0.3]], [1j], {0.1, 0.2}, None],
 )
 def test_holm_correction_input(p_values):
     with pytest.raises(SourceTypeError):
         holm_correction(p_values)
+
+
+def test_missing_values_are_nan():
+    adjusted = holm_correction([0.01, None, 0.03])
+    assert adjusted[[0, 2]].tolist() == pytest.approx([0.02, 0.03])
+    assert isnan(adjusted[1])
+    assert isnan(holm_correction([pd.NA])[0])
+    assert isnan(calc_cohen_d([1.0, None, 3.0, 4.0], [2.0, 3.0, 5.0]))
+    row = compare_values([1.0, None, 3.0, 4.0], [2.0, 3.0, 5.0], n_bootstrap=10)
+    assert row[-4:] == (3, 3, 3, 3)
+
+
+def test_values_of_other_number_types():
+    assert holm_correction([Fraction(1, 100), Fraction(3, 100)]).tolist() == pytest.approx(
+        [0.02, 0.03]
+    )
+    assert calc_cliff_delta([2**64, 3], [1, 2]) == 1.0
+    assert compare_values([2**64, 3, 4], [1, 2, 3], n_bootstrap=10)[-4:] == (3, 3, 3, 3)
 
 
 def test_holm_correction_containers():
@@ -135,7 +160,9 @@ def test_holm_correction_containers():
     assert holm_correction((0.01, 0.04)).tolist() == expected
 
 
-@pytest.mark.parametrize("values", ["123", {1.0, 2.0, 3.0}, ["a", "b"], [1.0, None], [[1.0, 2.0]]])
+@pytest.mark.parametrize(
+    "values", ["123", {1.0, 2.0, 3.0}, ["a", "b"], [1.0, [2.0, 3.0]], [[1.0, 2.0]], [1.0, 2j]]
+)
 def test_values_checked(values):
     for call in (
         lambda: calc_cohen_d(values, [1.0, 2.0]),
@@ -299,3 +326,20 @@ def test_texts_match_the_values(texts):
         compare_values(values, values, texts_b=texts)
     with pytest.raises(ParameterError, match=message):
         compare_values(values[:1], values, texts_b=texts)
+
+
+def test_compare_values_checks_first():
+    with pytest.raises(ParameterError, match="number of bootstrap samples"):
+        compare_values([1.0], [2.0], n_bootstrap=0)
+    for texts in ((text for text in "abc"), "abc"):
+        with pytest.raises(SourceTypeError, match="A list of texts is expected"):
+            compare_values([1.0, 2.0, 3.0], [4.0, 5.0, 6.0], 10, None, texts)
+    with pytest.raises(SourceTypeError, match=r"^The texts must be labels of one type$"):
+        compare_values([1.0, 2.0, 3.0], [4.0, 5.0, 6.0], 10, None, ["a", None, "b"])
+
+
+def test_feature_columns():
+    table = pd.DataFrame({"x": [1.0, 2.0]})
+    with pytest.raises(SourceTypeError, match="must be numeric"):
+        _check_table(table.assign(x=[1 + 1j, 2 + 0j]))
+    _check_table(table.assign(x=pd.Series([1.0, pd.NA], dtype=object)))

@@ -6,6 +6,8 @@ from fractions import Fraction
 from itertools import combinations, pairwise
 from math import isnan
 
+import numpy as np
+import pandas as pd
 import pytest
 import spacy
 
@@ -154,6 +156,12 @@ def test_count_given():
 )
 def test_dominant(values, expected):
     assert dominant(values) == expected
+    assert dominant(pd.Series(values)) == expected
+
+
+def test_dominant_of_an_array():
+    assert dominant(np.array(["a", "b", "b"])) == "b"
+    assert dominant(np.array([], dtype=str)) is None
 
 
 @pytest.mark.parametrize(

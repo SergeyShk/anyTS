@@ -38,6 +38,24 @@ def test_sentence_lengths():
         sentence_lengths(42)
 
 
+@pytest.mark.parametrize(
+    "lengths",
+    [pd.DataFrame([3, 5, 2]), {3: "a", 5: "b"}, {3, 5}, b"Hi.", [True, False], [[3, 5]]],
+)
+def test_sentence_lengths_ready_lengths_checked(lengths):
+    with pytest.raises(SourceTypeError):
+        sentence_lengths(lengths)
+
+
+def test_sentence_lengths_negative():
+    with pytest.raises(SourceError, match=r"^The lengths of the sentences must not be negative$"):
+        sentence_lengths([3, -5, 2])
+    plt.close("all")
+    with pytest.raises(SourceError):
+        sentence_lengths_plot([-3, -5, -2], window=2)
+    assert plt.get_fignums() == []
+
+
 def test_sentence_lengths_hooks():
     # The extractors of a string and the hyphens of a Doc are the hooks of a language
     parts = SentsExtractor(tokenizer=re.compile(r"(?<=,)\s+"))

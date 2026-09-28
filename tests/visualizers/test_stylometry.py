@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import pytest
 from matplotlib.axes import Axes
 
@@ -128,3 +129,57 @@ def test_mendenhall_plot():
     with pytest.raises(SourceError):
         mendenhall_plot({"A": []})
     assert len(plt.get_fignums()) == 0
+
+
+EXACT = pd.DataFrame(
+    [[0, 3, 4], [3, 0, 5], [4, 5, 0]], index=list("ABC"), columns=list("ABC"), dtype=float
+)
+
+
+def _heights(ax):
+    """Distances at which the dendrogram joins its clusters"""
+    return {
+        round(x, 9) for lines in ax.collections for line in lines.get_segments() for x, _ in line
+    }
+
+
+def test_distance_matrix_in_any_order():
+    # The columns follow the rows, whatever their order
+    offsets = np.asarray(mds_plot(EXACT.sort_index(ascending=False)).collections[0].get_offsets())
+    for i, j, expected in ((0, 1, 5), (0, 2, 4), (1, 2, 3)):
+        assert np.linalg.norm(offsets[i] - offsets[j]) == pytest.approx(expected)
+    assert _heights(dendrogram_plot(EXACT[["C", "A", "B"]], method="single")) == {0, 3, 4}
+    assert _heights(dendrogram_plot(EXACT, method="single")) == {0, 3, 4}
+    plt.close("all")
+
+
+@pytest.mark.parametrize(
+    ("matrix", "error", "message"),
+    [
+        (EXACT.rename(columns={"C": "D"}), SourceError, "same texts in the rows and the columns"),
+        (EXACT.rename(index={"C": "A"}), SourceError, "same texts in the rows and the columns"),
+        (
+            EXACT.replace({4.0: 100.0}).where(np.triu(np.ones((3, 3))) == 1, EXACT),
+            SourceError,
+            "symmetric",
+        ),
+        (EXACT * -1, SourceError, "non-negative"),
+        (EXACT + np.eye(3), SourceError, "zero distances on the diagonal"),
+        (EXACT.astype(object).replace({3.0: "far"}), SourceTypeError, "must be numbers"),
+    ],
+)
+def test_distance_matrix_errors(matrix, error, message):
+    for plot in (dendrogram_plot, mds_plot):
+        with pytest.raises(error, match=message):
+            plot(matrix)
+    assert plt.get_fignums() == []
+
+
+def test_distance_matrix_rounding_error():
+    # A cosine distance of a text to itself may come out a rounding error below zero
+    noisy = EXACT.copy()
+    noisy.iloc[0, 0] = noisy.iloc[1, 1] = -2.2e-16
+    offsets = np.asarray(mds_plot(noisy).collections[0].get_offsets())
+    assert np.linalg.norm(offsets[0] - offsets[1]) == pytest.approx(3)
+    assert _heights(dendrogram_plot(noisy, method="single")) == {0, 3, 4}
+    plt.close("all")

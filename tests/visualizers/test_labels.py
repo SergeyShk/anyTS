@@ -15,6 +15,7 @@ from anyts.visualizers import (
     heaps_plot,
     keyness_plot,
     mendenhall_plot,
+    pca_plot,
     sentence_lengths_plot,
     zipf,
     zipf_theory,
@@ -57,6 +58,16 @@ def test_merge_labels_format_strings():
             merge_labels(defaults, {"fit": label})
 
 
+def test_merge_labels_tries_the_samples():
+    defaults = {"title": "Plot", "fit": "q={q:.2f}, s={s:.2f}"}
+    assert merge_labels(defaults, {"fit": "{q:.3f}"}, q=0.0, s=0.0)["fit"] == "{q:.3f}"
+    # Without the samples of every field the label is not tried
+    assert merge_labels(defaults, {"fit": "{q:d}"}, q=0.0)["fit"] == "{q:d}"
+    for label in ("{q:d}", "{q!r:.2f}", "{q:%Y}", "{s:=^x}"):
+        with pytest.raises(ParameterError, match=r"^The label 'fit' does not format its fields"):
+            merge_labels(defaults, {"fit": label}, q=0.0, s=0.0)
+
+
 def test_labels_are_the_names_of_the_visualizers():
     import anyts.visualizers as visualizers
 
@@ -97,4 +108,30 @@ def test_labels_checked_before_plotting(labels):
         heaps_plot(words, labels=labels)
     with pytest.raises(ParameterError):
         sentence_lengths_plot([3, 5, 2], labels={"average": "avg {w}"})
+    assert plt.get_fignums() == []
+
+
+@pytest.mark.parametrize(
+    ("plot", "label"),
+    [
+        (lambda labels: zipf(Counter(words), show_fit=True, labels=labels), {"fit": "{q:d}"}),
+        (lambda labels: heaps_plot(words, labels=labels), {"fit": "{k:d}"}),
+        (
+            lambda labels: sentence_lengths_plot([3, 4, 5], window=2, labels=labels),
+            {"average": "{window:s}"},
+        ),
+        (
+            lambda labels: keyness_plot(keyness(words, ["pal", "is"]), labels=labels),
+            {"xlabel": "{field:.2f}"},
+        ),
+        (
+            lambda labels: pca_plot({"A": words, "B": words[:5], "C": words[2:]}, labels=labels),
+            {"xlabel": "{share:d}"},
+        ),
+    ],
+)
+def test_format_specs_checked_before_plotting(plot, label):
+    plt.close("all")
+    with pytest.raises(ParameterError, match="does not format its fields"):
+        plot(label)
     assert plt.get_fignums() == []

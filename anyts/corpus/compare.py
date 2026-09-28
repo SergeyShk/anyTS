@@ -157,9 +157,7 @@ def check_comparison_params(
         raise ParameterError(
             "The names of the corpora must be two strings that give distinct columns"
         )
-    check_integer(n_bootstrap, "number of bootstrap samples")
-    if n_bootstrap < 1:
-        raise ParameterError("The number of bootstrap samples must be greater than 0")
+    _check_n_bootstrap(n_bootstrap)
     if seed is not None and not isinstance(seed, np.random.Generator):
         check_integer(seed, "seed")
         if seed < 0:
@@ -184,40 +182,53 @@ def _check_table(table: object) -> None:
 
     Description:
         A column is numeric when pandas takes it for one (bools and nullable
-        integers included) or when it holds only numbers and None; dates and
-        text, numeric strings included, are not
+        integers included) or when it holds only numbers and missing values
+        (None, NA); dates, complex numbers and text, numeric strings included,
+        are not
     """
     if not isinstance(table, pd.DataFrame):
         raise SourceTypeError(f"The features must be a DataFrame, not {type(table).__name__}")
     if not table.columns.is_unique:
         raise SourceTypeError("The names of the features must be distinct")
     for name, column in table.items():
-        if not pd.api.types.is_numeric_dtype(column) and not (
+        numeric = pd.api.types.is_numeric_dtype(column) and not pd.api.types.is_complex_dtype(
+            column
+        )
+        if not numeric and not (
             column.dtype == object
-            and all(value is None or isinstance(value, Real) for value in column)
+            and all(value is None or value is pd.NA or isinstance(value, Real) for value in column)
         ):
             raise SourceTypeError(f"The feature {name} must be numeric")
 
 
 def _as_values(values: Iterable[Any], what: str = "values") -> np.ndarray:
     """
-    Values as an array of floats
+    Values as an array of floats, a missing value (None, NA) taken for nan
 
     Raises:
-        SourceTypeError: If the values are not a flat list of numbers (bools and
-            strings included)
+        SourceTypeError: If the values are not a flat list of numbers and missing
+            values (bools, strings and complex numbers are not numbers here)
     """
     check_sequence(values, what)
-    array = np.asarray(values if hasattr(values, "__array__") else list(values))
-    if array.ndim != 1 or (
-        array.dtype.kind not in "iuf"
-        and not (
-            array.dtype.kind == "O"
-            and all(isinstance(value, Real) and not isinstance(value, bool) for value in array)
-        )
+    error = SourceTypeError(f"The {what} must be a flat list of numbers")
+    try:
+        array = np.asarray(values if hasattr(values, "__array__") else list(values))
+    except ValueError as e:
+        raise error from e
+    if array.ndim != 1:
+        raise error
+    if array.dtype.kind in "iuf":
+        return array.astype(float)
+    if array.dtype.kind == "O" and all(
+        value is None
+        or value is pd.NA
+        or (isinstance(value, Real) and not isinstance(value, bool))
+        for value in array
     ):
-        raise SourceTypeError(f"The {what} must be a flat list of numbers")
-    return array.astype(float)
+        return np.array(
+            [nan if value is None or value is pd.NA else value for value in array], dtype=float
+        )
+    raise error
 
 
 def _check_rng(rng: object) -> None:
@@ -265,10 +276,13 @@ def compare_values(
         tuple[float, ...]: Values in the order of COMPARISON_COLUMNS, p_holm - nan
 
     Raises:
-        SourceTypeError: If the values are not a flat list of numbers
-        ParameterError: If the texts are given and are not as many as the values,
-            or the generator is not a numpy Generator
+        SourceTypeError: If the values are not a flat list of numbers, or the texts
+            are not a list of labels of one type
+        ParameterError: If the number of samples is below one, the texts are given
+            and are not as many as the values, or the generator is not a numpy
+            Generator
     """
+    _check_n_bootstrap(n_bootstrap)
     _check_rng(rng)
     values_a, texts_a = _finite(values_a, texts_a)
     values_b, texts_b = _finite(values_b, texts_b)
@@ -415,9 +429,7 @@ def bootstrap_median_diff(
         >>> bootstrap_median_diff([3.0, 3.0, 3.0], [1.0, 1.0, 1.0], n_bootstrap=10)
         (2.0, 2.0)
     """
-    check_integer(n_bootstrap, "number of bootstrap samples")
-    if n_bootstrap < 1:
-        raise ParameterError("The number of bootstrap samples must be greater than 0")
+    _check_n_bootstrap(n_bootstrap)
     check_number(confidence, "confidence level")
     if not 0 < confidence < 1:
         raise ParameterError("The confidence level must lie in the interval (0, 1)")
@@ -440,11 +452,25 @@ def bootstrap_median_diff(
 
 
 def _check_texts(values: Values, texts: Values | None) -> None:
-    """Checking that the texts of the values are as many as the values"""
-    if texts is not None and len(texts) != len(values):
+    """Checking that the texts of the values are labels of one type, as many as the values"""
+    if texts is None:
+        return
+    check_sequence(texts, "texts")
+    if len(texts) != len(values):
         raise ParameterError(
             f"The texts must match the values one to one: {len(texts)} texts, {len(values)} values"
         )
+    try:
+        np.unique(np.asarray(texts))
+    except TypeError as e:
+        raise SourceTypeError("The texts must be labels of one type") from e
+
+
+def _check_n_bootstrap(n_bootstrap: int) -> None:
+    """Checking the number of bootstrap samples: an integer of at least one"""
+    check_integer(n_bootstrap, "number of bootstrap samples")
+    if n_bootstrap < 1:
+        raise ParameterError("The number of bootstrap samples must be greater than 0")
 
 
 def _resampled_medians(

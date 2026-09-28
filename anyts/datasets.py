@@ -1,3 +1,4 @@
+import errno
 import hashlib
 import logging
 import os
@@ -6,10 +7,11 @@ import tarfile
 import unicodedata
 import urllib.parse
 import urllib.request
+import uuid
 import zipfile
 from abc import ABCMeta, abstractmethod
 from collections.abc import Callable, Iterator
-from pathlib import Path, PureWindowsPath
+from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import Any, ClassVar
 
 from .exceptions import DataFileError, DownloadError, ParameterError, SourceTypeError
@@ -28,6 +30,9 @@ USER_AGENT = "anyTS"
 
 # Whether tarfile has the data filter (Python 3.11.4+)
 TAR_DATA_FILTER = hasattr(tarfile, "data_filter")
+
+# The starts of a path that expandusers turns into the home directory
+_HOME = tuple(f"~{sep}" for sep in (os.sep, os.altsep) if sep)
 
 
 class Dataset(metaclass=ABCMeta):
@@ -91,7 +96,7 @@ class Dataset(metaclass=ABCMeta):
 
 def fetch_archive(
     url: str,
-    filepath: Path,
+    filepath: str | Path,
     checksum: str,
     missing: bool,
     force: bool = False,
@@ -104,12 +109,14 @@ def fetch_archive(
         The archive is verified and extracted when it is downloaded now or the
         extracted files are missing. An archive that fails the SHA-256 checksum
         is removed and downloaded again once. The extracted files replace the
-        directory of the dataset only once the extraction is complete
+        directory of the dataset only once the extraction is complete, and the
+        earlier directory is removed only once they are in place; concurrent
+        calls do not share their partial files
 
     Arguments:
         url (str): Address of the archive
-        filepath (Path): Path to the archive; the files are extracted into its directory
-        checksum (str): SHA-256 checksum of the archive
+        filepath (str|Path): Path to the archive; the files are extracted into its directory
+        checksum (str): SHA-256 checksum of the archive, in either case
         missing (bool): Whether the extracted files are missing
         force (bool): Download the archive even if it is already there
         user_agent (str): User-Agent header of the request
@@ -120,6 +127,8 @@ def fetch_archive(
         DataFileError: If the verified archive cannot be extracted or its files
             cannot replace the directory of the dataset
     """
+    filepath = to_path(filepath)
+    checksum = checksum.lower()
     stem = _stem(filepath.name)
     if stem == filepath.name:
         raise ParameterError(f"The name of the archive {filepath.name} has no extension")
@@ -148,20 +157,63 @@ def fetch_archive(
                 "download it again"
             )
     target = filepath.parent / stem
-    partial = filepath.parent / (stem + ".part")
-    shutil.rmtree(partial, ignore_errors=True)
+    partial = _partial(target)
     try:
+        partial.mkdir()
         extracted = Path(extract_archive(filepath, partial))
-        try:
-            if target.is_symlink() or target.is_file():
-                target.unlink()
-            elif target.exists():
-                shutil.rmtree(target)
-            extracted.rename(target)
-        except OSError as e:
-            raise DataFileError(f"Cannot replace the directory {target}") from e
+        _replace(extracted, target)
+    except OSError as e:
+        raise DataFileError(f"Cannot replace the directory {target}") from e
     finally:
         shutil.rmtree(partial, ignore_errors=True)
+
+
+def _partial(path: Path) -> Path:
+    """Path next to the given one, unique to the call, for its partial file or directory"""
+    return path.with_name(f".{path.name}.{uuid.uuid4().hex[:12]}.part")
+
+
+def _replace(source: Path, target: Path) -> None:
+    """
+    Putting a file or a directory in place of another one
+
+    Description:
+        The earlier target is moved aside and removed only once the source is
+        in place; it is put back when the source cannot take its place. A target
+        that a concurrent call moves away or puts in place meanwhile is taken as
+        it is
+    """
+    aside = _partial(target)
+    backup: Path | None = aside
+    try:
+        target.rename(aside)
+    except FileNotFoundError:
+        backup = None
+    try:
+        source.rename(target)
+    except OSError as error:
+        if _taken(error, target):
+            return
+        if backup is not None:
+            try:
+                backup.rename(target)
+            except OSError as restore_error:
+                if _taken(restore_error, target):
+                    return
+                raise
+            backup = None
+        raise
+    finally:
+        if backup is not None:
+            if backup.is_dir() and not backup.is_symlink():
+                shutil.rmtree(backup, ignore_errors=True)
+            else:
+                backup.unlink(missing_ok=True)
+
+
+def _taken(error: OSError, target: Path) -> bool:
+    """Whether a rename failed because a concurrent call has put its target in place"""
+    return error.errno in (errno.EEXIST, errno.ENOTEMPTY) or target.exists()
 
 
 def check_limit(limit: int | None) -> None:
@@ -214,7 +266,7 @@ def substring_filter(
     Description:
         The substring and the field are compared after the folding, by default
         regardless of case and diacritics; the substring is plain text, not a
-        regular expression
+        regular expression, and a field that is not a string does not match
 
     Arguments:
         field (str): Name of the field of a record
@@ -235,7 +287,7 @@ def substring_filter(
     if not isinstance(value, str):
         raise ParameterError(f"The {field} must be a string, not {type(value).__name__}")
     needle = fold(value)
-    return lambda record: needle in fold(record[field])
+    return lambda record: isinstance(text := record[field], str) and needle in fold(text)
 
 
 def length_filters(min_len: int | None, max_len: int | None) -> Filters:
@@ -273,6 +325,10 @@ def to_path(path: str | Path) -> Path:
     """
     Converting the string form of a path into a Path
 
+    Description:
+        A leading ~, alone or before a separator, is expanded into the home
+        directory
+
     Arguments:
         path (str|Path): Path as a string or a Path
 
@@ -282,10 +338,9 @@ def to_path(path: str | Path) -> Path:
     Raises:
         SourceTypeError: If the value is neither a string nor a Path
     """
-    if isinstance(path, str):
-        return Path(path)
-    if isinstance(path, Path):
-        return path
+    if isinstance(path, str | Path):
+        text = str(path)
+        return Path(path).expanduser() if text == "~" or text.startswith(_HOME) else Path(path)
     raise SourceTypeError("The path must be a string or a Path")
 
 
@@ -300,8 +355,10 @@ def download_file(
     Downloading a file from the network
 
     Description:
-        A broken download leaves no partial file; the server is waited for
-        DOWNLOAD_TIMEOUT seconds at most
+        A broken or cut download, shorter than the Content-Length of the
+        answer, leaves no partial file, and concurrent downloads do not share
+        their partial files; the server is waited for DOWNLOAD_TIMEOUT seconds
+        at most
 
     Arguments:
         url (str): Address of the file
@@ -333,16 +390,23 @@ def download_file(
     if filepath.is_file() and not force:
         logger.info("The file %s is already downloaded", filepath)
         return ""
-    partial = filepath.with_name(filepath.name + ".part")
+    partial = _partial(filepath)
     try:
         logger.info("Downloading the file %s", url)
         request = urllib.request.Request(url, headers={"User-Agent": user_agent})
         with (
             urllib.request.urlopen(request, timeout=DOWNLOAD_TIMEOUT) as response,
-            partial.open("wb") as out_file,
+            partial.open("xb") as out_file,
         ):
             shutil.copyfileobj(response, out_file)
+            length = response.headers.get("Content-Length", "")
+            if length.isdigit() and out_file.tell() != int(length):
+                raise DownloadError(
+                    f"Cannot download the file {url}: received {out_file.tell()} of {length} bytes"
+                )
         partial.replace(filepath)
+    except DownloadError:
+        raise
     except Exception as e:
         raise DownloadError(f"Cannot download the file {url}") from e
     finally:
@@ -377,9 +441,12 @@ def extract_archive(archive_file: str | Path, extract_dir: str | Path | None = N
 
     Description:
         Paths leading outside the directory (absolute, with a drive or with
-        ..) and links are refused. A root directory that differs from the
-        name of the archive without its extensions is renamed to it,
-        replacing an earlier extraction
+        ..) and links are refused. The archive is extracted aside and put in
+        place only once complete: a single root directory takes the name of
+        the archive without its extensions, replacing an earlier extraction;
+        the files of an archive without one root go into the directory,
+        replacing those of the same names and keeping the others, once none of
+        them would replace a directory or the other way round
 
     Arguments:
         archive_file (str|Path): Path to the archive
@@ -390,8 +457,10 @@ def extract_archive(archive_file: str | Path, extract_dir: str | Path | None = N
 
     Raises:
         DataFileError: If the file is missing or is not a ZIP or TAR archive, the archive is
-            corrupted, empty, has paths outside the directory or links, or the
-            directory cannot be created
+            corrupted, empty, has paths outside the directory or links, its files
+            would replace it or put a file in the place of a directory or the
+            other way round, or the directory cannot be created or its files
+            replaced
     """
     archive_path = to_path(archive_file).resolve()
     if not archive_path.is_file():
@@ -405,6 +474,65 @@ def extract_archive(archive_file: str | Path, extract_dir: str | Path | None = N
     is_tar = tarfile.is_tarfile(archive_path)
     if not is_tar and not zipfile.is_zipfile(archive_path):
         raise DataFileError(f"The file {archive_path} is not a ZIP or TAR archive")
+    stem = _stem(archive_path.name)
+    partial = _partial(extract_path / stem)
+    try:
+        partial.mkdir()
+        members = _extract(archive_path, is_tar, partial)
+        roots = {parts[0] for member in members if (parts := PurePosixPath(member).parts)}
+        if len(roots) == 1 and (partial / (root := roots.pop())).is_dir():
+            destination = extract_path / stem
+            _check_not_the_archive(destination, archive_path)
+            _replace(partial / root, destination)
+            return str(destination)
+        entries = [
+            (entry, extract_path / entry.relative_to(partial))
+            for entry in sorted(partial.rglob("*"))
+        ]
+        for entry, destination in entries:
+            _check_merge(entry, destination, archive_path)
+        for entry, destination in entries:
+            if entry.is_dir():
+                destination.mkdir(parents=True, exist_ok=True)
+            else:
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                _replace(entry, destination)
+        return str(extract_path)
+    except OSError as e:
+        raise DataFileError(f"Cannot extract the archive {archive_path}") from e
+    finally:
+        shutil.rmtree(partial, ignore_errors=True)
+
+
+def _check_merge(entry: Path, destination: Path, archive_path: Path) -> None:
+    """Refusing a file or a directory of the archive that would replace one of the other kind"""
+    if entry.is_file():
+        _check_not_the_archive(destination, archive_path)
+    if destination.exists() and entry.is_dir() != destination.is_dir():
+        kind = "directory" if entry.is_dir() else "file"
+        raise DataFileError(
+            f"The archive {archive_path} would put a {kind} in the place of {destination}"
+        )
+
+
+def _check_not_the_archive(destination: Path, archive_path: Path) -> None:
+    """Refusing a file of the archive that would take the place of the archive itself"""
+    if destination.resolve() == archive_path:
+        raise DataFileError(
+            f"The files of the archive {archive_path} would replace it: give the archive "
+            "an extension or extract it into another directory"
+        )
+
+
+def _extract(archive_path: Path, is_tar: bool, extract_path: Path) -> list[str]:
+    """
+    Extracting the members of an archive; the names of the members
+
+    Description:
+        A TAR member is checked as it is extracted, so that the archive is read
+        once; a refused member stops the extraction, and the caller removes
+        what was written
+    """
     refused = f"The archive {archive_path} has paths outside the directory or links"
 
     def check(member: tarfile.TarInfo, path: str) -> tarfile.TarInfo:
@@ -433,30 +561,20 @@ def extract_archive(archive_file: str | Path, extract_dir: str | Path | None = N
         raise DataFileError(f"Cannot extract the archive {archive_path}") from e
     if not members:
         raise DataFileError(f"The archive {archive_path} has no files")
-    src_basename = os.path.commonpath(members)
-    if src_basename and not (extract_path / src_basename).is_dir():
-        src_basename = str(Path(src_basename).parent)
-    if not src_basename or src_basename == ".":
-        return str(extract_path)
-    dest_basename = _stem(archive_path.name)
-    if src_basename != dest_basename:
-        destination = extract_path / dest_basename
-        if destination.is_dir():
-            shutil.rmtree(destination)
-        return str(shutil.move(extract_path / src_basename, destination))
-    return str(extract_path / src_basename)
+    return members
 
 
-def sha256(path: Path) -> str:
+def sha256(path: str | Path) -> str:
     """
     Computing the SHA-256 checksum of a file
 
     Arguments:
-        path (Path): Path to the file
+        path (str|Path): Path to the file
 
     Returns:
-        str: Hexadecimal checksum; an empty string for a missing file
+        str: Hexadecimal checksum in lower case; an empty string for a missing file
     """
+    path = to_path(path)
     if not path.is_file():
         return ""
     with path.open("rb") as file:

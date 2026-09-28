@@ -25,7 +25,7 @@ A language library subclasses `StatsComponent` for every class of its statistics
 ## Names { #names }
 
 <!-- --8<-- [start:StatsComponent-names] -->
-The name of the pipe is the name of the extension: `nlp.add_pipe(factory, name="basic")` puts the statistics into `doc._.basic`. Without `name` the pipe and the extension keep the name of the factory. The same component can be added twice under different names, with different parameters. A document with no words - an empty string, whitespace, punctuation alone - passes through a component untouched, its extension left at `None`.
+The name of the pipe is the name of the extension: `nlp.add_pipe(factory, name="basic")` puts the statistics into `doc._.basic`. Without `name` the pipe and the extension keep the name of the factory. The extension follows the pipe when the pipeline renames it (`nlp.rename_pipe`), and a name taken by an extension of another package raises `ParameterError` instead of replacing it. A component taken from another pipeline (`add_pipe(name, source=other)`) is the same object in both, so under a new name it writes to that extension in the other pipeline too; a component of its own comes from the factory, `add_pipe(factory, name=...)`. The same component can be added twice under different names, with different parameters. A document with no words - an empty string, whitespace, punctuation alone - passes through a component untouched, its extension left at `None`.
 <!-- --8<-- [end:StatsComponent-names] -->
 
 <!-- --8<-- [start:StatsComponent-serialization] -->

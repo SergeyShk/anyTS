@@ -77,7 +77,7 @@ Checks whether a text, a `Doc` or a `Span` holds a word: an empty text or one of
 ## check_sequence
 
 <!-- --8<-- [start:check_sequence] -->
-Checks that an argument is a sequence and not a text or an iterator: a string, a `Doc`, a `Span`, an iterator or an object that cannot be iterated raises `SourceTypeError`, since a string would be iterated character by character and an iterator would be exhausted by the first pass over it; so does a table - a two-dimensional array or a `DataFrame`. A set or a mapping holds every item once, in no order of the text, and raises the error too, unless `ordered=False` - for a collection whose order and repeats do not matter, such as stop words.
+Checks that an argument is a sequence and not a text or an iterator: a string (of characters or bytes), a `Doc`, a `Span`, an iterator or an object that cannot be iterated raises `SourceTypeError`, since a string would be iterated character by character and an iterator would be exhausted by the first pass over it; so does a table - a two-dimensional array or a `DataFrame`. A set or a mapping holds every item once, in no order of the text, and raises the error too, unless `ordered=False` - for a collection whose order and repeats do not matter, such as stop words.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
@@ -112,7 +112,7 @@ Checks that a parameter is an integer: a `bool` or a `float`, even a whole one l
 ## check_number
 
 <!-- --8<-- [start:check_number] -->
-Checks that a parameter is a real number: a `bool`, a string or `None` raises `ParameterError` instead of failing later in a comparison.
+Checks that a parameter is a finite real number: a `bool`, a string, `None`, `nan` or an infinity raises `ParameterError` instead of failing later in a comparison.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
@@ -123,7 +123,7 @@ Checks that a parameter is a real number: a `bool`, a string or `None` raises `P
 ## check_counts
 
 <!-- --8<-- [start:check_counts] -->
-Checks that an argument is a counter - a mapping of words to their frequencies, such as a `Counter`: a value that is not a mapping, a word that is not a string or a frequency that is not a number raises `SourceTypeError`.
+Checks that an argument is a counter - a mapping of words to their frequencies, such as a `Counter`: a value that is not a mapping, a word that is not a string or a frequency that is not a number raises `SourceTypeError`, and a negative, `nan` or infinite frequency `SourceError`.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
@@ -133,13 +133,16 @@ Checks that an argument is a counter - a mapping of words to their frequencies, 
 ## merge_labels
 
 <!-- --8<-- [start:merge_labels] -->
-Merges the labels given for a plot over its default ones: a label that is not given keeps its default, so a single label can be changed alone. A default with fields in braces, such as `"Moving average ({window})"`, is a format string: a label given for it may use only those fields, and a literal brace in it is doubled (`{{`); the other labels are taken as they are. The defaults of the visualizers are `anyts.constants.VISUALIZER_LABELS`, by the name of the function; labels that are not a mapping of strings, have a key the plot does not know or a field their default does not have raise `ParameterError`.
+Merges the labels given for a plot over its default ones: a label that is not given keeps its default, so a single label can be changed alone. A default with fields in braces, such as `"Moving average ({window})"`, is a format string: a label given for it may use only those fields, and a literal brace in it is doubled (`{{`); the other labels are taken as they are. A format label is tried on sample values of its fields, of the types the plot gives them, so that a format spec the values do not take (`{window:s}` for a number) fails before a figure is created. Labels that are not a mapping of strings, have a key the plot does not know, a field their default does not have or a format spec their values do not take raise `ParameterError`.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
 | `defaults` | dict[str, str] | `-` | Default labels by key |
 | `labels` | dict[str, str] | `-` | Labels given; `None` - the default ones |
+| `**samples` | object | `-` | Values of the fields of the format labels, for trying the labels given |
 <!-- --8<-- [end:merge_labels] -->
+
+The defaults of the visualizers of the core are `anyts.constants.VISUALIZER_LABELS`, by the name of the function.
 
 !!! example "Example"
 
@@ -163,7 +166,7 @@ Yields the tokens of the words of a `Doc` or a `Span`: whitespace tokens and the
 ## iter_doc_units
 
 <!-- --8<-- [start:iter_doc_units] -->
-Yields the words of a `Doc` or a `Span` as lists of tokens: one token each, as in `iter_doc_tokens`. With `join_hyphens=True` a word that the tokenizer split at its hyphens (`well-known` into `well`, `-`, `known`) is joined back when no whitespace separates its parts; a language library whose own tokenizer keeps such words whole turns it on, so that a string and a `Doc` give the same words.
+Yields the words of a `Doc` or a `Span` as lists of tokens: one token each, as in `iter_doc_tokens`. With `join_hyphens=True` a word that the tokenizer split at its hyphens (`well-known` into `well`, `-`, `known`) is joined back when no whitespace separates its parts and no sentence starts at a hyphen or a part; a language library whose own tokenizer keeps such words whole turns it on, so that a string and a `Doc` give the same words.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |

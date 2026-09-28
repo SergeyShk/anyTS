@@ -123,7 +123,8 @@ def keyness(
 
     Raises:
         SourceTypeError: If the words are not a list of strings (check_words)
-            or a counter (check_counts)
+            or a counter (check_counts), or a frequency of the target corpus is
+            not a whole number
         ParameterError: If the measure is unknown, top_n is below one or
             min_freq is not an integer
         SourceError: If one of the corpora is empty
@@ -143,6 +144,10 @@ def keyness(
     if top_n is not None and top_n < 1:
         raise ParameterError("The number of keywords must be greater than 0")
     _check_words_or_counts(target)
+    if isinstance(target, Mapping) and not all(
+        float(count).is_integer() for count in target.values()
+    ):
+        raise SourceTypeError("The frequencies of the target corpus must be whole numbers")
     counts_reference: Mapping[str, float]
     keep = None
     if isinstance(reference, FrequencyReference):

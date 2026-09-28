@@ -125,6 +125,12 @@ def test_substring_filter_fold():
     assert not exact({"author": "Benito Perez Galdos"})
 
 
+def test_substring_filter_not_a_string():
+    predicate = substring_filter("author", "galdos")
+    assert not predicate({"author": None})
+    assert not predicate({"author": 1905})
+
+
 def test_substring_filter_type():
     with pytest.raises(ParameterError, match=r"^The author must be a string, not int$"):
         substring_filter("author", 5)
@@ -147,14 +153,26 @@ def test_length_filters_errors(min_len, max_len):
 
 def test_to_path():
     assert to_path("/usr/local/") == Path("/usr/local/")
-    path = Path("/usr/local/")
-    assert to_path(path) is path
+    assert to_path(Path("/usr/local/")) == Path("/usr/local/")
+    assert to_path("~/corpora") == Path.home() / "corpora"
+    assert to_path(Path("~")) == Path.home()
+    # A name after ~ is not a home directory to look up
+    assert to_path("~no_such_user_anyts/x") == Path("~no_such_user_anyts/x")
+    assert to_path("~qa") == Path("~qa")
 
 
 @pytest.mark.parametrize("path", [666, ["a", "b"], {"a": "b"}])
 def test_to_path_type_error(path):
     with pytest.raises(SourceTypeError, match=r"^The path must be a string or a Path$"):
         to_path(path)
+
+
+class Answer(io.BytesIO):
+    """An answer of the network with its bytes and the length it announces"""
+
+    def __init__(self, data: bytes, length: int | None = None):
+        super().__init__(data)
+        self.headers = {} if length is None else {"Content-Length": str(length)}
 
 
 @pytest.fixture
@@ -164,7 +182,7 @@ def online(monkeypatch):
 
     def fake_urlopen(request, timeout=None):
         requests.append((request.full_url, request.get_header("User-agent"), timeout))
-        return io.BytesIO(b"data")
+        return Answer(b"data", 4)
 
     monkeypatch.setattr(datasets.urllib.request, "urlopen", fake_urlopen)
     return requests
@@ -214,8 +232,30 @@ def test_download_file_without_a_name(tmp_path, online):
     assert online == []
 
 
+def test_download_file_cut(tmp_path, monkeypatch):
+    # The server closes the connection before the announced length
+    monkeypatch.setattr(
+        datasets.urllib.request, "urlopen", lambda *args, **kwargs: Answer(b"da", 4)
+    )
+    with pytest.raises(DownloadError, match=r"received 2 of 4 bytes$"):
+        download_file("https://example.com/data.bin", tmp_path)
+    assert list(tmp_path.iterdir()) == []
+    monkeypatch.setattr(
+        datasets.urllib.request, "urlopen", lambda *args, **kwargs: Answer(b"data")
+    )
+    assert download_file("https://example.com/data.bin", tmp_path)
+
+
+def test_download_file_keeps_other_partial_files(tmp_path, online):
+    # A partial file of another download of the same file is not touched
+    (tmp_path / "data.bin.part").write_bytes(b"other")
+    download_file("https://example.com/data.bin", tmp_path)
+    assert sorted(path.name for path in tmp_path.iterdir()) == ["data.bin", "data.bin.part"]
+    assert (tmp_path / "data.bin.part").read_bytes() == b"other"
+
+
 def test_download_file_interrupted(tmp_path, monkeypatch):
-    class InterruptedResponse(io.BytesIO):
+    class InterruptedResponse(Answer):
         def read(self, size=-1):
             if self.tell():
                 raise KeyboardInterrupt
@@ -351,6 +391,104 @@ def test_extract_archive_single_file(tmp_path):
         zip_file.writestr("corpus.xml", "<items />")
     assert extract_archive(flat, tmp_path / "flat") == str(tmp_path / "flat")
     assert (tmp_path / "flat" / "corpus.xml").read_text() == "<items />"
+
+
+@pytest.mark.parametrize("root", ["corpus_v1", "repo-main", "./corpus_v1", "./repo-main"])
+def test_extract_archive_nested_root(tmp_path, root):
+    # A single root keeps its subdirectories and takes the name of the archive
+    archive = tmp_path / "corpus_v1.tar.xz"
+    _tar(archive, {f"{root}/texts/a.txt": "a", f"{root}/texts/b.txt": "b"})
+    out = tmp_path / "out"
+    assert extract_archive(archive, out) == str(out / "corpus_v1")
+    assert sorted(path.relative_to(out).as_posix() for path in out.rglob("*")) == [
+        "corpus_v1",
+        "corpus_v1/texts",
+        "corpus_v1/texts/a.txt",
+        "corpus_v1/texts/b.txt",
+    ]
+
+
+def test_extract_archive_replaces_an_earlier_extraction(tmp_path):
+    archive = tmp_path / "corpus_v1.tar.xz"
+    _tar(archive, {"corpus_v1/a.txt": "a"})
+    out = tmp_path / "out"
+    (out / "corpus_v1").mkdir(parents=True)
+    (out / "corpus_v1" / "stale.txt").write_text("stale", encoding="utf-8")
+    extract_archive(archive, out)
+    assert sorted(path.name for path in (out / "corpus_v1").iterdir()) == ["a.txt"]
+    # A file in the place of the directory is replaced too
+    (out / "corpus_v1").rename(out / "moved")
+    (out / "corpus_v1").write_text("file", encoding="utf-8")
+    assert Path(extract_archive(archive, out)).joinpath("a.txt").is_file()
+
+
+def test_extract_archive_flat_merges_into_the_directory(tmp_path):
+    archive = tmp_path / "flat.zip"
+    with zipfile.ZipFile(archive, "w") as zip_file:
+        zip_file.writestr("a.txt", "new")
+        zip_file.writestr("texts/b.txt", "new")
+        zip_file.writestr("empty/", "")
+    out = tmp_path / "out"
+    (out / "texts").mkdir(parents=True)
+    (out / "a.txt").write_text("old", encoding="utf-8")
+    (out / "texts" / "mine.txt").write_text("mine", encoding="utf-8")
+    assert extract_archive(archive, out) == str(out)
+    files = {path.relative_to(out).as_posix(): path.read_text() for path in out.rglob("*.txt")}
+    assert files == {"a.txt": "new", "texts/b.txt": "new", "texts/mine.txt": "mine"}
+    assert (out / "empty").is_dir()
+
+
+@pytest.mark.parametrize(
+    ("members", "existing"),
+    [
+        ({"data": "file", "README": "new"}, "data/mine.txt"),
+        ({"README/a.txt": "new", "b.txt": "new"}, "README"),
+    ],
+)
+def test_extract_archive_flat_keeps_the_other_kind(tmp_path, members, existing):
+    # A file never replaces a directory, nor a directory a file, and nothing is merged
+    archive = tmp_path / "flat.zip"
+    with zipfile.ZipFile(archive, "w") as zip_file:
+        for name, content in members.items():
+            zip_file.writestr(name, content)
+    out = tmp_path / "out"
+    (out / existing).parent.mkdir(parents=True, exist_ok=True)
+    (out / existing).write_text("mine", encoding="utf-8")
+    if existing != "README":
+        (out / "README").write_text("old", encoding="utf-8")
+    with pytest.raises(DataFileError, match=r"would put a (file|directory) in the place of"):
+        extract_archive(archive, out)
+    assert (out / existing).read_text(encoding="utf-8") == "mine"
+    if existing != "README":
+        assert (out / "README").read_text(encoding="utf-8") == "old"
+    assert sorted(path.name for path in out.iterdir() if path.name.startswith(".")) == []
+
+
+@pytest.mark.parametrize("members", [["main-abc/a.txt"], ["main", "other.txt"]])
+def test_extract_archive_never_replaces_itself(tmp_path, members):
+    # An archive without an extension, a GitHub zipball saved as main
+    archive = tmp_path / "main"
+    with zipfile.ZipFile(archive, "w") as zip_file:
+        for member in members:
+            zip_file.writestr(member, "text")
+    data = archive.read_bytes()
+    with pytest.raises(DataFileError, match=r"would replace it"):
+        extract_archive(archive)
+    assert archive.read_bytes() == data
+    assert sorted(path.name for path in tmp_path.iterdir()) == ["main"]
+
+
+def test_extract_archive_refused_leaves_nothing(tmp_path):
+    # A bad member after good ones: nothing is extracted
+    archive = tmp_path / "corpus.tar"
+    with tarfile.open(archive, mode="w") as tar_file:
+        _tar_member(tar_file, "corpus/a.txt")
+        _tar_member(tar_file, "corpus/b.txt")
+        _tar_member(tar_file, "../evil.txt")
+    out = tmp_path / "out"
+    with pytest.raises(DataFileError, match="outside the directory or links"):
+        extract_archive(archive, out)
+    assert list(out.iterdir()) == []
 
 
 def test_extract_archive_same_root(tmp_path):
@@ -499,7 +637,69 @@ def test_sha256(tmp_path):
     path = tmp_path / "data.txt"
     path.write_bytes(b"anyTS")
     assert sha256(path) == hashlib.sha256(b"anyTS").hexdigest()
+    assert sha256(str(path)) == sha256(path)
     assert sha256(tmp_path / "missing.txt") == ""
+
+
+def test_replace_errors(tmp_path, monkeypatch):
+    with pytest.raises(FileNotFoundError):
+        datasets._replace(tmp_path / "missing", tmp_path / "target")
+    assert not (tmp_path / "target").exists()
+    archive = tmp_path / "corpus_v1.tar.xz"
+    _tar(archive, {"corpus_v1/a.txt": "a"})
+
+    def failing(source, target):
+        raise PermissionError(target)
+
+    monkeypatch.setattr(datasets, "_replace", failing)
+    with pytest.raises(DataFileError, match=r"^Cannot extract the archive"):
+        extract_archive(archive, tmp_path / "out")
+    assert list((tmp_path / "out").iterdir()) == []
+
+
+@pytest.mark.parametrize("concurrent", [True, False])
+def test_replace_cannot_restore(tmp_path, monkeypatch, concurrent):
+    # Neither the source nor the earlier target can take the place
+    source = tmp_path / "source"
+    source.mkdir()
+    target = tmp_path / "target"
+    target.mkdir()
+    rename = Path.rename
+
+    def failing(self, other):
+        if other == target:
+            if concurrent and self != source:
+                target.mkdir()
+            raise PermissionError(other)
+        return rename(self, other)
+
+    monkeypatch.setattr(Path, "rename", failing)
+    if concurrent:
+        datasets._replace(source, target)
+        assert target.is_dir()
+    else:
+        with pytest.raises(PermissionError):
+            datasets._replace(source, target)
+
+
+def test_replace_keeps_a_concurrent_target(tmp_path, monkeypatch):
+    # Another call puts its complete copy in place between the two renames
+    source = tmp_path / "source"
+    source.mkdir()
+    (source / "a.txt").write_text("ours", encoding="utf-8")
+    target = tmp_path / "target"
+    rename = Path.rename
+
+    def concurrent(self, other):
+        if self == source:
+            target.mkdir()
+            (target / "a.txt").write_text("theirs", encoding="utf-8")
+            raise FileExistsError(other)
+        return rename(self, other)
+
+    monkeypatch.setattr(Path, "rename", concurrent)
+    datasets._replace(source, target)
+    assert (target / "a.txt").read_text(encoding="utf-8") == "theirs"
 
 
 MEMBERS = {"corpus_v1/a.txt": "first", "corpus_v1/b/c.txt": "second"}
@@ -615,20 +815,35 @@ def test_fetch_archive_replaces_a_link(remote):
     assert (elsewhere / "a.txt").read_text(encoding="utf-8") == "elsewhere"
 
 
-def test_fetch_archive_cannot_replace(remote, monkeypatch):
+@pytest.mark.parametrize("step", ["aside", "in place"])
+def test_fetch_archive_cannot_replace(remote, monkeypatch, step):
+    # The earlier directory stays whole whichever rename fails
     filepath, checksum, _, _ = remote
-    _fetch(filepath, checksum)
+    root = _fetch(filepath, checksum)
+    (root / "a.txt").write_text("earlier", encoding="utf-8")
+    rename = Path.rename
 
-    rmtree = datasets.shutil.rmtree
+    def failing(self, other):
+        moves = (step == "aside" and self == root) or (step == "in place" and other == root)
+        if moves and self.name == "corpus_v1":
+            raise PermissionError(self)
+        return rename(self, other)
 
-    def failing(path, ignore_errors=False):
-        if not ignore_errors:
-            raise PermissionError(path)
-        rmtree(path, ignore_errors=True)
-
-    monkeypatch.setattr(datasets.shutil, "rmtree", failing)
+    monkeypatch.setattr(Path, "rename", failing)
     with pytest.raises(DataFileError, match=r"^Cannot replace the directory"):
         _fetch(filepath, checksum, missing=True)
+    assert (root / "a.txt").read_text(encoding="utf-8") == "earlier"
+    assert (root / "b" / "c.txt").is_file()
+    assert sorted(path.name for path in filepath.parent.iterdir()) == [
+        "corpus_v1",
+        "corpus_v1.tar.xz",
+    ]
+
+
+def test_fetch_archive_path_and_checksum_forms(remote):
+    filepath, checksum, _, _ = remote
+    fetch_archive("https://example.com/corpus_v1.tar.xz", str(filepath), checksum.upper(), True)
+    assert (filepath.parent / "corpus_v1" / "a.txt").is_file()
 
 
 def test_fetch_archive_interrupted_extraction(remote, monkeypatch):
@@ -650,7 +865,10 @@ def test_fetch_archive_interrupted_extraction(remote, monkeypatch):
         _fetch(filepath, checksum)
     # The earlier directory stays as it was and the partial one is gone
     assert (root / "a.txt").read_text(encoding="utf-8") == "earlier"
-    assert not (filepath.parent / "corpus_v1.part").exists()
+    assert sorted(path.name for path in filepath.parent.iterdir()) == [
+        "corpus_v1",
+        "corpus_v1.tar.xz",
+    ]
     monkeypatch.setattr(datasets, "extract_archive", extract)
     _fetch(filepath, checksum)
     assert (root / "a.txt").read_text(encoding="utf-8") == "first"
