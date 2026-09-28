@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from anyts import cohesion, diversity_stats, exceptions, extractors, syntax, utils
+from anyts import cohesion, datasets, diversity_stats, exceptions, extractors, syntax, utils
 
 DOCS = Path(__file__).parents[1] / "docs"
 # The subpackage rebinds the names of some of its modules to their functions
@@ -94,6 +94,8 @@ def test_public_api_has_sections():
         *public_names(diversity_stats),
         *public_names(cohesion),
         *public_names(syntax),
+        *public_names(datasets),
+        "Dataset",
         *(name for module in CORPUS_MODULES for name in public_names(module)),
     }
     assert public_names(exceptions) == []
