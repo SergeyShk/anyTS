@@ -17,6 +17,7 @@
 * **[Cohesion helpers](https://sergeyshk.github.io/anyTS/stats/cohesion/)** - the overlap of sentences, adjacent and over all pairs, Dice, givenness and repetition
 * **[Dependency tree helpers](https://sergeyshk.github.io/anyTS/stats/syntax/)** - dependency distances, tree depth, valency and coordination chains on the labels shared by Universal Dependencies and ClearNLP
 * **[Corpus measures](https://sergeyshk.github.io/anyTS/corpus/keyness/)** - keywords against a corpus or a frequency dictionary, collocations, the dispersion of a word, Burrows's Delta and its variants, Zeta, Kilgarriff's chi-square, the Mendenhall curve and the comparison of corpora with effect sizes, a bootstrap by texts and the Holm correction
+* **[Datasets](https://sergeyshk.github.io/anyTS/datasets/)** - the base of a dataset: downloading an archive with a checksum, safe extraction and filters of the records
 * **[Exceptions](https://sergeyshk.github.io/anyTS/exceptions/)** - one hierarchy whose classes are also built-in exceptions
 
 The reference of every function is a named section that the libraries include in their own documentation, so a formula is described in one place.

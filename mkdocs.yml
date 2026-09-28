@@ -25,6 +25,7 @@ nav:
       - Word dispersion: corpus/dispersion.md
       - Stylometry: corpus/stylometry.md
       - Corpus comparison: corpus/compare.md
+    - Datasets: datasets.md
     - Utilities: utils.md
 
 theme:
