@@ -36,11 +36,13 @@ The thresholds of the complex and the long words are parameters; a library sets 
 | `sents_extractor` | SentsExtractor | `None` | Sentence extraction tool; used for a Doc too, on its text |
 | `words_extractor` | WordsExtractor | `None` | Word extraction tool; used for a Doc too, on its text |
 | `normalize` | bool | `False` | Compute normalized statistics |
-| `complex_syl_factor` | int | `3` | Minimum number of syllables in a complex word |
-| `long_word_letter_factor` | int | `7` | Minimum number of letters in a long word |
+| `complex_syl_factor` | int | `COMPLEX_SYL_FACTOR` | Minimum number of syllables in a complex word |
+| `long_word_letter_factor` | int | `LONG_WORD_LETTER_FACTOR` | Minimum number of letters in a long word |
 
 A source that is neither a string nor a `Doc` and an extractor of another type raise `SourceTypeError`, a source without words `SourceError`, a threshold that is not an integer of at least one `ParameterError`.
 <!-- --8<-- [end:BasicStats-parameters] -->
+
+The thresholds of the core are `COMPLEX_SYL_FACTOR = 3` and `LONG_WORD_LETTER_FACTOR = 7` of `anyts.constants`.
 
 ## Attributes
 
@@ -78,14 +80,28 @@ The counts of the words are normalized by the number of words, those of the char
 
 ## Methods
 
+### count_words_by_syllables, count_words_by_letters
+
 <!-- --8<-- [start:BasicStats-count_words_by] -->
-`count_words_by_syllables(min_syllables)` and `count_words_by_letters(min_letters)` return the number of words with at least the given number of syllables or letters; `get_stats()` returns a copy of the computed statistics, `print_stats()` prints them with their descriptions.
+`count_words_by_syllables(min_syllables)` and `count_words_by_letters(min_letters)` return the number of words with at least the given number of syllables or letters; a minimum that is not an integer raises `ParameterError`.
 <!-- --8<-- [end:BasicStats-count_words_by] -->
+
+### get_stats
+
+<!-- --8<-- [start:BasicStats-get_stats] -->
+Returns a dictionary with the computed statistics - a copy: editing it does not change the object.
+<!-- --8<-- [end:BasicStats-get_stats] -->
+
+### print_stats
+
+<!-- --8<-- [start:BasicStats-print_stats] -->
+Prints a table with the counts of the statistics, their descriptions from `stats_desc` and the headers from `stats_headers`.
+<!-- --8<-- [end:BasicStats-print_stats] -->
 
 ## Punctuation marks { #count_punctuations }
 
 <!-- --8<-- [start:count_punctuations] -->
-`count_punctuations(text, marks=PUNCTUATION_MARKS, dash_pattern=DASH_PATTERN)` counts punctuation marks by the types of `anyts.constants.PUNCTUATION_TYPES` - the same distribution lives in the `c_punctuations` attribute: commas, periods, question and exclamation marks (the inverted `¿` and `¡` included, so `¿So?` carries two question marks), ellipses (the `…` character, three or more periods, or two periods after `?` and `!` - one mark whose periods do not count as periods: `Who?..` is a question and an ellipsis), colons, semicolons, dashes (`—`, `–` and the horizontal bar `―`, as well as a run of two or more hyphens, a hyphen after whitespace, at the start of a line or after a closing mark, before a space or between a letter and an opening or a closing mark, as a dash is typed in plain text: `--Hello --said John`, `- They left - he said`), hyphens inside words, before digits and at the end of a line inside a word (`well-known`, `-5`), guillemets `«»`, straight and curly quotation marks `"“”‘’`, parentheses and the other marks: every remaining character of the Unicode categories P and S (`‹›`, `§`, `€`, `°`). `marks` gives the type of every mark and `dash_pattern` the dashes typed with hyphens, for a language whose conventions differ.
+`count_punctuations(text, marks=PUNCTUATION_MARKS, dash_pattern=DASH_PATTERN)` counts punctuation marks by the types of `anyts.constants.PUNCTUATION_TYPES` - the same distribution lives in the `c_punctuations` attribute: commas, periods, question and exclamation marks (the inverted `¿` and `¡` included, so `¿So?` carries two question marks), ellipses (the `…` character, three or more periods, or two periods after `?` and `!` - one mark whose periods do not count as periods: `Who?..` is a question and an ellipsis), colons, semicolons, dashes (`—`, `–` and the horizontal bar `―`, as well as a run of two or more hyphens, a hyphen after whitespace, at the start of a line or after a closing mark, before a space, a tab or the end of the text, or between a letter and an opening or a closing mark, as a dash is typed in plain text: `--Hello --said John`, `- They left - he said`), hyphens inside words, before digits and at the end of a line inside a word (`well-known`, `-5`), guillemets `«»`, straight and curly quotation marks `"“”‘’`, parentheses and the other marks: every remaining character of the Unicode categories P and S (`‹›`, `§`, `€`, `°`). `marks` gives the type of every mark - a single character of a type of `PUNCTUATION_TYPES`, otherwise `ParameterError` - and `dash_pattern` the dashes typed with hyphens as a compiled regular expression, for a language whose conventions differ; a text that is not a string, marks that are not a mapping and dashes that are not a compiled expression raise `SourceTypeError`.
 <!-- --8<-- [end:count_punctuations] -->
 
 ## Usage example

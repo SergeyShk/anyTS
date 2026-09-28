@@ -21,7 +21,7 @@ from .utils import check_integer, count_letters, has_words, iter_doc_words
 
 ELLIPSIS_PATTERN = re.compile(r"…|\.{3,}|(?<=[?!])\.{2}")
 # A dash typed with hyphens: a run of two or more, a hyphen after whitespace, the start of a
-# line or a closing mark (the underscore of italics included), before a space or the end,
+# line or a closing mark (the underscore of italics included), before a space, a tab or the end,
 # or between a letter and an opening or a closing mark
 DASH_PATTERN = re.compile(
     r"-{2,}|(?:(?<=\s)|(?<=[.,;:!?…»”\"')\]_])|^)-(?!\d)|-(?=[ \t]|\Z)"
@@ -77,11 +77,8 @@ class BasicStats(metaclass=ABCMeta):
     Description:
         Counts of the sentences, the words, the characters, the syllables and
         the punctuation marks of a text. A language library subclasses the
-        class and implements count_syllables; the class attributes
-        sents_extractor_class and words_extractor_class are the extractors used
-        when none is given, join_hyphens joins the parts of the hyphenated
-        words of a Doc, and count_punctuations, stats_desc and stats_headers
-        may be overridden as well
+        class and implements count_syllables; the class attributes and
+        count_punctuations may be overridden as well
         The words of a string come from the words extractor and its sentences
         from the sentence extractor; the words of a Doc come from its tokens and
         its sentences from its boundaries, or from the sentence extractor when it
@@ -109,7 +106,7 @@ class BasicStats(metaclass=ABCMeta):
         n_polysyllable_words (int): Number of polysyllabic words
         n_chars (int): Number of characters without the line breaks
         n_letters (int): Number of letters
-        n_spaces (int): Number of spaces
+        n_spaces (int): Number of spaces and tabs
         n_syllables (int): Number of syllables
         n_punctuations (int): Number of punctuation marks
         c_punctuations (dict[str, int]): Distribution of punctuation marks by type
@@ -130,6 +127,13 @@ class BasicStats(metaclass=ABCMeta):
         count_words_by_letters: Number of words with at least the given number of letters
         get_stats: Getting the computed statistics of the text
         print_stats: Printing the computed statistics of the text with descriptions
+
+    Class attributes:
+        sents_extractor_class (type[SentsExtractor]): Sentence extractor used when none is given
+        words_extractor_class (type[WordsExtractor]): Word extractor used when none is given
+        join_hyphens (bool): Join the parts of the hyphenated words of a Doc
+        stats_desc (dict[str, str]): Descriptions of the statistics for print_stats
+        stats_headers (tuple[str, str]): Headers of the columns for print_stats
 
     Raises:
         SourceTypeError: If the source is neither a string nor a Doc object, or an extractor
@@ -318,7 +322,8 @@ def count_punctuations(
         then every other mark by marks - so ¿ and ¡ are question and
         exclamation marks, a hyphen inside a word, before a digit or at a line
         break inside a word is a hyphen; any other character of the Unicode
-        categories P and S is another mark
+        categories P and S is another mark. A library passes its marks, each
+        a single character of a type of PUNCTUATION_TYPES, and its dashes
 
     Arguments:
         text (str): Text string
@@ -329,7 +334,9 @@ def count_punctuations(
         dict[str, int]: Number of marks of each type in the order of PUNCTUATION_TYPES
 
     Raises:
-        SourceTypeError: If the text is not a string
+        SourceTypeError: If the text is not a string, the marks are not a mapping or
+            the dashes are not a compiled regular expression
+        ParameterError: If a mark is not a single character or its type is unknown
 
     Example:
         >>> from anyts.basic_stats import count_punctuations
@@ -339,6 +346,20 @@ def count_punctuations(
     """
     if not isinstance(text, str):
         raise SourceTypeError(f"A text string is expected, not {type(text).__name__}")
+    if not isinstance(marks, Mapping):
+        raise SourceTypeError(f"The marks must be a mapping, not {type(marks).__name__}")
+    if not isinstance(dash_pattern, Pattern):
+        raise SourceTypeError(
+            f"The dashes must be a compiled regular expression, not {type(dash_pattern).__name__}"
+        )
+    for char, kind in marks.items():
+        if not isinstance(char, str) or len(char) != 1:
+            raise ParameterError(f"A punctuation mark must be a single character, not {char!r}")
+        if not isinstance(kind, str) or kind not in PUNCTUATION_TYPES:
+            raise ParameterError(
+                f"Unknown type of the mark {char!r}: {kind!r}. "
+                f"Available types: {tuple(PUNCTUATION_TYPES)}"
+            )
     counts = dict.fromkeys(PUNCTUATION_TYPES, 0)
     # Dashes first, so that one after an ellipsis still sees it (so...-he said)
     rest, counts["dash"] = dash_pattern.subn("", text)
@@ -346,7 +367,7 @@ def count_punctuations(
     chars = Counter(rest)
     for char, kind in marks.items():
         counts[kind] += chars[char]
-    counts["other"] = sum(
+    counts["other"] += sum(
         count
         for char, count in chars.items()
         if char not in marks and unicodedata.category(char)[0] in "PS"

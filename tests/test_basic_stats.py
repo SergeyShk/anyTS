@@ -6,7 +6,7 @@ import pytest
 import spacy
 
 from anyts import SentsExtractor, WordsExtractor
-from anyts.basic_stats import BasicStats, count_punctuations
+from anyts.basic_stats import PUNCTUATION_MARKS, BasicStats, count_punctuations
 from anyts.constants import BASIC_STATS_DESC, PUNCTUATION_TYPES
 from anyts.exceptions import ParameterError, SourceError, SourceTypeError
 
@@ -162,12 +162,20 @@ def test_extractor_classes_and_hyphens():
         def sentenize(self, text):
             return text.split(";")
 
+    class Words(WordsExtractor):
+        def __init__(self):
+            super().__init__(stopwords=["one"])
+
     class Joined(Stats):
         sents_extractor_class = Parts
+        words_extractor_class = Words
         join_hyphens = True
 
-    assert Joined("one two; three").n_sents == 2
-    assert Stats("one two; three").n_sents == 1
+    assert (Joined("one two; three").n_sents, Joined("one two; three").n_words) == (2, 2)
+    assert (Stats("one two; three").n_sents, Stats("one two; three").n_words) == (1, 3)
+    # A Doc without sentence boundaries takes its sentences from the class, its words from tokens
+    blank = spacy.blank("xx")("one two; three")
+    assert (Joined(blank).n_sents, Joined(blank).n_words) == (2, 3)
     doc = spacy.blank("xx")("A well-known cat.")
     assert (Stats(doc).n_words, Joined(doc).n_words) == (4, 3)
 
@@ -286,6 +294,25 @@ def test_count_punctuations_marks_and_dashes():
     counts = count_punctuations("„so“ - yes!", marks=marks, dash_pattern=re.compile(r" - "))
     assert (counts["straight_quotes"], counts["exclamation"], counts["dash"]) == (1, 1, 1)
     assert counts["other"] == 1
+    # A mark given the type other is counted with the other marks
+    counts = count_punctuations("¿So? §", marks={**PUNCTUATION_MARKS, "¿": "other"})
+    assert (counts["question"], counts["other"]) == (1, 2)
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "error", "message"),
+    [
+        ({"marks": {"!": "bang"}}, ParameterError, r"^Unknown type of the mark '!': 'bang'\."),
+        ({"marks": {"!": ["exclamation"]}}, ParameterError, r"^Unknown type of the mark '!'"),
+        ({"marks": {"!!": "exclamation"}}, ParameterError, r"single character, not '!!'$"),
+        ({"marks": {1: "exclamation"}}, ParameterError, r"single character, not 1$"),
+        ({"marks": ["!"]}, SourceTypeError, r"^The marks must be a mapping, not list$"),
+        ({"dash_pattern": " - "}, SourceTypeError, r"compiled regular expression, not str$"),
+    ],
+)
+def test_count_punctuations_hook_errors(kwargs, error, message):
+    with pytest.raises(error, match=message):
+        count_punctuations("Hello", **kwargs)
 
 
 @pytest.mark.parametrize(
