@@ -400,7 +400,7 @@ def test_extract_archive_nested_root(tmp_path, root):
     _tar(archive, {f"{root}/texts/a.txt": "a", f"{root}/texts/b.txt": "b"})
     out = tmp_path / "out"
     assert extract_archive(archive, out) == str(out / "corpus_v1")
-    assert sorted(str(path.relative_to(out)) for path in out.rglob("*")) == [
+    assert sorted(path.relative_to(out).as_posix() for path in out.rglob("*")) == [
         "corpus_v1",
         "corpus_v1/texts",
         "corpus_v1/texts/a.txt",
@@ -433,7 +433,7 @@ def test_extract_archive_flat_merges_into_the_directory(tmp_path):
     (out / "a.txt").write_text("old", encoding="utf-8")
     (out / "texts" / "mine.txt").write_text("mine", encoding="utf-8")
     assert extract_archive(archive, out) == str(out)
-    files = {str(path.relative_to(out)): path.read_text() for path in out.rglob("*.txt")}
+    files = {path.relative_to(out).as_posix(): path.read_text() for path in out.rglob("*.txt")}
     assert files == {"a.txt": "new", "texts/b.txt": "new", "texts/mine.txt": "mine"}
     assert (out / "empty").is_dir()
 
