@@ -20,7 +20,7 @@ For a word of frequency $a$ in a target corpus of size $c$ and of frequency $b$ 
 
 | Measure | Key | Formula | Description |
 | :------ | :-- | :------ | :---------- |
-| Log-likelihood | `log_likelihood` | $G^2 = 2\,(a \ln \frac{a}{E_1} + b \ln \frac{b}{E_2})$, $E_1 = \frac{c\,(a+b)}{N}$, $E_2 = \frac{d\,(a+b)}{N}$ | [Rayson and Garside (2000)](https://ucrel.lancs.ac.uk/llwizard.html); critical values `G2_CRITICAL_VALUES`: 3.84 for p < 0.05, 6.63 for p < 0.01, 10.83 for p < 0.001, 15.13 for p < 0.0001 |
+| Log-likelihood | `log_likelihood` | $G^2 = 2\,(a \ln \frac{a}{E_1} + b \ln \frac{b}{E_2})$, $E_1 = \frac{c\,(a+b)}{N}$, $E_2 = \frac{d\,(a+b)}{N}$ | [Rayson and Garside (2000)](https://ucrel.lancs.ac.uk/llwizard.html); critical values `anyts.constants.G2_CRITICAL_VALUES`: 3.84 for p < 0.05, 6.63 for p < 0.01, 10.83 for p < 0.001, 15.13 for p < 0.0001 |
 | Chi-square | `chi2` | $\chi^2 = \frac{N\,\max(\lvert a(d-b) - b(c-a) \rvert - N/2,\ 0)^2}{(a+b)(N-a-b)\,c\,d}$ | with Yates's correction over the 2×2 contingency table; when the correction exceeds the difference, the statistic is zero |
 | %DIFF | `diff` | $\frac{NF_a - NF_b}{NF_b} \cdot 100$ | [Gabrielatos and Marchi (2011)](http://eprints.lancs.ac.uk/51449/4/Gabrielatos_Marchi_Keyness.pdf); $NF$ - frequency per million words |
 | Log Ratio | `log_ratio` | $\log_2 \frac{NF_a}{NF_b}$ | [Hardie (2014)](http://cass.lancs.ac.uk/log-ratio-an-informal-introduction/); one means the word is twice as frequent in the target corpus |
@@ -38,7 +38,7 @@ A zero frequency in one of the corpora is replaced with 0.5 for %DIFF, Log Ratio
 | :-------: | :--: | :-----: | :---------: |
 | `target` | list[str]/dict[str, int] | `-` | Words of the target corpus or their frequencies |
 | `reference` | list[str]/dict[str, float]/FrequencyReference | `-` | Words of the reference corpus, their frequencies or a reference by frequencies |
-| `measure` | str | `log_likelihood` | Measure of `KEYNESS_MEASURES` for `score` and the sorting |
+| `measure` | str | `log_likelihood` | Measure of `anyts.constants.KEYNESS_MEASURES` for `score` and the sorting |
 | `min_freq` | int | `1` | Minimum frequency of a keyword in its own corpus |
 | `positive` | bool | `True` | Positive keywords (more frequent in the target corpus) or negative ones (more frequent in the reference) |
 | `top_n` | int | `None` | Number of keywords; `None` - all of them |

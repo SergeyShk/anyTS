@@ -15,8 +15,10 @@ A class for extracting sentences from a text. It allows using different tokenize
 The default tokenizer is the method `sentenize(text)`, which a language library overrides in a subclass. Here it splits the text at whitespace after `.`, `!`, `?` or `…`, optionally followed by a closing quote or bracket; it knows no abbreviations, so `e.g. this` is two sentences. A piece without words, such as the dots of a spaced ellipsis `. . .` or a lone `!`, stays with the sentence before it, or with the one after it at the start of the text.
 <!-- --8<-- [end:SentsExtractor-hooks] -->
 
+<!-- --8<-- [start:SentsExtractor-pipeline] -->
 !!! note "Note"
     A spaCy pipeline can be passed as the tokenizer: `tokenizer=lambda text: (sent.text for sent in nlp(text).sents)`.
+<!-- --8<-- [end:SentsExtractor-pipeline] -->
 
 ## Parameters
 
@@ -24,8 +26,8 @@ The default tokenizer is the method `sentenize(text)`, which a language library 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
 | `tokenizer` | Pattern/Callable | `None` | Tokenizer or regular expression; by default the `sentenize` method |
-| `min_len` | int | `0` | Minimum length of an extracted sentence, `0` for no bound |
-| `max_len` | int | `0` | Maximum length of an extracted sentence, `0` for no bound |
+| `min_len` | int | `0` | Minimum length of an extracted sentence in characters, `0` for no bound |
+| `max_len` | int | `0` | Maximum length of an extracted sentence in characters, `0` for no bound |
 
 !!! note "Note"
     A regular expression as the tokenizer is a separator: the text is split with `re.split`. The sentences of any tokenizer are stripped of whitespace at the edges, before the length bounds, and empty ones are dropped.

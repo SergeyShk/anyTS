@@ -1,3 +1,4 @@
+from collections import Counter
 from math import isnan, log2, sqrt
 
 import numpy as np
@@ -137,7 +138,22 @@ def test_dispersion_options():
 
 
 @pytest.mark.parametrize(
-    "parts", [1, 13, [6, 5], [12, 0], [12], ["a", "b"], 2.5, [2.5, 9.5], [True, 11]]
+    "parts",
+    [
+        1,
+        13,
+        [6, 5],
+        [12, 0],
+        [12],
+        ["a", "b"],
+        2.5,
+        [2.5, 9.5],
+        [True, 11],
+        {5, 6},
+        {5: 6},
+        iter([6, 5]),
+        "65",
+    ],
 )
 def test_dispersion_errors(parts):
     with pytest.raises(ParameterError):
@@ -151,9 +167,16 @@ def test_dispersion_of_an_empty_corpus():
         dispersion(np.array([], dtype=str), parts=2)
 
 
-def test_dispersion_of_a_string():
+@pytest.mark.parametrize("kwargs", [{"min_freq": 1.5}, {"min_freq": "2"}, {"word": ["cat"]}])
+def test_dispersion_parameters(kwargs):
+    with pytest.raises(ParameterError):
+        dispersion(words, parts=2, **kwargs)
+
+
+@pytest.mark.parametrize("source", ["the cat sleeps", set(words), Counter(words)])
+def test_dispersion_of_a_string_or_a_set(source):
     with pytest.raises(SourceTypeError):
-        dispersion("the cat sleeps", parts=2)
+        dispersion(source, parts=2)
 
 
 @pytest.mark.parametrize("span", [False, True])

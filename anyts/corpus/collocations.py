@@ -69,7 +69,8 @@ def collocations(
     Raises:
         SourceTypeError: If the words are not a list of strings (check_words)
         SourceError: If there are no words
-        ParameterError: If the measure is unknown or the window or top_n is below one
+        ParameterError: If the measure is unknown, the window or top_n is below
+            one, min_freq is not an integer or the node is not a string
 
     Example:
         >>> from anyts.corpus import collocations
@@ -77,7 +78,7 @@ def collocations(
         >>> [(c.left, c.right, c.freq_pair) for c in collocations(words, window=1)]
         [('red', 'wine', 2)]
     """
-    if measure not in COLLOCATION_MEASURES:
+    if not isinstance(measure, str) or measure not in COLLOCATION_MEASURES:
         raise ParameterError(f"Unknown measure of association: {measure}")
     check_integer(window, "window")
     if window < 1:
@@ -86,6 +87,9 @@ def collocations(
         check_integer(top_n, "number of collocations")
     if top_n is not None and top_n < 1:
         raise ParameterError("The number of collocations must be greater than 0")
+    check_integer(min_freq, "minimum frequency")
+    if node is not None and not isinstance(node, str):
+        raise ParameterError(f"The node must be a string, not {type(node).__name__}")
     check_words(words)
     if not len(words):
         raise SourceError("The data source has no words")

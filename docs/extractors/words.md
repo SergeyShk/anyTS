@@ -57,11 +57,11 @@ The language enters the extractor through three hooks that a language library ov
 | `stopwords` | Collection[str] | `None` | Stop words, compared case-insensitively |
 | `lowercase` | bool | `False` | Convert words to lower case |
 | `ngram_range` | Tuple[int, int] | `(1, 1)` | Lower and upper bound of the N-gram size |
-| `min_len` | int | `0` | Minimum length of an extracted word, `0` for no bound |
-| `max_len` | int | `0` | Maximum length of an extracted word, `0` for no bound |
+| `min_len` | int | `0` | Minimum length of an extracted word in characters, `0` for no bound |
+| `max_len` | int | `0` | Maximum length of an extracted word in characters, `0` for no bound |
 
 !!! note "Note"
-    A regular expression as the tokenizer is a separator: the text is split with `re.split`. The filters are applied in order: punctuation, numbers, lemmatization, lower case, stop words, word length. A lower-case stop word list also filters a capitalized word at the start of a sentence. A punctuation mark is a token consisting entirely of marks and symbols, including multi-character ones: `?!`, `--`, `…`, `€` (see `is_punctuation`). Empty and whitespace tokens are dropped before the filters. N-grams join the words with `_`.
+    A regular expression as the tokenizer is a separator: the text is split with `re.split`. The filters are applied in order: punctuation, numbers, lemmatization, lower case, stop words, word length. A lower-case stop word list also filters a capitalized word at the start of a sentence. A punctuation mark is a token consisting entirely of marks and symbols, including multi-character ones: `?!`, `--`, `…`, `€` (see `anyts.utils.is_punctuation`). Empty and whitespace tokens are dropped before the filters. N-grams join the words with `_`.
 <!-- --8<-- [end:WordsExtractor-parameters] -->
 
 ## Methods
@@ -100,7 +100,11 @@ An example of word extraction with bigrams as tokens, after filtering numbers an
 ### get_most_common
 
 <!-- --8<-- [start:WordsExtractor-get_most_common] -->
-Returns a counter of the top words of the text. It takes the number of top words to return as a parameter.
+Returns the top words of the text as a list of (word, frequency) pairs, the most frequent first.
+
+| Parameter | Type | Default | Description |
+| :-------: | :--: | :-----: | :---------: |
+| `n` | int | `10` | Number of top words |
 
 !!! warning "Warning"
     The method must be called after words have been extracted with `extract`.

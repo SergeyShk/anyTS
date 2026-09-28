@@ -9,11 +9,12 @@ from anyts.corpus import (
     bootstrap_median_diff,
     calc_cliff_delta,
     calc_cohen_d,
+    check_comparison_params,
     compare_features,
     holm_correction,
 )
 from anyts.corpus.compare import COMPARISON_COLUMNS, _resampled_medians, compare_values
-from anyts.exceptions import ParameterError
+from anyts.exceptions import ParameterError, SourceTypeError
 
 
 def test_compare_values():
@@ -117,6 +118,69 @@ def test_holm_correction():
     assert all(isnan(value) for value in holm_correction([float("nan")]))
 
 
+@pytest.mark.parametrize(
+    "p_values", ["0.5", 0.5, [[0.1, 0.2]], ["a"], ["0.1"], [True], [0.1, None], {0.1, 0.2}, None]
+)
+def test_holm_correction_input(p_values):
+    with pytest.raises(SourceTypeError):
+        holm_correction(p_values)
+
+
+def test_holm_correction_containers():
+    expected = holm_correction([0.01, 0.04]).tolist()
+    assert holm_correction(pd.Series([0.01, 0.04], dtype=object)).tolist() == expected
+    assert holm_correction(np.array([0.01, 0.04], dtype=object)).tolist() == expected
+    assert holm_correction({"a": 0.01, "b": 0.04}.values()).tolist() == expected
+    assert holm_correction(pd.Series([0.01, 0.04])).tolist() == expected
+    assert holm_correction((0.01, 0.04)).tolist() == expected
+
+
+@pytest.mark.parametrize("values", ["123", {1.0, 2.0, 3.0}, ["a", "b"], [1.0, None], [[1.0, 2.0]]])
+def test_values_checked(values):
+    for call in (
+        lambda: calc_cohen_d(values, [1.0, 2.0]),
+        lambda: calc_cliff_delta([1.0, 2.0], values),
+        lambda: bootstrap_median_diff(values, [1.0, 2.0]),
+        lambda: compare_values([1.0, 2.0], values),
+    ):
+        with pytest.raises(SourceTypeError):
+            call()
+
+
+def test_texts_checked_after_the_values():
+    with pytest.raises(SourceTypeError):
+        bootstrap_median_diff(0.5, [1.0, 2.0], texts_a=[1])
+
+
+def test_compare_features_tables():
+    empty = compare_features(pd.DataFrame(), pd.DataFrame(), n_bootstrap=5)
+    assert empty.shape == (0, 17)
+    with pytest.raises(SourceTypeError, match=r"^The features must be a DataFrame, not dict$"):
+        compare_features({"x": [1.0]}, LONG)
+    for values in (["a", "b", "c"], ["1.5", "2", "3"], pd.to_datetime(["2020", "2021", "2022"])):
+        with pytest.raises(SourceTypeError, match=r"^The feature name must be numeric$"):
+            compare_features(SHORT.assign(name=values), LONG)
+    repeated = pd.concat([SHORT["length"], SHORT["length"]], axis=1)
+    with pytest.raises(SourceTypeError, match=r"^The names of the features must be distinct$"):
+        compare_features(repeated, LONG)
+    mixed = SHORT.assign(
+        flag=[True, False, True],
+        count=pd.array([1, None, 3], dtype="Int64"),
+        loose=pd.Series([1.0, None, 2], dtype=object),
+    )
+    result = compare_features(mixed, mixed, n_bootstrap=5)
+    assert (result.loc["count", "n_A"], result.loc["loose", "n_A"]) == (2, 2)
+
+
+def test_generator_and_confidence_checked():
+    with pytest.raises(ParameterError, match=r"must be a numpy Generator, not int$"):
+        compare_values([1.0, 2.0], [1.0, 3.0], rng=0)
+    with pytest.raises(ParameterError, match=r"must be a numpy Generator, not int$"):
+        bootstrap_median_diff([1.0, 2.0], [1.0, 3.0], rng=0)
+    with pytest.raises(ParameterError, match=r"^The confidence level must be a number"):
+        bootstrap_median_diff([1.0, 2.0], [1.0, 3.0], confidence=None)
+
+
 def test_holm_correction_range():
     with pytest.raises(ParameterError, match=r"^The p-values must lie within \[0, 1\]$"):
         holm_correction([0.5, 1.5])
@@ -158,6 +222,47 @@ def test_compare_features_seed_and_errors():
         compare_features(SHORT, LONG, n_bootstrap=0)
     with pytest.raises(ParameterError, match=r"must be an integer, not float$"):
         compare_features(SHORT, LONG, n_bootstrap=50.0)
+    with pytest.raises(ParameterError, match=r"^The seed must not be negative$"):
+        compare_features(SHORT, LONG, seed=-1)
+    with pytest.raises(ParameterError, match=r"^The names of the corpora"):
+        compare_features(SHORT, LONG, labels=("A", "A"))
+    generated = compare_features(SHORT, LONG, n_bootstrap=50, seed=np.random.default_rng(1))
+    assert generated.equals(first)
+    named = compare_features(SHORT, LONG, labels=np.array(["x", "y"]), n_bootstrap=5)
+    assert list(named.columns[:4]) == ["mean_x", "mean_y", "median_x", "median_y"]
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"labels": ("A",)},
+        {"labels": ("A", "B", "C")},
+        {"labels": ("A", "A")},
+        {"labels": ("A", 1)},
+        {"labels": "AB"},
+        {"labels": None},
+        {"labels": ("diff", "B")},
+        {"labels": ("A", "texts_A")},
+        {"labels": iter(("A", "B"))},
+        {"labels": {"A": 1, "B": 2}},
+        {"labels": {"A", "B"}},
+        {"labels": {"A": 1, "B": 2}.keys()},
+        {"n_bootstrap": 0},
+        {"n_bootstrap": 1.0},
+        {"seed": 1.5},
+        {"seed": -1},
+        {"seed": True},
+        {"seed": "1"},
+    ],
+)
+def test_check_comparison_params(kwargs):
+    with pytest.raises(ParameterError):
+        check_comparison_params(**kwargs)
+
+
+def test_check_comparison_params_valid():
+    assert check_comparison_params(["short", "long"], 1, None) is None
+    assert check_comparison_params(seed=np.int64(3)) is None
 
 
 def test_compare_features_undefined_values():

@@ -22,7 +22,7 @@ A corpus is a dictionary "name of a text → units". `frequency_table(corpus, n_
 <!-- --8<-- [start:delta] -->
 `delta` computes a symmetric matrix of distances from the z-scores (a `DataFrame` with the names of the texts); at least three texts are needed - with two, the z-scores degenerate to ±1/√2 and the distances do not depend on the frequencies.
 
-Variants (`DELTA_VARIANTS`), with the formulas of the sources of stylo; $n$ is the number of units, $z_A$ and $z_B$ the vectors of z-scores of the texts:
+Variants (`anyts.constants.DELTA_VARIANTS`), with the formulas of the sources of stylo; $n$ is the number of units, $z_A$ and $z_B$ the vectors of z-scores of the texts:
 
 | Variant | Key | Formula | Source |
 | :------ | :-- | :------ | :----- |
@@ -33,11 +33,13 @@ Variants (`DELTA_VARIANTS`), with the formulas of the sources of stylo; $n$ is t
 
 Cosine Delta clusters the texts by author best in the experiments of Evert et al. The usual number of units is 100 to 500 most frequent words, 100-200 for character N-grams.
 
+Parameters of `delta`:
+
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
 | `corpus` | dict[str, list[str]] | `-` | Units of the texts by the names of the texts |
 | `n_mfw` | int | `100` | Number of the most frequent units; `None` - all of them |
-| `variant` | str | `burrows` | Variant of Delta of `DELTA_VARIANTS` |
+| `variant` | str | `burrows` | Variant of Delta of `anyts.constants.DELTA_VARIANTS` |
 | `culling` | float | `0.0` | Smallest share of the texts a unit occurs in |
 <!-- --8<-- [end:delta] -->
 

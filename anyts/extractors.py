@@ -6,7 +6,7 @@ from collections import Counter
 from collections.abc import Callable, Collection, Iterable, Iterator
 from functools import cache
 from re import Pattern
-from typing import Any, ClassVar
+from typing import ClassVar
 
 from .exceptions import ParameterError, SourceTypeError
 from .utils import check_integer, check_words, has_words, is_punctuation
@@ -300,7 +300,7 @@ class WordsExtractor(Extractor):
         tokenize: Default tokenizer
         lemmatize: Lemma of a word
         extract: Extracting words from a text
-        get_most_common: Getting a counter of the top words
+        get_most_common: Getting the top words with their frequencies
 
     Raises:
         ParameterError: If the N-gram range is not a pair of integers, its lower bound
@@ -329,7 +329,7 @@ class WordsExtractor(Extractor):
         self.filter_nums = filter_nums
         self.use_lexemes = use_lexemes
         if stopwords is not None:
-            check_words(stopwords, "stopwords")
+            check_words(stopwords, "stopwords", ordered=False)
         self.stopwords = frozenset(word.lower() for word in stopwords) if stopwords else None
         self.lowercase = lowercase
         if not isinstance(ngram_range, tuple | list) or len(ngram_range) != 2:
@@ -402,15 +402,15 @@ class WordsExtractor(Extractor):
             self.words = self.__make_ngrams()
         return self.words
 
-    def get_most_common(self, n: int = 10) -> list[tuple[Any, int]]:
+    def get_most_common(self, n: int = 10) -> list[tuple[str, int]]:
         """
-        Getting a counter of the top words
+        Getting the top words with their frequencies
 
         Arguments:
             n (int): Number of words
 
         Returns:
-            list: List of the top words
+            list[tuple[str, int]]: Pairs (word, frequency), the most frequent first
 
         Raises:
             ParameterError: If the number of words is not an integer or is less than 1
@@ -467,7 +467,7 @@ class CharNgramsExtractor(Extractor):
     Methods:
         tokenize: Default word tokenizer
         extract: Extracting N-grams from a text
-        get_most_common: Getting a counter of the top N-grams
+        get_most_common: Getting the top N-grams with their frequencies
 
     Raises:
         ParameterError: If the N-gram length is not an integer or is less than one
@@ -530,15 +530,15 @@ class CharNgramsExtractor(Extractor):
         )
         return self.ngrams
 
-    def get_most_common(self, n: int = 10) -> list[tuple[Any, int]]:
+    def get_most_common(self, n: int = 10) -> list[tuple[str, int]]:
         """
-        Getting a counter of the top N-grams
+        Getting the top N-grams with their frequencies
 
         Arguments:
             n (int): Number of N-grams
 
         Returns:
-            list: List of the top N-grams
+            list[tuple[str, int]]: Pairs (N-gram, frequency), the most frequent first
 
         Raises:
             ParameterError: If the number of N-grams is not an integer or is less than 1

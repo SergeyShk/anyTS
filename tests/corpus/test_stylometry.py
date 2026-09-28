@@ -174,6 +174,25 @@ def test_delta_profiles():
 def test_delta_errors():
     with pytest.raises(ParameterError):
         delta(corpus, variant="manhattan")
+    with pytest.raises(ParameterError):
+        delta(corpus, variant=["burrows"])
+    with pytest.raises(ParameterError):
+        delta_profiles(corpus, corpus, variant=["burrows"])
+    with pytest.raises(SourceTypeError):
+        frequency_table({"A": set(corpus["A"])})
+    with pytest.raises(ParameterError, match=r"must be a number, not str$"):
+        frequency_table(corpus, culling="0.5")
+    texts_list = list(corpus.values())
+    for call in (
+        lambda: frequency_table(texts_list),
+        lambda: frequency_table("abc"),
+        lambda: delta(texts_list[:2]),
+        lambda: delta_profiles(texts_list, corpus),
+        lambda: delta_profiles(corpus, texts_list),
+        lambda: delta_profiles(corpus, corpus, statistics=texts_list),
+    ):
+        with pytest.raises(SourceTypeError, match="must be a mapping of the names of the texts"):
+            call()
     with pytest.raises(SourceError):
         delta({"A": corpus["A"], "B": corpus["B"]})
     with pytest.raises(ParameterError):
@@ -235,6 +254,10 @@ def test_zeta_errors():
         zeta(["acab", ["babaa"]], corpus["B"])
     with pytest.raises(SourceTypeError):
         zeta([spacy.blank("xx")(texts["A"])], corpus["B"])
+    with pytest.raises(SourceTypeError):
+        zeta(set(corpus["A"]), corpus["B"])
+    with pytest.raises(SourceTypeError):
+        zeta([set(corpus["A"])], corpus["B"])
 
 
 def test_kilgarriff_chi2():

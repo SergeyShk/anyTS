@@ -1,5 +1,5 @@
 from collections import Counter
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable, Iterator, Mapping, Sequence, Set
 from math import log2, nan, sqrt
 from numbers import Integral
 from typing import NamedTuple
@@ -75,8 +75,9 @@ def dispersion(
         SourceTypeError: If the words are not a list of strings (check_words)
         SourceError: If there are no words
         ParameterError: If there are fewer than two parts or more parts than
-            words, the number of parts is not an integer, or the sizes of the
-            parts do not match the text
+            words, the number of parts or min_freq is not an integer, the sizes
+            of the parts are not a list of integers that matches the text, or
+            the word is not a string
 
     Example:
         >>> from anyts.corpus import dispersion
@@ -85,6 +86,9 @@ def dispersion(
         >>> result.freq, round(result.dp, 3)
         (2, 0.455)
     """
+    check_integer(min_freq, "minimum frequency")
+    if word is not None and not isinstance(word, str):
+        raise ParameterError(f"The word must be a string, not {type(word).__name__}")
     check_words(words)
     if not len(words):
         raise SourceError("The data source has no words")
@@ -115,7 +119,7 @@ def _sizes(n_words: int, parts: int | Sequence[int]) -> list[int]:
         if not 2 <= n_parts <= n_words:
             raise ParameterError("There must be at least two parts and no more parts than words")
         return [len(part) for part in np.array_split(np.arange(n_words), n_parts)]
-    if not isinstance(parts, Iterable):
+    if not isinstance(parts, Iterable) or isinstance(parts, Set | Mapping | Iterator | str):
         raise ParameterError(
             "The number of parts must be an integer and the sizes of the parts a list of integers"
         )

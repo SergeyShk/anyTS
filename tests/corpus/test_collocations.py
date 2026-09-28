@@ -143,6 +143,11 @@ def test_collocations_measures(measure):
         {"top_n": 0},
         {"top_n": -1},
         {"top_n": 1.5},
+        {"measure": ["mi"]},
+        {"min_freq": 1.5},
+        {"min_freq": True},
+        {"min_freq": "2"},
+        {"node": ["wine"]},
     ],
 )
 def test_collocations_errors(kwargs):
@@ -150,9 +155,10 @@ def test_collocations_errors(kwargs):
         collocations(words, **kwargs)
 
 
-def test_collocations_of_a_string():
+@pytest.mark.parametrize("source", ["the cat sleeps", set(words), dict.fromkeys(words)])
+def test_collocations_of_a_string_or_a_set(source):
     with pytest.raises(SourceTypeError):
-        collocations("the cat sleeps")
+        collocations(source)
 
 
 def test_pair_of_a_word_with_itself():

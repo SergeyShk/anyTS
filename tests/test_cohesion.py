@@ -190,10 +190,20 @@ def test_sentences_checked(func):
     doc = spacy.blank("xx")("The cat. The dog.")
     with pytest.raises(SourceTypeError, match=r"not a Doc"):
         func(doc)
+    with pytest.raises(SourceTypeError, match=r"^A list of sentences is expected, not set$"):
+        func({frozenset({"a"}), frozenset({"b"})})
+
+
+@pytest.mark.parametrize("func", [count_given, calc_repetition])
+def test_ordered_sentences_checked(func):
+    with pytest.raises(SourceTypeError, match=r"of a sentence is expected, not set$"):
+        func([{"a", "b"}, {"b"}])
 
 
 def test_dominant_checked():
     with pytest.raises(SourceTypeError, match=r"^A list of values is expected, not a string$"):
         dominant("Pres")
+    with pytest.raises(SourceTypeError, match=r"^A list of values is expected, not set$"):
+        dominant({"Pres", "Past"})
     with pytest.raises(SourceTypeError, match=r"^The values must be strings, not Token$"):
         dominant(list(spacy.blank("xx")("Pres Pres")))

@@ -2,8 +2,10 @@ import math
 import string
 import sys
 import unicodedata
+from collections import Counter
 
 import numpy as np
+import pandas as pd
 import pytest
 import spacy
 from spacy.tokens import Doc
@@ -11,7 +13,9 @@ from spacy.tokens import Doc
 from anyts.exceptions import ParameterError, SourceTypeError
 from anyts.utils import (
     PUNCTUATION_CATEGORIES,
+    check_counts,
     check_integer,
+    check_number,
     check_sequence,
     check_words,
     count_letters,
@@ -165,9 +169,75 @@ def test_check_sequence_iterators(value):
         check_sequence(value, "stopwords")
 
 
-@pytest.mark.parametrize("value", [["the", "cat"], ("the",), [], {"the": 1}])
+@pytest.mark.parametrize("value", [["the", "cat"], ("the",), []])
 def test_check_words(value):
     assert check_words(value) is None
+
+
+@pytest.mark.parametrize(
+    ("value", "name"),
+    [
+        ({"the", "cat"}, "set"),
+        (frozenset({"the"}), "frozenset"),
+        ({"the": 1}, "dict"),
+        (Counter(["the"]), "Counter"),
+        ({"the": 1}.keys(), "dict_keys"),
+    ],
+)
+def test_check_sequence_unordered(value, name):
+    message = rf"^A list of words is expected, not {name}$"
+    with pytest.raises(SourceTypeError, match=message):
+        check_sequence(value)
+    with pytest.raises(SourceTypeError, match=message):
+        check_words(value)
+    assert check_sequence(value, ordered=False) is None
+    assert check_words(value, ordered=False) is None
+    with pytest.raises(SourceTypeError, match=r"^The stopwords must be strings, not int$"):
+        check_words({1}, "stopwords", ordered=False)
+
+
+@pytest.mark.parametrize(
+    ("value", "name"),
+    [
+        (np.array([["the", "cat"]]), "2-dimensional ndarray"),
+        (np.array("the"), "0-dimensional ndarray"),
+        (pd.DataFrame({"word": ["the", "cat"]}), "2-dimensional DataFrame"),
+    ],
+)
+def test_check_sequence_tables(value, name):
+    with pytest.raises(SourceTypeError, match=rf"^A list of words is expected, not a {name}$"):
+        check_sequence(value, ordered=False)
+    assert check_words(np.array(["the", "cat"])) is None
+    assert check_words(pd.Series(["the", "cat"])) is None
+
+
+def test_check_counts():
+    assert check_counts(Counter(["the", "cat", "the"])) is None
+    assert check_counts({"the": 2.5, "cat": np.int64(1)}) is None
+    with pytest.raises(SourceTypeError, match=r"^A mapping of frequencies is expected, not list$"):
+        check_counts(["the", "cat"])
+    with pytest.raises(SourceTypeError, match=r"^The words must be strings, not int$"):
+        check_counts({1: 2})
+    for count, name in (("2", "str"), (None, "NoneType"), (True, "bool")):
+        with pytest.raises(
+            SourceTypeError, match=rf"^The frequencies must be numbers, not {name}$"
+        ):
+            check_counts({"the": count})
+
+
+@pytest.mark.parametrize("value", [0.95, 1, np.float64(0.5), -3])
+def test_check_number(value):
+    assert check_number(value, "confidence level") is None
+
+
+@pytest.mark.parametrize(
+    ("value", "name"), [("0.95", "str"), (None, "NoneType"), (True, "bool"), ([0.5], "list")]
+)
+def test_check_number_errors(value, name):
+    with pytest.raises(
+        ParameterError, match=rf"^The confidence level must be a number, not {name}$"
+    ):
+        check_number(value, "confidence level")
 
 
 def test_check_words_errors(nlp):

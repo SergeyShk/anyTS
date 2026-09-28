@@ -77,7 +77,11 @@ N-grams inside words only:
 ### get_most_common
 
 <!-- --8<-- [start:CharNgramsExtractor-get_most_common] -->
-Returns a counter of the top N-grams of the text. It takes the number of top N-grams to return as a parameter.
+Returns the top N-grams of the text as a list of (N-gram, frequency) pairs, the most frequent first.
+
+| Parameter | Type | Default | Description |
+| :-------: | :--: | :-----: | :---------: |
+| `n` | int | `10` | Number of top N-grams |
 
 !!! warning "Warning"
     The method must be called after N-grams have been extracted with `extract`.

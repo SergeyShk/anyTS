@@ -77,12 +77,13 @@ Checks whether a text, a `Doc` or a `Span` holds a word: an empty text or one of
 ## check_sequence
 
 <!-- --8<-- [start:check_sequence] -->
-Checks that an argument is a sequence and not a text or an iterator: a string, a `Doc`, a `Span`, an iterator or an object that cannot be iterated raises `SourceTypeError`, since a string would be iterated character by character and an iterator would be exhausted by the first pass over it.
+Checks that an argument is a sequence and not a text or an iterator: a string, a `Doc`, a `Span`, an iterator or an object that cannot be iterated raises `SourceTypeError`, since a string would be iterated character by character and an iterator would be exhausted by the first pass over it; so does a table - a two-dimensional array or a `DataFrame`. A set or a mapping holds every item once, in no order of the text, and raises the error too, unless `ordered=False` - for a collection whose order and repeats do not matter, such as stop words.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
 | `value` | object | `-` | Value to check |
 | `what` | str | `"words"` | What is expected, for the message of the error |
+| `ordered` | bool | `True` | Whether the order and the repeats of the items matter |
 <!-- --8<-- [end:check_sequence] -->
 
 ## check_words
@@ -94,6 +95,7 @@ Checks that an argument is a list of words: it passes `check_sequence` and every
 | :-------: | :--: | :-----: | :---------: |
 | `value` | Iterable | `-` | Value to check |
 | `what` | str | `"words"` | What is expected, for the message of the error |
+| `ordered` | bool | `True` | Whether the order and the repeats of the words matter |
 <!-- --8<-- [end:check_words] -->
 
 ## check_integer
@@ -106,6 +108,27 @@ Checks that a parameter is an integer: a `bool` or a `float`, even a whole one l
 | `value` | object | `-` | Value to check |
 | `what` | str | `-` | Name of the parameter, for the message of the error |
 <!-- --8<-- [end:check_integer] -->
+
+## check_number
+
+<!-- --8<-- [start:check_number] -->
+Checks that a parameter is a real number: a `bool`, a string or `None` raises `ParameterError` instead of failing later in a comparison.
+
+| Parameter | Type | Default | Description |
+| :-------: | :--: | :-----: | :---------: |
+| `value` | object | `-` | Value to check |
+| `what` | str | `-` | Name of the parameter, for the message of the error |
+<!-- --8<-- [end:check_number] -->
+
+## check_counts
+
+<!-- --8<-- [start:check_counts] -->
+Checks that an argument is a counter - a mapping of words to their frequencies, such as a `Counter`: a value that is not a mapping, a word that is not a string or a frequency that is not a number raises `SourceTypeError`.
+
+| Parameter | Type | Default | Description |
+| :-------: | :--: | :-----: | :---------: |
+| `value` | object | `-` | Value to check |
+<!-- --8<-- [end:check_counts] -->
 
 ## iter_doc_tokens
 

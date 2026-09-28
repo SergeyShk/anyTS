@@ -9,11 +9,11 @@ import numpy as np
 from .utils import check_sequence, check_words, safe_divide
 
 
-def _check_sents(sents: Iterable[Iterable[object]], what: str) -> None:
+def _check_sents(sents: Iterable[Iterable[object]], what: str, ordered: bool = True) -> None:
     """Checking a list of sentences given as collections of their elements"""
     check_sequence(sents, "sentences")
     for sent in sents:
-        check_words(sent, what)
+        check_words(sent, what, ordered)
 
 
 class Overlap(NamedTuple):
@@ -55,7 +55,7 @@ def calc_overlap(sets: Sequence[Collection[str]], adjacent: bool = True) -> floa
         SourceTypeError: If the sentences are a string, a Doc or an iterator, or a sentence
             is not a list of strings (check_words)
     """
-    _check_sents(sets, "elements of a sentence")
+    _check_sents(sets, "elements of a sentence", ordered=False)
     frozen = [frozenset(elements) for elements in sets]
     n_sents = len(frozen)
     if n_sents < 2:
@@ -88,7 +88,7 @@ def calc_proportional_overlap(sets: Sequence[Collection[str]], adjacent: bool = 
         SourceTypeError: If the sentences are a string, a Doc or an iterator, or a sentence
             is not a list of strings (check_words)
     """
-    _check_sents(sets, "elements of a sentence")
+    _check_sents(sets, "elements of a sentence", ordered=False)
     frozen = [frozenset(elements) for elements in sets]
     n_sents = len(frozen)
     if n_sents < 2:
@@ -133,7 +133,7 @@ def calc_overlaps(sets: Sequence[Collection[str]], proportional: bool = True) ->
         SourceTypeError: If the sentences are a string, a Doc or an iterator, or a sentence
             is not a list of strings (check_words)
     """
-    _check_sents(sets, "elements of a sentence")
+    _check_sents(sets, "elements of a sentence", ordered=False)
     frozen = [frozenset(elements) for elements in sets]
     n_sents = len(frozen)
     if n_sents < 2:

@@ -1,13 +1,14 @@
-from collections.abc import Sequence
+from collections.abc import Iterable, Iterator, Mapping, Sequence, Set
 from math import nan, sqrt
+from numbers import Real
 from typing import Any
 
 import numpy as np
 import pandas as pd
 from scipy.stats import mannwhitneyu
 
-from ..exceptions import ParameterError
-from ..utils import check_integer
+from ..exceptions import ParameterError, SourceTypeError
+from ..utils import check_integer, check_number, check_sequence
 
 Values = Sequence[float] | np.ndarray[Any, Any]
 
@@ -38,7 +39,7 @@ def compare_features(
     table_b: pd.DataFrame,
     labels: tuple[str, str] = ("A", "B"),
     n_bootstrap: int = 1000,
-    seed: int | None = 0,
+    seed: int | np.random.Generator | None = 0,
 ) -> pd.DataFrame:
     """
     Comparing two corpora by the tables of the features of their windows
@@ -69,18 +70,21 @@ def compare_features(
         table_b (DataFrame): Features of the windows of the second corpus
         labels (tuple[str, str]): Names of the corpora for the columns (mean_<a>, ...)
         n_bootstrap (int): Number of bootstrap samples
-        seed (int): Seed of the random number generator; None - a random one
+        seed (int|Generator): Seed of the random number generator or the
+            generator itself; None - a random one
 
     Returns:
         DataFrame: Features × statistics of the comparison (COMPARISON_COLUMNS
             with the names of the corpora in the columns)
 
     Raises:
-        ParameterError: If the number of samples is below one
+        SourceTypeError: If a table is not a DataFrame, repeats the name of a
+            column or has a column that is not numeric
+        ParameterError: If the parameters fail check_comparison_params
     """
-    check_integer(n_bootstrap, "number of bootstrap samples")
-    if n_bootstrap < 1:
-        raise ParameterError("The number of bootstrap samples must be greater than 0")
+    check_comparison_params(labels, n_bootstrap, seed)
+    for table in (table_a, table_b):
+        _check_table(table)
     rng = np.random.default_rng(seed)
     rows = {}
     for name in table_a.columns.union(table_b.columns, sort=False):
@@ -88,23 +92,78 @@ def compare_features(
         values_b, texts_b = _column(table_b, name)
         rows[name] = compare_values(values_a, values_b, n_bootstrap, rng, texts_a, texts_b)
     result = pd.DataFrame.from_dict(rows, orient="index", columns=list(COMPARISON_COLUMNS))
-    result["p_holm"] = holm_correction(result["p_value"].to_numpy())
+    result["p_holm"] = holm_correction(result["p_value"].to_numpy(dtype=float))
     result = result.iloc[(-result["cliff_delta"].abs()).fillna(np.inf).argsort(kind="stable")]
     counts = ["n_a", "n_b", "n_texts_a", "n_texts_b"]
     result[counts] = result[counts].astype(int)
+    return result.rename(columns=_labelled_columns(labels))
+
+
+def _labelled_columns(labels: Iterable[str]) -> dict[str, str]:
+    """Columns of COMPARISON_COLUMNS with the names of the corpora, by the column"""
     label_a, label_b = labels
-    return result.rename(
-        columns={
-            "mean_a": f"mean_{label_a}",
-            "mean_b": f"mean_{label_b}",
-            "median_a": f"median_{label_a}",
-            "median_b": f"median_{label_b}",
-            "n_a": f"n_{label_a}",
-            "n_b": f"n_{label_b}",
-            "n_texts_a": f"n_texts_{label_a}",
-            "n_texts_b": f"n_texts_{label_b}",
-        }
+    return {
+        column: column[:-1] + (label_a if column.endswith("_a") else label_b)
+        for column in COMPARISON_COLUMNS
+        if column.endswith(("_a", "_b"))
+    }
+
+
+def check_comparison_params(
+    labels: tuple[str, str] = ("A", "B"),
+    n_bootstrap: int = 1000,
+    seed: int | np.random.Generator | None = 0,
+) -> None:
+    """
+    Checking the parameters of compare_features
+
+    Description:
+        Meant to be called before the tables of the features are built, so
+        that a wrong parameter fails before the texts are processed. The names
+        of the corpora must give distinct columns: ("diff", "B") would repeat
+        median_diff
+
+    Arguments:
+        labels (tuple[str, str]): Names of the corpora for the columns
+        n_bootstrap (int): Number of bootstrap samples
+        seed (int|Generator): Seed of the random number generator or the
+            generator itself; None - a random one
+
+    Raises:
+        ParameterError: If the names are not two strings that give distinct
+            columns, the number of samples is not an integer or is below one,
+            or the seed is neither None, a non-negative integer nor a generator
+
+    Example:
+        >>> from anyts.corpus import check_comparison_params
+        >>> check_comparison_params(("A", "A"))
+        Traceback (most recent call last):
+        ...
+        anyts.exceptions.ParameterError: The names of the corpora must be two strings that give distinct columns
+    """
+    names = (
+        ()
+        if isinstance(labels, str | Set | Mapping | Iterator) or not isinstance(labels, Iterable)
+        else tuple(labels)
     )
+    if len(names) != 2 or not all(isinstance(name, str) for name in names):
+        raise ParameterError(
+            "The names of the corpora must be two strings that give distinct columns"
+        )
+    renamed = _labelled_columns(names)
+    if len({renamed.get(column, column) for column in COMPARISON_COLUMNS}) != len(
+        COMPARISON_COLUMNS
+    ):
+        raise ParameterError(
+            "The names of the corpora must be two strings that give distinct columns"
+        )
+    check_integer(n_bootstrap, "number of bootstrap samples")
+    if n_bootstrap < 1:
+        raise ParameterError("The number of bootstrap samples must be greater than 0")
+    if seed is not None and not isinstance(seed, np.random.Generator):
+        check_integer(seed, "seed")
+        if seed < 0:
+            raise ParameterError("The seed must not be negative")
 
 
 def _column(table: pd.DataFrame, name: str) -> tuple[np.ndarray, np.ndarray | None]:
@@ -116,14 +175,64 @@ def _column(table: pd.DataFrame, name: str) -> tuple[np.ndarray, np.ndarray | No
     texts = (
         table.index.get_level_values("text").to_numpy() if "text" in table.index.names else None
     )
-    return table[name].to_numpy(dtype=float), texts
+    return table[name].to_numpy(dtype=float, na_value=nan), texts
+
+
+def _check_table(table: object) -> None:
+    """
+    Checking a table of features: a DataFrame of distinct numeric columns
+
+    Description:
+        A column is numeric when pandas takes it for one (bools and nullable
+        integers included) or when it holds only numbers and None; dates and
+        text, numeric strings included, are not
+    """
+    if not isinstance(table, pd.DataFrame):
+        raise SourceTypeError(f"The features must be a DataFrame, not {type(table).__name__}")
+    if not table.columns.is_unique:
+        raise SourceTypeError("The names of the features must be distinct")
+    for name, column in table.items():
+        if not pd.api.types.is_numeric_dtype(column) and not (
+            column.dtype == object
+            and all(value is None or isinstance(value, Real) for value in column)
+        ):
+            raise SourceTypeError(f"The feature {name} must be numeric")
+
+
+def _as_values(values: Iterable[Any], what: str = "values") -> np.ndarray:
+    """
+    Values as an array of floats
+
+    Raises:
+        SourceTypeError: If the values are not a flat list of numbers (bools and
+            strings included)
+    """
+    check_sequence(values, what)
+    array = np.asarray(values if hasattr(values, "__array__") else list(values))
+    if array.ndim != 1 or (
+        array.dtype.kind not in "iuf"
+        and not (
+            array.dtype.kind == "O"
+            and all(isinstance(value, Real) and not isinstance(value, bool) for value in array)
+        )
+    ):
+        raise SourceTypeError(f"The {what} must be a flat list of numbers")
+    return array.astype(float)
+
+
+def _check_rng(rng: object) -> None:
+    """Checking that a random number generator is a numpy Generator or None"""
+    if rng is not None and not isinstance(rng, np.random.Generator):
+        raise ParameterError(
+            f"The random number generator must be a numpy Generator, not {type(rng).__name__}"
+        )
 
 
 def _finite(values: Values, texts: Values | None) -> tuple[np.ndarray, np.ndarray | None]:
     """
     Finite values and their texts
     """
-    array = np.asarray(values, dtype=float)
+    array = _as_values(values)
     _check_texts(array, texts)
     finite = np.isfinite(array)
     return array[finite], None if texts is None else np.asarray(texts)[finite]
@@ -156,8 +265,11 @@ def compare_values(
         tuple[float, ...]: Values in the order of COMPARISON_COLUMNS, p_holm - nan
 
     Raises:
-        ParameterError: If the texts are given and are not as many as the values
+        SourceTypeError: If the values are not a flat list of numbers
+        ParameterError: If the texts are given and are not as many as the values,
+            or the generator is not a numpy Generator
     """
+    _check_rng(rng)
     values_a, texts_a = _finite(values_a, texts_a)
     values_b, texts_b = _finite(values_b, texts_b)
     n_a, n_b = len(values_a), len(values_b)
@@ -207,13 +319,16 @@ def calc_cohen_d(values_a: Values, values_b: Values) -> float:
     Returns:
         float: Cohen's d, nan with fewer than two values on a side or a zero variance
 
+    Raises:
+        SourceTypeError: If the values are not a flat list of numbers
+
     Example:
         >>> from anyts.corpus import calc_cohen_d
         >>> round(calc_cohen_d([2, 4, 6, 8], [1, 3, 5, 7]), 3)
         0.387
     """
-    a = np.asarray(values_a, dtype=float)
-    b = np.asarray(values_b, dtype=float)
+    a = _as_values(values_a)
+    b = _as_values(values_b)
     if len(a) < 2 or len(b) < 2:
         return nan
     pooled = ((len(a) - 1) * a.var(ddof=1) + (len(b) - 1) * b.var(ddof=1)) / (len(a) + len(b) - 2)
@@ -239,13 +354,16 @@ def calc_cliff_delta(values_a: Values, values_b: Values) -> float:
     Returns:
         float: Cliff's delta, nan for an empty set or an undefined value
 
+    Raises:
+        SourceTypeError: If the values are not a flat list of numbers
+
     Example:
         >>> from anyts.corpus import calc_cliff_delta
         >>> calc_cliff_delta([2, 4, 6, 8], [1, 3, 5, 7])
         0.25
     """
-    a = np.asarray(values_a, dtype=float)
-    b = np.sort(np.asarray(values_b, dtype=float))
+    a = _as_values(values_a)
+    b = np.sort(_as_values(values_b))
     if not len(a) or not len(b) or np.isnan(a).any() or np.isnan(b).any():
         return nan
     greater = np.searchsorted(b, a, "left").sum()
@@ -287,9 +405,10 @@ def bootstrap_median_diff(
             with the texts given, fewer than two texts on a side
 
     Raises:
+        SourceTypeError: If the values are not a flat list of numbers
         ParameterError: If the number of samples is below one, the confidence
-            level is outside the interval (0, 1) or the texts are given and are
-            not as many as the values
+            level is outside the interval (0, 1), the generator is not a numpy
+            Generator or the texts are given and are not as many as the values
 
     Example:
         >>> from anyts.corpus import bootstrap_median_diff
@@ -299,12 +418,14 @@ def bootstrap_median_diff(
     check_integer(n_bootstrap, "number of bootstrap samples")
     if n_bootstrap < 1:
         raise ParameterError("The number of bootstrap samples must be greater than 0")
+    check_number(confidence, "confidence level")
     if not 0 < confidence < 1:
         raise ParameterError("The confidence level must lie in the interval (0, 1)")
-    _check_texts(values_a, texts_a)
-    _check_texts(values_b, texts_b)
-    a = np.asarray(values_a, dtype=float)
-    b = np.asarray(values_b, dtype=float)
+    _check_rng(rng)
+    a = _as_values(values_a)
+    b = _as_values(values_b)
+    _check_texts(a, texts_a)
+    _check_texts(b, texts_b)
     if not len(a) or not len(b):
         return nan, nan
     if any(texts is not None and len(np.unique(texts)) < 2 for texts in (texts_a, texts_b)):
@@ -367,6 +488,7 @@ def holm_correction(p_values: Sequence[float]) -> np.ndarray:
         ndarray: Corrected p-values in the original order
 
     Raises:
+        SourceTypeError: If the p-values are not a flat list of numbers
         ParameterError: If a p-value lies outside [0, 1]
 
     Example:
@@ -374,7 +496,7 @@ def holm_correction(p_values: Sequence[float]) -> np.ndarray:
         >>> holm_correction([0.01, 0.04, 0.03]).round(3).tolist()
         [0.03, 0.06, 0.06]
     """
-    values = np.asarray(p_values, dtype=float)
+    values = _as_values(p_values, "p-values")
     defined = np.flatnonzero(~np.isnan(values))
     if ((values[defined] < 0) | (values[defined] > 1)).any():
         raise ParameterError("The p-values must lie within [0, 1]")
