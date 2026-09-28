@@ -97,9 +97,10 @@ class HighlightedText:
                 their positions, doc_words - the words of a Doc
         The sentences of a Doc come from its boundaries (iter_doc_sents), or
         from iter_sents over its text without them; the words of a sentence are
-        those of doc_words or iter_words that start in it. The fragments are sorted by their start and then
-        by descending end; fragments of different layers may overlap. The result
-        shows in Jupyter as HTML with a legend (to_html)
+        those of doc_words or iter_words that start in it. The fragments are
+        sorted by their start and then by descending end; fragments of
+        different layers may overlap. The result shows in Jupyter as HTML with
+        a legend (to_html)
 
     Arguments:
         source (str|Doc): Data source (a string or a Doc object)
