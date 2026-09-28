@@ -4,7 +4,7 @@ from typing import Any, TypeVar
 from spacy.language import Language
 from spacy.tokens import Doc
 
-from .exceptions import SourceError
+from .exceptions import ParameterError, SourceError
 from .utils import has_words
 
 Stats = TypeVar("Stats")
@@ -19,7 +19,8 @@ class StatsComponent(metaclass=ABCMeta):
         and registers the subclass as a factory under the prefix of the library,
         Language.factory("<prefix>_<statistics>"), so that the factories of
         several libraries live in one process; add_pipe(factory, name=...)
-        names the extension. The subclass checks its parameters before it calls
+        names the extension, which follows the component when the pipeline
+        renames it. The subclass checks its parameters before it calls
         the __init__ of the base, so that a wrong one fails at add_pipe, and
         implements compute; a subclass without it fails at add_pipe too
         A document without words passes untouched, its extension left at None
@@ -31,6 +32,9 @@ class StatsComponent(metaclass=ABCMeta):
         nlp (Language): Pipeline the component is added to
         name (str): Name of the component in the pipeline and of the extension
 
+    Raises:
+        ParameterError: If another package registered an extension of Doc with the name
+
     Methods:
         prepare: Preparing the pipeline
         accepts: Checking whether a document gets the statistics
@@ -41,12 +45,22 @@ class StatsComponent(metaclass=ABCMeta):
     def __init__(self, nlp: Language, name: str):
         self.name = name
         self.prepare(nlp)
-        Doc.set_extension(self.name, default=None, force=True)
+
+    @property
+    def name(self) -> str:
+        """Name of the component in the pipeline and of its extension"""
+        return self._name
+
+    @name.setter
+    def name(self, name: str) -> None:
+        # The pipeline renames its components by this attribute
+        _register(name)
+        self._name = name
 
     def __setstate__(self, state: dict[str, Any]) -> None:
         # An unpickled component, in another process, registers its extension again
         self.__dict__.update(state)
-        Doc.set_extension(self.name, default=None, force=True)
+        _register(self._name)
 
     def prepare(self, nlp: Language) -> None:
         """
@@ -135,3 +149,13 @@ class StatsComponent(metaclass=ABCMeta):
         if self.accepts(doc):
             doc._.set(self.name, self.compute(doc))
         return doc
+
+
+def _register(name: str) -> None:
+    """Registering the extension of a component, never over one of another package"""
+    if Doc.has_extension(name) and Doc.get_extension(name) != (None, None, None, None):
+        raise ParameterError(
+            f"The extension {name} of Doc belongs to another package: give the component "
+            "another name"
+        )
+    Doc.set_extension(name, default=None, force=True)

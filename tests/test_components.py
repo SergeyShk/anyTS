@@ -157,3 +157,26 @@ def test_pickled_component_registers_its_extension(nlp):
     restored = pickle.loads(data)
     assert Doc.has_extension("anyts_test_pickled")
     assert restored(nlp("The cat and the dog"))._.anyts_test_pickled.ttr == 0.8
+
+
+def test_renamed_component_follows_with_its_extension(nlp):
+    nlp.add_pipe("anyts_test_diversity", name="anyts_test_before")
+    nlp.rename_pipe("anyts_test_before", "anyts_test_after")
+    assert nlp("The cat and the dog")._.anyts_test_after.ttr == 0.8
+    other = spacy.blank("xx")
+    other.add_pipe("anyts_test_after", source=nlp, name="anyts_test_sourced")
+    assert other("The cat and the dog")._.anyts_test_sourced.ttr == 0.8
+
+
+def test_extension_of_another_package_is_kept(nlp):
+    Doc.set_extension("anyts_test_foreign", getter=lambda doc: 0.5)
+    try:
+        with pytest.raises(ParameterError, match=r"^The extension anyts_test_foreign of Doc"):
+            nlp.add_pipe("anyts_test_diversity", name="anyts_test_foreign")
+        assert nlp("The cat")._.anyts_test_foreign == 0.5
+        assert nlp.pipe_names == []
+    finally:
+        Doc.remove_extension("anyts_test_foreign")
+    # A component added again takes its own extension back
+    nlp.add_pipe("anyts_test_diversity", name="anyts_test_again")
+    spacy.blank("xx").add_pipe("anyts_test_diversity", name="anyts_test_again")
