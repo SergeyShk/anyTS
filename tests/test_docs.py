@@ -17,7 +17,15 @@ CORPUS_MODULES = [
 ]
 VISUALIZER_MODULES = [
     importlib.import_module(f"anyts.visualizers.{name}")
-    for name in ("corpus", "fingerprinting", "sentences", "stylometry", "vocabulary", "zipf")
+    for name in (
+        "corpus",
+        "fingerprinting",
+        "highlight",
+        "sentences",
+        "stylometry",
+        "vocabulary",
+        "zipf",
+    )
 ]
 PAGES = sorted(DOCS.rglob("*.md"))
 # The marker and the name rule of pymdownx.snippets
