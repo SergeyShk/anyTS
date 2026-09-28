@@ -22,7 +22,7 @@ DOCS = Path(__file__).parents[1] / "docs"
 # The subpackages rebind the names of some of their modules to their functions
 CORPUS_MODULES = [
     importlib.import_module(f"anyts.corpus.{name}")
-    for name in ("collocations", "compare", "dispersion", "keyness", "stylometry")
+    for name in ("collocations", "compare", "dispersion", "keyness", "kwic", "stylometry")
 ]
 VISUALIZER_MODULES = [
     importlib.import_module(f"anyts.visualizers.{name}")
