@@ -255,6 +255,16 @@ def test_word_holding_the_root():
     assert calc_dependency_distances(doc) == [1, 1, 2]
     assert calc_dependency_distances(doc, join_hyphens=True) == [1, 1]
     assert texts(get_children(doc[3], join_hyphens=True)) == ["He", "home"]
+    # "to" hangs on "home" but belongs to the word with the root, not to the subtree of "home"
+    moved = parse(
+        ["He", "came", "-", "to", "home", "."],
+        [1, 1, 4, 4, 1, 1],
+        ["nsubj", "ROOT", "punct", "advmod", "obl", "punct"],
+        spaces=[True, False, False, True, False, False],
+    )
+    assert get_children(moved[4], join_hyphens=True) == []
+    assert (subtree_len(moved[4]), subtree_len(moved[4], join_hyphens=True)) == (2, 1)
+    assert subtree_len(moved[1], join_hyphens=True) == 3
 
 
 def test_word_hanging_by_its_hyphen():

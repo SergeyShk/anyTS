@@ -208,7 +208,8 @@ def subtree_len(token: Token, join_hyphens: bool = False) -> int:
 
     Description:
         The token itself and all of its direct and indirect dependents; with
-        join_hyphens, those of the whole hyphenated word the token belongs to
+        join_hyphens, the hyphenated word the token belongs to and the words that
+        hang on it (get_children), directly or through punctuation
 
     Arguments:
         token (Token): Token
@@ -219,9 +220,21 @@ def subtree_len(token: Token, join_hyphens: bool = False) -> int:
     """
     if not join_hyphens:
         return len(_word_units(token.subtree, False))
-    word = _hyphenated_word(token) or [token]
-    tokens = {descendant.i: descendant for part in word for descendant in part.subtree}
-    return len(_word_units((tokens[i] for i in sorted(tokens)), True))
+    count = 0
+    words = [_hyphenated_word(token) or [token]]
+    while words:
+        word = words.pop()
+        count += is_word(word[0])
+        ids = {part.i for part in word}
+        tokens = [child for part in word for child in part.children if child.i not in ids]
+        while tokens:
+            child = tokens.pop()
+            unit = _hyphenated_word(child)
+            if unit is None:
+                tokens.extend(child.children)
+            elif len(unit) == 1 or ((head := _word_head(unit)) is not None and head.i == child.i):
+                words.append(unit)
+    return count
 
 
 def calc_dependency_distances(tokens: Iterable[Token], join_hyphens: bool = False) -> list[int]:
