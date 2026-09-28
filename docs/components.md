@@ -16,10 +16,10 @@ A language library subclasses `StatsComponent` for every class of its statistics
 
 | Hook | Description |
 | :--: | :---------: |
-| `compute(doc)` | The statistics of a document; implemented by the library |
+| `compute(doc)` | The statistics of a document; an abstract method, so a subclass without it fails at `add_pipe` |
 | `prepare(nlp)` | Preparing the pipeline when the component is added, such as the rules of the tokenizer; nothing by default |
 | `accepts(doc)` | Whether a document gets the statistics; by default whether it has a word (`has_words`) |
-| `from_extension(doc, name, stats_class)` | The statistics another component put into the document, for reusing them instead of computing them again; an extension without statistics of the class raises `SourceError` |
+| `from_extension(doc, name, stats_class, factory=None)` | The statistics another component put into the document, for reusing them instead of computing them again; an extension without statistics of the class raises `SourceError`, which names the factory to add. The other component must accept every document the reusing one does, since a document it passes leaves `None` |
 <!-- --8<-- [end:StatsComponent-hooks] -->
 
 ## Names { #names }

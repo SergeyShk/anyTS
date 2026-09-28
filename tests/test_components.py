@@ -1,3 +1,5 @@
+import pickle
+
 import pytest
 import spacy
 from spacy.language import Language
@@ -33,7 +35,9 @@ class RatioComponent(StatsComponent):
         super().__init__(nlp, name)
 
     def compute(self, doc: Doc) -> float:
-        return self.from_extension(doc, self.source, DiversityStats).ttr * 2
+        return (
+            self.from_extension(doc, self.source, DiversityStats, "anyts_test_diversity").ttr * 2
+        )
 
 
 @Language.factory("anyts_test_digits")
@@ -108,7 +112,10 @@ def test_from_extension(nlp):
 
 def test_from_extension_errors(nlp):
     nlp.add_pipe("anyts_test_ratio", name="ratio", config={"source": "missing"})
-    message = r"^The extension missing holds no DiversityStats: add the component"
+    message = (
+        r"^The extension missing holds no DiversityStats: add the component "
+        r"anyts_test_diversity with the name missing before ratio$"
+    )
     with pytest.raises(SourceError, match=message):
         nlp("The cat")
     other = spacy.blank("xx")
@@ -118,8 +125,35 @@ def test_from_extension_errors(nlp):
         other("A1 and 2")
 
 
-def test_compute_of_the_base(nlp):
-    component = StatsComponent(nlp, "anyts_test_base")
-    assert component(nlp("?!"))._.anyts_test_base is None
-    with pytest.raises(NotImplementedError):
-        component(nlp("The cat"))
+def test_from_extension_without_the_factory(nlp):
+    class Reuser(DigitsComponent):
+        def compute(self, doc):
+            return self.from_extension(doc, "missing", DiversityStats)
+
+    reuser = Reuser(nlp, "reuser")
+    with pytest.raises(
+        SourceError, match=r"add the component with the name missing before reuser$"
+    ):
+        reuser(nlp("1 cat"))
+
+
+def test_compute_is_required(nlp):
+    with pytest.raises(TypeError, match="abstract"):
+        StatsComponent(nlp, "anyts_test_base")
+
+    @Language.factory("anyts_test_unfinished")
+    class Unfinished(StatsComponent):
+        pass
+
+    with pytest.raises(TypeError, match="abstract"):
+        nlp.add_pipe("anyts_test_unfinished")
+    assert nlp.pipe_names == []
+
+
+def test_pickled_component_registers_its_extension(nlp):
+    component = nlp.add_pipe("anyts_test_diversity", name="anyts_test_pickled")
+    data = pickle.dumps(component)
+    Doc.remove_extension("anyts_test_pickled")
+    restored = pickle.loads(data)
+    assert Doc.has_extension("anyts_test_pickled")
+    assert restored(nlp("The cat and the dog"))._.anyts_test_pickled.ttr == 0.8

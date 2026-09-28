@@ -1,4 +1,5 @@
-from typing import Any
+from abc import ABCMeta, abstractmethod
+from typing import Any, TypeVar
 
 from spacy.language import Language
 from spacy.tokens import Doc
@@ -6,8 +7,10 @@ from spacy.tokens import Doc
 from .exceptions import SourceError
 from .utils import has_words
 
+Stats = TypeVar("Stats")
 
-class StatsComponent:
+
+class StatsComponent(metaclass=ABCMeta):
     """
     Base of a component of spaCy that puts the statistics of a text into doc._.<name>
 
@@ -18,7 +21,7 @@ class StatsComponent:
         several libraries live in one process; add_pipe(factory, name=...)
         names the extension. The subclass checks its parameters before it calls
         the __init__ of the base, so that a wrong one fails at add_pipe, and
-        implements compute
+        implements compute; a subclass without it fails at add_pipe too
         A document without words passes untouched, its extension left at None
         (accepts). spaCy does not serialize the objects in the extensions, so
         Doc.to_bytes(), DocBin with store_user_data=True and nlp.pipe with
@@ -40,6 +43,11 @@ class StatsComponent:
         self.prepare(nlp)
         Doc.set_extension(self.name, default=None, force=True)
 
+    def __setstate__(self, state: dict[str, Any]) -> None:
+        # An unpickled component, in another process, registers its extension again
+        self.__dict__.update(state)
+        Doc.set_extension(self.name, default=None, force=True)
+
     def prepare(self, nlp: Language) -> None:
         """
         Preparing the pipeline the component is added to
@@ -51,6 +59,7 @@ class StatsComponent:
         Arguments:
             nlp (Language): Pipeline
         """
+        return
 
     def accepts(self, doc: Doc) -> bool:
         """
@@ -64,6 +73,7 @@ class StatsComponent:
         """
         return has_words(doc)
 
+    @abstractmethod
     def compute(self, doc: Doc) -> Any:
         """
         Computing the statistics of a document
@@ -79,18 +89,23 @@ class StatsComponent:
         """
         raise NotImplementedError
 
-    def from_extension(self, doc: Doc, name: str, stats_class: type) -> Any:
+    def from_extension(
+        self, doc: Doc, name: str, stats_class: type[Stats], factory: str | None = None
+    ) -> Stats:
         """
         Getting the statistics another component put into a document
 
         Description:
             For a component that reuses the statistics of another one instead of
             computing them again; that component must come first in the pipeline
+            and accept every document the reusing one accepts, since a document
+            it passes leaves None in its extension
 
         Arguments:
             doc (Doc): Doc object
             name (str): Name of the extension of the other component
             stats_class (type): Class of the statistics expected there
+            factory (str): Factory of the other component, for the message of the error
 
         Returns:
             object: Statistics of the extension
@@ -100,8 +115,9 @@ class StatsComponent:
         """
         stats = doc._.get(name) if Doc.has_extension(name) else None
         if not isinstance(stats, stats_class):
+            component = f"the component {factory}" if factory else "the component"
             raise SourceError(
-                f"The extension {name} holds no {stats_class.__name__}: add the component "
+                f"The extension {name} holds no {stats_class.__name__}: add {component} "
                 f"with the name {name} before {self.name}"
             )
         return stats

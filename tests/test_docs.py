@@ -117,6 +117,7 @@ def test_public_api_has_sections():
         *public_names(syntax),
         *public_names(datasets),
         *public_names(components),
+        "StatsComponent",
         "Dataset",
         *(name for module in CORPUS_MODULES for name in public_names(module)),
         *(name for module in VISUALIZER_MODULES for name in public_names(module)),
