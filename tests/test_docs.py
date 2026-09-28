@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 from anyts import (
+    basic_stats,
     cohesion,
     components,
     datasets,
@@ -117,6 +118,8 @@ def test_public_api_has_sections():
         *public_names(syntax),
         *public_names(datasets),
         *public_names(components),
+        *public_names(basic_stats),
+        "BasicStats",
         "StatsComponent",
         "Dataset",
         *(name for module in CORPUS_MODULES for name in public_names(module)),
