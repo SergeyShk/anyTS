@@ -82,3 +82,65 @@ DELTA_VARIANTS = {
     "eder": "Eder's Delta - Manhattan distance of the z-scores weighted by rank",
     "cosine": "Cosine Delta - cosine distance of the z-scores",
 }
+
+# Labels of the plots by the name of the visualizer; the labels with fields in braces are
+# format strings, and a language library passes its own labels over these
+VISUALIZER_LABELS = {
+    "zipf": {
+        "title": "Zipf's law",
+        "xlabel": "Rank of the word",
+        "ylabel": "Frequency of the word",
+        "experimental": "Experimental law",
+        "theoretical": "Theoretical law",
+        "fit": "Zipf-Mandelbrot: q={q:.2f}, s={s:.2f}",
+    },
+    "zipf_theory": {"theoretical": "Theoretical law"},
+    "heaps_plot": {
+        "title": "Heaps' law",
+        "xlabel": "Length of the text, words",
+        "ylabel": "Size of the vocabulary",
+        "growth": "Vocabulary growth",
+        "fit": "K·N^β: K={k:.2f}, β={beta:.2f}",
+    },
+    "frequency_spectrum_plot": {
+        "title": "Frequency spectrum",
+        "xlabel": "Frequency of a word type m",
+        "ylabel": "Number of word types V(m)",
+    },
+    "sentence_lengths_plot": {
+        "title": "Sentence lengths",
+        "xlabel": "Number of the sentence",
+        "ylabel": "Words in the sentence",
+        "length": "Sentence length",
+        "average": "Moving average ({window})",
+        "distribution": "Distribution",
+    },
+    "fingerprinting": {"title": "Literature fingerprinting"},
+    "dispersion_plot": {
+        "title": "Lexical dispersion",
+        "xlabel": "Position of the word in the text",
+    },
+    "keyness_plot": {
+        "title": "Keywords",
+        "xlabel": "|{field}|",
+        "xlabel_log": "|log2({field})|",
+        "target": "target corpus",
+        "reference": "reference corpus",
+    },
+    "dendrogram_plot": {"title": "Clustering of the texts", "xlabel": "Distance"},
+    "pca_plot": {
+        "title": "Principal components",
+        "xlabel": "Component 1 ({share:.1%})",
+        "ylabel": "Component 2 ({share:.1%})",
+    },
+    "mds_plot": {
+        "title": "Multidimensional scaling",
+        "xlabel": "Dimension 1",
+        "ylabel": "Dimension 2",
+    },
+    "mendenhall_plot": {
+        "title": "Mendenhall curves",
+        "xlabel": "Length of the word, characters",
+        "ylabel": "Share of the words",
+    },
+}

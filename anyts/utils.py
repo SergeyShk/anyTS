@@ -3,6 +3,7 @@ from collections.abc import Iterable, Iterator, Mapping, Set
 from functools import lru_cache
 from itertools import repeat
 from numbers import Integral, Real
+from string import Formatter
 
 from spacy.tokens import Doc, Span, Token
 
@@ -261,6 +262,77 @@ def check_number(value: object, what: str) -> None:
     """
     if isinstance(value, bool) or not isinstance(value, Real):
         raise ParameterError(f"The {what} must be a number, not {type(value).__name__}")
+
+
+def merge_labels(defaults: Mapping[str, str], labels: Mapping[str, str] | None) -> dict[str, str]:
+    """
+    Merging the labels given for a plot over its default ones
+
+    Description:
+        A label that is not given keeps its default, so a single label can be
+        changed alone. A default with fields in braces is a format string: a
+        label given for it may use only those fields, and a literal brace in it
+        is doubled ({{); the other labels are taken as they are
+
+    Arguments:
+        defaults (dict[str, str]): Default labels by key
+        labels (dict[str, str]): Labels given; None - the default ones
+
+    Returns:
+        dict[str, str]: Labels by key
+
+    Raises:
+        ParameterError: If the labels are not a mapping of strings, have an
+            unknown key, or a format label is not a format string of the fields
+            of its default
+
+    Example:
+        >>> from anyts.utils import merge_labels
+        >>> merge_labels({"title": "Plot", "xlabel": "x"}, {"title": "My plot"})
+        {'title': 'My plot', 'xlabel': 'x'}
+    """
+    if labels is None:
+        return dict(defaults)
+    if not isinstance(labels, Mapping):
+        raise ParameterError(f"The labels must be a mapping, not {type(labels).__name__}")
+    unknown = [key for key in labels if key not in defaults]
+    if unknown:
+        raise ParameterError(f"Unknown labels: {unknown}. Available labels: {tuple(defaults)}")
+    if not all(isinstance(label, str) for label in labels.values()):
+        raise ParameterError("The labels must be strings")
+    for key, label in labels.items():
+        fields = _format_fields(defaults[key])
+        if not fields:
+            continue
+        try:
+            extra = _format_fields(label) - fields
+        except ValueError as error:
+            raise ParameterError(f"The label {key!r} is not a format string: {error}") from None
+        if extra:
+            raise ParameterError(
+                f"The label {key!r} has unknown fields {sorted(extra)}; "
+                f"available fields: {sorted(fields)}"
+            )
+    return {**defaults, **labels}
+
+
+def _format_fields(label: str) -> set[str]:
+    """
+    Names of the fields of a format string, those in the format specs included
+
+    Raises:
+        ValueError: If the string is not a format string or has an unknown conversion
+    """
+    fields = set()
+    for _, name, spec, conversion in Formatter().parse(label):
+        if name is None:
+            continue
+        if conversion not in (None, "r", "s", "a"):
+            raise ValueError(f"Unknown conversion specifier {conversion}")
+        fields.add(name)
+        if spec:
+            fields |= _format_fields(spec)
+    return fields
 
 
 def iter_doc_tokens(source: Doc | Span) -> Iterator[Token]:

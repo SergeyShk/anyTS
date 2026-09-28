@@ -9,6 +9,7 @@
 *   measure [cohesion](stats/cohesion.md) between sentences: overlaps, adjacent and over all pairs, Dice, givenness and repetition
 *   walk the [dependency tree](stats/syntax.md): dependency distances, tree depth, valency and coordination chains on the labels shared by Universal Dependencies and ClearNLP
 *   compare corpora with the measures of corpus linguistics: [keywords](corpus/keyness.md) against a corpus or a frequency dictionary, [collocations](corpus/collocations.md), the [dispersion](corpus/dispersion.md) of a word, [stylometry](corpus/stylometry.md) (Burrows's Delta and its variants, Zeta, Kilgarriff's chi-square, the Mendenhall curve) and the [comparison](corpus/compare.md) of corpora feature by feature with effect sizes, a bootstrap by texts and the Holm correction
+*   plot [Zipf's law](visualizers/zipf.md), [vocabulary growth](visualizers/vocabulary.md), [sentence lengths](visualizers/sentences.md), [literature fingerprinting](visualizers/fingerprinting.md), a [word tree](visualizers/word_tree.md), [corpus](visualizers/corpus.md) and [stylometric](visualizers/stylometry.md) measures, with the labels of the plots as a parameter
 *   build [datasets](datasets.md): download an archive with a checksum, extract it safely and filter the records
 *   catch errors of one [hierarchy](exceptions.md) whose classes are also built-in exceptions
 

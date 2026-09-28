@@ -25,6 +25,14 @@ nav:
       - Word dispersion: corpus/dispersion.md
       - Stylometry: corpus/stylometry.md
       - Corpus comparison: corpus/compare.md
+    - Visualization:
+      - Zipf's law: visualizers/zipf.md
+      - Vocabulary growth: visualizers/vocabulary.md
+      - Sentence lengths: visualizers/sentences.md
+      - Literature fingerprinting: visualizers/fingerprinting.md
+      - Word tree: visualizers/word_tree.md
+      - Corpus plots: visualizers/corpus.md
+      - Stylometric plots: visualizers/stylometry.md
     - Datasets: datasets.md
     - Utilities: utils.md
 
