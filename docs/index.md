@@ -5,6 +5,7 @@
 ## Features
 
 *   extract [sentences](extractors/sentences.md), [words](extractors/words.md) and [character N-grams](extractors/char_ngrams.md) with extractors whose tokenizer, lemmatizer and number pattern are hooks a language library overrides
+*   count the [basic statistics](stats/basic_stats.md) of a text - sentences, words, syllables, letters and punctuation marks by type - with the syllables of a language library
 *   compute [lexical diversity metrics](stats/diversity_stats.md) (Type-Token Ratio and its variants, MATTR, MSTTR, MTLD, MA-MTLD, MTLD-W, HD-D, the indices of Simpson and Yule, entropy, the laws of Zipf and Heaps), over the whole text or over windows with confidence intervals
 *   measure [cohesion](stats/cohesion.md) between sentences: overlaps, adjacent and over all pairs, Dice, givenness and repetition
 *   walk the [dependency tree](stats/syntax.md): dependency distances, tree depth, valency and coordination chains on the labels shared by Universal Dependencies and ClearNLP

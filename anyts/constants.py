@@ -144,3 +144,39 @@ VISUALIZER_LABELS = {
         "ylabel": "Share of the words",
     },
 }
+
+# Basic statistics: the least syllables of a complex word and letters of a long one (the
+# bounds of Gunning's fog and of LIX), the characters counted as spaces
+COMPLEX_SYL_FACTOR = 3
+LONG_WORD_LETTER_FACTOR = 7
+SPACES = (" ", "\t")
+BASIC_STATS_DESC = {
+    "n_sents": "Sentences",
+    "n_words": "Words",
+    "n_unique_words": "Unique words",
+    "n_long_words": "Long words",
+    "n_complex_words": "Complex words",
+    "n_simple_words": "Simple words",
+    "n_monosyllable_words": "Monosyllabic words",
+    "n_polysyllable_words": "Polysyllabic words",
+    "n_chars": "Characters",
+    "n_letters": "Letters",
+    "n_spaces": "Spaces",
+    "n_syllables": "Syllables",
+    "n_punctuations": "Punctuation marks",
+}
+PUNCTUATION_TYPES = {
+    "comma": "Commas",
+    "period": "Periods",
+    "question": "Question marks",
+    "exclamation": "Exclamation marks",
+    "ellipsis": "Ellipses",
+    "colon": "Colons",
+    "semicolon": "Semicolons",
+    "dash": "Dashes",
+    "hyphen": "Hyphens",
+    "angle_quotes": "Guillemets",
+    "straight_quotes": "Straight and curly quotes",
+    "parentheses": "Parentheses",
+    "other": "Other marks",
+}
