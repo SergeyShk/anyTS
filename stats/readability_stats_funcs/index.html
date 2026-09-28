@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://sergeyshk.github.io/anyTS/stats/cohesion/">
+        <link rel="canonical" href="https://sergeyshk.github.io/anyTS/stats/readability_stats_funcs/">
       
       
-        <link rel="prev" href="../readability_stats_funcs/">
+        <link rel="prev" href="../readability_stats/">
       
       
-        <link rel="next" href="../syntax/">
+        <link rel="next" href="../cohesion/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Cohesion helpers - anyTS</title>
+        <title>Metric functions - anyTS</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#cohesion-helpers" class="md-skip">
+        <a href="#metric-functions" class="md-skip">
           Skip to content
         </a>
       
@@ -112,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Cohesion helpers
+              Metric functions
             
           </span>
         </div>
@@ -918,6 +918,8 @@
                 
   
   
+    
+  
   
   
     
@@ -928,11 +930,11 @@
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3" checked>
         
           
           <label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="0">
@@ -953,7 +955,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_3_3">
             <span class="md-nav__icon md-icon"></span>
             
@@ -996,42 +998,6 @@
                 
   
   
-  
-  
-    <li class="md-nav__item">
-      <a href="../readability_stats_funcs/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Metric functions
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
     
   
   
@@ -1051,7 +1017,7 @@
   <span class="md-ellipsis">
     
   
-    Cohesion helpers
+    Metric functions
   
 
     
@@ -1069,7 +1035,7 @@
   <span class="md-ellipsis">
     
   
-    Cohesion helpers
+    Metric functions
   
 
     
@@ -1095,10 +1061,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#calc_overlap" class="md-nav__link">
+  <a href="#flesch-reading-ease" class="md-nav__link">
     <span class="md-ellipsis">
       
-        calc_overlap
+        Flesch reading ease
       
     </span>
   </a>
@@ -1106,10 +1072,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#calc_proportional_overlap" class="md-nav__link">
+  <a href="#flesch-kincaid-grade" class="md-nav__link">
     <span class="md-ellipsis">
       
-        calc_proportional_overlap
+        Flesch-Kincaid grade
       
     </span>
   </a>
@@ -1117,10 +1083,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#dice" class="md-nav__link">
+  <a href="#coleman-liau-index" class="md-nav__link">
     <span class="md-ellipsis">
       
-        dice
+        Coleman-Liau index
       
     </span>
   </a>
@@ -1128,10 +1094,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#calc_overlaps" class="md-nav__link">
+  <a href="#automated-readability-index-ari" class="md-nav__link">
     <span class="md-ellipsis">
       
-        calc_overlaps
+        Automated readability index (ARI)
       
     </span>
   </a>
@@ -1139,10 +1105,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#count_given" class="md-nav__link">
+  <a href="#smog-index" class="md-nav__link">
     <span class="md-ellipsis">
       
-        count_given
+        SMOG index
       
     </span>
   </a>
@@ -1150,10 +1116,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#dominant" class="md-nav__link">
+  <a href="#gunning-fog-index" class="md-nav__link">
     <span class="md-ellipsis">
       
-        dominant
+        Gunning fog index
       
     </span>
   </a>
@@ -1161,10 +1127,76 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#calc_repetition" class="md-nav__link">
+  <a href="#lix-readability-index" class="md-nav__link">
     <span class="md-ellipsis">
       
-        calc_repetition
+        LIX readability index
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rix-readability-index" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RIX readability index
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#legibilidad" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Legibilidad µ
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reading-ease-as-a-grade" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reading ease as a grade
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consensus-grade" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consensus grade
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#school-stage-and-age" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        School stage and age
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reading-time" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reading time
       
     </span>
   </a>
@@ -1175,6 +1207,42 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cohesion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cohesion helpers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -1829,10 +1897,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#calc_overlap" class="md-nav__link">
+  <a href="#flesch-reading-ease" class="md-nav__link">
     <span class="md-ellipsis">
       
-        calc_overlap
+        Flesch reading ease
       
     </span>
   </a>
@@ -1840,10 +1908,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#calc_proportional_overlap" class="md-nav__link">
+  <a href="#flesch-kincaid-grade" class="md-nav__link">
     <span class="md-ellipsis">
       
-        calc_proportional_overlap
+        Flesch-Kincaid grade
       
     </span>
   </a>
@@ -1851,10 +1919,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#dice" class="md-nav__link">
+  <a href="#coleman-liau-index" class="md-nav__link">
     <span class="md-ellipsis">
       
-        dice
+        Coleman-Liau index
       
     </span>
   </a>
@@ -1862,10 +1930,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#calc_overlaps" class="md-nav__link">
+  <a href="#automated-readability-index-ari" class="md-nav__link">
     <span class="md-ellipsis">
       
-        calc_overlaps
+        Automated readability index (ARI)
       
     </span>
   </a>
@@ -1873,10 +1941,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#count_given" class="md-nav__link">
+  <a href="#smog-index" class="md-nav__link">
     <span class="md-ellipsis">
       
-        count_given
+        SMOG index
       
     </span>
   </a>
@@ -1884,10 +1952,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#dominant" class="md-nav__link">
+  <a href="#gunning-fog-index" class="md-nav__link">
     <span class="md-ellipsis">
       
-        dominant
+        Gunning fog index
       
     </span>
   </a>
@@ -1895,10 +1963,76 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#calc_repetition" class="md-nav__link">
+  <a href="#lix-readability-index" class="md-nav__link">
     <span class="md-ellipsis">
       
-        calc_repetition
+        LIX readability index
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rix-readability-index" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RIX readability index
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#legibilidad" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Legibilidad µ
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reading-ease-as-a-grade" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reading ease as a grade
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consensus-grade" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consensus grade
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#school-stage-and-age" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        School stage and age
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reading-time" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reading time
       
     </span>
   </a>
@@ -1925,80 +2059,22 @@
   
 
 
-<h1 id="cohesion-helpers">Cohesion helpers<a class="headerlink" href="#cohesion-helpers" title="Permanent link">&para;</a></h1>
+<h1 id="metric-functions">Metric functions<a class="headerlink" href="#metric-functions" title="Permanent link">&para;</a></h1>
+<p>The coefficients of the formulas are parameters; the defaults below are those of the original English formulas.</p>
+<h2 id="flesch-reading-ease">Flesch reading ease<a class="headerlink" href="#flesch-reading-ease" title="Permanent link">&para;</a></h2>
 <div class="admonition info">
-<p><strong>anyts.cohesion</strong></p>
+<p><strong>anyts.readability_stats.calc_flesch_reading_easy()</strong></p>
 </div>
-<p>Functions that measure how the sentences of a text are tied together by shared elements, in the manner of Coh-Metrix. A sentence is given as the collection of its elements - lemmas of nouns, arguments or content words, values of a feature of its verbs - so the functions see no language: a library chooses the elements.</p>
-<!-- --8<-- [start:cohesion-checks] -->
-<p>A list of sentences that is a string, a <code>Doc</code> or an iterator raises <code>SourceTypeError</code>, and so does a sentence that is not a list of strings (<code>check_words</code>): a string would be read character by character, an iterator exhausted by the first pass, and spaCy tokens never match, since a token equals only itself.</p>
-<!-- --8<-- [end:cohesion-checks] -->
-
-<h2 id="calc_overlap">calc_overlap<a class="headerlink" href="#calc_overlap" title="Permanent link">&para;</a></h2>
-<!-- --8<-- [start:calc_overlap] -->
-<p>The binary overlap of Coh-Metrix (CRFNO1, CRFAO1, CRFSO1 over the adjacent pairs, CRFNOa, CRFAOa, CRFSOa over all of them): the share of the pairs of sentences that share at least one element; <code>nan</code> for a text shorter than two sentences. All the pairs are counted as in <code>calc_overlaps</code>, without going through them.</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: center;">Parameter</th>
-<th style="text-align: center;">Type</th>
-<th style="text-align: center;">Default</th>
-<th style="text-align: center;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: center;"><code>sets</code></td>
-<td style="text-align: center;">list[set[str]]</td>
-<td style="text-align: center;"><code>-</code></td>
-<td style="text-align: center;">Elements of every sentence</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>adjacent</code></td>
-<td style="text-align: center;">bool</td>
-<td style="text-align: center;"><code>True</code></td>
-<td style="text-align: center;">Count the adjacent pairs only, otherwise all the pairs</td>
-</tr>
-</tbody>
-</table>
-<!-- --8<-- [end:calc_overlap] -->
-
-<h2 id="calc_proportional_overlap">calc_proportional_overlap<a class="headerlink" href="#calc_proportional_overlap" title="Permanent link">&para;</a></h2>
-<!-- --8<-- [start:calc_proportional_overlap] -->
-<p>The proportional overlap of Coh-Metrix (CRFCWO1, CRFCWOa): the Dice coefficient of a pair of sentences averaged over the pairs; <code>nan</code> for a text shorter than two sentences. Over all the pairs the sum is computed as in <code>calc_overlaps</code>, without going through them.</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: center;">Parameter</th>
-<th style="text-align: center;">Type</th>
-<th style="text-align: center;">Default</th>
-<th style="text-align: center;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: center;"><code>sets</code></td>
-<td style="text-align: center;">list[set[str]]</td>
-<td style="text-align: center;"><code>-</code></td>
-<td style="text-align: center;">Elements of every sentence</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>adjacent</code></td>
-<td style="text-align: center;">bool</td>
-<td style="text-align: center;"><code>True</code></td>
-<td style="text-align: center;">Count the adjacent pairs only, otherwise all the pairs</td>
-</tr>
-</tbody>
-</table>
-<!-- --8<-- [end:calc_proportional_overlap] -->
-
-<h2 id="dice">dice<a class="headerlink" href="#dice" title="Permanent link">&para;</a></h2>
-<!-- --8<-- [start:dice] -->
-<p>The Dice coefficient of two sets:</p>
+<!-- --8<-- [start:calc_flesch_reading_easy] -->
+<p>Computation of the Flesch reading ease (Flesch, 1948).</p>
+<p>The higher the value, the easier the text; the scale runs from 0 to 100.</p>
+<p>Formula:</p>
 <div class="arithmatex">\[
-\frac{2 \times |A \cap B|}{|A| + |B|}
+c - a \cdot \frac{\textrm{Number of words}}{\textrm{Number of sentences}} - b \cdot \frac{\textrm{Number of syllables}}{\textrm{Number of words}}
 \]</div>
-<p>and 0 for two empty sets.</p>
+<!-- --8<-- [end:calc_flesch_reading_easy] -->
+
+<p>Parameters:</p>
 <table>
 <thead>
 <tr>
@@ -2010,131 +2086,731 @@
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;"><code>first</code></td>
-<td style="text-align: center;">frozenset[str]</td>
+<td style="text-align: center;"><code>n_syllables</code></td>
+<td style="text-align: center;">int</td>
 <td style="text-align: center;"><code>-</code></td>
-<td style="text-align: center;">First set</td>
+<td style="text-align: center;">Number of syllables</td>
 </tr>
 <tr>
-<td style="text-align: center;"><code>second</code></td>
-<td style="text-align: center;">frozenset[str]</td>
+<td style="text-align: center;"><code>n_words</code></td>
+<td style="text-align: center;">int</td>
 <td style="text-align: center;"><code>-</code></td>
-<td style="text-align: center;">Second set</td>
+<td style="text-align: center;">Number of words</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>n_sents</code></td>
+<td style="text-align: center;">int</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Number of sentences</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>a</code></td>
+<td style="text-align: center;">float</td>
+<td style="text-align: center;"><code>1.015</code></td>
+<td style="text-align: center;">Coefficient a, at the mean sentence length</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>b</code></td>
+<td style="text-align: center;">float</td>
+<td style="text-align: center;"><code>84.6</code></td>
+<td style="text-align: center;">Coefficient b, at the mean word length</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>c</code></td>
+<td style="text-align: center;">float</td>
+<td style="text-align: center;"><code>206.835</code></td>
+<td style="text-align: center;">Coefficient c, the constant</td>
 </tr>
 </tbody>
 </table>
-<!-- --8<-- [end:dice] -->
-
-<h2 id="calc_overlaps">calc_overlaps<a class="headerlink" href="#calc_overlaps" title="Permanent link">&para;</a></h2>
-<!-- --8<-- [start:calc_overlaps] -->
-<p>The values of <code>calc_overlap</code> and <code>calc_proportional_overlap</code> over the adjacent and over all the pairs at once, as an <code>Overlap</code> named tuple with the fields <code>adjacent</code>, <code>all</code>, <code>prop_adjacent</code> and <code>prop_all</code>. The values over all the pairs are computed without going through every pair: the pairs sharing an element are counted over bit masks of the sentences, and the sum of the Dice coefficients over the histograms of the lengths of the sentences holding every element. That sum is added by <code>math.fsum</code>, so it does not depend on the order of the elements. Without <code>proportional</code> the fields <code>prop_adjacent</code> and <code>prop_all</code> are <code>nan</code>.</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: center;">Parameter</th>
-<th style="text-align: center;">Type</th>
-<th style="text-align: center;">Default</th>
-<th style="text-align: center;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: center;"><code>sets</code></td>
-<td style="text-align: center;">list[set[str]]</td>
-<td style="text-align: center;"><code>-</code></td>
-<td style="text-align: center;">Elements of every sentence</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>proportional</code></td>
-<td style="text-align: center;">bool</td>
-<td style="text-align: center;"><code>True</code></td>
-<td style="text-align: center;">Compute the proportional overlap as well</td>
-</tr>
-</tbody>
-</table>
-<!-- --8<-- [end:calc_overlaps] -->
-
-<h2 id="count_given">count_given<a class="headerlink" href="#count_given" title="Permanent link">&para;</a></h2>
-<!-- --8<-- [start:count_given] -->
-<p>The number of given elements: an element is given when the same lemma was used earlier in any sentence, the current one included; the first occurrence is new.</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: center;">Parameter</th>
-<th style="text-align: center;">Type</th>
-<th style="text-align: center;">Default</th>
-<th style="text-align: center;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: center;"><code>sents</code></td>
-<td style="text-align: center;">list[list[str]]</td>
-<td style="text-align: center;"><code>-</code></td>
-<td style="text-align: center;">Lemmas of every sentence in the order of the text</td>
-</tr>
-</tbody>
-</table>
-<!-- --8<-- [end:count_given] -->
-
-<h2 id="dominant">dominant<a class="headerlink" href="#dominant" title="Permanent link">&para;</a></h2>
-<!-- --8<-- [start:dominant] -->
-<p>The dominant value: the most frequent one, the first of the equally frequent; <code>None</code> for an empty list.</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: center;">Parameter</th>
-<th style="text-align: center;">Type</th>
-<th style="text-align: center;">Default</th>
-<th style="text-align: center;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: center;"><code>values</code></td>
-<td style="text-align: center;">list[str]</td>
-<td style="text-align: center;"><code>-</code></td>
-<td style="text-align: center;">Values</td>
-</tr>
-</tbody>
-</table>
-<!-- --8<-- [end:dominant] -->
-
-<h2 id="calc_repetition">calc_repetition<a class="headerlink" href="#calc_repetition" title="Permanent link">&para;</a></h2>
-<!-- --8<-- [start:calc_repetition] -->
-<p>The repetition of the tense and of the mood of Coh-Metrix (SMTEMP): the share of the adjacent pairs of sentences whose verbs have the same dominant value of the feature; a pair where one of the sentences has no verb with the feature is skipped, and without a single such pair the value is <code>nan</code>.</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: center;">Parameter</th>
-<th style="text-align: center;">Type</th>
-<th style="text-align: center;">Default</th>
-<th style="text-align: center;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: center;"><code>sents</code></td>
-<td style="text-align: center;">list[list[str]]</td>
-<td style="text-align: center;"><code>-</code></td>
-<td style="text-align: center;">Values of the feature of the verbs of every sentence</td>
-</tr>
-</tbody>
-</table>
-<!-- --8<-- [end:calc_repetition] -->
-
-<div class="admonition example">
-<p class="admonition-title">Example</p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts.cohesion</span><span class="w"> </span><span class="kn">import</span> <span class="n">calc_overlaps</span><span class="p">,</span> <span class="n">calc_repetition</span><span class="p">,</span> <span class="n">count_given</span>
-
-<span class="n">calc_overlaps</span><span class="p">([{</span><span class="s2">"cat"</span><span class="p">,</span> <span class="s2">"house"</span><span class="p">},</span> <span class="p">{</span><span class="s2">"cat"</span><span class="p">,</span> <span class="s2">"dog"</span><span class="p">},</span> <span class="p">{</span><span class="s2">"bird"</span><span class="p">}])</span>
-<span class="c1"># Overlap(adjacent=0.5, all=0.3333333333333333, prop_adjacent=0.25, prop_all=0.16666666666666666)</span>
-<span class="n">count_given</span><span class="p">([[</span><span class="s2">"cat"</span><span class="p">,</span> <span class="s2">"house"</span><span class="p">],</span> <span class="p">[</span><span class="s2">"cat"</span><span class="p">,</span> <span class="s2">"dog"</span><span class="p">],</span> <span class="p">[</span><span class="s2">"house"</span><span class="p">]])</span>
-<span class="c1"># 2</span>
-<span class="n">calc_repetition</span><span class="p">([[</span><span class="s2">"Pres"</span><span class="p">],</span> <span class="p">[</span><span class="s2">"Pres"</span><span class="p">,</span> <span class="s2">"Past"</span><span class="p">,</span> <span class="s2">"Pres"</span><span class="p">],</span> <span class="p">[</span><span class="s2">"Past"</span><span class="p">]])</span>
-<span class="c1"># 0.5</span>
-</code></pre></div>
+<h2 id="flesch-kincaid-grade">Flesch-Kincaid grade<a class="headerlink" href="#flesch-kincaid-grade" title="Permanent link">&para;</a></h2>
+<div class="admonition info">
+<p><strong>anyts.readability_stats.calc_flesch_kincaid_grade()</strong></p>
 </div>
+<!-- --8<-- [start:calc_flesch_kincaid_grade] -->
+<p>Computation of the Flesch-Kincaid grade (Kincaid et al., 1975).</p>
+<p>The years of schooling needed to read the text; the higher the value, the harder the text.</p>
+<p>Formula:</p>
+<div class="arithmatex">\[
+a \cdot \frac{\textrm{Number of words}}{\textrm{Number of sentences}} + b \cdot \frac{\textrm{Number of syllables}}{\textrm{Number of words}} - c
+\]</div>
+<!-- --8<-- [end:calc_flesch_kincaid_grade] -->
+
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>n_syllables</code></td>
+<td style="text-align: center;">int</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Number of syllables</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>n_words</code></td>
+<td style="text-align: center;">int</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Number of words</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>n_sents</code></td>
+<td style="text-align: center;">int</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Number of sentences</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>a</code></td>
+<td style="text-align: center;">float</td>
+<td style="text-align: center;"><code>0.39</code></td>
+<td style="text-align: center;">Coefficient a, at the mean sentence length</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>b</code></td>
+<td style="text-align: center;">float</td>
+<td style="text-align: center;"><code>11.8</code></td>
+<td style="text-align: center;">Coefficient b, at the mean word length</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>c</code></td>
+<td style="text-align: center;">float</td>
+<td style="text-align: center;"><code>15.59</code></td>
+<td style="text-align: center;">Coefficient c, the constant</td>
+</tr>
+</tbody>
+</table>
+<h2 id="coleman-liau-index">Coleman-Liau index<a class="headerlink" href="#coleman-liau-index" title="Permanent link">&para;</a></h2>
+<div class="admonition info">
+<p><strong>anyts.readability_stats.calc_coleman_liau_index()</strong></p>
+</div>
+<!-- --8<-- [start:calc_coleman_liau_index] -->
+<p>Computation of the Coleman-Liau index (Coleman and Liau, 1975).</p>
+<p>The years of schooling needed to read the text from the letters and the sentences per 100 words; the higher the value, the harder the text.</p>
+<p>Formula:</p>
+<div class="arithmatex">\[
+a \cdot \frac{100 \cdot \textrm{Number of letters}}{\textrm{Number of words}} - b \cdot \frac{100 \cdot \textrm{Number of sentences}}{\textrm{Number of words}} - c
+\]</div>
+<!-- --8<-- [end:calc_coleman_liau_index] -->
+
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>n_letters</code></td>
+<td style="text-align: center;">int</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Number of letters of the words</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>n_words</code></td>
+<td style="text-align: center;">int</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Number of words</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>n_sents</code></td>
+<td style="text-align: center;">int</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Number of sentences</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>a</code></td>
+<td style="text-align: center;">float</td>
+<td style="text-align: center;"><code>0.0588</code></td>
+<td style="text-align: center;">Coefficient a, at the letters per 100 words</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>b</code></td>
+<td style="text-align: center;">float</td>
+<td style="text-align: center;"><code>0.296</code></td>
+<td style="text-align: center;">Coefficient b, at the sentences per 100 words</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>c</code></td>
+<td style="text-align: center;">float</td>
+<td style="text-align: center;"><code>15.8</code></td>
+<td style="text-align: center;">Coefficient c, the constant</td>
+</tr>
+</tbody>
+</table>
+<h2 id="automated-readability-index-ari">Automated readability index (ARI)<a class="headerlink" href="#automated-readability-index-ari" title="Permanent link">&para;</a></h2>
+<div class="admonition info">
+<p><strong>anyts.readability_stats.calc_automated_readability_index()</strong></p>
+</div>
+<!-- --8<-- [start:calc_automated_readability_index] -->
+<p>Computation of the automated readability index (Smith and Senter, 1967).</p>
+<p>The years of schooling needed to read the text from the letters per word and the words per sentence; the higher the value, the harder the text.</p>
+<p>Formula:</p>
+<div class="arithmatex">\[
+a \cdot \frac{\textrm{Number of letters}}{\textrm{Number of words}} + b \cdot \frac{\textrm{Number of words}}{\textrm{Number of sentences}} - c
+\]</div>
+<!-- --8<-- [end:calc_automated_readability_index] -->
+
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>n_letters</code></td>
+<td style="text-align: center;">int</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Number of letters of the words</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>n_words</code></td>
+<td style="text-align: center;">int</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Number of words</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>n_sents</code></td>
+<td style="text-align: center;">int</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Number of sentences</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>a</code></td>
+<td style="text-align: center;">float</td>
+<td style="text-align: center;"><code>4.71</code></td>
+<td style="text-align: center;">Coefficient a, at the letters per word</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>b</code></td>
+<td style="text-align: center;">float</td>
+<td style="text-align: center;"><code>0.5</code></td>
+<td style="text-align: center;">Coefficient b, at the mean sentence length</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>c</code></td>
+<td style="text-align: center;">float</td>
+<td style="text-align: center;"><code>21.43</code></td>
+<td style="text-align: center;">Coefficient c, the constant</td>
+</tr>
+</tbody>
+</table>
+<h2 id="smog-index">SMOG index<a class="headerlink" href="#smog-index" title="Permanent link">&para;</a></h2>
+<div class="admonition info">
+<p><strong>anyts.readability_stats.calc_smog_index()</strong></p>
+</div>
+<!-- --8<-- [start:calc_smog_index] -->
+<p>Computation of the SMOG index (McLaughlin, 1969).</p>
+<p>The years of schooling needed to read the text from the polysyllabic words per sentence; the higher the value, the harder the text. In the original formula the polysyllabic words have three or more syllables and <code>b</code> brings their number to a sample of 30 sentences.</p>
+<p>Formula:</p>
+<div class="arithmatex">\[
+a \cdot \sqrt{b \cdot \frac{\textrm{Number of polysyllabic words}}{\textrm{Number of sentences}}} + c
+\]</div>
+<!-- --8<-- [end:calc_smog_index] -->
+
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>n_complex</code></td>
+<td style="text-align: center;">int</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Number of polysyllabic words</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>n_sents</code></td>
+<td style="text-align: center;">int</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Number of sentences</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>a</code></td>
+<td style="text-align: center;">float</td>
+<td style="text-align: center;"><code>1.043</code></td>
+<td style="text-align: center;">Coefficient a, at the square root</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>b</code></td>
+<td style="text-align: center;">float</td>
+<td style="text-align: center;"><code>30</code></td>
+<td style="text-align: center;">Coefficient b, the number of sentences of the sample</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>c</code></td>
+<td style="text-align: center;">float</td>
+<td style="text-align: center;"><code>3.1291</code></td>
+<td style="text-align: center;">Coefficient c, the constant</td>
+</tr>
+</tbody>
+</table>
+<h2 id="gunning-fog-index">Gunning fog index<a class="headerlink" href="#gunning-fog-index" title="Permanent link">&para;</a></h2>
+<div class="admonition info">
+<p><strong>anyts.readability_stats.calc_gunning_fog_index()</strong></p>
+</div>
+<!-- --8<-- [start:calc_gunning_fog_index] -->
+<p>Computation of the Gunning fog index (Gunning, 1952).</p>
+<p>The years of schooling needed to read the text from the mean sentence length and the percentage of complex words, in the original formula the words of three or more syllables; the higher the value, the harder the text.</p>
+<p>Formula:</p>
+<div class="arithmatex">\[
+a \cdot \left(\frac{\textrm{Number of words}}{\textrm{Number of sentences}} + \frac{100 \cdot \textrm{Number of complex words}}{\textrm{Number of words}}\right)
+\]</div>
+<!-- --8<-- [end:calc_gunning_fog_index] -->
+
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>n_complex</code></td>
+<td style="text-align: center;">int</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Number of complex words</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>n_words</code></td>
+<td style="text-align: center;">int</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Number of words</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>n_sents</code></td>
+<td style="text-align: center;">int</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Number of sentences</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>a</code></td>
+<td style="text-align: center;">float</td>
+<td style="text-align: center;"><code>0.4</code></td>
+<td style="text-align: center;">Coefficient a</td>
+</tr>
+</tbody>
+</table>
+<h2 id="lix-readability-index">LIX readability index<a class="headerlink" href="#lix-readability-index" title="Permanent link">&para;</a></h2>
+<div class="admonition info">
+<p><strong>anyts.readability_stats.calc_lix()</strong></p>
+</div>
+<!-- --8<-- [start:calc_lix] -->
+<p>Computation of the LIX readability index (Björnsson, 1968).</p>
+<p>The mean sentence length plus the percentage of long words, the words of more than six letters; there are no coefficients to fit. The higher the value, the harder the text:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Value</th>
+<th style="text-align: left;">Text</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>0-30</code></td>
+<td style="text-align: left;">very easy texts, children's books</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>30-40</code></td>
+<td style="text-align: left;">easy texts, fiction, newspaper articles</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>40-50</code></td>
+<td style="text-align: left;">texts of medium difficulty, magazine articles</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>50-60</code></td>
+<td style="text-align: left;">hard texts, popular science, official texts</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>60-100</code></td>
+<td style="text-align: left;">very hard texts, laws and bureaucratic language</td>
+</tr>
+</tbody>
+</table>
+<p>Formula:</p>
+<div class="arithmatex">\[
+\frac{\textrm{Number of words}}{\textrm{Number of sentences}} + \frac{100 \cdot \textrm{Number of long words}}{\textrm{Number of words}}
+\]</div>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>n_long_words</code></td>
+<td style="text-align: center;">int</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Number of long words</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>n_words</code></td>
+<td style="text-align: center;">int</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Number of words</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>n_sents</code></td>
+<td style="text-align: center;">int</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Number of sentences</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:calc_lix] -->
+
+<h2 id="rix-readability-index">RIX readability index<a class="headerlink" href="#rix-readability-index" title="Permanent link">&para;</a></h2>
+<div class="admonition info">
+<p><strong>anyts.readability_stats.calc_rix()</strong></p>
+</div>
+<!-- --8<-- [start:calc_rix] -->
+<p>Computation of the RIX readability index (Anderson, 1983).</p>
+<p>The long words, of more than six letters, per sentence; there are no coefficients to fit. The higher the value, the harder the text:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Value</th>
+<th style="text-align: center;">Grade</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>&lt; 0.2</code></td>
+<td style="text-align: center;">1</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>0.2-0.5</code></td>
+<td style="text-align: center;">2</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>0.5-0.8</code></td>
+<td style="text-align: center;">3</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>0.8-1.3</code></td>
+<td style="text-align: center;">4</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>1.3-1.8</code></td>
+<td style="text-align: center;">5</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>1.8-2.4</code></td>
+<td style="text-align: center;">6</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>2.4-3.0</code></td>
+<td style="text-align: center;">7</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>3.0-3.7</code></td>
+<td style="text-align: center;">8</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>3.7-4.5</code></td>
+<td style="text-align: center;">9</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>4.5-5.3</code></td>
+<td style="text-align: center;">10</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>5.3-6.2</code></td>
+<td style="text-align: center;">11</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>6.2-7.2</code></td>
+<td style="text-align: center;">12</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>&gt; 7.2</code></td>
+<td style="text-align: center;">college</td>
+</tr>
+</tbody>
+</table>
+<p>Formula:</p>
+<div class="arithmatex">\[
+\frac{\textrm{Number of long words}}{\textrm{Number of sentences}}
+\]</div>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>n_long_words</code></td>
+<td style="text-align: center;">int</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Number of long words</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>n_sents</code></td>
+<td style="text-align: center;">int</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Number of sentences</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:calc_rix] -->
+
+<h2 id="legibilidad">Legibilidad µ<a class="headerlink" href="#legibilidad" title="Permanent link">&para;</a></h2>
+<div class="admonition info">
+<p><strong>anyts.readability_stats.calc_mu_index()</strong></p>
+</div>
+<!-- --8<-- [start:calc_mu_index] -->
+<p>Computation of Legibilidad µ (Muñoz Baquedano and Muñoz Urra, 2006).</p>
+<p>The mean number of letters per word divided by its sample variance, times 100; there are no coefficients to fit, and the higher the value, the easier the text. Words without letters (numbers) are left out; with fewer than two words or without variability the index is undefined (<code>nan</code>).</p>
+<p>Formula:</p>
+<div class="arithmatex">\[
+100 \cdot \frac{\bar{x}}{s^2}, \quad s^2 = \frac{\sum (x_i - \bar{x})^2}{n - 1}
+\]</div>
+<p>where <span class="arithmatex">\(x_i\)</span> is the number of letters of a word and <span class="arithmatex">\(n\)</span> the number of words.</p>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>c_letters</code></td>
+<td style="text-align: center;">dict[int, int]</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Distribution of words by number of letters</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:calc_mu_index] -->
+
+<h2 id="reading-ease-as-a-grade">Reading ease as a grade<a class="headerlink" href="#reading-ease-as-a-grade" title="Permanent link">&para;</a></h2>
+<div class="admonition info">
+<p><strong>anyts.readability_stats.flesch_reading_easy_to_grade()</strong></p>
+</div>
+<!-- --8<-- [start:flesch_reading_easy_to_grade] -->
+<p>Conversion of the Flesch reading ease into years of schooling for the consensus grade: the grade of the first band whose lower bound the value reaches, or <code>below</code> under the last bound; values above 100 belong to the first band.</p>
+<!-- --8<-- [end:flesch_reading_easy_to_grade] -->
+
+<p>The default bands are those of <code>text_standard</code> of <a href="https://github.com/textstat/textstat">textstat</a>, which follow the table of Flesch (1948) down to 60 and split his lower bands, with 8.5 for its grades 8 and 9: 90-100 - 5, 80-90 - 6, 70-80 - 7, 60-70 - 8.5, 50-60 - 10, 40-50 - 11, 30-40 - 12, below 30 - 13 (<code>anyts.constants.READING_EASE_GRADES</code>).</p>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>flesch_reading_easy</code></td>
+<td style="text-align: center;">float</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Value of the reading ease</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>grades</code></td>
+<td style="text-align: center;">list[tuple[float, float]]</td>
+<td style="text-align: center;"><code>READING_EASE_GRADES</code></td>
+<td style="text-align: center;">Lower bounds and their grades in descending order of the bounds</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>below</code></td>
+<td style="text-align: center;">float</td>
+<td style="text-align: center;"><code>13</code></td>
+<td style="text-align: center;">Grade below the last bound</td>
+</tr>
+</tbody>
+</table>
+<h2 id="consensus-grade">Consensus grade<a class="headerlink" href="#consensus-grade" title="Permanent link">&para;</a></h2>
+<div class="admonition info">
+<p><strong>anyts.readability_stats.calc_consensus_grade()</strong></p>
+</div>
+<!-- --8<-- [start:calc_consensus_grade] -->
+<p>Computation of the consensus grade: the median of the values of the grade formulas rounded half up, together with the reading ease converted into years of schooling by <code>to_grade</code> and added without rounding - so a band of 8.5 votes for 8.5. No values at all raise <code>ParameterError</code>, a <code>to_grade</code> that is not callable <code>SourceTypeError</code>.</p>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>grades</code></td>
+<td style="text-align: center;">list[float]</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Values of the grade formulas</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>flesch_reading_easy</code></td>
+<td style="text-align: center;">float</td>
+<td style="text-align: center;"><code>None</code></td>
+<td style="text-align: center;">Value of the reading ease</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>to_grade</code></td>
+<td style="text-align: center;">Callable</td>
+<td style="text-align: center;"><code>flesch_reading_easy_to_grade</code></td>
+<td style="text-align: center;">Conversion of the reading ease into years of schooling</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:calc_consensus_grade] -->
+
+<h2 id="school-stage-and-age">School stage and age<a class="headerlink" href="#school-stage-and-age" title="Permanent link">&para;</a></h2>
+<div class="admonition info">
+<p><strong>anyts.readability_stats.grade_to_age()</strong></p>
+</div>
+<!-- --8<-- [start:grade_to_age] -->
+<p>The school stage and reader age by the value of a grade formula: the value is rounded half up and falls into the first stage whose last year it does not exceed, values below 1 into the first stage; above the last stage lies <code>above</code>.</p>
+<!-- --8<-- [end:grade_to_age] -->
+
+<p>The default stages are those of the United States (<code>anyts.constants.GRADE_AGE_LEVELS</code> and <code>POSTGRADUATE_LEVEL</code>):</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Grade</th>
+<th style="text-align: center;">Stage</th>
+<th style="text-align: center;">Age</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">1-5</td>
+<td style="text-align: center;">elementary school, grades 1-5</td>
+<td style="text-align: center;">6-11 years</td>
+</tr>
+<tr>
+<td style="text-align: center;">6-8</td>
+<td style="text-align: center;">middle school, grades 6-8</td>
+<td style="text-align: center;">11-14 years</td>
+</tr>
+<tr>
+<td style="text-align: center;">9-12</td>
+<td style="text-align: center;">high school, grades 9-12</td>
+<td style="text-align: center;">14-18 years</td>
+</tr>
+<tr>
+<td style="text-align: center;">13-16</td>
+<td style="text-align: center;">college</td>
+<td style="text-align: center;">18-22 years</td>
+</tr>
+<tr>
+<td style="text-align: center;">above 16</td>
+<td style="text-align: center;">graduate school</td>
+<td style="text-align: center;">over 22 years</td>
+</tr>
+</tbody>
+</table>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>grade</code></td>
+<td style="text-align: center;">float</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Value of a grade formula</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>levels</code></td>
+<td style="text-align: center;">list[tuple[int, int, str, str]]</td>
+<td style="text-align: center;"><code>GRADE_AGE_LEVELS</code></td>
+<td style="text-align: center;">Stages as the first and the last year, the stage and the age, in ascending order</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>above</code></td>
+<td style="text-align: center;">tuple[str, str]</td>
+<td style="text-align: center;"><code>POSTGRADUATE_LEVEL</code></td>
+<td style="text-align: center;">Stage and age above the last stage</td>
+</tr>
+</tbody>
+</table>
+<h2 id="reading-time">Reading time<a class="headerlink" href="#reading-time" title="Permanent link">&para;</a></h2>
+<div class="admonition info">
+<p><strong>anyts.readability_stats.calc_reading_time()</strong></p>
+</div>
+<!-- --8<-- [start:calc_reading_time] -->
+<p>Computation of the reading time of a text in minutes: the number of words divided by the reading speed; a speed that is not a positive number raises <code>ParameterError</code>.</p>
+<!-- --8<-- [end:calc_reading_time] -->
+
+<p>The default speed is the silent reading speed of adults in English, 238 words per minute (Brysbaert, 2019).</p>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>n_words</code></td>
+<td style="text-align: center;">int</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Number of words</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>wpm</code></td>
+<td style="text-align: center;">float</td>
+<td style="text-align: center;"><code>238</code></td>
+<td style="text-align: center;">Reading speed, words per minute</td>
+</tr>
+</tbody>
+</table>
 
 
 
