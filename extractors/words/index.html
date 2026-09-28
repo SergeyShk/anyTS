@@ -1472,19 +1472,19 @@
 <td style="text-align: center;"><code>min_len</code></td>
 <td style="text-align: center;">int</td>
 <td style="text-align: center;"><code>0</code></td>
-<td style="text-align: center;">Minimum length of an extracted word, <code>0</code> for no bound</td>
+<td style="text-align: center;">Minimum length of an extracted word in characters, <code>0</code> for no bound</td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>max_len</code></td>
 <td style="text-align: center;">int</td>
 <td style="text-align: center;"><code>0</code></td>
-<td style="text-align: center;">Maximum length of an extracted word, <code>0</code> for no bound</td>
+<td style="text-align: center;">Maximum length of an extracted word in characters, <code>0</code> for no bound</td>
 </tr>
 </tbody>
 </table>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>A regular expression as the tokenizer is a separator: the text is split with <code>re.split</code>. The filters are applied in order: punctuation, numbers, lemmatization, lower case, stop words, word length. A lower-case stop word list also filters a capitalized word at the start of a sentence. A punctuation mark is a token consisting entirely of marks and symbols, including multi-character ones: <code>?!</code>, <code>--</code>, <code>…</code>, <code>€</code> (see <code>is_punctuation</code>). Empty and whitespace tokens are dropped before the filters. N-grams join the words with <code>_</code>.</p>
+<p>A regular expression as the tokenizer is a separator: the text is split with <code>re.split</code>. The filters are applied in order: punctuation, numbers, lemmatization, lower case, stop words, word length. A lower-case stop word list also filters a capitalized word at the start of a sentence. A punctuation mark is a token consisting entirely of marks and symbols, including multi-character ones: <code>?!</code>, <code>--</code>, <code>…</code>, <code>€</code> (see <code>anyts.utils.is_punctuation</code>). Empty and whitespace tokens are dropped before the filters. N-grams join the words with <code>_</code>.</p>
 </div>
 <!-- --8<-- [end:WordsExtractor-parameters] -->
 
@@ -1529,7 +1529,25 @@
 </div>
 <h3 id="get_most_common">get_most_common<a class="headerlink" href="#get_most_common" title="Permanent link">&para;</a></h3>
 <!-- --8<-- [start:WordsExtractor-get_most_common] -->
-<p>Returns a counter of the top words of the text. It takes the number of top words to return as a parameter.</p>
+<p>Returns the top words of the text as a list of (word, frequency) pairs, the most frequent first.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>n</code></td>
+<td style="text-align: center;">int</td>
+<td style="text-align: center;"><code>10</code></td>
+<td style="text-align: center;">Number of top words</td>
+</tr>
+</tbody>
+</table>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>The method must be called after words have been extracted with <code>extract</code>.</p>

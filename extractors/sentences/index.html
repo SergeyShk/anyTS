@@ -1342,10 +1342,13 @@
 <p>The default tokenizer is the method <code>sentenize(text)</code>, which a language library overrides in a subclass. Here it splits the text at whitespace after <code>.</code>, <code>!</code>, <code>?</code> or <code>…</code>, optionally followed by a closing quote or bracket; it knows no abbreviations, so <code>e.g. this</code> is two sentences. A piece without words, such as the dots of a spaced ellipsis <code>. . .</code> or a lone <code>!</code>, stays with the sentence before it, or with the one after it at the start of the text.</p>
 <!-- --8<-- [end:SentsExtractor-hooks] -->
 
+<!-- --8<-- [start:SentsExtractor-pipeline] -->
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>A spaCy pipeline can be passed as the tokenizer: <code>tokenizer=lambda text: (sent.text for sent in nlp(text).sents)</code>.</p>
 </div>
+<!-- --8<-- [end:SentsExtractor-pipeline] -->
+
 <h2 id="parameters">Parameters<a class="headerlink" href="#parameters" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:SentsExtractor-parameters] -->
 <table>
@@ -1368,13 +1371,13 @@
 <td style="text-align: center;"><code>min_len</code></td>
 <td style="text-align: center;">int</td>
 <td style="text-align: center;"><code>0</code></td>
-<td style="text-align: center;">Minimum length of an extracted sentence, <code>0</code> for no bound</td>
+<td style="text-align: center;">Minimum length of an extracted sentence in characters, <code>0</code> for no bound</td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>max_len</code></td>
 <td style="text-align: center;">int</td>
 <td style="text-align: center;"><code>0</code></td>
-<td style="text-align: center;">Maximum length of an extracted sentence, <code>0</code> for no bound</td>
+<td style="text-align: center;">Maximum length of an extracted sentence in characters, <code>0</code> for no bound</td>
 </tr>
 </tbody>
 </table>

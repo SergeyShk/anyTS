@@ -2471,7 +2471,7 @@
 <p>An alternative to vocd-D (McCarthy &amp; Jarvis, 2010): instead of drawing random segments of the text, it computes the expected TTR of a random sample of <code>sample_size</code> words exactly. For every lexeme the hypergeometric distribution gives the probability that the sample holds it at least once; the sum of these probabilities is the expected number of lexemes in the sample, and HD-D is that number divided by the sample size. The value involves no randomness.</p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
-<p>For texts shorter than 50 words and shorter than the sample size the metric is undefined; the function returns <code>nan</code>.</p>
+<p>For texts shorter than 50 words or than the sample size the metric is undefined; the function returns <code>nan</code>.</p>
 </div>
 <p>Parameters:</p>
 <table>
@@ -3146,9 +3146,9 @@ H = -\sum_k p_k \log_2 p_k
 <tbody>
 <tr>
 <td style="text-align: center;"><code>text</code></td>
-<td style="text-align: center;">list[str]</td>
+<td style="text-align: center;">list[str]/Counter</td>
 <td style="text-align: center;"><code>-</code></td>
-<td style="text-align: center;">List of words</td>
+<td style="text-align: center;">List of words or a counter of their frequencies</td>
 </tr>
 </tbody>
 </table>

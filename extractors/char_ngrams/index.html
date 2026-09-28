@@ -1454,7 +1454,25 @@
 </div>
 <h3 id="get_most_common">get_most_common<a class="headerlink" href="#get_most_common" title="Permanent link">&para;</a></h3>
 <!-- --8<-- [start:CharNgramsExtractor-get_most_common] -->
-<p>Returns a counter of the top N-grams of the text. It takes the number of top N-grams to return as a parameter.</p>
+<p>Returns the top N-grams of the text as a list of (N-gram, frequency) pairs, the most frequent first.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>n</code></td>
+<td style="text-align: center;">int</td>
+<td style="text-align: center;"><code>10</code></td>
+<td style="text-align: center;">Number of top N-grams</td>
+</tr>
+</tbody>
+</table>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>The method must be called after N-grams have been extracted with <code>extract</code>.</p>

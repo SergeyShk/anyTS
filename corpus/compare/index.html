@@ -1296,11 +1296,11 @@
 
 <h1 id="corpus-comparison">Corpus comparison<a class="headerlink" href="#corpus-comparison" title="Permanent link">&para;</a></h1>
 <div class="admonition info">
-<p><strong>anyts.corpus.compare_features()</strong>, <strong>anyts.corpus.compare_values()</strong>, <strong>anyts.corpus.calc_cohen_d()</strong>, <strong>anyts.corpus.calc_cliff_delta()</strong>, <strong>anyts.corpus.bootstrap_median_diff()</strong>, <strong>anyts.corpus.holm_correction()</strong></p>
+<p><strong>anyts.corpus.compare_features()</strong>, <strong>anyts.corpus.check_comparison_params()</strong>, <strong>anyts.corpus.compare_values()</strong>, <strong>anyts.corpus.calc_cohen_d()</strong>, <strong>anyts.corpus.calc_cliff_delta()</strong>, <strong>anyts.corpus.bootstrap_median_diff()</strong>, <strong>anyts.corpus.holm_correction()</strong></p>
 </div>
 <h2 id="description">Description<a class="headerlink" href="#description" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:compare_features] -->
-<p>Comparing two corpora feature by feature. Each corpus comes as a table of the features of its windows - texts split into parts of about the same size, so that the features do not depend on the length of the texts; a language library builds such tables from its texts. <code>compare_features(table_a, table_b, labels, n_bootstrap, seed)</code> compares the tables column by column and returns one row per feature, sorted by descending absolute Cliff's delta, the features without statistics last. The bootstrap resamples whole texts by the level <code>text</code> of the index of a table; a table without that level has every row taken for a text of its own. A column missing from one of the tables gives <code>nan</code>.</p>
+<p>Comparing two corpora feature by feature. Each corpus comes as a table of the features of its windows - texts split into parts of about the same size, so that the features do not depend on the length of the texts. <code>compare_features(table_a, table_b, labels, n_bootstrap, seed)</code> compares the tables column by column and returns one row per feature, sorted by descending absolute Cliff's delta, the features without statistics last. The bootstrap resamples whole texts by the level <code>text</code> of the index of a table; a table without that level has every row taken for a text of its own. A column missing from one of the tables gives <code>nan</code>.</p>
 <!-- --8<-- [end:compare_features] -->
 
 <h2 id="statistics">Statistics<a class="headerlink" href="#statistics" title="Permanent link">&para;</a></h2>
@@ -1352,7 +1352,7 @@
 </tr>
 </tbody>
 </table>
-<p>The names of the columns are <code>COMPARISON_COLUMNS</code>, with <code>A</code> and <code>B</code> replaced by the labels of the corpora. Cliff's delta and the AUC come from the same U statistic and agree with each other; Cohen's d is sensitive to outliers and to departures from normality, so it is best read next to the delta.</p>
+<p>The names of the columns are <code>anyts.corpus.COMPARISON_COLUMNS</code>, with <code>A</code> and <code>B</code> replaced by the labels of the corpora. Cliff's delta and the AUC come from the same U statistic and agree with each other; Cohen's d is sensitive to outliers and to departures from normality, so it is best read next to the delta.</p>
 <div class="admonition warning">
 <p class="admonition-title">Windows of one text are not independent</p>
 <p>The test and the effect sizes take every window for an independent observation, and the windows of one text are not. With few texts in a corpus the p-values are too small and reflect the texts chosen as much as the corpora. The bootstrap resamples whole texts instead (a cluster bootstrap), so its interval accounts for the spread between the texts; it needs at least two texts on each side and is rough with only a few.</p>
@@ -1387,7 +1387,7 @@
 <td style="text-align: center;"><code>labels</code></td>
 <td style="text-align: center;">tuple[str, str]</td>
 <td style="text-align: center;"><code>("A", "B")</code></td>
-<td style="text-align: center;">Names of the corpora for the columns</td>
+<td style="text-align: center;">Names of the corpora for the columns, two strings that give distinct columns</td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>n_bootstrap</code></td>
@@ -1397,13 +1397,17 @@
 </tr>
 <tr>
 <td style="text-align: center;"><code>seed</code></td>
-<td style="text-align: center;">int</td>
+<td style="text-align: center;">int/Generator</td>
 <td style="text-align: center;"><code>0</code></td>
-<td style="text-align: center;">Seed of the random number generator; <code>None</code> - a random one</td>
+<td style="text-align: center;">Seed of the random number generator, a non-negative integer, or a numpy <code>Generator</code>; <code>None</code> - a random one</td>
 </tr>
 </tbody>
 </table>
 <!-- --8<-- [end:compare_features-parameters] -->
+
+<!-- --8<-- [start:check_comparison_params] -->
+<p><code>check_comparison_params(labels=("A", "B"), n_bootstrap=1000, seed=0)</code> checks the parameters of <code>compare_features</code> and raises <code>ParameterError</code> unless the labels are two strings that give distinct columns (<code>("diff", "B")</code> would repeat <code>median_diff</code>), the number of bootstrap samples is an integer of at least one and the seed is <code>None</code>, a non-negative integer or a numpy <code>Generator</code>. Called before the tables are built from texts, it reports a wrong parameter before the texts are processed.</p>
+<!-- --8<-- [end:check_comparison_params] -->
 
 <div class="admonition example">
 <p class="admonition-title">Example</p>
@@ -1422,7 +1426,7 @@
 </div>
 <h2 id="functions-of-the-statistics">Functions of the statistics<a class="headerlink" href="#functions-of-the-statistics" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:compare_values] -->
-<p><code>compare_values(values_a, values_b, n_bootstrap=1000, rng=None, texts_a=None, texts_b=None)</code> compares two sets of values of one feature, undefined and infinite values dropped together with their texts, and returns the values of one row in the order of <code>COMPARISON_COLUMNS</code>, <code>p_holm</code> left <code>nan</code>; <code>texts_a</code> and <code>texts_b</code> give the text of every value for the bootstrap.</p>
+<p><code>compare_values(values_a, values_b, n_bootstrap=1000, rng=None, texts_a=None, texts_b=None)</code> compares two sets of values of one feature, undefined and infinite values dropped together with their texts, and returns the values of one row in the order of <code>anyts.corpus.COMPARISON_COLUMNS</code>, <code>p_holm</code> left <code>nan</code>; <code>texts_a</code> and <code>texts_b</code> give the text of every value for the bootstrap.</p>
 <!-- --8<-- [end:compare_values] -->
 
 <!-- --8<-- [start:calc_cohen_d] -->

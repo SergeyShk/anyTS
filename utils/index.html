@@ -1223,6 +1223,28 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#check_number" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        check_number
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#check_counts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        check_counts
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#iter_doc_tokens" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1360,6 +1382,28 @@
     <span class="md-ellipsis">
       
         check_integer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#check_number" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        check_number
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#check_counts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        check_counts
       
     </span>
   </a>
@@ -1554,7 +1598,7 @@
 </div>
 <h2 id="check_sequence">check_sequence<a class="headerlink" href="#check_sequence" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:check_sequence] -->
-<p>Checks that an argument is a sequence and not a text or an iterator: a string, a <code>Doc</code>, a <code>Span</code>, an iterator or an object that cannot be iterated raises <code>SourceTypeError</code>, since a string would be iterated character by character and an iterator would be exhausted by the first pass over it.</p>
+<p>Checks that an argument is a sequence and not a text or an iterator: a string, a <code>Doc</code>, a <code>Span</code>, an iterator or an object that cannot be iterated raises <code>SourceTypeError</code>, since a string would be iterated character by character and an iterator would be exhausted by the first pass over it; so does a table - a two-dimensional array or a <code>DataFrame</code>. A set or a mapping holds every item once, in no order of the text, and raises the error too, unless <code>ordered=False</code> - for a collection whose order and repeats do not matter, such as stop words.</p>
 <table>
 <thead>
 <tr>
@@ -1576,6 +1620,12 @@
 <td style="text-align: center;">str</td>
 <td style="text-align: center;"><code>"words"</code></td>
 <td style="text-align: center;">What is expected, for the message of the error</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>ordered</code></td>
+<td style="text-align: center;">bool</td>
+<td style="text-align: center;"><code>True</code></td>
+<td style="text-align: center;">Whether the order and the repeats of the items matter</td>
 </tr>
 </tbody>
 </table>
@@ -1605,6 +1655,12 @@
 <td style="text-align: center;">str</td>
 <td style="text-align: center;"><code>"words"</code></td>
 <td style="text-align: center;">What is expected, for the message of the error</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>ordered</code></td>
+<td style="text-align: center;">bool</td>
+<td style="text-align: center;"><code>True</code></td>
+<td style="text-align: center;">Whether the order and the repeats of the words matter</td>
 </tr>
 </tbody>
 </table>
@@ -1638,6 +1694,58 @@
 </tbody>
 </table>
 <!-- --8<-- [end:check_integer] -->
+
+<h2 id="check_number">check_number<a class="headerlink" href="#check_number" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:check_number] -->
+<p>Checks that a parameter is a real number: a <code>bool</code>, a string or <code>None</code> raises <code>ParameterError</code> instead of failing later in a comparison.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>value</code></td>
+<td style="text-align: center;">object</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Value to check</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>what</code></td>
+<td style="text-align: center;">str</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Name of the parameter, for the message of the error</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:check_number] -->
+
+<h2 id="check_counts">check_counts<a class="headerlink" href="#check_counts" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:check_counts] -->
+<p>Checks that an argument is a counter - a mapping of words to their frequencies, such as a <code>Counter</code>: a value that is not a mapping, a word that is not a string or a frequency that is not a number raises <code>SourceTypeError</code>.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>value</code></td>
+<td style="text-align: center;">object</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Value to check</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:check_counts] -->
 
 <h2 id="iter_doc_tokens">iter_doc_tokens<a class="headerlink" href="#iter_doc_tokens" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:iter_doc_tokens] -->

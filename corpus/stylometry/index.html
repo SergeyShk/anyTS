@@ -1336,7 +1336,7 @@
 
 <!-- --8<-- [start:delta] -->
 <p><code>delta</code> computes a symmetric matrix of distances from the z-scores (a <code>DataFrame</code> with the names of the texts); at least three texts are needed - with two, the z-scores degenerate to ±1/√2 and the distances do not depend on the frequencies.</p>
-<p>Variants (<code>DELTA_VARIANTS</code>), with the formulas of the sources of stylo; <span class="arithmatex">\(n\)</span> is the number of units, <span class="arithmatex">\(z_A\)</span> and <span class="arithmatex">\(z_B\)</span> the vectors of z-scores of the texts:</p>
+<p>Variants (<code>anyts.constants.DELTA_VARIANTS</code>), with the formulas of the sources of stylo; <span class="arithmatex">\(n\)</span> is the number of units, <span class="arithmatex">\(z_A\)</span> and <span class="arithmatex">\(z_B\)</span> the vectors of z-scores of the texts:</p>
 <table>
 <thead>
 <tr>
@@ -1374,6 +1374,7 @@
 </tbody>
 </table>
 <p>Cosine Delta clusters the texts by author best in the experiments of Evert et al. The usual number of units is 100 to 500 most frequent words, 100-200 for character N-grams.</p>
+<p>Parameters of <code>delta</code>:</p>
 <table>
 <thead>
 <tr>
@@ -1400,7 +1401,7 @@
 <td style="text-align: center;"><code>variant</code></td>
 <td style="text-align: center;">str</td>
 <td style="text-align: center;"><code>burrows</code></td>
-<td style="text-align: center;">Variant of Delta of <code>DELTA_VARIANTS</code></td>
+<td style="text-align: center;">Variant of Delta of <code>anyts.constants.DELTA_VARIANTS</code></td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>culling</code></td>
