@@ -5,14 +5,15 @@ import spacy
 from spacy.tokens import Doc
 
 from anyts.exceptions import ParameterError, SourceError, SourceTypeError
+from anyts.utils import iter_doc_units
 from anyts.visualizers import Highlight, HighlightedText
 from anyts.visualizers.highlight import (
     Sent,
     Word,
-    get_doc_sents,
     get_doc_words,
     get_text_sents,
     group_words_by_sents,
+    iter_doc_sents,
     split_segments,
     tokens_span,
 )
@@ -168,6 +169,54 @@ def test_base_class():
         Unfinished(text, layers="all")
 
 
+def test_sentences_count_the_words_of_the_hook():
+    class Units(Marks):
+        def doc_words(self, doc):
+            return [
+                Word(unit[0].idx, unit[-1].idx + len(unit[-1]), "".join(t.text for t in unit))
+                for unit in iter_doc_units(doc, join_hyphens=True)
+            ]
+
+    sample = "A well-known old cat sleeps. It eats."
+    nlp = spacy.blank("xx")
+    nlp.add_pipe("sentencizer")
+    for source in (nlp(sample), spacy.blank("xx")(sample)):
+        assert Units(source, layers="long_sents").counts == {"long_sents": 1}
+        assert Units(source, layers="long_sents").highlights[0].note == "5 words"
+    assert Marks(nlp(sample), layers="long_sents").highlights[0].note == "6 words"
+
+
+def test_find_of_another_layer():
+    class Typo(Marks):
+        def find(self, layer, words, sents, doc):
+            return [Highlight(0, 3, "stopword")]
+
+    with pytest.raises(
+        ValueError, match=r"^A fragment of the layer stopword is found for stopwords$"
+    ):
+        Typo(text, layers="stopwords")
+
+
+def test_defaults_are_read_only():
+    with pytest.raises(TypeError):
+        HighlightedText.layer_styles["x"] = "color: red;"  # type: ignore[index]
+    with pytest.raises(TypeError):
+        HighlightedText.layers_desc["x"] = "x"  # type: ignore[index]
+
+
+def test_layer_requirements_listed():
+    class Heavy(Marks):
+        layer_annotations: ClassVar[dict[str, tuple[str, ...]]] = {
+            "subjects": ("DEP", "POS", "LEMMA")
+        }
+
+    message = r"needs a Doc with a dependency parse, the parts of speech and the lemmas$"
+    with pytest.raises(ParameterError, match=message):
+        Heavy(text, layers="subjects")
+    with pytest.raises(ParameterError, match=r"^The layer long_sents is not available$"):
+        Marks.select_layers(["long_sents"], [])
+
+
 def test_highlights_sorted():
     ht = Marks(parsed(), layers="all")
     positions = [(h.start, -h.end) for h in ht.highlights]
@@ -194,12 +243,12 @@ def test_get_doc_words():
     assert get_doc_words(parsed(tags=False))[0] == Word(0, 3, "The")
 
 
-def test_get_doc_sents():
-    doc = spacy.blank("xx")
-    doc.add_pipe("sentencizer")
-    assert get_doc_sents(doc("\n\nHello, world.  How are you?")) == [
-        Sent(2, 15, 2),
-        Sent(17, 29, 3),
+def test_iter_doc_sents():
+    nlp = spacy.blank("xx")
+    nlp.add_pipe("sentencizer")
+    assert list(iter_doc_sents(nlp("\n\nHello, world.  How are you?"))) == [
+        (2, 15, "Hello, world."),
+        (17, 29, "How are you?"),
     ]
     # A sentence of whitespace alone is skipped
     doc = Doc(
@@ -208,7 +257,7 @@ def test_get_doc_sents():
         spaces=[False, False, False, False, False],
         sent_starts=[True, False, True, True, False],
     )
-    assert get_doc_sents(doc) == [Sent(0, 3, 1), Sent(5, 9, 1)]
+    assert list(iter_doc_sents(doc)) == [(0, 3, "Hi."), (5, 9, "Bye.")]
 
 
 def test_get_text_sents():

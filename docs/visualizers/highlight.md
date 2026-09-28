@@ -25,7 +25,7 @@ The core has no layers of its own: a language library subclasses `HighlightedTex
 | `iter_words(text)`, `iter_sents(text)` | methods | The words and the sentences of a string as triples of the start, the end and the text; by default those of the default tokenizers of `WordsExtractor` and `SentsExtractor` |
 | `doc_words(doc)` | method | The words of a `Doc`; by default `get_doc_words` |
 
-The sentences of a `Doc` come from its boundaries, or from `iter_sents` over its text when it has none.
+The sentences of a `Doc` come from its boundaries, or from `iter_sents` over its text when it has none, and the words of a sentence are those of `doc_words` or `iter_words` that start in it. `find` runs in `__init__`, so a subclass with parameters of its own stores them before it calls the `__init__` of the base; a fragment of another layer raises `ValueError`.
 <!-- --8<-- [end:HighlightedText-hooks] -->
 
 ## Parameters
@@ -36,7 +36,7 @@ The sentences of a `Doc` come from its boundaries, or from `iter_sents` over its
 | `source` | str/Doc | `-` | Data source (a string or a Doc object) |
 | `layers` | list[str]/str | `None` | Layers of the highlighting; if not given, the default layers the source allows; `"all"` - every layer allowed |
 
-A layer that is unknown or needs an annotation the source lacks raises `ParameterError`, a source without words `SourceError`.
+A source that is neither a string nor a `Doc` raises `SourceTypeError`, a source without words `SourceError`; layers that are not a name or a list of names, a layer that is unknown or one that needs an annotation the source lacks raise `ParameterError`.
 <!-- --8<-- [end:HighlightedText-parameters] -->
 
 ## Attributes
@@ -67,6 +67,12 @@ Returns the HTML markup of the highlighted text: a `div` of the class `<prefix>-
 | `css` | bool | `True` | Add the styles of the layers |
 <!-- --8<-- [end:HighlightedText-to_html] -->
 
+### css
+
+<!-- --8<-- [start:HighlightedText-css] -->
+The class method `css()` returns the styles `to_html` adds: the container, the legend and the text under the classes of `css_prefix`, the declarations of `layer_styles` for every layer, and a dark colour of the text on the layers with a background.
+<!-- --8<-- [end:HighlightedText-css] -->
+
 ## Helpers of the layers
 
 <!-- --8<-- [start:Word] -->
@@ -81,9 +87,9 @@ Returns the HTML markup of the highlighted text: a `div` of the class `<prefix>-
 `get_doc_words(doc)` - the words of `iter_doc_tokens` with their positions, and with the part of speech and the lemma when the `Doc` has both.
 <!-- --8<-- [end:get_doc_words] -->
 
-<!-- --8<-- [start:get_doc_sents] -->
-`get_doc_sents(doc)` - the sentences of a `Doc` with their positions and numbers of words; the whitespace tokens at the edges of a sentence are left out, and a sentence of whitespace alone is skipped.
-<!-- --8<-- [end:get_doc_sents] -->
+<!-- --8<-- [start:iter_doc_sents] -->
+`iter_doc_sents(doc)` - the sentences of the boundaries of a `Doc` as triples of the start, the end and the text; the whitespace tokens at the edges of a sentence are left out, and a sentence of whitespace alone is skipped.
+<!-- --8<-- [end:iter_doc_sents] -->
 
 <!-- --8<-- [start:get_text_sents] -->
 `get_text_sents(spans, words)` - the sentences given by their positions with their numbers of words; a word belongs to the sentence of its first character.

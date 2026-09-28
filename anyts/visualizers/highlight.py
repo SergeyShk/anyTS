@@ -3,6 +3,7 @@ import re
 from collections.abc import Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from itertools import pairwise
+from types import MappingProxyType
 from typing import ClassVar, NamedTuple
 
 from spacy.tokens import Doc, Token
@@ -94,8 +95,9 @@ class HighlightedText:
             find - the fragments of a layer
             iter_words, iter_sents - the words and the sentences of a string with
                 their positions, doc_words - the words of a Doc
-        The sentences of a Doc come from its boundaries, or from iter_sents over
-        its text without them. The fragments are sorted by their start and then
+        The sentences of a Doc come from its boundaries (iter_doc_sents), or
+        from iter_sents over its text without them; the words of a sentence are
+        those of doc_words or iter_words that start in it. The fragments are sorted by their start and then
         by descending end; fragments of different layers may overlap. The result
         shows in Jupyter as HTML with a legend (to_html)
 
@@ -118,13 +120,15 @@ class HighlightedText:
     Raises:
         SourceTypeError: If the source is neither a string nor a Doc
         SourceError: If the source has no words
-        ParameterError: If a layer is unknown or not allowed by the source
+        ParameterError: If a layer is unknown or not allowed by the source, or
+            the layers are not a list of names
+        ValueError: If find gives a fragment of another layer
     """
 
-    layers_desc: ClassVar[Mapping[str, str]] = {}
+    layers_desc: ClassVar[Mapping[str, str]] = MappingProxyType({})
     default_layers: ClassVar[Sequence[str]] = ()
-    layer_annotations: ClassVar[Mapping[str, Sequence[str]]] = {}
-    layer_styles: ClassVar[Mapping[str, str]] = {}
+    layer_annotations: ClassVar[Mapping[str, Sequence[str]]] = MappingProxyType({})
+    layer_styles: ClassVar[Mapping[str, str]] = MappingProxyType({})
     css_prefix: ClassVar[str] = "anyts"
 
     def __init__(self, source: str | Doc, layers: Sequence[str] | str | None = None):
@@ -133,11 +137,12 @@ class HighlightedText:
             doc = source
             self.text = source.text
             words = self.doc_words(source)
-            sents = (
-                get_doc_sents(source)
+            spans = (
+                iter_doc_sents(source)
                 if source.has_annotation("SENT_START")
-                else get_text_sents(self.iter_sents(self.text), words)
+                else self.iter_sents(self.text)
             )
+            sents = get_text_sents(spans, words)
         elif isinstance(source, str):
             self.text = source
             words = [Word(start, end, text) for start, end, text in self.iter_words(source)]
@@ -155,7 +160,12 @@ class HighlightedText:
             )
         ]
         self.layers = self.select_layers(layers, available)
-        highlights = [h for layer in self.layers for h in self.find(layer, words, sents, doc)]
+        highlights = []
+        for layer in self.layers:
+            for h in self.find(layer, words, sents, doc):
+                if h.layer != layer:
+                    raise ValueError(f"A fragment of the layer {h.layer} is found for {layer}")
+                highlights.append(h)
         self.highlights = tuple(sorted(highlights, key=lambda h: (h.start, -h.end)))
 
     def iter_words(self, text: str) -> Iterable[tuple[int, int, str]]:
@@ -220,7 +230,9 @@ class HighlightedText:
         Finding the fragments of a layer
 
         Description:
-            A language library implements the method for its layers
+            A language library implements the method for its layers; it runs in
+            __init__, so a subclass stores its own parameters before calling the
+            __init__ of the base
 
         Arguments:
             layer (str): Layer of the highlighting
@@ -229,7 +241,7 @@ class HighlightedText:
             doc (Doc): Doc object of the source; None for a string
 
         Returns:
-            list[Highlight]: Fragments of the layer
+            list[Highlight]: Fragments of the layer, of this layer only
         """
         raise NotImplementedError
 
@@ -266,11 +278,16 @@ class HighlightedText:
             if not isinstance(layer, str) or layer not in cls.layers_desc:
                 raise ParameterError(f"Unknown layer of the highlighting: {layer}")
             if layer not in available:
-                needs = " and ".join(
+                needs = [
                     ANNOTATION_NAMES.get(annotation, annotation)
-                    for annotation in cls.layer_annotations[layer]
+                    for annotation in cls.layer_annotations.get(layer, ())
+                ]
+                if not needs:
+                    raise ParameterError(f"The layer {layer} is not available")
+                listed = (
+                    ", ".join(needs[:-1]) + " and " + needs[-1] if len(needs) > 1 else needs[0]
                 )
-                raise ParameterError(f"The layer {layer} needs a Doc with {needs}")
+                raise ParameterError(f"The layer {layer} needs a Doc with {listed}")
         return tuple(layer for layer in cls.layers_desc if layer in layers)
 
     @classmethod
@@ -388,28 +405,28 @@ def get_doc_words(doc: Doc) -> list[Word]:
     ]
 
 
-def get_doc_sents(doc: Doc) -> list[Sent]:
+def iter_doc_sents(doc: Doc) -> Iterator[tuple[int, int, str]]:
     """
-    Extracting the sentences of a Doc object with their positions and numbers of words
+    Extracting the sentences of a Doc object with their positions
 
     Description:
-        The whitespace tokens at the edges of a sentence are left out of its
-        positions, and a sentence of whitespace alone is skipped
+        The sentences of its boundaries; the whitespace tokens at the edges of a
+        sentence are left out of its positions, and a sentence of whitespace
+        alone is skipped
 
     Arguments:
         doc (Doc): Doc object with the sentence boundaries
 
     Returns:
-        list[Sent]: Sentences with their positions and numbers of words
+        iterator[tuple[int, int, str]]: Position of the first character,
+            position after the last character and text of each sentence
     """
-    sents = []
     for sent in doc.sents:
         tokens = [token for token in sent if not token.is_space]
         if tokens:
             start = min(token.idx for token in tokens)
             end = max(token.idx + len(token) for token in tokens)
-            sents.append(Sent(start, end, sum(1 for _ in iter_doc_tokens(sent))))
-    return sents
+            yield start, end, doc.text[start:end]
 
 
 def get_text_sents(spans: Iterable[tuple[int, int, str]], words: Sequence[Word]) -> list[Sent]:
