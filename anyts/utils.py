@@ -263,6 +263,41 @@ def check_number(value: object, what: str) -> None:
         raise ParameterError(f"The {what} must be a number, not {type(value).__name__}")
 
 
+def merge_labels(defaults: Mapping[str, str], labels: Mapping[str, str] | None) -> dict[str, str]:
+    """
+    Merging the labels given for a plot over its default ones
+
+    Description:
+        A label that is not given keeps its default, so a single label can be
+        changed alone
+
+    Arguments:
+        defaults (dict[str, str]): Default labels by key
+        labels (dict[str, str]): Labels given; None - the default ones
+
+    Returns:
+        dict[str, str]: Labels by key
+
+    Raises:
+        ParameterError: If the labels are not a mapping of strings or have an unknown key
+
+    Example:
+        >>> from anyts.utils import merge_labels
+        >>> merge_labels({"title": "Plot", "xlabel": "x"}, {"title": "My plot"})
+        {'title': 'My plot', 'xlabel': 'x'}
+    """
+    if labels is None:
+        return dict(defaults)
+    if not isinstance(labels, Mapping):
+        raise ParameterError(f"The labels must be a mapping, not {type(labels).__name__}")
+    unknown = [key for key in labels if key not in defaults]
+    if unknown:
+        raise ParameterError(f"Unknown labels: {unknown}. Available labels: {tuple(defaults)}")
+    if not all(isinstance(label, str) for label in labels.values()):
+        raise ParameterError("The labels must be strings")
+    return {**defaults, **labels}
+
+
 def iter_doc_tokens(source: Doc | Span) -> Iterator[Token]:
     """
     Extracting the tokens of the words from a Doc or Span object

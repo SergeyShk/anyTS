@@ -1,6 +1,6 @@
 [project]
 name = "anyts"
-version = "0.2.0.dev2"
+version = "0.2.0.dev3"
 description = "Any Texts Statistics: the language-independent core of text statistics libraries"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -38,6 +38,8 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
+    "graphviz>=0.20.3",
+    "matplotlib>=3.8",
     "numpy>=1.26",
     "pandas>=2.1",
     "scipy>=1.11",

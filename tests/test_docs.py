@@ -10,10 +10,14 @@ import pytest
 from anyts import cohesion, datasets, diversity_stats, exceptions, extractors, syntax, utils
 
 DOCS = Path(__file__).parents[1] / "docs"
-# The subpackage rebinds the names of some of its modules to their functions
+# The subpackages rebind the names of some of their modules to their functions
 CORPUS_MODULES = [
     importlib.import_module(f"anyts.corpus.{name}")
     for name in ("collocations", "compare", "dispersion", "keyness", "stylometry")
+]
+VISUALIZER_MODULES = [
+    importlib.import_module(f"anyts.visualizers.{name}")
+    for name in ("corpus", "fingerprinting", "sentences", "stylometry", "vocabulary", "zipf")
 ]
 PAGES = sorted(DOCS.rglob("*.md"))
 # The marker and the name rule of pymdownx.snippets
@@ -97,6 +101,8 @@ def test_public_api_has_sections():
         *public_names(datasets),
         "Dataset",
         *(name for module in CORPUS_MODULES for name in public_names(module)),
+        *(name for module in VISUALIZER_MODULES for name in public_names(module)),
+        "wordtree",
     }
     assert public_names(exceptions) == []
     assert required <= documented, sorted(required - documented)
