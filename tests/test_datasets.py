@@ -201,6 +201,14 @@ def test_download_file_name(tmp_path, online, url, name):
 def test_download_file_without_a_name(tmp_path, online):
     with pytest.raises(DownloadError, match="names no file"):
         download_file("https://example.com/", tmp_path)
+    for url, name in (
+        ("https://example.com/files/C:data.zip", None),
+        ("https://example.com/a", "../a"),
+    ):
+        with pytest.raises(DownloadError, match="is not a plain name"):
+            download_file(url, tmp_path, filename=name)
+    with pytest.raises(DownloadError, match="is not a plain name"):
+        download_file("https://example.com/a", tmp_path, filename="sub\\a.zip")
     assert online == []
 
 
@@ -308,6 +316,11 @@ def test_extract_archive_tar_renames_root(tar_archive):
     # A second extraction replaces the renamed directory instead of nesting a copy in it
     assert extract_archive(str(tar_archive)) == extracted
     assert not (Path(extracted) / "corpus").exists()
+
+
+def test_extract_archive_missing(tmp_path):
+    with pytest.raises(DataFileError, match=r"is not found$"):
+        extract_archive(tmp_path / "missing.zip")
 
 
 def test_extract_archive_not_an_archive(tmp_path):

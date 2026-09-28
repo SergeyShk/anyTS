@@ -38,7 +38,7 @@ Downloads the archive of a dataset, verifies it and extracts the files. The arch
 ## download_file
 
 <!-- --8<-- [start:download_file] -->
-Downloads a file into a directory and returns its path, or an empty string if the file is already there and `force` is off. The name of the file is the last part of the path of the address, decoded; an address without one needs `filename`. The file is written under the name with `.part` added and renamed once it is complete, so a broken or interrupted download leaves no partial file; the server is waited for `DOWNLOAD_TIMEOUT` (60) seconds at most.
+Downloads a file into a directory and returns its path, or an empty string if the file is already there and `force` is off. The name of the file is the last part of the path of the address, decoded; an address without one needs `filename`, and a name with a drive or a separator raises `DownloadError`. The file is written under the name with `.part` added and renamed once it is complete, so a broken or interrupted download leaves no partial file; the server is waited for `DOWNLOAD_TIMEOUT` (60) seconds at most.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
@@ -52,7 +52,7 @@ Downloads a file into a directory and returns its path, or an empty string if th
 ## extract_archive
 
 <!-- --8<-- [start:extract_archive] -->
-Extracts a ZIP or TAR archive and returns the directory with the files. Paths leading outside the directory - absolute, with a drive or a network share, or with `..` - and links are refused, whatever the version of Python; a root directory that differs from the name of the archive without its extensions (`corpus_v1.tar.xz` - `corpus_v1`) is renamed to it, replacing an earlier extraction. A file that is not an archive, a corrupted or empty archive and a directory that cannot be created raise `DataFileError`.
+Extracts a ZIP or TAR archive and returns the directory with the files. Paths leading outside the directory - absolute, with a drive or a network share, or with `..` - and links are refused, whatever the version of Python; a root directory that differs from the name of the archive without its extensions (`corpus_v1.tar.xz` - `corpus_v1`) is renamed to it, replacing an earlier extraction. A missing file, a file that is not an archive, a corrupted or empty archive and a directory that cannot be created raise `DataFileError`.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |

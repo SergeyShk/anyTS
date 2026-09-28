@@ -315,7 +315,8 @@ def download_file(
 
     Raises:
         DownloadError: If the directory cannot be created, the address names no
-            file and no name is given, or the file cannot be downloaded
+            file and no name is given, the name is not a plain name of a file, or
+            the file cannot be downloaded
     """
     dirpath = to_path(dirpath)
     try:
@@ -326,6 +327,8 @@ def download_file(
         filename = Path(urllib.parse.unquote(urllib.parse.urlparse(url).path)).name
     if not filename:
         raise DownloadError(f"The address {url} names no file: give the name of the file")
+    if _is_outside(filename) or PureWindowsPath(filename).name != filename:
+        raise DownloadError(f"The name of the file {filename} is not a plain name")
     filepath = dirpath.resolve() / filename
     if filepath.is_file() and not force:
         logger.info("The file %s is already downloaded", filepath)
@@ -386,11 +389,13 @@ def extract_archive(archive_file: str | Path, extract_dir: str | Path | None = N
         str: Path to the directory with the extracted files
 
     Raises:
-        DataFileError: If the file is not a ZIP or TAR archive, the archive is
+        DataFileError: If the file is missing or is not a ZIP or TAR archive, the archive is
             corrupted, empty, has paths outside the directory or links, or the
             directory cannot be created
     """
     archive_path = to_path(archive_file).resolve()
+    if not archive_path.is_file():
+        raise DataFileError(f"The archive {archive_path} is not found")
     extract_path = to_path(extract_dir) if extract_dir else archive_path.parent
     try:
         extract_path.mkdir(parents=True, exist_ok=True)
