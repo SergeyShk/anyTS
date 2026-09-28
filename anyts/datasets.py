@@ -9,7 +9,7 @@ import urllib.request
 import zipfile
 from abc import ABCMeta, abstractmethod
 from collections.abc import Callable, Iterator
-from pathlib import Path, PurePosixPath
+from pathlib import Path, PureWindowsPath
 from typing import Any, ClassVar
 
 from .exceptions import DataFileError, DownloadError, ParameterError, SourceTypeError
@@ -115,9 +115,14 @@ def fetch_archive(
         user_agent (str): User-Agent header of the request
 
     Raises:
+        ParameterError: If the name of the archive has no extension
         DownloadError: If the archive cannot be downloaded or fails the checksum twice
-        DataFileError: If the verified archive cannot be extracted
+        DataFileError: If the verified archive cannot be extracted or its files
+            cannot replace the directory of the dataset
     """
+    stem = _stem(filepath.name)
+    if stem == filepath.name:
+        raise ParameterError(f"The name of the archive {filepath.name} has no extension")
     downloaded = download_file(
         url=url,
         dirpath=filepath.parent,
@@ -142,14 +147,19 @@ def fetch_archive(
                 f"The file {filepath} failed the checksum verification and was removed, "
                 "download it again"
             )
-    stem = _stem(filepath.name)
     target = filepath.parent / stem
     partial = filepath.parent / (stem + ".part")
     shutil.rmtree(partial, ignore_errors=True)
     try:
         extracted = Path(extract_archive(filepath, partial))
-        shutil.rmtree(target, ignore_errors=True)
-        extracted.rename(target)
+        try:
+            if target.is_symlink() or target.is_file():
+                target.unlink()
+            elif target.exists():
+                shutil.rmtree(target)
+            extracted.rename(target)
+        except OSError as e:
+            raise DataFileError(f"Cannot replace the directory {target}") from e
     finally:
         shutil.rmtree(partial, ignore_errors=True)
 
@@ -304,7 +314,8 @@ def download_file(
         str: Path to the downloaded file; an empty string if it was already there
 
     Raises:
-        DownloadError: If the directory cannot be created or the file cannot be downloaded
+        DownloadError: If the directory cannot be created, the address names no
+            file and no name is given, or the file cannot be downloaded
     """
     dirpath = to_path(dirpath)
     try:
@@ -312,7 +323,9 @@ def download_file(
     except OSError as e:
         raise DownloadError(f"Cannot create the directory {dirpath}") from e
     if not filename:
-        filename = Path(urllib.parse.urlparse(urllib.parse.unquote_plus(url)).path).name
+        filename = Path(urllib.parse.unquote(urllib.parse.urlparse(url).path)).name
+    if not filename:
+        raise DownloadError(f"The address {url} names no file: give the name of the file")
     filepath = dirpath.resolve() / filename
     if filepath.is_file() and not force:
         logger.info("The file %s is already downloaded", filepath)
@@ -328,16 +341,24 @@ def download_file(
             shutil.copyfileobj(response, out_file)
         partial.replace(filepath)
     except Exception as e:
-        partial.unlink(missing_ok=True)
         raise DownloadError(f"Cannot download the file {url}") from e
+    finally:
+        partial.unlink(missing_ok=True)
     logger.info("The file is downloaded: %s", filepath)
     return str(filepath)
 
 
 def _is_outside(member: str) -> bool:
-    """Whether the path of an archive member leads outside the directory of extraction"""
-    parts = PurePosixPath(member.replace("\\", "/")).parts
-    return bool(parts) and (parts[0] in ("/", "..") or ".." in parts)
+    """
+    Whether the path of an archive member leads outside the directory of extraction
+
+    Description:
+        Read as a Windows path, so that both separators, drives and network
+        shares are seen: any anchor (a leading separator, a drive, a share) or
+        a part ..
+    """
+    path = PureWindowsPath(member)
+    return bool(path.anchor) or ".." in path.parts
 
 
 def _stem(name: str) -> str:
@@ -352,9 +373,10 @@ def extract_archive(archive_file: str | Path, extract_dir: str | Path | None = N
     Extracting the files of a ZIP or TAR archive
 
     Description:
-        Paths and links leading outside the directory are refused. A root
-        directory that differs from the name of the archive without its
-        extensions is renamed to it, replacing an earlier extraction
+        Paths leading outside the directory (absolute, with a drive or with
+        ..) and links are refused. A root directory that differs from the
+        name of the archive without its extensions is renamed to it,
+        replacing an earlier extraction
 
     Arguments:
         archive_file (str|Path): Path to the archive
@@ -374,34 +396,34 @@ def extract_archive(archive_file: str | Path, extract_dir: str | Path | None = N
         extract_path.mkdir(parents=True, exist_ok=True)
     except OSError as e:
         raise DataFileError(f"Cannot create the directory {extract_path}") from e
-    is_zip = zipfile.is_zipfile(archive_path)
+    # A TAR that ends with a ZIP member passes is_zipfile too
     is_tar = tarfile.is_tarfile(archive_path)
-    if not is_zip and not is_tar:
+    if not is_tar and not zipfile.is_zipfile(archive_path):
         raise DataFileError(f"The file {archive_path} is not a ZIP or TAR archive")
+    refused = f"The archive {archive_path} has paths outside the directory or links"
+
+    def check(member: tarfile.TarInfo, path: str) -> tarfile.TarInfo:
+        if _is_outside(member.name) or not (member.isfile() or member.isdir()):
+            raise DataFileError(refused)
+        return tarfile.data_filter(member, path) if TAR_DATA_FILTER else member
+
     logger.info("Extracting the archive %s", archive_path)
     try:
-        if is_zip:
+        if is_tar:
+            with tarfile.open(archive_path, mode="r") as tar_file:
+                if TAR_DATA_FILTER:
+                    tar_file.extractall(extract_path, filter=check)
+                else:
+                    for member in tar_file:
+                        tar_file.extract(check(member, str(extract_path)), extract_path)
+                # After the extraction, so that the stream is read once
+                members = tar_file.getnames()
+        else:
             with zipfile.ZipFile(archive_path, mode="r") as zip_file:
                 members = zip_file.namelist()
                 if any(_is_outside(member) for member in members):
-                    raise DataFileError(
-                        f"The archive {archive_path} has paths outside the directory"
-                    )
+                    raise DataFileError(refused)
                 zip_file.extractall(extract_path)
-        else:
-            with tarfile.open(archive_path, mode="r") as tar_file:
-                if TAR_DATA_FILTER:
-                    tar_file.extractall(extract_path, filter="data")
-                else:
-                    for member in tar_file:
-                        if _is_outside(member.name) or not (member.isfile() or member.isdir()):
-                            raise DataFileError(
-                                f"The archive {archive_path} has paths outside the directory "
-                                "or links"
-                            )
-                        tar_file.extract(member, extract_path)
-                # After the extraction, so that the stream is read once
-                members = tar_file.getnames()
     except (OSError, zipfile.BadZipFile, tarfile.TarError) as e:
         raise DataFileError(f"Cannot extract the archive {archive_path}") from e
     if not members:

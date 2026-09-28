@@ -187,6 +187,40 @@ def test_download_file(tmp_path, online):
     ]
 
 
+@pytest.mark.parametrize(
+    ("url", "name"),
+    [
+        ("https://example.com/files/data+v1.zip", "data+v1.zip"),
+        ("https://example.com/files/a%23b.txt?download=1#top", "a#b.txt"),
+    ],
+)
+def test_download_file_name(tmp_path, online, url, name):
+    assert download_file(url, tmp_path) == str(tmp_path / name)
+
+
+def test_download_file_without_a_name(tmp_path, online):
+    with pytest.raises(DownloadError, match="names no file"):
+        download_file("https://example.com/", tmp_path)
+    assert online == []
+
+
+def test_download_file_interrupted(tmp_path, monkeypatch):
+    class InterruptedResponse(io.BytesIO):
+        def read(self, size=-1):
+            if self.tell():
+                raise KeyboardInterrupt
+            return super().read(4)
+
+    monkeypatch.setattr(
+        datasets.urllib.request,
+        "urlopen",
+        lambda *args, **kwargs: InterruptedResponse(b"data" * 4),
+    )
+    with pytest.raises(KeyboardInterrupt):
+        download_file("https://example.com/data.zip", tmp_path)
+    assert list(tmp_path.iterdir()) == []
+
+
 def test_download_file_partial_cleanup(tmp_path, monkeypatch):
     class BrokenResponse:
         def __enter__(self):
@@ -363,6 +397,89 @@ def test_extract_archive_without_the_data_filter(tar_archive, tmp_path, monkeypa
     assert not (tmp_path / "linked_out" / "corpus" / "link").exists()
 
 
+@pytest.mark.parametrize(
+    ("member", "outside"),
+    [
+        ("/x", True),
+        ("//x", True),
+        ("C:/x", True),
+        ("C:x", True),
+        ("\\\\server\\share\\x", True),
+        ("\\x", True),
+        ("../x", True),
+        ("a\\..\\b", True),
+        ("corpus/a.txt", False),
+        ("corpus/", False),
+        ("What....txt", False),
+    ],
+)
+def test_is_outside(member, outside):
+    assert datasets._is_outside(member) is outside
+
+
+def _tar_member(archive: tarfile.TarFile, name: str, data: bytes = b"text") -> None:
+    info = tarfile.TarInfo(name)
+    info.size = len(data)
+    archive.addfile(info, io.BytesIO(data))
+
+
+@pytest.mark.parametrize("data_filter", [True, False])
+def test_extract_archive_absolute_member(tmp_path, monkeypatch, data_filter):
+    if data_filter and not datasets.TAR_DATA_FILTER:
+        pytest.skip("tarfile has no data filter")
+    monkeypatch.setattr(datasets, "TAR_DATA_FILTER", data_filter)
+    victim = tmp_path / "victim"
+    victim.mkdir()
+    (victim / "mine.txt").write_text("mine", encoding="utf-8")
+    archive = tmp_path / "corpus.tar"
+    with tarfile.open(archive, mode="w") as tar_file:
+        _tar_member(tar_file, (victim / "a.txt").as_posix())
+    with pytest.raises(DataFileError, match="outside the directory or links"):
+        extract_archive(archive, tmp_path / "out")
+    assert (victim / "mine.txt").read_text(encoding="utf-8") == "mine"
+    assert not (victim / "a.txt").exists()
+
+
+@pytest.mark.parametrize("name", ["//abs/a.txt", "C:/data/a.txt", "\\\\server\\share\\a.txt"])
+def test_extract_archive_absolute_zip_member(tmp_path, name):
+    archive = tmp_path / "corpus.zip"
+    with zipfile.ZipFile(archive, "w") as zip_file:
+        zip_file.writestr(name, "text")
+    with pytest.raises(DataFileError, match="outside the directory or links"):
+        extract_archive(archive, tmp_path / "out")
+
+
+@pytest.mark.parametrize("data_filter", [True, False])
+def test_extract_archive_refuses_inner_links(tmp_path, monkeypatch, data_filter):
+    if data_filter and not datasets.TAR_DATA_FILTER:
+        pytest.skip("tarfile has no data filter")
+    monkeypatch.setattr(datasets, "TAR_DATA_FILTER", data_filter)
+    for kind in (tarfile.SYMTYPE, tarfile.LNKTYPE):
+        archive = tmp_path / f"corpus{kind!r}.tar"
+        with tarfile.open(archive, mode="w") as tar_file:
+            _tar_member(tar_file, "corpus/a.txt")
+            link = tarfile.TarInfo("corpus/link.txt")
+            link.type = kind
+            link.linkname = "a.txt" if kind == tarfile.SYMTYPE else "corpus/a.txt"
+            tar_file.addfile(link)
+        with pytest.raises(DataFileError, match="outside the directory or links"):
+            extract_archive(archive, tmp_path / "out")
+        assert not (tmp_path / "out" / "corpus" / "link.txt").exists()
+
+
+def test_extract_archive_tar_ending_with_a_zip(tmp_path):
+    inner = io.BytesIO()
+    with zipfile.ZipFile(inner, "w") as zip_file:
+        zip_file.writestr("inner/readme.txt", "readme")
+    archive = tmp_path / "corpus_v1.tar"
+    with tarfile.open(archive, mode="w") as tar_file:
+        _tar_member(tar_file, "corpus_v1/a.txt")
+        _tar_member(tar_file, "corpus_v1/extra.zip", inner.getvalue())
+    assert zipfile.is_zipfile(archive)
+    extracted = Path(extract_archive(archive, tmp_path / "out"))
+    assert sorted(path.name for path in extracted.iterdir()) == ["a.txt", "extra.zip"]
+
+
 def test_sha256(tmp_path):
     path = tmp_path / "data.txt"
     path.write_bytes(b"anyTS")
@@ -459,6 +576,44 @@ def test_fetch_archive_checksum_error(remote):
     assert calls == [(False, "anyTS"), (True, "anyTS")]
     assert not filepath.exists()
     assert not (filepath.parent / "corpus_v1").exists()
+
+
+def test_fetch_archive_without_an_extension(remote):
+    filepath, checksum, _, calls = remote
+    with pytest.raises(ParameterError, match="has no extension"):
+        _fetch(filepath.with_name("corpus_v1"), checksum)
+    assert calls == []
+
+
+def test_fetch_archive_replaces_a_link(remote):
+    filepath, checksum, _, _ = remote
+    elsewhere = filepath.parent.parent / "elsewhere"
+    elsewhere.mkdir()
+    (elsewhere / "a.txt").write_text("elsewhere", encoding="utf-8")
+    try:
+        (filepath.parent / "corpus_v1").symlink_to(elsewhere, target_is_directory=True)
+    except OSError:
+        pytest.skip("symbolic links are not available")
+    root = _fetch(filepath, checksum, missing=True)
+    assert not root.is_symlink()
+    assert (root / "b" / "c.txt").is_file()
+    assert (elsewhere / "a.txt").read_text(encoding="utf-8") == "elsewhere"
+
+
+def test_fetch_archive_cannot_replace(remote, monkeypatch):
+    filepath, checksum, _, _ = remote
+    _fetch(filepath, checksum)
+
+    rmtree = datasets.shutil.rmtree
+
+    def failing(path, ignore_errors=False):
+        if not ignore_errors:
+            raise PermissionError(path)
+        rmtree(path, ignore_errors=True)
+
+    monkeypatch.setattr(datasets.shutil, "rmtree", failing)
+    with pytest.raises(DataFileError, match=r"^Cannot replace the directory"):
+        _fetch(filepath, checksum, missing=True)
 
 
 def test_fetch_archive_interrupted_extraction(remote, monkeypatch):

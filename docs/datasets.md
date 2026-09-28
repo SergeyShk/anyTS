@@ -9,21 +9,21 @@ The base of a dataset and the functions that download, verify and extract its ar
 
 <!-- --8<-- [start:Dataset] -->
 An abstract dataset: a name, a dictionary of reference information `meta` and the methods a dataset implements - iteration over the records, `check_data`, `get_texts`, `get_records` and `download(force=False)`. `repr` gives `Dataset('<name>')`, and the property `info` is the name followed by `meta`.
+
+| Parameter | Type | Default | Description |
+| :-------: | :--: | :-----: | :---------: |
+| `name` | str | `-` | Name of the dataset |
+| `meta` | dict | `None` | Reference information about the dataset |
 <!-- --8<-- [end:Dataset] -->
 
 <!-- --8<-- [start:Dataset-hooks] -->
 The class attributes `repr_name` (`"Dataset"`) and `name_key` (`"name"`) are the name of the class in `repr` and the key of the name in `info`; a language library overrides them in a subclass.
 <!-- --8<-- [end:Dataset-hooks] -->
 
-| Parameter | Type | Default | Description |
-| :-------: | :--: | :-----: | :---------: |
-| `name` | str | `-` | Name of the dataset |
-| `meta` | dict | `None` | Reference information about the dataset |
-
 ## fetch_archive
 
 <!-- --8<-- [start:fetch_archive] -->
-Downloads the archive of a dataset, verifies it and extracts the files. The archive is verified and extracted when it is downloaded now or when `missing` says the extracted files are not all in place. An archive that fails the SHA-256 checksum is removed and downloaded again once, and a second failure raises `DownloadError`. The files are extracted into a directory `<name>.part` next to the archive, which replaces the directory of the dataset only once the extraction is complete, so an interrupted extraction leaves the earlier files as they were.
+Downloads the archive of a dataset, verifies it and extracts the files. The archive is verified and extracted when it is downloaded now or when `missing` says the extracted files are not all in place. An archive that fails the SHA-256 checksum is removed and downloaded again once, and a second failure raises `DownloadError`. The files are extracted into a directory `<name>.part` next to the archive, which replaces the directory of the dataset (or a link in its place) only once the extraction is complete, so an interrupted extraction leaves the earlier files as they were. The name of the archive must have an extension, since the directory is named after the archive without it; otherwise `ParameterError` is raised before the download.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
@@ -38,7 +38,7 @@ Downloads the archive of a dataset, verifies it and extracts the files. The arch
 ## download_file
 
 <!-- --8<-- [start:download_file] -->
-Downloads a file into a directory and returns its path, or an empty string if the file is already there and `force` is off. The file is written under the name with `.part` added and renamed once it is complete, so a broken download leaves no partial file; the server is waited for `DOWNLOAD_TIMEOUT` (60) seconds at most.
+Downloads a file into a directory and returns its path, or an empty string if the file is already there and `force` is off. The name of the file is the last part of the path of the address, decoded; an address without one needs `filename`. The file is written under the name with `.part` added and renamed once it is complete, so a broken or interrupted download leaves no partial file; the server is waited for `DOWNLOAD_TIMEOUT` (60) seconds at most.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
@@ -52,7 +52,7 @@ Downloads a file into a directory and returns its path, or an empty string if th
 ## extract_archive
 
 <!-- --8<-- [start:extract_archive] -->
-Extracts a ZIP or TAR archive and returns the directory with the files. Paths leading outside the directory and links are refused; a root directory that differs from the name of the archive without its extensions (`corpus_v1.tar.xz` - `corpus_v1`) is renamed to it, replacing an earlier extraction. A file that is not an archive, a corrupted or empty archive and a directory that cannot be created raise `DataFileError`.
+Extracts a ZIP or TAR archive and returns the directory with the files. Paths leading outside the directory - absolute, with a drive or a network share, or with `..` - and links are refused, whatever the version of Python; a root directory that differs from the name of the archive without its extensions (`corpus_v1.tar.xz` - `corpus_v1`) is renamed to it, replacing an earlier extraction. A file that is not an archive, a corrupted or empty archive and a directory that cannot be created raise `DataFileError`.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
@@ -64,12 +64,20 @@ Extracts a ZIP or TAR archive and returns the directory with the files. Paths le
 
 <!-- --8<-- [start:sha256] -->
 Computes the SHA-256 checksum of a file as a hexadecimal string; a missing file gives an empty string.
+
+| Parameter | Type | Default | Description |
+| :-------: | :--: | :-----: | :---------: |
+| `path` | Path | `-` | Path to the file |
 <!-- --8<-- [end:sha256] -->
 
 ## to_path
 
 <!-- --8<-- [start:to_path] -->
 Converts a string into a `Path` and returns a `Path` as it is; any other value raises `SourceTypeError`.
+
+| Parameter | Type | Default | Description |
+| :-------: | :--: | :-----: | :---------: |
+| `path` | str/Path | `-` | Path as a string or a Path |
 <!-- --8<-- [end:to_path] -->
 
 ## Filters of the records
