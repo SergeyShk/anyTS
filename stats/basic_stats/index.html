@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://sergeyshk.github.io/anyTS/stats/syntax/">
+        <link rel="canonical" href="https://sergeyshk.github.io/anyTS/stats/basic_stats/">
       
       
-        <link rel="prev" href="../cohesion/">
+        <link rel="prev" href="../diversity_stats_funcs/">
       
       
-        <link rel="next" href="../../corpus/keyness/">
+        <link rel="next" href="../cohesion/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Dependency tree helpers - anyTS</title>
+        <title>Basic statistics - anyTS</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#dependency-tree-helpers" class="md-skip">
+        <a href="#basic-statistics" class="md-skip">
           Skip to content
         </a>
       
@@ -112,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Dependency tree helpers
+              Basic statistics
             
           </span>
         </div>
@@ -890,10 +890,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../basic_stats/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Basic statistics
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -909,6 +936,142 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#description" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Description
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#language-hooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Language hooks
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parameters
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#attributes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Attributes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#methods" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Methods
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Methods">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#count_words_by_syllables-count_words_by_letters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        count_words_by_syllables, count_words_by_letters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get_stats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_stats
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#print_stats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        print_stats
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#count_punctuations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Punctuation marks
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage example
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -946,37 +1109,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Dependency tree helpers
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../syntax/" class="md-nav__link">
         
   
   
@@ -992,136 +1128,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#is_word" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        is_word
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#joins_previous" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Hyphenated words
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#is_root" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        is_root
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#base_dep" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        base_dep
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#get_children-count_children-subtree_len" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        get_children, count_children, subtree_len
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#calc_dependency_distances" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        calc_dependency_distances
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#calc_tree_depth" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        calc_tree_depth
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#has_feature" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        has_feature
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#calc_valency" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        calc_valency
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#calc_coordination_chains" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        calc_coordination_chains
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1748,10 +1754,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#is_word" class="md-nav__link">
+  <a href="#description" class="md-nav__link">
     <span class="md-ellipsis">
       
-        is_word
+        Description
       
     </span>
   </a>
@@ -1759,10 +1765,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#joins_previous" class="md-nav__link">
+  <a href="#language-hooks" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Hyphenated words
+        Language hooks
       
     </span>
   </a>
@@ -1770,10 +1776,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#is_root" class="md-nav__link">
+  <a href="#parameters" class="md-nav__link">
     <span class="md-ellipsis">
       
-        is_root
+        Parameters
       
     </span>
   </a>
@@ -1781,10 +1787,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#base_dep" class="md-nav__link">
+  <a href="#attributes" class="md-nav__link">
     <span class="md-ellipsis">
       
-        base_dep
+        Attributes
       
     </span>
   </a>
@@ -1792,10 +1798,60 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#get_children-count_children-subtree_len" class="md-nav__link">
+  <a href="#methods" class="md-nav__link">
     <span class="md-ellipsis">
       
-        get_children, count_children, subtree_len
+        Methods
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Methods">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#count_words_by_syllables-count_words_by_letters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        count_words_by_syllables, count_words_by_letters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get_stats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_stats
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#print_stats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        print_stats
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#count_punctuations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Punctuation marks
       
     </span>
   </a>
@@ -1803,54 +1859,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#calc_dependency_distances" class="md-nav__link">
+  <a href="#usage-example" class="md-nav__link">
     <span class="md-ellipsis">
       
-        calc_dependency_distances
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#calc_tree_depth" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        calc_tree_depth
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#has_feature" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        has_feature
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#calc_valency" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        calc_valency
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#calc_coordination_chains" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        calc_coordination_chains
+        Usage example
       
     </span>
   </a>
@@ -1877,162 +1889,295 @@
   
 
 
-<h1 id="dependency-tree-helpers">Dependency tree helpers<a class="headerlink" href="#dependency-tree-helpers" title="Permanent link">&para;</a></h1>
+<h1 id="basic-statistics">Basic statistics<a class="headerlink" href="#basic-statistics" title="Permanent link">&para;</a></h1>
 <div class="admonition info">
-<p><strong>anyts.syntax</strong></p>
+<p><strong>anyts.basic_stats.BasicStats</strong>, <strong>anyts.basic_stats.count_punctuations()</strong></p>
 </div>
-<p>Functions over the dependency tree of a spaCy <code>Doc</code>, a <code>Span</code> or a list of tokens. They use only what Universal Dependencies and the ClearNLP labels of the English models share: the head of a token, the relations <code>cc</code>, <code>conj</code>, <code>parataxis</code> and <code>punct</code>, and the root; everything else is up to a language library.</p>
-<h2 id="is_word">is_word<a class="headerlink" href="#is_word" title="Permanent link">&para;</a></h2>
-<!-- --8<-- [start:is_word] -->
-<p>Checks whether a token is a word: not whitespace and not a token of <code>is_punctuation</code>, so symbols like <code>%</code>, <code>€</code>, <code>+</code> and invisible characters are no words either.</p>
-<!-- --8<-- [end:is_word] -->
+<h2 id="description">Description<a class="headerlink" href="#description" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:BasicStats] -->
+<p>The basic statistics of a text: the counts of its sentences, words, characters, letters, spaces, syllables and punctuation marks, the distributions of the words by letters and by syllables, and the long, complex, simple, monosyllabic and polysyllabic words. The data source can be either a text or a <code>Doc</code> object of <a href="https://github.com/explosion/spaCy">spaCy</a>. Letters are counted by <code>str.isalpha</code>, so digits, hyphens and marks inside a word are not letters.</p>
+<p>The words of a string come from the word extractor and its sentences from the sentence extractor. The words of a <code>Doc</code> come from its tokens (punctuation marks and symbols such as <code>€</code> or <code>%</code> dropped) and its sentences from its boundaries, or from the sentence extractor when it has none; an extractor passed explicitly is used on the text of the <code>Doc</code>. A sentence of punctuation alone holds no word and is not counted.</p>
+<!-- --8<-- [end:BasicStats] -->
 
-<!-- --8<-- [start:get_words] -->
-<p><code>get_words(tokens, join_hyphens=False)</code> returns the words of a sequence of tokens in their order; with <code>join_hyphens=True</code> a word the tokenizer split at its hyphens is one word, given by its first part.</p>
-<!-- --8<-- [end:get_words] -->
-
-<h2 id="joins_previous">Hyphenated words<a class="headerlink" href="#joins_previous" title="Permanent link">&para;</a></h2>
-<!-- --8<-- [start:joins_previous] -->
-<p>A tokenizer may split a word at its hyphens (<code>well-known</code> into <code>well</code>, <code>-</code>, <code>known</code>) and a parser then hangs every part on its own head. <code>joins_previous(token)</code> checks whether a token continues such a word: it is a word that follows a hyphen with no whitespace around it, and the hyphen follows a word - the rule of <code>iter_doc_units</code> with <code>join_hyphens=True</code>. With <code>join_hyphens=True</code>, <code>get_words</code>, <code>get_children</code>, <code>count_children</code>, <code>subtree_len</code>, <code>calc_valency</code> and <code>calc_dependency_distances</code> take such a word for one word with its hyphens. A word that holds the head of the sentence has no head; the head of another one is that of its part hanging outside it, the nearest to the root (a word rather than a hyphen when equal). The dependents of a word are the words whose head hangs on one of its tokens, each given by that part (or by its first part when it hangs by a hyphen), and its subtree is the word and the words that hang on it, directly or through punctuation, so every word has one dependency and is the dependent of one word.</p>
-<!-- --8<-- [end:joins_previous] -->
-
-<h2 id="is_root">is_root<a class="headerlink" href="#is_root" title="Permanent link">&para;</a></h2>
-<!-- --8<-- [start:is_root] -->
-<p>Checks whether a token is the head of its sentence: its head is the token itself.</p>
-<!-- --8<-- [end:is_root] -->
-
-<h2 id="base_dep">base_dep<a class="headerlink" href="#base_dep" title="Permanent link">&para;</a></h2>
-<!-- --8<-- [start:base_dep] -->
-<p>The relation of a token without its subtype, which Universal Dependencies separates by a colon: <code>nsubj:pass</code> gives <code>nsubj</code>, <code>expl:pass</code> gives <code>expl</code>.</p>
-<!-- --8<-- [end:base_dep] -->
-
-<h2 id="get_children-count_children-subtree_len">get_children, count_children, subtree_len<a class="headerlink" href="#get_children-count_children-subtree_len" title="Permanent link">&para;</a></h2>
-<!-- --8<-- [start:get_children] -->
-<p><code>get_children(token, join_hyphens=False)</code> returns the dependent words of a token, punctuation and whitespace left out; with <code>join_hyphens=True</code>, the dependents of the whole hyphenated word the token belongs to.</p>
-<!-- --8<-- [end:get_children] -->
-
-<!-- --8<-- [start:count_children] -->
-<p><code>count_children(token, join_hyphens=False)</code> counts the dependent words of a token.</p>
-<!-- --8<-- [end:count_children] -->
-
-<!-- --8<-- [start:subtree_len] -->
-<p><code>subtree_len(token, join_hyphens=False)</code> is the number of words in the subtree of a token: the token itself and all of its direct and indirect dependents.</p>
-<!-- --8<-- [end:subtree_len] -->
-
-<h2 id="calc_dependency_distances">calc_dependency_distances<a class="headerlink" href="#calc_dependency_distances" title="Permanent link">&para;</a></h2>
-<!-- --8<-- [start:calc_dependency_distances] -->
-<p>The dependency distances (Liu 2008): the distance between a word and its head in positions of words, punctuation left out, in the order of the words. The head of a sentence has no dependency and is skipped, as is a word whose head lies outside the given sequence.</p>
+<h2 id="language-hooks">Language hooks<a class="headerlink" href="#language-hooks" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:BasicStats-hooks] -->
+<p>A language library subclasses <code>BasicStats</code>:</p>
 <table>
 <thead>
 <tr>
-<th style="text-align: center;">Parameter</th>
-<th style="text-align: center;">Type</th>
-<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Hook</th>
+<th style="text-align: center;">Kind</th>
 <th style="text-align: center;">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;"><code>tokens</code></td>
-<td style="text-align: center;">Doc/Span/list[Token]</td>
-<td style="text-align: center;"><code>-</code></td>
-<td style="text-align: center;">Sequence of tokens</td>
+<td style="text-align: center;"><code>count_syllables(word)</code></td>
+<td style="text-align: center;">method</td>
+<td style="text-align: center;">The syllables of a word; an abstract method, since syllables depend on the language</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>sents_extractor_class</code>, <code>words_extractor_class</code></td>
+<td style="text-align: center;">class attributes</td>
+<td style="text-align: center;">The extractors used when none is given; <code>SentsExtractor</code> and <code>WordsExtractor</code> of the core by default</td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>join_hyphens</code></td>
+<td style="text-align: center;">class attribute</td>
+<td style="text-align: center;">Join the parts of the hyphenated words of a <code>Doc</code> (<code>iter_doc_words</code>); <code>False</code> by default</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>count_punctuations(text)</code></td>
+<td style="text-align: center;">method</td>
+<td style="text-align: center;">The punctuation marks by type; <code>count_punctuations</code> of the module by default</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>stats_desc</code>, <code>stats_headers</code></td>
+<td style="text-align: center;">class attributes</td>
+<td style="text-align: center;">The descriptions of the statistics and the headers of the columns for <code>print_stats</code></td>
+</tr>
+</tbody>
+</table>
+<p>The thresholds of the complex and the long words are parameters; a library sets its own defaults in its <code>__init__</code> and passes them on.</p>
+<!-- --8<-- [end:BasicStats-hooks] -->
+
+<h2 id="parameters">Parameters<a class="headerlink" href="#parameters" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:BasicStats-parameters] -->
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>source</code></td>
+<td style="text-align: center;">str/Doc</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Data source (a string or a Doc object)</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>sents_extractor</code></td>
+<td style="text-align: center;">SentsExtractor</td>
+<td style="text-align: center;"><code>None</code></td>
+<td style="text-align: center;">Sentence extraction tool; used for a Doc too, on its text</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>words_extractor</code></td>
+<td style="text-align: center;">WordsExtractor</td>
+<td style="text-align: center;"><code>None</code></td>
+<td style="text-align: center;">Word extraction tool; used for a Doc too, on its text</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>normalize</code></td>
 <td style="text-align: center;">bool</td>
 <td style="text-align: center;"><code>False</code></td>
-<td style="text-align: center;">Take a hyphenated word for one position</td>
+<td style="text-align: center;">Compute normalized statistics</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>complex_syl_factor</code></td>
+<td style="text-align: center;">int</td>
+<td style="text-align: center;"><code>COMPLEX_SYL_FACTOR</code></td>
+<td style="text-align: center;">Minimum number of syllables in a complex word</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>long_word_letter_factor</code></td>
+<td style="text-align: center;">int</td>
+<td style="text-align: center;"><code>LONG_WORD_LETTER_FACTOR</code></td>
+<td style="text-align: center;">Minimum number of letters in a long word</td>
 </tr>
 </tbody>
 </table>
-<!-- --8<-- [end:calc_dependency_distances] -->
+<p>A source that is neither a string nor a <code>Doc</code> and an extractor of another type raise <code>SourceTypeError</code>, a source without words <code>SourceError</code>, a threshold that is not an integer of at least one <code>ParameterError</code>.</p>
+<!-- --8<-- [end:BasicStats-parameters] -->
 
-<h2 id="calc_tree_depth">calc_tree_depth<a class="headerlink" href="#calc_tree_depth" title="Permanent link">&para;</a></h2>
-<!-- --8<-- [start:calc_tree_depth] -->
-<p>The depth of the dependency tree: the longest path from the head of a sentence to a leaf, in relations between words. For a sequence of several sentences the maximum is taken; a sentence of one word has depth 0.</p>
+<p>The thresholds of the core are <code>COMPLEX_SYL_FACTOR = 3</code> and <code>LONG_WORD_LETTER_FACTOR = 7</code> of <code>anyts.constants</code>.</p>
+<h2 id="attributes">Attributes<a class="headerlink" href="#attributes" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:BasicStats-attributes] -->
 <table>
 <thead>
 <tr>
-<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Attribute</th>
 <th style="text-align: center;">Type</th>
-<th style="text-align: center;">Default</th>
 <th style="text-align: center;">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;"><code>tokens</code></td>
-<td style="text-align: center;">Doc/Span/list[Token]</td>
-<td style="text-align: center;"><code>-</code></td>
-<td style="text-align: center;">Sequence of tokens</td>
+<td style="text-align: center;"><code>c_letters</code></td>
+<td style="text-align: center;">dict[int, int]</td>
+<td style="text-align: center;">Distribution of words by number of letters</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>c_syllables</code></td>
+<td style="text-align: center;">dict[int, int]</td>
+<td style="text-align: center;">Distribution of words by number of syllables</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>n_sents</code></td>
+<td style="text-align: center;">int</td>
+<td style="text-align: center;">Number of sentences containing words</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>n_words</code></td>
+<td style="text-align: center;">int</td>
+<td style="text-align: center;">Number of words</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>n_unique_words</code></td>
+<td style="text-align: center;">int</td>
+<td style="text-align: center;">Number of unique words, case ignored</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>n_long_words</code></td>
+<td style="text-align: center;">int</td>
+<td style="text-align: center;">Number of long words</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>n_complex_words</code></td>
+<td style="text-align: center;">int</td>
+<td style="text-align: center;">Number of complex words</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>n_simple_words</code></td>
+<td style="text-align: center;">int</td>
+<td style="text-align: center;">Number of simple words: with a syllable, below the complex ones</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>n_monosyllable_words</code></td>
+<td style="text-align: center;">int</td>
+<td style="text-align: center;">Number of monosyllabic words</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>n_polysyllable_words</code></td>
+<td style="text-align: center;">int</td>
+<td style="text-align: center;">Number of polysyllabic words</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>n_chars</code></td>
+<td style="text-align: center;">int</td>
+<td style="text-align: center;">Number of characters without the line breaks</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>n_letters</code></td>
+<td style="text-align: center;">int</td>
+<td style="text-align: center;">Number of letters</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>n_spaces</code></td>
+<td style="text-align: center;">int</td>
+<td style="text-align: center;">Number of spaces and tabs</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>n_syllables</code></td>
+<td style="text-align: center;">int</td>
+<td style="text-align: center;">Number of syllables</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>n_punctuations</code></td>
+<td style="text-align: center;">int</td>
+<td style="text-align: center;">Number of punctuation marks</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>c_punctuations</code></td>
+<td style="text-align: center;">dict[str, int]</td>
+<td style="text-align: center;">Distribution of punctuation marks by type</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>p_unique_words</code></td>
+<td style="text-align: center;">float</td>
+<td style="text-align: center;">Normalized number of unique words</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>p_long_words</code></td>
+<td style="text-align: center;">float</td>
+<td style="text-align: center;">Normalized number of long words</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>p_complex_words</code></td>
+<td style="text-align: center;">float</td>
+<td style="text-align: center;">Normalized number of complex words</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>p_simple_words</code></td>
+<td style="text-align: center;">float</td>
+<td style="text-align: center;">Normalized number of simple words</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>p_monosyllable_words</code></td>
+<td style="text-align: center;">float</td>
+<td style="text-align: center;">Normalized number of monosyllabic words</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>p_polysyllable_words</code></td>
+<td style="text-align: center;">float</td>
+<td style="text-align: center;">Normalized number of polysyllabic words</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>p_letters</code></td>
+<td style="text-align: center;">float</td>
+<td style="text-align: center;">Normalized number of letters</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>p_spaces</code></td>
+<td style="text-align: center;">float</td>
+<td style="text-align: center;">Normalized number of spaces</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>p_punctuations</code></td>
+<td style="text-align: center;">float</td>
+<td style="text-align: center;">Normalized number of punctuation marks</td>
 </tr>
 </tbody>
 </table>
-<!-- --8<-- [end:calc_tree_depth] -->
+<p>The counts of the words are normalized by the number of words, those of the characters by the number of characters; the normalized statistics are computed with <code>normalize=True</code>.</p>
+<!-- --8<-- [end:BasicStats-attributes] -->
 
-<h2 id="has_feature">has_feature<a class="headerlink" href="#has_feature" title="Permanent link">&para;</a></h2>
-<!-- --8<-- [start:has_feature] -->
-<p>Checks whether a token carries a morphological feature with a given value: <code>has_feature(token, "VerbForm", "Fin")</code>.</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: center;">Parameter</th>
-<th style="text-align: center;">Type</th>
-<th style="text-align: center;">Default</th>
-<th style="text-align: center;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: center;"><code>token</code></td>
-<td style="text-align: center;">Token</td>
-<td style="text-align: center;"><code>-</code></td>
-<td style="text-align: center;">Token</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>field</code></td>
-<td style="text-align: center;">str</td>
-<td style="text-align: center;"><code>-</code></td>
-<td style="text-align: center;">Name of the feature</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>value</code></td>
-<td style="text-align: center;">str</td>
-<td style="text-align: center;"><code>-</code></td>
-<td style="text-align: center;">Value of the feature</td>
-</tr>
-</tbody>
-</table>
-<!-- --8<-- [end:has_feature] -->
+<h2 id="methods">Methods<a class="headerlink" href="#methods" title="Permanent link">&para;</a></h2>
+<h3 id="count_words_by_syllables-count_words_by_letters">count_words_by_syllables, count_words_by_letters<a class="headerlink" href="#count_words_by_syllables-count_words_by_letters" title="Permanent link">&para;</a></h3>
+<!-- --8<-- [start:BasicStats-count_words_by] -->
+<p><code>count_words_by_syllables(min_syllables)</code> and <code>count_words_by_letters(min_letters)</code> return the number of words with at least the given number of syllables or letters; a minimum that is not an integer raises <code>ParameterError</code>.</p>
+<!-- --8<-- [end:BasicStats-count_words_by] -->
 
-<h2 id="calc_valency">calc_valency<a class="headerlink" href="#calc_valency" title="Permanent link">&para;</a></h2>
-<!-- --8<-- [start:calc_valency] -->
-<p>The valency of a token: the number of its dependent words, the relations <code>cc</code>, <code>conj</code> and <code>parataxis</code> left out; <code>calc_valency(token, join_hyphens=True)</code> counts a hyphenated dependent once, so <code>came</code> in <code>Some-one came</code> has one dependent and not two.</p>
-<!-- --8<-- [end:calc_valency] -->
+<h3 id="get_stats">get_stats<a class="headerlink" href="#get_stats" title="Permanent link">&para;</a></h3>
+<!-- --8<-- [start:BasicStats-get_stats] -->
+<p>Returns a dictionary with the computed statistics - a copy: editing it does not change the object.</p>
+<!-- --8<-- [end:BasicStats-get_stats] -->
 
-<h2 id="calc_coordination_chains">calc_coordination_chains<a class="headerlink" href="#calc_coordination_chains" title="Permanent link">&para;</a></h2>
-<!-- --8<-- [start:calc_coordination_chains] -->
-<p>The lengths of the coordination chains, in the order of their first words. A chain is a group of words linked by the relation <code>conj</code>, whichever word each conjunct hangs on: Universal Dependencies attaches every conjunct to the first one (<code>pears → apples</code>, <code>plums → apples</code>), ClearNLP to the previous one (<code>pears → apples</code>, <code>plums → pears</code>), and both give one chain of three for <code>apples, pears and plums</code>. A nested coordination (<code>cats and dogs, or birds</code>) and an enumeration that the parser splits between several heads are one chain as well. The length of a chain is the number of its words; a conjunct whose head lies outside the sequence belongs to no chain with it.</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: center;">Parameter</th>
-<th style="text-align: center;">Type</th>
-<th style="text-align: center;">Default</th>
-<th style="text-align: center;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: center;"><code>tokens</code></td>
-<td style="text-align: center;">Doc/Span/list[Token]</td>
-<td style="text-align: center;"><code>-</code></td>
-<td style="text-align: center;">Sequence of tokens</td>
-</tr>
-</tbody>
-</table>
-<!-- --8<-- [end:calc_coordination_chains] -->
+<h3 id="print_stats">print_stats<a class="headerlink" href="#print_stats" title="Permanent link">&para;</a></h3>
+<!-- --8<-- [start:BasicStats-print_stats] -->
+<p>Prints a table with the counts of the statistics, their descriptions from <code>stats_desc</code> and the headers from <code>stats_headers</code>.</p>
+<!-- --8<-- [end:BasicStats-print_stats] -->
+
+<h2 id="count_punctuations">Punctuation marks<a class="headerlink" href="#count_punctuations" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:count_punctuations] -->
+<p><code>count_punctuations(text, marks=PUNCTUATION_MARKS, dash_pattern=DASH_PATTERN)</code> counts punctuation marks by the types of <code>anyts.constants.PUNCTUATION_TYPES</code> - the same distribution lives in the <code>c_punctuations</code> attribute: commas, periods, question and exclamation marks (the inverted <code>¿</code> and <code>¡</code> included, so <code>¿So?</code> carries two question marks), ellipses (the <code>…</code> character, three or more periods, or two periods after <code>?</code> and <code>!</code> - one mark whose periods do not count as periods: <code>Who?..</code> is a question and an ellipsis), colons, semicolons, dashes (<code>—</code>, <code>–</code> and the horizontal bar <code>―</code>, as well as a run of two or more hyphens, a hyphen after whitespace, at the start of a line or after a closing mark, before a space, a tab or the end of the text, or between a letter and an opening or a closing mark, as a dash is typed in plain text: <code>--Hello --said John</code>, <code>- They left - he said</code>), hyphens inside words, before digits and at the end of a line inside a word (<code>well-known</code>, <code>-5</code>), guillemets <code>«»</code>, straight and curly quotation marks <code>"“”‘’</code>, parentheses and the other marks: every remaining character of the Unicode categories P and S (<code>‹›</code>, <code>§</code>, <code>€</code>, <code>°</code>). <code>marks</code> gives the type of every mark - a single character of a type of <code>PUNCTUATION_TYPES</code>, otherwise <code>ParameterError</code> - and <code>dash_pattern</code> the dashes typed with hyphens as a compiled regular expression, for a language whose conventions differ; a text that is not a string, marks that are not a mapping and dashes that are not a compiled expression raise <code>SourceTypeError</code>.</p>
+<!-- --8<-- [end:count_punctuations] -->
+
+<h2 id="usage-example">Usage example<a class="headerlink" href="#usage-example" title="Permanent link">&para;</a></h2>
+<p>A subclass with the syllables of a language - here the groups of vowels, a rough rule for English.</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">anyts.basic_stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">BasicStats</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Stats</span><span class="p">(</span><span class="n">BasicStats</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">count_syllables</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">word</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="sa">r</span><span class="s2">"[aeiouy]+"</span><span class="p">,</span> <span class="n">word</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">))</span>
+
+
+<span class="n">bs</span> <span class="o">=</span> <span class="n">Stats</span><span class="p">(</span><span class="s2">"The cat sat on the mat. A beautiful day!"</span><span class="p">)</span>
+<span class="n">bs</span><span class="o">.</span><span class="n">n_sents</span><span class="p">,</span> <span class="n">bs</span><span class="o">.</span><span class="n">n_words</span><span class="p">,</span> <span class="n">bs</span><span class="o">.</span><span class="n">n_syllables</span><span class="p">,</span> <span class="n">bs</span><span class="o">.</span><span class="n">n_complex_words</span>
+<span class="c1"># (2, 9, 11, 1)</span>
+<span class="n">bs</span><span class="o">.</span><span class="n">c_punctuations</span><span class="p">[</span><span class="s2">"exclamation"</span><span class="p">]</span>
+<span class="c1"># 1</span>
+</code></pre></div>
+</div>
 
 
 
