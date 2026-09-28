@@ -192,9 +192,19 @@ def test_find_of_another_layer():
             return [Highlight(0, 3, "stopword")]
 
     with pytest.raises(
-        ValueError, match=r"^A fragment of the layer stopword is found for stopwords$"
+        ParameterError, match=r"^A fragment of the layer stopword is found for stopwords$"
     ):
         Typo(text, layers="stopwords")
+
+
+@pytest.mark.parametrize(("start", "end"), [(3, 3), (5, 2), (-4, 2), (8, 10_000)])
+def test_find_outside_the_text(start, end):
+    class Astray(Marks):
+        def find(self, layer, words, sents, doc):
+            return [Highlight(start, end, layer)]
+
+    with pytest.raises(ParameterError, match=rf"lies outside the text: {start}-{end}$"):
+        Astray(text, layers="stopwords")
 
 
 def test_defaults_are_read_only():
@@ -214,7 +224,7 @@ def test_layer_requirements_listed():
     with pytest.raises(ParameterError, match=message):
         Heavy(text, layers="subjects")
     with pytest.raises(ParameterError, match=r"^The layer long_sents is not available$"):
-        Marks.select_layers(["long_sents"], [])
+        Marks._select_layers(["long_sents"], [])
 
 
 def test_highlights_sorted():
@@ -241,6 +251,19 @@ def test_get_doc_words():
         Word(4, 7, "old", "ADJ", "old"),
     ]
     assert get_doc_words(parsed(tags=False))[0] == Word(0, 3, "The")
+    # The part of speech and the lemma are taken each when the Doc has it
+    doc = Doc(spacy.blank("xx").vocab, words=["The", "cat"], pos=["DET", "NOUN"])
+    assert get_doc_words(doc) == [Word(0, 3, "The", "DET"), Word(4, 7, "cat", "NOUN")]
+    doc = Doc(spacy.blank("xx").vocab, words=["The", "cats"], lemmas=["the", "cat"])
+    assert get_doc_words(doc)[1] == Word(4, 8, "cats", None, "cat")
+
+
+def test_byte_order_mark():
+    sample = "\ufeffThe cat and the dog sleep on a mat."
+    assert get_doc_words(spacy.blank("xx")(sample))[0] == Word(1, 4, "The")
+    counts = Marks(sample, layers="stopwords").counts
+    assert Marks(spacy.blank("xx")(sample), layers="stopwords").counts == counts
+    assert counts == {"stopwords": 4}
 
 
 def test_iter_doc_sents():

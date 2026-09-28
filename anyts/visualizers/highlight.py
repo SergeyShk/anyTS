@@ -11,7 +11,7 @@ from spacy.tokens import Doc, Token
 from ..exceptions import ParameterError, SourceError, SourceTypeError
 from ..extractors import SentsExtractor, _iter_words
 from ..syntax import get_words
-from ..utils import iter_doc_tokens
+from ..utils import _unit_word, iter_doc_tokens
 
 # Line breaks of Unix, Windows and old Mac texts
 LINE_BREAK = re.compile(r"\r\n?|\n")
@@ -121,9 +121,9 @@ class HighlightedText:
     Raises:
         SourceTypeError: If the source is neither a string nor a Doc
         SourceError: If the source has no words
-        ParameterError: If a layer is unknown or not allowed by the source, or
-            the layers are not a list of names
-        ValueError: If find gives a fragment of another layer
+        ParameterError: If a layer is unknown or not allowed by the source, the
+            layers are not a list of names, or find gives a fragment of another
+            layer or one outside the text
     """
 
     layers_desc: ClassVar[Mapping[str, str]] = MappingProxyType({})
@@ -160,12 +160,16 @@ class HighlightedText:
                 for annotation in self.layer_annotations.get(layer, ())
             )
         ]
-        self.layers = self.select_layers(layers, available)
+        self.layers = self._select_layers(layers, available)
         highlights = []
         for layer in self.layers:
             for h in self.find(layer, words, sents, doc):
                 if h.layer != layer:
-                    raise ValueError(f"A fragment of the layer {h.layer} is found for {layer}")
+                    raise ParameterError(f"A fragment of the layer {h.layer} is found for {layer}")
+                if not 0 <= h.start < h.end <= len(self.text):
+                    raise ParameterError(
+                        f"A fragment of the layer {layer} lies outside the text: {h.start}-{h.end}"
+                    )
                 highlights.append(h)
         self.highlights = tuple(sorted(highlights, key=lambda h: (h.start, -h.end)))
 
@@ -245,7 +249,7 @@ class HighlightedText:
         raise NotImplementedError
 
     @classmethod
-    def select_layers(
+    def _select_layers(
         cls, layers: Sequence[str] | str | None, available: Sequence[str]
     ) -> tuple[str, ...]:
         """
@@ -382,8 +386,8 @@ def get_doc_words(doc: Doc) -> list[Word]:
     Extracting the words of a Doc object with their positions
 
     Description:
-        The words of iter_doc_tokens, with the part of speech and the lemma when
-        the Doc has both
+        The words of iter_doc_tokens, a byte order mark at the start left out,
+        with the part of speech and the lemma when the Doc has them
 
     Arguments:
         doc (Doc): Doc object
@@ -391,14 +395,12 @@ def get_doc_words(doc: Doc) -> list[Word]:
     Returns:
         list[Word]: Words with their positions
     """
-    tagged = doc.has_annotation("POS") and doc.has_annotation("LEMMA")
+    has_pos, has_lemma = doc.has_annotation("POS"), doc.has_annotation("LEMMA")
     return [
         Word(
-            token.idx,
-            token.idx + len(token),
-            token.text,
-            token.pos_ if tagged else None,
-            token.lemma_ if tagged else None,
+            *_unit_word([token]),
+            token.pos_ if has_pos else None,
+            token.lemma_ if has_lemma else None,
         )
         for token in iter_doc_tokens(doc)
     ]

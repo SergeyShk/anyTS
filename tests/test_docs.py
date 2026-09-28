@@ -35,6 +35,7 @@ VISUALIZER_MODULES = [
         "sentences",
         "stylometry",
         "vocabulary",
+        "word_tree",
         "zipf",
     )
 ]
@@ -126,7 +127,6 @@ def test_public_api_has_sections():
         "Dataset",
         *(name for module in CORPUS_MODULES for name in public_names(module)),
         *(name for module in VISUALIZER_MODULES for name in public_names(module)),
-        "wordtree",
     }
     assert public_names(exceptions) == []
     assert required <= documented, sorted(required - documented)
