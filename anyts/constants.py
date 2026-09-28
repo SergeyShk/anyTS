@@ -180,3 +180,63 @@ PUNCTUATION_TYPES = {
     "parentheses": "Parentheses",
     "other": "Other marks",
 }
+
+# Readability statistics: the least syllables of a polysyllabic word of SMOG and Gunning's
+# fog and letters of a long word of LIX and RIX
+SMOG_COMPLEX_SYL_FACTOR = 3
+LIX_LONG_WORD_LETTER_FACTOR = 7
+READABILITY_STATS_DESC = {
+    "flesch_reading_easy": "Flesch reading ease",
+    "flesch_kincaid_grade": "Flesch-Kincaid grade",
+    "coleman_liau_index": "Coleman-Liau index",
+    "automated_readability_index": "Automated readability index",
+    "smog_index": "SMOG index",
+    "gunning_fog_index": "Gunning fog index",
+    "lix": "LIX readability index",
+    "rix": "RIX readability index",
+    "mu_index": "Legibilidad µ",
+    "consensus_grade": "Consensus grade",
+    "reading_time": "Reading time (min)",
+}
+READABILITY_GRADE_STATS = (
+    "flesch_kincaid_grade",
+    "coleman_liau_index",
+    "automated_readability_index",
+    "smog_index",
+    "gunning_fog_index",
+)
+# Coefficients of the formulas fitted on English: Flesch (1948), Kincaid et al. (1975),
+# Coleman and Liau (1975), Smith and Senter (1967), McLaughlin (1969), Gunning (1952)
+READABILITY_PRESETS: dict[str, dict[str, tuple[float, ...]]] = {
+    "original": {
+        "flesch_reading_easy": (1.015, 84.6, 206.835),
+        "flesch_kincaid_grade": (0.39, 11.8, 15.59),
+        "coleman_liau_index": (0.0588, 0.296, 15.8),
+        "automated_readability_index": (4.71, 0.5, 21.43),
+        "smog_index": (1.043, 30, 3.1291),
+        "gunning_fog_index": (0.4,),
+    }
+}
+# Lower bounds of the Flesch reading ease and the years of schooling they give, as
+# text_standard of textstat reads the table of Flesch (1948); below the last bound - 13
+READING_EASE_GRADES: tuple[tuple[float, float], ...] = (
+    (90, 5),
+    (80, 6),
+    (70, 7),
+    (60, 8.5),
+    (50, 10),
+    (40, 11),
+    (30, 12),
+)
+# Years of schooling of the school stages of the United States and the age of the reader
+GRADE_AGE_LEVELS: tuple[tuple[int, int, str, str], ...] = (
+    (1, 5, "elementary school, grades 1-5", "6-11 years"),
+    (6, 8, "middle school, grades 6-8", "11-14 years"),
+    (9, 12, "high school, grades 9-12", "14-18 years"),
+    (13, 16, "college", "18-22 years"),
+)
+POSTGRADUATE_LEVEL = ("graduate school", "over 22 years")
+# Silent reading speed of adults in English, words per minute, and the speeds (aloud,
+# silent) of the norms: Brysbaert (2019)
+READING_SPEED_WPM = 238
+READING_SPEED_NORMS: dict[str, tuple[int, ...]] = {"adult": (183, 238)}

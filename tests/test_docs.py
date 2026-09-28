@@ -15,6 +15,7 @@ from anyts import (
     diversity_stats,
     exceptions,
     extractors,
+    readability_stats,
     syntax,
     utils,
 )
@@ -119,6 +120,7 @@ def test_public_api_has_sections():
         *public_names(datasets),
         *public_names(components),
         *public_names(basic_stats),
+        *public_names(readability_stats),
         "BasicStats",
         "StatsComponent",
         "Dataset",
