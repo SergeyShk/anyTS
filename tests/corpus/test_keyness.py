@@ -286,6 +286,14 @@ def test_keyness_of_a_string_or_a_set():
         keyness(target, frozenset(reference))
     with pytest.raises(SourceTypeError):
         keyness(Counter({1: 2}), reference)
+    with pytest.raises(SourceTypeError, match=r"^The frequencies must be numbers, not str$"):
+        keyness({"a": "3"}, ["a", "b"])
+    with pytest.raises(SourceTypeError, match=r"^The frequencies must be numbers, not NoneType$"):
+        keyness(["a"], {"a": None, "b": 1})
+    with pytest.raises(
+        SourceTypeError, match=r"^The frequencies of the reference must be a mapping"
+    ):
+        keyness(target, FrequencyReference(["the", "dog"], 100))
 
 
 @pytest.mark.parametrize("span", [False, True])

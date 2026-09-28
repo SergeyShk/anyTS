@@ -138,7 +138,22 @@ def test_dispersion_options():
 
 
 @pytest.mark.parametrize(
-    "parts", [1, 13, [6, 5], [12, 0], [12], ["a", "b"], 2.5, [2.5, 9.5], [True, 11]]
+    "parts",
+    [
+        1,
+        13,
+        [6, 5],
+        [12, 0],
+        [12],
+        ["a", "b"],
+        2.5,
+        [2.5, 9.5],
+        [True, 11],
+        {5, 6},
+        {5: 6},
+        iter([6, 5]),
+        "65",
+    ],
 )
 def test_dispersion_errors(parts):
     with pytest.raises(ParameterError):

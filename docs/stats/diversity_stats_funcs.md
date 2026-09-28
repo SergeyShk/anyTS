@@ -757,7 +757,7 @@ Parameters:
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
-| `text` | list[str] | `-` | List of words |
+| `text` | list[str]/Counter | `-` | List of words or a counter of their frequencies |
 <!-- --8<-- [end:fit_zipf_mandelbrot] -->
 
 !!! example "Example"

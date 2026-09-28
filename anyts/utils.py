@@ -2,7 +2,7 @@ import unicodedata
 from collections.abc import Iterable, Iterator, Mapping, Set
 from functools import lru_cache
 from itertools import repeat
-from numbers import Integral
+from numbers import Integral, Real
 
 from spacy.tokens import Doc, Span, Token
 
@@ -109,18 +109,20 @@ def check_sequence(value: object, what: str = "words", ordered: bool = True) -> 
 
     Description:
         A string would be iterated character by character, an iterator would
-        be exhausted by the first pass over it, and a set or a mapping has no
-        order of its items, so it passes only with ordered=False - for items
-        whose order does not matter, such as stop words
+        be exhausted by the first pass over it, and a table (a two-dimensional
+        array or a DataFrame) by its rows or columns. A set or a mapping holds
+        every item once, in no order of the text, so it passes only with
+        ordered=False - for a collection whose order and repeats do not
+        matter, such as stop words
 
     Arguments:
         value (object): Value to check
         what (str): What is expected, for the message of the error
-        ordered (bool): Whether the order of the items matters
+        ordered (bool): Whether the order and the repeats of the items matter
 
     Raises:
         SourceTypeError: If a string, a Doc, a Span, an iterator, a non-iterable
-            object or, with ordered, a set or a mapping is passed
+            object, a table or, with ordered, a set or a mapping is passed
 
     Example:
         >>> from anyts.utils import check_sequence
@@ -142,10 +144,13 @@ def check_sequence(value: object, what: str = "words", ordered: bool = True) -> 
         raise SourceTypeError(f"A list of {what} is expected, not an iterator")
     if not isinstance(value, Iterable):
         raise SourceTypeError(f"A list of {what} is expected, not {type(value).__name__}")
-    if ordered and isinstance(value, Set | Mapping):
+    ndim = getattr(value, "ndim", 1)
+    if ndim != 1:
         raise SourceTypeError(
-            f"A list of {what} is expected, not a {type(value).__name__}: its order is not fixed"
+            f"A list of {what} is expected, not a {ndim}-dimensional {type(value).__name__}"
         )
+    if ordered and isinstance(value, Set | Mapping):
+        raise SourceTypeError(f"A list of {what} is expected, not {type(value).__name__}")
 
 
 def check_words(value: Iterable[object], what: str = "words", ordered: bool = True) -> None:
@@ -155,7 +160,7 @@ def check_words(value: Iterable[object], what: str = "words", ordered: bool = Tr
     Arguments:
         value (object): Value to check
         what (str): What is expected, for the message of the error
-        ordered (bool): Whether the order of the words matters (check_sequence)
+        ordered (bool): Whether the order and the repeats of the words matter (check_sequence)
 
     Raises:
         SourceTypeError: If the value fails check_sequence or holds an item
@@ -174,6 +179,35 @@ def check_words(value: Iterable[object], what: str = "words", ordered: bool = Tr
     if not all(map(isinstance, value, repeat(str))):
         item = next(item for item in value if not isinstance(item, str))
         raise SourceTypeError(f"The {what} must be strings, not {type(item).__name__}")
+
+
+def check_counts(value: object) -> None:
+    """
+    Checking that an argument is a counter: a mapping of words to their frequencies
+
+    Arguments:
+        value (object): Value to check
+
+    Raises:
+        SourceTypeError: If the value is not a mapping, a word is not a string
+            or a frequency is not a number
+
+    Example:
+        >>> from collections import Counter
+        >>> from anyts.utils import check_counts
+        >>> check_counts(Counter(["the", "cat", "the"]))
+        >>> check_counts({"the": "2"})
+        Traceback (most recent call last):
+        ...
+        anyts.exceptions.SourceTypeError: The frequencies must be numbers, not str
+    """
+    if not isinstance(value, Mapping):
+        raise SourceTypeError(f"A mapping of frequencies is expected, not {type(value).__name__}")
+    for word, count in value.items():
+        if not isinstance(word, str):
+            raise SourceTypeError(f"The words must be strings, not {type(word).__name__}")
+        if isinstance(count, bool) or not isinstance(count, Real):
+            raise SourceTypeError(f"The frequencies must be numbers, not {type(count).__name__}")
 
 
 def check_integer(value: object, what: str) -> None:
@@ -201,6 +235,32 @@ def check_integer(value: object, what: str) -> None:
     """
     if isinstance(value, bool) or not isinstance(value, Integral):
         raise ParameterError(f"The {what} must be an integer, not {type(value).__name__}")
+
+
+def check_number(value: object, what: str) -> None:
+    """
+    Checking that a parameter is a real number
+
+    Description:
+        A bool is not taken for a number
+
+    Arguments:
+        value (object): Value to check
+        what (str): Name of the parameter, for the message of the error
+
+    Raises:
+        ParameterError: If the value is not a real number
+
+    Example:
+        >>> from anyts.utils import check_number
+        >>> check_number(0.95, "confidence level")
+        >>> check_number("0.95", "confidence level")
+        Traceback (most recent call last):
+        ...
+        anyts.exceptions.ParameterError: The confidence level must be a number, not str
+    """
+    if isinstance(value, bool) or not isinstance(value, Real):
+        raise ParameterError(f"The {what} must be a number, not {type(value).__name__}")
 
 
 def iter_doc_tokens(source: Doc | Span) -> Iterator[Token]:

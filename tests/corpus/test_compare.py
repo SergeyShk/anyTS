@@ -118,10 +118,40 @@ def test_holm_correction():
     assert all(isnan(value) for value in holm_correction([float("nan")]))
 
 
-@pytest.mark.parametrize("p_values", ["0.5", 0.5, [[0.1, 0.2]], ["a"], {0.1, 0.2}, None])
+@pytest.mark.parametrize(
+    "p_values", ["0.5", 0.5, [[0.1, 0.2]], ["a"], ["0.1"], [True], [0.1, None], {0.1, 0.2}, None]
+)
 def test_holm_correction_input(p_values):
     with pytest.raises(SourceTypeError):
         holm_correction(p_values)
+
+
+def test_holm_correction_containers():
+    expected = holm_correction([0.01, 0.04]).tolist()
+    assert holm_correction({"a": 0.01, "b": 0.04}.values()).tolist() == expected
+    assert holm_correction(pd.Series([0.01, 0.04])).tolist() == expected
+    assert holm_correction((0.01, 0.04)).tolist() == expected
+
+
+@pytest.mark.parametrize("values", ["123", {1.0, 2.0, 3.0}, ["a", "b"], [1.0, None], [[1.0, 2.0]]])
+def test_values_checked(values):
+    for call in (
+        lambda: calc_cohen_d(values, [1.0, 2.0]),
+        lambda: calc_cliff_delta([1.0, 2.0], values),
+        lambda: bootstrap_median_diff(values, [1.0, 2.0]),
+        lambda: compare_values([1.0, 2.0], values),
+    ):
+        with pytest.raises(SourceTypeError):
+            call()
+
+
+def test_generator_and_confidence_checked():
+    with pytest.raises(ParameterError, match=r"must be a numpy Generator, not int$"):
+        compare_values([1.0, 2.0], [1.0, 3.0], rng=0)
+    with pytest.raises(ParameterError, match=r"must be a numpy Generator, not int$"):
+        bootstrap_median_diff([1.0, 2.0], [1.0, 3.0], rng=0)
+    with pytest.raises(ParameterError, match=r"^The confidence level must be a number"):
+        bootstrap_median_diff([1.0, 2.0], [1.0, 3.0], confidence=None)
 
 
 def test_holm_correction_range():
@@ -169,6 +199,10 @@ def test_compare_features_seed_and_errors():
         compare_features(SHORT, LONG, seed=-1)
     with pytest.raises(ParameterError, match=r"^The names of the corpora"):
         compare_features(SHORT, LONG, labels=("A", "A"))
+    generated = compare_features(SHORT, LONG, n_bootstrap=50, seed=np.random.default_rng(1))
+    assert generated.equals(first)
+    named = compare_features(SHORT, LONG, labels=np.array(["x", "y"]), n_bootstrap=5)
+    assert list(named.columns[:4]) == ["mean_x", "mean_y", "median_x", "median_y"]
 
 
 @pytest.mark.parametrize(
@@ -180,6 +214,10 @@ def test_compare_features_seed_and_errors():
         {"labels": ("A", 1)},
         {"labels": "AB"},
         {"labels": None},
+        {"labels": ("diff", "B")},
+        {"labels": ("A", "texts_A")},
+        {"labels": iter(("A", "B"))},
+        {"labels": {"A": 1, "B": 2}},
         {"n_bootstrap": 0},
         {"n_bootstrap": 1.0},
         {"seed": 1.5},

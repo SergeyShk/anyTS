@@ -7,8 +7,8 @@ import numpy as np
 from scipy.stats import chi2 as chi2_distribution
 
 from ..constants import KEYNESS_MEASURES
-from ..exceptions import ParameterError, SourceError
-from ..utils import check_integer, check_words
+from ..exceptions import ParameterError, SourceError, SourceTypeError
+from ..utils import check_counts, check_integer, check_words
 
 ZERO_ADJUSTMENT = 0.5
 
@@ -69,6 +69,14 @@ class Keyword(NamedTuple):
     score: float
 
 
+def _check_words_or_counts(words: Iterable[object]) -> None:
+    """Checking the words of a corpus given as a list (check_words) or a counter (check_counts)"""
+    if isinstance(words, Mapping):
+        check_counts(words)
+    else:
+        check_words(words)
+
+
 def keyness(
     target: Sequence[str] | Mapping[str, int],
     reference: Sequence[str] | Mapping[str, float] | FrequencyReference,
@@ -115,6 +123,7 @@ def keyness(
 
     Raises:
         SourceTypeError: If the words are not a list of strings (check_words)
+            or a counter (check_counts)
         ParameterError: If the measure is unknown, top_n is below one or
             min_freq is not an integer
         SourceError: If one of the corpora is empty
@@ -133,17 +142,22 @@ def keyness(
         check_integer(top_n, "number of keywords")
     if top_n is not None and top_n < 1:
         raise ParameterError("The number of keywords must be greater than 0")
-    check_words(target, ordered=not isinstance(target, Mapping))
+    _check_words_or_counts(target)
     counts_reference: Mapping[str, float]
     keep = None
     if isinstance(reference, FrequencyReference):
+        if not isinstance(reference.counts, Mapping):
+            raise SourceTypeError(
+                "The frequencies of the reference must be a mapping, "
+                f"not {type(reference.counts).__name__}"
+            )
         counts_target = _count(target, key=reference.key, keep=reference.keep)
         size_reference = float(reference.size)
         counts_reference = reference.counts
         missing = float(reference.missing)
         keep = reference.keep
     else:
-        check_words(reference, ordered=not isinstance(reference, Mapping))
+        _check_words_or_counts(reference)
         counts_target = _count(target)
         counts_reference = _count(reference)
         size_reference = float(sum(counts_reference.values()))

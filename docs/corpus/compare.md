@@ -39,13 +39,13 @@ The names of the columns are `anyts.corpus.COMPARISON_COLUMNS`, with `A` and `B`
 | :-------: | :--: | :-----: | :---------: |
 | `table_a` | DataFrame | `-` | Features of the windows of the first corpus, one row per window |
 | `table_b` | DataFrame | `-` | Features of the windows of the second corpus |
-| `labels` | tuple[str, str] | `("A", "B")` | Names of the corpora for the columns, two different strings |
+| `labels` | tuple[str, str] | `("A", "B")` | Names of the corpora for the columns, two strings that give distinct columns |
 | `n_bootstrap` | int | `1000` | Number of bootstrap samples |
-| `seed` | int | `0` | Seed of the random number generator, a non-negative integer; `None` - a random one |
+| `seed` | int/Generator | `0` | Seed of the random number generator, a non-negative integer, or a numpy `Generator`; `None` - a random one |
 <!-- --8<-- [end:compare_features-parameters] -->
 
 <!-- --8<-- [start:check_comparison_params] -->
-`check_comparison_params(labels=("A", "B"), n_bootstrap=1000, seed=0)` checks these parameters the way `compare_features` does and raises `ParameterError` for a wrong one. A comparison that builds the tables from texts calls it first, so that a wrong parameter fails before the texts are processed.
+`check_comparison_params(labels=("A", "B"), n_bootstrap=1000, seed=0)` checks the parameters of `compare_features` and raises `ParameterError` unless the labels are two strings that give distinct columns (`("diff", "B")` would repeat `median_diff`), the number of bootstrap samples is an integer of at least one and the seed is `None`, a non-negative integer or a numpy `Generator`. Called before the tables are built from texts, it reports a wrong parameter before the texts are processed.
 <!-- --8<-- [end:check_comparison_params] -->
 
 !!! example "Example"

@@ -8,8 +8,8 @@ import pandas as pd
 from scipy.spatial.distance import cdist, jensenshannon, pdist, squareform
 
 from ..constants import DELTA_VARIANTS
-from ..exceptions import ParameterError, SourceError
-from ..utils import check_integer, check_sequence, check_words
+from ..exceptions import ParameterError, SourceError, SourceTypeError
+from ..utils import check_integer, check_number, check_sequence, check_words
 
 ZERO_SEGMENTS = 0.5
 
@@ -55,10 +55,11 @@ def frequency_table(
         DataFrame: Table of relative frequencies
 
     Raises:
-        SourceTypeError: If the units of a text are not a list of strings (check_words)
+        SourceTypeError: If the corpus is not a mapping or the units of a text
+            are not a list of strings (check_words)
         SourceError: If the corpus is empty, holds a text without units or no
             unit is left after culling
-        ParameterError: If n_mfw is below one or culling outside [0, 1]
+        ParameterError: If n_mfw is below one or culling is not a number within [0, 1]
 
     Example:
         >>> from anyts.corpus import frequency_table
@@ -68,12 +69,14 @@ def frequency_table(
         A  0.4  0.2
         B  0.2  0.2
     """
+    _check_mapping(corpus, "corpus")
     if not corpus:
         raise SourceError("The corpus has no texts")
     for units in corpus.values():
         check_words(units, "units of a text")
     if any(len(units) == 0 for units in corpus.values()):
         raise SourceError("The corpus holds a text without units")
+    check_number(culling, "share of texts for culling")
     if not 0 <= culling <= 1:
         raise ParameterError("The share of texts for culling must lie between 0 and 1")
     if n_mfw is not None:
@@ -172,7 +175,8 @@ def delta(
     Raises:
         ParameterError: If the variant is unknown or n_mfw is below one
         SourceError: If there are fewer than three texts
-        SourceTypeError: If the units of a text are not a list of strings (check_words)
+        SourceTypeError: If the corpus is not a mapping or the units of a text
+            are not a list of strings (check_words)
 
     Example:
         >>> from anyts.corpus import delta
@@ -189,6 +193,7 @@ def delta(
     """
     if not isinstance(variant, str) or variant not in DELTA_VARIANTS:
         raise ParameterError(f"Unknown variant of Delta: {variant}")
+    _check_mapping(corpus, "corpus")
     if len(corpus) < 3:
         raise SourceError("The distances need at least three texts")
     scores = z_scores(frequency_table(corpus, n_mfw, culling))
@@ -232,7 +237,8 @@ def delta_profiles(
         ParameterError: If the variant is unknown or n_mfw is below one
         SourceError: If there are fewer than three texts for the statistics, no
             reference texts or texts under test, or one of them has no units
-        SourceTypeError: If the units of a text are not a list of strings (check_words)
+        SourceTypeError: If a corpus is not a mapping or the units of a text are
+            not a list of strings (check_words)
 
     Example:
         >>> from anyts.corpus import delta_profiles
@@ -247,6 +253,10 @@ def delta_profiles(
     """
     if not isinstance(variant, str) or variant not in DELTA_VARIANTS:
         raise ParameterError(f"Unknown variant of Delta: {variant}")
+    _check_mapping(reference, "reference corpus")
+    _check_mapping(samples, "tested corpus")
+    if statistics is not None:
+        _check_mapping(statistics, "corpus of the statistics")
     basis = reference if statistics is None else statistics
     if len(basis) < 3:
         raise SourceError("The statistics of the scaling need at least three texts")
@@ -266,8 +276,18 @@ def delta_profiles(
     return pd.DataFrame(distances, index=list(samples), columns=list(reference))
 
 
+def _check_mapping(corpus: object, what: str) -> None:
+    """Checking that a corpus is a mapping of the names of its texts to their units"""
+    if not isinstance(corpus, Mapping):
+        raise SourceTypeError(
+            f"The {what} must be a mapping of the names of the texts to their units, "
+            f"not {type(corpus).__name__}"
+        )
+
+
 def _check_corpus(corpus: Mapping[str, Sequence[str]], what: str) -> None:
     """Checking that a corpus has texts, all of them sequences with units"""
+    _check_mapping(corpus, f"{what} corpus")
     if not corpus:
         raise SourceError(f"There are no {what} texts")
     for units in corpus.values():

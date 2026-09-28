@@ -22,7 +22,14 @@ from .constants import (
     MTLD_WINDOW_LEN,
 )
 from .exceptions import ParameterError, SourceError, UnknownStatError
-from .utils import check_integer, check_sequence, check_words, safe_divide
+from .utils import (
+    check_counts,
+    check_integer,
+    check_number,
+    check_sequence,
+    check_words,
+    safe_divide,
+)
 
 Calculator = Callable[[Sequence[str]], float]
 Function = TypeVar("Function", bound=Callable[..., Any])
@@ -84,7 +91,7 @@ def check_params(
         log_base (float): Logarithm base for the Summer, Maas and Dugast metrics
 
     Raises:
-        ParameterError: If a parameter is out of range
+        ParameterError: If a parameter is not a number of its type or is out of range
     """
     check_integer(window_len, "window size")
     if window_len < 1:
@@ -98,6 +105,7 @@ def check_params(
 
 def _check_log_base(base: float) -> None:
     """Checking the logarithm base of the Summer, Maas and Dugast metrics"""
+    check_number(base, "logarithm base")
     if not base > 1:
         raise ParameterError("The logarithm base must be greater than 1")
 
@@ -727,6 +735,7 @@ def calc_msttr(text: Sequence[str], segment_len: int = MATTR_WINDOW_LEN) -> floa
 
 def _check_mtld_params(threshold: float, min_len: int) -> None:
     """Checking the TTR threshold and the minimum factor length of MTLD"""
+    check_number(threshold, "TTR threshold of MTLD")
     if not 0 < threshold < 1:
         raise ParameterError("The TTR threshold of MTLD must lie in the interval (0, 1)")
     check_integer(min_len, "minimum factor length of MTLD")
@@ -1482,9 +1491,12 @@ def fit_zipf_mandelbrot(text: Sequence[str] | Mapping[str, int]) -> ZipfMandelbr
 
     Raises:
         SourceTypeError: If the words are not a list of strings (check_words)
-            or the keys of the counter are not strings
+            or the counter fails check_counts
     """
-    check_words(text, ordered=not isinstance(text, Mapping))
+    if isinstance(text, Mapping):
+        check_counts(text)
+    else:
+        check_words(text)
     frequencies = np.array(
         sorted((count for count in Counter(text).values() if count > 0), reverse=True),
         dtype=float,
@@ -1644,7 +1656,8 @@ def calc_windowed(
         WindowStats: Mean, standard deviation, bounds of the interval and number of windows
 
     Raises:
-        ParameterError: If the window size, the step or the confidence level are set incorrectly
+        ParameterError: If the metric is not a function or the window size, the
+            step or the confidence level are set incorrectly
         SourceTypeError: If the words are not a list of strings (check_words)
     """
     check_integer(window_len, "window size")
@@ -1655,6 +1668,9 @@ def calc_windowed(
     check_integer(step, "window step")
     if step < 1:
         raise ParameterError("The window step must be greater than 0")
+    if not callable(func):
+        raise ParameterError(f"The metric must be a function, not {type(func).__name__}")
+    check_number(confidence, "confidence level")
     if not 0 < confidence < 1:
         raise ParameterError("The confidence level must lie in the interval (0, 1)")
     starts = range(0, max(len(text) - window_len, 0) + 1, step)

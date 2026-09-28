@@ -88,6 +88,9 @@ def ds():
         {"window_len": 50.0},
         {"mtld_min_len": 10.0},
         {"hdd_sample_size": 42.0},
+        {"log_base": "10"},
+        {"log_base": True},
+        {"mtld_threshold": [0.72]},
     ],
 )
 def test_init_params_error(kwargs):
@@ -117,8 +120,8 @@ def test_init_empty():
         ("some text", r"^A list of words is expected, not a string$"),
         (spacy.blank("xx")("some text"), r"not a Doc"),
         (666, r"^A list of words is expected, not int$"),
-        ({"some", "text"}, r"^A list of words is expected, not a set"),
-        (Counter(["some", "text"]), r"^A list of words is expected, not a Counter"),
+        ({"some", "text"}, r"^A list of words is expected, not set$"),
+        (Counter(["some", "text"]), r"^A list of words is expected, not Counter$"),
     ],
 )
 def test_init_type_error(words, message):
@@ -621,6 +624,8 @@ def test_fit_zipf_mandelbrot(ds):
     assert fit.s == pytest.approx(1, rel=1e-3)
     with pytest.raises(SourceTypeError, match=r"^The words must be strings, not int$"):
         fit_zipf_mandelbrot(Counter({1: 12, 2: 6}))
+    with pytest.raises(SourceTypeError, match=r"^The frequencies must be numbers, not str$"):
+        fit_zipf_mandelbrot({"a": "3", "b": 2, "c": 1})
 
 
 def test_heaps_beta(ds):
@@ -690,6 +695,10 @@ def test_windowed_errors(ds):
         calc_windowed(riddle, calc_ttr, window_len=5.0)
     with pytest.raises(ParameterError, match=r"^The window step must be an integer, not float$"):
         calc_windowed(riddle, calc_ttr, step=2.0)
+    with pytest.raises(ParameterError, match=r"^The confidence level must be a number, not str$"):
+        calc_windowed(riddle, calc_ttr, 3, confidence="0.95")
+    with pytest.raises(ParameterError, match=r"^The metric must be a function, not str$"):
+        calc_windowed(riddle, "ttr")
 
 
 def test_sttr_base():
@@ -790,7 +799,7 @@ def test_word_functions_count():
         (lambda: "some text", r"^A list of words is expected, not a string$"),
         (lambda: (word for word in riddle), r"^A list of words is expected, not an iterator$"),
         (lambda: list(spacy.blank("xx")("the cat")), r"^The words must be strings, not Token$"),
-        (lambda: set(riddle), r"^A list of words is expected, not a set"),
+        (lambda: set(riddle), r"^A list of words is expected, not set$"),
     ],
     ids=["string", "iterator", "tokens", "set"],
 )

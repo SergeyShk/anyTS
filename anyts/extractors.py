@@ -6,7 +6,7 @@ from collections import Counter
 from collections.abc import Callable, Collection, Iterable, Iterator
 from functools import cache
 from re import Pattern
-from typing import Any, ClassVar
+from typing import ClassVar
 
 from .exceptions import ParameterError, SourceTypeError
 from .utils import check_integer, check_words, has_words, is_punctuation
@@ -300,7 +300,7 @@ class WordsExtractor(Extractor):
         tokenize: Default tokenizer
         lemmatize: Lemma of a word
         extract: Extracting words from a text
-        get_most_common: Getting a counter of the top words
+        get_most_common: Getting the top words with their frequencies
 
     Raises:
         ParameterError: If the N-gram range is not a pair of integers, its lower bound
@@ -402,7 +402,7 @@ class WordsExtractor(Extractor):
             self.words = self.__make_ngrams()
         return self.words
 
-    def get_most_common(self, n: int = 10) -> list[tuple[Any, int]]:
+    def get_most_common(self, n: int = 10) -> list[tuple[str, int]]:
         """
         Getting the top words with their frequencies
 
@@ -467,7 +467,7 @@ class CharNgramsExtractor(Extractor):
     Methods:
         tokenize: Default word tokenizer
         extract: Extracting N-grams from a text
-        get_most_common: Getting a counter of the top N-grams
+        get_most_common: Getting the top N-grams with their frequencies
 
     Raises:
         ParameterError: If the N-gram length is not an integer or is less than one
@@ -530,7 +530,7 @@ class CharNgramsExtractor(Extractor):
         )
         return self.ngrams
 
-    def get_most_common(self, n: int = 10) -> list[tuple[Any, int]]:
+    def get_most_common(self, n: int = 10) -> list[tuple[str, int]]:
         """
         Getting the top N-grams with their frequencies
 
