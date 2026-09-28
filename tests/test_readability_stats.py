@@ -365,3 +365,16 @@ def test_calc_reading_time():
     for wpm in (0, -1, float("nan"), "238", True, None):
         with pytest.raises(ParameterError):
             calc_reading_time(100, wpm)
+
+
+@pytest.mark.parametrize("grade", [float("nan"), float("inf"), "5", None])
+def test_grades_must_be_finite_numbers(grade):
+    with pytest.raises(ParameterError, match="grade must be"):
+        calc_consensus_grade([grade, 3.0])
+    with pytest.raises(ParameterError, match="grade must be"):
+        grade_to_age(grade)
+
+
+def test_reading_speed_must_be_finite():
+    with pytest.raises(ParameterError, match="finite"):
+        calc_reading_time(100, float("inf"))

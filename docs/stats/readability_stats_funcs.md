@@ -10,7 +10,7 @@ The coefficients of the formulas are parameters; the defaults below are those of
 <!-- --8<-- [start:calc_flesch_reading_easy] -->
 Computation of the Flesch reading ease (Flesch, 1948).
 
-The higher the value, the easier the text; the scale runs from 0 to 100.
+The higher the value, the easier the text; the scale runs nominally from 0 to 100, though the simplest texts go above 100 and the hardest below 0.
 
 Formula:
 
@@ -290,7 +290,7 @@ Parameters:
     **anyts.readability_stats.calc_consensus_grade()**
 
 <!-- --8<-- [start:calc_consensus_grade] -->
-Computation of the consensus grade: the median of the values of the grade formulas rounded half up, together with the reading ease converted into years of schooling by `to_grade` and added without rounding - so a band of 8.5 votes for 8.5. No values at all raise `ParameterError`, a `to_grade` that is not callable `SourceTypeError`.
+Computation of the consensus grade: the median of the values of the grade formulas rounded half up, together with the reading ease converted into years of schooling by `to_grade` and added without rounding - so a band of 8.5 votes for 8.5. No values at all and a grade that is not a finite number raise `ParameterError`, a `to_grade` that is not callable `SourceTypeError`.
 
 Parameters:
 
@@ -307,7 +307,7 @@ Parameters:
     **anyts.readability_stats.grade_to_age()**
 
 <!-- --8<-- [start:grade_to_age] -->
-The school stage and reader age by the value of a grade formula: the value is rounded half up and falls into the first stage whose last year it does not exceed, values below 1 into the first stage; above the last stage lies `above`.
+The school stage and reader age by the value of a grade formula: the value is rounded half up and falls into the first stage whose last year it does not exceed, values below 1 into the first stage; above the last stage lies `above`. A grade that is not a finite number raises `ParameterError`.
 <!-- --8<-- [end:grade_to_age] -->
 
 The default stages are those of the United States (`anyts.constants.GRADE_AGE_LEVELS` and `POSTGRADUATE_LEVEL`):

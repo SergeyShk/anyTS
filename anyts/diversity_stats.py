@@ -1,6 +1,7 @@
 from collections import Counter
 from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from functools import partial, wraps
+from itertools import islice
 from math import inf, log, log2, nan, sqrt
 from typing import Any, ClassVar, NamedTuple, TypeVar, cast
 
@@ -688,11 +689,11 @@ def calc_mattr(text: Sequence[str], window_len: int = MATTR_WINDOW_LEN) -> float
     n_words = len(text)
     if n_words < (window_len + 1):
         return _unchecked(calc_ttr)(text)
-    counts = Counter(text[:window_len])
+    counts = Counter(islice(text, window_len))
     window_ttr = len(counts) / window_len
-    for n in range(window_len, n_words):
-        counts[text[n]] += 1
-        outgoing = text[n - window_len]
+    # By position, whatever the index of the sequence
+    for incoming, outgoing in zip(islice(text, window_len, None), text, strict=False):
+        counts[incoming] += 1
         counts[outgoing] -= 1
         if not counts[outgoing]:
             del counts[outgoing]
