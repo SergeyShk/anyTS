@@ -1,5 +1,5 @@
 import unicodedata
-from collections.abc import Iterable, Iterator, Mapping, Set
+from collections.abc import Iterable, Iterator, Mapping, Sequence, Set
 from functools import lru_cache
 from itertools import repeat
 from numbers import Integral, Real
@@ -421,6 +421,11 @@ def iter_doc_words(
         [(0, 1, 'A'), (2, 12, 'well-known'), (13, 16, 'cat')]
     """
     for unit in iter_doc_units(source, join_hyphens):
-        text = "".join(token.text for token in unit)
-        word = text.lstrip("\ufeff")
-        yield unit[0].idx + len(text) - len(word), unit[-1].idx + len(unit[-1]), word
+        yield _unit_word(unit)
+
+
+def _unit_word(unit: Sequence[Token]) -> tuple[int, int, str]:
+    """Positions and text of a word of iter_doc_units, a byte order mark at its start left out"""
+    text = "".join(token.text for token in unit)
+    word = text.lstrip("\ufeff")
+    return unit[0].idx + len(text) - len(word), unit[-1].idx + len(unit[-1]), word

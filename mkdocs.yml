@@ -25,6 +25,7 @@ nav:
       - Word dispersion: corpus/dispersion.md
       - Stylometry: corpus/stylometry.md
       - Corpus comparison: corpus/compare.md
+      - KWIC concordance: corpus/kwic.md
     - Visualization:
       - Zipf's law: visualizers/zipf.md
       - Vocabulary growth: visualizers/vocabulary.md

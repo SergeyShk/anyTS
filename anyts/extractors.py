@@ -59,6 +59,13 @@ def _word_pattern() -> Pattern[str]:
     return re.compile(rf"\w[\w{continuation}]*")
 
 
+def _iter_words(text: str) -> Iterator[tuple[int, int, str]]:
+    """Words of the default tokenizer of WordsExtractor with their positions"""
+    return (
+        (match.start(), match.end(), match.group()) for match in _word_pattern().finditer(text)
+    )
+
+
 NUMBER_PATTERN = re.compile(r"[+\-−]?\d+(?:[.,:/-]\d+)*%?")
 
 

@@ -11,6 +11,7 @@ from .compare import (
 )
 from .dispersion import Dispersion, dispersion
 from .keyness import FrequencyReference, Keyword, keyness
+from .kwic import Concordance, format_kwic, kwic, print_kwic
 from .stylometry import (
     ZetaScore,
     delta,
@@ -26,6 +27,7 @@ from .stylometry import (
 __all__ = [
     "COMPARISON_COLUMNS",
     "Collocation",
+    "Concordance",
     "Dispersion",
     "FrequencyReference",
     "Keyword",
@@ -40,12 +42,15 @@ __all__ = [
     "delta",
     "delta_profiles",
     "dispersion",
+    "format_kwic",
     "frequency_table",
     "holm_correction",
     "keyness",
     "kilgarriff_chi2",
+    "kwic",
     "mendenhall_curve",
     "mendenhall_distance",
+    "print_kwic",
     "z_scores",
     "zeta",
 ]
