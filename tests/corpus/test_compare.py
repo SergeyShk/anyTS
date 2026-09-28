@@ -128,6 +128,8 @@ def test_holm_correction_input(p_values):
 
 def test_holm_correction_containers():
     expected = holm_correction([0.01, 0.04]).tolist()
+    assert holm_correction(pd.Series([0.01, 0.04], dtype=object)).tolist() == expected
+    assert holm_correction(np.array([0.01, 0.04], dtype=object)).tolist() == expected
     assert holm_correction({"a": 0.01, "b": 0.04}.values()).tolist() == expected
     assert holm_correction(pd.Series([0.01, 0.04])).tolist() == expected
     assert holm_correction((0.01, 0.04)).tolist() == expected
@@ -143,6 +145,20 @@ def test_values_checked(values):
     ):
         with pytest.raises(SourceTypeError):
             call()
+
+
+def test_texts_checked_after_the_values():
+    with pytest.raises(SourceTypeError):
+        bootstrap_median_diff(0.5, [1.0, 2.0], texts_a=[1])
+
+
+def test_compare_features_tables():
+    empty = compare_features(pd.DataFrame(), pd.DataFrame(), n_bootstrap=5)
+    assert empty.shape == (0, 17)
+    with pytest.raises(SourceTypeError, match=r"^The features must be a DataFrame, not dict$"):
+        compare_features({"x": [1.0]}, LONG)
+    with pytest.raises(SourceTypeError, match=r"^The feature name must be numeric$"):
+        compare_features(SHORT.assign(name=["a", "b", "c"]), LONG)
 
 
 def test_generator_and_confidence_checked():
@@ -218,6 +234,8 @@ def test_compare_features_seed_and_errors():
         {"labels": ("A", "texts_A")},
         {"labels": iter(("A", "B"))},
         {"labels": {"A": 1, "B": 2}},
+        {"labels": {"A", "B"}},
+        {"labels": {"A": 1, "B": 2}.keys()},
         {"n_bootstrap": 0},
         {"n_bootstrap": 1.0},
         {"seed": 1.5},

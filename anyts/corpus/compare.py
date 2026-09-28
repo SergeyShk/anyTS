@@ -1,5 +1,6 @@
-from collections.abc import Iterable, Iterator, Mapping, Sequence
+from collections.abc import Iterable, Iterator, Mapping, Sequence, Set
 from math import nan, sqrt
+from numbers import Real
 from typing import Any
 
 import numpy as np
@@ -77,9 +78,13 @@ def compare_features(
             with the names of the corpora in the columns)
 
     Raises:
+        SourceTypeError: If a table is not a DataFrame or has a column that is not numeric
         ParameterError: If the parameters fail check_comparison_params
     """
     check_comparison_params(labels, n_bootstrap, seed)
+    for table in (table_a, table_b):
+        if not isinstance(table, pd.DataFrame):
+            raise SourceTypeError(f"The features must be a DataFrame, not {type(table).__name__}")
     rng = np.random.default_rng(seed)
     rows = {}
     for name in table_a.columns.union(table_b.columns, sort=False):
@@ -87,7 +92,7 @@ def compare_features(
         values_b, texts_b = _column(table_b, name)
         rows[name] = compare_values(values_a, values_b, n_bootstrap, rng, texts_a, texts_b)
     result = pd.DataFrame.from_dict(rows, orient="index", columns=list(COMPARISON_COLUMNS))
-    result["p_holm"] = holm_correction(result["p_value"].to_numpy())
+    result["p_holm"] = holm_correction(result["p_value"].to_numpy(dtype=float))
     result = result.iloc[(-result["cliff_delta"].abs()).fillna(np.inf).argsort(kind="stable")]
     counts = ["n_a", "n_b", "n_texts_a", "n_texts_b"]
     result[counts] = result[counts].astype(int)
@@ -138,7 +143,7 @@ def check_comparison_params(
     """
     names = (
         ()
-        if isinstance(labels, str | Mapping | Iterator) or not isinstance(labels, Iterable)
+        if isinstance(labels, str | Set | Mapping | Iterator) or not isinstance(labels, Iterable)
         else tuple(labels)
     )
     if len(names) != 2 or not all(isinstance(name, str) for name in names):
@@ -170,7 +175,10 @@ def _column(table: pd.DataFrame, name: str) -> tuple[np.ndarray, np.ndarray | No
     texts = (
         table.index.get_level_values("text").to_numpy() if "text" in table.index.names else None
     )
-    return table[name].to_numpy(dtype=float), texts
+    try:
+        return table[name].to_numpy(dtype=float), texts
+    except (TypeError, ValueError):
+        raise SourceTypeError(f"The feature {name} must be numeric") from None
 
 
 def _as_values(values: Iterable[Any], what: str = "values") -> np.ndarray:
@@ -183,7 +191,13 @@ def _as_values(values: Iterable[Any], what: str = "values") -> np.ndarray:
     """
     check_sequence(values, what)
     array = np.asarray(values if hasattr(values, "__array__") else list(values))
-    if array.ndim != 1 or array.dtype.kind not in "iuf":
+    if array.ndim != 1 or (
+        array.dtype.kind not in "iuf"
+        and not (
+            array.dtype.kind == "O"
+            and all(isinstance(value, Real) and not isinstance(value, bool) for value in array)
+        )
+    ):
         raise SourceTypeError(f"The {what} must be a flat list of numbers")
     return array.astype(float)
 
@@ -390,10 +404,10 @@ def bootstrap_median_diff(
     if not 0 < confidence < 1:
         raise ParameterError("The confidence level must lie in the interval (0, 1)")
     _check_rng(rng)
-    _check_texts(values_a, texts_a)
-    _check_texts(values_b, texts_b)
     a = _as_values(values_a)
     b = _as_values(values_b)
+    _check_texts(a, texts_a)
+    _check_texts(b, texts_b)
     if not len(a) or not len(b):
         return nan, nan
     if any(texts is not None and len(np.unique(texts)) < 2 for texts in (texts_a, texts_b)):
