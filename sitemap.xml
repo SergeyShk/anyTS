@@ -72,4 +72,32 @@
          <loc>https://sergeyshk.github.io/anyTS/stats/syntax/</loc>
          <lastmod>2026-09-28</lastmod>
     </url>
+    <url>
+         <loc>https://sergeyshk.github.io/anyTS/visualizers/corpus/</loc>
+         <lastmod>2026-09-28</lastmod>
+    </url>
+    <url>
+         <loc>https://sergeyshk.github.io/anyTS/visualizers/fingerprinting/</loc>
+         <lastmod>2026-09-28</lastmod>
+    </url>
+    <url>
+         <loc>https://sergeyshk.github.io/anyTS/visualizers/sentences/</loc>
+         <lastmod>2026-09-28</lastmod>
+    </url>
+    <url>
+         <loc>https://sergeyshk.github.io/anyTS/visualizers/stylometry/</loc>
+         <lastmod>2026-09-28</lastmod>
+    </url>
+    <url>
+         <loc>https://sergeyshk.github.io/anyTS/visualizers/vocabulary/</loc>
+         <lastmod>2026-09-28</lastmod>
+    </url>
+    <url>
+         <loc>https://sergeyshk.github.io/anyTS/visualizers/word_tree/</loc>
+         <lastmod>2026-09-28</lastmod>
+    </url>
+    <url>
+         <loc>https://sergeyshk.github.io/anyTS/visualizers/zipf/</loc>
+         <lastmod>2026-09-28</lastmod>
+    </url>
 </urlset>

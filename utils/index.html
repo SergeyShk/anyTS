@@ -284,6 +284,26 @@
   
   
   
+    
+    
+      <li class="md-tabs__item">
+        <a href="../visualizers/zipf/" class="md-tabs__link">
+          
+  
+  
+  Visualization
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
     <li class="md-tabs__item">
       <a href="../datasets/" class="md-tabs__link">
         
@@ -1104,6 +1124,259 @@
   
   
   
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Visualization
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Visualization
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../visualizers/zipf/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Zipf's law
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../visualizers/vocabulary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vocabulary growth
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../visualizers/sentences/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sentence lengths
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../visualizers/fingerprinting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Literature fingerprinting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../visualizers/word_tree/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Word tree
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../visualizers/corpus/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Corpus plots
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../visualizers/stylometry/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stylometric plots
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
     <li class="md-nav__item">
       <a href="../datasets/" class="md-nav__link">
         
@@ -1291,6 +1564,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#merge_labels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        merge_labels
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#iter_doc_tokens" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1450,6 +1734,17 @@
     <span class="md-ellipsis">
       
         check_counts
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#merge_labels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        merge_labels
       
     </span>
   </a>
@@ -1793,6 +2088,43 @@
 </table>
 <!-- --8<-- [end:check_counts] -->
 
+<h2 id="merge_labels">merge_labels<a class="headerlink" href="#merge_labels" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:merge_labels] -->
+<p>Merges the labels given for a plot over its default ones: a label that is not given keeps its default, so a single label can be changed alone. A default with fields in braces, such as <code>"Moving average ({window})"</code>, is a format string: a label given for it may use only those fields, and a literal brace in it is doubled (<code>{{</code>); the other labels are taken as they are. The defaults of the visualizers are <code>anyts.constants.VISUALIZER_LABELS</code>, by the name of the function; labels that are not a mapping of strings, have a key the plot does not know or a field their default does not have raise <code>ParameterError</code>.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>defaults</code></td>
+<td style="text-align: center;">dict[str, str]</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Default labels by key</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>labels</code></td>
+<td style="text-align: center;">dict[str, str]</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Labels given; <code>None</code> - the default ones</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:merge_labels] -->
+
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">merge_labels</span>
+
+<span class="n">merge_labels</span><span class="p">({</span><span class="s2">"title"</span><span class="p">:</span> <span class="s2">"Plot"</span><span class="p">,</span> <span class="s2">"xlabel"</span><span class="p">:</span> <span class="s2">"x"</span><span class="p">},</span> <span class="p">{</span><span class="s2">"title"</span><span class="p">:</span> <span class="s2">"My plot"</span><span class="p">})</span>
+<span class="c1"># {'title': 'My plot', 'xlabel': 'x'}</span>
+</code></pre></div>
+</div>
 <h2 id="iter_doc_tokens">iter_doc_tokens<a class="headerlink" href="#iter_doc_tokens" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:iter_doc_tokens] -->
 <p>Yields the tokens of the words of a <code>Doc</code> or a <code>Span</code>: whitespace tokens and the tokens of <code>is_punctuation</code>, symbols like <code>%</code> and <code>€</code> included, are skipped.</p>

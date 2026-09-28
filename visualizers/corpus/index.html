@@ -10,31 +10,31 @@
       
       
       
-        <link rel="canonical" href="https://sergeyshk.github.io/anyTS/exceptions/">
+        <link rel="canonical" href="https://sergeyshk.github.io/anyTS/visualizers/corpus/">
       
       
-        <link rel="prev" href="../installation/">
+        <link rel="prev" href="../word_tree/">
       
       
-        <link rel="next" href="../authors/">
+        <link rel="next" href="../stylometry/">
       
       
         
       
       
-      <link rel="icon" href="../assets/images/favicon.png">
+      <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
-        <title>Exceptions - anyTS</title>
+        <title>Corpus plots - anyTS</title>
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
-        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -53,9 +53,9 @@
       
     
     
-      <link rel="stylesheet" href="../css/extra.css">
+      <link rel="stylesheet" href="../../css/extra.css">
     
-    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#exceptions" class="md-skip">
+        <a href="#corpus-plots" class="md-skip">
           Skip to content
         </a>
       
@@ -92,7 +92,7 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="anyTS" class="md-header__button md-logo" aria-label="anyTS" data-md-component="logo">
+    <a href="../.." title="anyTS" class="md-header__button md-logo" aria-label="anyTS" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -112,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Exceptions
+              Corpus plots
             
           </span>
         </div>
@@ -195,13 +195,11 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href=".." class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../.." class="md-tabs__link">
           
   
   
@@ -221,7 +219,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../extractors/sentences/" class="md-tabs__link">
+        <a href="../../extractors/sentences/" class="md-tabs__link">
           
   
   
@@ -248,7 +246,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../stats/diversity_stats/" class="md-tabs__link">
+        <a href="../../stats/diversity_stats/" class="md-tabs__link">
           
   
   
@@ -271,7 +269,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../corpus/keyness/" class="md-tabs__link">
+        <a href="../../corpus/keyness/" class="md-tabs__link">
           
   
   
@@ -287,11 +285,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../visualizers/zipf/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../zipf/" class="md-tabs__link">
           
   
   
@@ -309,7 +309,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../datasets/" class="md-tabs__link">
+      <a href="../../datasets/" class="md-tabs__link">
         
   
   
@@ -328,7 +328,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../utils/" class="md-tabs__link">
+      <a href="../../utils/" class="md-tabs__link">
         
   
   
@@ -363,7 +363,7 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="anyTS" class="md-nav__button md-logo" aria-label="anyTS" data-md-component="logo">
+    <a href="../.." title="anyTS" class="md-nav__button md-logo" aria-label="anyTS" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -390,29 +390,24 @@
       
   
   
-    
   
   
-  
     
     
     
     
       
-        
-        
-      
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
         
           
-          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="">
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
             
   
   
@@ -430,7 +425,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_1">
             <span class="md-nav__icon md-icon"></span>
             
@@ -448,7 +443,7 @@
   
   
     <li class="md-nav__item">
-      <a href=".." class="md-nav__link">
+      <a href="../.." class="md-nav__link">
         
   
   
@@ -476,7 +471,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../installation/" class="md-nav__link">
+      <a href="../../installation/" class="md-nav__link">
         
   
   
@@ -501,19 +496,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../exceptions/" class="md-nav__link">
         
   
   
@@ -529,7 +515,6 @@
   
 
       </a>
-      
     </li>
   
 
@@ -542,7 +527,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../authors/" class="md-nav__link">
+      <a href="../../authors/" class="md-nav__link">
         
   
   
@@ -627,7 +612,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../extractors/sentences/" class="md-nav__link">
+      <a href="../../extractors/sentences/" class="md-nav__link">
         
   
   
@@ -655,7 +640,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../extractors/words/" class="md-nav__link">
+      <a href="../../extractors/words/" class="md-nav__link">
         
   
   
@@ -683,7 +668,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../extractors/char_ngrams/" class="md-nav__link">
+      <a href="../../extractors/char_ngrams/" class="md-nav__link">
         
   
   
@@ -818,7 +803,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../stats/diversity_stats/" class="md-nav__link">
+      <a href="../../stats/diversity_stats/" class="md-nav__link">
         
   
   
@@ -846,7 +831,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../stats/diversity_stats_funcs/" class="md-nav__link">
+      <a href="../../stats/diversity_stats_funcs/" class="md-nav__link">
         
   
   
@@ -882,7 +867,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../stats/cohesion/" class="md-nav__link">
+      <a href="../../stats/cohesion/" class="md-nav__link">
         
   
   
@@ -910,7 +895,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../stats/syntax/" class="md-nav__link">
+      <a href="../../stats/syntax/" class="md-nav__link">
         
   
   
@@ -995,7 +980,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../corpus/keyness/" class="md-nav__link">
+      <a href="../../corpus/keyness/" class="md-nav__link">
         
   
   
@@ -1023,7 +1008,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../corpus/collocations/" class="md-nav__link">
+      <a href="../../corpus/collocations/" class="md-nav__link">
         
   
   
@@ -1051,7 +1036,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../corpus/dispersion/" class="md-nav__link">
+      <a href="../../corpus/dispersion/" class="md-nav__link">
         
   
   
@@ -1079,7 +1064,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../corpus/stylometry/" class="md-nav__link">
+      <a href="../../corpus/stylometry/" class="md-nav__link">
         
   
   
@@ -1107,7 +1092,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../corpus/compare/" class="md-nav__link">
+      <a href="../../corpus/compare/" class="md-nav__link">
         
   
   
@@ -1139,24 +1124,29 @@
       
   
   
+    
   
   
+  
     
     
     
     
-      
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
         
           
-          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
             
   
   
@@ -1174,7 +1164,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_5">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1192,7 +1182,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../visualizers/zipf/" class="md-nav__link">
+      <a href="../zipf/" class="md-nav__link">
         
   
   
@@ -1220,7 +1210,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../visualizers/vocabulary/" class="md-nav__link">
+      <a href="../vocabulary/" class="md-nav__link">
         
   
   
@@ -1248,7 +1238,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../visualizers/sentences/" class="md-nav__link">
+      <a href="../sentences/" class="md-nav__link">
         
   
   
@@ -1276,7 +1266,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../visualizers/fingerprinting/" class="md-nav__link">
+      <a href="../fingerprinting/" class="md-nav__link">
         
   
   
@@ -1304,7 +1294,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../visualizers/word_tree/" class="md-nav__link">
+      <a href="../word_tree/" class="md-nav__link">
         
   
   
@@ -1329,10 +1319,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../visualizers/corpus/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Corpus plots
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1348,6 +1365,81 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#description" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Description
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dispersion_plot" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lexical dispersion
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#keyness_plot" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Chart of keywords
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#collocation_network" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Network of collocations
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage example
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1360,7 +1452,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../visualizers/stylometry/" class="md-nav__link">
+      <a href="../stylometry/" class="md-nav__link">
         
   
   
@@ -1395,7 +1487,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../datasets/" class="md-nav__link">
+      <a href="../../datasets/" class="md-nav__link">
         
   
   
@@ -1422,7 +1514,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../utils/" class="md-nav__link">
+      <a href="../../utils/" class="md-nav__link">
         
   
   
@@ -1462,6 +1554,69 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#description" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Description
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dispersion_plot" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lexical dispersion
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#keyness_plot" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Chart of keywords
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#collocation_network" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Network of collocations
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage example
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -1480,81 +1635,152 @@
   
 
 
-<h1 id="exceptions">Exceptions<a class="headerlink" href="#exceptions" title="Permanent link">&para;</a></h1>
+<h1 id="corpus-plots">Corpus plots<a class="headerlink" href="#corpus-plots" title="Permanent link">&para;</a></h1>
 <div class="admonition info">
-<p><strong>anyts.exceptions</strong></p>
+<p><strong>anyts.visualizers.dispersion_plot()</strong>, <strong>anyts.visualizers.keyness_plot()</strong>, <strong>anyts.visualizers.collocation_network()</strong></p>
 </div>
-<!-- --8<-- [start:exceptions] -->
-<p>All exceptions of the library inherit the base class <code>AnyTSError</code> and a built-in Python class, so they can be caught by either, and <code>except ValueError</code> keeps working.</p>
+<h2 id="description">Description<a class="headerlink" href="#description" title="Permanent link">&para;</a></h2>
+<p>Plots for the <a href="../../corpus/keyness/">corpus measures</a>: the lexical dispersion - where in a text a word occurs, a chart of the keywords found by <code>keyness</code> and a network of the collocations found by <code>collocations</code>. The matplotlib functions take the axes <code>ax</code> and return <code>Axes</code>: without <code>ax</code> a new figure is created, with it the plot goes into a grid of one's own; the network of collocations is built by graphviz and returns a <code>Graph</code>, as the <a href="../word_tree/">word tree</a>.</p>
+<h2 id="dispersion_plot">Lexical dispersion<a class="headerlink" href="#dispersion_plot" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:dispersion_plot] -->
+<p>A row for every word of <code>targets</code> and a tick at the position of each of its occurrences in the text. Words are compared as they are: case and lemmatization belong to the extraction of the words.</p>
 <table>
 <thead>
 <tr>
-<th style="text-align: left;">Exception</th>
-<th style="text-align: left;">Built-in class</th>
-<th style="text-align: left;">When raised</th>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><code>AnyTSError</code></td>
-<td style="text-align: left;"><code>Exception</code></td>
-<td style="text-align: left;">Base class, never raised itself</td>
+<td style="text-align: center;"><code>words</code></td>
+<td style="text-align: center;">list[str]</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Words of the text in order</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>SourceTypeError</code></td>
-<td style="text-align: left;"><code>TypeError</code></td>
-<td style="text-align: left;">The source or the text is of an unsupported type; a text is passed where a list of words is expected; the tokenizer is not callable or returns a non-iterable object; the stop words are a string</td>
+<td style="text-align: center;"><code>targets</code></td>
+<td style="text-align: center;">list[str]</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Words whose occurrences are shown</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>SourceError</code></td>
-<td style="text-align: left;"><code>ValueError</code></td>
-<td style="text-align: left;">The source has no words, sentences or texts to compute a statistic on, or lacks an annotation the statistic needs</td>
+<td style="text-align: center;"><code>ax</code></td>
+<td style="text-align: center;">Axes</td>
+<td style="text-align: center;"><code>None</code></td>
+<td style="text-align: center;">Axes for the plot</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>ParameterError</code></td>
-<td style="text-align: left;"><code>ValueError</code></td>
-<td style="text-align: left;">A length, window, threshold or number of items is out of range, or the name of a measure, variant or preset is unknown</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>UnknownStatError</code></td>
-<td style="text-align: left;"><code>ParameterError</code>, <code>KeyError</code></td>
-<td style="text-align: left;">An unknown statistic is requested by name</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>DatasetNotFoundError</code></td>
-<td style="text-align: left;"><code>OSError</code></td>
-<td style="text-align: left;">The spaCy model is not installed or a dataset is not downloaded; the message gives the command that fixes it</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>DataFileError</code></td>
-<td style="text-align: left;"><code>ValueError</code></td>
-<td style="text-align: left;">The archive of a dataset cannot be extracted or is unsafe, or a line of a dataset file cannot be read</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>DownloadError</code></td>
-<td style="text-align: left;"><code>RuntimeError</code></td>
-<td style="text-align: left;">A file cannot be downloaded or fails the checksum verification</td>
+<td style="text-align: center;"><code>labels</code></td>
+<td style="text-align: center;">dict[str, str]</td>
+<td style="text-align: center;"><code>None</code></td>
+<td style="text-align: center;">Labels over the defaults: <code>title</code>, <code>xlabel</code></td>
 </tr>
 </tbody>
 </table>
-<p>The classes are available from <code>anyts</code> and from <code>anyts.exceptions</code>. A language library re-exports them under its own names as aliases, not subclasses, so its base class catches the errors of the core too.</p>
-<!-- --8<-- [end:exceptions] -->
+<!-- --8<-- [end:dispersion_plot] -->
 
+<h2 id="keyness_plot">Chart of keywords<a class="headerlink" href="#keyness_plot" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:keyness_plot] -->
+<p>Diverging horizontal bars: the words of <code>positive</code> to the right, of <code>negative</code> - the result of <code>keyness</code> with <code>positive=False</code> - to the left, the length of a bar is the absolute value of the <code>field</code> (<code>score</code>, <code>g2</code>, <code>log_ratio</code>), so the side is set by the list and not by the sign of the measure; <code>top_n</code> words on each side, the words with an undefined or infinite value are skipped. For the odds ratio (<code>score</code> from 0 to infinity, one - equal odds) set <code>log=True</code>: the absolute <span class="arithmatex">\(\log_2\)</span> of the value is plotted, symmetric around one.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>positive</code></td>
+<td style="text-align: center;">list[Keyword]</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Positive keywords</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>negative</code></td>
+<td style="text-align: center;">list[Keyword]</td>
+<td style="text-align: center;"><code>()</code></td>
+<td style="text-align: center;">Negative keywords</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>top_n</code></td>
+<td style="text-align: center;">int</td>
+<td style="text-align: center;"><code>20</code></td>
+<td style="text-align: center;">Number of words on each side</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>labels</code></td>
+<td style="text-align: center;">dict[str, str]/tuple[str, str]</td>
+<td style="text-align: center;"><code>None</code></td>
+<td style="text-align: center;">Labels over the defaults: <code>title</code>, <code>xlabel</code> and <code>xlabel_log</code> (format strings with <code>field</code>), <code>target</code> and <code>reference</code> (the legend); a pair of strings sets the legend alone</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>field</code></td>
+<td style="text-align: center;">str</td>
+<td style="text-align: center;"><code>score</code></td>
+<td style="text-align: center;">Field of <code>Keyword</code> whose values are plotted</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>log</code></td>
+<td style="text-align: center;">bool</td>
+<td style="text-align: center;"><code>False</code></td>
+<td style="text-align: center;">Plot <span class="arithmatex">\(\log_2\)</span> of the value - for the odds ratio</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>ax</code></td>
+<td style="text-align: center;">Axes</td>
+<td style="text-align: center;"><code>None</code></td>
+<td style="text-align: center;">Axes for the plot</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:keyness_plot] -->
+
+<h2 id="collocation_network">Network of collocations<a class="headerlink" href="#collocation_network" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:collocation_network] -->
+<p>An undirected graph: the nodes are the words with the size of the font by frequency, the edges the pairs with the width and the label by the value of the measure; the <code>neato</code> layout. A pair of a word with itself - a word repeated within the window - would be a loop and is left out before <code>top_n</code> pairs are taken. Rendering needs the executables of <a href="https://graphviz.org/download/">Graphviz</a>; in Jupyter the graph displays itself, and <code>graph.render("network")</code> saves a png file.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>collocations</code></td>
+<td style="text-align: center;">list[Collocation]</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Collocations</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>top_n</code></td>
+<td style="text-align: center;">int</td>
+<td style="text-align: center;"><code>None</code></td>
+<td style="text-align: center;">Number of pairs from the start of the list; <code>None</code> - all of them</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:collocation_network] -->
+
+<h2 id="usage-example">Usage example<a class="headerlink" href="#usage-example" title="Permanent link">&para;</a></h2>
 <div class="admonition example">
 <p class="admonition-title">Example</p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts</span><span class="w"> </span><span class="kn">import</span> <span class="n">AnyTSError</span><span class="p">,</span> <span class="n">ParameterError</span><span class="p">,</span> <span class="n">WordsExtractor</span>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts.corpus</span><span class="w"> </span><span class="kn">import</span> <span class="n">collocations</span><span class="p">,</span> <span class="n">keyness</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">anyts.visualizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">collocation_network</span><span class="p">,</span> <span class="n">dispersion_plot</span><span class="p">,</span> <span class="n">keyness_plot</span>
 
-<span class="k">try</span><span class="p">:</span>
-    <span class="n">WordsExtractor</span><span class="p">(</span><span class="n">ngram_range</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
-<span class="k">except</span> <span class="n">ParameterError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
-<span class="c1"># The lower N-gram bound is greater than the upper</span>
-
-<span class="k">try</span><span class="p">:</span>
-    <span class="n">WordsExtractor</span><span class="p">(</span><span class="n">tokenizer</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="s2">"The cat sleeps."</span><span class="p">)</span>
-<span class="k">except</span> <span class="n">AnyTSError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
-<span class="c1"># SourceTypeError</span>
+<span class="n">target</span> <span class="o">=</span> <span class="s2">"the cat sleeps and the cat eats and the cat purrs"</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+<span class="n">reference</span> <span class="o">=</span> <span class="s2">"the dog sleeps and the dog eats and the dog barks"</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+<span class="n">dispersion_plot</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="p">[</span><span class="s2">"cat"</span><span class="p">,</span> <span class="s2">"eats"</span><span class="p">])</span>
+<span class="n">keyness_plot</span><span class="p">(</span><span class="n">keyness</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">reference</span><span class="p">),</span> <span class="n">keyness</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">positive</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">collocation_network</span><span class="p">(</span><span class="n">collocations</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">source</span><span class="p">)</span>
 </code></pre></div>
 </div>
 
@@ -1633,12 +1859,12 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
-        <script src="../js/config.js"></script>
+        <script src="../../js/config.js"></script>
       
         <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
       
