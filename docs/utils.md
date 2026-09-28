@@ -166,7 +166,7 @@ Yields the tokens of the words of a `Doc` or a `Span`: whitespace tokens and the
 ## iter_doc_units
 
 <!-- --8<-- [start:iter_doc_units] -->
-Yields the words of a `Doc` or a `Span` as lists of tokens: one token each, as in `iter_doc_tokens`. With `join_hyphens=True` a word that the tokenizer split at its hyphens (`well-known` into `well`, `-`, `known`) is joined back when no whitespace separates its parts; a language library whose own tokenizer keeps such words whole turns it on, so that a string and a `Doc` give the same words.
+Yields the words of a `Doc` or a `Span` as lists of tokens: one token each, as in `iter_doc_tokens`. With `join_hyphens=True` a word that the tokenizer split at its hyphens (`well-known` into `well`, `-`, `known`) is joined back when no whitespace separates its parts and no sentence starts at a hyphen or a part; a language library whose own tokenizer keeps such words whole turns it on, so that a string and a `Doc` give the same words.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |

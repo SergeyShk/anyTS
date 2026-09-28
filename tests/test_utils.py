@@ -307,6 +307,19 @@ def test_iter_doc_units_whitespace(nlp, spaces, expected):
     assert [word for _, _, word in iter_doc_words(doc, join_hyphens=True)] == expected
 
 
+def test_iter_doc_units_stop_at_a_sentence_start(nlp):
+    doc = Doc(
+        nlp.vocab,
+        words=["Tick", "-", "tock", "-", "tock", "came"],
+        spaces=[False] * 5 + [True],
+        sent_starts=[True, False, True, False, False, False],
+    )
+    units = [" ".join(token.text for token in unit) for unit in iter_doc_units(doc, True)]
+    assert units == ["Tick", "tock - tock", "came"]
+    words = [word for sent in doc.sents for _, _, word in iter_doc_words(sent, True)]
+    assert words == [word for _, _, word in iter_doc_words(doc, True)]
+
+
 def test_iter_doc_units_stop_at_space_and_punctuation(nlp):
     doc = Doc(nlp.vocab, words=["well", "-", "\n", "known", "-", "?"], spaces=[False] * 6)
     assert [word for _, _, word in iter_doc_words(doc, join_hyphens=True)] == ["well", "known"]

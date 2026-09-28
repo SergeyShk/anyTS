@@ -381,7 +381,8 @@ def iter_doc_units(source: Doc | Span, join_hyphens: bool = False) -> Iterator[l
     Description:
         The words of iter_doc_tokens, one token each; with join_hyphens, a word
         the tokenizer split at its hyphens (well-known into well, -, known) is
-        joined back when no whitespace separates its parts
+        joined back when no whitespace separates its parts and no sentence
+        starts at a hyphen or a part
 
     Arguments:
         source (Doc|Span): Doc or Span object
@@ -406,6 +407,8 @@ def iter_doc_units(source: Doc | Span, join_hyphens: bool = False) -> Iterator[l
             and not tokens[last + 1].whitespace_
             and not tokens[last + 2].is_space
             and not is_punctuation(tokens[last + 2].text)
+            and not tokens[last + 1].is_sent_start
+            and not tokens[last + 2].is_sent_start
         ):
             last += 2
         yield tokens[index : last + 1]

@@ -196,6 +196,26 @@ def test_joins_previous():
     assert not joins_previous(spaced[0])
 
 
+def test_hyphen_at_a_sentence_start():
+    # Tick- | tock came . - a sentence starts at the second part, which is not joined
+    doc = parse(
+        ["Tick", "-", "tock", "came", "."],
+        [0, 0, 3, 3, 3],
+        ["ROOT", "punct", "nsubj", "ROOT", "punct"],
+        spaces=[False, False, True, False, False],
+    )
+    tick, _, tock, came, _ = doc
+    assert [texts(sent) for sent in doc.sents] == [["Tick", "-"], ["tock", "came", "."]]
+    assert not joins_previous(tock)
+    assert texts(get_words(doc, join_hyphens=True)) == ["Tick", "tock", "came"]
+    assert texts(get_children(came, join_hyphens=True)) == ["tock"]
+    assert subtree_len(came, join_hyphens=True) == 2
+    assert subtree_len(tick, join_hyphens=True) == 1
+    whole = calc_dependency_distances(doc, join_hyphens=True)
+    by_sentence = [d for sent in doc.sents for d in calc_dependency_distances(sent, True)]
+    assert whole == by_sentence == [1]
+
+
 def test_words_of_hyphenated_words():
     doc = hyphenated()
     assert texts(get_words(doc)) == ["Some", "one", "came", "with", "a", "well", "known", "cat"]

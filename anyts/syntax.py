@@ -30,8 +30,8 @@ def joins_previous(token: Token) -> bool:
 
     Description:
         The token is a word that follows a hyphen with no whitespace around it,
-        and the hyphen follows a word: known in well-known, as iter_doc_units
-        joins them
+        and the hyphen follows a word, with no sentence starting at the hyphen
+        or at the token: known in well-known, as iter_doc_units joins them
 
     Arguments:
         token (Token): Token
@@ -48,6 +48,8 @@ def joins_previous(token: Token) -> bool:
         and not doc[i - 1].whitespace_
         and is_word(doc[i - 2])
         and is_word(token)
+        and not doc[i - 1].is_sent_start
+        and not token.is_sent_start
     )
 
 
