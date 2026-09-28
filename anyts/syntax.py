@@ -1,5 +1,5 @@
 from collections import Counter
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 
 from spacy.tokens import Token
 
@@ -52,7 +52,13 @@ def joins_previous(token: Token) -> bool:
 
 
 def _word_units(tokens: Iterable[Token], join_hyphens: bool) -> list[list[Token]]:
-    """Words of a sequence of tokens as lists of their tokens, the parts of a hyphenated word joined"""
+    """
+    Words of a sequence of tokens as lists of their tokens
+
+    Description:
+        With join_hyphens the parts of a hyphenated word and the hyphens between
+        them are one word, when its earlier parts are in the sequence
+    """
     units: list[list[Token]] = []
     unit_of: dict[int, list[Token]] = {}
     for token in tokens:
@@ -61,7 +67,7 @@ def _word_units(tokens: Iterable[Token], join_hyphens: bool) -> list[list[Token]
         first = token.i - 2
         if join_hyphens and first in unit_of and joins_previous(token):
             unit = unit_of[first]
-            unit.append(token)
+            unit.extend((token.doc[token.i - 1], token))
         else:
             unit = [token]
             units.append(unit)
@@ -69,16 +75,36 @@ def _word_units(tokens: Iterable[Token], join_hyphens: bool) -> list[list[Token]
     return units
 
 
-def _word_of(token: Token) -> list[Token]:
-    """Tokens of the hyphenated word a token belongs to"""
+def _hyphenated_word(token: Token) -> list[Token] | None:
+    """Tokens of the hyphenated word a token or an inner hyphen belongs to, None for no word"""
     doc = token.doc
-    start = token.i
+    i = token.i
+    if not is_word(token):
+        if token.text != "-" or i + 1 >= len(doc) or not joins_previous(doc[i + 1]):
+            return None
+        i += 1
+    start = i
     while joins_previous(doc[start]):
         start -= 2
-    end = token.i
+    end = i
     while end + 2 < len(doc) and joins_previous(doc[end + 2]):
         end += 2
-    return [doc[i] for i in range(start, end + 1, 2)]
+    return list(doc[start : end + 1])
+
+
+def _word_head(unit: Sequence[Token]) -> Token | None:
+    """
+    Part of a word that hangs on a token outside it, the nearest to the root and
+    a word rather than a hyphen when equal; None for a word that holds the head
+    of its sentence
+    """
+    if any(is_root(token) for token in unit):
+        return None
+    ids = {token.i for token in unit}
+    outside = [token for token in unit if token.head.i not in ids]
+    if len(outside) == 1:
+        return outside[0]
+    return min(outside, key=lambda token: (sum(1 for _ in token.ancestors), not is_word(token)))
 
 
 def get_words(tokens: Iterable[Token], join_hyphens: bool = False) -> list[Token]:
@@ -134,8 +160,10 @@ def get_children(token: Token, join_hyphens: bool = False) -> list[Token]:
     Getting the dependent words of a token
 
     Description:
-        With join_hyphens, the dependents of a hyphenated word are those of all
-        of its parts, and a dependent hyphenated word is given by its first part
+        With join_hyphens, a hyphenated word is one word with its hyphens: its
+        dependents are the words whose head (the part hanging outside the word,
+        the nearest to the root) hangs on one of its tokens, each given by that
+        part, or by its first part when it hangs by a hyphen
 
     Arguments:
         token (Token): Token
@@ -146,15 +174,18 @@ def get_children(token: Token, join_hyphens: bool = False) -> list[Token]:
     """
     if not join_hyphens:
         return [child for child in token.children if is_word(child)]
-    word = _word_of(token)
+    word = _hyphenated_word(token) or [token]
     ids = {part.i for part in word}
-    children = (
-        child
-        for part in word
-        for child in part.children
-        if is_word(child) and child.i not in ids and not joins_previous(child)
-    )
-    return sorted(children, key=lambda child: child.i)
+    children: dict[int, Token] = {}
+    for part in word:
+        for child in part.children:
+            unit = _hyphenated_word(child) if child.i not in ids else None
+            if unit is None or unit[0].i in children:
+                continue
+            head = _word_head(unit)
+            if head is not None and head.head.i in ids:
+                children[unit[0].i] = head if is_word(head) else unit[0]
+    return [children[start] for start in sorted(children)]
 
 
 def count_children(token: Token, join_hyphens: bool = False) -> int:
@@ -176,7 +207,8 @@ def subtree_len(token: Token, join_hyphens: bool = False) -> int:
     Computing the length of the subtree of a token in words
 
     Description:
-        The token itself and all of its direct and indirect dependents
+        The token itself and all of its direct and indirect dependents; with
+        join_hyphens, those of the whole hyphenated word the token belongs to
 
     Arguments:
         token (Token): Token
@@ -185,7 +217,11 @@ def subtree_len(token: Token, join_hyphens: bool = False) -> int:
     Returns:
         int: Number of words in the subtree
     """
-    return len(_word_units(token.subtree, join_hyphens))
+    if not join_hyphens:
+        return len(_word_units(token.subtree, False))
+    word = _hyphenated_word(token) or [token]
+    tokens = {descendant.i: descendant for part in word for descendant in part.subtree}
+    return len(_word_units((tokens[i] for i in sorted(tokens)), True))
 
 
 def calc_dependency_distances(tokens: Iterable[Token], join_hyphens: bool = False) -> list[int]:
@@ -197,7 +233,9 @@ def calc_dependency_distances(tokens: Iterable[Token], join_hyphens: bool = Fals
         in positions of words, punctuation left out (Liu 2008); the head of a
         sentence has no dependency and is skipped, as is a word whose head lies
         outside the given sequence. With join_hyphens, a hyphenated word is one
-        position, and its head is the first head of its parts outside it
+        position with its hyphens; a word holding the head of the sentence has
+        no dependency, and the head of another one is that of its part hanging
+        outside it, the nearest to the root
 
     References:
         Liu H. Dependency distance as a metric for language comprehension difficulty.
@@ -214,10 +252,9 @@ def calc_dependency_distances(tokens: Iterable[Token], join_hyphens: bool = Fals
     positions = {token.i: position for position, unit in enumerate(units) for token in unit}
     distances = []
     for position, unit in enumerate(units):
-        ids = {token.i for token in unit}
-        heads = [token.head.i for token in unit if not is_root(token) and token.head.i not in ids]
-        if heads and heads[0] in positions:
-            distances.append(abs(position - positions[heads[0]]))
+        head = _word_head(unit)
+        if head is not None and head.head.i in positions:
+            distances.append(abs(position - positions[head.head.i]))
     return distances
 
 
