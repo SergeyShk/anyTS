@@ -156,6 +156,9 @@ def test_to_path():
     assert to_path(Path("/usr/local/")) == Path("/usr/local/")
     assert to_path("~/corpora") == Path.home() / "corpora"
     assert to_path(Path("~")) == Path.home()
+    # A name after ~ is not a home directory to look up
+    assert to_path("~no_such_user_anyts/x") == Path("~no_such_user_anyts/x")
+    assert to_path("~qa") == Path("~qa")
 
 
 @pytest.mark.parametrize("path", [666, ["a", "b"], {"a": "b"}])
@@ -419,21 +422,34 @@ def test_extract_archive_replaces_an_earlier_extraction(tmp_path):
     assert Path(extract_archive(archive, out)).joinpath("a.txt").is_file()
 
 
-def test_extract_archive_flat_replaces_files_of_the_same_names(tmp_path):
+def test_extract_archive_flat_merges_into_the_directory(tmp_path):
     archive = tmp_path / "flat.zip"
     with zipfile.ZipFile(archive, "w") as zip_file:
         zip_file.writestr("a.txt", "new")
-        zip_file.writestr("b.txt", "new")
+        zip_file.writestr("texts/b.txt", "new")
+        zip_file.writestr("empty/", "")
     out = tmp_path / "out"
-    out.mkdir()
+    (out / "texts").mkdir(parents=True)
     (out / "a.txt").write_text("old", encoding="utf-8")
-    (out / "other.txt").write_text("other", encoding="utf-8")
+    (out / "texts" / "mine.txt").write_text("mine", encoding="utf-8")
     assert extract_archive(archive, out) == str(out)
-    assert {path.name: path.read_text() for path in out.iterdir()} == {
-        "a.txt": "new",
-        "b.txt": "new",
-        "other.txt": "other",
-    }
+    files = {str(path.relative_to(out)): path.read_text() for path in out.rglob("*.txt")}
+    assert files == {"a.txt": "new", "texts/b.txt": "new", "texts/mine.txt": "mine"}
+    assert (out / "empty").is_dir()
+
+
+@pytest.mark.parametrize("members", [["main-abc/a.txt"], ["main", "other.txt"]])
+def test_extract_archive_never_replaces_itself(tmp_path, members):
+    # An archive without an extension, a GitHub zipball saved as main
+    archive = tmp_path / "main"
+    with zipfile.ZipFile(archive, "w") as zip_file:
+        for member in members:
+            zip_file.writestr(member, "text")
+    data = archive.read_bytes()
+    with pytest.raises(DataFileError, match=r"would replace it"):
+        extract_archive(archive)
+    assert archive.read_bytes() == data
+    assert sorted(path.name for path in tmp_path.iterdir()) == ["main"]
 
 
 def test_extract_archive_refused_leaves_nothing(tmp_path):
@@ -613,6 +629,31 @@ def test_replace_errors(tmp_path, monkeypatch):
     with pytest.raises(DataFileError, match=r"^Cannot extract the archive"):
         extract_archive(archive, tmp_path / "out")
     assert list((tmp_path / "out").iterdir()) == []
+
+
+@pytest.mark.parametrize("concurrent", [True, False])
+def test_replace_cannot_restore(tmp_path, monkeypatch, concurrent):
+    # Neither the source nor the earlier target can take the place
+    source = tmp_path / "source"
+    source.mkdir()
+    target = tmp_path / "target"
+    target.mkdir()
+    rename = Path.rename
+
+    def failing(self, other):
+        if other == target:
+            if concurrent and self != source:
+                target.mkdir()
+            raise PermissionError(other)
+        return rename(self, other)
+
+    monkeypatch.setattr(Path, "rename", failing)
+    if concurrent:
+        datasets._replace(source, target)
+        assert target.is_dir()
+    else:
+        with pytest.raises(PermissionError):
+            datasets._replace(source, target)
 
 
 def test_replace_keeps_a_concurrent_target(tmp_path, monkeypatch):

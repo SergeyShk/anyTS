@@ -225,7 +225,9 @@ def _as_values(values: Iterable[Any], what: str = "values") -> np.ndarray:
         or (isinstance(value, Real) and not isinstance(value, bool))
         for value in array
     ):
-        return np.array([nan if value is None or value is pd.NA else value for value in array])
+        return np.array(
+            [nan if value is None or value is pd.NA else value for value in array], dtype=float
+        )
     raise error
 
 

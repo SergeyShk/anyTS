@@ -1,5 +1,7 @@
+import errno
 import hashlib
 import logging
+import os
 import shutil
 import tarfile
 import unicodedata
@@ -28,6 +30,9 @@ USER_AGENT = "anyTS"
 
 # Whether tarfile has the data filter (Python 3.11.4+)
 TAR_DATA_FILTER = hasattr(tarfile, "data_filter")
+
+# The starts of a path that expandusers turns into the home directory
+_HOME = tuple(f"~{sep}" for sep in (os.sep, os.altsep) if sep)
 
 
 class Dataset(metaclass=ABCMeta):
@@ -175,19 +180,27 @@ def _replace(source: Path, target: Path) -> None:
     Description:
         The earlier target is moved aside and removed only once the source is
         in place; it is put back when the source cannot take its place. A target
-        that a concurrent call has put in place meanwhile is kept
+        that a concurrent call moves away or puts in place meanwhile is taken as
+        it is
     """
-    backup = None
-    if target.exists() or target.is_symlink():
-        backup = _partial(target)
-        target.rename(backup)
+    aside = _partial(target)
+    backup: Path | None = aside
+    try:
+        target.rename(aside)
+    except FileNotFoundError:
+        backup = None
     try:
         source.rename(target)
-    except OSError:
-        if target.exists():
+    except OSError as error:
+        if _taken(error, target):
             return
         if backup is not None:
-            backup.rename(target)
+            try:
+                backup.rename(target)
+            except OSError as restore_error:
+                if _taken(restore_error, target):
+                    return
+                raise
             backup = None
         raise
     finally:
@@ -196,6 +209,11 @@ def _replace(source: Path, target: Path) -> None:
                 shutil.rmtree(backup, ignore_errors=True)
             else:
                 backup.unlink(missing_ok=True)
+
+
+def _taken(error: OSError, target: Path) -> bool:
+    """Whether a rename failed because a concurrent call has put its target in place"""
+    return error.errno in (errno.EEXIST, errno.ENOTEMPTY) or target.exists()
 
 
 def check_limit(limit: int | None) -> None:
@@ -308,7 +326,8 @@ def to_path(path: str | Path) -> Path:
     Converting the string form of a path into a Path
 
     Description:
-        A leading ~ is expanded into the home directory
+        A leading ~, alone or before a separator, is expanded into the home
+        directory
 
     Arguments:
         path (str|Path): Path as a string or a Path
@@ -320,7 +339,8 @@ def to_path(path: str | Path) -> Path:
         SourceTypeError: If the value is neither a string nor a Path
     """
     if isinstance(path, str | Path):
-        return Path(path).expanduser()
+        text = str(path)
+        return Path(path).expanduser() if text == "~" or text.startswith(_HOME) else Path(path)
     raise SourceTypeError("The path must be a string or a Path")
 
 
@@ -425,7 +445,7 @@ def extract_archive(archive_file: str | Path, extract_dir: str | Path | None = N
         place only once complete: a single root directory takes the name of
         the archive without its extensions, replacing an earlier extraction;
         the files of an archive without one root go into the directory,
-        replacing those of the same names
+        replacing those of the same names and keeping the others
 
     Arguments:
         archive_file (str|Path): Path to the archive
@@ -436,8 +456,9 @@ def extract_archive(archive_file: str | Path, extract_dir: str | Path | None = N
 
     Raises:
         DataFileError: If the file is missing or is not a ZIP or TAR archive, the archive is
-            corrupted, empty, has paths outside the directory or links, or the
-            directory cannot be created or its files replaced
+            corrupted, empty, has paths outside the directory or links, its files
+            would replace it, or the directory cannot be created or its files
+            replaced
     """
     archive_path = to_path(archive_file).resolve()
     if not archive_path.is_file():
@@ -451,17 +472,25 @@ def extract_archive(archive_file: str | Path, extract_dir: str | Path | None = N
     is_tar = tarfile.is_tarfile(archive_path)
     if not is_tar and not zipfile.is_zipfile(archive_path):
         raise DataFileError(f"The file {archive_path} is not a ZIP or TAR archive")
-    partial = _partial(extract_path / _stem(archive_path.name))
+    stem = _stem(archive_path.name)
+    partial = _partial(extract_path / stem)
     try:
         partial.mkdir()
         members = _extract(archive_path, is_tar, partial)
         roots = {parts[0] for member in members if (parts := PurePosixPath(member).parts)}
         if len(roots) == 1 and (partial / (root := roots.pop())).is_dir():
-            destination = extract_path / _stem(archive_path.name)
+            destination = extract_path / stem
+            _check_not_the_archive(destination, archive_path)
             _replace(partial / root, destination)
             return str(destination)
-        for entry in partial.iterdir():
-            _replace(entry, extract_path / entry.name)
+        for entry in sorted(partial.rglob("*")):
+            destination = extract_path / entry.relative_to(partial)
+            if entry.is_dir():
+                destination.mkdir(parents=True, exist_ok=True)
+            else:
+                _check_not_the_archive(destination, archive_path)
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                _replace(entry, destination)
         return str(extract_path)
     except OSError as e:
         raise DataFileError(f"Cannot extract the archive {archive_path}") from e
@@ -469,24 +498,42 @@ def extract_archive(archive_file: str | Path, extract_dir: str | Path | None = N
         shutil.rmtree(partial, ignore_errors=True)
 
 
+def _check_not_the_archive(destination: Path, archive_path: Path) -> None:
+    """Refusing a file of the archive that would take the place of the archive itself"""
+    if destination.resolve() == archive_path:
+        raise DataFileError(
+            f"The files of the archive {archive_path} would replace it: give the archive "
+            "an extension or extract it into another directory"
+        )
+
+
 def _extract(archive_path: Path, is_tar: bool, extract_path: Path) -> list[str]:
-    """Extracting all the members of an archive, each checked first; the names of the members"""
+    """
+    Extracting the members of an archive; the names of the members
+
+    Description:
+        A TAR member is checked as it is extracted, so that the archive is read
+        once; a refused member stops the extraction, and the caller removes
+        what was written
+    """
     refused = f"The archive {archive_path} has paths outside the directory or links"
+
+    def check(member: tarfile.TarInfo, path: str) -> tarfile.TarInfo:
+        if _is_outside(member.name) or not (member.isfile() or member.isdir()):
+            raise DataFileError(refused)
+        return tarfile.data_filter(member, path) if TAR_DATA_FILTER else member
+
     logger.info("Extracting the archive %s", archive_path)
     try:
         if is_tar:
             with tarfile.open(archive_path, mode="r") as tar_file:
-                tar_members = tar_file.getmembers()
-                if any(
-                    _is_outside(member.name) or not (member.isfile() or member.isdir())
-                    for member in tar_members
-                ):
-                    raise DataFileError(refused)
                 if TAR_DATA_FILTER:
-                    tar_file.extractall(extract_path, filter="data")
+                    tar_file.extractall(extract_path, filter=check)
                 else:
-                    tar_file.extractall(extract_path)
-                members = [member.name for member in tar_members]
+                    for member in tar_file:
+                        tar_file.extract(check(member, str(extract_path)), extract_path)
+                # After the extraction, so that the stream is read once
+                members = tar_file.getnames()
         else:
             with zipfile.ZipFile(archive_path, mode="r") as zip_file:
                 members = zip_file.namelist()

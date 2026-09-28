@@ -166,6 +166,9 @@ def test_renamed_component_follows_with_its_extension(nlp):
     other = spacy.blank("xx")
     other.add_pipe("anyts_test_after", source=nlp, name="anyts_test_sourced")
     assert other("The cat and the dog")._.anyts_test_sourced.ttr == 0.8
+    # The component is shared: the first pipeline writes to its last name too
+    assert other.get_pipe("anyts_test_sourced") is nlp.get_pipe("anyts_test_after")
+    assert nlp("The cat and the dog")._.anyts_test_sourced.ttr == 0.8
 
 
 def test_extension_of_another_package_is_kept(nlp):

@@ -107,7 +107,7 @@ def keyness_plot(
         if len(labels) != 2:
             raise ParameterError("The labels of the legend must be a pair of strings")
         labels = {"target": labels[0], "reference": labels[1]}
-    captions = merge_labels(VISUALIZER_LABELS["keyness_plot"], labels, field="")
+    captions = merge_labels(VISUALIZER_LABELS["keyness_plot"], labels, field="score")
     if not isinstance(field, str) or field not in Keyword._fields[1:]:
         raise ParameterError(f"Unknown field of a keyword: {field}")
     check_integer(top_n, "number of words")

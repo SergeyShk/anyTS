@@ -184,7 +184,7 @@ def _distance_matrix(distances: pd.DataFrame, purpose: str) -> np.ndarray:
 
     Description:
         The distances are finite and non-negative, the matrix symmetric with
-        zeros on the diagonal
+        zeros on the diagonal, up to a rounding error
     """
     if not isinstance(distances, pd.DataFrame):
         raise SourceTypeError(
@@ -202,11 +202,15 @@ def _distance_matrix(distances: pd.DataFrame, purpose: str) -> np.ndarray:
         raise SourceTypeError("The distances must be numbers") from e
     if not np.isfinite(values).all():
         raise SourceError(f"{purpose} needs every distance to be finite")
-    if (values < 0).any() or not np.allclose(values, values.T):
-        raise SourceError(f"{purpose} needs a symmetric matrix of non-negative distances")
+    # A distance below zero by a rounding error only is zero
+    if ((values < 0) & ~np.isclose(values, 0)).any():
+        raise SourceError(f"{purpose} needs non-negative distances")
+    if not np.allclose(values, values.T):
+        raise SourceError(f"{purpose} needs a symmetric matrix of distances")
     if not np.allclose(np.diagonal(values), 0):
         raise SourceError(f"{purpose} needs zero distances on the diagonal")
-    return values
+    clipped: np.ndarray = np.clip(values, 0, None)
+    return clipped
 
 
 def mendenhall_plot(

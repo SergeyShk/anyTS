@@ -1,3 +1,4 @@
+from fractions import Fraction
 from math import inf, isnan, nan, sqrt
 
 import numpy as np
@@ -140,6 +141,14 @@ def test_missing_values_are_nan():
     assert isnan(calc_cohen_d([1.0, None, 3.0, 4.0], [2.0, 3.0, 5.0]))
     row = compare_values([1.0, None, 3.0, 4.0], [2.0, 3.0, 5.0], n_bootstrap=10)
     assert row[-4:] == (3, 3, 3, 3)
+
+
+def test_values_of_other_number_types():
+    assert holm_correction([Fraction(1, 100), Fraction(3, 100)]).tolist() == pytest.approx(
+        [0.02, 0.03]
+    )
+    assert calc_cliff_delta([2**64, 3], [1, 2]) == 1.0
+    assert compare_values([2**64, 3, 4], [1, 2, 3], n_bootstrap=10)[-4:] == (3, 3, 3, 3)
 
 
 def test_holm_correction_containers():

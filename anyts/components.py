@@ -20,9 +20,11 @@ class StatsComponent(metaclass=ABCMeta):
         Language.factory("<prefix>_<statistics>"), so that the factories of
         several libraries live in one process; add_pipe(factory, name=...)
         names the extension, which follows the component when the pipeline
-        renames it. The subclass checks its parameters before it calls
-        the __init__ of the base, so that a wrong one fails at add_pipe, and
-        implements compute; a subclass without it fails at add_pipe too
+        renames it; a component taken from another pipeline is the same object
+        there, writing to the extension of its last name. The subclass checks
+        its parameters before it calls the __init__ of the base, so that a wrong
+        one fails at add_pipe, and implements compute; a subclass without it
+        fails at add_pipe too
         A document without words passes untouched, its extension left at None
         (accepts). spaCy does not serialize the objects in the extensions, so
         Doc.to_bytes(), DocBin with store_user_data=True and nlp.pipe with

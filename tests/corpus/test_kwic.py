@@ -232,3 +232,21 @@ def test_format_kwic_iterables_and_composed_forms():
     formatted = format_kwic(kwic(decomposed, "come", window=1), width=6).split("\n")
     assert formatted == ["  niño  come  . El", " perro  come  "]
     assert [line.index("come") for line in formatted] == [8, 8]
+
+
+def test_kwic_phrase_stops_at_a_sentence_start_on_a_mark():
+    # The parser starts the sentence at the opening mark before the word
+    words = ["Vino", "ayer", ".", "¿", "Qué", "tal", "?"]
+    doc = Doc(
+        spacy.blank("xx").vocab,
+        words=words,
+        spaces=[True, False, True, False, True, False, False],
+        sent_starts=[True, False, False, True, False, False, False],
+    )
+    assert kwic(doc, "ayer qué") == []
+    assert len(kwic(doc, "qué tal")) == 1
+    # A paragraph ends a phrase in a Doc with boundaries too
+    nlp = spacy.blank("xx")
+    nlp.add_pipe("sentencizer")
+    assert kwic(nlp("Dijo uno\n\nEl otro vino."), "uno el") == []
+    assert len(kwic(nlp("Dijo uno\nEl otro vino."), "uno el")) == 1

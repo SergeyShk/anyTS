@@ -173,3 +173,13 @@ def test_distance_matrix_errors(matrix, error, message):
         with pytest.raises(error, match=message):
             plot(matrix)
     assert plt.get_fignums() == []
+
+
+def test_distance_matrix_rounding_error():
+    # A cosine distance of a text to itself may come out a rounding error below zero
+    noisy = EXACT.copy()
+    noisy.iloc[0, 0] = noisy.iloc[1, 1] = -2.2e-16
+    offsets = np.asarray(mds_plot(noisy).collections[0].get_offsets())
+    assert np.linalg.norm(offsets[0] - offsets[1]) == pytest.approx(3)
+    assert _heights(dendrogram_plot(noisy, method="single")) == {0, 3, 4}
+    plt.close("all")

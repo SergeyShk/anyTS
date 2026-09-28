@@ -13,8 +13,9 @@ from ..utils import _unit_word, check_integer, iter_doc_units
 Tokenizer = Callable[[str], Iterable[tuple[int, int, str]]]
 Lemmatizer = Callable[[str, Sequence[Token]], Iterable[str] | str]
 
-# The end of a sentence (a final mark, closing marks and whitespace) or of a paragraph
-BOUNDARY = re.compile(r"[.!?…][\"'»”’)\]]*\s|\n[^\S\n]*\n")
+# The end of a paragraph, and of a sentence: a final mark, closing marks and whitespace
+PARAGRAPH = re.compile(r"\n[^\S\n]*\n")
+BOUNDARY = re.compile(rf"[.!?…][\"'»”’)\]]*\s|{PARAGRAPH.pattern}")
 
 
 class Concordance(NamedTuple):
@@ -64,11 +65,12 @@ def kwic(
         across its inner hyphens with join_hyphens, the lemmas of a word are the
         word itself and, for a word of a Doc with lemmas, the lemma of the
         model, and fold lower-cases
-        A phrase does not run across the end of a sentence or a paragraph -
-        the boundaries of a Doc, or a final mark before whitespace - unless the
-        keyword has one in the same place. The context is window words on each
-        side as written, with the punctuation between them; whitespace
-        collapses to one space; occurrences do not overlap
+        A phrase does not run across the end of a paragraph or of a sentence -
+        a boundary of a Doc anywhere between its words, or a final mark before
+        whitespace without boundaries - unless the keyword has one in the same
+        place. The context is window words on each side as written, with the
+        punctuation between them; whitespace collapses to one space;
+        occurrences do not overlap
 
     Arguments:
         source (str|Doc): Text or Doc object
@@ -119,7 +121,7 @@ def kwic(
     if window < 0:
         raise ParameterError("The window cannot be negative")
     text, words, tokens = _source_words(source, split, join_hyphens)
-    sentences = isinstance(source, Doc) and source.has_annotation("SENT_START")
+    doc = source if isinstance(source, Doc) and source.has_annotation("SENT_START") else None
     lemmas = lemmatize or _lemmas
 
     def readings(word: str, word_tokens: Sequence[Token]) -> set[str]:
@@ -134,9 +136,7 @@ def kwic(
     def crosses(index: int) -> bool:
         """Whether the phrase starting at a word runs across a boundary the keyword lacks"""
         return any(
-            tokens[index + offset][0].is_sent_start
-            if sentences
-            else BOUNDARY.search(text[words[index + offset - 1][1] : words[index + offset][0]])
+            _boundary(text, words, tokens, doc, index + offset)
             for offset, allowed in enumerate(key_gaps, 1)
             if not allowed
         )
@@ -184,6 +184,31 @@ def _source_words(
         words = list(split(source))
         return source, words, [()] * len(words)
     raise SourceTypeError("The data source is set incorrectly")
+
+
+def _boundary(
+    text: str,
+    words: Sequence[tuple[int, int, str]],
+    tokens: Sequence[Sequence[Token]],
+    doc: Doc | None,
+    index: int,
+) -> bool:
+    """
+    Whether a sentence or a paragraph ends before a word
+
+    Description:
+        By the sentence boundaries of a Doc - at any token from the one after
+        the previous word to the first token of the word, so that a start on an
+        opening mark counts - and by the paragraph breaks; by the final marks
+        before whitespace otherwise
+    """
+    gap = text[words[index - 1][1] : words[index][0]]
+    if doc is None:
+        return bool(BOUNDARY.search(gap))
+    first, last = tokens[index - 1][-1].i + 1, tokens[index][0].i
+    return bool(PARAGRAPH.search(gap)) or any(
+        doc[position].is_sent_start for position in range(first, last + 1)
+    )
 
 
 def _normalize(word: str) -> str:

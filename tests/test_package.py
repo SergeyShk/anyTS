@@ -100,3 +100,28 @@ def test_lazy_packages():
         assert all(getattr(package, name) is not None for name in package.__all__)
         with pytest.raises(AttributeError, match="has no attribute 'missing'"):
             package.missing  # noqa: B018
+        with pytest.raises(AttributeError, match="has no attribute '__missing__'"):
+            package.__missing__  # noqa: B018
+
+
+def test_modules_of_lazy_packages_are_attributes():
+    code = (
+        "import anyts.corpus, anyts.visualizers\n"
+        "print(anyts.corpus.stylometry.__name__, anyts.visualizers.highlight.__name__,"
+        " callable(anyts.corpus.kwic))"
+    )
+    assert _run(code) == "anyts.corpus.stylometry anyts.visualizers.highlight True"
+
+
+def test_lazy_package_reports_a_missing_dependency(tmp_path, monkeypatch):
+    package = tmp_path / "anyts_lazy_fake"
+    package.mkdir()
+    (package / "__init__.py").write_text(
+        "from anyts._lazy import make_lazy\n_MODULES = {}\nmake_lazy(__name__)\n"
+    )
+    (package / "broken.py").write_text("import anyts_no_such_dependency\n")
+    monkeypatch.syspath_prepend(str(tmp_path))
+    monkeypatch.setattr(sys, "modules", dict(sys.modules))
+    fake = importlib.import_module("anyts_lazy_fake")
+    with pytest.raises(ModuleNotFoundError, match="anyts_no_such_dependency"):
+        fake.broken  # noqa: B018
