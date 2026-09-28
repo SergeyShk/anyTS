@@ -19,7 +19,7 @@ Every text is cut into segments of `segment_len` words with a sliding step of a 
 | `texts` | list[list[str]] | `-` | List of lists of words |
 | `segment_len` | int | `10` | Size of a segment |
 | `metric` | Callable | `None` | Function of a measure of lexical diversity; `calc_ttr` by default |
-| `x_size` | int | `800` | Half the width of the drawing area |
+| `x_size` | int | `800` | Half the width of the drawing area, greater than 25 (the margin between the blocks) |
 | `y_size` | int | `600` | Half the height of the drawing area, which grows when the blocks need more |
 | `cmap` | str | `'viridis'` | Colour map |
 | `ax` | Axes | `None` | Axes of matplotlib for the plot; if not given, a 15×10 figure is created |

@@ -48,7 +48,8 @@ def zipf(
         SourceTypeError: If the value is not a Counter object
         SourceError: If the counter is empty
         ParameterError: If the number of words or of labels is not an integer, the number
-            of words is below one or the labels are set incorrectly (merge_labels)
+            of words is below one, the exponent α of the shown theoretical law is not
+            a number above zero or the labels are set incorrectly (merge_labels)
     """
     captions = merge_labels(VISUALIZER_LABELS["zipf"], labels)
     if not isinstance(counter, Counter):
@@ -60,6 +61,8 @@ def zipf(
         if num_words < 1:
             raise ParameterError("The number of words must be greater than 0")
     check_integer(num_labels, "number of labels")
+    if show_theory:
+        _check_alpha(alpha)
     if ax is None:
         _, ax = plt.subplots()
     top_frequency = counter.most_common(1)[0][1]
@@ -133,17 +136,24 @@ def zipf_theory(
 
     Raises:
         ParameterError: If the number of ranks is not an integer or is below one, the
-            exponent is not a number above zero or the labels are set incorrectly
+            frequency is not a number, the exponent is not a number above zero or
+            the labels are set incorrectly
     """
     captions = merge_labels(VISUALIZER_LABELS["zipf_theory"], labels)
     check_integer(num_ranks, "number of ranks")
     if num_ranks < 1:
         raise ParameterError("The number of ranks must be greater than 0")
-    check_number(alpha, "exponent α")
-    if alpha <= 0:
-        raise ParameterError("The exponent α must be greater than 0")
+    check_number(size, "frequency of the first rank")
+    _check_alpha(alpha)
     if ax is None:
         _, ax = plt.subplots()
     x = np.arange(1, num_ranks + 1)
     ax.plot(x, size * x ** (-alpha), linewidth=2, color="r", label=captions["theoretical"])
     return ax
+
+
+def _check_alpha(alpha: float) -> None:
+    """Checking the exponent α of the theoretical Zipf's law"""
+    check_number(alpha, "exponent α")
+    if alpha <= 0:
+        raise ParameterError("The exponent α must be greater than 0")

@@ -42,6 +42,16 @@ def test_zipf_empty_and_overflow(tokens):
     assert len(single.texts) == 1
 
 
+def test_zipf_checks_before_plotting():
+    with pytest.raises(ParameterError, match="exponent"):
+        zipf(Counter(a=3, b=1), show_theory=True, alpha=0)
+    assert zipf(Counter(a=3, b=1), alpha=0).get_lines()
+    plt.close("all")
+    with pytest.raises(ParameterError, match="frequency of the first rank"):
+        zipf_theory("10", 5)
+    assert plt.get_fignums() == []
+
+
 def test_zipf_type_error():
     with pytest.raises(SourceTypeError):
         zipf(1)

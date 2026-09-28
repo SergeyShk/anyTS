@@ -15,7 +15,7 @@ Hierarchical clustering by `scipy.cluster.hierarchy` over the matrix of distance
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
 | `distances` | DataFrame | `-` | Symmetric matrix of distances with the names of the texts |
-| `method` | str | `ward` | Method of `scipy.cluster.hierarchy.linkage` to join the clusters |
+| `method` | str | `ward` | Method of `scipy.cluster.hierarchy.linkage` to join the clusters: `single`, `complete`, `average`, `weighted`, `centroid`, `median` or `ward` |
 | `ax` | Axes | `None` | Axes for the plot |
 | `labels` | dict[str, str] | `None` | Labels over the defaults: `title`, `xlabel` |
 <!-- --8<-- [end:dendrogram_plot] -->

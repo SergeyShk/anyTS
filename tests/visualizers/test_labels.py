@@ -36,6 +36,24 @@ def test_merge_labels():
         merge_labels(defaults, {"title": 1})
 
 
+def test_merge_labels_format_strings():
+    defaults = {"title": "Plot", "fit": "q={q:.2f}, s={s:.2f}"}
+    assert merge_labels(defaults, {"fit": "s={s:.1f}"})["fit"] == "s={s:.1f}"
+    assert merge_labels(defaults, {"fit": "{{q}}"})["fit"] == "{{q}}"
+    assert merge_labels(defaults, {"title": "f(r) = {C}"})["title"] == "f(r) = {C}"
+    for label, message in (
+        (
+            "q={q} {x}",
+            r"^The label 'fit' has unknown fields \['x'\]; available fields: \['q', 's'\]$",
+        ),
+        ("K={0}", r"unknown fields \['0'\]"),
+        ("|{}|", r"unknown fields \[''\]"),
+        ("q={q} {", r"^The label 'fit' is not a format string"),
+    ):
+        with pytest.raises(ParameterError, match=message):
+            merge_labels(defaults, {"fit": label})
+
+
 def test_labels_are_the_names_of_the_visualizers():
     import anyts.visualizers as visualizers
 
@@ -67,11 +85,13 @@ def test_labels_replace_the_defaults():
     assert [text.get_text() for text in ax.get_legend().get_texts()] == ["Cervantes"]
 
 
-@pytest.mark.parametrize("labels", [{"unknown": "x"}, ["x"], {"title": 1}])
+@pytest.mark.parametrize("labels", [{"unknown": "x"}, ["x"], {"title": 1}, {"fit": "{x}"}])
 def test_labels_checked_before_plotting(labels):
     plt.close("all")
     with pytest.raises(ParameterError):
         zipf(Counter(words), labels=labels)
     with pytest.raises(ParameterError):
         heaps_plot(words, labels=labels)
+    with pytest.raises(ParameterError):
+        sentence_lengths_plot([3, 5, 2], labels={"average": "avg {w}"})
     assert plt.get_fignums() == []

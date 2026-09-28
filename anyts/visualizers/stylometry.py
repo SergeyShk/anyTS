@@ -9,8 +9,13 @@ from scipy.spatial.distance import squareform
 
 from ..constants import VISUALIZER_LABELS
 from ..corpus.stylometry import frequency_table, mendenhall_curve, z_scores
-from ..exceptions import SourceError, SourceTypeError
+from ..exceptions import ParameterError, SourceError, SourceTypeError
 from ..utils import merge_labels
+
+# Methods of scipy.cluster.hierarchy.linkage
+LINKAGE_METHODS = frozenset(
+    ("single", "complete", "average", "weighted", "centroid", "median", "ward")
+)
 
 
 def dendrogram_plot(
@@ -36,11 +41,15 @@ def dendrogram_plot(
         Axes: Axes with the dendrogram
 
     Raises:
+        SourceTypeError: If the distances are not a DataFrame
         SourceError: If the matrix is not square, has fewer than two texts or
             an infinite distance
-        ParameterError: If the labels are set incorrectly (merge_labels)
+        ParameterError: If the method is unknown or the labels are set incorrectly
+            (merge_labels)
     """
     captions = merge_labels(VISUALIZER_LABELS["dendrogram_plot"], labels)
+    if method not in LINKAGE_METHODS:
+        raise ParameterError(f"Unknown method of linkage: {method}")
     values = _distance_matrix(distances, "a dendrogram")
     if ax is None:
         _, ax = plt.subplots(figsize=(8, 0.4 * len(distances) + 1.5))
@@ -80,10 +89,12 @@ def pca_plot(
         Axes: Axes with the plot
 
     Raises:
+        SourceTypeError: If the corpus is not a mapping
         SourceError: If there are fewer than three texts
         ParameterError: If the labels are set incorrectly (merge_labels)
     """
     captions = merge_labels(VISUALIZER_LABELS["pca_plot"], labels)
+    _check_corpus(corpus)
     if len(corpus) < 3:
         raise SourceError("The principal components need at least three texts")
     scores = z_scores(frequency_table(corpus, n_mfw, culling))
@@ -127,6 +138,7 @@ def mds_plot(
         Axes: Axes with the plot
 
     Raises:
+        SourceTypeError: If the distances are not a DataFrame
         SourceError: If the matrix is not square, has fewer than two texts or
             an infinite distance
         ParameterError: If the labels are set incorrectly (merge_labels)
@@ -152,8 +164,22 @@ def mds_plot(
     return ax
 
 
+def _check_corpus(corpus: object) -> None:
+    """Checking that a corpus is a mapping of the names of its texts to their units"""
+    if not isinstance(corpus, Mapping):
+        raise SourceTypeError(
+            f"The corpus must be a mapping of the names of the texts to their units, "
+            f"not {type(corpus).__name__}"
+        )
+
+
 def _distance_matrix(distances: pd.DataFrame, purpose: str) -> np.ndarray:
     """Values of a square matrix of finite distances between at least two texts"""
+    if not isinstance(distances, pd.DataFrame):
+        raise SourceTypeError(
+            f"The distances must be a DataFrame with the names of the texts, "
+            f"not {type(distances).__name__}"
+        )
     values = np.asarray(distances.to_numpy(dtype=float), dtype=float)
     if values.ndim != 2 or values.shape[0] != values.shape[1] or len(values) < 2:
         raise SourceError(f"{purpose.capitalize()} needs a square matrix of at least two texts")
@@ -188,11 +214,7 @@ def mendenhall_plot(
         ParameterError: If the labels are set incorrectly (merge_labels)
     """
     captions = merge_labels(VISUALIZER_LABELS["mendenhall_plot"], labels)
-    if not isinstance(corpus, Mapping):
-        raise SourceTypeError(
-            f"The corpus must be a mapping of the names of the texts to their words, "
-            f"not {type(corpus).__name__}"
-        )
+    _check_corpus(corpus)
     if not corpus:
         raise SourceError("The corpus has no texts")
     curves = {name: mendenhall_curve(words) for name, words in corpus.items()}

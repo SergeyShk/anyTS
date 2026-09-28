@@ -5,7 +5,7 @@ from matplotlib.axes import Axes
 
 from anyts import WordsExtractor
 from anyts.corpus import delta, mendenhall_curve
-from anyts.exceptions import SourceError, SourceTypeError
+from anyts.exceptions import ParameterError, SourceError, SourceTypeError
 from anyts.visualizers import dendrogram_plot, mds_plot, mendenhall_plot, pca_plot
 
 # Three short texts, every word replaced by a token of the same length that keeps
@@ -39,6 +39,11 @@ def test_dendrogram_plot():
         dendrogram_plot(distances.iloc[:2, :3])
     with pytest.raises(SourceError, match="finite"):
         dendrogram_plot(distances.replace(0.0, np.nan))
+    with pytest.raises(ParameterError, match="Unknown method of linkage: wrad"):
+        dendrogram_plot(distances, method="wrad")
+    for plot in (dendrogram_plot, mds_plot):
+        with pytest.raises(SourceTypeError, match="must be a DataFrame"):
+            plot(distances.to_numpy())
     assert len(plt.get_fignums()) == 0
 
 
@@ -53,6 +58,8 @@ def test_pca_plot():
     assert ax.get_ylabel().startswith("Component 2 (")
     with pytest.raises(SourceError):
         pca_plot({name: corpus[name] for name in ("A", "B")}, n_mfw=10)
+    with pytest.raises(SourceTypeError, match="must be a mapping"):
+        pca_plot(5)
     _, given = plt.subplots()
     assert pca_plot(corpus, n_mfw=10, ax=given) is given
     ax = pca_plot(corpus, n_mfw=1)

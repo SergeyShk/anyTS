@@ -51,7 +51,7 @@ def fingerprinting(
         texts (list[list[str]]): List of lists of words
         segment_len (int): Size of a segment
         metric (callable): Function of a measure of lexical diversity; calc_ttr by default
-        x_size (int): Half the width of the drawing area
+        x_size (int): Half the width of the drawing area, greater than MARGIN (25)
         y_size (int): Half the height of the drawing area, which grows when the blocks need more
         cmap (str): Colour map
         ax (Axes): Axes for the plot; if not given, a 15×10 figure is created
@@ -65,7 +65,8 @@ def fingerprinting(
             measure is not callable
         SourceError: If there are no texts or a text has no words
         ParameterError: If the size of a segment is not an integer or is below one,
-            or the labels are set incorrectly (merge_labels)
+            the half width is not an integer above MARGIN, the half height not an
+            integer above zero, or the labels are set incorrectly (merge_labels)
     """
     title = merge_labels(VISUALIZER_LABELS["fingerprinting"], labels)["title"]
     check_sequence(texts, "lists of words")
@@ -80,6 +81,13 @@ def fingerprinting(
     check_integer(segment_len, "size of a segment")
     if segment_len < 1:
         raise ParameterError("The size of a segment must be greater than 0")
+    check_integer(x_size, "half width of the drawing area")
+    check_integer(y_size, "half height of the drawing area")
+    if x_size <= MARGIN or y_size < 1:
+        raise ParameterError(
+            f"The half width of the drawing area must be greater than {MARGIN} "
+            "and the half height greater than 0"
+        )
     measure = metric if metric is not None else calc_ttr
     values = [_segment_values(text, segment_len, measure) for text in texts]
     finite = [value for segments in values for value in segments if np.isfinite(value)]

@@ -3,6 +3,7 @@ from collections.abc import Iterable, Iterator, Mapping, Set
 from functools import lru_cache
 from itertools import repeat
 from numbers import Integral, Real
+from string import Formatter
 
 from spacy.tokens import Doc, Span, Token
 
@@ -269,7 +270,9 @@ def merge_labels(defaults: Mapping[str, str], labels: Mapping[str, str] | None) 
 
     Description:
         A label that is not given keeps its default, so a single label can be
-        changed alone
+        changed alone. A default with fields in braces is a format string: a
+        label given for it may use only those fields, and a literal brace in it
+        is doubled ({{); the other labels are taken as they are
 
     Arguments:
         defaults (dict[str, str]): Default labels by key
@@ -279,7 +282,9 @@ def merge_labels(defaults: Mapping[str, str], labels: Mapping[str, str] | None) 
         dict[str, str]: Labels by key
 
     Raises:
-        ParameterError: If the labels are not a mapping of strings or have an unknown key
+        ParameterError: If the labels are not a mapping of strings, have an
+            unknown key, or a format label is not a format string of the fields
+            of its default
 
     Example:
         >>> from anyts.utils import merge_labels
@@ -295,7 +300,25 @@ def merge_labels(defaults: Mapping[str, str], labels: Mapping[str, str] | None) 
         raise ParameterError(f"Unknown labels: {unknown}. Available labels: {tuple(defaults)}")
     if not all(isinstance(label, str) for label in labels.values()):
         raise ParameterError("The labels must be strings")
+    for key, label in labels.items():
+        fields = _format_fields(defaults[key])
+        if not fields:
+            continue
+        try:
+            extra = _format_fields(label) - fields
+        except ValueError as error:
+            raise ParameterError(f"The label {key!r} is not a format string: {error}") from None
+        if extra:
+            raise ParameterError(
+                f"The label {key!r} has unknown fields {sorted(extra)}; "
+                f"available fields: {sorted(fields)}"
+            )
     return {**defaults, **labels}
+
+
+def _format_fields(label: str) -> set[str]:
+    """Names of the fields of a format string"""
+    return {name for _, name, _, _ in Formatter().parse(label) if name is not None}
 
 
 def iter_doc_tokens(source: Doc | Span) -> Iterator[Token]:

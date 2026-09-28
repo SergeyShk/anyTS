@@ -53,6 +53,9 @@ def test_sentence_lengths_hooks():
     doc = nlp("A well-known cat. It sleeps.")
     assert sentence_lengths(doc) == [4, 2]
     assert sentence_lengths(doc, join_hyphens=True) == [3, 2]
+    # A Doc without sentence boundaries is counted as its text, by the extractors
+    bare = spacy.blank("xx")("A well-known cat. It sleeps.")
+    assert sentence_lengths(bare, join_hyphens=True) == [4, 2]
     with pytest.raises(SourceTypeError, match="SentsExtractor"):
         sentence_lengths(text, sents_extractor=WordsExtractor())
     with pytest.raises(SourceTypeError, match="WordsExtractor"):

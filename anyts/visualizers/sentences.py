@@ -95,9 +95,10 @@ def sentence_lengths(
     Description:
         A string is split into sentences by sents_extractor and every
         sentence into words by words_extractor; a Doc by its sentence
-        boundaries (iter_doc_words), or as its text without them; ready
-        lengths (any iterable of integers) are used as they are. Sentences
-        without words are skipped
+        boundaries, with the words of iter_doc_words and join_hyphens, and a
+        Doc without them as its text, by the extractors; ready lengths (any
+        iterable of integers) are used as they are. Sentences without words
+        are skipped
 
     Arguments:
         source (str|Doc|Iterable[int]): Text, Doc object or ready lengths
@@ -105,7 +106,8 @@ def sentence_lengths(
             SentsExtractor() by default
         words_extractor (WordsExtractor): Extractor of the words of a sentence of a
             string; WordsExtractor() by default
-        join_hyphens (bool): Join the parts of hyphenated words of a Doc (iter_doc_words)
+        join_hyphens (bool): Join the parts of hyphenated words of a Doc with
+            sentence boundaries (iter_doc_words)
 
     Returns:
         list[int]: Lengths of the sentences in order

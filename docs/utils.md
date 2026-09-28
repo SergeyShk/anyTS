@@ -133,7 +133,7 @@ Checks that an argument is a counter - a mapping of words to their frequencies, 
 ## merge_labels
 
 <!-- --8<-- [start:merge_labels] -->
-Merges the labels given for a plot over its default ones: a label that is not given keeps its default, so a single label can be changed alone. The defaults of the visualizers are `anyts.constants.VISUALIZER_LABELS`, by the name of the function; labels that are not a mapping of strings or have a key the plot does not know raise `ParameterError`.
+Merges the labels given for a plot over its default ones: a label that is not given keeps its default, so a single label can be changed alone. A default with fields in braces, such as `"Moving average ({window})"`, is a format string: a label given for it may use only those fields, and a literal brace in it is doubled (`{{`); the other labels are taken as they are. The defaults of the visualizers are `anyts.constants.VISUALIZER_LABELS`, by the name of the function; labels that are not a mapping of strings, have a key the plot does not know or a field their default does not have raise `ParameterError`.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |

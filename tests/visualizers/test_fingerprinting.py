@@ -28,6 +28,15 @@ def test_fingerprinting_type_error(texts):
     for segment_len in (0, -1, 2.5):
         with pytest.raises(ParameterError):
             fingerprinting(texts, segment_len=segment_len)
+    for kwargs in (
+        {"x_size": 25},
+        {"x_size": -100},
+        {"x_size": "a"},
+        {"y_size": 0},
+        {"y_size": 1.5},
+    ):
+        with pytest.raises(ParameterError):
+            fingerprinting(texts, **kwargs)
     assert plt.get_fignums() == []
 
 
