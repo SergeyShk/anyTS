@@ -327,7 +327,7 @@ def download_file(
         filename = Path(urllib.parse.unquote(urllib.parse.urlparse(url).path)).name
     if not filename:
         raise DownloadError(f"The address {url} names no file: give the name of the file")
-    if _is_outside(filename) or PureWindowsPath(filename).name != filename:
+    if "\x00" in filename or _is_outside(filename) or PureWindowsPath(filename).name != filename:
         raise DownloadError(f"The name of the file {filename} is not a plain name")
     filepath = dirpath.resolve() / filename
     if filepath.is_file() and not force:

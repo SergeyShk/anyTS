@@ -204,6 +204,8 @@ def test_download_file_without_a_name(tmp_path, online):
     for url, name in (
         ("https://example.com/files/C:data.zip", None),
         ("https://example.com/a", "../a"),
+        ("https://example.com/a%00b.zip", None),
+        ("https://example.com/a", "a\x00b.zip"),
     ):
         with pytest.raises(DownloadError, match="is not a plain name"):
             download_file(url, tmp_path, filename=name)
