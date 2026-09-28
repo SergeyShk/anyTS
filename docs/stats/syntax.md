@@ -12,8 +12,14 @@ Checks whether a token is a word: not whitespace and not a token of `is_punctuat
 <!-- --8<-- [end:is_word] -->
 
 <!-- --8<-- [start:get_words] -->
-`get_words(tokens)` returns the words of a sequence of tokens in their order.
+`get_words(tokens, join_hyphens=False)` returns the words of a sequence of tokens in their order; with `join_hyphens=True` a word the tokenizer split at its hyphens is one word, given by its first part.
 <!-- --8<-- [end:get_words] -->
+
+## Hyphenated words { #joins_previous }
+
+<!-- --8<-- [start:joins_previous] -->
+A tokenizer may split a word at its hyphens (`well-known` into `well`, `-`, `known`) and a parser then hangs every part on its own head. `joins_previous(token)` checks whether a token continues such a word: it is a word that follows a hyphen with no whitespace around it, and the hyphen follows a word - the rule of `iter_doc_units` with `join_hyphens=True`. With `join_hyphens=True`, `get_words`, `get_children`, `count_children`, `subtree_len`, `calc_valency` and `calc_dependency_distances` take such a word for one word with its hyphens. A word that holds the head of the sentence has no head; the head of another one is that of its part hanging outside it, the nearest to the root (a word rather than a hyphen when equal). The dependents of a word are the words whose head hangs on one of its tokens, each given by that part (or by its first part when it hangs by a hyphen), and its subtree is the word and the words that hang on it, directly or through punctuation, so every word has one dependency and is the dependent of one word.
+<!-- --8<-- [end:joins_previous] -->
 
 ## is_root
 
@@ -30,15 +36,15 @@ The relation of a token without its subtype, which Universal Dependencies separa
 ## get_children, count_children, subtree_len
 
 <!-- --8<-- [start:get_children] -->
-`get_children(token)` returns the dependent words of a token, punctuation and whitespace left out.
+`get_children(token, join_hyphens=False)` returns the dependent words of a token, punctuation and whitespace left out; with `join_hyphens=True`, the dependents of the whole hyphenated word the token belongs to.
 <!-- --8<-- [end:get_children] -->
 
 <!-- --8<-- [start:count_children] -->
-`count_children(token)` counts the dependent words of a token.
+`count_children(token, join_hyphens=False)` counts the dependent words of a token.
 <!-- --8<-- [end:count_children] -->
 
 <!-- --8<-- [start:subtree_len] -->
-`subtree_len(token)` is the number of words in the subtree of a token: the token itself and all of its direct and indirect dependents.
+`subtree_len(token, join_hyphens=False)` is the number of words in the subtree of a token: the token itself and all of its direct and indirect dependents.
 <!-- --8<-- [end:subtree_len] -->
 
 ## calc_dependency_distances
@@ -49,6 +55,7 @@ The dependency distances (Liu 2008): the distance between a word and its head in
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
 | `tokens` | Doc/Span/list[Token] | `-` | Sequence of tokens |
+| `join_hyphens` | bool | `False` | Take a hyphenated word for one position |
 <!-- --8<-- [end:calc_dependency_distances] -->
 
 ## calc_tree_depth
@@ -76,7 +83,7 @@ Checks whether a token carries a morphological feature with a given value: `has_
 ## calc_valency
 
 <!-- --8<-- [start:calc_valency] -->
-The valency of a token: the number of its dependent words, the relations `cc`, `conj` and `parataxis` left out.
+The valency of a token: the number of its dependent words, the relations `cc`, `conj` and `parataxis` left out; `calc_valency(token, join_hyphens=True)` counts a hyphenated dependent once, so `came` in `Some-one came` has one dependent and not two.
 <!-- --8<-- [end:calc_valency] -->
 
 ## calc_coordination_chains

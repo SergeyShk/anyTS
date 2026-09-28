@@ -14,6 +14,7 @@ from anyts.syntax import (
     has_feature,
     is_root,
     is_word,
+    joins_previous,
     subtree_len,
 )
 
@@ -159,3 +160,158 @@ def test_coordination_chains_none(house):
     # A conjunct hanging on punctuation starts no chain
     doc = parse(["a", ",", "b"], [0, 0, 1], ["ROOT", "punct", "conj"])
     assert calc_coordination_chains(doc) == []
+
+
+def hyphenated(one_head=3):
+    # Some-one came with a well-known cat . - the parser hangs both parts of Some-one on the verb
+    return parse(
+        ["Some", "-", "one", "came", "with", "a", "well", "-", "known", "cat", "."],
+        [3, 0, one_head, 3, 9, 9, 9, 6, 9, 3, 3],
+        [
+            "nsubj",
+            "punct",
+            "nsubj",
+            "ROOT",
+            "case",
+            "det",
+            "amod",
+            "punct",
+            "amod",
+            "obl",
+            "punct",
+        ],
+        spaces=[False, False, True, True, True, True, False, False, True, False, False],
+    )
+
+
+def texts(tokens):
+    return [token.text for token in tokens]
+
+
+def test_joins_previous():
+    doc = hyphenated()
+    assert [token.text for token in doc if joins_previous(token)] == ["one", "known"]
+    spaced = parse(["Some", "-", "one"], [0, 0, 0], ["ROOT", "punct", "dep"])
+    assert not joins_previous(spaced[2])
+    assert not joins_previous(spaced[0])
+
+
+def test_words_of_hyphenated_words():
+    doc = hyphenated()
+    assert texts(get_words(doc)) == ["Some", "one", "came", "with", "a", "well", "known", "cat"]
+    assert texts(get_words(doc, join_hyphens=True)) == ["Some", "came", "with", "a", "well", "cat"]
+    # A part whose first part lies outside the sequence is a word of its own
+    assert texts(get_words(doc[2:5], join_hyphens=True)) == ["one", "came", "with"]
+
+
+def test_children_of_hyphenated_words():
+    doc = hyphenated()
+    assert (calc_valency(doc[3]), calc_valency(doc[3], join_hyphens=True)) == (3, 2)
+    assert texts(get_children(doc[3], join_hyphens=True)) == ["Some", "cat"]
+    assert (count_children(doc[9]), count_children(doc[9], join_hyphens=True)) == (4, 3)
+    # Every part of a word gives the dependents of the whole word
+    assert get_children(doc[6], join_hyphens=True) == get_children(doc[8], join_hyphens=True) == []
+    # The second part hanging on the first one is no dependent of either
+    nested = hyphenated(one_head=0)
+    assert texts(get_children(nested[3], join_hyphens=True)) == ["Some", "cat"]
+    assert get_children(nested[0], join_hyphens=True) == []
+    assert texts(get_children(nested[0])) == ["one"]
+
+
+def test_subtree_of_hyphenated_words():
+    doc = hyphenated()
+    assert (subtree_len(doc[3]), subtree_len(doc[3], join_hyphens=True)) == (8, 6)
+    assert (subtree_len(doc[9]), subtree_len(doc[9], join_hyphens=True)) == (5, 4)
+
+
+def test_dependency_distances_of_hyphenated_words():
+    doc = hyphenated()
+    assert calc_dependency_distances(doc) == [2, 1, 4, 3, 2, 1, 5]
+    assert calc_dependency_distances(doc, join_hyphens=True) == [1, 3, 2, 1, 4]
+    assert calc_dependency_distances(hyphenated(one_head=0), join_hyphens=True) == [1, 3, 2, 1, 4]
+
+
+def test_first_part_hanging_on_a_later_one():
+    # She said : n-no . - "n" hangs on "no", which carries the relation to the verb
+    doc = parse(
+        ["She", "said", ":", "n", "-", "no", "."],
+        [1, 1, 1, 5, 5, 1, 1],
+        ["nsubj", "ROOT", "punct", "reparandum", "punct", "ccomp", "punct"],
+        spaces=[True, False, True, False, False, False, False],
+    )
+    assert texts(get_children(doc[1], join_hyphens=True)) == ["She", "no"]
+    assert calc_valency(doc[1], join_hyphens=True) == 2
+    assert calc_dependency_distances(doc, join_hyphens=True) == [1, 1]
+
+
+def test_word_holding_the_root():
+    # He came-to home . - the word with the head of the sentence has no dependency
+    doc = parse(
+        ["He", "came", "-", "to", "home", "."],
+        [1, 1, 1, 1, 1, 1],
+        ["nsubj", "ROOT", "punct", "advmod", "obl", "punct"],
+        spaces=[True, False, False, True, False, False],
+    )
+    assert calc_dependency_distances(doc) == [1, 1, 2]
+    assert calc_dependency_distances(doc, join_hyphens=True) == [1, 1]
+    assert texts(get_children(doc[3], join_hyphens=True)) == ["He", "home"]
+    # "to" hangs on "home" but belongs to the word with the root, not to the subtree of "home"
+    moved = parse(
+        ["He", "came", "-", "to", "home", "."],
+        [1, 1, 4, 4, 1, 1],
+        ["nsubj", "ROOT", "punct", "advmod", "obl", "punct"],
+        spaces=[True, False, False, True, False, False],
+    )
+    assert get_children(moved[4], join_hyphens=True) == []
+    assert (subtree_len(moved[4]), subtree_len(moved[4], join_hyphens=True)) == (2, 1)
+    assert subtree_len(moved[1], join_hyphens=True) == 3
+
+
+def test_word_hanging_by_its_hyphen():
+    # On clothes not re-ca-ll . - the parser hangs the parts and a hyphen on the noun
+    doc = parse(
+        ["On", "clothes", "not", "re", "-", "ca", "-", "ll", "."],
+        [1, 1, 4, 4, 1, 1, 1, 1, 1],
+        ["case", "ROOT", "advmod", "case", "nmod", "nmod", "nmod", "nmod", "punct"],
+        spaces=[True, True, True, False, False, False, False, False, False],
+    )
+    # The part that is a word is the head rather than the hyphen
+    assert texts(get_children(doc[1], join_hyphens=True)) == ["On", "ca"]
+    assert texts(get_children(doc[3], join_hyphens=True)) == ["not"]
+    assert calc_dependency_distances(doc, join_hyphens=True) == [1, 1, 2]
+    # A word that hangs by a hyphen alone is given by its first part
+    alone = parse(
+        ["On", "clothes", "re", "-", "call", "."],
+        [1, 1, 3, 1, 3, 1],
+        ["case", "ROOT", "case", "nmod", "fixed", "punct"],
+        spaces=[True, True, False, False, False, False],
+    )
+    assert texts(get_children(alone[1], join_hyphens=True)) == ["On", "re"]
+    assert calc_dependency_distances(alone, join_hyphens=True) == [1, 1]
+
+
+def test_subtree_of_the_whole_word():
+    # Over-seer me obeys . - "Over" hangs on "seer", "me" on "Over"
+    doc = parse(
+        ["Over", "-", "seer", "me", "obeys", "."],
+        [2, 2, 4, 0, 4, 4],
+        ["compound", "punct", "nsubj", "obj", "ROOT", "punct"],
+        spaces=[False, False, True, True, False, False],
+    )
+    assert subtree_len(doc[0], join_hyphens=True) == subtree_len(doc[2], join_hyphens=True) == 2
+    assert texts(get_children(doc[2], join_hyphens=True)) == ["me"]
+    assert (subtree_len(doc[0]), subtree_len(doc[2])) == (2, 3)
+
+
+def test_word_with_parts_on_several_heads():
+    # dog re-call barks - "re" hangs on "dog", "call" on the verb: the word depends on the verb
+    doc = parse(
+        ["dog", "re", "-", "call", "barks"],
+        [4, 0, 1, 4, 4],
+        ["nsubj", "nmod", "punct", "obj", "ROOT"],
+        spaces=[True, False, False, True, False],
+    )
+    assert texts(get_children(doc[0])) == ["re"]
+    assert get_children(doc[0], join_hyphens=True) == []
+    assert texts(get_children(doc[4], join_hyphens=True)) == ["dog", "call"]
+    assert calc_dependency_distances(doc, join_hyphens=True) == [2, 1]
