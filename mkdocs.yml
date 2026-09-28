@@ -34,6 +34,7 @@ nav:
       - Corpus plots: visualizers/corpus.md
       - Stylometric plots: visualizers/stylometry.md
       - Text highlighting: visualizers/highlight.md
+    - Components: components.md
     - Datasets: datasets.md
     - Utilities: utils.md
 
