@@ -14,6 +14,7 @@
 
 * **[Extraction](https://sergeyshk.github.io/anyTS/extractors/sentences/)** - sentence, word and character N-gram extractors whose tokenizer, lemmatizer and number pattern are hooks a language library overrides
 * **[Basic statistics](https://sergeyshk.github.io/anyTS/stats/basic_stats/)** - sentences, words, syllables, letters, long and complex words, punctuation marks by type, with the syllables of a language library
+* **[Readability metrics](https://sergeyshk.github.io/anyTS/stats/readability_stats/)** - Flesch reading ease, Flesch-Kincaid, Coleman-Liau, ARI, SMOG, Gunning fog, LIX, RIX, Legibilidad µ, the consensus grade, the school stage and the reading time, with the coefficients of a language library
 * **[Lexical diversity](https://sergeyshk.github.io/anyTS/stats/diversity_stats/)** - 32 metrics: TTR and its variants, MATTR, MSTTR, MTLD, MA-MTLD, MTLD-W, HD-D, the indices of Simpson and Yule, entropy, the laws of Zipf and Heaps, over the whole text or over windows with confidence intervals
 * **[Cohesion helpers](https://sergeyshk.github.io/anyTS/stats/cohesion/)** - the overlap of sentences, adjacent and over all pairs, Dice, givenness and repetition
 * **[Dependency tree helpers](https://sergeyshk.github.io/anyTS/stats/syntax/)** - dependency distances, tree depth, valency and coordination chains on the labels shared by Universal Dependencies and ClearNLP

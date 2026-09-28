@@ -18,6 +18,9 @@ nav:
         - Metrics module: stats/diversity_stats.md
         - Metric functions: stats/diversity_stats_funcs.md
       - Basic statistics: stats/basic_stats.md
+      - Readability metrics:
+        - Metrics module: stats/readability_stats.md
+        - Metric functions: stats/readability_stats_funcs.md
       - Cohesion helpers: stats/cohesion.md
       - Dependency tree helpers: stats/syntax.md
     - Corpus measures:
