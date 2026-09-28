@@ -1,4 +1,4 @@
-from collections.abc import Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping
 from math import floor, sqrt
 from statistics import median
 from typing import ClassVar
@@ -38,9 +38,11 @@ class ReadabilityStats:
 
     Arguments:
         source (str|Doc|BasicStats): Data source - a string, a Doc object or
-            a ready BasicStats object to reuse
-        sents_extractor (SentsExtractor): Sentence extraction tool
-        words_extractor (WordsExtractor): Word extraction tool
+            a ready object of basic_stats_class to reuse
+        sents_extractor (SentsExtractor): Sentence extraction tool, not used for
+            ready basic statistics
+        words_extractor (WordsExtractor): Word extraction tool, not used for ready
+            basic statistics
         preset (str): Coefficient preset
 
     Attributes:
@@ -91,8 +93,8 @@ class ReadabilityStats:
 
     Raises:
         SourceTypeError: If the source is neither a string, a Doc nor a BasicStats object,
-            an extractor is of another type, or a class without basic_stats_class is
-            given a string or a Doc
+            the basic statistics are of another class, an extractor is of another type,
+            or a class without basic_stats_class is given a string or a Doc
         SourceError: If the source has no words or no sentences
         ParameterError: If the coefficient preset is not a string or is unknown
     """
@@ -125,6 +127,12 @@ class ReadabilityStats:
         self.preset = preset
         self.coefficients = dict(self.presets[preset])
         if isinstance(source, BasicStats):
+            expected = self.basic_stats_class or BasicStats
+            if not isinstance(source, expected):
+                raise SourceTypeError(
+                    f"The basic statistics must be a {expected.__name__} object, "
+                    f"not {type(source).__name__}"
+                )
             self.bs = source
         elif self.basic_stats_class is None:
             raise SourceTypeError(
@@ -210,7 +218,7 @@ class ReadabilityStats:
     @property
     def consensus_grade(self) -> float:
         grades = [getattr(self, stat) for stat in self.grade_stats]
-        return calc_consensus_grade(grades, self.reading_ease_to_grade(self.flesch_reading_easy))
+        return calc_consensus_grade(grades, self.flesch_reading_easy, self.reading_ease_to_grade)
 
     @property
     def reading_time(self) -> float:
@@ -615,9 +623,10 @@ def flesch_reading_easy_to_grade(
 
     Description:
         The grade of the first band whose lower bound the value reaches; by
-        default the bands of Flesch: 90-100 - 5, 80-90 - 6, 70-80 - 7,
-        60-70 - 8.5, 50-60 - 10, 40-50 - 11, 30-40 - 12, below 30 - 13.
-        Values above 100 belong to the first band
+        default the bands of text_standard of textstat, which follow the table
+        of Flesch (1948) down to 60 and split his lower bands: 90-100 - 5,
+        80-90 - 6, 70-80 - 7, 60-70 - 8.5, 50-60 - 10, 40-50 - 11, 30-40 - 12,
+        below 30 - 13. Values above 100 belong to the first band
 
     Arguments:
         flesch_reading_easy (float): Value of the reading ease
@@ -635,29 +644,35 @@ def flesch_reading_easy_to_grade(
 
 
 def calc_consensus_grade(
-    grades: Iterable[float], reading_ease_grade: float | None = None
+    grades: Iterable[float],
+    flesch_reading_easy: float | None = None,
+    to_grade: Callable[[float], float] = flesch_reading_easy_to_grade,
 ) -> float:
     """
     Computing the consensus grade
 
     Description:
         The median of the values of the grade formulas rounded half up; the
-        grade of the reading ease (flesch_reading_easy_to_grade) is added
-        without rounding, so a band of 8.5 votes for 8.5
+        reading ease is converted into years of schooling by to_grade and
+        added without rounding, so a band of 8.5 votes for 8.5
 
     Arguments:
         grades (list[float]): Values of the grade formulas
-        reading_ease_grade (float): Years of schooling for the reading ease
+        flesch_reading_easy (float): Value of the reading ease
+        to_grade (Callable): Conversion of the reading ease into years of schooling
 
     Returns:
         float: Consensus grade
 
     Raises:
+        SourceTypeError: If to_grade is not callable
         ParameterError: If there are no values
     """
+    if not callable(to_grade):
+        raise SourceTypeError(f"to_grade must be callable, not {type(to_grade).__name__}")
     values = [float(floor(grade + 0.5)) for grade in grades]
-    if reading_ease_grade is not None:
-        values.append(reading_ease_grade)
+    if flesch_reading_easy is not None:
+        values.append(to_grade(flesch_reading_easy))
     if not values:
         raise ParameterError("The list of grade formulas is empty")
     return float(median(values))
@@ -721,6 +736,6 @@ def calc_reading_time(n_words: int, wpm: float = READING_SPEED_WPM) -> float:
         ParameterError: If the reading speed is not a positive number
     """
     check_number(wpm, "reading speed")
-    if wpm <= 0:
+    if not wpm > 0:
         raise ParameterError("The reading speed must be greater than 0")
     return n_words / wpm

@@ -274,7 +274,7 @@ Parameters:
 Conversion of the Flesch reading ease into years of schooling for the consensus grade: the grade of the first band whose lower bound the value reaches, or `below` under the last bound; values above 100 belong to the first band.
 <!-- --8<-- [end:flesch_reading_easy_to_grade] -->
 
-The default bands are those of Flesch: 90-100 - 5, 80-90 - 6, 70-80 - 7, 60-70 - 8.5, 50-60 - 10, 40-50 - 11, 30-40 - 12, below 30 - 13 (`anyts.constants.READING_EASE_GRADES`).
+The default bands are those of `text_standard` of [textstat](https://github.com/textstat/textstat), which follow the table of Flesch (1948) down to 60 and split his lower bands: 90-100 - 5, 80-90 - 6, 70-80 - 7, 60-70 - 8.5, 50-60 - 10, 40-50 - 11, 30-40 - 12, below 30 - 13 (`anyts.constants.READING_EASE_GRADES`).
 
 Parameters:
 
@@ -290,14 +290,15 @@ Parameters:
     **anyts.readability_stats.calc_consensus_grade()**
 
 <!-- --8<-- [start:calc_consensus_grade] -->
-Computation of the consensus grade: the median of the values of the grade formulas rounded half up, together with the grade of the reading ease, added without rounding - so a band of 8.5 votes for 8.5. No values at all raise `ParameterError`.
+Computation of the consensus grade: the median of the values of the grade formulas rounded half up, together with the reading ease converted into years of schooling by `to_grade` and added without rounding - so a band of 8.5 votes for 8.5. No values at all raise `ParameterError`, a `to_grade` that is not callable `SourceTypeError`.
 
 Parameters:
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
 | `grades` | list[float] | `-` | Values of the grade formulas |
-| `reading_ease_grade` | float | `None` | Years of schooling for the reading ease |
+| `flesch_reading_easy` | float | `None` | Value of the reading ease |
+| `to_grade` | Callable | `flesch_reading_easy_to_grade` | Conversion of the reading ease into years of schooling |
 <!-- --8<-- [end:calc_consensus_grade] -->
 
 ## School stage and age

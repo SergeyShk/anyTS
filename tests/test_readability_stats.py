@@ -67,6 +67,25 @@ def test_init_basic_stats(rs):
     reused = ReadabilityStats(basic)
     assert reused.bs is basic
     assert reused.get_stats() == rs.get_stats()
+    # Ready basic statistics are taken as they are, the extractors are not used
+    stopwords = WordsExtractor(stopwords=["the"])
+    assert Readability(basic, words_extractor=stopwords).bs is basic
+
+
+def test_init_basic_stats_of_another_class():
+    class OneSyllable(BasicStats):
+        def count_syllables(self, word):
+            return 1
+
+    class Words(Stats):
+        pass
+
+    message = r"^The basic statistics must be a Stats object, not OneSyllable$"
+    with pytest.raises(SourceTypeError, match=message):
+        Readability(OneSyllable(TEXT))
+    assert Readability(Words(TEXT)).bs.n_syllables == 11
+    # Without basic_stats_class any basic statistics are taken
+    assert ReadabilityStats(OneSyllable(TEXT)).bs.n_syllables == 9
 
 
 def test_init_doc(rs):
@@ -76,6 +95,9 @@ def test_init_doc(rs):
 def test_init_extractors():
     two = Readability(TEXT, words_extractor=WordsExtractor(stopwords=["the", "a", "on"]))
     assert two.bs.n_words == 5
+    # The letters of the kept words - cat, sat, mat, beautiful, day - not the 30 of the text
+    assert two.coleman_liau_index == pytest.approx(0.0588 * 2100 / 5 - 0.296 * 200 / 5 - 15.8)
+    assert two.automated_readability_index == pytest.approx(4.71 * 21 / 5 + 0.5 * 2.5 - 21.43)
     one = Readability(TEXT, sents_extractor=SentsExtractor(min_len=20))
     assert one.bs.n_sents == 1
 
@@ -125,6 +147,26 @@ def test_coefficients_copy():
     assert READABILITY_PRESETS["original"]["flesch_reading_easy"] == (1.015, 84.6, 206.835)
     del rs.coefficients["flesch_reading_easy"]
     assert rs.flesch_reading_easy == Readability(TEXT).flesch_reading_easy
+
+
+@pytest.mark.parametrize(
+    ("stat", "coefficients", "expected"),
+    [
+        ("flesch_reading_easy", (1.0, 62.3, 206.835), 206.835 - 4.5 - 62.3 * 11 / 9),
+        ("flesch_kincaid_grade", (0.5, 8.4, 15.59), 0.5 * 4.5 + 8.4 * 11 / 9 - 15.59),
+        ("coleman_liau_index", (0.055, 0.35, 20.33), 0.055 * 3000 / 9 - 0.35 * 200 / 9 - 20.33),
+        ("automated_readability_index", (6.26, 0.28, 31.04), 6.26 * 30 / 9 + 0.28 * 4.5 - 31.04),
+        ("smog_index", (1.1, 64.6, 0.05), 1.1 * sqrt(64.6 / 2) + 0.05),
+        ("gunning_fog_index", (0.5,), 0.5 * (4.5 + 100 / 9)),
+    ],
+)
+def test_preset_coefficients(rs, stat, coefficients, expected):
+    class Preset(Readability):
+        presets: ClassVar = {"one": {stat: coefficients}}
+
+    value = getattr(Preset(TEXT, preset="one"), stat)
+    assert value == pytest.approx(expected)
+    assert value != pytest.approx(getattr(rs, stat))
 
 
 class Custom(Readability):
@@ -265,13 +307,19 @@ def test_flesch_reading_easy_to_grade_bands():
 
 
 def test_calc_consensus_grade():
-    assert calc_consensus_grade([4.4, 4.6, 7.5], 8.5) == 6.5
+    # grades 4, 5, 8 and the reading ease 65 - grade 8.5
+    assert calc_consensus_grade([4.4, 4.6, 7.5], 65.0) == 6.5
+    assert calc_consensus_grade([10, 12, 14], 65.0) == 11.0
     assert calc_consensus_grade([2.5, 2.5, 3.4]) == 3.0
     assert calc_consensus_grade([8.5]) == 9.0
-    assert calc_consensus_grade([], 8.5) == 8.5
+    assert calc_consensus_grade([], 65.0) == 8.5
     assert calc_consensus_grade(iter([7.0])) == 7.0
+    assert calc_consensus_grade([12.0], 53.545) == 11.0
+    assert calc_consensus_grade([12.0], 53.545, lambda value: 11) == 11.5
     with pytest.raises(ParameterError, match=r"^The list of grade formulas is empty$"):
         calc_consensus_grade([])
+    with pytest.raises(SourceTypeError, match=r"^to_grade must be callable, not str$"):
+        calc_consensus_grade([1.0], 50.0, "classic")
 
 
 @pytest.mark.parametrize(
@@ -298,6 +346,6 @@ def test_grade_to_age_levels():
 def test_calc_reading_time():
     assert calc_reading_time(476) == 2.0
     assert calc_reading_time(278, 139) == 2.0
-    for wpm in (0, -1, "238", True, None):
+    for wpm in (0, -1, float("nan"), "238", True, None):
         with pytest.raises(ParameterError):
             calc_reading_time(100, wpm)

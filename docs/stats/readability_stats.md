@@ -6,9 +6,11 @@
 ## Description
 
 <!-- --8<-- [start:ReadabilityStats] -->
-The [readability](https://en.wikipedia.org/wiki/Readability) metrics of a text from its basic statistics: the mean sentence length in words, the mean word length in syllables or letters, the share of polysyllabic and of long words and the variability of word length. The data source can be a text, a `Doc` object of [spaCy](https://github.com/explosion/spaCy) or ready basic statistics `BasicStats` - then the text is not counted again; the extractors are passed on to the basic statistics. The letters of the formulas are those of the counted words, so a word extractor that drops words does not lengthen the mean word.
+The [readability](https://en.wikipedia.org/wiki/Readability) metrics of a text from its basic statistics: the mean sentence length in words, the mean word length in syllables or letters, the share of polysyllabic and of long words and the variability of word length. The data source can be a text, a `Doc` object of [spaCy](https://github.com/explosion/spaCy) or ready basic statistics - then the text is not counted again; the extractors are passed on to the basic statistics of a text or a `Doc`, while ready ones are taken as they are. The letters of the formulas are those of the counted words, so a word extractor that drops words does not lengthen the mean word.
 
-The metrics are properties computed on each access, so a change of the `coefficients` of an object applies at once. A source without sentences raises `SourceError`.
+The metrics are properties computed on each access, so a change of the `coefficients` of an object applies at once.
+
+A source that is neither a string, a `Doc` nor basic statistics, basic statistics of another class than those of the library and an extractor of another type raise `SourceTypeError`, a source without words or sentences `SourceError`, an unknown preset or one that is not a string `ParameterError`.
 <!-- --8<-- [end:ReadabilityStats] -->
 
 ## Language hooks
@@ -42,7 +44,7 @@ The core defaults are the original English formulas: the preset `original` of `a
 | `words_extractor` | WordsExtractor | `None` | Word extraction tool |
 | `preset` | str | `original` | Coefficient preset |
 
-An unknown preset or one that is not a string raises `ParameterError`.
+The core class has no basic statistics of its own (`basic_stats_class` is `None`), so it takes only a ready `BasicStats` object of a library.
 
 ## Attributes
 
