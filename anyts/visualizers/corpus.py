@@ -51,7 +51,7 @@ def dispersion_plot(
         [index for index, word in enumerate(words) if word == target] for target in targets
     ]
     if ax is None:
-        _, ax = plt.subplots(figsize=(8, 0.4 * len(targets) + 1.5))
+        _, ax = plt.subplots(figsize=(8, 0.4 * len(targets) + 1.5), layout="constrained")
     ax.eventplot(
         positions,
         lineoffsets=range(len(targets)),
@@ -122,7 +122,7 @@ def keyness_plot(
             "The data source has no words" if not raw else "The measure is undefined"
         )
     if ax is None:
-        _, ax = plt.subplots(figsize=(8, 0.3 * len(keywords) + 1.5))
+        _, ax = plt.subplots(figsize=(8, 0.3 * len(keywords) + 1.5), layout="constrained")
     rows = range(len(keywords))
     colors = ["tab:blue"] * len(top) + ["tab:red"] * len(bottom)
     ax.barh(rows, [value for _, value in keywords], color=colors)

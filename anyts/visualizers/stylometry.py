@@ -33,6 +33,7 @@ def dendrogram_plot(
 
     Arguments:
         distances (DataFrame): Symmetric matrix of distances with the names of the texts
+            in the rows and the columns, in any order
         method (str): Method of scipy.cluster.hierarchy.linkage to join the clusters
         ax (Axes): Axes for the plot; if not given, a new figure is created
         labels (dict[str, str]): Labels over VISUALIZER_LABELS["dendrogram_plot"]
@@ -41,9 +42,10 @@ def dendrogram_plot(
         Axes: Axes with the dendrogram
 
     Raises:
-        SourceTypeError: If the distances are not a DataFrame
-        SourceError: If the matrix is not square, has fewer than two texts or
-            an infinite distance
+        SourceTypeError: If the distances are not a DataFrame of numbers
+        SourceError: If the matrix is not square, has fewer than two texts, other
+            texts in the columns than in the rows, an infinite or negative distance,
+            is not symmetric or has a distance on the diagonal
         ParameterError: If the method is unknown or the labels are set incorrectly
             (merge_labels)
     """
@@ -52,7 +54,7 @@ def dendrogram_plot(
         raise ParameterError(f"Unknown method of linkage: {method}")
     values = _distance_matrix(distances, "a dendrogram")
     if ax is None:
-        _, ax = plt.subplots(figsize=(8, 0.4 * len(distances) + 1.5))
+        _, ax = plt.subplots(figsize=(8, 0.4 * len(distances) + 1.5), layout="constrained")
     condensed = squareform(values, checks=False)
     dendrogram(
         linkage(condensed, method=method), labels=list(distances.index), orientation="right", ax=ax
@@ -131,6 +133,7 @@ def mds_plot(
 
     Arguments:
         distances (DataFrame): Symmetric matrix of distances with the names of the texts
+            in the rows and the columns, in any order
         ax (Axes): Axes for the plot; if not given, a new figure is created
         labels (dict[str, str]): Labels over VISUALIZER_LABELS["mds_plot"]
 
@@ -138,9 +141,10 @@ def mds_plot(
         Axes: Axes with the plot
 
     Raises:
-        SourceTypeError: If the distances are not a DataFrame
-        SourceError: If the matrix is not square, has fewer than two texts or
-            an infinite distance
+        SourceTypeError: If the distances are not a DataFrame of numbers
+        SourceError: If the matrix is not square, has fewer than two texts, other
+            texts in the columns than in the rows, an infinite or negative distance,
+            is not symmetric or has a distance on the diagonal
         ParameterError: If the labels are set incorrectly (merge_labels)
     """
     captions = merge_labels(VISUALIZER_LABELS["mds_plot"], labels)
@@ -174,17 +178,34 @@ def _check_corpus(corpus: object) -> None:
 
 
 def _distance_matrix(distances: pd.DataFrame, purpose: str) -> np.ndarray:
-    """Values of a square matrix of finite distances between at least two texts"""
+    """
+    Values of a matrix of distances between at least two texts, its columns in
+    the order of its rows
+
+    Description:
+        The distances are finite and non-negative, the matrix symmetric with
+        zeros on the diagonal
+    """
     if not isinstance(distances, pd.DataFrame):
         raise SourceTypeError(
             f"The distances must be a DataFrame with the names of the texts, "
             f"not {type(distances).__name__}"
         )
-    values = np.asarray(distances.to_numpy(dtype=float), dtype=float)
-    if values.ndim != 2 or values.shape[0] != values.shape[1] or len(values) < 2:
-        raise SourceError(f"{purpose.capitalize()} needs a square matrix of at least two texts")
+    purpose = purpose.capitalize()
+    if distances.shape[0] != distances.shape[1] or len(distances) < 2:
+        raise SourceError(f"{purpose} needs a square matrix of at least two texts")
+    if distances.index.has_duplicates or set(distances.columns) != set(distances.index):
+        raise SourceError(f"{purpose} needs the same texts in the rows and the columns")
+    try:
+        values = distances.loc[:, distances.index].to_numpy(dtype=float)
+    except (TypeError, ValueError) as e:
+        raise SourceTypeError("The distances must be numbers") from e
     if not np.isfinite(values).all():
-        raise SourceError(f"{purpose.capitalize()} needs every distance to be finite")
+        raise SourceError(f"{purpose} needs every distance to be finite")
+    if (values < 0).any() or not np.allclose(values, values.T):
+        raise SourceError(f"{purpose} needs a symmetric matrix of non-negative distances")
+    if not np.allclose(np.diagonal(values), 0):
+        raise SourceError(f"{purpose} needs zero distances on the diagonal")
     return values
 
 

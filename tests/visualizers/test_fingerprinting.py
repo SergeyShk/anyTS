@@ -112,7 +112,7 @@ def test_fingerprinting_fits():
         assert y0 <= coordinates[..., 1].min() and coordinates[..., 1].max() <= y1
     assert y0 < -100
     assert [cells.shape[1] for cells in _cells(ax)] == [23, 23]
-    assert sum(cells.count() for cells in _cells(ax)) == 2 * 4992
+    assert sum(cells.count() for cells in _cells(ax)) == 2 * 4991
     plt.close("all")
 
 
@@ -139,11 +139,28 @@ def test_fingerprinting_no_words(texts):
     assert plt.get_fignums() == []
 
 
-def test_segment_values_tail():
-    # A tail is added only when words are left after the last segment
+def test_segment_values_end():
+    # Every segment is full; one more ends with the text when the step leaves words
     assert _segment_values(["a", "b", "c"], 1, calc_ttr) == [1.0, 1.0, 1.0]
     assert _segment_values(["a", "b", "c"], 5, calc_ttr) == [1.0]
-    assert _segment_values(["a", "a", "b"], 2, calc_ttr) == [0.5, 1.0, 1.0]
+    assert _segment_values(["a", "b", "c"], 3, calc_ttr) == [1.0]
+    assert _segment_values(["a", "a", "b"], 2, calc_ttr) == [0.5, 1.0]
+    assert _segment_values(list("abcdefghijkl"), 12, calc_ttr) == [1.0]
+    # A step of 2 on 13 words of segments of 20: one segment; of 10: starts 0, 1, 2, 3
+    assert len(_segment_values(list("abcdefghijklm"), 20, calc_ttr)) == 1
+    assert len(_segment_values(list("abcdefghijklm"), 10, calc_ttr)) == 4
+    words = list("aabbccddeeffgghhiijjkkl")
+    segments = _segment_values(words, 20, lambda segment: len(segment))
+    assert segments == [20, 20, 20]
+    assert _segment_values(words, 20, lambda segment: ord(segment[-1]))[-1] == ord("l")
+
+
+def test_fingerprinting_uniform_text_has_no_bright_cell():
+    ax = fingerprinting([("the cat sat on the mat " * 20).split()])
+    values = next(iter(_cells(ax))).compressed()
+    assert len(values) == 111
+    assert set(values) == {0.5}
+    plt.close("all")
 
 
 def test_fingerprinting_colorbar_height():

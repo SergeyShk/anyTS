@@ -35,8 +35,8 @@ def fingerprinting(
 
     Description:
         Every text is cut into segments of segment_len words with a sliding
-        step of a tenth of a segment, and the measure is computed for every
-        segment. A text is a block of squares in the order of its segments,
+        step of a tenth of a segment, the last one ending with the text, and
+        the measure is computed for every segment. A text is a block of squares in the order of its segments,
         row by row, 8 rows high, or a single column when it has at most 8
         segments. The blocks are laid out left to right in an area 2 · x_size
         wide, which grows downwards from 2 · y_size when they need more height.
@@ -133,17 +133,17 @@ def _segment_values(
     Values of the measure over the sliding segments of a text
 
     Description:
-        The last segment starts one step after the last full one and is cut
-        short by the end of the text; a text shorter than a segment is one
-        short segment
+        Every segment is segment_len words long, so the values are comparable:
+        when the step leaves words after the last segment, one more ends with
+        the text; a text not longer than a segment is one segment
     """
+    if len(text) <= segment_len:
+        return [float(measure(text))]
     step = max(1, int(0.1 * segment_len))
-    starts = range(0, len(text) - segment_len + 1, step)
-    values = [float(measure(text[start : start + segment_len])) for start in starts]
-    tail = len(starts) * step
-    if tail < len(text):
-        values.append(float(measure(text[tail:])))
-    return values
+    starts = list(range(0, len(text) - segment_len + 1, step))
+    if starts[-1] + segment_len < len(text):
+        starts.append(len(text) - segment_len)
+    return [float(measure(text[start : start + segment_len])) for start in starts]
 
 
 def _block(values: Sequence[float], max_cols: int) -> np.ndarray:
