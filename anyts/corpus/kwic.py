@@ -4,11 +4,11 @@ from typing import NamedTuple
 from spacy.tokens import Doc, Token
 
 from ..exceptions import ParameterError, SourceTypeError
-from ..extractors import _word_pattern
-from ..utils import check_integer, iter_doc_units
+from ..extractors import _iter_words
+from ..utils import _unit_word, check_integer, iter_doc_units
 
 Tokenizer = Callable[[str], Iterable[tuple[int, int, str]]]
-Lemmatizer = Callable[[str, Sequence[Token]], Iterable[str]]
+Lemmatizer = Callable[[str, Sequence[Token]], Iterable[str] | str]
 
 
 class Concordance(NamedTuple):
@@ -68,7 +68,7 @@ def kwic(
         tokenize (callable): Words of a string as triples of the start, the end
             and the text; a run of word characters by default
         lemmatize (callable): Lemmas of a word, given its text and its tokens
-            in a Doc (none for a string and the keyword)
+            in a Doc (none for a string and the keyword); a string is one lemma
         fold (callable): Folding of a word form or a lemma before the comparison
         join_hyphens (bool): Join the parts of hyphenated words of a Doc
 
@@ -76,10 +76,10 @@ def kwic(
         list[Concordance]: Occurrences in the order of the text
 
     Raises:
-        SourceTypeError: If the source is neither a string nor a Doc object or the keyword
-            is not a string
-        ParameterError: If the keyword has no words, the window is not an integer or
-            is negative, or a hook is not callable
+        SourceTypeError: If the source is neither a string nor a Doc object, the keyword
+            is not a string or a hook is not callable
+        ParameterError: If the keyword has no words or the window is not an integer
+            or is negative
 
     Example:
         >>> from anyts.corpus import kwic
@@ -91,10 +91,12 @@ def kwic(
     """
     if not isinstance(keyword, str):
         raise SourceTypeError(f"The keyword must be a string, not {type(keyword).__name__}")
-    for hook, name in ((tokenize, "tokenizer"), (lemmatize, "lemmatizer"), (fold, "folding")):
+    for hook, name in ((tokenize, "tokenizer"), (lemmatize, "lemmatizer")):
         if hook is not None and not callable(hook):
-            raise ParameterError(f"The {name} must be callable, not {type(hook).__name__}")
-    split = tokenize or _split
+            raise SourceTypeError(f"The {name} must be callable, not {type(hook).__name__}")
+    if not callable(fold):
+        raise SourceTypeError(f"The folding must be callable, not {type(fold).__name__}")
+    split = tokenize or _iter_words
     pattern = [word for _, _, word in split(keyword)]
     if not pattern:
         raise ParameterError("The keyword is not set")
@@ -116,9 +118,10 @@ def kwic(
     lemmas = lemmatize or _lemmas
 
     def readings(word: str, word_tokens: Sequence[Token]) -> set[str]:
-        if by_lemma:
-            return {fold(lemma) for lemma in lemmas(word, word_tokens)}
-        return {fold(word) if ignore_case else word}
+        if not by_lemma:
+            return {fold(word) if ignore_case else word}
+        found = lemmas(word, word_tokens)
+        return {fold(found)} if isinstance(found, str) else {fold(lemma) for lemma in found}
 
     met = [
         readings(word, word_tokens)
@@ -150,25 +153,10 @@ def kwic(
     return found
 
 
-def _split(text: str) -> Iterable[tuple[int, int, str]]:
-    """Words of a string by the default tokenizer of WordsExtractor"""
-    return (
-        (match.start(), match.end(), match.group()) for match in _word_pattern().finditer(text)
-    )
-
-
-def _unit_word(unit: Sequence[Token]) -> tuple[int, int, str]:
-    """Position and text of a word of iter_doc_units, a byte order mark at its start left out"""
-    text = "".join(token.text for token in unit)
-    word = text.lstrip("﻿")
-    return unit[0].idx + len(text) - len(word), unit[-1].idx + len(unit[-1]), word
-
-
 def _lemmas(word: str, tokens: Sequence[Token]) -> tuple[str, ...]:
     """The word itself and, for a word of one token of a Doc with lemmas, the lemma of the model"""
-    if len(tokens) == 1 and tokens[0].doc.has_annotation("LEMMA"):
-        return word, tokens[0].lemma_
-    return (word,)
+    lemma = tokens[0].lemma_ if len(tokens) == 1 else ""
+    return (word, lemma) if lemma else (word,)
 
 
 def format_kwic(concordances: Sequence[Concordance], width: int = 40) -> str:

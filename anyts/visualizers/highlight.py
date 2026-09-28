@@ -9,7 +9,7 @@ from typing import ClassVar, NamedTuple
 from spacy.tokens import Doc, Token
 
 from ..exceptions import ParameterError, SourceError, SourceTypeError
-from ..extractors import SentsExtractor, _word_pattern
+from ..extractors import SentsExtractor, _iter_words
 from ..syntax import get_words
 from ..utils import iter_doc_tokens
 
@@ -184,9 +184,7 @@ class HighlightedText:
             iterable[tuple[int, int, str]]: Position of the first character,
                 position after the last character and text of each word
         """
-        return (
-            (match.start(), match.end(), match.group()) for match in _word_pattern().finditer(text)
-        )
+        return _iter_words(text)
 
     def iter_sents(self, text: str) -> Iterator[tuple[int, int, str]]:
         """

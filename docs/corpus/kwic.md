@@ -17,7 +17,7 @@ The language enters through four parameters, which a language library fills in i
 | Parameter | Default | Description |
 | :-------: | :-----: | :---------: |
 | `tokenize` | a run of word characters | The words of a string and of the keyword as triples of the start, the end and the text |
-| `lemmatize` | the word and the lemma of the model | The lemmas of a word, given its text and its tokens in a `Doc` (none for a string and the keyword); a word matches when one of its lemmas is one of those of the keyword |
+| `lemmatize` | the word and the lemma of the model | The lemmas of a word, given its text and its tokens in a `Doc` (none for a string and the keyword), or one lemma as a string; a word matches when one of its lemmas is one of those of the keyword |
 | `fold` | `str.lower` | The folding of a word form (with `ignore_case`) or a lemma before the comparison, such as the letters a language takes for the same |
 | `join_hyphens` | `False` | Join the parts of the hyphenated words of a `Doc` the tokenizer split (`iter_doc_units`) |
 
@@ -35,7 +35,7 @@ The words of a `Doc` are its tokens, a byte order mark at the start of a word le
 | `by_lemma` | bool | `False` | Compare lemmas instead of word forms |
 | `ignore_case` | bool | `True` | Ignore case when comparing word forms |
 
-A keyword without words, a negative window and a hook that is not callable raise `ParameterError`; a source that is neither a string nor a `Doc` and a keyword that is not a string raise `SourceTypeError`.
+A keyword without words and a negative window raise `ParameterError`; a source that is neither a string nor a `Doc`, a keyword that is not a string and a hook that is not callable raise `SourceTypeError`.
 <!-- --8<-- [end:kwic-parameters] -->
 
 <!-- --8<-- [start:format_kwic] -->

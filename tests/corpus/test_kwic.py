@@ -146,10 +146,18 @@ def test_kwic_errors(keyword, window):
         kwic(text, keyword, window=window)
 
 
-@pytest.mark.parametrize("hook", ["tokenize", "lemmatize", "fold"])
-def test_kwic_hooks_checked(hook):
-    with pytest.raises(ParameterError, match=r"must be callable, not str$"):
-        kwic(text, "cat", **{hook: "x"})
+@pytest.mark.parametrize(
+    ("hook", "value"), [("tokenize", "x"), ("lemmatize", "x"), ("fold", "x"), ("fold", None)]
+)
+def test_kwic_hooks_checked(hook, value):
+    with pytest.raises(SourceTypeError, match=r"must be callable, not"):
+        kwic(text, "cat", ignore_case=False, **{hook: value})
+
+
+def test_kwic_lemmatizer_of_one_lemma():
+    # A lemma given as a string is one lemma, not its letters
+    found = kwic(text, "cat", by_lemma=True, lemmatize=lambda word, tokens: LEMMAS.get(word, word))
+    assert [line.keyword for line in found] == ["cat", "cat", "cats", "cat"]
 
 
 def test_format_kwic():
@@ -179,6 +187,6 @@ def test_print_kwic(capsys):
 
 
 def test_kwic_byte_order_mark():
-    sample = "﻿Cat and cat."
+    sample = "\ufeffCat and cat."
     assert len(kwic(sample, "cat")) == len(kwic(spacy.blank("xx")(sample), "cat")) == 2
     assert kwic(spacy.blank("xx")(sample), "cat")[0].start == 1
