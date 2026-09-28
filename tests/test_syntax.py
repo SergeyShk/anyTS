@@ -14,6 +14,7 @@ from anyts.syntax import (
     has_feature,
     is_root,
     is_word,
+    joins_previous,
     subtree_len,
 )
 
@@ -159,3 +160,72 @@ def test_coordination_chains_none(house):
     # A conjunct hanging on punctuation starts no chain
     doc = parse(["a", ",", "b"], [0, 0, 1], ["ROOT", "punct", "conj"])
     assert calc_coordination_chains(doc) == []
+
+
+def hyphenated(one_head=3):
+    # Some-one came with a well-known cat . - the parser hangs both parts of Some-one on the verb
+    return parse(
+        ["Some", "-", "one", "came", "with", "a", "well", "-", "known", "cat", "."],
+        [3, 0, one_head, 3, 9, 9, 9, 6, 9, 3, 3],
+        [
+            "nsubj",
+            "punct",
+            "nsubj",
+            "ROOT",
+            "case",
+            "det",
+            "amod",
+            "punct",
+            "amod",
+            "obl",
+            "punct",
+        ],
+        spaces=[False, False, True, True, True, True, False, False, True, False, False],
+    )
+
+
+def texts(tokens):
+    return [token.text for token in tokens]
+
+
+def test_joins_previous():
+    doc = hyphenated()
+    assert [token.text for token in doc if joins_previous(token)] == ["one", "known"]
+    spaced = parse(["Some", "-", "one"], [0, 0, 0], ["ROOT", "punct", "dep"])
+    assert not joins_previous(spaced[2])
+    assert not joins_previous(spaced[0])
+
+
+def test_words_of_hyphenated_words():
+    doc = hyphenated()
+    assert texts(get_words(doc)) == ["Some", "one", "came", "with", "a", "well", "known", "cat"]
+    assert texts(get_words(doc, join_hyphens=True)) == ["Some", "came", "with", "a", "well", "cat"]
+    # A part whose first part lies outside the sequence is a word of its own
+    assert texts(get_words(doc[2:5], join_hyphens=True)) == ["one", "came", "with"]
+
+
+def test_children_of_hyphenated_words():
+    doc = hyphenated()
+    assert (calc_valency(doc[3]), calc_valency(doc[3], join_hyphens=True)) == (3, 2)
+    assert texts(get_children(doc[3], join_hyphens=True)) == ["Some", "cat"]
+    assert (count_children(doc[9]), count_children(doc[9], join_hyphens=True)) == (4, 3)
+    # Every part of a word gives the dependents of the whole word
+    assert get_children(doc[6], join_hyphens=True) == get_children(doc[8], join_hyphens=True) == []
+    # The second part hanging on the first one is no dependent of either
+    nested = hyphenated(one_head=0)
+    assert texts(get_children(nested[3], join_hyphens=True)) == ["Some", "cat"]
+    assert get_children(nested[0], join_hyphens=True) == []
+    assert texts(get_children(nested[0])) == ["one"]
+
+
+def test_subtree_of_hyphenated_words():
+    doc = hyphenated()
+    assert (subtree_len(doc[3]), subtree_len(doc[3], join_hyphens=True)) == (8, 6)
+    assert (subtree_len(doc[9]), subtree_len(doc[9], join_hyphens=True)) == (5, 4)
+
+
+def test_dependency_distances_of_hyphenated_words():
+    doc = hyphenated()
+    assert calc_dependency_distances(doc) == [2, 1, 4, 3, 2, 1, 5]
+    assert calc_dependency_distances(doc, join_hyphens=True) == [1, 3, 2, 1, 4]
+    assert calc_dependency_distances(hyphenated(one_head=0), join_hyphens=True) == [1, 3, 2, 1, 4]
