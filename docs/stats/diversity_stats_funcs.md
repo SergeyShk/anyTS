@@ -312,7 +312,7 @@ Computation of the Hypergeometric Distribution D (HD-D).
 An alternative to vocd-D (McCarthy & Jarvis, 2010): instead of drawing random segments of the text, it computes the expected TTR of a random sample of `sample_size` words exactly. For every lexeme the hypergeometric distribution gives the probability that the sample holds it at least once; the sum of these probabilities is the expected number of lexemes in the sample, and HD-D is that number divided by the sample size. The value involves no randomness.
 
 !!! warning "Warning"
-    For texts shorter than 50 words and shorter than the sample size the metric is undefined; the function returns `nan`.
+    For texts shorter than 50 words or than the sample size the metric is undefined; the function returns `nan`.
 
 Parameters:
 

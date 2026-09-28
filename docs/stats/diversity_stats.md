@@ -32,7 +32,7 @@ The class takes the words as given: a language library extracts them from its so
 <!-- --8<-- [end:DiversityStats-parameters] -->
 
 <!-- --8<-- [start:check_params] -->
-The parameters are checked by `check_params(window_len, mtld_threshold, mtld_min_len, hdd_sample_size, log_base)`, which raises `ParameterError` for a window, a sample size or a minimum factor length out of range, a threshold outside (0, 1) or a logarithm base not above 1; a library calls it before extracting the words, so that a wrong parameter is reported before an empty text.
+The parameters are checked by `check_params(window_len, mtld_threshold, mtld_min_len, hdd_sample_size, log_base)`, which raises `ParameterError` for a window, a sample size or a minimum factor length out of range, a threshold outside (0, 1) or a logarithm base not above 1. Called before the words are extracted, it reports a wrong parameter before an empty text.
 <!-- --8<-- [end:check_params] -->
 
 ## Conventions { #conventions }

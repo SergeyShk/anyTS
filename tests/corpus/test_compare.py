@@ -9,11 +9,12 @@ from anyts.corpus import (
     bootstrap_median_diff,
     calc_cliff_delta,
     calc_cohen_d,
+    check_comparison_params,
     compare_features,
     holm_correction,
 )
 from anyts.corpus.compare import COMPARISON_COLUMNS, _resampled_medians, compare_values
-from anyts.exceptions import ParameterError
+from anyts.exceptions import ParameterError, SourceTypeError
 
 
 def test_compare_values():
@@ -117,6 +118,12 @@ def test_holm_correction():
     assert all(isnan(value) for value in holm_correction([float("nan")]))
 
 
+@pytest.mark.parametrize("p_values", ["0.5", 0.5, [[0.1, 0.2]], ["a"], {0.1, 0.2}, None])
+def test_holm_correction_input(p_values):
+    with pytest.raises(SourceTypeError):
+        holm_correction(p_values)
+
+
 def test_holm_correction_range():
     with pytest.raises(ParameterError, match=r"^The p-values must lie within \[0, 1\]$"):
         holm_correction([0.5, 1.5])
@@ -158,6 +165,37 @@ def test_compare_features_seed_and_errors():
         compare_features(SHORT, LONG, n_bootstrap=0)
     with pytest.raises(ParameterError, match=r"must be an integer, not float$"):
         compare_features(SHORT, LONG, n_bootstrap=50.0)
+    with pytest.raises(ParameterError, match=r"^The seed must not be negative$"):
+        compare_features(SHORT, LONG, seed=-1)
+    with pytest.raises(ParameterError, match=r"^The names of the corpora"):
+        compare_features(SHORT, LONG, labels=("A", "A"))
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"labels": ("A",)},
+        {"labels": ("A", "B", "C")},
+        {"labels": ("A", "A")},
+        {"labels": ("A", 1)},
+        {"labels": "AB"},
+        {"labels": None},
+        {"n_bootstrap": 0},
+        {"n_bootstrap": 1.0},
+        {"seed": 1.5},
+        {"seed": -1},
+        {"seed": True},
+        {"seed": "1"},
+    ],
+)
+def test_check_comparison_params(kwargs):
+    with pytest.raises(ParameterError):
+        check_comparison_params(**kwargs)
+
+
+def test_check_comparison_params_valid():
+    assert check_comparison_params(["short", "long"], 1, None) is None
+    assert check_comparison_params(seed=np.int64(3)) is None
 
 
 def test_compare_features_undefined_values():

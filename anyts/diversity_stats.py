@@ -427,7 +427,7 @@ class DiversityStats:
             ParameterError: If the window size, the step or the confidence level are set incorrectly
         """
         calculators = self._calculators
-        if stat not in calculators:
+        if not isinstance(stat, str) or stat not in calculators:
             raise UnknownStatError(
                 f"Unknown metric: {stat}. Available metrics: {tuple(calculators)}"
             )
@@ -1460,7 +1460,6 @@ class ZipfMandelbrot(NamedTuple):
     r2: float
 
 
-@_checks_words
 def fit_zipf_mandelbrot(text: Sequence[str] | Mapping[str, int]) -> ZipfMandelbrot:
     """
     Fitting the Zipf-Mandelbrot law to the frequency distribution
@@ -1483,7 +1482,9 @@ def fit_zipf_mandelbrot(text: Sequence[str] | Mapping[str, int]) -> ZipfMandelbr
 
     Raises:
         SourceTypeError: If the words are not a list of strings (check_words)
+            or the keys of the counter are not strings
     """
+    check_words(text, ordered=not isinstance(text, Mapping))
     frequencies = np.array(
         sorted((count for count in Counter(text).values() if count > 0), reverse=True),
         dtype=float,

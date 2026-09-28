@@ -1,5 +1,5 @@
 import unicodedata
-from collections.abc import Iterable, Iterator
+from collections.abc import Iterable, Iterator, Mapping, Set
 from functools import lru_cache
 from itertools import repeat
 from numbers import Integral
@@ -103,25 +103,29 @@ def has_words(source: str | Doc | Span) -> bool:
     return any(not char.isspace() and not is_punctuation(char) for char in text)
 
 
-def check_sequence(value: object, what: str = "words") -> None:
+def check_sequence(value: object, what: str = "words", ordered: bool = True) -> None:
     """
     Checking that an argument is a sequence and not a text or an iterator
 
     Description:
-        A string would be iterated character by character and an iterator
-        would be exhausted by the first pass over it
+        A string would be iterated character by character, an iterator would
+        be exhausted by the first pass over it, and a set or a mapping has no
+        order of its items, so it passes only with ordered=False - for items
+        whose order does not matter, such as stop words
 
     Arguments:
         value (object): Value to check
         what (str): What is expected, for the message of the error
+        ordered (bool): Whether the order of the items matters
 
     Raises:
-        SourceTypeError: If a string, a Doc, a Span, an iterator or a non-iterable
-            object is passed
+        SourceTypeError: If a string, a Doc, a Span, an iterator, a non-iterable
+            object or, with ordered, a set or a mapping is passed
 
     Example:
         >>> from anyts.utils import check_sequence
         >>> check_sequence(["the", "cat"])
+        >>> check_sequence({"the", "cat"}, "stop words", ordered=False)
         >>> check_sequence("the cat")
         Traceback (most recent call last):
         ...
@@ -138,15 +142,20 @@ def check_sequence(value: object, what: str = "words") -> None:
         raise SourceTypeError(f"A list of {what} is expected, not an iterator")
     if not isinstance(value, Iterable):
         raise SourceTypeError(f"A list of {what} is expected, not {type(value).__name__}")
+    if ordered and isinstance(value, Set | Mapping):
+        raise SourceTypeError(
+            f"A list of {what} is expected, not a {type(value).__name__}: its order is not fixed"
+        )
 
 
-def check_words(value: Iterable[object], what: str = "words") -> None:
+def check_words(value: Iterable[object], what: str = "words", ordered: bool = True) -> None:
     """
     Checking that an argument is a list of words: a sequence of strings
 
     Arguments:
         value (object): Value to check
         what (str): What is expected, for the message of the error
+        ordered (bool): Whether the order of the words matters (check_sequence)
 
     Raises:
         SourceTypeError: If the value fails check_sequence or holds an item
@@ -161,7 +170,7 @@ def check_words(value: Iterable[object], what: str = "words") -> None:
         ...
         anyts.exceptions.SourceTypeError: The words must be strings, not Token
     """
-    check_sequence(value, what)
+    check_sequence(value, what, ordered)
     if not all(map(isinstance, value, repeat(str))):
         item = next(item for item in value if not isinstance(item, str))
         raise SourceTypeError(f"The {what} must be strings, not {type(item).__name__}")

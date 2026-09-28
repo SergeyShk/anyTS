@@ -2,6 +2,7 @@ import math
 import string
 import sys
 import unicodedata
+from collections import Counter
 
 import numpy as np
 import pytest
@@ -165,9 +166,31 @@ def test_check_sequence_iterators(value):
         check_sequence(value, "stopwords")
 
 
-@pytest.mark.parametrize("value", [["the", "cat"], ("the",), [], {"the": 1}])
+@pytest.mark.parametrize("value", [["the", "cat"], ("the",), []])
 def test_check_words(value):
     assert check_words(value) is None
+
+
+@pytest.mark.parametrize(
+    ("value", "name"),
+    [
+        ({"the", "cat"}, "set"),
+        (frozenset({"the"}), "frozenset"),
+        ({"the": 1}, "dict"),
+        (Counter(["the"]), "Counter"),
+        ({"the": 1}.keys(), "dict_keys"),
+    ],
+)
+def test_check_sequence_unordered(value, name):
+    message = rf"^A list of words is expected, not a {name}: its order is not fixed$"
+    with pytest.raises(SourceTypeError, match=message):
+        check_sequence(value)
+    with pytest.raises(SourceTypeError, match=message):
+        check_words(value)
+    assert check_sequence(value, ordered=False) is None
+    assert check_words(value, ordered=False) is None
+    with pytest.raises(SourceTypeError, match=r"^The stopwords must be strings, not int$"):
+        check_words({1}, "stopwords", ordered=False)
 
 
 def test_check_words_errors(nlp):

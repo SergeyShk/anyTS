@@ -1,12 +1,12 @@
 # Corpus comparison
 
 !!! info ""
-    **anyts.corpus.compare_features()**, **anyts.corpus.compare_values()**, **anyts.corpus.calc_cohen_d()**, **anyts.corpus.calc_cliff_delta()**, **anyts.corpus.bootstrap_median_diff()**, **anyts.corpus.holm_correction()**
+    **anyts.corpus.compare_features()**, **anyts.corpus.check_comparison_params()**, **anyts.corpus.compare_values()**, **anyts.corpus.calc_cohen_d()**, **anyts.corpus.calc_cliff_delta()**, **anyts.corpus.bootstrap_median_diff()**, **anyts.corpus.holm_correction()**
 
 ## Description
 
 <!-- --8<-- [start:compare_features] -->
-Comparing two corpora feature by feature. Each corpus comes as a table of the features of its windows - texts split into parts of about the same size, so that the features do not depend on the length of the texts; a language library builds such tables from its texts. `compare_features(table_a, table_b, labels, n_bootstrap, seed)` compares the tables column by column and returns one row per feature, sorted by descending absolute Cliff's delta, the features without statistics last. The bootstrap resamples whole texts by the level `text` of the index of a table; a table without that level has every row taken for a text of its own. A column missing from one of the tables gives `nan`.
+Comparing two corpora feature by feature. Each corpus comes as a table of the features of its windows - texts split into parts of about the same size, so that the features do not depend on the length of the texts. `compare_features(table_a, table_b, labels, n_bootstrap, seed)` compares the tables column by column and returns one row per feature, sorted by descending absolute Cliff's delta, the features without statistics last. The bootstrap resamples whole texts by the level `text` of the index of a table; a table without that level has every row taken for a text of its own. A column missing from one of the tables gives `nan`.
 <!-- --8<-- [end:compare_features] -->
 
 ## Statistics
@@ -26,7 +26,7 @@ For a feature with the values $x_1 \dots x_{n_A}$ in corpus A and $y_1 \dots y_{
 | `n_A`, `n_B` | number of windows with a defined value |
 | `n_texts_A`, `n_texts_B` | number of texts behind those windows |
 
-The names of the columns are `COMPARISON_COLUMNS`, with `A` and `B` replaced by the labels of the corpora. Cliff's delta and the AUC come from the same U statistic and agree with each other; Cohen's d is sensitive to outliers and to departures from normality, so it is best read next to the delta.
+The names of the columns are `anyts.corpus.COMPARISON_COLUMNS`, with `A` and `B` replaced by the labels of the corpora. Cliff's delta and the AUC come from the same U statistic and agree with each other; Cohen's d is sensitive to outliers and to departures from normality, so it is best read next to the delta.
 
 !!! warning "Windows of one text are not independent"
     The test and the effect sizes take every window for an independent observation, and the windows of one text are not. With few texts in a corpus the p-values are too small and reflect the texts chosen as much as the corpora. The bootstrap resamples whole texts instead (a cluster bootstrap), so its interval accounts for the spread between the texts; it needs at least two texts on each side and is rough with only a few.
@@ -39,10 +39,14 @@ The names of the columns are `COMPARISON_COLUMNS`, with `A` and `B` replaced by 
 | :-------: | :--: | :-----: | :---------: |
 | `table_a` | DataFrame | `-` | Features of the windows of the first corpus, one row per window |
 | `table_b` | DataFrame | `-` | Features of the windows of the second corpus |
-| `labels` | tuple[str, str] | `("A", "B")` | Names of the corpora for the columns |
+| `labels` | tuple[str, str] | `("A", "B")` | Names of the corpora for the columns, two different strings |
 | `n_bootstrap` | int | `1000` | Number of bootstrap samples |
-| `seed` | int | `0` | Seed of the random number generator; `None` - a random one |
+| `seed` | int | `0` | Seed of the random number generator, a non-negative integer; `None` - a random one |
 <!-- --8<-- [end:compare_features-parameters] -->
+
+<!-- --8<-- [start:check_comparison_params] -->
+`check_comparison_params(labels=("A", "B"), n_bootstrap=1000, seed=0)` checks these parameters the way `compare_features` does and raises `ParameterError` for a wrong one. A comparison that builds the tables from texts calls it first, so that a wrong parameter fails before the texts are processed.
+<!-- --8<-- [end:check_comparison_params] -->
 
 !!! example "Example"
 
@@ -63,7 +67,7 @@ The names of the columns are `COMPARISON_COLUMNS`, with `A` and `B` replaced by 
 ## Functions of the statistics
 
 <!-- --8<-- [start:compare_values] -->
-`compare_values(values_a, values_b, n_bootstrap=1000, rng=None, texts_a=None, texts_b=None)` compares two sets of values of one feature, undefined and infinite values dropped together with their texts, and returns the values of one row in the order of `COMPARISON_COLUMNS`, `p_holm` left `nan`; `texts_a` and `texts_b` give the text of every value for the bootstrap.
+`compare_values(values_a, values_b, n_bootstrap=1000, rng=None, texts_a=None, texts_b=None)` compares two sets of values of one feature, undefined and infinite values dropped together with their texts, and returns the values of one row in the order of `anyts.corpus.COMPARISON_COLUMNS`, `p_holm` left `nan`; `texts_a` and `texts_b` give the text of every value for the bootstrap.
 <!-- --8<-- [end:compare_values] -->
 
 <!-- --8<-- [start:calc_cohen_d] -->

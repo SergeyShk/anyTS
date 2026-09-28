@@ -75,8 +75,8 @@ def dispersion(
         SourceTypeError: If the words are not a list of strings (check_words)
         SourceError: If there are no words
         ParameterError: If there are fewer than two parts or more parts than
-            words, the number of parts is not an integer, or the sizes of the
-            parts do not match the text
+            words, the number of parts or min_freq is not an integer, the sizes
+            of the parts do not match the text, or the word is not a string
 
     Example:
         >>> from anyts.corpus import dispersion
@@ -85,6 +85,9 @@ def dispersion(
         >>> result.freq, round(result.dp, 3)
         (2, 0.455)
     """
+    check_integer(min_freq, "minimum frequency")
+    if word is not None and not isinstance(word, str):
+        raise ParameterError(f"The word must be a string, not {type(word).__name__}")
     check_words(words)
     if not len(words):
         raise SourceError("The data source has no words")

@@ -300,6 +300,8 @@ class TestWordsExtractor:
 
     def test_stopwords_stored_as_frozenset(self):
         assert WordsExtractor(stopwords=["A", "b"]).stopwords == frozenset({"a", "b"})
+        assert WordsExtractor(stopwords={"A", "b"}).stopwords == frozenset({"a", "b"})
+        assert WordsExtractor(stopwords={"a": 1}).stopwords == frozenset({"a"})
         assert WordsExtractor(stopwords=[]).stopwords is None
         assert WordsExtractor().stopwords is None
 

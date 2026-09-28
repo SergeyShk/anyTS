@@ -117,6 +117,8 @@ def test_init_empty():
         ("some text", r"^A list of words is expected, not a string$"),
         (spacy.blank("xx")("some text"), r"not a Doc"),
         (666, r"^A list of words is expected, not int$"),
+        ({"some", "text"}, r"^A list of words is expected, not a set"),
+        (Counter(["some", "text"]), r"^A list of words is expected, not a Counter"),
     ],
 )
 def test_init_type_error(words, message):
@@ -617,6 +619,8 @@ def test_fit_zipf_mandelbrot(ds):
         fit_zipf_mandelbrot(["a", "b", "c"])
         fit = fit_zipf_mandelbrot(Counter({"a": 12, "b": 6, "c": 4, "d": 0}))
     assert fit.s == pytest.approx(1, rel=1e-3)
+    with pytest.raises(SourceTypeError, match=r"^The words must be strings, not int$"):
+        fit_zipf_mandelbrot(Counter({1: 12, 2: 6}))
 
 
 def test_heaps_beta(ds):
@@ -670,6 +674,8 @@ def test_windowed_inf_windows():
 def test_windowed_errors(ds):
     with pytest.raises(UnknownStatError):
         ds.windowed("unknown")
+    with pytest.raises(UnknownStatError):
+        ds.windowed(["ttr"])
     with pytest.raises(KeyError):
         ds.windowed("unknown")
     with pytest.raises(ValueError):
@@ -784,8 +790,9 @@ def test_word_functions_count():
         (lambda: "some text", r"^A list of words is expected, not a string$"),
         (lambda: (word for word in riddle), r"^A list of words is expected, not an iterator$"),
         (lambda: list(spacy.blank("xx")("the cat")), r"^The words must be strings, not Token$"),
+        (lambda: set(riddle), r"^A list of words is expected, not a set"),
     ],
-    ids=["string", "iterator", "tokens"],
+    ids=["string", "iterator", "tokens", "set"],
 )
 def test_word_functions_reject(func, words, message):
     args = (calc_ttr,) if func is calc_windowed else ()

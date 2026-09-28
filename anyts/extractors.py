@@ -329,7 +329,7 @@ class WordsExtractor(Extractor):
         self.filter_nums = filter_nums
         self.use_lexemes = use_lexemes
         if stopwords is not None:
-            check_words(stopwords, "stopwords")
+            check_words(stopwords, "stopwords", ordered=False)
         self.stopwords = frozenset(word.lower() for word in stopwords) if stopwords else None
         self.lowercase = lowercase
         if not isinstance(ngram_range, tuple | list) or len(ngram_range) != 2:
@@ -404,13 +404,13 @@ class WordsExtractor(Extractor):
 
     def get_most_common(self, n: int = 10) -> list[tuple[Any, int]]:
         """
-        Getting a counter of the top words
+        Getting the top words with their frequencies
 
         Arguments:
             n (int): Number of words
 
         Returns:
-            list: List of the top words
+            list[tuple[str, int]]: Pairs (word, frequency), the most frequent first
 
         Raises:
             ParameterError: If the number of words is not an integer or is less than 1
@@ -532,13 +532,13 @@ class CharNgramsExtractor(Extractor):
 
     def get_most_common(self, n: int = 10) -> list[tuple[Any, int]]:
         """
-        Getting a counter of the top N-grams
+        Getting the top N-grams with their frequencies
 
         Arguments:
             n (int): Number of N-grams
 
         Returns:
-            list: List of the top N-grams
+            list[tuple[str, int]]: Pairs (N-gram, frequency), the most frequent first
 
         Raises:
             ParameterError: If the number of N-grams is not an integer or is less than 1

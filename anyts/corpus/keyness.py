@@ -115,7 +115,8 @@ def keyness(
 
     Raises:
         SourceTypeError: If the words are not a list of strings (check_words)
-        ParameterError: If the measure is unknown or top_n is below one
+        ParameterError: If the measure is unknown, top_n is below one or
+            min_freq is not an integer
         SourceError: If one of the corpora is empty
 
     Example:
@@ -125,13 +126,14 @@ def keyness(
         >>> [(k.word, round(k.g2, 2)) for k in keyness(target, reference)]
         [('cat', 2.77)]
     """
-    if measure not in KEYNESS_MEASURES:
+    if not isinstance(measure, str) or measure not in KEYNESS_MEASURES:
         raise ParameterError(f"Unknown measure of keyness: {measure}")
+    check_integer(min_freq, "minimum frequency")
     if top_n is not None:
         check_integer(top_n, "number of keywords")
     if top_n is not None and top_n < 1:
         raise ParameterError("The number of keywords must be greater than 0")
-    check_words(target)
+    check_words(target, ordered=not isinstance(target, Mapping))
     counts_reference: Mapping[str, float]
     keep = None
     if isinstance(reference, FrequencyReference):
@@ -141,7 +143,7 @@ def keyness(
         missing = float(reference.missing)
         keep = reference.keep
     else:
-        check_words(reference)
+        check_words(reference, ordered=not isinstance(reference, Mapping))
         counts_target = _count(target)
         counts_reference = _count(reference)
         size_reference = float(sum(counts_reference.values()))

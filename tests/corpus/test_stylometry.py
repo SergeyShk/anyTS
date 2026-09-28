@@ -174,6 +174,12 @@ def test_delta_profiles():
 def test_delta_errors():
     with pytest.raises(ParameterError):
         delta(corpus, variant="manhattan")
+    with pytest.raises(ParameterError):
+        delta(corpus, variant=["burrows"])
+    with pytest.raises(ParameterError):
+        delta_profiles(corpus, corpus, variant=["burrows"])
+    with pytest.raises(SourceTypeError):
+        frequency_table({"A": set(corpus["A"])})
     with pytest.raises(SourceError):
         delta({"A": corpus["A"], "B": corpus["B"]})
     with pytest.raises(ParameterError):
@@ -235,6 +241,10 @@ def test_zeta_errors():
         zeta(["acab", ["babaa"]], corpus["B"])
     with pytest.raises(SourceTypeError):
         zeta([spacy.blank("xx")(texts["A"])], corpus["B"])
+    with pytest.raises(SourceTypeError):
+        zeta(set(corpus["A"]), corpus["B"])
+    with pytest.raises(SourceTypeError):
+        zeta([set(corpus["A"])], corpus["B"])
 
 
 def test_kilgarriff_chi2():

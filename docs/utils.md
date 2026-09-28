@@ -77,12 +77,13 @@ Checks whether a text, a `Doc` or a `Span` holds a word: an empty text or one of
 ## check_sequence
 
 <!-- --8<-- [start:check_sequence] -->
-Checks that an argument is a sequence and not a text or an iterator: a string, a `Doc`, a `Span`, an iterator or an object that cannot be iterated raises `SourceTypeError`, since a string would be iterated character by character and an iterator would be exhausted by the first pass over it.
+Checks that an argument is a sequence and not a text or an iterator: a string, a `Doc`, a `Span`, an iterator or an object that cannot be iterated raises `SourceTypeError`, since a string would be iterated character by character and an iterator would be exhausted by the first pass over it. A set or a mapping has no order of its items and raises the error too, unless `ordered=False` - for items whose order does not matter, such as stop words.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
 | `value` | object | `-` | Value to check |
 | `what` | str | `"words"` | What is expected, for the message of the error |
+| `ordered` | bool | `True` | Whether the order of the items matters |
 <!-- --8<-- [end:check_sequence] -->
 
 ## check_words
@@ -94,6 +95,7 @@ Checks that an argument is a list of words: it passes `check_sequence` and every
 | :-------: | :--: | :-----: | :---------: |
 | `value` | Iterable | `-` | Value to check |
 | `what` | str | `"words"` | What is expected, for the message of the error |
+| `ordered` | bool | `True` | Whether the order of the words matters |
 <!-- --8<-- [end:check_words] -->
 
 ## check_integer

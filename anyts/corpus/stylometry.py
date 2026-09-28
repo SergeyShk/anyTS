@@ -187,7 +187,7 @@ def delta(
         B  1.299  0.000  0.866
         C  1.299  0.866  0.000
     """
-    if variant not in DELTA_VARIANTS:
+    if not isinstance(variant, str) or variant not in DELTA_VARIANTS:
         raise ParameterError(f"Unknown variant of Delta: {variant}")
     if len(corpus) < 3:
         raise SourceError("The distances need at least three texts")
@@ -245,7 +245,7 @@ def delta_profiles(
              A      B      C
         ?  0.0  1.299  1.299
     """
-    if variant not in DELTA_VARIANTS:
+    if not isinstance(variant, str) or variant not in DELTA_VARIANTS:
         raise ParameterError(f"Unknown variant of Delta: {variant}")
     basis = reference if statistics is None else statistics
     if len(basis) < 3:

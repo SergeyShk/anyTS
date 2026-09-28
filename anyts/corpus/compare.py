@@ -6,8 +6,8 @@ import numpy as np
 import pandas as pd
 from scipy.stats import mannwhitneyu
 
-from ..exceptions import ParameterError
-from ..utils import check_integer
+from ..exceptions import ParameterError, SourceTypeError
+from ..utils import check_integer, check_sequence
 
 Values = Sequence[float] | np.ndarray[Any, Any]
 
@@ -76,11 +76,9 @@ def compare_features(
             with the names of the corpora in the columns)
 
     Raises:
-        ParameterError: If the number of samples is below one
+        ParameterError: If the parameters fail check_comparison_params
     """
-    check_integer(n_bootstrap, "number of bootstrap samples")
-    if n_bootstrap < 1:
-        raise ParameterError("The number of bootstrap samples must be greater than 0")
+    check_comparison_params(labels, n_bootstrap, seed)
     rng = np.random.default_rng(seed)
     rows = {}
     for name in table_a.columns.union(table_b.columns, sort=False):
@@ -105,6 +103,50 @@ def compare_features(
             "n_texts_b": f"n_texts_{label_b}",
         }
     )
+
+
+def check_comparison_params(
+    labels: tuple[str, str] = ("A", "B"), n_bootstrap: int = 1000, seed: int | None = 0
+) -> None:
+    """
+    Checking the parameters of compare_features
+
+    Description:
+        Meant to be called before the tables of the features are built, so
+        that a wrong parameter fails before the texts are processed
+
+    Arguments:
+        labels (tuple[str, str]): Names of the corpora for the columns
+        n_bootstrap (int): Number of bootstrap samples
+        seed (int): Seed of the random number generator; None - a random one
+
+    Raises:
+        ParameterError: If the names are not two different strings, the number
+            of samples is not an integer or is below one, or the seed is neither
+            None nor a non-negative integer
+
+    Example:
+        >>> from anyts.corpus import check_comparison_params
+        >>> check_comparison_params(("A", "A"))
+        Traceback (most recent call last):
+        ...
+        anyts.exceptions.ParameterError: The names of the corpora must be two different strings
+    """
+    if (
+        not isinstance(labels, Sequence)
+        or isinstance(labels, str)
+        or len(labels) != 2
+        or not all(isinstance(label, str) for label in labels)
+        or labels[0] == labels[1]
+    ):
+        raise ParameterError("The names of the corpora must be two different strings")
+    check_integer(n_bootstrap, "number of bootstrap samples")
+    if n_bootstrap < 1:
+        raise ParameterError("The number of bootstrap samples must be greater than 0")
+    if seed is not None:
+        check_integer(seed, "seed")
+        if seed < 0:
+            raise ParameterError("The seed must not be negative")
 
 
 def _column(table: pd.DataFrame, name: str) -> tuple[np.ndarray, np.ndarray | None]:
@@ -367,6 +409,7 @@ def holm_correction(p_values: Sequence[float]) -> np.ndarray:
         ndarray: Corrected p-values in the original order
 
     Raises:
+        SourceTypeError: If the p-values are not a flat list of numbers
         ParameterError: If a p-value lies outside [0, 1]
 
     Example:
@@ -374,7 +417,13 @@ def holm_correction(p_values: Sequence[float]) -> np.ndarray:
         >>> holm_correction([0.01, 0.04, 0.03]).round(3).tolist()
         [0.03, 0.06, 0.06]
     """
-    values = np.asarray(p_values, dtype=float)
+    check_sequence(p_values, "p-values")
+    try:
+        values = np.asarray(p_values, dtype=float)
+    except (TypeError, ValueError):
+        raise SourceTypeError("The p-values must be numbers") from None
+    if values.ndim != 1:
+        raise SourceTypeError("A flat list of p-values is expected")
     defined = np.flatnonzero(~np.isnan(values))
     if ((values[defined] < 0) | (values[defined] > 1)).any():
         raise ParameterError("The p-values must lie within [0, 1]")

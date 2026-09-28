@@ -8,7 +8,7 @@
 <!-- --8<-- [start:collocations] -->
 Collocation extraction - pairs of words that occur together more often than independence would give: fixed expressions, terminology, the combinatorics of a word. The measures of association are those of [Sketch Engine](https://www.sketchengine.eu/wp-content/uploads/ske-statistics.pdf) and of [`nltk.metrics.association`](https://www.nltk.org/api/nltk.metrics.association.html).
 
-Pairs of words are ordered, as in NLTK: the right word occurs no more than `window` words after the left one, and every pair of positions is counted once; `window=1` gives bigrams. Inside the measure the frequency of a pair is divided by the size of the window (Church and Hanks 1990, as in NLTK), so that the expected frequency does not depend on the window and Dice and the minimum sensitivity do not exceed one; the field `freq_pair` keeps the undivided frequency. With `window > 1` the scale of the Dice measures therefore shifts: a pair always side by side gets a logDice of $14 - \log_2 window$ (13 at a window of 2) and not 14 as in Sketch Engine, which uses the raw co-occurrence. The parameter `node` keeps the pairs with the given word on the left or on the right - the combinatorics of one word.
+Pairs of words are ordered, as in NLTK: the right word occurs no more than `window` words after the left one, and every pair of positions is counted once; `window=1` gives bigrams. Inside the measure the frequency of a pair is divided by the size of the window (Church and Hanks 1990, as in NLTK), so that the expected frequency does not depend on the window and Dice and the minimum sensitivity do not exceed one; the field `freq_pair` keeps the undivided frequency. With `window > 1` the scale of the Dice measures therefore shifts: a pair always side by side gets a logDice of $14 - \log_2 window$ (13 at a window of 2) and not 14 as in Sketch Engine, which uses the raw co-occurrence; 14 is reached only by a pair that occurs at every distance within the window. The parameter `node` keeps the pairs with the given word on the left or on the right - the combinatorics of one word.
 
 Words are compared as they are: case, lemmatization and stop words belong to the word extractor; lemmas suit fixed expressions, word forms suit grammatical constructions.
 <!-- --8<-- [end:collocations] -->
@@ -39,7 +39,7 @@ The measures are available as the functions `calc_mi`, `calc_mi3`, `calc_t_score
 | :-------: | :--: | :-----: | :---------: |
 | `words` | list[str] | `-` | Words of the text in order |
 | `window` | int | `5` | Greatest distance between the words of a pair |
-| `measure` | str | `logdice` | Measure of `COLLOCATION_MEASURES` |
+| `measure` | str | `logdice` | Measure of `anyts.constants.COLLOCATION_MEASURES` |
 | `min_freq` | int | `2` | Minimum frequency of a pair |
 | `node` | str | `None` | Word whose combinatorics is needed; `None` - every pair |
 | `top_n` | int | `None` | Number of collocations; `None` - all of them |
