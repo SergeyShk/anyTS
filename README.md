@@ -18,6 +18,7 @@
 * **[Dependency tree helpers](https://sergeyshk.github.io/anyTS/stats/syntax/)** - dependency distances, tree depth, valency and coordination chains on the labels shared by Universal Dependencies and ClearNLP
 * **[Corpus measures](https://sergeyshk.github.io/anyTS/corpus/keyness/)** - keywords against a corpus or a frequency dictionary, collocations, the dispersion of a word, Burrows's Delta and its variants, Zeta, Kilgarriff's chi-square, the Mendenhall curve and the comparison of corpora with effect sizes, a bootstrap by texts and the Holm correction
 * **[Visualization](https://sergeyshk.github.io/anyTS/visualizers/zipf/)** - Zipf's law, vocabulary growth and frequency spectrum, sentence lengths, literature fingerprinting, word tree, corpus and stylometric plots, the labels of the plots as a parameter; the machinery of the highlighting of a text by layers
+* **[Components](https://sergeyshk.github.io/anyTS/components/)** - the base of the spaCy components that put the statistics into an extension of `Doc`
 * **[Datasets](https://sergeyshk.github.io/anyTS/datasets/)** - the base of a dataset: downloading an archive with a checksum, safe extraction and filters of the records
 * **[Exceptions](https://sergeyshk.github.io/anyTS/exceptions/)** - one hierarchy whose classes are also built-in exceptions
 
