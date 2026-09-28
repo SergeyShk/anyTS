@@ -5,7 +5,7 @@ from enum import Enum
 from itertools import count
 from typing import Any
 
-from graphviz import Digraph, nohtml
+from graphviz import Digraph, escape
 
 from ..exceptions import ParameterError, SourceError, SourceTypeError
 from ..utils import check_integer, check_sequence, check_words
@@ -36,7 +36,8 @@ class TreeDrawer:
         bwd_tree (FreqNode): Subtree before the keyword
         max_font_size (int): Largest size of the font
         min_font_size (int): Smallest size of the font
-        font_interp (Callable): Function interpolating the size of the font
+        font_interp (Callable): Function of the relative frequency of a node, from 0 to
+            1, giving the share of the range of the font sizes, from 0 to 1
 
     Attributes:
         max_freq (int): Greatest frequency
@@ -68,7 +69,7 @@ class TreeDrawer:
             [t.freq for t in fwd_tree.children.values()]
             + [t.freq for t in bwd_tree.children.values()]
         )
-        self.graph = Digraph(nohtml(keyword), format="png")
+        self.graph = Digraph(escape(keyword), format="png")
         self.graph.attr("graph", rankdir="LR")
         self.graph.attr("node", shape="plaintext", margin="0")
         self._ids = count()
@@ -109,7 +110,7 @@ class TreeDrawer:
             str: Identifier of the node
         """
         node = f"n{next(self._ids)}"
-        self.graph.node(node, label=nohtml(word), fontsize=str(fontsize))
+        self.graph.node(node, label=escape(word), fontsize=str(fontsize))
         return node
 
     def draw_subtree(self, tree: FreqNode, direction: Direction, parent: str) -> None:

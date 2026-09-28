@@ -1,4 +1,4 @@
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable, Iterator, Mapping
 from numbers import Integral
 
 import matplotlib.pyplot as plt
@@ -9,7 +9,7 @@ from spacy.tokens import Doc
 from ..constants import VISUALIZER_LABELS
 from ..exceptions import ParameterError, SourceError, SourceTypeError
 from ..extractors import SentsExtractor, WordsExtractor
-from ..utils import check_integer, iter_doc_words, merge_labels
+from ..utils import check_integer, check_sequence, iter_doc_words, merge_labels
 
 
 def sentence_lengths_plot(
@@ -48,9 +48,9 @@ def sentence_lengths_plot(
         SourceTypeError: If the data source or an extractor is set incorrectly
         ParameterError: If the window is not an integer or is below one, or the
             labels are set incorrectly (merge_labels)
-        SourceError: If there are no sentences
+        SourceError: If there are no sentences or a length is negative
     """
-    captions = merge_labels(VISUALIZER_LABELS["sentence_lengths_plot"], labels)
+    captions = merge_labels(VISUALIZER_LABELS["sentence_lengths_plot"], labels, window=1)
     check_integer(window, "window")
     if window < 1:
         raise ParameterError("The window must be at least one")
@@ -96,9 +96,9 @@ def sentence_lengths(
         A string is split into sentences by sents_extractor and every
         sentence into words by words_extractor; a Doc by its sentence
         boundaries, with the words of iter_doc_words and join_hyphens, and a
-        Doc without them as its text, by the extractors; ready lengths (any
-        iterable of integers) are used as they are. Sentences without words
-        are skipped
+        Doc without them as its text, by the extractors; ready lengths (a
+        sequence or an iterator of integers that are not negative) are used as
+        they are. Sentences without words are skipped
 
     Arguments:
         source (str|Doc|Iterable[int]): Text, Doc object or ready lengths
@@ -113,7 +113,10 @@ def sentence_lengths(
         list[int]: Lengths of the sentences in order
 
     Raises:
-        SourceTypeError: If the data source or an extractor is set incorrectly
+        SourceTypeError: If the data source or an extractor is set incorrectly (a
+            table, a set, a mapping or bytes for the lengths, a length that is not
+            an integer)
+        SourceError: If a length is negative
 
     Example:
         >>> from anyts.visualizers import sentence_lengths
@@ -134,8 +137,15 @@ def sentence_lengths(
             lengths = [sum(1 for _ in iter_doc_words(sent, join_hyphens)) for sent in source.sents]
             return [length for length in lengths if length]
         return sentence_lengths(source.text, sents_extractor, words_extractor)
-    if isinstance(source, Iterable):
-        lengths = list(source)
-        if all(isinstance(length, Integral) for length in lengths):
-            return [int(length) for length in lengths]
-    raise SourceTypeError("The data source is set incorrectly")
+    if isinstance(source, Iterator):
+        source = list(source)
+    check_sequence(source, "lengths of the sentences")
+    values: list[object] = list(source)
+    lengths = []
+    for value in values:
+        if isinstance(value, bool) or not isinstance(value, Integral):
+            raise SourceTypeError("The lengths of the sentences must be integers")
+        lengths.append(int(value))
+    if any(length < 0 for length in lengths):
+        raise SourceError("The lengths of the sentences must not be negative")
+    return lengths

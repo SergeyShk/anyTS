@@ -10,7 +10,7 @@ The curve of the lengths of the sentences - the rhythm of a text: the length of 
 <!-- --8<-- [end:sentence_lengths_plot] -->
 
 <!-- --8<-- [start:sentence_lengths] -->
-`sentence_lengths(source)` extracts the lengths: a string is split into sentences by `SentsExtractor` and every sentence into words by `WordsExtractor`, which a language library passes as `sents_extractor` and `words_extractor`; the sentences of a `Doc` come from its boundaries and its words from `iter_doc_words` with `join_hyphens`, while a `Doc` without boundaries is counted as its text, by the extractors; ready lengths are used as they are; sentences without words are skipped.
+`sentence_lengths(source)` extracts the lengths: a string is split into sentences by the sentence extractor and every sentence into words by the word extractor; the sentences of a `Doc` come from its boundaries and its words from `iter_doc_words` with `join_hyphens`, while a `Doc` without boundaries is counted as its text, by the extractors; sentences without words are skipped. Ready lengths - a sequence or an iterator of integers that are not negative - are used as they are; a table, a set, a mapping, bytes or a length that is not an integer raise `SourceTypeError`, a negative length `SourceError`.
 <!-- --8<-- [end:sentence_lengths] -->
 
 ## Parameters
@@ -23,10 +23,11 @@ The curve of the lengths of the sentences - the rhythm of a text: the length of 
 | `inset` | bool | `True` | Show the inset with the histogram |
 | `ax` | Axes | `None` | Axes for the plot |
 | `labels` | dict[str, str] | `None` | Labels over the defaults: `title`, `xlabel`, `ylabel`, `length` (the curve), `average` (a format string with `window`), `distribution` (the inset) |
-| `sents_extractor` | SentsExtractor | `None` | Extractor of the sentences of a string; `SentsExtractor()` by default |
-| `words_extractor` | WordsExtractor | `None` | Extractor of the words of a sentence of a string; `WordsExtractor()` by default |
-| `join_hyphens` | bool | `False` | Join the parts of hyphenated words of a `Doc` with sentence boundaries |
+| `sents_extractor` | SentsExtractor | `None` | Extractor of the sentences of a string; the sentence extractor of the library by default |
+| `words_extractor` | WordsExtractor | `None` | Extractor of the words of a sentence of a string; the word extractor of the library by default |
 <!-- --8<-- [end:sentence_lengths_plot-parameters] -->
+
+The core functions also take `join_hyphens`, `False` by default: join the parts of hyphenated words of a `Doc` with sentence boundaries (`iter_doc_words`); a library whose tokenizer keeps hyphenated words whole sets it. The extractors of the core are `SentsExtractor()` and `WordsExtractor()`.
 
 ## Usage example
 

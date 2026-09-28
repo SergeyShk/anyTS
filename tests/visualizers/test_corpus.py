@@ -124,6 +124,9 @@ def test_collocation_network():
     html_like = collocation_network([Collocation("<b>", "kitty", 2, 2, 2, 1.0)])
     assert '\tn0 [label="<b>" fontsize=17]' in html_like.source
     assert "n0 -- n1" in html_like.source
+    backslash = collocation_network([Collocation("a\\", "\\G", 2, 2, 2, 1.0)])
+    assert '\tn0 [label="a\\\\" fontsize=17]' in backslash.source
+    assert '\tn1 [label="\\\\G" fontsize=17]' in backslash.source
     for top_n in (0, -1, 1.5):
         with pytest.raises(ParameterError):
             collocation_network(found, top_n=top_n)

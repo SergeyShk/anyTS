@@ -95,7 +95,7 @@ def pca_plot(
         SourceError: If there are fewer than three texts
         ParameterError: If the labels are set incorrectly (merge_labels)
     """
-    captions = merge_labels(VISUALIZER_LABELS["pca_plot"], labels)
+    captions = merge_labels(VISUALIZER_LABELS["pca_plot"], labels, share=0.0)
     _check_corpus(corpus)
     if len(corpus) < 3:
         raise SourceError("The principal components need at least three texts")
@@ -197,7 +197,7 @@ def _distance_matrix(distances: pd.DataFrame, purpose: str) -> np.ndarray:
     if distances.index.has_duplicates or set(distances.columns) != set(distances.index):
         raise SourceError(f"{purpose} needs the same texts in the rows and the columns")
     try:
-        values = distances.loc[:, distances.index].to_numpy(dtype=float)
+        values: np.ndarray = distances.loc[:, distances.index].to_numpy(dtype=float)
     except (TypeError, ValueError) as e:
         raise SourceTypeError("The distances must be numbers") from e
     if not np.isfinite(values).all():

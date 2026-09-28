@@ -3,7 +3,7 @@ from collections.abc import Mapping, Sequence
 from math import isfinite, isnan, log2, nan
 
 import matplotlib.pyplot as plt
-from graphviz import Graph, nohtml
+from graphviz import Graph, escape
 from matplotlib.axes import Axes
 from matplotlib.patches import Patch
 
@@ -107,7 +107,7 @@ def keyness_plot(
         if len(labels) != 2:
             raise ParameterError("The labels of the legend must be a pair of strings")
         labels = {"target": labels[0], "reference": labels[1]}
-    captions = merge_labels(VISUALIZER_LABELS["keyness_plot"], labels)
+    captions = merge_labels(VISUALIZER_LABELS["keyness_plot"], labels, field="")
     if not isinstance(field, str) or field not in Keyword._fields[1:]:
         raise ParameterError(f"Unknown field of a keyword: {field}")
     check_integer(top_n, "number of words")
@@ -218,7 +218,7 @@ def collocation_network(collocations: Sequence[Collocation], top_n: int | None =
     for word, frequency in frequencies.items():
         graph.node(
             nodes[word],
-            label=nohtml(word),
+            label=escape(word),
             fontsize=f"{_scale(frequency, min_freq, max_freq, 10, 24):.0f}",
         )
     for pair in pairs:

@@ -34,7 +34,7 @@ def heaps_plot(
         SourceError: If there are fewer than two words
         ParameterError: If the labels are set incorrectly (merge_labels)
     """
-    captions = merge_labels(VISUALIZER_LABELS["heaps_plot"], labels)
+    captions = merge_labels(VISUALIZER_LABELS["heaps_plot"], labels, k=0.0, beta=0.0)
     check_words(words)
     if len(words) < 2:
         raise SourceError("The growth of the vocabulary needs at least two words")

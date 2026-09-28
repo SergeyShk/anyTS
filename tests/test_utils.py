@@ -10,7 +10,7 @@ import pytest
 import spacy
 from spacy.tokens import Doc
 
-from anyts.exceptions import ParameterError, SourceTypeError
+from anyts.exceptions import ParameterError, SourceError, SourceTypeError
 from anyts.utils import (
     PUNCTUATION_CATEGORIES,
     check_counts,
@@ -159,6 +159,9 @@ def test_check_sequence_errors(nlp):
         check_sequence(doc)
     with pytest.raises(SourceTypeError, match="not a Span"):
         check_sequence(doc[:1])
+    for value in (b"the cat", bytearray(b"the")):
+        with pytest.raises(SourceTypeError, match=r"^A list of words is expected, not a string$"):
+            check_sequence(value)
 
 
 @pytest.mark.parametrize("value", [iter([]), (word for word in "ab"), map(str.lower, "ab")])
@@ -223,6 +226,10 @@ def test_check_counts():
             SourceTypeError, match=rf"^The frequencies must be numbers, not {name}$"
         ):
             check_counts({"the": count})
+    for count in (-1, float("nan"), float("inf"), np.float64("-inf")):
+        with pytest.raises(SourceError, match=r"^The frequencies must be finite and not negative"):
+            check_counts({"the": count})
+    assert check_counts({"the": 0}) is None
 
 
 @pytest.mark.parametrize("value", [0.95, 1, np.float64(0.5), -3])
@@ -237,6 +244,12 @@ def test_check_number_errors(value, name):
     with pytest.raises(
         ParameterError, match=rf"^The confidence level must be a number, not {name}$"
     ):
+        check_number(value, "confidence level")
+
+
+@pytest.mark.parametrize("value", [float("nan"), float("inf"), -np.inf])
+def test_check_number_not_finite(value):
+    with pytest.raises(ParameterError, match=r"^The confidence level must be a finite number"):
         check_number(value, "confidence level")
 
 

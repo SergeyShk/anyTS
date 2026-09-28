@@ -8,7 +8,7 @@ from matplotlib.axes import Axes
 from ..constants import VISUALIZER_LABELS
 from ..diversity_stats import fit_zipf_mandelbrot
 from ..exceptions import ParameterError, SourceError, SourceTypeError
-from ..utils import check_integer, check_number, merge_labels
+from ..utils import check_counts, check_integer, check_number, merge_labels
 
 
 def zipf(
@@ -45,17 +45,20 @@ def zipf(
         Axes: Axes with the plot of Zipf's law
 
     Raises:
-        SourceTypeError: If the value is not a Counter object
-        SourceError: If the counter is empty
+        SourceTypeError: If the value is not a Counter object of strings (check_counts)
+        SourceError: If the counter is empty or has a frequency that is not above zero
         ParameterError: If the number of words or of labels is not an integer, the number
             of words is below one, the exponent α of the shown theoretical law is not
             a number above zero or the labels are set incorrectly (merge_labels)
     """
-    captions = merge_labels(VISUALIZER_LABELS["zipf"], labels)
+    captions = merge_labels(VISUALIZER_LABELS["zipf"], labels, q=0.0, s=0.0)
     if not isinstance(counter, Counter):
         raise SourceTypeError("The counter of the frequencies of words must be a Counter object")
+    check_counts(counter)
     if not counter:
         raise SourceError("The data source has no words")
+    if not all(counter.values()):
+        raise SourceError("The frequencies of the words must be greater than zero")
     if num_words is not None:
         check_integer(num_words, "number of words")
         if num_words < 1:
