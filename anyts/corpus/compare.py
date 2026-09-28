@@ -78,13 +78,13 @@ def compare_features(
             with the names of the corpora in the columns)
 
     Raises:
-        SourceTypeError: If a table is not a DataFrame or has a column that is not numeric
+        SourceTypeError: If a table is not a DataFrame, repeats the name of a
+            column or has a column that is not numeric
         ParameterError: If the parameters fail check_comparison_params
     """
     check_comparison_params(labels, n_bootstrap, seed)
     for table in (table_a, table_b):
-        if not isinstance(table, pd.DataFrame):
-            raise SourceTypeError(f"The features must be a DataFrame, not {type(table).__name__}")
+        _check_table(table)
     rng = np.random.default_rng(seed)
     rows = {}
     for name in table_a.columns.union(table_b.columns, sort=False):
@@ -175,10 +175,28 @@ def _column(table: pd.DataFrame, name: str) -> tuple[np.ndarray, np.ndarray | No
     texts = (
         table.index.get_level_values("text").to_numpy() if "text" in table.index.names else None
     )
-    try:
-        return table[name].to_numpy(dtype=float), texts
-    except (TypeError, ValueError):
-        raise SourceTypeError(f"The feature {name} must be numeric") from None
+    return table[name].to_numpy(dtype=float, na_value=nan), texts
+
+
+def _check_table(table: object) -> None:
+    """
+    Checking a table of features: a DataFrame of distinct numeric columns
+
+    Description:
+        A column is numeric when pandas takes it for one (bools and nullable
+        integers included) or when it holds only numbers and None; dates and
+        text, numeric strings included, are not
+    """
+    if not isinstance(table, pd.DataFrame):
+        raise SourceTypeError(f"The features must be a DataFrame, not {type(table).__name__}")
+    if not table.columns.is_unique:
+        raise SourceTypeError("The names of the features must be distinct")
+    for name, column in table.items():
+        if not pd.api.types.is_numeric_dtype(column) and not (
+            column.dtype == object
+            and all(value is None or isinstance(value, Real) for value in column)
+        ):
+            raise SourceTypeError(f"The feature {name} must be numeric")
 
 
 def _as_values(values: Iterable[Any], what: str = "values") -> np.ndarray:

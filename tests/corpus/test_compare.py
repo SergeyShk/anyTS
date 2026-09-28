@@ -157,8 +157,19 @@ def test_compare_features_tables():
     assert empty.shape == (0, 17)
     with pytest.raises(SourceTypeError, match=r"^The features must be a DataFrame, not dict$"):
         compare_features({"x": [1.0]}, LONG)
-    with pytest.raises(SourceTypeError, match=r"^The feature name must be numeric$"):
-        compare_features(SHORT.assign(name=["a", "b", "c"]), LONG)
+    for values in (["a", "b", "c"], ["1.5", "2", "3"], pd.to_datetime(["2020", "2021", "2022"])):
+        with pytest.raises(SourceTypeError, match=r"^The feature name must be numeric$"):
+            compare_features(SHORT.assign(name=values), LONG)
+    repeated = pd.concat([SHORT["length"], SHORT["length"]], axis=1)
+    with pytest.raises(SourceTypeError, match=r"^The names of the features must be distinct$"):
+        compare_features(repeated, LONG)
+    mixed = SHORT.assign(
+        flag=[True, False, True],
+        count=pd.array([1, None, 3], dtype="Int64"),
+        loose=pd.Series([1.0, None, 2], dtype=object),
+    )
+    result = compare_features(mixed, mixed, n_bootstrap=5)
+    assert (result.loc["count", "n_A"], result.loc["loose", "n_A"]) == (2, 2)
 
 
 def test_generator_and_confidence_checked():
