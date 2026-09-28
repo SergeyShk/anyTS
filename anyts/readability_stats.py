@@ -5,7 +5,7 @@ from typing import ClassVar
 
 from spacy.tokens import Doc
 
-from .basic_stats import BasicStats
+from .basic_stats import BasicStats, _check_extractors
 from .constants import (
     GRADE_AGE_LEVELS,
     LIX_LONG_WORD_LETTER_FACTOR,
@@ -126,6 +126,7 @@ class ReadabilityStats:
             )
         self.preset = preset
         self.coefficients = dict(self.presets[preset])
+        _check_extractors(sents_extractor, words_extractor)
         if isinstance(source, BasicStats):
             expected = self.basic_stats_class or BasicStats
             if not isinstance(source, expected):
@@ -624,7 +625,8 @@ def flesch_reading_easy_to_grade(
     Description:
         The grade of the first band whose lower bound the value reaches; by
         default the bands of text_standard of textstat, which follow the table
-        of Flesch (1948) down to 60 and split his lower bands: 90-100 - 5,
+        of Flesch (1948) down to 60 and split his lower bands, with 8.5 for
+        its grades 8 and 9: 90-100 - 5,
         80-90 - 6, 70-80 - 7, 60-70 - 8.5, 50-60 - 10, 40-50 - 11, 30-40 - 12,
         below 30 - 13. Values above 100 belong to the first band
 

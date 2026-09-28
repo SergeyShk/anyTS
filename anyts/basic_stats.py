@@ -70,6 +70,16 @@ def _check_factor(value: int, what: str) -> None:
         raise ParameterError(f"The {what} must be greater than 0")
 
 
+def _check_extractors(
+    sents_extractor: SentsExtractor | None, words_extractor: WordsExtractor | None
+) -> None:
+    """Checking the types of the extractors given, SourceTypeError for another type"""
+    if sents_extractor is not None and not isinstance(sents_extractor, SentsExtractor):
+        raise SourceTypeError("The sentence extractor must be a SentsExtractor")
+    if words_extractor is not None and not isinstance(words_extractor, WordsExtractor):
+        raise SourceTypeError("The word extractor must be a WordsExtractor")
+
+
 class BasicStats(metaclass=ABCMeta):
     """
     Base of the basic statistics of a text
@@ -157,10 +167,7 @@ class BasicStats(metaclass=ABCMeta):
         complex_syl_factor: int = COMPLEX_SYL_FACTOR,
         long_word_letter_factor: int = LONG_WORD_LETTER_FACTOR,
     ):
-        if sents_extractor is not None and not isinstance(sents_extractor, SentsExtractor):
-            raise SourceTypeError("The sentence extractor must be a SentsExtractor")
-        if words_extractor is not None and not isinstance(words_extractor, WordsExtractor):
-            raise SourceTypeError("The word extractor must be a WordsExtractor")
+        _check_extractors(sents_extractor, words_extractor)
         _check_factor(complex_syl_factor, "minimum number of syllables in a complex word")
         _check_factor(long_word_letter_factor, "minimum number of letters in a long word")
         sents: Iterable[Span] | Iterable[str]

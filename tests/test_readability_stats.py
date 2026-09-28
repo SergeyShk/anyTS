@@ -70,6 +70,13 @@ def test_init_basic_stats(rs):
     # Ready basic statistics are taken as they are, the extractors are not used
     stopwords = WordsExtractor(stopwords=["the"])
     assert Readability(basic, words_extractor=stopwords).bs is basic
+    # but are checked all the same
+    with pytest.raises(SourceTypeError, match=r"^The word extractor must be a WordsExtractor$"):
+        Readability(basic, words_extractor="junk")
+    with pytest.raises(
+        SourceTypeError, match=r"^The sentence extractor must be a SentsExtractor$"
+    ):
+        ReadabilityStats(basic, sents_extractor=42)
 
 
 def test_init_basic_stats_of_another_class():
@@ -215,6 +222,15 @@ def test_hooks():
         rs.describe_grade("flesch_kincaid_grade")
     with pytest.raises(ParameterError, match=r"Available norms: \('slow',\)$"):
         rs.reading_time_by_norm("adult")
+
+
+def test_consensus_grade_hook():
+    class Hard(Custom):
+        def reading_ease_to_grade(self, flesch_reading_easy):
+            return 30
+
+    # smog 19 and rix_grade 7 rounded, the reading ease 30 instead of 5 by default
+    assert Hard(TEXT).consensus_grade == 19.0
 
 
 def test_print_stats_hooks(capsys):
