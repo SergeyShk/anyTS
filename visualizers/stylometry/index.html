@@ -1909,7 +1909,7 @@
 <p>Plots for <a href="../../corpus/stylometry/">stylometry</a>: a dendrogram and the multidimensional scaling of the matrix of distances of <code>delta</code>, the principal components of the frequencies of the most frequent words and the Mendenhall curves of several texts. The functions take the axes <code>ax</code> and return <code>Axes</code>.</p>
 <h2 id="dendrogram_plot">Dendrogram<a class="headerlink" href="#dendrogram_plot" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:dendrogram_plot] -->
-<p>Hierarchical clustering by <code>scipy.cluster.hierarchy</code> over the matrix of distances between texts; Ward's method by default, as in <a href="https://aclanthology.org/W15-0709.pdf">Evert et al. (2015)</a>; the labels of the leaves are the names of the texts of the index of the matrix.</p>
+<p>Hierarchical clustering by <code>scipy.cluster.hierarchy</code> over the matrix of distances between texts; Ward's method by default, as in <a href="https://aclanthology.org/W15-0709.pdf">Evert et al. (2015)</a>; the labels of the leaves are the names of the texts of the index of the matrix. The columns are taken in the order of the rows; a matrix with other texts in the columns than in the rows, fewer than two texts, an infinite or negative distance, asymmetry or a distance on the diagonal raises <code>SourceError</code> before a figure is created.</p>
 <table>
 <thead>
 <tr>
@@ -1924,7 +1924,7 @@
 <td style="text-align: center;"><code>distances</code></td>
 <td style="text-align: center;">DataFrame</td>
 <td style="text-align: center;"><code>-</code></td>
-<td style="text-align: center;">Symmetric matrix of distances with the names of the texts</td>
+<td style="text-align: center;">Symmetric matrix of distances with the names of the texts in the rows and the columns, in any order</td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>method</code></td>
@@ -1997,7 +1997,7 @@
 
 <h2 id="mds_plot">Multidimensional scaling<a class="headerlink" href="#mds_plot" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:mds_plot] -->
-<p>Classical multidimensional scaling (Torgerson 1952) of any matrix of distances: the double centering of the matrix of squared distances and the two leading eigenvectors; the distances between the points approximate the distances of the matrix.</p>
+<p>Classical multidimensional scaling (Torgerson 1952) of any matrix of distances: the double centering of the matrix of squared distances and the two leading eigenvectors; the distances between the points approximate the distances of the matrix. The columns are taken in the order of the rows; a matrix with other texts in the columns than in the rows, fewer than two texts, an infinite or negative distance, asymmetry or a distance on the diagonal raises <code>SourceError</code> before a figure is created.</p>
 <table>
 <thead>
 <tr>
@@ -2012,7 +2012,7 @@
 <td style="text-align: center;"><code>distances</code></td>
 <td style="text-align: center;">DataFrame</td>
 <td style="text-align: center;"><code>-</code></td>
-<td style="text-align: center;">Symmetric matrix of distances with the names of the texts</td>
+<td style="text-align: center;">Symmetric matrix of distances with the names of the texts in the rows and the columns, in any order</td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>ax</code></td>

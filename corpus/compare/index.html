@@ -1989,7 +1989,7 @@
 </div>
 <h2 id="functions-of-the-statistics">Functions of the statistics<a class="headerlink" href="#functions-of-the-statistics" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:compare_values] -->
-<p><code>compare_values(values_a, values_b, n_bootstrap=1000, rng=None, texts_a=None, texts_b=None)</code> compares two sets of values of one feature, undefined and infinite values dropped together with their texts, and returns the values of one row in the order of <code>anyts.corpus.COMPARISON_COLUMNS</code>, <code>p_holm</code> left <code>nan</code>; <code>texts_a</code> and <code>texts_b</code> give the text of every value for the bootstrap.</p>
+<p><code>compare_values(values_a, values_b, n_bootstrap=1000, rng=None, texts_a=None, texts_b=None)</code> compares two sets of values of one feature, undefined and infinite values - a missing value (<code>None</code>, <code>NA</code>) included - dropped together with their texts, and returns the values of one row in the order of <code>anyts.corpus.COMPARISON_COLUMNS</code>, <code>p_holm</code> left <code>nan</code>; <code>texts_a</code> and <code>texts_b</code> give the text of every value for the bootstrap.</p>
 <!-- --8<-- [end:compare_values] -->
 
 <!-- --8<-- [start:calc_cohen_d] -->

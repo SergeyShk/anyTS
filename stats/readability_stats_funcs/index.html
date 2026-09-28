@@ -2067,7 +2067,7 @@
 </div>
 <!-- --8<-- [start:calc_flesch_reading_easy] -->
 <p>Computation of the Flesch reading ease (Flesch, 1948).</p>
-<p>The higher the value, the easier the text; the scale runs from 0 to 100.</p>
+<p>The higher the value, the easier the text; the scale runs nominally from 0 to 100, though the simplest texts go above 100 and the hardest below 0.</p>
 <p>Formula:</p>
 <div class="arithmatex">\[
 c - a \cdot \frac{\textrm{Number of words}}{\textrm{Number of sentences}} - b \cdot \frac{\textrm{Number of syllables}}{\textrm{Number of words}}
@@ -2667,7 +2667,7 @@ a \cdot \left(\frac{\textrm{Number of words}}{\textrm{Number of sentences}} + \f
 <p><strong>anyts.readability_stats.calc_consensus_grade()</strong></p>
 </div>
 <!-- --8<-- [start:calc_consensus_grade] -->
-<p>Computation of the consensus grade: the median of the values of the grade formulas rounded half up, together with the reading ease converted into years of schooling by <code>to_grade</code> and added without rounding - so a band of 8.5 votes for 8.5. No values at all raise <code>ParameterError</code>, a <code>to_grade</code> that is not callable <code>SourceTypeError</code>.</p>
+<p>Computation of the consensus grade: the median of the values of the grade formulas rounded half up, together with the reading ease converted into years of schooling by <code>to_grade</code> and added without rounding - so a band of 8.5 votes for 8.5. No values at all and a grade that is not a finite number raise <code>ParameterError</code>, a <code>to_grade</code> that is not callable <code>SourceTypeError</code>.</p>
 <p>Parameters:</p>
 <table>
 <thead>
@@ -2706,7 +2706,7 @@ a \cdot \left(\frac{\textrm{Number of words}}{\textrm{Number of sentences}} + \f
 <p><strong>anyts.readability_stats.grade_to_age()</strong></p>
 </div>
 <!-- --8<-- [start:grade_to_age] -->
-<p>The school stage and reader age by the value of a grade formula: the value is rounded half up and falls into the first stage whose last year it does not exceed, values below 1 into the first stage; above the last stage lies <code>above</code>.</p>
+<p>The school stage and reader age by the value of a grade formula: the value is rounded half up and falls into the first stage whose last year it does not exceed, values below 1 into the first stage; above the last stage lies <code>above</code>. A grade that is not a finite number raises <code>ParameterError</code>.</p>
 <!-- --8<-- [end:grade_to_age] -->
 
 <p>The default stages are those of the United States (<code>anyts.constants.GRADE_AGE_LEVELS</code> and <code>POSTGRADUATE_LEVEL</code>):</p>

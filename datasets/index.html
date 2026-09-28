@@ -1925,7 +1925,7 @@
 <p>The base of a dataset and the functions that download, verify and extract its archive and filter its records.</p>
 <h2 id="dataset">Dataset<a class="headerlink" href="#dataset" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:Dataset] -->
-<p>An abstract dataset: a name, a dictionary of reference information <code>meta</code> and the methods a dataset implements - iteration over the records, <code>check_data</code>, <code>get_texts</code>, <code>get_records</code> and <code>download(force=False)</code>. <code>repr</code> gives <code>Dataset('&lt;name&gt;')</code>, and the property <code>info</code> is the name followed by <code>meta</code>.</p>
+<p>An abstract dataset: a name, a dictionary of reference information <code>meta</code> and the methods a dataset implements - iteration over the records, <code>check_data</code>, <code>get_texts</code>, <code>get_records</code> and <code>download(force=False)</code>. <code>repr</code> gives the name of the class and the name of the dataset, <code>&lt;repr_name&gt;('&lt;name&gt;')</code>, and the property <code>info</code> is the name under the key <code>name_key</code> followed by <code>meta</code>.</p>
 <table>
 <thead>
 <tr>
@@ -1953,12 +1953,13 @@
 <!-- --8<-- [end:Dataset] -->
 
 <!-- --8<-- [start:Dataset-hooks] -->
-<p>The class attributes <code>repr_name</code> (<code>"Dataset"</code>) and <code>name_key</code> (<code>"name"</code>) are the name of the class in <code>repr</code> and the key of the name in <code>info</code>; a language library overrides them in a subclass.</p>
+<p>The class attributes <code>repr_name</code> and <code>name_key</code> are the name of the class in <code>repr</code> and the key of the name in <code>info</code>; a language library overrides them in a subclass.</p>
 <!-- --8<-- [end:Dataset-hooks] -->
 
+<p>In the core <code>repr_name</code> is <code>"Dataset"</code> and <code>name_key</code> is <code>"name"</code>.</p>
 <h2 id="fetch_archive">fetch_archive<a class="headerlink" href="#fetch_archive" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:fetch_archive] -->
-<p>Downloads the archive of a dataset, verifies it and extracts the files. The archive is verified and extracted when it is downloaded now or when <code>missing</code> says the extracted files are not all in place. An archive that fails the SHA-256 checksum is removed and downloaded again once, and a second failure raises <code>DownloadError</code>. The files are extracted into a directory <code>&lt;name&gt;.part</code> next to the archive, which replaces the directory of the dataset (or a link in its place) only once the extraction is complete, so an interrupted extraction leaves the earlier files as they were. The name of the archive must have an extension, since the directory is named after the archive without it; otherwise <code>ParameterError</code> is raised before the download.</p>
+<p>Downloads the archive of a dataset, verifies it and extracts the files. The archive is verified and extracted when it is downloaded now or when <code>missing</code> says the extracted files are not all in place. An archive that fails the SHA-256 checksum, given in either case, is removed and downloaded again once, and a second failure raises <code>DownloadError</code>. The files are extracted aside, next to the archive, and replace the directory of the dataset (or a link in its place) only once the extraction is complete; the earlier directory is moved aside first and removed only once the new files are in place, so an interrupted extraction or a failed replacement leaves the earlier files as they were, and concurrent calls do not share their partial files. The name of the archive must have an extension, since the directory is named after the archive without it; otherwise <code>ParameterError</code> is raised before the download.</p>
 <table>
 <thead>
 <tr>
@@ -1977,7 +1978,7 @@
 </tr>
 <tr>
 <td style="text-align: center;"><code>filepath</code></td>
-<td style="text-align: center;">Path</td>
+<td style="text-align: center;">str/Path</td>
 <td style="text-align: center;"><code>-</code></td>
 <td style="text-align: center;">Path to the archive; the files are extracted into its directory, under the name of the archive without its extensions</td>
 </tr>
@@ -2002,8 +2003,8 @@
 <tr>
 <td style="text-align: center;"><code>user_agent</code></td>
 <td style="text-align: center;">str</td>
-<td style="text-align: center;"><code>"anyTS"</code></td>
-<td style="text-align: center;">User-Agent header of the request</td>
+<td style="text-align: center;"><code>USER_AGENT</code></td>
+<td style="text-align: center;">User-Agent header of the request, the name of the library</td>
 </tr>
 </tbody>
 </table>
@@ -2011,7 +2012,7 @@
 
 <h2 id="download_file">download_file<a class="headerlink" href="#download_file" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:download_file] -->
-<p>Downloads a file into a directory and returns its path, or an empty string if the file is already there and <code>force</code> is off. The name of the file is the last part of the path of the address, decoded; an address without one needs <code>filename</code>, and a name with a drive or a separator raises <code>DownloadError</code>. The file is written under the name with <code>.part</code> added and renamed once it is complete, so a broken or interrupted download leaves no partial file; the server is waited for <code>DOWNLOAD_TIMEOUT</code> (60) seconds at most.</p>
+<p>Downloads a file into a directory and returns its path, or an empty string if the file is already there and <code>force</code> is off. The name of the file is the last part of the path of the address, decoded; an address without one needs <code>filename</code>, and a name with a drive or a separator raises <code>DownloadError</code>. The file is written under a temporary name of its own and renamed once it is complete, so a broken, interrupted or cut download - shorter than the length the server announced - raises <code>DownloadError</code> and leaves no partial file, and concurrent downloads do not share their partial files; the server is waited for <code>DOWNLOAD_TIMEOUT</code> (60) seconds at most.</p>
 <table>
 <thead>
 <tr>
@@ -2049,16 +2050,17 @@
 <tr>
 <td style="text-align: center;"><code>user_agent</code></td>
 <td style="text-align: center;">str</td>
-<td style="text-align: center;"><code>"anyTS"</code></td>
-<td style="text-align: center;">User-Agent header of the request</td>
+<td style="text-align: center;"><code>USER_AGENT</code></td>
+<td style="text-align: center;">User-Agent header of the request, the name of the library</td>
 </tr>
 </tbody>
 </table>
 <!-- --8<-- [end:download_file] -->
 
+<p>In the core <code>USER_AGENT</code> is <code>"anyTS"</code>; a language library passes its own name.</p>
 <h2 id="extract_archive">extract_archive<a class="headerlink" href="#extract_archive" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:extract_archive] -->
-<p>Extracts a ZIP or TAR archive and returns the directory with the files. Paths leading outside the directory - absolute, with a drive or a network share, or with <code>..</code> - and links are refused, whatever the version of Python; a root directory that differs from the name of the archive without its extensions (<code>corpus_v1.tar.xz</code> - <code>corpus_v1</code>) is renamed to it, replacing an earlier extraction. A missing file, a file that is not an archive, a corrupted or empty archive and a directory that cannot be created raise <code>DataFileError</code>.</p>
+<p>Extracts a ZIP or TAR archive and returns the directory with the files. Paths leading outside the directory - absolute, with a drive or a network share, or with <code>..</code> - and links are refused before anything is written, whatever the version of Python. The archive is extracted aside and put in place only once complete: a single root directory takes the name of the archive without its extensions (<code>corpus_v1.tar.xz</code> - <code>corpus_v1</code>) with its subdirectories, replacing an earlier extraction, and the files of an archive without one root go into the directory, replacing those of the same names and keeping the others; a file in the place of a directory or the other way round is refused before anything is replaced. A missing file, a file that is not an archive, a corrupted or empty archive, a directory that cannot be created and files that cannot be replaced raise <code>DataFileError</code>.</p>
 <table>
 <thead>
 <tr>
@@ -2087,7 +2089,7 @@
 
 <h2 id="sha256">sha256<a class="headerlink" href="#sha256" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:sha256] -->
-<p>Computes the SHA-256 checksum of a file as a hexadecimal string; a missing file gives an empty string.</p>
+<p>Computes the SHA-256 checksum of a file as a hexadecimal string in lower case; a missing file gives an empty string.</p>
 <table>
 <thead>
 <tr>
@@ -2100,7 +2102,7 @@
 <tbody>
 <tr>
 <td style="text-align: center;"><code>path</code></td>
-<td style="text-align: center;">Path</td>
+<td style="text-align: center;">str/Path</td>
 <td style="text-align: center;"><code>-</code></td>
 <td style="text-align: center;">Path to the file</td>
 </tr>
@@ -2110,7 +2112,7 @@
 
 <h2 id="to_path">to_path<a class="headerlink" href="#to_path" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:to_path] -->
-<p>Converts a string into a <code>Path</code> and returns a <code>Path</code> as it is; any other value raises <code>SourceTypeError</code>.</p>
+<p>Converts a string or a <code>Path</code> into a <code>Path</code>, expanding a leading <code>~</code> into the home directory; any other value raises <code>SourceTypeError</code>.</p>
 <table>
 <thead>
 <tr>
@@ -2141,9 +2143,10 @@
 <!-- --8<-- [end:length_filters] -->
 
 <!-- --8<-- [start:substring_filter] -->
-<p><code>substring_filter(field, value, fold=fold_diacritics)</code> returns the predicate that keeps the records whose field holds the substring <code>value</code>. Both are folded by <code>fold</code> before the comparison, by default regardless of case and diacritics; the substring is plain text, not a regular expression, and a value that is not a string raises <code>ParameterError</code>.</p>
+<p><code>substring_filter(field, value, fold)</code> returns the predicate that keeps the records whose field holds the substring <code>value</code>. Both are folded by <code>fold</code> before the comparison, so that the differences of case and diacritics a language ignores do not count; the substring is plain text, not a regular expression, a field that is not a string does not match, and a value that is not a string raises <code>ParameterError</code>.</p>
 <!-- --8<-- [end:substring_filter] -->
 
+<p>In the core <code>fold</code> is <code>fold_diacritics</code>.</p>
 <!-- --8<-- [start:fold_diacritics] -->
 <p><code>fold_diacritics(value)</code> lower-cases a string (<code>str.casefold</code>), decomposes it (NFD) and drops the combining marks, so <code>Galdós</code> and <code>galdos</code> are the same. A letter that Unicode decomposes into a base letter and a mark is folded too (<code>й</code> gives <code>и</code>); a language where such a letter is a letter of its own passes another <code>fold</code>.</p>
 <!-- --8<-- [end:fold_diacritics] -->

@@ -2183,7 +2183,7 @@
 </div>
 <h2 id="check_sequence">check_sequence<a class="headerlink" href="#check_sequence" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:check_sequence] -->
-<p>Checks that an argument is a sequence and not a text or an iterator: a string, a <code>Doc</code>, a <code>Span</code>, an iterator or an object that cannot be iterated raises <code>SourceTypeError</code>, since a string would be iterated character by character and an iterator would be exhausted by the first pass over it; so does a table - a two-dimensional array or a <code>DataFrame</code>. A set or a mapping holds every item once, in no order of the text, and raises the error too, unless <code>ordered=False</code> - for a collection whose order and repeats do not matter, such as stop words.</p>
+<p>Checks that an argument is a sequence and not a text or an iterator: a string (of characters or bytes), a <code>Doc</code>, a <code>Span</code>, an iterator or an object that cannot be iterated raises <code>SourceTypeError</code>, since a string would be iterated character by character and an iterator would be exhausted by the first pass over it; so does a table - a two-dimensional array or a <code>DataFrame</code>. A set or a mapping holds every item once, in no order of the text, and raises the error too, unless <code>ordered=False</code> - for a collection whose order and repeats do not matter, such as stop words.</p>
 <table>
 <thead>
 <tr>
@@ -2282,7 +2282,7 @@
 
 <h2 id="check_number">check_number<a class="headerlink" href="#check_number" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:check_number] -->
-<p>Checks that a parameter is a real number: a <code>bool</code>, a string or <code>None</code> raises <code>ParameterError</code> instead of failing later in a comparison.</p>
+<p>Checks that a parameter is a finite real number: a <code>bool</code>, a string, <code>None</code>, <code>nan</code> or an infinity raises <code>ParameterError</code> instead of failing later in a comparison.</p>
 <table>
 <thead>
 <tr>
@@ -2311,7 +2311,7 @@
 
 <h2 id="check_counts">check_counts<a class="headerlink" href="#check_counts" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:check_counts] -->
-<p>Checks that an argument is a counter - a mapping of words to their frequencies, such as a <code>Counter</code>: a value that is not a mapping, a word that is not a string or a frequency that is not a number raises <code>SourceTypeError</code>.</p>
+<p>Checks that an argument is a counter - a mapping of words to their frequencies, such as a <code>Counter</code>: a value that is not a mapping, a word that is not a string or a frequency that is not a number raises <code>SourceTypeError</code>, and a negative, <code>nan</code> or infinite frequency <code>SourceError</code>.</p>
 <table>
 <thead>
 <tr>
@@ -2334,7 +2334,7 @@
 
 <h2 id="merge_labels">merge_labels<a class="headerlink" href="#merge_labels" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:merge_labels] -->
-<p>Merges the labels given for a plot over its default ones: a label that is not given keeps its default, so a single label can be changed alone. A default with fields in braces, such as <code>"Moving average ({window})"</code>, is a format string: a label given for it may use only those fields, and a literal brace in it is doubled (<code>{{</code>); the other labels are taken as they are. The defaults of the visualizers are <code>anyts.constants.VISUALIZER_LABELS</code>, by the name of the function; labels that are not a mapping of strings, have a key the plot does not know or a field their default does not have raise <code>ParameterError</code>.</p>
+<p>Merges the labels given for a plot over its default ones: a label that is not given keeps its default, so a single label can be changed alone. A default with fields in braces, such as <code>"Moving average ({window})"</code>, is a format string: a label given for it may use only those fields, and a literal brace in it is doubled (<code>{{</code>); the other labels are taken as they are. A format label is tried on sample values of its fields, of the types the plot gives them, so that a format spec the values do not take (<code>{window:s}</code> for a number) fails before a figure is created. Labels that are not a mapping of strings, have a key the plot does not know, a field their default does not have or a format spec their values do not take raise <code>ParameterError</code>.</p>
 <table>
 <thead>
 <tr>
@@ -2357,10 +2357,17 @@
 <td style="text-align: center;"><code>-</code></td>
 <td style="text-align: center;">Labels given; <code>None</code> - the default ones</td>
 </tr>
+<tr>
+<td style="text-align: center;"><code>**samples</code></td>
+<td style="text-align: center;">object</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Values of the fields of the format labels, for trying the labels given</td>
+</tr>
 </tbody>
 </table>
 <!-- --8<-- [end:merge_labels] -->
 
+<p>The defaults of the visualizers of the core are <code>anyts.constants.VISUALIZER_LABELS</code>, by the name of the function.</p>
 <div class="admonition example">
 <p class="admonition-title">Example</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">merge_labels</span>
@@ -2394,7 +2401,7 @@
 
 <h2 id="iter_doc_units">iter_doc_units<a class="headerlink" href="#iter_doc_units" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:iter_doc_units] -->
-<p>Yields the words of a <code>Doc</code> or a <code>Span</code> as lists of tokens: one token each, as in <code>iter_doc_tokens</code>. With <code>join_hyphens=True</code> a word that the tokenizer split at its hyphens (<code>well-known</code> into <code>well</code>, <code>-</code>, <code>known</code>) is joined back when no whitespace separates its parts; a language library whose own tokenizer keeps such words whole turns it on, so that a string and a <code>Doc</code> give the same words.</p>
+<p>Yields the words of a <code>Doc</code> or a <code>Span</code> as lists of tokens: one token each, as in <code>iter_doc_tokens</code>. With <code>join_hyphens=True</code> a word that the tokenizer split at its hyphens (<code>well-known</code> into <code>well</code>, <code>-</code>, <code>known</code>) is joined back when no whitespace separates its parts and no sentence starts at a hyphen or a part; a language library whose own tokenizer keeps such words whole turns it on, so that a string and a <code>Doc</code> give the same words.</p>
 <table>
 <thead>
 <tr>

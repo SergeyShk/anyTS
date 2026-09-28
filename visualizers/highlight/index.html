@@ -1981,7 +1981,7 @@
 
 <h1 id="text-highlighting">Text highlighting<a class="headerlink" href="#text-highlighting" title="Permanent link">&para;</a></h1>
 <div class="admonition info">
-<p><strong>anyts.visualizers.HighlightedText</strong>, <strong>anyts.visualizers.Highlight</strong></p>
+<p><strong>anyts.visualizers.HighlightedText</strong>, <strong>anyts.visualizers.Highlight</strong>; the helpers of the layers are in <strong>anyts.visualizers.highlight</strong></p>
 </div>
 <h2 id="description">Description<a class="headerlink" href="#description" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:HighlightedText] -->
@@ -2002,28 +2002,28 @@
 <tbody>
 <tr>
 <td style="text-align: center;"><code>layers_desc</code></td>
-<td style="text-align: center;">dict[str, str]</td>
-<td style="text-align: center;">The layers in the order of drawing with their names in the legend</td>
+<td style="text-align: center;">class attribute</td>
+<td style="text-align: center;">The layers in the order of drawing with their names in the legend, <code>dict[str, str]</code></td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>default_layers</code></td>
-<td style="text-align: center;">tuple[str]</td>
-<td style="text-align: center;">The layers on by default, among those the source allows</td>
+<td style="text-align: center;">class attribute</td>
+<td style="text-align: center;">The layers on by default, among those the source allows, <code>tuple[str]</code></td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>layer_annotations</code></td>
-<td style="text-align: center;">dict[str, tuple[str]]</td>
-<td style="text-align: center;">The annotations of a <code>Doc</code> a layer needs (<code>DEP</code>, <code>POS</code>, <code>LEMMA</code>...); a layer without them is available for a string too</td>
+<td style="text-align: center;">class attribute</td>
+<td style="text-align: center;">The annotations of a <code>Doc</code> a layer needs (<code>DEP</code>, <code>POS</code>, <code>LEMMA</code>...), <code>dict[str, tuple[str]]</code>; a layer without them is available for a string too</td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>layer_styles</code></td>
-<td style="text-align: center;">dict[str, str]</td>
-<td style="text-align: center;">The CSS declarations of every layer; the text of a layer with a background keeps a dark colour on it</td>
+<td style="text-align: center;">class attribute</td>
+<td style="text-align: center;">The CSS declarations of every layer, <code>dict[str, str]</code>; the text of a layer with a background keeps a dark colour on it</td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>css_prefix</code></td>
-<td style="text-align: center;">str</td>
-<td style="text-align: center;">The prefix of the CSS classes, <code>anyts</code> by default</td>
+<td style="text-align: center;">class attribute</td>
+<td style="text-align: center;">The prefix of the CSS classes, <code>str</code></td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>find(layer, words, sents, doc)</code></td>
@@ -2042,9 +2042,10 @@
 </tr>
 </tbody>
 </table>
-<p>The sentences of a <code>Doc</code> come from its boundaries, or from <code>iter_sents</code> over its text when it has none, and the words of a sentence are those of <code>doc_words</code> or <code>iter_words</code> that start in it. <code>find</code> runs in <code>__init__</code>, so a subclass with parameters of its own stores them before it calls the <code>__init__</code> of the base; a fragment of another layer raises <code>ValueError</code>.</p>
+<p>The sentences of a <code>Doc</code> come from its boundaries, or from <code>iter_sents</code> over its text when it has none, and the words of a sentence are those of <code>doc_words</code> or <code>iter_words</code> that start in it. <code>find</code> runs in <code>__init__</code>, so a subclass with parameters of its own stores them before it calls the <code>__init__</code> of the base; a fragment of another layer or one outside the text raises <code>ParameterError</code>.</p>
 <!-- --8<-- [end:HighlightedText-hooks] -->
 
+<p>In the core the layers are empty and <code>css_prefix</code> is <code>anyts</code>.</p>
 <h2 id="parameters">Parameters<a class="headerlink" href="#parameters" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:HighlightedText-parameters] -->
 <table>
@@ -2158,7 +2159,7 @@
 <!-- --8<-- [end:Sent] -->
 
 <!-- --8<-- [start:get_doc_words] -->
-<p><code>get_doc_words(doc)</code> - the words of <code>iter_doc_tokens</code> with their positions, and with the part of speech and the lemma when the <code>Doc</code> has both.</p>
+<p><code>get_doc_words(doc)</code> - the words of <code>iter_doc_tokens</code> with their positions, a byte order mark at the start of the text left out, with the part of speech and the lemma when the <code>Doc</code> has them.</p>
 <!-- --8<-- [end:get_doc_words] -->
 
 <!-- --8<-- [start:iter_doc_sents] -->

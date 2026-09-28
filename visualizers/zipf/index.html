@@ -1916,7 +1916,7 @@
 </tr>
 </tbody>
 </table>
-<p>The function returns the <code>Axes</code> with the plot; a <code>num_words</code> greater than the number of word types does not extend the curves beyond the data, an empty counter raises <code>SourceError</code>, and a <code>num_words</code> below one raises <code>ParameterError</code>.</p>
+<p>The function returns the <code>Axes</code> with the plot; a <code>num_words</code> greater than the number of word types does not extend the curves beyond the data, a counter whose words are not strings raises <code>SourceTypeError</code>, an empty counter or a frequency that is not above zero <code>SourceError</code>, and a <code>num_words</code> below one or an exponent that is not a finite number above zero <code>ParameterError</code> - all before a figure is created.</p>
 <!-- --8<-- [end:zipf-parameters] -->
 
 <!-- --8<-- [start:zipf_theory] -->
