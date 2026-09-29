@@ -2085,7 +2085,7 @@
 <!-- --8<-- [start:ReadabilityStats] -->
 <p>The <a href="https://en.wikipedia.org/wiki/Readability">readability</a> metrics of a text from its basic statistics: the mean sentence length in words, the mean word length in syllables or letters, the share of polysyllabic and of long words and the variability of word length. The data source can be a text, a <code>Doc</code> object of <a href="https://github.com/explosion/spaCy">spaCy</a> or ready basic statistics - then the text is not counted again; the extractors are passed on to the basic statistics of a text or a <code>Doc</code>, while ready ones are taken as they are. The letters of the formulas are those of the counted words, so a word extractor that drops words does not lengthen the mean word.</p>
 <p>The metrics are properties computed on each access, so a change of the <code>coefficients</code> of an object applies at once.</p>
-<p>A source that is neither a string, a <code>Doc</code> nor basic statistics, basic statistics of another class than those of the library and an extractor of another type raise <code>SourceTypeError</code>, a source without words or sentences <code>SourceError</code>, an unknown preset or one that is not a string <code>ParameterError</code>.</p>
+<p>A source that is neither a string, a <code>Doc</code> nor basic statistics, basic statistics of a class other than those of the library and an extractor of another type raise <code>SourceTypeError</code>, a source without words or sentences <code>SourceError</code>, an unknown preset or one that is not a string <code>ParameterError</code>.</p>
 <!-- --8<-- [end:ReadabilityStats] -->
 
 <h2 id="language-hooks">Language hooks<a class="headerlink" href="#language-hooks" title="Permanent link">&para;</a></h2>

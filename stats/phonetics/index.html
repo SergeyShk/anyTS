@@ -1828,7 +1828,7 @@
 <p>Functions over the sounds or the letters of the words of a text. A word is given as the collection of its features - the characters of a string, the sounds of a transcription - so the functions see no language: a library chooses the features.</p>
 <h2 id="calc_repetition_index">calc_repetition_index<a class="headerlink" href="#calc_repetition_index" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:calc_repetition_index] -->
-<p>The repetition index: the number of windows of <code>window_len</code> neighbouring words where a feature - a letter or a sound, as a library chooses - occurs in two words or more, summed over the features, to the number expected if the words stood in random order. A window of shuffled words is a sample of them without replacement, so for a feature found in <span class="arithmatex">\(K\)</span> of the <span class="arithmatex">\(N\)</span> words of the text a window of <span class="arithmatex">\(w\)</span> words holds it in two words or more with the hypergeometric probability</p>
+<p>The repetition index: the ratio of the number of windows of <code>window_len</code> neighbouring words where a feature - a letter or a sound, as a library chooses - occurs in two words or more, summed over the features, to the number expected if the words stood in random order. A window of shuffled words is a sample of them without replacement, so for a feature found in <span class="arithmatex">\(K\)</span> of the <span class="arithmatex">\(N\)</span> words of the text, a window of <span class="arithmatex">\(w\)</span> words holds it in two words or more with the hypergeometric probability</p>
 <div class="arithmatex">\[
 P = 1 - \frac{\binom{N-K}{w} + K \binom{N-K}{w-1}}{\binom{N}{w}}
 \]</div>
