@@ -280,6 +280,18 @@ def test_kwic_sentenize():
     nlp = spacy.blank("xx")
     nlp.add_pipe("sentencizer")
     assert kwic(nlp(text), "oh he", sentenize=sentences) == []
+    # A final mark in the keyword lets a phrase cross whatever its case, in a Doc too
+    assert len(kwic(text, "girls. then", sentenize=sentences)) == 1
+    assert len(kwic(nlp(text), "girls. then", sentenize=sentences)) == 1
+    # The sentences may come in any order
+    backwards = lambda text: reversed(list(sentences(text)))  # noqa: E731
+    assert kwic(text, "honest think", sentenize=backwards) == found
+    assert kwic(text, "girls then", sentenize=backwards) == []
+    # A sentence of a string may start on the opening mark before a word
+    dialogue = "He waited\n—Then go, she said."
+    assert len(kwic(dialogue, "waited then")) == 1
+    by_lines = lambda text: [(0, 9, text[:9]), (10, len(text), text[10:])]  # noqa: E731
+    assert kwic(dialogue, "waited then", sentenize=by_lines) == []
     # A paragraph ends a phrase whatever the sentences
     one = lambda text: [(0, len(text), text)]  # noqa: E731
     assert kwic("A line\n\nanother line", "line another", sentenize=one) == []

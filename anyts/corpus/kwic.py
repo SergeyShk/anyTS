@@ -70,9 +70,10 @@ def kwic(
         A phrase does not run across the end of a paragraph or of a sentence -
         a boundary of a Doc anywhere between its words, or without boundaries
         the start of a sentence of sentenize, by default a final mark before
-        whitespace - unless the keyword has one in the same place. The context is window words on each side as written, with the
-        punctuation between them; whitespace collapses to one space;
-        occurrences do not overlap
+        whitespace - unless the keyword has a final mark or the start of a
+        sentence of sentenize in the same place. The context is window words
+        on each side as written, with the punctuation between them; whitespace
+        collapses to one space; occurrences do not overlap
 
     Arguments:
         source (str|Doc): Text or Doc object
@@ -88,7 +89,8 @@ def kwic(
         join_hyphens (bool): Join the parts of hyphenated words of a Doc
         sentenize (callable): Sentences of a string, of the keyword and of the
             text of a Doc without boundaries, as triples of the start, the end
-            and the text
+            and the text; by default a sentence ends at a final mark before
+            whitespace
 
     Returns:
         list[Concordance]: Occurrences in the order of the text
@@ -124,7 +126,8 @@ def kwic(
         raise ParameterError("The keyword is not set")
     key_starts = _sent_starts(keyword, sentenize)
     key_gaps = [
-        _boundary(keyword, key_words, (), None, key_starts, index)
+        _boundary(keyword, key_words, (), None, None, index)
+        or _boundary(keyword, key_words, (), None, key_starts, index)
         for index in range(1, len(key_words))
     ]
     check_integer(window, "window")
@@ -132,7 +135,7 @@ def kwic(
         raise ParameterError("The window cannot be negative")
     text, words, tokens = _source_words(source, split, join_hyphens)
     doc = source if isinstance(source, Doc) and source.has_annotation("SENT_START") else None
-    starts = _sent_starts(text, sentenize) if doc is None else None
+    starts = _sent_starts(text, sentenize) if doc is None and not all(key_gaps) else None
     lemmas = lemmatize or _lemmas
 
     def readings(word: str, word_tokens: Sequence[Token]) -> set[str]:
