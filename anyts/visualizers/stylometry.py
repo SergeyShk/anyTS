@@ -47,7 +47,7 @@ def dendrogram_plot(
         SourceError: If the matrix is not square, has fewer than two texts, other
             texts in the columns than in the rows, an infinite or negative distance,
             is not symmetric or has a distance on the diagonal
-        ParameterError: If the method is unknown or the labels are set incorrectly (merge_labels)
+        ParameterError: If the method is unknown, the labels are set incorrectly (merge_labels)
             or ax is not a matplotlib Axes (check_axes)
     """
     captions = merge_labels(VISUALIZER_LABELS["dendrogram_plot"], labels)

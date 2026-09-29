@@ -49,7 +49,7 @@ def zipf(
         SourceTypeError: If the value is not a Counter object of strings (check_counts)
         SourceError: If the counter is empty or has a frequency that is not above zero
         ParameterError: If the number of words or of labels is not an integer, the number of words
-            is below one, the exponent α of the shown theoretical law is not a number above zero or
+            is below one, the exponent α of the shown theoretical law is not a number above zero,
             the labels are set incorrectly (merge_labels) or ax is not a matplotlib Axes
             (check_axes)
     """
@@ -142,7 +142,7 @@ def zipf_theory(
 
     Raises:
         ParameterError: If the number of ranks is not an integer or is below one, the frequency is
-            not a number, the exponent is not a number above zero or the labels are set incorrectly
+            not a number, the exponent is not a number above zero, the labels are set incorrectly
             or ax is not a matplotlib Axes (check_axes)
     """
     captions = merge_labels(VISUALIZER_LABELS["zipf_theory"], labels)

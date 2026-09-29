@@ -66,8 +66,8 @@ def fingerprinting(
             measure is not callable
         SourceError: If there are no texts or a text has no words
         ParameterError: If the size of a segment is not an integer or is below one, the half width
-            is not an integer above MARGIN, the half height not an integer above zero, or the
-            labels are set incorrectly (merge_labels) or ax is not a matplotlib Axes (check_axes)
+            is not an integer above MARGIN, the half height not an integer above zero, the labels
+            are set incorrectly (merge_labels) or ax is not a matplotlib Axes (check_axes)
     """
     title = merge_labels(VISUALIZER_LABELS["fingerprinting"], labels)["title"]
     check_sequence(texts, "lists of words")

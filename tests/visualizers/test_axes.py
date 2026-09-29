@@ -1,8 +1,10 @@
+import inspect
 from collections import Counter
 
 import matplotlib.pyplot as plt
 import pytest
 
+import anyts.visualizers
 from anyts import WordsExtractor
 from anyts.corpus import Keyword, delta
 from anyts.exceptions import ParameterError
@@ -75,3 +77,13 @@ def test_plot_on_given_axes(plot):
     _, ax = plt.subplots()
     assert plot(ax) is ax
     plt.close("all")
+
+
+def test_every_plot_with_axes_is_checked():
+    with_axes = {
+        name
+        for name in anyts.visualizers.__all__
+        if inspect.isfunction(function := getattr(anyts.visualizers, name))
+        and "ax" in inspect.signature(function).parameters
+    }
+    assert with_axes == set(PLOTS)

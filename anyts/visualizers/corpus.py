@@ -103,7 +103,7 @@ def keyness_plot(
 
     Raises:
         SourceTypeError: If the keywords are not a list (check_sequence)
-        ParameterError: If the field is unknown, top_n is not an integer or is below one, or the
+        ParameterError: If the field is unknown, top_n is not an integer or is below one, the
             labels are set incorrectly (merge_labels) or ax is not a matplotlib Axes (check_axes)
         SourceError: If there are no keywords or the measure of every one is undefined
     """
