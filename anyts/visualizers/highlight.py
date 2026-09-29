@@ -422,12 +422,13 @@ def iter_doc_sents(doc: Doc) -> Iterator[tuple[int, int, str]]:
         iterator[tuple[int, int, str]]: Position of the first character,
             position after the last character and text of each sentence
     """
+    text = doc.text
     for sent in doc.sents:
         tokens = [token for token in sent if not token.is_space]
         if tokens:
             start = min(token.idx for token in tokens)
             end = max(token.idx + len(token) for token in tokens)
-            yield start, end, doc.text[start:end]
+            yield start, end, text[start:end]
 
 
 def get_text_sents(spans: Iterable[tuple[int, int, str]], words: Sequence[Word]) -> list[Sent]:

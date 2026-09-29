@@ -9,6 +9,7 @@ from ..constants import VISUALIZER_LABELS
 from ..diversity_stats import fit_zipf_mandelbrot
 from ..exceptions import ParameterError, SourceError, SourceTypeError
 from ..utils import check_counts, check_integer, check_number, merge_labels
+from ._axes import check_axes
 
 
 def zipf(
@@ -45,6 +46,7 @@ def zipf(
         Axes: Axes with the plot of Zipf's law
 
     Raises:
+        ParameterError: If ax is not a matplotlib Axes
         SourceTypeError: If the value is not a Counter object of strings (check_counts)
         SourceError: If the counter is empty or has a frequency that is not above zero
         ParameterError: If the number of words or of labels is not an integer, the number
@@ -66,6 +68,7 @@ def zipf(
     check_integer(num_labels, "number of labels")
     if show_theory:
         _check_alpha(alpha)
+    check_axes(ax)
     if ax is None:
         _, ax = plt.subplots()
     top_frequency = counter.most_common(1)[0][1]
@@ -138,6 +141,7 @@ def zipf_theory(
         Axes: Axes with the plot of the theoretical Zipf's law
 
     Raises:
+        ParameterError: If ax is not a matplotlib Axes
         ParameterError: If the number of ranks is not an integer or is below one, the
             frequency is not a number, the exponent is not a number above zero or
             the labels are set incorrectly
@@ -148,9 +152,10 @@ def zipf_theory(
         raise ParameterError("The number of ranks must be greater than 0")
     check_number(size, "frequency of the first rank")
     _check_alpha(alpha)
+    check_axes(ax)
     if ax is None:
         _, ax = plt.subplots()
-    x = np.arange(1, num_ranks + 1)
+    x = np.arange(1, num_ranks + 1, dtype=float)
     ax.plot(x, size * x ** (-alpha), linewidth=2, color="r", label=captions["theoretical"])
     return ax
 

@@ -11,6 +11,7 @@ from ..constants import VISUALIZER_LABELS
 from ..corpus.stylometry import frequency_table, mendenhall_curve, z_scores
 from ..exceptions import ParameterError, SourceError, SourceTypeError
 from ..utils import merge_labels
+from ._axes import check_axes
 
 # Methods of scipy.cluster.hierarchy.linkage
 LINKAGE_METHODS = frozenset(
@@ -42,6 +43,7 @@ def dendrogram_plot(
         Axes: Axes with the dendrogram
 
     Raises:
+        ParameterError: If ax is not a matplotlib Axes
         SourceTypeError: If the distances are not a DataFrame of numbers
         SourceError: If the matrix is not square, has fewer than two texts, other
             texts in the columns than in the rows, an infinite or negative distance,
@@ -53,6 +55,7 @@ def dendrogram_plot(
     if not isinstance(method, str) or method not in LINKAGE_METHODS:
         raise ParameterError(f"Unknown method of linkage: {method}")
     values = _distance_matrix(distances, "a dendrogram")
+    check_axes(ax)
     if ax is None:
         _, ax = plt.subplots(figsize=(8, 0.4 * len(distances) + 1.5), layout="constrained")
     condensed = squareform(values, checks=False)
@@ -91,6 +94,7 @@ def pca_plot(
         Axes: Axes with the plot
 
     Raises:
+        ParameterError: If ax is not a matplotlib Axes
         SourceTypeError: If the corpus is not a mapping
         SourceError: If there are fewer than three texts
         ParameterError: If the labels are set incorrectly (merge_labels)
@@ -107,6 +111,7 @@ def pca_plot(
         components = np.hstack([components, np.zeros((len(components), 1))])
     variance = singular**2 / (singular**2).sum() if singular.any() else np.zeros(2)
     explained = list(variance[:2]) + [0.0] * (2 - min(len(variance), 2))
+    check_axes(ax)
     if ax is None:
         _, ax = plt.subplots(figsize=(7, 6))
     ax.scatter(components[:, 0], components[:, 1], color="tab:blue")
@@ -141,6 +146,7 @@ def mds_plot(
         Axes: Axes with the plot
 
     Raises:
+        ParameterError: If ax is not a matplotlib Axes
         SourceTypeError: If the distances are not a DataFrame of numbers
         SourceError: If the matrix is not square, has fewer than two texts, other
             texts in the columns than in the rows, an infinite or negative distance,
@@ -155,6 +161,7 @@ def mds_plot(
     eigenvalues, eigenvectors = np.linalg.eigh(gram)
     order = np.argsort(eigenvalues)[::-1][:2]
     coordinates = eigenvectors[:, order] * np.sqrt(np.clip(eigenvalues[order], 0, None))
+    check_axes(ax)
     if ax is None:
         _, ax = plt.subplots(figsize=(7, 6))
     ax.scatter(coordinates[:, 0], coordinates[:, 1], color="tab:blue")
@@ -234,6 +241,7 @@ def mendenhall_plot(
         Axes: Axes with the curves
 
     Raises:
+        ParameterError: If ax is not a matplotlib Axes
         SourceTypeError: If the corpus is not a mapping
         SourceError: If there are no texts or one of them has no words
         ParameterError: If the labels are set incorrectly (merge_labels)
@@ -243,6 +251,7 @@ def mendenhall_plot(
     if not corpus:
         raise SourceError("The corpus has no texts")
     curves = {name: mendenhall_curve(words) for name, words in corpus.items()}
+    check_axes(ax)
     if ax is None:
         _, ax = plt.subplots()
     for name, curve in curves.items():

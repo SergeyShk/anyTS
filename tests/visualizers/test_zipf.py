@@ -14,6 +14,11 @@ def tokens():
     return Counter({"the": 100, "of": 75, "and": 50, "to": 25})
 
 
+def test_zipf_theory_integer_alpha():
+    ax = zipf_theory(8, 4, 2)
+    assert ax.get_lines()[0].get_ydata().tolist() == [8.0, 2.0, 8 / 9, 0.5]
+
+
 def test_zipf_theory():
     ax = zipf_theory(10, 5, 1.0)
     assert isinstance(ax, Axes)
@@ -144,3 +149,8 @@ def test_zipf_ax(tokens):
 def test_zipf_labels_of_equal_frequencies():
     ax = zipf(Counter({"a": 2, "b": 2, "c": 2, "d": 2, "e": 1}), num_labels=5)
     assert [text.get_text() for text in ax.texts] == [" a", " b", " c", " e"]
+
+
+def test_plot_on_other_axes():
+    with pytest.raises(ParameterError, match=r"^The axes must be a matplotlib Axes, not str$"):
+        zipf_theory(10, 5, ax="x")

@@ -8,6 +8,7 @@ from ..constants import VISUALIZER_LABELS
 from ..diversity_stats import calc_frequency_spectrum, fit_heaps, vocabulary_growth
 from ..exceptions import SourceError
 from ..utils import check_words, merge_labels
+from ._axes import check_axes
 
 
 def heaps_plot(
@@ -30,6 +31,7 @@ def heaps_plot(
         Axes: Axes with the plot
 
     Raises:
+        ParameterError: If ax is not a matplotlib Axes
         SourceTypeError: If the words are not a list of strings
         SourceError: If there are fewer than two words
         ParameterError: If the labels are set incorrectly (merge_labels)
@@ -38,6 +40,7 @@ def heaps_plot(
     check_words(words)
     if len(words) < 2:
         raise SourceError("The growth of the vocabulary needs at least two words")
+    check_axes(ax)
     if ax is None:
         _, ax = plt.subplots()
     lengths = np.arange(1, len(words) + 1)
@@ -78,6 +81,7 @@ def frequency_spectrum_plot(
         Axes: Axes with the plot
 
     Raises:
+        ParameterError: If ax is not a matplotlib Axes
         SourceTypeError: If the words are not a list of strings
         SourceError: If there are no words
         ParameterError: If the labels are set incorrectly (merge_labels)
@@ -86,6 +90,7 @@ def frequency_spectrum_plot(
     check_words(words)
     if not words:
         raise SourceError("The data source has no words")
+    check_axes(ax)
     if ax is None:
         _, ax = plt.subplots()
     spectrum = calc_frequency_spectrum(words)

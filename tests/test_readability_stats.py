@@ -378,3 +378,27 @@ def test_grades_must_be_finite_numbers(grade):
 def test_reading_speed_must_be_finite():
     with pytest.raises(ParameterError, match="finite"):
         calc_reading_time(100, float("inf"))
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        lambda: calc_flesch_reading_easy(10, 0, 0),
+        lambda: calc_flesch_kincaid_grade(10, 5, 0),
+        lambda: calc_coleman_liau_index(10, 0, 1),
+        lambda: calc_automated_readability_index(10, 5, 0),
+        lambda: calc_smog_index(3, 0),
+        lambda: calc_gunning_fog_index(3, 0, 1),
+        lambda: calc_lix(3, 0, 2),
+        lambda: calc_rix(3, 0),
+    ],
+)
+def test_formulas_without_words_or_sentences(value):
+    assert isnan(value())
+
+
+def test_calc_mu_index_of_no_mapping():
+    with pytest.raises(
+        SourceTypeError, match=r"^A mapping of word lengths to counts is expected, not NoneType$"
+    ):
+        calc_mu_index(None)

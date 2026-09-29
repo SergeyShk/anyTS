@@ -10,6 +10,7 @@ from ..constants import VISUALIZER_LABELS
 from ..exceptions import ParameterError, SourceError, SourceTypeError
 from ..extractors import SentsExtractor, WordsExtractor
 from ..utils import check_integer, check_sequence, iter_doc_words, merge_labels
+from ._axes import check_axes
 
 
 def sentence_lengths_plot(
@@ -45,6 +46,7 @@ def sentence_lengths_plot(
         Axes: Axes with the plot
 
     Raises:
+        ParameterError: If ax is not a matplotlib Axes
         SourceTypeError: If the data source or an extractor is set incorrectly
         ParameterError: If the window is not an integer or is below one, or the
             labels are set incorrectly (merge_labels)
@@ -57,6 +59,7 @@ def sentence_lengths_plot(
     lengths = sentence_lengths(source, sents_extractor, words_extractor, join_hyphens)
     if not lengths:
         raise SourceError("The data source has no sentences")
+    check_axes(ax)
     if ax is None:
         _, ax = plt.subplots(figsize=(9, 4))
     numbers = np.arange(1, len(lengths) + 1)

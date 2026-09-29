@@ -1020,8 +1020,9 @@ def calc_inverse_simpson_index(text: Sequence[str]) -> float:
     Computing the inverse Simpson's index (1/D)
 
     Description:
-        The Hill number of order two; the higher the value, the richer the vocabulary
-        If all words of the text are unique, the index is infinity
+        An estimate of the Hill number of order two from pairs drawn without
+        replacement; the higher the value, the richer the vocabulary. If all
+        words of the text are unique, the index is infinity
 
     References:
         https://en.wikipedia.org/wiki/Diversity_index#Inverse_Simpson_index

@@ -11,7 +11,8 @@ from ..constants import VISUALIZER_LABELS
 from ..corpus.collocations import Collocation
 from ..corpus.keyness import Keyword
 from ..exceptions import ParameterError, SourceError
-from ..utils import check_integer, check_words, merge_labels
+from ..utils import check_integer, check_sequence, check_words, merge_labels
+from ._axes import check_axes
 
 
 def dispersion_plot(
@@ -38,6 +39,7 @@ def dispersion_plot(
         Axes: Axes with the plot
 
     Raises:
+        ParameterError: If ax is not a matplotlib Axes
         SourceTypeError: If the words or the target words are not a list of strings
         SourceError: If there are no words or no target words
         ParameterError: If the labels are set incorrectly (merge_labels)
@@ -50,6 +52,7 @@ def dispersion_plot(
     positions = [
         [index for index, word in enumerate(words) if word == target] for target in targets
     ]
+    check_axes(ax)
     if ax is None:
         _, ax = plt.subplots(figsize=(8, 0.4 * len(targets) + 1.5), layout="constrained")
     ax.eventplot(
@@ -99,10 +102,14 @@ def keyness_plot(
         Axes: Axes with the chart
 
     Raises:
+        SourceTypeError: If the keywords are not a list (check_sequence)
+        ParameterError: If ax is not a matplotlib Axes
         ParameterError: If the field is unknown, top_n is not an integer or is below one,
             or the labels are set incorrectly (merge_labels)
         SourceError: If there are no keywords or the measure of every one is undefined
     """
+    check_sequence(positive, "keywords")
+    check_sequence(negative, "keywords")
     if isinstance(labels, Sequence) and not isinstance(labels, str):
         if len(labels) != 2:
             raise ParameterError("The labels of the legend must be a pair of strings")
@@ -121,6 +128,7 @@ def keyness_plot(
         raise SourceError(
             "The data source has no words" if not raw else "The measure is undefined"
         )
+    check_axes(ax)
     if ax is None:
         _, ax = plt.subplots(figsize=(8, 0.3 * len(keywords) + 1.5), layout="constrained")
     rows = range(len(keywords))
@@ -177,6 +185,7 @@ def collocation_network(collocations: Sequence[Collocation], top_n: int | None =
         Graph: Graph of graphviz
 
     Raises:
+        SourceTypeError: If the collocations are not a list (check_sequence)
         ParameterError: If top_n is not an integer or is below one
         SourceError: If there are no collocations
 
@@ -195,6 +204,7 @@ def collocation_network(collocations: Sequence[Collocation], top_n: int | None =
         }
         <BLANKLINE>
     """
+    check_sequence(collocations, "collocations")
     if top_n is not None:
         check_integer(top_n, "number of pairs")
         if top_n < 1:
