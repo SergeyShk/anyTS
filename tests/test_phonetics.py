@@ -73,12 +73,15 @@ def test_calc_repetition_index_arrays(words):
 
 
 def test_count_windows_in_blocks():
-    # A large alphabet is counted over blocks of columns with the same result
+    # A large alphabet is counted over blocks of columns as in one pass
     words = [chr(0x4E00 + index % 97) + chr(0x4E00 + index * 7 % 89) for index in range(500)]
-    presence = np.array([[chr(0x4E00 + i) in word for i in range(97)] for word in words])
+    presence = np.array(
+        [[chr(0x4E00 + i) in word for i in range(97)] for word in words], dtype=np.int8
+    )
     rows = np.arange(len(words))
-    assert _count_windows(presence, rows, 3, block_size=5) == _count_windows(presence, rows, 3)
-    assert calc_repetition_index(words, 3) > 0
+    single = _count_windows(presence, rows, 3, block_size=presence.shape[1])
+    assert single[0] == 30
+    assert _count_windows(presence, rows, 3) == _count_windows(presence, rows, 3, 5) == single
 
 
 @pytest.mark.parametrize(
