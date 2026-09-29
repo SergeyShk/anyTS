@@ -147,7 +147,8 @@ def test_kwic_errors(keyword, window):
 
 
 @pytest.mark.parametrize(
-    ("hook", "value"), [("tokenize", "x"), ("lemmatize", "x"), ("fold", "x"), ("fold", None)]
+    ("hook", "value"),
+    [("tokenize", "x"), ("lemmatize", "x"), ("sentenize", "x"), ("fold", "x"), ("fold", None)],
 )
 def test_kwic_hooks_checked(hook, value):
     with pytest.raises(SourceTypeError, match=r"must be callable, not"):
@@ -250,3 +251,48 @@ def test_kwic_phrase_stops_at_a_sentence_start_on_a_mark():
     nlp.add_pipe("sentencizer")
     assert kwic(nlp("Dijo uno\n\nEl otro vino."), "uno el") == []
     assert len(kwic(nlp("Dijo uno\nEl otro vino."), "uno el")) == 1
+
+
+SENT_END = re.compile(r"(?<=[.!?])\s+(?=[A-Z])")
+
+
+def sentences(text):
+    """Sentences that end at a final mark only before an upper-case letter"""
+    start = 0
+    for match in SENT_END.finditer(text):
+        yield start, match.start(), text[start : match.start()]
+        start = match.end()
+    yield start, len(text), text[start:]
+
+
+def test_kwic_sentenize():
+    text = "He was honest... think of the girls. Then oh! he left."
+    assert kwic(text, "honest think") == kwic(text, "oh he") == []
+    found = kwic(text, "honest think", sentenize=sentences)
+    assert [(line.start, line.keyword) for line in found] == [(7, "honest... think")]
+    assert [line.keyword for line in kwic(text, "oh he", sentenize=sentences)] == ["oh! he"]
+    assert kwic(text, "girls then", sentenize=sentences) == []
+    assert len(kwic(text, "girls. Then", sentenize=sentences)) == 1
+    # The text of a Doc without boundaries is split the same way
+    blank = spacy.blank("xx")(text)
+    assert kwic(blank, "honest think", sentenize=sentences) == found
+    # The boundaries of a Doc come first
+    nlp = spacy.blank("xx")
+    nlp.add_pipe("sentencizer")
+    assert kwic(nlp(text), "oh he", sentenize=sentences) == []
+    # A final mark in the keyword lets a phrase cross whatever its case, in a Doc too
+    assert len(kwic(text, "girls. then", sentenize=sentences)) == 1
+    assert len(kwic(nlp(text), "girls. then", sentenize=sentences)) == 1
+    # The sentences may come in any order
+    backwards = lambda text: reversed(list(sentences(text)))  # noqa: E731
+    assert kwic(text, "honest think", sentenize=backwards) == found
+    assert kwic(text, "girls then", sentenize=backwards) == []
+    # A sentence of a string may start on the opening mark before a word
+    dialogue = "He waited\n—Then go, she said."
+    assert len(kwic(dialogue, "waited then")) == 1
+    by_lines = lambda text: [(0, 9, text[:9]), (10, len(text), text[10:])]  # noqa: E731
+    assert kwic(dialogue, "waited then", sentenize=by_lines) == []
+    # A paragraph ends a phrase whatever the sentences
+    one = lambda text: [(0, len(text), text)]  # noqa: E731
+    assert kwic("A line\n\nanother line", "line another", sentenize=one) == []
+    assert len(kwic("A line\nanother line", "line another", sentenize=one)) == 1
