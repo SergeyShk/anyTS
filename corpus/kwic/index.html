@@ -1885,12 +1885,12 @@
 </div>
 <h2 id="description">Description<a class="headerlink" href="#description" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:kwic] -->
-<p>A KWIC concordance (keyword in context) - every occurrence of a word or a phrase with its context on the left and on the right. The occurrences are looked for among the words of the text by the word form, ignoring case or respecting it (<code>ignore_case=False</code>), or by the lemma (<code>by_lemma=True</code>), where the words of the keyword are lemmatized as words of a string: with a lemmatizer a phrase may be written in any form, without one it is given by lemmas. The words of a string and of the keyword come from the tokenizer, those of a <code>Doc</code> from its tokens, so a tokenizer that splits a string as the pipeline does finds in a <code>Doc</code> what it finds in its text; punctuation and symbols are not words. The forms are compared in the composed form of Unicode (NFC), without soft hyphens. A phrase does not run across the end of a paragraph or of a sentence - a boundary of a <code>Doc</code> anywhere between its words, an opening mark included, or a final mark before whitespace in a text without boundaries - unless the keyword has one in the same place (<code>U.S. Army</code>). The context is <code>window</code> words on each side as they are written in the text, with the punctuation between them; whitespace collapses into one space, and occurrences do not overlap.</p>
+<p>A KWIC concordance (keyword in context) - every occurrence of a word or a phrase with its context on the left and on the right. The occurrences are looked for among the words of the text by the word form, ignoring case or respecting it (<code>ignore_case=False</code>), or by the lemma (<code>by_lemma=True</code>), where the words of the keyword are lemmatized as words of a string: with a lemmatizer a phrase may be written in any form, without one it is given by lemmas. The words of a string and of the keyword come from the tokenizer, those of a <code>Doc</code> from its tokens, so a tokenizer that splits a string as the pipeline does finds in a <code>Doc</code> what it finds in its text; punctuation and symbols are not words. The forms are compared in the composed form of Unicode (NFC), without soft hyphens. A phrase does not run across the end of a paragraph or of a sentence - a boundary of a <code>Doc</code> anywhere between its words, an opening mark included, or in a text without boundaries the start of a sentence of the sentence splitter, by default a final mark before whitespace - unless the keyword has a final mark or the start of a sentence in the same place (<code>U.S. Army</code>). The context is <code>window</code> words on each side as they are written in the text, with the punctuation between them; whitespace collapses into one space, and occurrences do not overlap.</p>
 <!-- --8<-- [end:kwic] -->
 
 <h2 id="language-hooks">Language hooks<a class="headerlink" href="#language-hooks" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:kwic-hooks] -->
-<p>The language enters through four parameters, which a language library fills in its own <code>kwic</code>:</p>
+<p>The language enters through five parameters, which a language library fills in its own <code>kwic</code>:</p>
 <table>
 <thead>
 <tr>
@@ -1914,6 +1914,11 @@
 <td style="text-align: center;"><code>fold</code></td>
 <td style="text-align: center;"><code>str.lower</code></td>
 <td style="text-align: center;">The folding of a word form (with <code>ignore_case</code>) or a lemma before the comparison, such as the letters a language takes for the same</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>sentenize</code></td>
+<td style="text-align: center;">a final mark before whitespace</td>
+<td style="text-align: center;">The sentences of a string, of the keyword and of the text of a <code>Doc</code> without boundaries as triples of the start, the end and the text; a phrase does not run from one sentence into the next</td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>join_hyphens</code></td>
