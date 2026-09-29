@@ -1,11 +1,13 @@
 from itertools import permutations
 from math import comb, fsum, isnan
 
+import numpy as np
+import pandas as pd
 import pytest
 import spacy
 
 from anyts.exceptions import ParameterError, SourceTypeError
-from anyts.phonetics import calc_repetition_index
+from anyts.phonetics import _count_windows, calc_repetition_index
 
 WORDS = ["casa", "cosa", "luna", "sol", "mar", "mesa", "paz"]
 
@@ -49,18 +51,48 @@ def test_calc_repetition_index_every_word():
     assert calc_repetition_index(["ab", "ac", "ad", "ae"], 2, {"a"}) == 1.0
 
 
+def test_calc_repetition_index_single_window():
+    # Every feature of two words or more repeats in the only window, as expected
+    assert calc_repetition_index(["sal", "sol", "mar"], 3, {"s"}) == 1.0
+
+
 @pytest.mark.parametrize(
-    ("words", "window_len"),
+    "features",
+    [{"s"}, ["s"], pd.Series(["s"], index=[5]), np.array(["s"])],
+)
+def test_calc_repetition_index_features_types(features):
+    words = ["sal", "sol", "mes", "luz", "paz", "mar"]
+    assert calc_repetition_index(words, 2, features) == 2.0
+
+
+@pytest.mark.parametrize(
+    "words", [np.array(WORDS), pd.Series(WORDS, index=range(10, 10 + len(WORDS)))]
+)
+def test_calc_repetition_index_arrays(words):
+    assert calc_repetition_index(words, 3) == calc_repetition_index(WORDS, 3)
+
+
+def test_count_windows_in_blocks():
+    # A large alphabet is counted over blocks of columns with the same result
+    words = [chr(0x4E00 + index % 97) + chr(0x4E00 + index * 7 % 89) for index in range(500)]
+    presence = np.array([[chr(0x4E00 + i) in word for i in range(97)] for word in words])
+    rows = np.arange(len(words))
+    assert _count_windows(presence, rows, 3, block_size=5) == _count_windows(presence, rows, 3)
+    assert calc_repetition_index(words, 3) > 0
+
+
+@pytest.mark.parametrize(
+    ("words", "window_len", "features"),
     [
-        ([], 2),
-        (["casa"], 2),
-        (["casa", "cosa"], 3),
-        (["ab", "cd", "ef"], 2),
-        (["ab", "ab", "cd"], 2),
+        ([], 2, None),
+        (["casa"], 2, None),
+        (["casa", "cosa"], 3, None),
+        (["ab", "cd", "ef"], 2, None),
+        (["ab", "ab", "cd"], 2, {"c", "d", "e", "f"}),
+        (["casa", "cosa"], 2, {"x"}),
     ],
 )
-def test_calc_repetition_index_nan(words, window_len):
-    features = {"c", "d", "e", "f"} if words == ["ab", "ab", "cd"] else None
+def test_calc_repetition_index_nan(words, window_len, features):
     assert isnan(calc_repetition_index(words, window_len, features))
 
 
