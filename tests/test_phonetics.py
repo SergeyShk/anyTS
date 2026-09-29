@@ -71,6 +71,7 @@ def test_calc_repetition_index_nan(words, window_len):
         (iter(WORDS), None, r"^A list of words is expected, not an iterator$"),
         (["casa", 1], None, r"^A list of features of a word is expected, not int$"),
         (["casa", [1]], None, r"^The features of a word must be strings, not int$"),
+        (["casa", ("c", ["a"])], None, r"^The features of a word must be strings, not list$"),
         (WORDS, "a", r"^A list of features is expected, not a string$"),
         (WORDS, [1], r"^The features must be strings, not int$"),
     ],

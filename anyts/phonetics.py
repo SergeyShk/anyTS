@@ -44,7 +44,9 @@ def calc_repetition_index(
         2.0
     """
     check_sequence(words)
-    for word in words:
+    keys = list(map(_word_key, words))
+    unique = list(dict.fromkeys(keys))
+    for word in unique:
         if not isinstance(word, str):
             check_words(word, "features of a word", ordered=False)
     if features is not None:
@@ -55,16 +57,15 @@ def calc_repetition_index(
     n_words = len(words)
     if n_words < window_len:
         return nan
-    sets = [frozenset(word) for word in words]
-    unique = list(dict.fromkeys(sets))
-    alphabet = sorted(frozenset().union(*unique))
+    sets = [frozenset(word) for word in unique]
+    alphabet = sorted(frozenset().union(*sets))
     if features is not None:
         alphabet = [feature for feature in alphabet if feature in features]
     presence = np.array(
-        [[feature in word for feature in alphabet] for word in unique], dtype=np.int32
-    ).reshape(len(unique), len(alphabet))
+        [[feature in word for feature in alphabet] for word in sets], dtype=np.int32
+    ).reshape(len(sets), len(alphabet))
     indices = dict(zip(unique, range(len(unique)), strict=True))
-    rows = np.fromiter(map(indices.__getitem__, sets), dtype=np.int64, count=n_words)
+    rows = np.fromiter(map(indices.__getitem__, keys), dtype=np.int64, count=n_words)
     cumulative = np.zeros((n_words + 1, len(alphabet)), dtype=np.int32)
     np.cumsum(presence[rows], axis=0, out=cumulative[1:])
     observed = int((cumulative[window_len:] - cumulative[:-window_len] >= 2).sum())
@@ -73,6 +74,16 @@ def calc_repetition_index(
         _repetition_probability(int(count), n_words, window_len) for count in cumulative[-1]
     )
     return safe_divide(observed, expected, nan)
+
+
+def _word_key(word: Sequence[str]) -> Sequence[str]:
+    """A word itself, or the tuple of its features when it cannot be a key of a dict"""
+    try:
+        hash(word)
+    except TypeError:
+        check_words(word, "features of a word", ordered=False)
+        return tuple(word)
+    return word
 
 
 def _repetition_probability(count: int, n_words: int, window_len: int) -> float:
