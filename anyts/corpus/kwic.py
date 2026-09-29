@@ -279,6 +279,7 @@ def format_kwic(concordances: Iterable[Concordance], width: int = 40) -> str:
         str: Concordance as text
 
     Raises:
+        SourceTypeError: If the concordances are a string or not iterable
         ParameterError: If the width of a context is not an integer or is below one
 
     Example:
@@ -290,6 +291,13 @@ def format_kwic(concordances: Iterable[Concordance], width: int = 40) -> str:
     check_integer(width, "width of a context")
     if width < 1:
         raise ParameterError("The width of a context must be greater than 0")
+    given: object = concordances
+    if isinstance(given, str):
+        raise SourceTypeError("An iterable of concordances is expected, not a string")
+    if not isinstance(given, Iterable):
+        raise SourceTypeError(
+            f"An iterable of concordances is expected, not {type(given).__name__}"
+        )
     lines = [
         [unicodedata.normalize("NFC", part) for part in (line.left, line.keyword, line.right)]
         for line in concordances
@@ -308,5 +316,9 @@ def print_kwic(concordances: Iterable[Concordance], width: int = 40) -> None:
     Arguments:
         concordances (list[Concordance]): Lines of the concordance
         width (int): Width of a context in characters
+
+    Raises:
+        SourceTypeError: If the concordances are a string or not iterable
+        ParameterError: If the width of a context is not an integer or is below one
     """
     print(format_kwic(concordances, width))

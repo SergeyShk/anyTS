@@ -319,7 +319,6 @@ def test_flesch_reading_easy_to_grade_bands():
     assert flesch_reading_easy_to_grade(70, bands) == 5
     assert flesch_reading_easy_to_grade(39.9, bands) == 13
     assert flesch_reading_easy_to_grade(39.9, bands, below=14) == 14
-    assert flesch_reading_easy_to_grade(float("nan")) == 13
 
 
 def test_calc_consensus_grade():
@@ -378,3 +377,50 @@ def test_grades_must_be_finite_numbers(grade):
 def test_reading_speed_must_be_finite():
     with pytest.raises(ParameterError, match="finite"):
         calc_reading_time(100, float("inf"))
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        lambda: calc_flesch_reading_easy(10, 0, 2),
+        lambda: calc_flesch_reading_easy(10, 5, 0),
+        lambda: calc_flesch_kincaid_grade(10, 0, 2),
+        lambda: calc_flesch_kincaid_grade(10, 5, 0),
+        lambda: calc_coleman_liau_index(10, 0, 1),
+        lambda: calc_automated_readability_index(10, 0, 2),
+        lambda: calc_automated_readability_index(10, 5, 0),
+        lambda: calc_smog_index(3, 0),
+        lambda: calc_gunning_fog_index(3, 0, 1),
+        lambda: calc_gunning_fog_index(3, 5, 0),
+        lambda: calc_lix(3, 0, 2),
+        lambda: calc_lix(3, 5, 0),
+        lambda: calc_rix(3, 0),
+    ],
+)
+def test_formulas_without_words_or_sentences(value):
+    assert isnan(value())
+
+
+def test_formulas_with_a_zero_they_do_not_divide_by():
+    assert calc_coleman_liau_index(500, 100, 0) == pytest.approx(0.0588 * 500 - 15.8)
+    assert calc_smog_index(0, 5) == pytest.approx(3.1291)
+    assert calc_rix(0, 5) == 0.0
+
+
+def test_undefined_reading_ease():
+    reading_ease = calc_flesch_reading_easy(10, 5, 0)
+    with pytest.raises(
+        ParameterError, match=r"^The reading ease must be a finite number, not nan$"
+    ):
+        flesch_reading_easy_to_grade(reading_ease)
+    with pytest.raises(
+        ParameterError, match=r"^The reading ease must be a finite number, not nan$"
+    ):
+        calc_consensus_grade([8.0], reading_ease)
+
+
+def test_calc_mu_index_of_no_mapping():
+    with pytest.raises(
+        SourceTypeError, match=r"^A mapping of word lengths to counts is expected, not NoneType$"
+    ):
+        calc_mu_index(None)

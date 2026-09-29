@@ -1,5 +1,5 @@
 from collections import Counter
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterable, Iterator, Mapping, Sequence
 from math import isfinite, isnan, log2, nan
 
 import matplotlib.pyplot as plt
@@ -11,7 +11,8 @@ from ..constants import VISUALIZER_LABELS
 from ..corpus.collocations import Collocation
 from ..corpus.keyness import Keyword
 from ..exceptions import ParameterError, SourceError
-from ..utils import check_integer, check_words, merge_labels
+from ..utils import check_integer, check_sequence, check_words, merge_labels
+from ._axes import check_axes
 
 
 def dispersion_plot(
@@ -40,7 +41,8 @@ def dispersion_plot(
     Raises:
         SourceTypeError: If the words or the target words are not a list of strings
         SourceError: If there are no words or no target words
-        ParameterError: If the labels are set incorrectly (merge_labels)
+        ParameterError: If the labels are set incorrectly (merge_labels) or ax is not a matplotlib
+            Axes (check_axes)
     """
     captions = merge_labels(VISUALIZER_LABELS["dispersion_plot"], labels)
     check_words(words)
@@ -50,6 +52,7 @@ def dispersion_plot(
     positions = [
         [index for index, word in enumerate(words) if word == target] for target in targets
     ]
+    check_axes(ax)
     if ax is None:
         _, ax = plt.subplots(figsize=(8, 0.4 * len(targets) + 1.5), layout="constrained")
     ax.eventplot(
@@ -68,8 +71,8 @@ def dispersion_plot(
 
 
 def keyness_plot(
-    positive: Sequence[Keyword],
-    negative: Sequence[Keyword] = (),
+    positive: Iterable[Keyword],
+    negative: Iterable[Keyword] = (),
     top_n: int = 20,
     labels: tuple[str, str] | Mapping[str, str] | None = None,
     field: str = "score",
@@ -99,10 +102,17 @@ def keyness_plot(
         Axes: Axes with the chart
 
     Raises:
-        ParameterError: If the field is unknown, top_n is not an integer or is below one,
-            or the labels are set incorrectly (merge_labels)
+        SourceTypeError: If the keywords are not a list (check_sequence)
+        ParameterError: If the field is unknown, top_n is not an integer or is below one, the
+            labels are set incorrectly (merge_labels) or ax is not a matplotlib Axes (check_axes)
         SourceError: If there are no keywords or the measure of every one is undefined
     """
+    if isinstance(positive, Iterator):
+        positive = list(positive)
+    if isinstance(negative, Iterator):
+        negative = list(negative)
+    check_sequence(positive, "keywords")
+    check_sequence(negative, "keywords")
     if isinstance(labels, Sequence) and not isinstance(labels, str):
         if len(labels) != 2:
             raise ParameterError("The labels of the legend must be a pair of strings")
@@ -121,6 +131,7 @@ def keyness_plot(
         raise SourceError(
             "The data source has no words" if not raw else "The measure is undefined"
         )
+    check_axes(ax)
     if ax is None:
         _, ax = plt.subplots(figsize=(8, 0.3 * len(keywords) + 1.5), layout="constrained")
     rows = range(len(keywords))
@@ -144,7 +155,7 @@ def keyness_plot(
 
 
 def _bars(
-    keywords: Sequence[Keyword], field: str, log: bool, sign: int
+    keywords: Iterable[Keyword], field: str, log: bool, sign: int
 ) -> list[tuple[Keyword, float]]:
     """Keywords with the signed length of their bars, those with an undefined value skipped"""
     bars = []
@@ -157,7 +168,7 @@ def _bars(
     return bars
 
 
-def collocation_network(collocations: Sequence[Collocation], top_n: int | None = None) -> Graph:
+def collocation_network(collocations: Iterable[Collocation], top_n: int | None = None) -> Graph:
     """
     Building the network of collocations
 
@@ -177,6 +188,7 @@ def collocation_network(collocations: Sequence[Collocation], top_n: int | None =
         Graph: Graph of graphviz
 
     Raises:
+        SourceTypeError: If the collocations are not a list (check_sequence)
         ParameterError: If top_n is not an integer or is below one
         SourceError: If there are no collocations
 
@@ -195,6 +207,9 @@ def collocation_network(collocations: Sequence[Collocation], top_n: int | None =
         }
         <BLANKLINE>
     """
+    if isinstance(collocations, Iterator):
+        collocations = list(collocations)
+    check_sequence(collocations, "collocations")
     if top_n is not None:
         check_integer(top_n, "number of pairs")
         if top_n < 1:

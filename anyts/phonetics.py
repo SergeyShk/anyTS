@@ -14,9 +14,9 @@ def calc_repetition_index(
     Computing the repetition index
 
     Description:
-        The number of windows of window_len neighbouring words where a feature
-        occurs in two words or more, summed over the features, to the number
-        expected if the words stood in random order: about 1 - random
+        The ratio of the number of windows of window_len neighbouring words
+        where a feature occurs in two words or more, summed over the features,
+        to the number expected if the words stood in random order: about 1 - random
         repetitions, well above 1 - the repetitions gather in neighbouring
         words. The features of a word are the characters of a string or the
         items of a collection, each counted once

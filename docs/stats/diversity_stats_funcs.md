@@ -356,7 +356,7 @@ Parameters:
     **anyts.diversity_stats.calc_inverse_simpson_index()**
 
 <!-- --8<-- [start:calc_inverse_simpson_index] -->
-Computation of the [inverse Simpson's index](https://en.wikipedia.org/wiki/Diversity_index#Inverse_Simpson_index), the Hill number of order two.
+Computation of the [inverse Simpson's index](https://en.wikipedia.org/wiki/Diversity_index#Inverse_Simpson_index), an estimate of the Hill number of order two ($1/\sum_k p_k^2$) from pairs drawn without replacement.
 
 The higher the value, the richer the vocabulary.
 
@@ -409,7 +409,7 @@ Computation of the [hapax index](https://en.wikipedia.org/wiki/Hapax_legomenon).
 
 !!! quote "Definition"
 
-    A hapax (Greek ἅπαξ λεγόμενον - "said only once") is a word that occurs only once in a certain corpus of texts. For instance, *baciyelmo*, the basin-helmet of Sancho Panza, is a hapax of Cervantes (it occurs only in one chapter of *Don Quixote*).
+    A hapax (Greek ἅπαξ λεγόμενον - "said only once") is a word that occurs only once in a certain corpus of texts. For instance, *baciyelmo*, Sancho Panza's word for the barber's basin that Don Quixote takes for a helmet, is a hapax of Cervantes (it occurs once, in chapter 44 of the first part of *Don Quixote*).
 
 The metric coincides with Honoré's measure (1979), with the natural logarithm.
 
@@ -667,7 +667,7 @@ Parameters:
     **anyts.diversity_stats.calc_entropy()**
 
 <!-- --8<-- [start:calc_entropy] -->
-Computation of the [Shannon entropy](https://en.wikipedia.org/wiki/Diversity_index#Shannon_index) of the lexeme distribution in bits. The higher the value, the richer the vocabulary. The Hill number of order one is $2^H$ ([perplexity](#perplexity)), of order zero - $V$, of order two - the [inverse Simpson's index](#inverse_simpson_index).
+Computation of the [Shannon entropy](https://en.wikipedia.org/wiki/Diversity_index#Shannon_index) of the lexeme distribution in bits. The higher the value, the richer the vocabulary. The Hill number of order one is $2^H$ ([perplexity](#perplexity)), of order zero - $V$; the [inverse Simpson's index](#inverse_simpson_index) estimates the one of order two.
 
 Formula:
 
@@ -804,7 +804,7 @@ Parameters:
     **anyts.diversity_stats.calc_windowed()**
 
 <!-- --8<-- [start:calc_windowed] -->
-Windowed computation of any metric: its value over consecutive text windows of equal length, the mean, the sample standard deviation and the confidence interval of the mean by Student's distribution. The standard way to compare texts of different lengths; Kubát and Milička's STTR is a windowed TTR with a 1000-word window and a 95% confidence interval. For texts shorter than the window the metric is computed over the whole text as a single window; windows with an undefined metric value (`nan`) are ignored. If the metric is infinite in at least one window (e.g. the inverse Simpson's index on a window of unique words), the mean is infinite and the standard deviation and confidence interval are undefined. Returns a `WindowStats` named tuple with the fields `mean`, `std`, `lower`, `upper` and `n_windows`.
+Windowed computation of any metric: its value over consecutive text windows of equal length, the mean, the sample standard deviation and the confidence interval of the mean by Student's distribution. The standard way to compare texts of different lengths; Kubát and Milička's standardized TTR (not Summer's STTR) is a windowed TTR with a 1000-word window and a 95% confidence interval. For texts shorter than the window the metric is computed over the whole text as a single window; windows with an undefined metric value (`nan`) are ignored. If the metric is infinite in at least one window (e.g. the inverse Simpson's index on a window of unique words), the mean is infinite and the standard deviation and confidence interval are undefined. Returns a `WindowStats` named tuple with the fields `mean`, `std`, `lower`, `upper` and `n_windows`.
 
 Parameters:
 

@@ -1020,8 +1020,9 @@ def calc_inverse_simpson_index(text: Sequence[str]) -> float:
     Computing the inverse Simpson's index (1/D)
 
     Description:
-        The Hill number of order two; the higher the value, the richer the vocabulary
-        If all words of the text are unique, the index is infinity
+        An estimate of the Hill number of order two from pairs drawn without
+        replacement; the higher the value, the richer the vocabulary. If all
+        words of the text are unique, the index is infinity
 
     References:
         https://en.wikipedia.org/wiki/Diversity_index#Inverse_Simpson_index
@@ -1245,12 +1246,14 @@ def calc_brunet_w(text: Sequence[str], a: float = BRUNET_W_EXPONENT) -> float:
 
     Raises:
         SourceTypeError: If the words are not a list of strings (check_words)
+        ParameterError: If the exponent is not a finite number
     """
+    check_number(a, "exponent")
     n_words = len(text)
     n_lexemes = len(set(text))
     if not n_words:
         return nan
-    return float(n_words ** (n_lexemes**-a))
+    return float(n_words ** (n_lexemes ** -float(a)))
 
 
 @_checks_words

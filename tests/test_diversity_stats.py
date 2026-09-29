@@ -7,6 +7,7 @@ from functools import partial
 from math import e, inf, isnan, log, log2, log10, nan, nextafter, sqrt
 from typing import ClassVar
 
+import numpy as np
 import pandas as pd
 import pytest
 import spacy
@@ -562,6 +563,14 @@ def test_brunet_w(ds):
     assert calc_brunet_w(riddle) == pytest.approx(15 ** (11**-0.172))
     assert ds.brunet_w == pytest.approx(94 ** (55**-0.172))
     assert isnan(calc_brunet_w([]))
+    # an integer exponent of numpy and a bare integer give the same as a float
+    assert (
+        calc_brunet_w(riddle, np.int64(1))
+        == calc_brunet_w(riddle, 1)
+        == calc_brunet_w(riddle, 1.0)
+    )
+    with pytest.raises(ParameterError, match=r"^The exponent must be a number, not str$"):
+        calc_brunet_w(riddle, "x")
 
 
 def test_dugast_k(ds):

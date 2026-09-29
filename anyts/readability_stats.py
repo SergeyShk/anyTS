@@ -1,5 +1,5 @@
 from collections.abc import Callable, Iterable, Mapping
-from math import floor, sqrt
+from math import floor, nan, sqrt
 from statistics import median
 from typing import ClassVar
 
@@ -20,7 +20,7 @@ from .constants import (
 )
 from .exceptions import ParameterError, SourceError, SourceTypeError
 from .extractors import SentsExtractor, WordsExtractor
-from .utils import check_number
+from .utils import check_number, safe_divide
 
 
 class ReadabilityStats:
@@ -353,9 +353,9 @@ def calc_flesch_reading_easy(
         c (float): Coefficient c, the constant
 
     Returns:
-        float: Value of the index
+        float: Value of the index, nan without words or sentences
     """
-    return c - (a * n_words / n_sents) - (b * n_syllables / n_words)
+    return c - safe_divide(a * n_words, n_sents, nan) - safe_divide(b * n_syllables, n_words, nan)
 
 
 def calc_flesch_kincaid_grade(
@@ -389,9 +389,9 @@ def calc_flesch_kincaid_grade(
         c (float): Coefficient c, the constant
 
     Returns:
-        float: Value of the grade
+        float: Value of the grade, nan without words or sentences
     """
-    return (a * n_words / n_sents) + (b * n_syllables / n_words) - c
+    return safe_divide(a * n_words, n_sents, nan) + safe_divide(b * n_syllables, n_words, nan) - c
 
 
 def calc_coleman_liau_index(
@@ -424,9 +424,13 @@ def calc_coleman_liau_index(
         c (float): Coefficient c, the constant
 
     Returns:
-        float: Value of the index
+        float: Value of the index, nan without words
     """
-    return (a * n_letters / n_words * 100) - (b * n_sents / n_words * 100) - c
+    return (
+        safe_divide(a * n_letters, n_words, nan) * 100
+        - safe_divide(b * n_sents, n_words, nan) * 100
+        - c
+    )
 
 
 def calc_automated_readability_index(
@@ -459,9 +463,9 @@ def calc_automated_readability_index(
         c (float): Coefficient c, the constant
 
     Returns:
-        float: Value of the index
+        float: Value of the index, nan without words or sentences
     """
-    return (a * n_letters / n_words) + (b * n_words / n_sents) - c
+    return safe_divide(a * n_letters, n_words, nan) + safe_divide(b * n_words, n_sents, nan) - c
 
 
 def calc_smog_index(
@@ -489,9 +493,9 @@ def calc_smog_index(
         c (float): Coefficient c, the constant
 
     Returns:
-        float: Value of the index
+        float: Value of the index, nan without sentences
     """
-    return (a * sqrt(b * n_complex / n_sents)) + c
+    return a * sqrt(safe_divide(b * n_complex, n_sents, nan)) + c
 
 
 def calc_gunning_fog_index(n_complex: int, n_words: int, n_sents: int, a: float = 0.4) -> float:
@@ -514,9 +518,9 @@ def calc_gunning_fog_index(n_complex: int, n_words: int, n_sents: int, a: float 
         a (float): Coefficient a
 
     Returns:
-        float: Value of the index
+        float: Value of the index, nan without words or sentences
     """
-    return a * ((n_words / n_sents) + (100 * n_complex / n_words))
+    return a * (safe_divide(n_words, n_sents, nan) + safe_divide(100 * n_complex, n_words, nan))
 
 
 def calc_lix(n_long_words: int, n_words: int, n_sents: int) -> float:
@@ -543,9 +547,9 @@ def calc_lix(n_long_words: int, n_words: int, n_sents: int) -> float:
         n_sents (int): Number of sentences
 
     Returns:
-        float: Value of the index
+        float: Value of the index, nan without words or sentences
     """
-    return (n_words / n_sents) + (100 * n_long_words / n_words)
+    return safe_divide(n_words, n_sents, nan) + safe_divide(100 * n_long_words, n_words, nan)
 
 
 def calc_rix(n_long_words: int, n_sents: int) -> float:
@@ -578,9 +582,9 @@ def calc_rix(n_long_words: int, n_sents: int) -> float:
         n_sents (int): Number of sentences
 
     Returns:
-        float: Value of the index
+        float: Value of the index, nan without sentences
     """
-    return n_long_words / n_sents
+    return safe_divide(n_long_words, n_sents, nan)
 
 
 def calc_mu_index(c_letters: Mapping[int, int]) -> float:
@@ -603,7 +607,14 @@ def calc_mu_index(c_letters: Mapping[int, int]) -> float:
 
     Returns:
         float: Value of the index
+
+    Raises:
+        SourceTypeError: If the distribution is not a mapping
     """
+    if not isinstance(c_letters, Mapping):
+        raise SourceTypeError(
+            f"A mapping of word lengths to counts is expected, not {type(c_letters).__name__}"
+        )
     counts = {letters: count for letters, count in c_letters.items() if letters > 0}
     n = sum(counts.values())
     if n < 2:
@@ -639,7 +650,11 @@ def flesch_reading_easy_to_grade(
 
     Returns:
         float: Years of schooling
+
+    Raises:
+        ParameterError: If the reading ease is not a finite number
     """
+    check_number(flesch_reading_easy, "reading ease")
     for threshold, grade in grades:
         if flesch_reading_easy >= threshold:
             return grade
@@ -669,7 +684,8 @@ def calc_consensus_grade(
 
     Raises:
         SourceTypeError: If to_grade is not callable
-        ParameterError: If there are no values or a grade is not a finite number
+        ParameterError: If there are no values, or a grade or the reading ease is not a
+            finite number
     """
     if not callable(to_grade):
         raise SourceTypeError(f"to_grade must be callable, not {type(to_grade).__name__}")
@@ -678,6 +694,7 @@ def calc_consensus_grade(
         check_number(grade, "grade")
         values.append(float(floor(grade + 0.5)))
     if flesch_reading_easy is not None:
+        check_number(flesch_reading_easy, "reading ease")
         values.append(to_grade(flesch_reading_easy))
     if not values:
         raise ParameterError("The list of grade formulas is empty")

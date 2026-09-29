@@ -92,9 +92,10 @@ def keyness(
         For every word the log-likelihood G² with its p-value (significance)
         and Log Ratio (effect size) are computed, as Gabrielatos and Hardie
         recommend, with the chosen measure score, which sorts the list. The
-        measures of significance (G², chi-square, BIC, ELL) are negative when
-        the word is more frequent in the reference. A zero frequency is
-        replaced with 0.5 for %DIFF, Log Ratio and the odds ratio (Hardie 2014)
+        measures of significance (G², chi-square, BIC) and ELL, the effect
+        size of G², are negative when the word is more frequent in the
+        reference. A zero frequency is replaced with 0.5 for %DIFF, Log Ratio
+        and the odds ratio (Hardie 2014)
         The reference may be a list of words, their frequencies (the size is
         their sum) or a FrequencyReference with a size of its own, which a
         language library builds from its frequency dictionary

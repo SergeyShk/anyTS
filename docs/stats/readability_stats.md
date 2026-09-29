@@ -10,7 +10,7 @@ The [readability](https://en.wikipedia.org/wiki/Readability) metrics of a text f
 
 The metrics are properties computed on each access, so a change of the `coefficients` of an object applies at once.
 
-A source that is neither a string, a `Doc` nor basic statistics, basic statistics of another class than those of the library and an extractor of another type raise `SourceTypeError`, a source without words or sentences `SourceError`, an unknown preset or one that is not a string `ParameterError`.
+A source that is neither a string, a `Doc` nor basic statistics, basic statistics of a class other than those of the library and an extractor of another type raise `SourceTypeError`, a source without words or sentences `SourceError`, an unknown preset or one that is not a string `ParameterError`.
 <!-- --8<-- [end:ReadabilityStats] -->
 
 ## Language hooks

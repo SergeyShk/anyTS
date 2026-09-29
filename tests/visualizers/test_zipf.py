@@ -14,6 +14,11 @@ def tokens():
     return Counter({"the": 100, "of": 75, "and": 50, "to": 25})
 
 
+def test_zipf_theory_integer_alpha():
+    ax = zipf_theory(8, 4, 2)
+    assert ax.get_lines()[0].get_ydata().tolist() == [8.0, 2.0, 8 / 9, 0.5]
+
+
 def test_zipf_theory():
     ax = zipf_theory(10, 5, 1.0)
     assert isinstance(ax, Axes)

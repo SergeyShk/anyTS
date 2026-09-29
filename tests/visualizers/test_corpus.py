@@ -154,3 +154,24 @@ def test_collocation_network_pairs_of_a_word_with_itself():
     assert graph.format == "png"
     with pytest.raises(SourceError):
         collocation_network(pairs[:2])
+
+
+def test_keyness_plot_of_no_list():
+    with pytest.raises(SourceTypeError, match=r"^A list of keywords is expected, not NoneType$"):
+        keyness_plot(None)
+
+
+def test_collocation_network_of_no_list():
+    with pytest.raises(
+        SourceTypeError, match=r"^A list of collocations is expected, not NoneType$"
+    ):
+        collocation_network(None)
+
+
+def test_plots_of_generators():
+    words = ["the", "cat", "sat", "the", "cat", "ran"] * 5
+    found = keyness(words, ["the", "dog"] * 10, min_freq=1)
+    assert isinstance(keyness_plot(iter(found), iter(found[:1])), Axes)
+    pairs = collocations(words, min_freq=1)
+    assert collocation_network(pair for pair in pairs).source == collocation_network(pairs).source
+    plt.close("all")

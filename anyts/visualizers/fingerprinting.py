@@ -12,6 +12,7 @@ from ..constants import VISUALIZER_LABELS
 from ..diversity_stats import calc_ttr
 from ..exceptions import ParameterError, SourceError, SourceTypeError
 from ..utils import check_integer, check_sequence, check_words, merge_labels
+from ._axes import check_axes
 
 # Size of a square and the margin between blocks, in the units of the drawing area
 SQUARE = 15
@@ -64,9 +65,9 @@ def fingerprinting(
         SourceTypeError: If the texts are not a list of lists of words or the
             measure is not callable
         SourceError: If there are no texts or a text has no words
-        ParameterError: If the size of a segment is not an integer or is below one,
-            the half width is not an integer above MARGIN, the half height not an
-            integer above zero, or the labels are set incorrectly (merge_labels)
+        ParameterError: If the size of a segment is not an integer or is below one, the half width
+            is not an integer above MARGIN, the half height not an integer above zero, the labels
+            are set incorrectly (merge_labels) or ax is not a matplotlib Axes (check_axes)
     """
     title = merge_labels(VISUALIZER_LABELS["fingerprinting"], labels)["title"]
     check_sequence(texts, "lists of words")
@@ -93,6 +94,7 @@ def fingerprinting(
     finite = [value for segments in values for value in segments if np.isfinite(value)]
     norm = Normalize(min(finite), max(finite)) if finite else Normalize(0, 1)
     colormap = plt.get_cmap(cmap).with_extremes(bad=MISSING_COLOR)
+    check_axes(ax)
     if ax is None:
         _, ax = plt.subplots(figsize=(15, 10))
     left = -x_size + MARGIN

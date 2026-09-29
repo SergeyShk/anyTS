@@ -1,6 +1,6 @@
 # Metric functions
 
-The coefficients of the formulas are parameters; the defaults below are those of the original English formulas.
+The coefficients of the formulas are parameters; the defaults below are those of the original English formulas. A formula of counts gives `nan` when the number of words or of sentences it divides by is zero.
 
 ## Flesch reading ease
 

@@ -296,3 +296,9 @@ def test_kwic_sentenize():
     one = lambda text: [(0, len(text), text)]  # noqa: E731
     assert kwic("A line\n\nanother line", "line another", sentenize=one) == []
     assert len(kwic("A line\nanother line", "line another", sentenize=one)) == 1
+
+
+@pytest.mark.parametrize("concordances", [None, "cat"])
+def test_format_kwic_of_no_concordances(concordances):
+    with pytest.raises(SourceTypeError, match=r"^An iterable of concordances is expected, not "):
+        format_kwic(concordances)

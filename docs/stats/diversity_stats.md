@@ -49,7 +49,7 @@ The values of some metrics depend on conventions that differ between libraries. 
 | Minimum MTLD factor length | 10 | koRpus applies it only to MTLD-MA and drops the shorter factors instead of extending them, LexicalRichness and textcomplexity do not apply it |
 | HD-D sample size | 42 | 35-50 in the literature |
 
-By Zenker and Kyle (2021) MATTR, MTLD and HD-D are stable on texts of 50-200 words and longer, MTLD-W, MA-MTLD and Maas are unstable on short texts, and the TTR family never stabilizes. To compare texts of different lengths use the [windowed computation](#windowed) with confidence intervals.
+According to Zenker and Kyle (2021), MATTR, MTLD and HD-D are stable on texts of 50-200 words and longer, MTLD-W, MA-MTLD and Maas are unstable on short texts, and the TTR family never stabilizes. To compare texts of different lengths use the [windowed computation](#windowed) with confidence intervals.
 <!-- --8<-- [end:DiversityStats-conventions] -->
 
 ## Attributes

@@ -8,7 +8,7 @@ Functions over the sounds or the letters of the words of a text. A word is given
 ## calc_repetition_index
 
 <!-- --8<-- [start:calc_repetition_index] -->
-The repetition index: the number of windows of `window_len` neighbouring words where a feature - a letter or a sound, as a library chooses - occurs in two words or more, summed over the features, to the number expected if the words stood in random order. A window of shuffled words is a sample of them without replacement, so for a feature found in \(K\) of the \(N\) words of the text a window of \(w\) words holds it in two words or more with the hypergeometric probability
+The repetition index: the ratio of the number of windows of `window_len` neighbouring words where a feature - a letter or a sound, as a library chooses - occurs in two words or more, summed over the features, to the number expected if the words stood in random order. A window of shuffled words is a sample of them without replacement, so for a feature found in \(K\) of the \(N\) words of the text, a window of \(w\) words holds it in two words or more with the hypergeometric probability
 
 $$
 P = 1 - \frac{\binom{N-K}{w} + K \binom{N-K}{w-1}}{\binom{N}{w}}
