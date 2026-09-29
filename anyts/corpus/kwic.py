@@ -1,7 +1,7 @@
 import re
 import unicodedata
+from bisect import bisect_left
 from collections.abc import Callable, Iterable, Sequence
-from itertools import pairwise
 from typing import NamedTuple
 
 from spacy.tokens import Doc, Token
@@ -11,6 +11,7 @@ from ..extractors import _iter_words
 from ..utils import _unit_word, check_integer, iter_doc_units
 
 Tokenizer = Callable[[str], Iterable[tuple[int, int, str]]]
+Sentenizer = Callable[[str], Iterable[tuple[int, int, str]]]
 Lemmatizer = Callable[[str, Sequence[Token]], Iterable[str] | str]
 
 # The end of a paragraph, and of a sentence: a final mark, closing marks and whitespace
@@ -47,6 +48,7 @@ def kwic(
     lemmatize: Lemmatizer | None = None,
     fold: Callable[[str], str] = str.lower,
     join_hyphens: bool = False,
+    sentenize: Sentenizer | None = None,
 ) -> list[Concordance]:
     """
     Building a KWIC concordance (keyword in context)
@@ -66,9 +68,9 @@ def kwic(
         word itself and, for a word of a Doc with lemmas, the lemma of the
         model, and fold lower-cases
         A phrase does not run across the end of a paragraph or of a sentence -
-        a boundary of a Doc anywhere between its words, or a final mark before
-        whitespace without boundaries - unless the keyword has one in the same
-        place. The context is window words on each side as written, with the
+        a boundary of a Doc anywhere between its words, or without boundaries
+        the start of a sentence of sentenize, by default a final mark before
+        whitespace - unless the keyword has one in the same place. The context is window words on each side as written, with the
         punctuation between them; whitespace collapses to one space;
         occurrences do not overlap
 
@@ -84,6 +86,9 @@ def kwic(
             in a Doc (none for a string and the keyword); a string is one lemma
         fold (callable): Folding of a word form or a lemma before the comparison
         join_hyphens (bool): Join the parts of hyphenated words of a Doc
+        sentenize (callable): Sentences of a string, of the keyword and of the
+            text of a Doc without boundaries, as triples of the start, the end
+            and the text
 
     Returns:
         list[Concordance]: Occurrences in the order of the text
@@ -104,7 +109,11 @@ def kwic(
     """
     if not isinstance(keyword, str):
         raise SourceTypeError(f"The keyword must be a string, not {type(keyword).__name__}")
-    for hook, name in ((tokenize, "tokenizer"), (lemmatize, "lemmatizer")):
+    for hook, name in (
+        (tokenize, "tokenizer"),
+        (lemmatize, "lemmatizer"),
+        (sentenize, "sentence splitter"),
+    ):
         if hook is not None and not callable(hook):
             raise SourceTypeError(f"The {name} must be callable, not {type(hook).__name__}")
     if not callable(fold):
@@ -113,15 +122,17 @@ def kwic(
     key_words = list(split(keyword))
     if not key_words:
         raise ParameterError("The keyword is not set")
+    key_starts = _sent_starts(keyword, sentenize)
     key_gaps = [
-        bool(BOUNDARY.search(keyword[end:start]))
-        for (_, end, _), (start, _, _) in pairwise(key_words)
+        _boundary(keyword, key_words, (), None, key_starts, index)
+        for index in range(1, len(key_words))
     ]
     check_integer(window, "window")
     if window < 0:
         raise ParameterError("The window cannot be negative")
     text, words, tokens = _source_words(source, split, join_hyphens)
     doc = source if isinstance(source, Doc) and source.has_annotation("SENT_START") else None
+    starts = _sent_starts(text, sentenize) if doc is None else None
     lemmas = lemmatize or _lemmas
 
     def readings(word: str, word_tokens: Sequence[Token]) -> set[str]:
@@ -136,7 +147,7 @@ def kwic(
     def crosses(index: int) -> bool:
         """Whether the phrase starting at a word runs across a boundary the keyword lacks"""
         return any(
-            _boundary(text, words, tokens, doc, index + offset)
+            _boundary(text, words, tokens, doc, starts, index + offset)
             for offset, allowed in enumerate(key_gaps, 1)
             if not allowed
         )
@@ -186,11 +197,19 @@ def _source_words(
     raise SourceTypeError("The data source is set incorrectly")
 
 
+def _sent_starts(text: str, sentenize: Sentenizer | None) -> list[int] | None:
+    """Starts of the sentences of a text by sentenize in ascending order; None without it"""
+    if sentenize is None:
+        return None
+    return sorted(start for start, _, _ in sentenize(text))
+
+
 def _boundary(
     text: str,
     words: Sequence[tuple[int, int, str]],
     tokens: Sequence[Sequence[Token]],
     doc: Doc | None,
+    starts: Sequence[int] | None,
     index: int,
 ) -> bool:
     """
@@ -199,16 +218,21 @@ def _boundary(
     Description:
         By the sentence boundaries of a Doc - at any token from the one after
         the previous word to the first token of the word, so that a start on an
-        opening mark counts - and by the paragraph breaks; by the final marks
-        before whitespace otherwise
+        opening mark counts - or by the starts of the sentences of sentenize
+        from the end of the previous word to the start of the word, and by the
+        paragraph breaks; by the final marks before whitespace otherwise
     """
-    gap = text[words[index - 1][1] : words[index][0]]
-    if doc is None:
+    end, start = words[index - 1][1], words[index][0]
+    gap = text[end:start]
+    if doc is not None:
+        first, last = tokens[index - 1][-1].i + 1, tokens[index][0].i
+        return bool(PARAGRAPH.search(gap)) or any(
+            doc[position].is_sent_start for position in range(first, last + 1)
+        )
+    if starts is None:
         return bool(BOUNDARY.search(gap))
-    first, last = tokens[index - 1][-1].i + 1, tokens[index][0].i
-    return bool(PARAGRAPH.search(gap)) or any(
-        doc[position].is_sent_start for position in range(first, last + 1)
-    )
+    position = bisect_left(starts, end)
+    return bool(PARAGRAPH.search(gap)) or (position < len(starts) and starts[position] <= start)
 
 
 def _normalize(word: str) -> str:
