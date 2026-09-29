@@ -23,6 +23,7 @@ nav:
         - Metric functions: stats/readability_stats_funcs.md
       - Cohesion helpers: stats/cohesion.md
       - Dependency tree helpers: stats/syntax.md
+      - Phonetic helpers: stats/phonetics.md
     - Corpus measures:
       - Keywords: corpus/keyness.md
       - Collocations: corpus/collocations.md
