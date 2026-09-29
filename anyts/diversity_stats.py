@@ -1246,12 +1246,14 @@ def calc_brunet_w(text: Sequence[str], a: float = BRUNET_W_EXPONENT) -> float:
 
     Raises:
         SourceTypeError: If the words are not a list of strings (check_words)
+        ParameterError: If the exponent is not a finite number
     """
+    check_number(a, "exponent")
     n_words = len(text)
     n_lexemes = len(set(text))
     if not n_words:
         return nan
-    return float(n_words ** (n_lexemes**-a))
+    return float(n_words ** (n_lexemes ** -float(a)))
 
 
 @_checks_words

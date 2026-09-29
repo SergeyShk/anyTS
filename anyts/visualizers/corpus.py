@@ -1,5 +1,5 @@
 from collections import Counter
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterable, Iterator, Mapping, Sequence
 from math import isfinite, isnan, log2, nan
 
 import matplotlib.pyplot as plt
@@ -39,10 +39,10 @@ def dispersion_plot(
         Axes: Axes with the plot
 
     Raises:
-        ParameterError: If ax is not a matplotlib Axes
         SourceTypeError: If the words or the target words are not a list of strings
         SourceError: If there are no words or no target words
-        ParameterError: If the labels are set incorrectly (merge_labels)
+        ParameterError: If the labels are set incorrectly (merge_labels) or ax is not a matplotlib
+            Axes (check_axes)
     """
     captions = merge_labels(VISUALIZER_LABELS["dispersion_plot"], labels)
     check_words(words)
@@ -71,8 +71,8 @@ def dispersion_plot(
 
 
 def keyness_plot(
-    positive: Sequence[Keyword],
-    negative: Sequence[Keyword] = (),
+    positive: Iterable[Keyword],
+    negative: Iterable[Keyword] = (),
     top_n: int = 20,
     labels: tuple[str, str] | Mapping[str, str] | None = None,
     field: str = "score",
@@ -103,11 +103,14 @@ def keyness_plot(
 
     Raises:
         SourceTypeError: If the keywords are not a list (check_sequence)
-        ParameterError: If ax is not a matplotlib Axes
-        ParameterError: If the field is unknown, top_n is not an integer or is below one,
-            or the labels are set incorrectly (merge_labels)
+        ParameterError: If the field is unknown, top_n is not an integer or is below one, or the
+            labels are set incorrectly (merge_labels) or ax is not a matplotlib Axes (check_axes)
         SourceError: If there are no keywords or the measure of every one is undefined
     """
+    if isinstance(positive, Iterator):
+        positive = list(positive)
+    if isinstance(negative, Iterator):
+        negative = list(negative)
     check_sequence(positive, "keywords")
     check_sequence(negative, "keywords")
     if isinstance(labels, Sequence) and not isinstance(labels, str):
@@ -152,7 +155,7 @@ def keyness_plot(
 
 
 def _bars(
-    keywords: Sequence[Keyword], field: str, log: bool, sign: int
+    keywords: Iterable[Keyword], field: str, log: bool, sign: int
 ) -> list[tuple[Keyword, float]]:
     """Keywords with the signed length of their bars, those with an undefined value skipped"""
     bars = []
@@ -165,7 +168,7 @@ def _bars(
     return bars
 
 
-def collocation_network(collocations: Sequence[Collocation], top_n: int | None = None) -> Graph:
+def collocation_network(collocations: Iterable[Collocation], top_n: int | None = None) -> Graph:
     """
     Building the network of collocations
 
@@ -204,6 +207,8 @@ def collocation_network(collocations: Sequence[Collocation], top_n: int | None =
         }
         <BLANKLINE>
     """
+    if isinstance(collocations, Iterator):
+        collocations = list(collocations)
     check_sequence(collocations, "collocations")
     if top_n is not None:
         check_integer(top_n, "number of pairs")

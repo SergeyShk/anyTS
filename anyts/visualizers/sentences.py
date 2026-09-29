@@ -46,10 +46,9 @@ def sentence_lengths_plot(
         Axes: Axes with the plot
 
     Raises:
-        ParameterError: If ax is not a matplotlib Axes
         SourceTypeError: If the data source or an extractor is set incorrectly
-        ParameterError: If the window is not an integer or is below one, or the
-            labels are set incorrectly (merge_labels)
+        ParameterError: If the window is not an integer or is below one, or the labels are set
+            incorrectly (merge_labels) or ax is not a matplotlib Axes (check_axes)
         SourceError: If there are no sentences or a length is negative
     """
     captions = merge_labels(VISUALIZER_LABELS["sentence_lengths_plot"], labels, window=1)

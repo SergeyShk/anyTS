@@ -300,5 +300,5 @@ def test_kwic_sentenize():
 
 @pytest.mark.parametrize("concordances", [None, "cat"])
 def test_format_kwic_of_no_concordances(concordances):
-    with pytest.raises(SourceTypeError, match=r"^A list of concordances is expected, not "):
+    with pytest.raises(SourceTypeError, match=r"^An iterable of concordances is expected, not "):
         format_kwic(concordances)

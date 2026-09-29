@@ -62,13 +62,12 @@ def fingerprinting(
         Axes: Axes with the fingerprinting
 
     Raises:
-        ParameterError: If ax is not a matplotlib Axes
         SourceTypeError: If the texts are not a list of lists of words or the
             measure is not callable
         SourceError: If there are no texts or a text has no words
-        ParameterError: If the size of a segment is not an integer or is below one,
-            the half width is not an integer above MARGIN, the half height not an
-            integer above zero, or the labels are set incorrectly (merge_labels)
+        ParameterError: If the size of a segment is not an integer or is below one, the half width
+            is not an integer above MARGIN, the half height not an integer above zero, or the
+            labels are set incorrectly (merge_labels) or ax is not a matplotlib Axes (check_axes)
     """
     title = merge_labels(VISUALIZER_LABELS["fingerprinting"], labels)["title"]
     check_sequence(texts, "lists of words")

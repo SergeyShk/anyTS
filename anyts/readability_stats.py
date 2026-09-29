@@ -424,7 +424,7 @@ def calc_coleman_liau_index(
         c (float): Coefficient c, the constant
 
     Returns:
-        float: Value of the index, nan without words or sentences
+        float: Value of the index, nan without words
     """
     return (
         safe_divide(a * n_letters, n_words, nan) * 100
@@ -493,7 +493,7 @@ def calc_smog_index(
         c (float): Coefficient c, the constant
 
     Returns:
-        float: Value of the index, nan without words or sentences
+        float: Value of the index, nan without sentences
     """
     return a * sqrt(safe_divide(b * n_complex, n_sents, nan)) + c
 
@@ -582,7 +582,7 @@ def calc_rix(n_long_words: int, n_sents: int) -> float:
         n_sents (int): Number of sentences
 
     Returns:
-        float: Value of the index, nan without words or sentences
+        float: Value of the index, nan without sentences
     """
     return safe_divide(n_long_words, n_sents, nan)
 
@@ -650,7 +650,11 @@ def flesch_reading_easy_to_grade(
 
     Returns:
         float: Years of schooling
+
+    Raises:
+        ParameterError: If the reading ease is not a finite number
     """
+    check_number(flesch_reading_easy, "reading ease")
     for threshold, grade in grades:
         if flesch_reading_easy >= threshold:
             return grade
@@ -680,7 +684,8 @@ def calc_consensus_grade(
 
     Raises:
         SourceTypeError: If to_grade is not callable
-        ParameterError: If there are no values or a grade is not a finite number
+        ParameterError: If there are no values, or a grade or the reading ease is not a
+            finite number
     """
     if not callable(to_grade):
         raise SourceTypeError(f"to_grade must be callable, not {type(to_grade).__name__}")
@@ -689,6 +694,7 @@ def calc_consensus_grade(
         check_number(grade, "grade")
         values.append(float(floor(grade + 0.5)))
     if flesch_reading_easy is not None:
+        check_number(flesch_reading_easy, "reading ease")
         values.append(to_grade(flesch_reading_easy))
     if not values:
         raise ParameterError("The list of grade formulas is empty")

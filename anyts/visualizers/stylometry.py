@@ -43,13 +43,12 @@ def dendrogram_plot(
         Axes: Axes with the dendrogram
 
     Raises:
-        ParameterError: If ax is not a matplotlib Axes
         SourceTypeError: If the distances are not a DataFrame of numbers
         SourceError: If the matrix is not square, has fewer than two texts, other
             texts in the columns than in the rows, an infinite or negative distance,
             is not symmetric or has a distance on the diagonal
-        ParameterError: If the method is unknown or the labels are set incorrectly
-            (merge_labels)
+        ParameterError: If the method is unknown or the labels are set incorrectly (merge_labels)
+            or ax is not a matplotlib Axes (check_axes)
     """
     captions = merge_labels(VISUALIZER_LABELS["dendrogram_plot"], labels)
     if not isinstance(method, str) or method not in LINKAGE_METHODS:
@@ -94,10 +93,10 @@ def pca_plot(
         Axes: Axes with the plot
 
     Raises:
-        ParameterError: If ax is not a matplotlib Axes
         SourceTypeError: If the corpus is not a mapping
         SourceError: If there are fewer than three texts
-        ParameterError: If the labels are set incorrectly (merge_labels)
+        ParameterError: If the labels are set incorrectly (merge_labels) or ax is not a matplotlib
+            Axes (check_axes)
     """
     captions = merge_labels(VISUALIZER_LABELS["pca_plot"], labels, share=0.0)
     _check_corpus(corpus)
@@ -146,12 +145,12 @@ def mds_plot(
         Axes: Axes with the plot
 
     Raises:
-        ParameterError: If ax is not a matplotlib Axes
         SourceTypeError: If the distances are not a DataFrame of numbers
         SourceError: If the matrix is not square, has fewer than two texts, other
             texts in the columns than in the rows, an infinite or negative distance,
             is not symmetric or has a distance on the diagonal
-        ParameterError: If the labels are set incorrectly (merge_labels)
+        ParameterError: If the labels are set incorrectly (merge_labels) or ax is not a matplotlib
+            Axes (check_axes)
     """
     captions = merge_labels(VISUALIZER_LABELS["mds_plot"], labels)
     squared = _distance_matrix(distances, "the scaling") ** 2
@@ -241,10 +240,10 @@ def mendenhall_plot(
         Axes: Axes with the curves
 
     Raises:
-        ParameterError: If ax is not a matplotlib Axes
         SourceTypeError: If the corpus is not a mapping
         SourceError: If there are no texts or one of them has no words
-        ParameterError: If the labels are set incorrectly (merge_labels)
+        ParameterError: If the labels are set incorrectly (merge_labels) or ax is not a matplotlib
+            Axes (check_axes)
     """
     captions = merge_labels(VISUALIZER_LABELS["mendenhall_plot"], labels)
     _check_corpus(corpus)

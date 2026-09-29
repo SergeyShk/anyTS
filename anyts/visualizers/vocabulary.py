@@ -31,10 +31,10 @@ def heaps_plot(
         Axes: Axes with the plot
 
     Raises:
-        ParameterError: If ax is not a matplotlib Axes
         SourceTypeError: If the words are not a list of strings
         SourceError: If there are fewer than two words
-        ParameterError: If the labels are set incorrectly (merge_labels)
+        ParameterError: If the labels are set incorrectly (merge_labels) or ax is not a matplotlib
+            Axes (check_axes)
     """
     captions = merge_labels(VISUALIZER_LABELS["heaps_plot"], labels, k=0.0, beta=0.0)
     check_words(words)
@@ -81,10 +81,10 @@ def frequency_spectrum_plot(
         Axes: Axes with the plot
 
     Raises:
-        ParameterError: If ax is not a matplotlib Axes
         SourceTypeError: If the words are not a list of strings
         SourceError: If there are no words
-        ParameterError: If the labels are set incorrectly (merge_labels)
+        ParameterError: If the labels are set incorrectly (merge_labels) or ax is not a matplotlib
+            Axes (check_axes)
     """
     captions = merge_labels(VISUALIZER_LABELS["frequency_spectrum_plot"], labels)
     check_words(words)
