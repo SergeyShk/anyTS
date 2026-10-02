@@ -1058,6 +1058,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#dash_pattern" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dashes typed with hyphens
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#usage-example" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2001,6 +2012,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#dash_pattern" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dashes typed with hyphens
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#usage-example" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2033,7 +2055,7 @@
 
 <h1 id="basic-statistics">Basic statistics<a class="headerlink" href="#basic-statistics" title="Permanent link">&para;</a></h1>
 <div class="admonition info">
-<p><strong>anyts.basic_stats.BasicStats</strong>, <strong>anyts.basic_stats.count_punctuations()</strong></p>
+<p><strong>anyts.basic_stats.BasicStats</strong>, <strong>anyts.basic_stats.count_punctuations()</strong>, <strong>anyts.basic_stats.dash_pattern()</strong></p>
 </div>
 <h2 id="description">Description<a class="headerlink" href="#description" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:BasicStats] -->
@@ -2300,6 +2322,45 @@
 <!-- --8<-- [end:count_punctuations] -->
 
 <p>In the core the types are <code>anyts.constants.PUNCTUATION_TYPES</code>, and <code>marks</code> and <code>dash_pattern</code> are <code>PUNCTUATION_MARKS</code> and <code>DASH_PATTERN</code> of <code>anyts.basic_stats</code>. The marks count the inverted <code>¿</code> and <code>¡</code> as question and exclamation marks (<code>¿So?</code> carries two question marks), <code>—</code>, <code>–</code> and the horizontal bar <code>―</code> as dashes, a hyphen inside a word, before a digit or at the end of a line inside a word as a hyphen (<code>well-known</code>, <code>-5</code>), <code>«»</code> as guillemets and <code>"“”‘’</code> as quotation marks. A dash typed with hyphens is a run of two or more hyphens, a hyphen after whitespace, at the start of a line or after a closing mark, before a space, a tab or the end of the text, or between a letter and an opening or a closing mark (<code>--Hello --said John</code>, <code>- They left - he said</code>).</p>
+<h2 id="dash_pattern">Dashes typed with hyphens<a class="headerlink" href="#dash_pattern" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:dash_pattern] -->
+<p><code>dash_pattern(conjunctions, hanging_before_comma)</code> builds the <code>dash_pattern</code> of <code>count_punctuations</code>. A hanging hyphen glued to a letter or a digit and carried on to a later word (<code>pre- and post-war</code>, <code>5- and 10-year</code>) stays a hyphen when one of the <code>conjunctions</code>, in any case, follows it after a space, and with <code>hanging_before_comma</code> when a comma follows it (<code>two-, three- and four-year</code>). A language whose dialogue closes a line with a hyphen before a comma (<code>-Come -he said-, and left</code>) leaves <code>hanging_before_comma</code> off. Without the parameters the pattern is <code>DASH_PATTERN</code>.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>conjunctions</code></td>
+<td style="text-align: center;">Collection[str]</td>
+<td style="text-align: center;"><code>()</code></td>
+<td style="text-align: center;">Conjunctions after a hanging hyphen</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>hanging_before_comma</code></td>
+<td style="text-align: center;">bool</td>
+<td style="text-align: center;"><code>False</code></td>
+<td style="text-align: center;">Take a hyphen between a letter and a comma for a hanging one</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:dash_pattern] -->
+
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts.basic_stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">count_punctuations</span><span class="p">,</span> <span class="n">dash_pattern</span>
+
+<span class="n">text</span> <span class="o">=</span> <span class="s2">"pre- and post-war, two-, three- and four-year - he said"</span>
+<span class="n">counts</span> <span class="o">=</span> <span class="n">count_punctuations</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">dash_pattern</span><span class="o">=</span><span class="n">dash_pattern</span><span class="p">([</span><span class="s2">"and"</span><span class="p">],</span> <span class="n">hanging_before_comma</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+<span class="n">counts</span><span class="p">[</span><span class="s2">"dash"</span><span class="p">],</span> <span class="n">counts</span><span class="p">[</span><span class="s2">"hyphen"</span><span class="p">]</span>
+<span class="c1"># (1, 5)</span>
+</code></pre></div>
+</div>
 <h2 id="usage-example">Usage example<a class="headerlink" href="#usage-example" title="Permanent link">&para;</a></h2>
 <p>A subclass with the syllables of a language - here the groups of vowels, a rough rule for English.</p>
 <div class="admonition example">

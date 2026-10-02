@@ -1879,6 +1879,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#count_words_by_spans" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        count_words_by_spans
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -2050,6 +2061,17 @@
     <span class="md-ellipsis">
       
         iter_doc_words
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#count_words_by_spans" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        count_words_by_spans
       
     </span>
   </a>
@@ -2496,6 +2518,43 @@
 <span class="c1"># ['A', 'well', 'known', 'cat']</span>
 <span class="nb">list</span><span class="p">(</span><span class="n">iter_doc_words</span><span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">join_hyphens</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
 <span class="c1"># [(0, 1, 'A'), (2, 12, 'well-known'), (13, 16, 'cat')]</span>
+</code></pre></div>
+</div>
+<h2 id="count_words_by_spans">count_words_by_spans<a class="headerlink" href="#count_words_by_spans" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:count_words_by_spans] -->
+<p>Counts the words in every span of a text - a sentence, say - by the positions of the first characters of the words and the bounds of the spans, both in order. A word belongs to the span of its first character, and a span without words is skipped. Positions or spans that are not a sequence raise <code>SourceTypeError</code>.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>starts</code></td>
+<td style="text-align: center;">list[int]</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Positions of the first characters of the words</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>spans</code></td>
+<td style="text-align: center;">list[tuple[int, int]]</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Spans: the start and the position after the end</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:count_words_by_spans] -->
+
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">count_words_by_spans</span>
+
+<span class="n">count_words_by_spans</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">14</span><span class="p">,</span> <span class="mi">20</span><span class="p">],</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">9</span><span class="p">),</span> <span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span> <span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">19</span><span class="p">),</span> <span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">24</span><span class="p">)])</span>
+<span class="c1"># [2, 2, 1]</span>
 </code></pre></div>
 </div>
 
