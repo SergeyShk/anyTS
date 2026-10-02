@@ -198,3 +198,23 @@ Yields the words of `iter_doc_units` as tuples: the position of the first charac
     list(iter_doc_words(doc, join_hyphens=True))
     # [(0, 1, 'A'), (2, 12, 'well-known'), (13, 16, 'cat')]
     ```
+
+## count_words_by_spans
+
+<!-- --8<-- [start:count_words_by_spans] -->
+Counts the words in every span of a text - a sentence, say - by the positions of the first characters of the words and the bounds of the spans, both in order. A word belongs to the span of its first character, and a span without words is skipped. Positions or spans that are not a sequence raise `SourceTypeError`.
+
+| Parameter | Type | Default | Description |
+| :-------: | :--: | :-----: | :---------: |
+| `starts` | list[int] | `-` | Positions of the first characters of the words |
+| `spans` | list[tuple[int, int]] | `-` | Spans: the start and the position after the end |
+<!-- --8<-- [end:count_words_by_spans] -->
+
+!!! example "Example"
+
+    ``` python
+    from anyts.utils import count_words_by_spans
+
+    count_words_by_spans([0, 4, 10, 14, 20], [(0, 9), (9, 10), (10, 19), (20, 24)])
+    # [2, 2, 1]
+    ```

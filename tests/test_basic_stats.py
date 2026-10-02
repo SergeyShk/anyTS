@@ -6,7 +6,13 @@ import pytest
 import spacy
 
 from anyts import SentsExtractor, WordsExtractor
-from anyts.basic_stats import PUNCTUATION_MARKS, BasicStats, count_punctuations
+from anyts.basic_stats import (
+    DASH_PATTERN,
+    PUNCTUATION_MARKS,
+    BasicStats,
+    count_punctuations,
+    dash_pattern,
+)
 from anyts.constants import BASIC_STATS_DESC, PUNCTUATION_TYPES
 from anyts.exceptions import ParameterError, SourceError, SourceTypeError
 
@@ -366,3 +372,48 @@ def test_multichar_punctuation():
     assert bs.n_punctuations == 14 == sum(bs.c_punctuations.values())
     assert bs.c_punctuations["exclamation"] == 8
     assert bs.c_punctuations["other"] == 1
+
+
+@pytest.mark.parametrize(
+    ("text", "conjunctions", "before_comma", "dashes", "hyphens"),
+    [
+        ("pre- and post-war", ["and", "or"], False, 0, 2),
+        ("pre- or post-war - he said", ["and", "or"], False, 1, 2),
+        ("pre- andante", ["and"], False, 1, 0),
+        ("two-, three- and four-year", ["and"], True, 0, 3),
+        # Without the comma rule the hyphen before a comma closes a dialogue line
+        ("two-, three- and four-year", ["and"], False, 1, 2),
+        ("-Come -he said-, and left", ["and"], False, 3, 0),
+        ("Yes- he said", ["and"], True, 1, 0),
+        ("pre-- and post-war", ["and"], True, 1, 1),
+        ("двух- и трёхкомнатные", ["и", "или"], True, 0, 1),
+        ("5- and 10-year bonds", ["and"], False, 0, 2),
+        ("2-, 3- и 4-комнатные", ["и"], True, 0, 3),
+        ("PRE- AND POST-WAR", ["and"], False, 0, 2),
+        # A spaced dash after a number stays a dash
+        ("It was 5 - and that was all", ["and"], True, 1, 0),
+    ],
+)
+def test_dash_pattern_hanging_hyphens(text, conjunctions, before_comma, dashes, hyphens):
+    counts = count_punctuations(text, dash_pattern=dash_pattern(conjunctions, before_comma))
+    assert (counts["dash"], counts["hyphen"]) == (dashes, hyphens)
+
+
+def test_dash_pattern_default():
+    assert dash_pattern().pattern == DASH_PATTERN.pattern
+    assert dash_pattern(set(), False).pattern == DASH_PATTERN.pattern
+    assert dash_pattern(["or", "and"]).pattern == dash_pattern({"and", "or"}).pattern
+
+
+@pytest.mark.parametrize(
+    ("conjunctions", "error"),
+    [
+        ("and", SourceTypeError),
+        ([1], SourceTypeError),
+        (iter(["and"]), SourceTypeError),
+        ([""], ParameterError),
+    ],
+)
+def test_dash_pattern_errors(conjunctions, error):
+    with pytest.raises(error):
+        dash_pattern(conjunctions)
