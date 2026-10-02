@@ -1,7 +1,7 @@
 # Keywords
 
 !!! info ""
-    **anyts.corpus.keyness()**, **anyts.corpus.Keyword**, **anyts.corpus.FrequencyReference**
+    **anyts.corpus.keyness()**, **anyts.corpus.check_keyness_params()**, **anyts.corpus.Keyword**, **anyts.corpus.FrequencyReference**
 
 ## Description
 
@@ -43,6 +43,10 @@ A zero frequency in one of the corpora is replaced with 0.5 for %DIFF, Log Ratio
 | `positive` | bool | `True` | Positive keywords (more frequent in the target corpus) or negative ones (more frequent in the reference) |
 | `top_n` | int | `None` | Number of keywords; `None` - all of them |
 <!-- --8<-- [end:keyness-parameters] -->
+
+<!-- --8<-- [start:check_keyness_params] -->
+`check_keyness_params(measure="log_likelihood", min_freq=1, top_n=None, target=None)` checks the parameters of `keyness` and raises `ParameterError` unless the measure is one of `KEYNESS_MEASURES`, the minimum frequency is an integer and the number of keywords is `None` or an integer of at least one; with `target` it also raises `SourceTypeError` unless the target corpus is a list of strings or a mapping of strings to whole frequencies. A library that builds the reference from a frequency dictionary calls it first, so that a wrong parameter or target fails before the dictionary is read.
+<!-- --8<-- [end:check_keyness_params] -->
 
 ## Reference by frequencies
 

@@ -15,7 +15,7 @@ if TYPE_CHECKING:
         holm_correction,
     )
     from .dispersion import Dispersion, dispersion
-    from .keyness import FrequencyReference, Keyword, keyness
+    from .keyness import FrequencyReference, Keyword, check_keyness_params, keyness
     from .kwic import Concordance, format_kwic, kwic, print_kwic
     from .stylometry import (
         ZetaScore,
@@ -42,6 +42,7 @@ _MODULES = {
     "calc_cliff_delta": "compare",
     "calc_cohen_d": "compare",
     "check_comparison_params": "compare",
+    "check_keyness_params": "keyness",
     "collocations": "collocations",
     "compare_features": "compare",
     "compare_values": "compare",
@@ -73,6 +74,7 @@ __all__ = [
     "calc_cliff_delta",
     "calc_cohen_d",
     "check_comparison_params",
+    "check_keyness_params",
     "collocations",
     "compare_features",
     "compare_values",
