@@ -326,6 +326,13 @@ def test_check_keyness_params(kwargs):
         keyness(["cat"], ["dog"], **kwargs)
 
 
+@pytest.mark.parametrize("target", ["cat dog", 5, {"cat": 1.5}, [1, 2]])
+def test_check_keyness_params_target(target):
+    with pytest.raises(SourceTypeError):
+        check_keyness_params(target=target)
+
+
 def test_check_keyness_params_valid():
     assert check_keyness_params() is None
     assert check_keyness_params("log_ratio", 2, 10) is None
+    assert check_keyness_params(target={"cat": 2.0}) is None

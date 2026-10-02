@@ -137,12 +137,7 @@ def keyness(
         >>> [(k.word, round(k.g2, 2)) for k in keyness(target, reference)]
         [('cat', 2.77)]
     """
-    check_keyness_params(measure, min_freq, top_n)
-    _check_words_or_counts(target)
-    if isinstance(target, Mapping) and not all(
-        float(count).is_integer() for count in target.values()
-    ):
-        raise SourceTypeError("The frequencies of the target corpus must be whole numbers")
+    check_keyness_params(measure, min_freq, top_n, target)
     counts_reference: Mapping[str, float]
     keep = None
     if isinstance(reference, FrequencyReference):
@@ -211,23 +206,30 @@ def keyness(
 
 
 def check_keyness_params(
-    measure: str = "log_likelihood", min_freq: int = 1, top_n: int | None = None
+    measure: str = "log_likelihood",
+    min_freq: int = 1,
+    top_n: int | None = None,
+    target: Sequence[str] | Mapping[str, int] | None = None,
 ) -> None:
     """
     Checking the parameters of keyness
 
     Description:
         Meant to be called before the reference is built, so that a wrong
-        parameter fails before a frequency dictionary is read
+        parameter or target corpus fails before a frequency dictionary is read
 
     Arguments:
         measure (str): Measure of KEYNESS_MEASURES
         min_freq (int): Minimum frequency of a keyword in its own corpus
         top_n (int): Number of keywords; None - all of them
+        target (list[str]|dict[str, int]): Words of the target corpus or their
+            frequencies; None - not checked
 
     Raises:
         ParameterError: If the measure is unknown, the minimum frequency or the
             number of keywords is not an integer, or the number is below one
+        SourceTypeError: If the target corpus is not a list of strings or
+            a mapping of strings to whole frequencies
 
     Example:
         >>> from anyts.corpus import check_keyness_params
@@ -243,6 +245,12 @@ def check_keyness_params(
         check_integer(top_n, "number of keywords")
     if top_n is not None and top_n < 1:
         raise ParameterError("The number of keywords must be greater than 0")
+    if target is not None:
+        _check_words_or_counts(target)
+        if isinstance(target, Mapping) and not all(
+            float(count).is_integer() for count in target.values()
+        ):
+            raise SourceTypeError("The frequencies of the target corpus must be whole numbers")
 
 
 def _count(
