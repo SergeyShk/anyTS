@@ -137,7 +137,8 @@ def keyness(
         >>> [(k.word, round(k.g2, 2)) for k in keyness(target, reference)]
         [('cat', 2.77)]
     """
-    check_keyness_params(measure, min_freq, top_n, target)
+    check_keyness_params(measure, min_freq, top_n)
+    _check_target(target)
     counts_reference: Mapping[str, float]
     keep = None
     if isinstance(reference, FrequencyReference):
@@ -246,11 +247,16 @@ def check_keyness_params(
     if top_n is not None and top_n < 1:
         raise ParameterError("The number of keywords must be greater than 0")
     if target is not None:
-        _check_words_or_counts(target)
-        if isinstance(target, Mapping) and not all(
-            float(count).is_integer() for count in target.values()
-        ):
-            raise SourceTypeError("The frequencies of the target corpus must be whole numbers")
+        _check_target(target)
+
+
+def _check_target(target: Iterable[object]) -> None:
+    """Checking that the target corpus is a list of words or a mapping of words to whole frequencies"""
+    _check_words_or_counts(target)
+    if isinstance(target, Mapping) and not all(
+        float(count).is_integer() for count in target.values()
+    ):
+        raise SourceTypeError("The frequencies of the target corpus must be whole numbers")
 
 
 def _count(

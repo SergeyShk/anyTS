@@ -332,6 +332,19 @@ def test_check_keyness_params_target(target):
         check_keyness_params(target=target)
 
 
+@pytest.mark.parametrize(
+    "reference",
+    [
+        ["dog"],
+        FrequencyReference({"dog": 1.0}, 10),
+        FrequencyReference({"dog": 1.0}, 10, key=str.lower),
+    ],
+)
+def test_keyness_none_target(reference):
+    with pytest.raises(SourceTypeError):
+        keyness(None, reference)
+
+
 def test_check_keyness_params_valid():
     assert check_keyness_params() is None
     assert check_keyness_params("log_ratio", 2, 10) is None
