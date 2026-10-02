@@ -7,7 +7,7 @@ import pytest
 import spacy
 
 from anyts.constants import G2_CRITICAL_VALUES, KEYNESS_MEASURES
-from anyts.corpus import FrequencyReference, Keyword, keyness
+from anyts.corpus import FrequencyReference, Keyword, check_keyness_params, keyness
 from anyts.corpus.keyness import (
     MEASURES,
     calc_bic,
@@ -313,3 +313,19 @@ def test_refuses_a_doc(span):
 def test_signed_measures_give_a_positive_zero():
     assert copysign(1, calc_chi2(1, 2, 100, 100)) == 1
     assert copysign(1, calc_bic(0, 2, 8, 8)) == 1
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [{"measure": "tf_idf"}, {"measure": 1}, {"min_freq": 1.5}, {"top_n": 0}, {"top_n": 2.0}],
+)
+def test_check_keyness_params(kwargs):
+    with pytest.raises(ParameterError):
+        check_keyness_params(**kwargs)
+    with pytest.raises(ParameterError):
+        keyness(["cat"], ["dog"], **kwargs)
+
+
+def test_check_keyness_params_valid():
+    assert check_keyness_params() is None
+    assert check_keyness_params("log_ratio", 2, 10) is None

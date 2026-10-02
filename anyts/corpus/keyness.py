@@ -137,13 +137,7 @@ def keyness(
         >>> [(k.word, round(k.g2, 2)) for k in keyness(target, reference)]
         [('cat', 2.77)]
     """
-    if not isinstance(measure, str) or measure not in KEYNESS_MEASURES:
-        raise ParameterError(f"Unknown measure of keyness: {measure}")
-    check_integer(min_freq, "minimum frequency")
-    if top_n is not None:
-        check_integer(top_n, "number of keywords")
-    if top_n is not None and top_n < 1:
-        raise ParameterError("The number of keywords must be greater than 0")
+    check_keyness_params(measure, min_freq, top_n)
     _check_words_or_counts(target)
     if isinstance(target, Mapping) and not all(
         float(count).is_integer() for count in target.values()
@@ -214,6 +208,41 @@ def keyness(
         )
     )
     return keywords[:top_n] if top_n else keywords
+
+
+def check_keyness_params(
+    measure: str = "log_likelihood", min_freq: int = 1, top_n: int | None = None
+) -> None:
+    """
+    Checking the parameters of keyness
+
+    Description:
+        Meant to be called before the reference is built, so that a wrong
+        parameter fails before a frequency dictionary is read
+
+    Arguments:
+        measure (str): Measure of KEYNESS_MEASURES
+        min_freq (int): Minimum frequency of a keyword in its own corpus
+        top_n (int): Number of keywords; None - all of them
+
+    Raises:
+        ParameterError: If the measure is unknown, the minimum frequency or the
+            number of keywords is not an integer, or the number is below one
+
+    Example:
+        >>> from anyts.corpus import check_keyness_params
+        >>> check_keyness_params("tf_idf")
+        Traceback (most recent call last):
+        ...
+        anyts.exceptions.ParameterError: Unknown measure of keyness: tf_idf
+    """
+    if not isinstance(measure, str) or measure not in KEYNESS_MEASURES:
+        raise ParameterError(f"Unknown measure of keyness: {measure}")
+    check_integer(min_freq, "minimum frequency")
+    if top_n is not None:
+        check_integer(top_n, "number of keywords")
+    if top_n is not None and top_n < 1:
+        raise ParameterError("The number of keywords must be greater than 0")
 
 
 def _count(
