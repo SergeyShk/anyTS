@@ -130,6 +130,8 @@ def test_carroll_d2_of_one_part_is_positive_zero():
     assert copysign(1, calc_carroll_d2([10, 0, 0, 0, 0], sizes)) == 1
     one_part = [item for item in dispersion(words, parts=3) if item.word in ("rug", "dozed")]
     assert [copysign(1, item.carroll_d2) for item in one_part] == [1, 1]
+    rounded = dispersion(["a"] * 7 + ["b"] * 18, parts=3, word="a")[0].carroll_d2
+    assert rounded == 0 and copysign(1, rounded) == 1
 
 
 def test_dispersion_options():

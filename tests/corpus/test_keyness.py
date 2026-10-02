@@ -1,6 +1,6 @@
 from collections import Counter
 from collections.abc import Mapping
-from math import inf, isnan, log
+from math import copysign, inf, isnan, log
 
 import numpy as np
 import pytest
@@ -308,3 +308,8 @@ def test_refuses_a_doc(span):
     source = doc[0:3] if span else doc
     with pytest.raises(SourceTypeError, match="WordsExtractor"):
         keyness(source, reference)
+
+
+def test_signed_measures_give_a_positive_zero():
+    assert copysign(1, calc_chi2(1, 2, 100, 100)) == 1
+    assert copysign(1, calc_bic(0, 2, 8, 8)) == 1

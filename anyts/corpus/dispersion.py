@@ -169,7 +169,7 @@ def _cell_measures(
     variance = np.maximum(by_word(relative**2) / n_parts - mean**2, 0)
     with np.errstate(divide="ignore", invalid="ignore"):
         juilland = 1 - np.sqrt(variance) / mean / sqrt(n_parts - 1)
-        probabilities = relative / (mean * n_parts)[rows]
+        probabilities = relative / by_word(relative)[rows]
         carroll = -by_word(probabilities * np.log2(probabilities)) / log2(n_parts) + 0.0
         rosengren = by_word(np.sqrt(cell_shares * values)) ** 2 / totals
         kl = by_word(proportions * np.log2(proportions / cell_shares))

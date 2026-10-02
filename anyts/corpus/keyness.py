@@ -323,7 +323,7 @@ def calc_chi2(a: float, b: float, c: float, d: float) -> float:
     if not denominator:
         return 0.0
     difference = max(abs(a * rest_b - b * rest_a) - total / 2, 0.0)
-    return _sign(a, b, c, d) * total * difference**2 / denominator
+    return _sign(a, b, c, d) * total * difference**2 / denominator or 0.0
 
 
 def calc_diff(a: float, b: float, c: float, d: float) -> float:
@@ -391,7 +391,7 @@ def calc_bic(a: float, b: float, c: float, d: float) -> float:
         float: Signed BIC
     """
     g2 = calc_log_likelihood(a, b, c, d)
-    return _sign(a, b, c, d) * (abs(g2) - log(c + d))
+    return _sign(a, b, c, d) * (abs(g2) - log(c + d)) or 0.0
 
 
 def calc_ell(a: float, b: float, c: float, d: float) -> float:
