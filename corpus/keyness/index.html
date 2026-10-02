@@ -1931,7 +1931,7 @@
 
 <h1 id="keywords">Keywords<a class="headerlink" href="#keywords" title="Permanent link">&para;</a></h1>
 <div class="admonition info">
-<p><strong>anyts.corpus.keyness()</strong>, <strong>anyts.corpus.Keyword</strong>, <strong>anyts.corpus.FrequencyReference</strong></p>
+<p><strong>anyts.corpus.keyness()</strong>, <strong>anyts.corpus.check_keyness_params()</strong>, <strong>anyts.corpus.Keyword</strong>, <strong>anyts.corpus.FrequencyReference</strong></p>
 </div>
 <h2 id="description">Description<a class="headerlink" href="#description" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:keyness] -->
@@ -2051,6 +2051,10 @@
 </tbody>
 </table>
 <!-- --8<-- [end:keyness-parameters] -->
+
+<!-- --8<-- [start:check_keyness_params] -->
+<p><code>check_keyness_params(measure="log_likelihood", min_freq=1, top_n=None, target=None)</code> checks the parameters of <code>keyness</code> and raises <code>ParameterError</code> unless the measure is one of <code>KEYNESS_MEASURES</code>, the minimum frequency is an integer and the number of keywords is <code>None</code> or an integer of at least one; with <code>target</code> it also raises <code>SourceTypeError</code> unless the target corpus is a list of strings or a mapping of strings to whole frequencies. A library that builds the reference from a frequency dictionary calls it first, so that a wrong parameter or target fails before the dictionary is read.</p>
+<!-- --8<-- [end:check_keyness_params] -->
 
 <h2 id="reference-by-frequencies">Reference by frequencies<a class="headerlink" href="#reference-by-frequencies" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:FrequencyReference] -->
