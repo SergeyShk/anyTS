@@ -447,6 +447,45 @@ def iter_doc_words(
         yield _unit_word(unit)
 
 
+def count_words_by_spans(starts: Sequence[int], spans: Sequence[tuple[int, int]]) -> list[int]:
+    """
+    Counting the words in every span of a text by the positions of the words and the spans
+
+    Description:
+        The words and the spans are ordered by position; a word belongs to the
+        span of its first character, and a span without words is skipped, so
+        the lengths of the sentences of a text come out of the positions of its
+        words and sentences
+
+    Arguments:
+        starts (list[int]): Positions of the first characters of the words in order
+        spans (list[tuple[int, int]]): Spans in order - the start and the position
+            after the end
+
+    Returns:
+        list[int]: Number of words in every span with words
+
+    Raises:
+        SourceTypeError: If the positions or the spans are not a sequence
+
+    Example:
+        >>> from anyts.utils import count_words_by_spans
+        >>> count_words_by_spans([0, 4, 10, 14, 20], [(0, 9), (9, 10), (10, 19), (20, 24)])
+        [2, 2, 1]
+    """
+    check_sequence(starts, "positions of the words")
+    check_sequence(spans, "spans")
+    lengths = []
+    index = 0
+    for start, stop in spans:
+        count = 0
+        while index < len(starts) and starts[index] < stop:
+            count += starts[index] >= start
+            index += 1
+        lengths.append(count)
+    return [length for length in lengths if length]
+
+
 def _unit_word(unit: Sequence[Token]) -> tuple[int, int, str]:
     """Positions and text of a word of iter_doc_units, a byte order mark at its start left out"""
     text = "".join(token.text for token in unit)

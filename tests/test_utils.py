@@ -19,6 +19,7 @@ from anyts.utils import (
     check_sequence,
     check_words,
     count_letters,
+    count_words_by_spans,
     has_words,
     is_punctuation,
     iter_doc_tokens,
@@ -359,3 +360,18 @@ def test_iter_doc_words_drops_byte_order_mark(nlp):
 )
 def test_iter_doc_words_skips_invisible(nlp, text, expected):
     assert [word for _, _, word in iter_doc_words(nlp(text))] == expected
+
+
+def test_count_words_by_spans():
+    starts = [0, 4, 10, 14, 20]
+    assert count_words_by_spans(starts, [(0, 9), (10, 19), (20, 24)]) == [2, 2, 1]
+    # A span without words is skipped, a word out of the spans is not counted
+    assert count_words_by_spans(starts, [(0, 9), (9, 10), (20, 24)]) == [2, 1]
+    assert count_words_by_spans([], [(0, 5)]) == []
+    assert count_words_by_spans(starts, []) == []
+
+
+@pytest.mark.parametrize(("starts", "spans"), [(iter([0]), [(0, 5)]), ([0], "0-5"), (None, [])])
+def test_count_words_by_spans_errors(starts, spans):
+    with pytest.raises(SourceTypeError):
+        count_words_by_spans(starts, spans)
