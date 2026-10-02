@@ -39,12 +39,13 @@ def dash_pattern(
         A dash typed with hyphens is a run of two or more hyphens, a hyphen
         after whitespace, at the start of a line or after a closing mark, before
         a space, a tab or the end of the text, or between a letter and an
-        opening or a closing mark. A hanging hyphen, glued to a letter and
-        carried on to a later word ("pre- and post-war"), stays a hyphen when
-        one of the conjunctions follows it after a space, and with
-        hanging_before_comma when a comma follows it ("two-, three- and
-        four-year"); a language whose dialogue closes a line with a hyphen
-        before a comma ("-Come -he said-, and left") leaves it off
+        opening or a closing mark. A hanging hyphen, glued to a letter or a
+        digit and carried on to a later word ("pre- and post-war", "5- and
+        10-year"), stays a hyphen when one of the conjunctions, in any case,
+        follows it after a space, and with hanging_before_comma when a comma
+        follows it ("two-, three- and four-year"); a language whose dialogue
+        closes a line with a hyphen before a comma ("-Come -he said-, and
+        left") leaves it off
 
     Arguments:
         conjunctions (Collection[str]): Conjunctions after a hanging hyphen
@@ -71,12 +72,12 @@ def dash_pattern(
     hanging = []
     if conjunctions:
         alternatives = "|".join(map(re.escape, sorted(set(conjunctions))))
-        hanging.append(rf"[ \t]+(?:{alternatives})(?!\w)")
+        hanging.append(rf"[ \t]+(?i:{alternatives})(?!\w)")
     if hanging_before_comma:
         hanging.append(",")
     if not hanging:
         return re.compile(_DASHES, re.MULTILINE)
-    guard = rf"(?!(?<=[^\W\d_])-(?:{'|'.join(hanging)}))"
+    guard = rf"(?!(?<=[^\W_])-(?:{'|'.join(hanging)}))"
     return re.compile(rf"{guard}(?:{_DASHES})", re.MULTILINE)
 
 

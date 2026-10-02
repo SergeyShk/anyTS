@@ -109,7 +109,7 @@ In the core the types are `anyts.constants.PUNCTUATION_TYPES`, and `marks` and `
 ## Dashes typed with hyphens { #dash_pattern }
 
 <!-- --8<-- [start:dash_pattern] -->
-`dash_pattern(conjunctions, hanging_before_comma)` builds the `dash_pattern` of `count_punctuations`. A hanging hyphen glued to a letter and carried on to a later word (`pre- and post-war`) stays a hyphen when one of the `conjunctions` follows it after a space, and with `hanging_before_comma` when a comma follows it (`two-, three- and four-year`). A language whose dialogue closes a line with a hyphen before a comma (`-Come -he said-, and left`) leaves `hanging_before_comma` off. Without the parameters the pattern is `DASH_PATTERN`.
+`dash_pattern(conjunctions, hanging_before_comma)` builds the `dash_pattern` of `count_punctuations`. A hanging hyphen glued to a letter or a digit and carried on to a later word (`pre- and post-war`, `5- and 10-year`) stays a hyphen when one of the `conjunctions`, in any case, follows it after a space, and with `hanging_before_comma` when a comma follows it (`two-, three- and four-year`). A language whose dialogue closes a line with a hyphen before a comma (`-Come -he said-, and left`) leaves `hanging_before_comma` off. Without the parameters the pattern is `DASH_PATTERN`.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |

@@ -387,6 +387,11 @@ def test_multichar_punctuation():
         ("Yes- he said", ["and"], True, 1, 0),
         ("pre-- and post-war", ["and"], True, 1, 1),
         ("двух- и трёхкомнатные", ["и", "или"], True, 0, 1),
+        ("5- and 10-year bonds", ["and"], False, 0, 2),
+        ("2-, 3- и 4-комнатные", ["и"], True, 0, 3),
+        ("PRE- AND POST-WAR", ["and"], False, 0, 2),
+        # A spaced dash after a number stays a dash
+        ("It was 5 - and that was all", ["and"], True, 1, 0),
     ],
 )
 def test_dash_pattern_hanging_hyphens(text, conjunctions, before_comma, dashes, hyphens):
