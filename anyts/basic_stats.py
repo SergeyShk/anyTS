@@ -2,7 +2,7 @@ import re
 import unicodedata
 from abc import ABCMeta, abstractmethod
 from collections import Counter
-from collections.abc import Iterable, Mapping
+from collections.abc import Collection, Iterable, Mapping
 from re import Pattern
 from typing import Any, ClassVar
 
@@ -17,17 +17,71 @@ from .constants import (
 )
 from .exceptions import ParameterError, SourceError, SourceTypeError
 from .extractors import SentsExtractor, WordsExtractor
-from .utils import check_integer, count_letters, has_words, iter_doc_words
+from .utils import check_integer, check_words, count_letters, has_words, iter_doc_words
 
 ELLIPSIS_PATTERN = re.compile(r"…|\.{3,}|(?<=[?!])\.{2}")
 # A dash typed with hyphens: a run of two or more, a hyphen after whitespace, the start of a
 # line or a closing mark (the underscore of italics included), before a space, a tab or the end,
 # or between a letter and an opening or a closing mark
-DASH_PATTERN = re.compile(
+_DASHES = (
     r"-{2,}|(?:(?<=\s)|(?<=[.,;:!?…»”\"')\]_])|^)-(?!\d)|-(?=[ \t]|\Z)"
-    r"|(?<=[^\W\d_])-(?=[¿¡«“\"'(\[_])|(?<=[^\W\d_])-(?=[.,;:!?…»”\"')\]_])",
-    re.MULTILINE,
+    r"|(?<=[^\W\d_])-(?=[¿¡«“\"'(\[_])|(?<=[^\W\d_])-(?=[.,;:!?…»”\"')\]_])"
 )
+
+
+def dash_pattern(
+    conjunctions: Collection[str] = (), hanging_before_comma: bool = False
+) -> Pattern[str]:
+    """
+    Building the pattern of the dashes typed with hyphens
+
+    Description:
+        A dash typed with hyphens is a run of two or more hyphens, a hyphen
+        after whitespace, at the start of a line or after a closing mark, before
+        a space, a tab or the end of the text, or between a letter and an
+        opening or a closing mark. A hanging hyphen, glued to a letter and
+        carried on to a later word ("pre- and post-war"), stays a hyphen when
+        one of the conjunctions follows it after a space, and with
+        hanging_before_comma when a comma follows it ("two-, three- and
+        four-year"); a language whose dialogue closes a line with a hyphen
+        before a comma ("-Come -he said-, and left") leaves it off
+
+    Arguments:
+        conjunctions (Collection[str]): Conjunctions after a hanging hyphen
+        hanging_before_comma (bool): Take a hyphen between a letter and a comma
+            for a hanging one
+
+    Returns:
+        Pattern: Compiled regular expression for count_punctuations
+
+    Raises:
+        SourceTypeError: If the conjunctions are not a collection of strings
+        ParameterError: If a conjunction is empty
+
+    Example:
+        >>> from anyts.basic_stats import count_punctuations, dash_pattern
+        >>> text = "pre- and post-war, two-, three- and four-year - he said"
+        >>> counts = count_punctuations(text, dash_pattern=dash_pattern(["and"], True))
+        >>> counts["dash"], counts["hyphen"]
+        (1, 5)
+    """
+    check_words(conjunctions, "conjunctions", ordered=False)
+    if any(not conjunction for conjunction in conjunctions):
+        raise ParameterError("A conjunction must not be empty")
+    hanging = []
+    if conjunctions:
+        alternatives = "|".join(map(re.escape, sorted(set(conjunctions))))
+        hanging.append(rf"[ \t]+(?:{alternatives})(?!\w)")
+    if hanging_before_comma:
+        hanging.append(",")
+    if not hanging:
+        return re.compile(_DASHES, re.MULTILINE)
+    guard = rf"(?!(?<=[^\W\d_])-(?:{'|'.join(hanging)}))"
+    return re.compile(rf"{guard}(?:{_DASHES})", re.MULTILINE)
+
+
+DASH_PATTERN = dash_pattern()
+
 PUNCTUATION_MARKS = {
     ",": "comma",
     ".": "period",
@@ -330,7 +384,7 @@ def count_punctuations(
         exclamation marks, a hyphen inside a word, before a digit or at a line
         break inside a word is a hyphen; any other character of the Unicode
         categories P and S is another mark. A library passes its marks, each
-        a single character of a type of PUNCTUATION_TYPES, and its dashes
+        a single character of a type of PUNCTUATION_TYPES, and its dashes (dash_pattern)
 
     Arguments:
         text (str): Text string

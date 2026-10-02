@@ -1,7 +1,7 @@
 # Basic statistics
 
 !!! info ""
-    **anyts.basic_stats.BasicStats**, **anyts.basic_stats.count_punctuations()**
+    **anyts.basic_stats.BasicStats**, **anyts.basic_stats.count_punctuations()**, **anyts.basic_stats.dash_pattern()**
 
 ## Description
 
@@ -105,6 +105,28 @@ Prints a table with the counts of the statistics, their descriptions from `stats
 <!-- --8<-- [end:count_punctuations] -->
 
 In the core the types are `anyts.constants.PUNCTUATION_TYPES`, and `marks` and `dash_pattern` are `PUNCTUATION_MARKS` and `DASH_PATTERN` of `anyts.basic_stats`. The marks count the inverted `¿` and `¡` as question and exclamation marks (`¿So?` carries two question marks), `—`, `–` and the horizontal bar `―` as dashes, a hyphen inside a word, before a digit or at the end of a line inside a word as a hyphen (`well-known`, `-5`), `«»` as guillemets and `"“”‘’` as quotation marks. A dash typed with hyphens is a run of two or more hyphens, a hyphen after whitespace, at the start of a line or after a closing mark, before a space, a tab or the end of the text, or between a letter and an opening or a closing mark (`--Hello --said John`, `- They left - he said`).
+
+## Dashes typed with hyphens { #dash_pattern }
+
+<!-- --8<-- [start:dash_pattern] -->
+`dash_pattern(conjunctions, hanging_before_comma)` builds the `dash_pattern` of `count_punctuations`. A hanging hyphen glued to a letter and carried on to a later word (`pre- and post-war`) stays a hyphen when one of the `conjunctions` follows it after a space, and with `hanging_before_comma` when a comma follows it (`two-, three- and four-year`). A language whose dialogue closes a line with a hyphen before a comma (`-Come -he said-, and left`) leaves `hanging_before_comma` off. Without the parameters the pattern is `DASH_PATTERN`.
+
+| Parameter | Type | Default | Description |
+| :-------: | :--: | :-----: | :---------: |
+| `conjunctions` | Collection[str] | `()` | Conjunctions after a hanging hyphen |
+| `hanging_before_comma` | bool | `False` | Take a hyphen between a letter and a comma for a hanging one |
+<!-- --8<-- [end:dash_pattern] -->
+
+!!! example "Example"
+
+    ``` python
+    from anyts.basic_stats import count_punctuations, dash_pattern
+
+    text = "pre- and post-war, two-, three- and four-year - he said"
+    counts = count_punctuations(text, dash_pattern=dash_pattern(["and"], hanging_before_comma=True))
+    counts["dash"], counts["hyphen"]
+    # (1, 5)
+    ```
 
 ## Usage example
 
