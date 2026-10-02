@@ -231,6 +231,7 @@ def check_keyness_params(
             number of keywords is not an integer, or the number is below one
         SourceTypeError: If the target corpus is not a list of strings or
             a mapping of strings to whole frequencies
+        SourceError: If a frequency of the target corpus is negative, nan or infinite
 
     Example:
         >>> from anyts.corpus import check_keyness_params
