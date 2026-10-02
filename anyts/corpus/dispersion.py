@@ -170,7 +170,7 @@ def _cell_measures(
     with np.errstate(divide="ignore", invalid="ignore"):
         juilland = 1 - np.sqrt(variance) / mean / sqrt(n_parts - 1)
         probabilities = relative / (mean * n_parts)[rows]
-        carroll = -by_word(probabilities * np.log2(probabilities)) / log2(n_parts)
+        carroll = -by_word(probabilities * np.log2(probabilities)) / log2(n_parts) + 0.0
         rosengren = by_word(np.sqrt(cell_shares * values)) ** 2 / totals
         kl = by_word(proportions * np.log2(proportions / cell_shares))
     empty = totals == 0
@@ -285,7 +285,7 @@ def calc_carroll_d2(frequencies: Sequence[int], sizes: Sequence[int]) -> float:
         return nan
     relative = counts / np.asarray(sizes, dtype=float)
     probabilities = relative[relative > 0] / relative.sum()
-    entropy = -float((probabilities * np.log2(probabilities)).sum())
+    entropy = -float((probabilities * np.log2(probabilities)).sum()) or 0.0
     return entropy / log2(len(sizes))
 
 
