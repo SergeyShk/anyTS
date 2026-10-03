@@ -101,7 +101,7 @@ def _word_head(unit: Sequence[Token]) -> Token | None:
     """
     Part of a word that hangs on a token outside it, the nearest to the root and
     a word rather than a hyphen when equal; None for a word that holds the head
-    of its sentence
+    of its sentence or has no part hanging outside it
     """
     if len(unit) == 1:
         return None if is_root(unit[0]) else unit[0]
@@ -109,6 +109,9 @@ def _word_head(unit: Sequence[Token]) -> Token | None:
         return None
     ids = {token.i for token in unit}
     outside = [token for token in unit if token.head.i not in ids]
+    if not outside:
+        # A broken parse can link the parts of one word in a loop
+        return None
     if len(outside) == 1:
         return outside[0]
     return min(outside, key=lambda token: (sum(1 for _ in token.ancestors), not is_word(token)))
