@@ -222,6 +222,22 @@ def test_words_of_hyphenated_words():
     assert texts(get_words(doc, join_hyphens=True)) == ["Some", "came", "with", "a", "well", "cat"]
     # A part whose first part lies outside the sequence is a word of its own
     assert texts(get_words(doc[2:5], join_hyphens=True)) == ["one", "came", "with"]
+    # A word is given by its part that holds its relation, not by its first part
+    governor = parse(
+        ["He", "is", "vice", "-", "governor", "of", "the", "vice", "-", "region"],
+        [4, 4, 4, 4, 4, 9, 9, 9, 7, 4],
+        ["nsubj", "cop", "amod", "punct", "ROOT", "case", "det", "amod", "punct", "nmod"],
+        spaces=[True, True, False, False, True, True, True, False, False, False],
+    )
+    assert texts(get_words(governor, join_hyphens=True)) == [
+        "He",
+        "is",
+        "governor",
+        "of",
+        "the",
+        "region",
+    ]
+    assert texts(get_children(governor[2], join_hyphens=True)) == ["He", "is", "region"]
 
 
 def test_children_of_hyphenated_words():
