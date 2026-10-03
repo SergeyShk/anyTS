@@ -270,7 +270,18 @@ def subtree_len(token: Token, join_hyphens: bool = False) -> int:
         int: Number of words in the subtree
     """
     if not join_hyphens:
-        return len(_word_units(token.subtree, False))
+        count = 0
+        tokens = [token]
+        # A broken parse can link tokens in a loop, and Token.subtree never ends then
+        seen = {token.i}
+        while tokens:
+            current = tokens.pop()
+            count += is_word(current)
+            for child in current.children:
+                if child.i not in seen:
+                    seen.add(child.i)
+                    tokens.append(child)
+        return count
     count = 0
     words = [_hyphenated_word(token) or [token]]
     seen = {part.i for part in words[0]}

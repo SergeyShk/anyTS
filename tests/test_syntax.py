@@ -442,8 +442,8 @@ def test_coordination_chains_of_hyphenated_words():
 
 
 def test_subtree_of_a_loop():
-    doc = parse(["a", "b"], [1, 0], ["dep", "dep"])
-    assert subtree_len(doc[0], join_hyphens=True) == 2
+    doc = parse(["a", "b", "c"], [1, 0, 1], ["dep", "dep", "dep"])
+    assert subtree_len(doc[0]) == subtree_len(doc[0], join_hyphens=True) == 3
 
 
 def test_loop_inside_a_hyphenated_word():
