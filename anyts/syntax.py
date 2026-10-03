@@ -389,8 +389,8 @@ def calc_coordination_chains(tokens: Iterable[Token], join_hyphens: bool = False
         to the first one, ClearNLP to the previous one; a nested coordination
         (A and B, or C) and an enumeration the parser splits between several
         heads give one chain. The length of a chain is the number of its words.
-        With join_hyphens, a hyphenated word is one word, linked by its part
-        hanging outside it, the nearest to the root
+        With join_hyphens, a hyphenated word is one word, linked by the conj
+        relations of all of its parts with other words
 
     Arguments:
         tokens (Doc|Span|list[Token]): Sequence of tokens
@@ -402,11 +402,13 @@ def calc_coordination_chains(tokens: Iterable[Token], join_hyphens: bool = False
     if join_hyphens:
         units = _word_units(tokens, True)
         unit_of = {token.i: n for n, unit in enumerate(units) for token in unit}
-        links = []
-        for n, unit in enumerate(units):
-            head = _word_head(unit)
-            if head is not None and head.dep_ == "conj" and head.head.i in unit_of:
-                links.append((n, unit_of[head.head.i]))
+        # Any part can be the conjunct: the parser links the parts of a compound adjective apart
+        links = [
+            (n, unit_of[token.head.i])
+            for n, unit in enumerate(units)
+            for token in unit
+            if token.dep_ == "conj" and is_word(token) and unit_of.get(token.head.i, n) != n
+        ]
         return _chain_sizes(range(len(units)), links)
     words = get_words(tokens)
     ids = {token.i for token in words}

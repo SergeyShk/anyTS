@@ -387,3 +387,12 @@ def test_coordination_chains_of_hyphenated_words():
         spaces=[True, True, False, False, True, True, False],
     )
     assert calc_coordination_chains(saw, join_hyphens=True) == [2]
+    # A strict, haughty-learned face: the first part is the conjunct, the last one hangs on the noun
+    face = parse(
+        ["strict", ",", "haughty", "-", "learned", "face"],
+        [5, 2, 0, 4, 5, 5],
+        ["amod", "punct", "conj", "punct", "amod", "ROOT"],
+        spaces=[False, True, False, False, True, False],
+    )
+    assert calc_coordination_chains(face) == [2]
+    assert calc_coordination_chains(face, join_hyphens=True) == [2]
