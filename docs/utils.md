@@ -8,7 +8,7 @@ Helper functions shared by the extractors and the statistics.
 ## is_punctuation
 
 <!-- --8<-- [start:is_punctuation] -->
-Checks whether a token consists only of punctuation marks and symbols: the characters of the Unicode categories P (punctuation), S (symbols), M (combining marks) and Cf (invisible format characters such as the zero-width space `U+200B`, the byte order mark `U+FEFF` and the zero-width joiner `U+200D`). Multi-character tokens like `?!` and `--`, symbols like `€` and `№` and a lone invisible character that a tokenizer splits off are punctuation too, while a token with a letter or a digit is not (`e` with a combining acute accent is a word); an empty token is punctuation as well.
+Checks whether a token consists only of punctuation marks and symbols: the characters of the Unicode categories P (punctuation), S (symbols), M (combining marks) and Cf (invisible format characters such as the zero-width space `U+200B`, the byte order mark `U+FEFF` and the zero-width joiner `U+200D`). Multi-character tokens like `?!` and `--`, symbols like `€` and `№` and a lone invisible character that a tokenizer splits off are punctuation too, while a token with a letter or a digit is not (`e` with a combining acute accent is a word); an empty token is punctuation as well. The results are cached by token, so the function is meant for tokens, not whole texts.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
