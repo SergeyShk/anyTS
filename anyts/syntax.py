@@ -117,6 +117,19 @@ def _word_head(unit: Sequence[Token]) -> Token | None:
     return min(outside, key=lambda token: (sum(1 for _ in token.ancestors), not is_word(token)))
 
 
+def _word_part(unit: Sequence[Token]) -> Token:
+    """
+    Part that gives a word: the one holding the head of its sentence or hanging
+    outside it (_word_head), the first part when that is a hyphen or there is none
+    """
+    if len(unit) == 1:
+        return unit[0]
+    part = next((token for token in unit if is_root(token)), None)
+    if part is None:
+        part = _word_head(unit)
+    return part if part is not None and is_word(part) else unit[0]
+
+
 def _unit_parents(units: Sequence[Sequence[Token]]) -> list[int | None]:
     """
     Index of the word every word of a sequence hangs on, through punctuation and
@@ -145,7 +158,10 @@ def get_words(tokens: Iterable[Token], join_hyphens: bool = False) -> list[Token
 
     Description:
         With join_hyphens, a word the tokenizer split at its hyphens is one
-        word, given by its first part
+        word, given by its part that holds its relation: the head of the
+        sentence or the part hanging outside the word, the nearest to the root,
+        as in get_children; by its first part when a hyphen holds the relation
+        or the parts form a loop
 
     Arguments:
         tokens (Doc|Span|list[Token]): Sequence of tokens
@@ -154,7 +170,7 @@ def get_words(tokens: Iterable[Token], join_hyphens: bool = False) -> list[Token
     Returns:
         list[Token]: List of words
     """
-    return [unit[0] for unit in _word_units(tokens, join_hyphens)]
+    return [_word_part(unit) for unit in _word_units(tokens, join_hyphens)]
 
 
 def is_root(token: Token) -> bool:
@@ -219,7 +235,7 @@ def get_children(token: Token, join_hyphens: bool = False) -> list[Token]:
                 continue
             head = _word_head(unit)
             if head is not None and head.head.i in ids:
-                children[unit[0].i] = head if is_word(head) else unit[0]
+                children[unit[0].i] = _word_part(unit)
     return [children[start] for start in sorted(children)]
 
 
@@ -254,9 +270,21 @@ def subtree_len(token: Token, join_hyphens: bool = False) -> int:
         int: Number of words in the subtree
     """
     if not join_hyphens:
-        return len(_word_units(token.subtree, False))
+        count = 0
+        tokens = [token]
+        # A broken parse can link tokens in a loop, and Token.subtree never ends then
+        seen = {token.i}
+        while tokens:
+            current = tokens.pop()
+            count += is_word(current)
+            for child in current.children:
+                if child.i not in seen:
+                    seen.add(child.i)
+                    tokens.append(child)
+        return count
     count = 0
     words = [_hyphenated_word(token) or [token]]
+    seen = {part.i for part in words[0]}
     while words:
         word = words.pop()
         count += is_word(word[0])
@@ -264,10 +292,15 @@ def subtree_len(token: Token, join_hyphens: bool = False) -> int:
         tokens = [child for part in word for child in part.children if child.i not in ids]
         while tokens:
             child = tokens.pop()
+            # A broken parse can link tokens in a loop
+            if child.i in seen:
+                continue
+            seen.add(child.i)
             unit = _hyphenated_word(child)
             if unit is None:
                 tokens.extend(child.children)
             elif len(unit) == 1 or ((head := _word_head(unit)) is not None and head.i == child.i):
+                seen.update(part.i for part in unit)
                 words.append(unit)
     return count
 
