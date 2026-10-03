@@ -2105,7 +2105,7 @@
 <p>Helper functions shared by the extractors and the statistics.</p>
 <h2 id="is_punctuation">is_punctuation<a class="headerlink" href="#is_punctuation" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:is_punctuation] -->
-<p>Checks whether a token consists only of punctuation marks and symbols: the characters of the Unicode categories P (punctuation), S (symbols), M (combining marks) and Cf (invisible format characters such as the zero-width space <code>U+200B</code>, the byte order mark <code>U+FEFF</code> and the zero-width joiner <code>U+200D</code>). Multi-character tokens like <code>?!</code> and <code>--</code>, symbols like <code>€</code> and <code>№</code> and a lone invisible character that a tokenizer splits off are punctuation too, while a token with a letter or a digit is not (<code>e</code> with a combining acute accent is a word); an empty token is punctuation as well.</p>
+<p>Checks whether a token consists only of punctuation marks and symbols: the characters of the Unicode categories P (punctuation), S (symbols), M (combining marks) and Cf (invisible format characters such as the zero-width space <code>U+200B</code>, the byte order mark <code>U+FEFF</code> and the zero-width joiner <code>U+200D</code>). Multi-character tokens like <code>?!</code> and <code>--</code>, symbols like <code>€</code> and <code>№</code> and a lone invisible character that a tokenizer splits off are punctuation too, while a token with a letter or a digit is not (<code>e</code> with a combining acute accent is a word); an empty token is punctuation as well. The results are cached by token, so the function is meant for tokens, not whole texts.</p>
 <table>
 <thead>
 <tr>

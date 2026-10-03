@@ -2092,7 +2092,7 @@
 
 <h2 id="calc_tree_depth">calc_tree_depth<a class="headerlink" href="#calc_tree_depth" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:calc_tree_depth] -->
-<p>The depth of the dependency tree: the longest path from the head of a sentence to a leaf, in relations between words. For a sequence of several sentences the maximum is taken; a sentence of one word has depth 0.</p>
+<p>The depth of the dependency tree: the longest path from the head of a sentence to a leaf, in relations between words. For a sequence of several sentences the maximum is taken; a sentence of one word has depth 0. With <code>join_hyphens</code> a hyphenated word is one word, and the words that hang on any of its parts are one level below it.</p>
 <table>
 <thead>
 <tr>
@@ -2108,6 +2108,12 @@
 <td style="text-align: center;">Doc/Span/list[Token]</td>
 <td style="text-align: center;"><code>-</code></td>
 <td style="text-align: center;">Sequence of tokens</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>join_hyphens</code></td>
+<td style="text-align: center;">bool</td>
+<td style="text-align: center;"><code>False</code></td>
+<td style="text-align: center;">Take a hyphenated word for one word</td>
 </tr>
 </tbody>
 </table>
@@ -2155,7 +2161,7 @@
 
 <h2 id="calc_coordination_chains">calc_coordination_chains<a class="headerlink" href="#calc_coordination_chains" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:calc_coordination_chains] -->
-<p>The lengths of the coordination chains, in the order of their first words. A chain is a group of words linked by the relation <code>conj</code>, whichever word each conjunct hangs on: Universal Dependencies attaches every conjunct to the first one (<code>pears → apples</code>, <code>plums → apples</code>), ClearNLP to the previous one (<code>pears → apples</code>, <code>plums → pears</code>), and both give one chain of three for <code>apples, pears and plums</code>. A nested coordination (<code>cats and dogs, or birds</code>) and an enumeration that the parser splits between several heads are one chain as well. The length of a chain is the number of its words; a conjunct whose head lies outside the sequence belongs to no chain with it.</p>
+<p>The lengths of the coordination chains, in the order of their first words. A chain is a group of words linked by the relation <code>conj</code>, whichever word each conjunct hangs on: Universal Dependencies attaches every conjunct to the first one (<code>pears → apples</code>, <code>plums → apples</code>), ClearNLP to the previous one (<code>pears → apples</code>, <code>plums → pears</code>), and both give one chain of three for <code>apples, pears and plums</code>. A nested coordination (<code>cats and dogs, or birds</code>) and an enumeration that the parser splits between several heads are one chain as well. The length of a chain is the number of its words; a conjunct whose head lies outside the sequence belongs to no chain with it. With <code>join_hyphens</code> a hyphenated word is one conjunct, linked by the <code>conj</code> of any of its parts (<code>member and vice-governor</code> is a chain of two).</p>
 <table>
 <thead>
 <tr>
@@ -2171,6 +2177,12 @@
 <td style="text-align: center;">Doc/Span/list[Token]</td>
 <td style="text-align: center;"><code>-</code></td>
 <td style="text-align: center;">Sequence of tokens</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>join_hyphens</code></td>
+<td style="text-align: center;">bool</td>
+<td style="text-align: center;"><code>False</code></td>
+<td style="text-align: center;">Take a hyphenated word for one word</td>
 </tr>
 </tbody>
 </table>
