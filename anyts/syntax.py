@@ -85,6 +85,9 @@ def _hyphenated_word(token: Token) -> list[Token] | None:
         if token.text != "-" or i + 1 >= len(doc) or not joins_previous(doc[i + 1]):
             return None
         i += 1
+    elif (i == 0 or doc[i - 1].text != "-") and (i + 1 >= len(doc) or doc[i + 1].text != "-"):
+        # A word without a hyphen next to it is a word of its own, the common case
+        return [token]
     start = i
     while joins_previous(doc[start]):
         start -= 2
@@ -100,6 +103,8 @@ def _word_head(unit: Sequence[Token]) -> Token | None:
     a word rather than a hyphen when equal; None for a word that holds the head
     of its sentence
     """
+    if len(unit) == 1:
+        return None if is_root(unit[0]) else unit[0]
     if any(is_root(token) for token in unit):
         return None
     ids = {token.i for token in unit}
@@ -107,6 +112,28 @@ def _word_head(unit: Sequence[Token]) -> Token | None:
     if len(outside) == 1:
         return outside[0]
     return min(outside, key=lambda token: (sum(1 for _ in token.ancestors), not is_word(token)))
+
+
+def _unit_parents(units: Sequence[Sequence[Token]]) -> list[int | None]:
+    """
+    Index of the word every word of a sequence hangs on, through punctuation and
+    tokens outside the sequence; None for a word with no such head
+    """
+    unit_of = {token.i: n for n, unit in enumerate(units) for token in unit}
+    parents: list[int | None] = []
+    for n, unit in enumerate(units):
+        head = _word_head(unit)
+        parent = None
+        token = head.head if head is not None else None
+        seen = set()
+        while token is not None and token.i not in seen:
+            seen.add(token.i)
+            if unit_of.get(token.i, n) != n:
+                parent = unit_of[token.i]
+                break
+            token = None if is_root(token) else token.head
+        parents.append(parent)
+    return parents
 
 
 def get_words(tokens: Iterable[Token], join_hyphens: bool = False) -> list[Token]:
@@ -183,6 +210,9 @@ def get_children(token: Token, join_hyphens: bool = False) -> list[Token]:
         for child in part.children:
             unit = _hyphenated_word(child) if child.i not in ids else None
             if unit is None or unit[0].i in children:
+                continue
+            if len(unit) == 1:
+                children[child.i] = child
                 continue
             head = _word_head(unit)
             if head is not None and head.head.i in ids:
@@ -273,21 +303,39 @@ def calc_dependency_distances(tokens: Iterable[Token], join_hyphens: bool = Fals
     return distances
 
 
-def calc_tree_depth(tokens: Iterable[Token]) -> int:
+def calc_tree_depth(tokens: Iterable[Token], join_hyphens: bool = False) -> int:
     """
     Computing the depth of the dependency tree
 
     Description:
         The longest path from the head of the sentence to a leaf in relations;
         for a sequence of several sentences the maximum is taken, for a sentence
-        of one word the depth is 0
+        of one word the depth is 0. With join_hyphens, a hyphenated word is one
+        word with its hyphens, hanging by its part outside it, the nearest to
+        the root, as in calc_dependency_distances
 
     Arguments:
         tokens (Doc|Span|list[Token]): Sequence of tokens
+        join_hyphens (bool): Join the parts of hyphenated words (joins_previous)
 
     Returns:
         int: Depth of the tree
     """
+    if join_hyphens:
+        parents = _unit_parents(_word_units(tokens, True))
+        depths: dict[int, int] = {}
+        for start in range(len(parents)):
+            chain: list[int] = []
+            node: int | None = start
+            # A broken parse can link the parts of two words in a loop
+            while node is not None and node not in depths and node not in chain:
+                chain.append(node)
+                node = parents[node]
+            depth = depths[node] if node is not None and node in depths else -1
+            for member in reversed(chain):
+                depth += 1
+                depths[member] = depth
+        return max(depths.values(), default=0)
     words = get_words(tokens)
     ids = {token.i for token in words}
     return max(
@@ -331,7 +379,7 @@ def calc_valency(token: Token, join_hyphens: bool = False) -> int:
     )
 
 
-def calc_coordination_chains(tokens: Iterable[Token]) -> list[int]:
+def calc_coordination_chains(tokens: Iterable[Token], join_hyphens: bool = False) -> list[int]:
     """
     Computing the lengths of the coordination chains
 
@@ -340,16 +388,38 @@ def calc_coordination_chains(tokens: Iterable[Token]) -> list[int]:
         each conjunct hangs on: Universal Dependencies attaches every conjunct
         to the first one, ClearNLP to the previous one; a nested coordination
         (A and B, or C) and an enumeration the parser splits between several
-        heads give one chain. The length of a chain is the number of its words
+        heads give one chain. The length of a chain is the number of its words.
+        With join_hyphens, a hyphenated word is one word, linked by its part
+        hanging outside it, the nearest to the root
 
     Arguments:
         tokens (Doc|Span|list[Token]): Sequence of tokens
+        join_hyphens (bool): Join the parts of hyphenated words (joins_previous)
 
     Returns:
         list[int]: Lengths of the chains in the order of their first words
     """
+    if join_hyphens:
+        units = _word_units(tokens, True)
+        unit_of = {token.i: n for n, unit in enumerate(units) for token in unit}
+        links = []
+        for n, unit in enumerate(units):
+            head = _word_head(unit)
+            if head is not None and head.dep_ == "conj" and head.head.i in unit_of:
+                links.append((n, unit_of[head.head.i]))
+        return _chain_sizes(range(len(units)), links)
     words = get_words(tokens)
-    parent = {token.i: token.i for token in words}
+    ids = {token.i for token in words}
+    links = [
+        (token.i, token.head.i) for token in words if token.dep_ == "conj" and token.head.i in ids
+    ]
+    return _chain_sizes([token.i for token in words], links)
+
+
+def _chain_sizes(nodes: Iterable[int], links: Iterable[tuple[int, int]]) -> list[int]:
+    """Sizes of the groups of nodes the links join, of two or more, in the order of the nodes"""
+    nodes = list(nodes)
+    parent = {node: node for node in nodes}
 
     def find(i: int) -> int:
         while parent[i] != i:
@@ -357,13 +427,12 @@ def calc_coordination_chains(tokens: Iterable[Token]) -> list[int]:
             i = parent[i]
         return i
 
-    for token in words:
-        if token.dep_ == "conj" and token.head.i in parent:
-            parent[find(token.i)] = find(token.head.i)
-    sizes = Counter(find(token.i) for token in words)
+    for a, b in links:
+        parent[find(a)] = find(b)
+    sizes = Counter(find(node) for node in nodes)
     chains: dict[int, int] = {}
-    for token in words:
-        root = find(token.i)
+    for node in nodes:
+        root = find(node)
         if sizes[root] > 1:
             chains.setdefault(root, sizes[root])
     return list(chains.values())

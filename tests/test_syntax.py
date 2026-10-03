@@ -335,3 +335,55 @@ def test_word_with_parts_on_several_heads():
     assert get_children(doc[0], join_hyphens=True) == []
     assert texts(get_children(doc[4], join_hyphens=True)) == ["dog", "call"]
     assert calc_dependency_distances(doc, join_hyphens=True) == [2, 1]
+
+
+def test_tree_depth_of_hyphenated_words():
+    # I saw some-thing and more . - "more" hangs on the second part of some-thing
+    doc = parse(
+        ["I", "saw", "some", "-", "thing", "and", "more", "."],
+        [1, 1, 4, 4, 1, 6, 4, 1],
+        ["nsubj", "ROOT", "det", "punct", "obj", "cc", "conj", "punct"],
+        spaces=[True, True, False, False, True, True, False, False],
+    )
+    assert calc_tree_depth(doc) == calc_tree_depth(doc, join_hyphens=True) == 3
+    # The parts of a word of one sentence are no levels of its tree
+    tick = parse(
+        ["Tick", "-", "tock", "!"],
+        [0, 0, 0, 0],
+        ["ROOT", "punct", "dep", "punct"],
+        spaces=[False, False, False, False],
+    )
+    assert (calc_tree_depth(tick), calc_tree_depth(tick, join_hyphens=True)) == (1, 0)
+    assert calc_tree_depth(hyphenated(), join_hyphens=True) == 2
+    assert calc_tree_depth(hyphenated(one_head=0), join_hyphens=True) == 2
+
+
+def test_tree_depth_through_a_hyphen():
+    # A word that hangs on the inner hyphen of a word is one level below that word
+    doc = parse(
+        ["came", "well", "-", "known", "there"],
+        [0, 3, 3, 0, 2],
+        ["ROOT", "amod", "punct", "obl", "advmod"],
+        spaces=[True, False, False, True, False],
+    )
+    assert calc_tree_depth(doc, join_hyphens=True) == 2
+
+
+def test_coordination_chains_of_hyphenated_words():
+    # member and vice-governor - the parts of vice-governor are two conjuncts for the parser
+    doc = parse(
+        ["member", "and", "vice", "-", "governor"],
+        [0, 2, 0, 2, 2],
+        ["ROOT", "cc", "conj", "punct", "conj"],
+        spaces=[True, True, False, False, False],
+    )
+    assert calc_coordination_chains(doc) == [3]
+    assert calc_coordination_chains(doc, join_hyphens=True) == [2]
+    # A conjunct of the second part of a word joins its chain
+    saw = parse(
+        ["I", "saw", "some", "-", "thing", "and", "more"],
+        [1, 1, 4, 4, 1, 6, 4],
+        ["nsubj", "ROOT", "det", "punct", "obj", "cc", "conj"],
+        spaces=[True, True, False, False, True, True, False],
+    )
+    assert calc_coordination_chains(saw, join_hyphens=True) == [2]

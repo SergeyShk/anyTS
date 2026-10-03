@@ -61,11 +61,12 @@ The dependency distances (Liu 2008): the distance between a word and its head in
 ## calc_tree_depth
 
 <!-- --8<-- [start:calc_tree_depth] -->
-The depth of the dependency tree: the longest path from the head of a sentence to a leaf, in relations between words. For a sequence of several sentences the maximum is taken; a sentence of one word has depth 0.
+The depth of the dependency tree: the longest path from the head of a sentence to a leaf, in relations between words. For a sequence of several sentences the maximum is taken; a sentence of one word has depth 0. With `join_hyphens` a hyphenated word is one word, and the words that hang on any of its parts are one level below it.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
 | `tokens` | Doc/Span/list[Token] | `-` | Sequence of tokens |
+| `join_hyphens` | bool | `False` | Take a hyphenated word for one word |
 <!-- --8<-- [end:calc_tree_depth] -->
 
 ## has_feature
@@ -89,9 +90,10 @@ The valency of a token: the number of its dependent words, the relations `cc`, `
 ## calc_coordination_chains
 
 <!-- --8<-- [start:calc_coordination_chains] -->
-The lengths of the coordination chains, in the order of their first words. A chain is a group of words linked by the relation `conj`, whichever word each conjunct hangs on: Universal Dependencies attaches every conjunct to the first one (`pears → apples`, `plums → apples`), ClearNLP to the previous one (`pears → apples`, `plums → pears`), and both give one chain of three for `apples, pears and plums`. A nested coordination (`cats and dogs, or birds`) and an enumeration that the parser splits between several heads are one chain as well. The length of a chain is the number of its words; a conjunct whose head lies outside the sequence belongs to no chain with it.
+The lengths of the coordination chains, in the order of their first words. A chain is a group of words linked by the relation `conj`, whichever word each conjunct hangs on: Universal Dependencies attaches every conjunct to the first one (`pears → apples`, `plums → apples`), ClearNLP to the previous one (`pears → apples`, `plums → pears`), and both give one chain of three for `apples, pears and plums`. A nested coordination (`cats and dogs, or birds`) and an enumeration that the parser splits between several heads are one chain as well. The length of a chain is the number of its words; a conjunct whose head lies outside the sequence belongs to no chain with it. With `join_hyphens` a hyphenated word is one conjunct (`member and vice-governor` is a chain of two).
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
 | `tokens` | Doc/Span/list[Token] | `-` | Sequence of tokens |
+| `join_hyphens` | bool | `False` | Take a hyphenated word for one word |
 <!-- --8<-- [end:calc_coordination_chains] -->
