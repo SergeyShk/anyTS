@@ -369,6 +369,19 @@ def test_tree_depth_through_a_hyphen():
     assert calc_tree_depth(doc, join_hyphens=True) == 2
 
 
+def test_tree_depth_through_tokens_outside_the_words():
+    # well-known , new - "new" hangs on the comma, and the comma on "known"
+    doc = parse(
+        ["well", "-", "known", ",", "new"],
+        [2, 2, 2, 2, 3],
+        ["amod", "punct", "ROOT", "punct", "dep"],
+        spaces=[False, False, False, True, False],
+    )
+    assert calc_tree_depth(doc) == calc_tree_depth(doc, join_hyphens=True) == 1
+    # A word whose head is outside the sequence is the head of its tree
+    assert calc_tree_depth([doc[0], doc[4]], join_hyphens=True) == 0
+
+
 def test_coordination_chains_of_hyphenated_words():
     # member and vice-governor - the parts of vice-governor are two conjuncts for the parser
     doc = parse(
