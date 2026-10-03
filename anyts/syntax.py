@@ -272,6 +272,7 @@ def subtree_len(token: Token, join_hyphens: bool = False) -> int:
         return len(_word_units(token.subtree, False))
     count = 0
     words = [_hyphenated_word(token) or [token]]
+    seen = {part.i for part in words[0]}
     while words:
         word = words.pop()
         count += is_word(word[0])
@@ -279,10 +280,15 @@ def subtree_len(token: Token, join_hyphens: bool = False) -> int:
         tokens = [child for part in word for child in part.children if child.i not in ids]
         while tokens:
             child = tokens.pop()
+            # A broken parse can link tokens in a loop
+            if child.i in seen:
+                continue
+            seen.add(child.i)
             unit = _hyphenated_word(child)
             if unit is None:
                 tokens.extend(child.children)
             elif len(unit) == 1 or ((head := _word_head(unit)) is not None and head.i == child.i):
+                seen.update(part.i for part in unit)
                 words.append(unit)
     return count
 

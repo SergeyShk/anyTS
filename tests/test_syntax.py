@@ -427,6 +427,11 @@ def test_coordination_chains_of_hyphenated_words():
     assert calc_coordination_chains(face, join_hyphens=True) == [2]
 
 
+def test_subtree_of_a_loop():
+    doc = parse(["a", "b"], [1, 0], ["dep", "dep"])
+    assert subtree_len(doc[0], join_hyphens=True) == 2
+
+
 def test_loop_inside_a_hyphenated_word():
     doc = parse(["a", "-", "b"], [2, 0, 1], ["dep", "punct", "dep"], spaces=[False, False, False])
     assert calc_tree_depth(doc, join_hyphens=True) == 0
