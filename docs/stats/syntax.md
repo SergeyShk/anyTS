@@ -12,7 +12,7 @@ Checks whether a token is a word: not whitespace and not a token of `is_punctuat
 <!-- --8<-- [end:is_word] -->
 
 <!-- --8<-- [start:get_words] -->
-`get_words(tokens, join_hyphens=False)` returns the words of a sequence of tokens in their order; with `join_hyphens=True` a word the tokenizer split at its hyphens is one word, given by its part that holds its relation, as with the dependents of `get_children` (`governor` in `He is vice-governor`).
+`get_words(tokens, join_hyphens=False)` returns the words of a sequence of tokens in their order; with `join_hyphens=True` a word the tokenizer split at its hyphens is one word, given by its part that holds its relation, as with the dependents of `get_children` (`governor` in `He is vice-governor`), or by its first part when a hyphen holds it.
 <!-- --8<-- [end:get_words] -->
 
 ## Hyphenated words { #joins_previous }

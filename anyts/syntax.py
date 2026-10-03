@@ -160,7 +160,8 @@ def get_words(tokens: Iterable[Token], join_hyphens: bool = False) -> list[Token
         With join_hyphens, a word the tokenizer split at its hyphens is one
         word, given by its part that holds its relation: the head of the
         sentence or the part hanging outside the word, the nearest to the root,
-        as in get_children; by its first part when that is a hyphen
+        as in get_children; by its first part when a hyphen holds the relation
+        or the parts form a loop
 
     Arguments:
         tokens (Doc|Span|list[Token]): Sequence of tokens

@@ -238,6 +238,20 @@ def test_words_of_hyphenated_words():
         "region",
     ]
     assert texts(get_children(governor[2], join_hyphens=True)) == ["He", "is", "region"]
+    # A word whose relation a hyphen holds, or whose parts form a loop, is given by its first part
+    laugh = parse(
+        ["Ha", "-", "ha", "!"], [1, 1, 1, 1], ["dep", "ROOT", "dep", "punct"], spaces=[False] * 4
+    )
+    hanging = parse(
+        ["some", "-", "one", "came"],
+        [1, 3, 1, 3],
+        ["det", "nsubj", "dep", "ROOT"],
+        spaces=[False, False, True, False],
+    )
+    loop = parse(["a", "-", "b"], [2, 0, 1], ["dep", "punct", "dep"], spaces=[False] * 3)
+    assert texts(get_words(laugh, join_hyphens=True)) == ["Ha"]
+    assert texts(get_words(hanging, join_hyphens=True)) == ["some", "came"]
+    assert texts(get_words(loop, join_hyphens=True)) == ["a"]
 
 
 def test_children_of_hyphenated_words():
