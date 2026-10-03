@@ -16,6 +16,7 @@ PUNCTUATION_CATEGORIES = frozenset(
 )
 
 
+@lru_cache(maxsize=1 << 16)
 def is_punctuation(token: str) -> bool:
     """
     Checking whether a token consists only of punctuation marks and symbols
@@ -25,7 +26,9 @@ def is_punctuation(token: str) -> bool:
         M (combining marks) and Cf (invisible format characters: the zero-width
         space, the byte order mark, the zero-width joiner), so "?!", "--", "«",
         "€", "№" and a lone zero-width space are punctuation too, while a token
-        with a letter or a digit is not; an empty token is punctuation as well
+        with a letter or a digit is not; an empty token is punctuation as well.
+        The results are cached by token, so the function is meant for tokens,
+        not whole texts
 
     Arguments:
         token (str): Token
