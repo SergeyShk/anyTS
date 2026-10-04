@@ -2030,7 +2030,7 @@
 <!-- --8<-- [end:is_word] -->
 
 <!-- --8<-- [start:get_words] -->
-<p><code>get_words(tokens, join_hyphens=False)</code> returns the words of a sequence of tokens in their order; with <code>join_hyphens=True</code> a word the tokenizer split at its hyphens is one word, given by its first part.</p>
+<p><code>get_words(tokens, join_hyphens=False)</code> returns the words of a sequence of tokens in their order; with <code>join_hyphens=True</code> a word the tokenizer split at its hyphens is one word, given by its part that holds its relation, as with the dependents of <code>get_children</code> (<code>governor</code> in <code>He is vice-governor</code>), or by its first part when a hyphen holds it.</p>
 <!-- --8<-- [end:get_words] -->
 
 <h2 id="joins_previous">Hyphenated words<a class="headerlink" href="#joins_previous" title="Permanent link">&para;</a></h2>
