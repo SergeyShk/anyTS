@@ -228,6 +228,42 @@ READING_EASE_GRADES: tuple[tuple[float, float], ...] = (
     (40, 11),
     (30, 12),
 )
+# Scales of describe_level: lower bounds in descending order, the lowest band open below.
+# The reading ease by the school levels of Flesch (How to Write Plain English, 1979)
+READING_EASE_LEVELS: tuple[tuple[float, str], ...] = (
+    (90, "5th grade"),
+    (80, "6th grade"),
+    (70, "7th grade"),
+    (60, "8th and 9th grade"),
+    (50, "10th to 12th grade"),
+    (30, "college"),
+    (10, "college graduate"),
+    (0, "professional"),
+)
+# LIX by the text types of Björnsson (1968)
+LIX_LEVELS: tuple[tuple[float, str], ...] = (
+    (60, "very hard texts, laws and bureaucratic language"),
+    (50, "hard texts, popular science, official texts"),
+    (40, "texts of medium difficulty, magazine articles"),
+    (30, "easy texts, fiction, newspaper articles"),
+    (0, "very easy texts, children's books"),
+)
+# RIX as years of schooling by Anderson (1983), college as 13
+RIX_GRADES: tuple[tuple[float, float], ...] = (
+    (7.2, 13),
+    (6.2, 12),
+    (5.3, 11),
+    (4.5, 10),
+    (3.7, 9),
+    (3.0, 8),
+    (2.4, 7),
+    (1.8, 6),
+    (1.3, 5),
+    (0.8, 4),
+    (0.5, 3),
+    (0.2, 2),
+    (0, 1),
+)
 # Years of schooling of the school stages of the United States and the age of the reader
 GRADE_AGE_LEVELS: tuple[tuple[int, int, str, str], ...] = (
     (1, 5, "elementary school, grades 1-5", "6-11 years"),

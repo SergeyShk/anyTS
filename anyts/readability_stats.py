@@ -1,26 +1,32 @@
 from collections.abc import Callable, Iterable, Mapping
-from math import floor, nan, sqrt
+from math import floor, isfinite, nan, sqrt
+from numbers import Real
 from statistics import median
-from typing import ClassVar
+from typing import ClassVar, TypeVar
 
 from spacy.tokens import Doc
 
 from .basic_stats import BasicStats, _check_extractors
 from .constants import (
     GRADE_AGE_LEVELS,
+    LIX_LEVELS,
     LIX_LONG_WORD_LETTER_FACTOR,
     POSTGRADUATE_LEVEL,
     READABILITY_GRADE_STATS,
     READABILITY_PRESETS,
     READABILITY_STATS_DESC,
     READING_EASE_GRADES,
+    READING_EASE_LEVELS,
     READING_SPEED_NORMS,
     READING_SPEED_WPM,
+    RIX_GRADES,
     SMOG_COMPLEX_SYL_FACTOR,
 )
-from .exceptions import ParameterError, SourceError, SourceTypeError
+from .exceptions import ParameterError, SourceError, SourceTypeError, UnknownStatError
 from .extractors import SentsExtractor, WordsExtractor
 from .utils import check_number, safe_divide
+
+Band = TypeVar("Band")
 
 
 class ReadabilityStats:
@@ -66,6 +72,9 @@ class ReadabilityStats:
     Methods:
         reading_ease_to_grade: Years of schooling for a value of the reading ease
         describe_grade: School stage and reader age for the consensus grade or a grade formula
+        level_scale: Interpretation scale of a metric, level_scales by default
+        describe_level: Band of the interpretation scale of a metric
+        describe: Reading of any metric by its scale
         reading_time_by_speed: Reading time at a given speed
         reading_time_by_norm: Reading times at the speeds of a norm
         get_stats: Getting the computed readability metrics of the text
@@ -86,6 +95,10 @@ class ReadabilityStats:
             LIX and RIX
         grade_age_levels (tuple[tuple[int, int, str, str], ...]): School stages of
             describe_grade (grade_to_age)
+        level_scales (dict[str, tuple[tuple[float, str], ...]]): Interpretation scales
+            of describe_level by metric, as lower bounds and their bands
+        grade_scales (dict[str, tuple[tuple[float, float], ...]]): Scales that convert
+            a metric into years of schooling for describe, as lower bounds and grades
         postgraduate_level (tuple[str, str]): Stage and age above the last school stage
         reading_speed (float): Reading speed of reading_time, words per minute
         reading_speed_norms (dict[str, tuple[float, ...]]): Speeds of the reading norms,
@@ -107,6 +120,11 @@ class ReadabilityStats:
     smog_complex_syl_factor: ClassVar[int] = SMOG_COMPLEX_SYL_FACTOR
     lix_long_word_letter_factor: ClassVar[int] = LIX_LONG_WORD_LETTER_FACTOR
     grade_age_levels: ClassVar[tuple[tuple[int, int, str, str], ...]] = GRADE_AGE_LEVELS
+    level_scales: ClassVar[Mapping[str, tuple[tuple[float, str], ...]]] = {
+        "flesch_reading_easy": READING_EASE_LEVELS,
+        "lix": LIX_LEVELS,
+    }
+    grade_scales: ClassVar[Mapping[str, tuple[tuple[float, float], ...]]] = {"rix": RIX_GRADES}
     postgraduate_level: ClassVar[tuple[str, str]] = POSTGRADUATE_LEVEL
     reading_speed: ClassVar[float] = READING_SPEED_WPM
     reading_speed_norms: ClassVar[Mapping[str, tuple[float, ...]]] = READING_SPEED_NORMS
@@ -260,6 +278,87 @@ class ReadabilityStats:
                 f"The metric {stat} is not a grade formula. Grade formulas: {grade_stats}"
             )
         return grade_to_age(getattr(self, stat), self.grade_age_levels, self.postgraduate_level)
+
+    def level_scale(self, stat: str) -> tuple[tuple[float, str], ...] | None:
+        """
+        Getting the interpretation scale of a metric
+
+        Description:
+            By default the scale of level_scales; a library whose scale depends
+            on the preset overrides the method, and describe_level and describe
+            follow it
+
+        Arguments:
+            stat (str): Name of the metric
+
+        Returns:
+            tuple[tuple[float, str], ...] | None: Lower bounds and their bands, None
+                for a metric without a scale
+        """
+        return self.level_scales.get(stat)
+
+    def describe_level(self, stat: str = "flesch_reading_easy") -> str:
+        """
+        Getting the band of the interpretation scale of a metric
+
+        Arguments:
+            stat (str): Name of a metric with a scale (level_scale), the reading ease
+                by default
+
+        Returns:
+            str: Band of the scale
+
+        Raises:
+            ParameterError: If the metric has no scale of bands or its value is not
+                a finite number
+        """
+        scale = self.level_scale(stat)
+        if scale is None:
+            raise ParameterError(f"The metric {stat} has no scale of bands")
+        return scale_level(getattr(self, stat), scale)
+
+    def describe(self, stat: str) -> str | None:
+        """
+        Getting the reading of a metric by its scale
+
+        Description:
+            The consensus grade and a grade formula give the school stage and
+            reader age (describe_grade), a metric of grade_scales the stage and
+            age of the years of schooling its scale gives, a metric with a scale
+            of bands (level_scale) its band; a metric without a scale and an
+            undefined value (nan) give None. A metric is a name of stats_desc
+            or a public property of the class
+
+        Arguments:
+            stat (str): Name of the metric
+
+        Returns:
+            str | None: Reading of the value; None for a metric without a scale
+                or an undefined value
+
+        Raises:
+            UnknownStatError: If the class has no such metric
+        """
+        if not self._is_metric(stat):
+            raise UnknownStatError(
+                f"Unknown metric: {stat}. Available metrics: {tuple(self.stats_desc)}"
+            )
+        value = getattr(self, stat)
+        if isinstance(value, Real) and not isfinite(value):
+            return None
+        if stat in ("consensus_grade", *self.grade_stats):
+            return grade_to_age(value, self.grade_age_levels, self.postgraduate_level)
+        if stat in self.grade_scales:
+            grade = scale_level(value, self.grade_scales[stat])
+            return grade_to_age(grade, self.grade_age_levels, self.postgraduate_level)
+        scale = self.level_scale(stat)
+        return None if scale is None else scale_level(value, scale)
+
+    def _is_metric(self, stat: object) -> bool:
+        """Whether the name is a metric of stats_desc or a public property of the class"""
+        if not isinstance(stat, str) or stat.startswith("_"):
+            return False
+        return stat in self.stats_desc or isinstance(getattr(type(self), stat, None), property)
 
     def reading_time_by_speed(self, wpm: float) -> float:
         """
@@ -530,12 +629,8 @@ def calc_lix(n_long_words: int, n_words: int, n_sents: int) -> float:
     Description:
         The mean sentence length plus the percentage of long words, words of
         more than six letters (Björnsson, 1968), with no coefficients to fit.
-        The higher the value, the harder the text:
-            0-30 - very easy texts, children's books
-            30-40 - easy texts, fiction, newspaper articles
-            40-50 - texts of medium difficulty, magazine articles
-            50-60 - hard texts, popular science, official texts
-            60-100 - very hard texts, laws and bureaucratic language
+        The higher the value, the harder the text; the text types of Björnsson
+        are the bands of LIX_LEVELS
 
     References:
         Björnsson, C. H. Läsbarhet. Liber, 1968
@@ -558,20 +653,8 @@ def calc_rix(n_long_words: int, n_sents: int) -> float:
 
     Description:
         Long words, of more than six letters, per sentence (Anderson, 1983),
-        with no coefficients to fit. The higher the value, the harder the text:
-            < 0.2 - grade 1
-            0.2-0.5 - grade 2
-            0.5-0.8 - grade 3
-            0.8-1.3 - grade 4
-            1.3-1.8 - grade 5
-            1.8-2.4 - grade 6
-            2.4-3.0 - grade 7
-            3.0-3.7 - grade 8
-            3.7-4.5 - grade 9
-            4.5-5.3 - grade 10
-            5.3-6.2 - grade 11
-            6.2-7.2 - grade 12
-            > 7.2 - college
+        with no coefficients to fit. The higher the value, the harder the text;
+        RIX_GRADES gives the grade of Anderson for a value, 13 for college
 
     References:
         Anderson, J. Lix and Rix: variations on a little-known readability index.
@@ -699,6 +782,41 @@ def calc_consensus_grade(
     if not values:
         raise ParameterError("The list of grade formulas is empty")
     return float(median(values))
+
+
+def scale_level(value: float, scale: Iterable[tuple[float, Band]]) -> Band:
+    """
+    Getting the band of a scale for a value
+
+    Description:
+        The scale is given as the lower bounds of its bands in descending
+        order; the value falls into the first band whose bound it reaches,
+        and the lowest band is open below
+
+    Arguments:
+        value (float): Value of a metric
+        scale (list[tuple[float, Any]]): Lower bounds and their bands in descending order
+
+    Returns:
+        Any: Band of the scale
+
+    Raises:
+        ParameterError: If the value is not a finite number or the scale is empty
+
+    Example:
+        >>> from anyts.constants import READING_EASE_LEVELS
+        >>> from anyts.readability_stats import scale_level
+        >>> scale_level(45, READING_EASE_LEVELS), scale_level(-40, READING_EASE_LEVELS)
+        ('college', 'professional')
+    """
+    check_number(value, "value")
+    bands = list(scale)
+    if not bands:
+        raise ParameterError("The scale is empty")
+    for threshold, band in bands:
+        if value >= threshold:
+            return band
+    return bands[-1][1]
 
 
 def grade_to_age(
