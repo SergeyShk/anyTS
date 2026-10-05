@@ -27,13 +27,15 @@ A language library subclasses `ReadabilityStats`:
 | `smog_complex_syl_factor` | class attribute | Minimum number of syllables in a polysyllabic word of SMOG and Gunning fog |
 | `lix_long_word_letter_factor` | class attribute | Minimum number of letters in a long word of LIX and RIX |
 | `grade_age_levels`, `postgraduate_level` | class attributes | School stages and ages of `describe_grade` |
+| `level_scales` | class attribute | Interpretation scales of `describe_level` by metric, as lower bounds and their bands |
+| `grade_scales` | class attribute | Scales that convert a metric into years of schooling for `describe`, as lower bounds and grades |
 | `reading_speed`, `reading_speed_norms` | class attributes | Reading speed of `reading_time` and the speeds of the norms, words per minute |
 | `reading_ease_to_grade(flesch_reading_easy)` | method | Years of schooling for the reading ease in the consensus grade |
 
 A formula of the library is a property of the subclass named in `stats_desc`, and in `grade_stats` when it gives years of schooling; its coefficients may live in the presets under its name. The preset is a parameter: a library sets its own default in its `__init__` and passes it on.
 <!-- --8<-- [end:ReadabilityStats-hooks] -->
 
-The core defaults are the original English formulas: the preset `original` of `anyts.constants.READABILITY_PRESETS`, the grade formulas Flesch-Kincaid, Coleman-Liau, ARI, SMOG and Gunning fog, polysyllabic words of three syllables and long words of seven letters, the school stages of the United States, and the reading speed of 238 words per minute with the norm `adult` - 183 words per minute aloud and 238 silently (Brysbaert, 2019).
+The core defaults are the original English formulas: the preset `original` of `anyts.constants.READABILITY_PRESETS`, the grade formulas Flesch-Kincaid, Coleman-Liau, ARI, SMOG and Gunning fog, polysyllabic words of three syllables and long words of seven letters, the school stages of the United States, the scales of the reading ease, LIX and RIX, and the reading speed of 238 words per minute with the norm `adult` - 183 words per minute aloud and 238 silently (Brysbaert, 2019).
 
 ## Parameters
 
@@ -86,6 +88,45 @@ Parameters:
 | :-------: | :--: | :-----: | :---------: |
 | `stat` | str | `consensus_grade` | Name of the grade formula |
 <!-- --8<-- [end:ReadabilityStats-describe_grade] -->
+
+### describe_level
+
+<!-- --8<-- [start:ReadabilityStats-describe_level] -->
+Returns the band of the interpretation scale of a metric from `level_scales`; a metric without a scale there raises `ParameterError`.
+
+Parameters:
+
+| Parameter | Type | Default | Description |
+| :-------: | :--: | :-----: | :---------: |
+| `stat` | str | `flesch_reading_easy` | Name of the metric |
+<!-- --8<-- [end:ReadabilityStats-describe_level] -->
+
+The default scales are the school levels of Flesch for the reading ease (`anyts.constants.READING_EASE_LEVELS`, How to Write Plain English, 1979) and the text types of Björnsson for [LIX](readability_stats_funcs.md#lix-readability-index) (`LIX_LEVELS`):
+
+| Reading ease | Level |
+| :----------: | :---: |
+| `90-100` | 5th grade |
+| `80-90` | 6th grade |
+| `70-80` | 7th grade |
+| `60-70` | 8th and 9th grade |
+| `50-60` | 10th to 12th grade |
+| `30-50` | college |
+| `10-30` | college graduate |
+| `< 10` | professional |
+
+### describe
+
+<!-- --8<-- [start:ReadabilityStats-describe] -->
+Returns the reading of any metric by its scale: for the consensus grade and a grade formula the school stage and reader age (`describe_grade`), for a metric of `grade_scales` the stage and age of the years of schooling its scale gives, for a metric of `level_scales` the band of its scale (`describe_level`), and `None` for a metric without a scale. A name that is not a metric of the class raises `UnknownStatError`.
+
+Parameters:
+
+| Parameter | Type | Default | Description |
+| :-------: | :--: | :-----: | :---------: |
+| `stat` | str | `-` | Name of the metric |
+<!-- --8<-- [end:ReadabilityStats-describe] -->
+
+By default RIX converts into the grades of Anderson (`anyts.constants.RIX_GRADES`, the table of the [RIX](readability_stats_funcs.md#rix-readability-index) section, college as 13).
 
 ### reading_time_by_speed
 
@@ -150,6 +191,8 @@ A subclass with the basic statistics of a language - here the syllables are the 
     # (98.87, 0.59)
     rs.consensus_grade, rs.describe_grade()
     # (3.0, 'elementary school, grades 1-5 (6-11 years)')
+    rs.describe("flesch_reading_easy"), rs.describe("lix"), rs.describe("mu_index")
+    # ('5th grade', "very easy texts, children's books", None)
     rs.reading_time_by_norm("adult")
     # (0.04918032786885246, 0.037815126050420166)
     ```

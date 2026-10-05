@@ -7,8 +7,14 @@ import pytest
 import spacy
 
 from anyts.basic_stats import BasicStats
-from anyts.constants import READABILITY_PRESETS, READABILITY_STATS_DESC
-from anyts.exceptions import ParameterError, SourceError, SourceTypeError
+from anyts.constants import (
+    LIX_LEVELS,
+    READABILITY_PRESETS,
+    READABILITY_STATS_DESC,
+    READING_EASE_LEVELS,
+    RIX_GRADES,
+)
+from anyts.exceptions import ParameterError, SourceError, SourceTypeError, UnknownStatError
 from anyts.extractors import SentsExtractor, WordsExtractor
 from anyts.readability_stats import (
     ReadabilityStats,
@@ -25,6 +31,7 @@ from anyts.readability_stats import (
     calc_smog_index,
     flesch_reading_easy_to_grade,
     grade_to_age,
+    scale_level,
 )
 
 # 2 sentences, 9 words, 11 syllables, 30 letters of the words, one word of three syllables
@@ -190,6 +197,8 @@ class Custom(Readability):
     postgraduate_level = ("upper school", "over 13 years")
     reading_speed = 90
     reading_speed_norms: ClassVar = {"slow": (30, 45, 90)}
+    level_scales: ClassVar = {"lix": ((50, "hard"), (0, "easy"))}
+    grade_scales: ClassVar = {}
 
     def __init__(self, source, preset="short"):
         super().__init__(source, preset=preset)
@@ -222,6 +231,11 @@ def test_hooks():
         rs.describe_grade("flesch_kincaid_grade")
     with pytest.raises(ParameterError, match=r"Available norms: \('slow',\)$"):
         rs.reading_time_by_norm("adult")
+    # LIX 82.3 by the scale of the subclass, RIX and the reading ease without a scale
+    assert rs.describe("lix") == rs.describe_level("lix") == "hard"
+    assert rs.describe("rix") is None
+    assert rs.describe("flesch_reading_easy") is None
+    assert rs.describe("rix_grade") == rs.describe_grade("rix_grade")
 
 
 def test_consensus_grade_hook():
@@ -245,6 +259,63 @@ def test_describe_grade(rs):
     assert rs.describe_grade("smog_index") == grade_to_age(rs.smog_index)
     with pytest.raises(ParameterError, match=r"^The metric lix is not a grade formula"):
         rs.describe_grade("lix")
+
+
+def test_describe_level(rs):
+    # reading ease 98.9 - 5th grade, LIX 15.6 - below 30
+    assert rs.describe_level() == "5th grade"
+    assert rs.describe_level("lix") == "very easy texts, children's books"
+    with pytest.raises(ParameterError, match=r"^The metric rix has no interpretation scale"):
+        rs.describe_level("rix")
+
+
+def test_describe(rs):
+    for stat in ("consensus_grade", *rs.grade_stats):
+        assert rs.describe(stat) == rs.describe_grade(stat)
+    for stat in ("flesch_reading_easy", "lix"):
+        assert rs.describe(stat) == rs.describe_level(stat)
+    # RIX 0.5 - grade 3 of Anderson
+    assert rs.describe("rix") == grade_to_age(3) == "elementary school, grades 1-5 (6-11 years)"
+    assert rs.describe("mu_index") is None
+    assert rs.describe("reading_time") is None
+    for stat in ("rix_grade", "bs"):
+        with pytest.raises(
+            UnknownStatError, match=rf"^Unknown metric: {stat}\. Available metrics"
+        ):
+            rs.describe(stat)
+
+
+@pytest.mark.parametrize(
+    ("value", "band"),
+    [
+        (100, "5th grade"),
+        (90, "5th grade"),
+        (89.9, "6th grade"),
+        (45, "college"),
+        (10, "college graduate"),
+        (9.9, "professional"),
+        (-40, "professional"),
+    ],
+)
+def test_scale_level(value, band):
+    assert scale_level(value, READING_EASE_LEVELS) == band
+
+
+def test_scale_level_bounds():
+    assert [scale_level(v, RIX_GRADES) for v in (-1, 0.19, 0.2, 7.19, 7.2, 50)] == [
+        1,
+        1,
+        2,
+        12,
+        13,
+        13,
+    ]
+    assert scale_level(30, LIX_LEVELS) == "easy texts, fiction, newspaper articles"
+    assert scale_level(29.9, iter(LIX_LEVELS)) == "very easy texts, children's books"
+    with pytest.raises(ParameterError, match=r"^The value must be a finite number, not nan$"):
+        scale_level(float("nan"), LIX_LEVELS)
+    with pytest.raises(ParameterError, match=r"^The scale is empty$"):
+        scale_level(1, ())
 
 
 def test_reading_time_by_speed(rs):

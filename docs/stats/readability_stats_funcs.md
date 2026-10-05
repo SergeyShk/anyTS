@@ -328,6 +328,22 @@ Parameters:
 | `levels` | list[tuple[int, int, str, str]] | `GRADE_AGE_LEVELS` | Stages as the first and the last year, the stage and the age, in ascending order |
 | `above` | tuple[str, str] | `POSTGRADUATE_LEVEL` | Stage and age above the last stage |
 
+## Band of a scale
+
+!!! info ""
+    **anyts.readability_stats.scale_level()**
+
+<!-- --8<-- [start:scale_level] -->
+The band of a scale for a value: the scale is given as the lower bounds of its bands in descending order, the value falls into the first band whose bound it reaches, and the lowest band is open below. A value that is not a finite number and an empty scale raise `ParameterError`.
+
+Parameters:
+
+| Parameter | Type | Default | Description |
+| :-------: | :--: | :-----: | :---------: |
+| `value` | float | `-` | Value of a metric |
+| `scale` | list[tuple[float, Any]] | `-` | Lower bounds and their bands in descending order |
+<!-- --8<-- [end:scale_level] -->
+
 ## Reading time
 
 !!! info ""
