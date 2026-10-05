@@ -1193,6 +1193,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#band-of-a-scale" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Band of a scale
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#reading-time" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2057,6 +2068,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#band-of-a-scale" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Band of a scale
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#reading-time" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2805,6 +2827,39 @@ a \cdot \left(\frac{\textrm{Number of words}}{\textrm{Number of sentences}} + \f
 </tr>
 </tbody>
 </table>
+<h2 id="band-of-a-scale">Band of a scale<a class="headerlink" href="#band-of-a-scale" title="Permanent link">&para;</a></h2>
+<div class="admonition info">
+<p><strong>anyts.readability_stats.scale_level()</strong></p>
+</div>
+<!-- --8<-- [start:scale_level] -->
+<p>The band of a scale for a value: the scale is given as the lower bounds of its bands in descending order, the value falls into the first band whose bound it reaches, and the lowest band is open below. A value that is not a finite number and an empty scale raise <code>ParameterError</code>.</p>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>value</code></td>
+<td style="text-align: center;">float</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Value of a metric</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>scale</code></td>
+<td style="text-align: center;">list[tuple[float, Any]]</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Lower bounds and their bands in descending order</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:scale_level] -->
+
 <h2 id="reading-time">Reading time<a class="headerlink" href="#reading-time" title="Permanent link">&para;</a></h2>
 <div class="admonition info">
 <p><strong>anyts.readability_stats.calc_reading_time()</strong></p>

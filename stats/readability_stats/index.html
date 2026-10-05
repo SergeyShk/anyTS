@@ -1111,6 +1111,28 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#describe_level" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        describe_level
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#describe" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        describe
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#reading_time_by_speed" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1998,6 +2020,28 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#describe_level" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        describe_level
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#describe" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        describe
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#reading_time_by_speed" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2136,6 +2180,21 @@
 <td style="text-align: center;">School stages and ages of <code>describe_grade</code></td>
 </tr>
 <tr>
+<td style="text-align: center;"><code>level_scales</code></td>
+<td style="text-align: center;">class attribute</td>
+<td style="text-align: center;">Interpretation scales by metric, as lower bounds and their bands</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>level_scale(stat)</code></td>
+<td style="text-align: center;">method</td>
+<td style="text-align: center;">Interpretation scale of a metric for <code>describe_level</code> and <code>describe</code>; <code>level_scales</code> by default, overridden when the scale depends on the preset</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>grade_scales</code></td>
+<td style="text-align: center;">class attribute</td>
+<td style="text-align: center;">Scales that convert a metric into years of schooling for <code>describe</code>, as lower bounds and grades</td>
+</tr>
+<tr>
 <td style="text-align: center;"><code>reading_speed</code>, <code>reading_speed_norms</code></td>
 <td style="text-align: center;">class attributes</td>
 <td style="text-align: center;">Reading speed of <code>reading_time</code> and the speeds of the norms, words per minute</td>
@@ -2150,7 +2209,7 @@
 <p>A formula of the library is a property of the subclass named in <code>stats_desc</code>, and in <code>grade_stats</code> when it gives years of schooling; its coefficients may live in the presets under its name. The preset is a parameter: a library sets its own default in its <code>__init__</code> and passes it on.</p>
 <!-- --8<-- [end:ReadabilityStats-hooks] -->
 
-<p>The core defaults are the original English formulas: the preset <code>original</code> of <code>anyts.constants.READABILITY_PRESETS</code>, the grade formulas Flesch-Kincaid, Coleman-Liau, ARI, SMOG and Gunning fog, polysyllabic words of three syllables and long words of seven letters, the school stages of the United States, and the reading speed of 238 words per minute with the norm <code>adult</code> - 183 words per minute aloud and 238 silently (Brysbaert, 2019).</p>
+<p>The core defaults are the original English formulas: the preset <code>original</code> of <code>anyts.constants.READABILITY_PRESETS</code>, the grade formulas Flesch-Kincaid, Coleman-Liau, ARI, SMOG and Gunning fog, polysyllabic words of three syllables and long words of seven letters, the school stages of the United States, the scales of the reading ease, LIX and RIX, and the reading speed of 238 words per minute with the norm <code>adult</code> - 183 words per minute aloud and 238 silently (Brysbaert, 2019).</p>
 <h2 id="parameters">Parameters<a class="headerlink" href="#parameters" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -2302,6 +2361,98 @@
 </table>
 <!-- --8<-- [end:ReadabilityStats-describe_grade] -->
 
+<h3 id="describe_level">describe_level<a class="headerlink" href="#describe_level" title="Permanent link">&para;</a></h3>
+<!-- --8<-- [start:ReadabilityStats-describe_level] -->
+<p>Returns the band of the interpretation scale of a metric (<code>level_scale</code>); a metric without a scale of bands and an undefined value (nan) raise <code>ParameterError</code>.</p>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>stat</code></td>
+<td style="text-align: center;">str</td>
+<td style="text-align: center;"><code>flesch_reading_easy</code></td>
+<td style="text-align: center;">Name of the metric</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:ReadabilityStats-describe_level] -->
+
+<p>The default scales are the school levels of Flesch for the reading ease (<code>anyts.constants.READING_EASE_LEVELS</code>, How to Write Plain English, 1979) and the text types of Björnsson for <a href="../readability_stats_funcs/#lix-readability-index">LIX</a> (<code>LIX_LEVELS</code>):</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Reading ease</th>
+<th style="text-align: center;">Level</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>90-100</code></td>
+<td style="text-align: center;">5th grade</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>80-90</code></td>
+<td style="text-align: center;">6th grade</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>70-80</code></td>
+<td style="text-align: center;">7th grade</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>60-70</code></td>
+<td style="text-align: center;">8th and 9th grade</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>50-60</code></td>
+<td style="text-align: center;">10th to 12th grade</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>30-50</code></td>
+<td style="text-align: center;">college</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>10-30</code></td>
+<td style="text-align: center;">college graduate</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>&lt; 10</code></td>
+<td style="text-align: center;">professional</td>
+</tr>
+</tbody>
+</table>
+<h3 id="describe">describe<a class="headerlink" href="#describe" title="Permanent link">&para;</a></h3>
+<!-- --8<-- [start:ReadabilityStats-describe] -->
+<p>Returns the reading of any metric by its scale: for the consensus grade and a grade formula the school stage and reader age (<code>describe_grade</code>), for a metric of <code>grade_scales</code> the stage and age of the years of schooling its scale gives, for a metric with a scale of bands (<code>level_scale</code>) its band, and <code>None</code> for a metric without a scale or with an undefined value (nan). A name that is neither in <code>stats_desc</code> nor a public property of the class raises <code>UnknownStatError</code>.</p>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>stat</code></td>
+<td style="text-align: center;">str</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Name of the metric</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:ReadabilityStats-describe] -->
+
+<p>By default RIX converts into the grades of Anderson (<code>anyts.constants.RIX_GRADES</code>, the table of the <a href="../readability_stats_funcs/#rix-readability-index">RIX</a> section, college as 13).</p>
 <h3 id="reading_time_by_speed">reading_time_by_speed<a class="headerlink" href="#reading_time_by_speed" title="Permanent link">&para;</a></h3>
 <!-- --8<-- [start:ReadabilityStats-reading_time_by_speed] -->
 <p>Returns the reading time of the text in minutes at the given speed; a speed that is not a positive number raises <code>ParameterError</code>.</p>
@@ -2384,6 +2535,8 @@
 <span class="c1"># (98.87, 0.59)</span>
 <span class="n">rs</span><span class="o">.</span><span class="n">consensus_grade</span><span class="p">,</span> <span class="n">rs</span><span class="o">.</span><span class="n">describe_grade</span><span class="p">()</span>
 <span class="c1"># (3.0, 'elementary school, grades 1-5 (6-11 years)')</span>
+<span class="n">rs</span><span class="o">.</span><span class="n">describe</span><span class="p">(</span><span class="s2">"flesch_reading_easy"</span><span class="p">),</span> <span class="n">rs</span><span class="o">.</span><span class="n">describe</span><span class="p">(</span><span class="s2">"lix"</span><span class="p">),</span> <span class="n">rs</span><span class="o">.</span><span class="n">describe</span><span class="p">(</span><span class="s2">"mu_index"</span><span class="p">)</span>
+<span class="c1"># ('5th grade', "very easy texts, children's books", None)</span>
 <span class="n">rs</span><span class="o">.</span><span class="n">reading_time_by_norm</span><span class="p">(</span><span class="s2">"adult"</span><span class="p">)</span>
 <span class="c1"># (0.04918032786885246, 0.037815126050420166)</span>
 </code></pre></div>
