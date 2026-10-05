@@ -1,3 +1,4 @@
+import functools
 import re
 from collections import Counter
 from math import isnan, sqrt
@@ -265,7 +266,7 @@ def test_describe_level(rs):
     # reading ease 98.9 - 5th grade, LIX 15.6 - below 30
     assert rs.describe_level() == "5th grade"
     assert rs.describe_level("lix") == "very easy texts, children's books"
-    with pytest.raises(ParameterError, match=r"^The metric rix has no interpretation scale"):
+    with pytest.raises(ParameterError, match=r"^The metric rix has no scale of bands"):
         rs.describe_level("rix")
 
 
@@ -278,11 +279,40 @@ def test_describe(rs):
     assert rs.describe("rix") == grade_to_age(3) == "elementary school, grades 1-5 (6-11 years)"
     assert rs.describe("mu_index") is None
     assert rs.describe("reading_time") is None
-    for stat in ("rix_grade", "bs"):
-        with pytest.raises(
-            UnknownStatError, match=rf"^Unknown metric: {stat}\. Available metrics"
-        ):
+    for stat in ("rix_grade", "bs", "_n_words", None, ["lix"]):
+        with pytest.raises(UnknownStatError, match=r"^Unknown metric: .+\. Available metrics"):
             rs.describe(stat)
+
+
+class ByPreset(Readability):
+    """A scale chosen by the object, as a library with scales by preset does"""
+
+    stats_desc: ClassVar = {**READABILITY_STATS_DESC, "cached_lix": "LIX, cached"}
+
+    @functools.cached_property
+    def cached_lix(self):
+        return self.lix
+
+    @property
+    def _n_words(self):
+        return self.bs.n_words
+
+    def level_scale(self, stat):
+        return {"mu_index": ((50, "high"), (0, "low")), "cached_lix": LIX_LEVELS}.get(stat)
+
+    def describe_level(self, stat="flesch_reading_easy", scale=None):
+        raise RuntimeError("describe reads the scale of level_scale, not describe_level")
+
+
+def test_describe_level_scale():
+    rs = ByPreset(TEXT)
+    # Legibilidad µ 66.7
+    assert rs.describe("mu_index") == "high"
+    assert rs.describe("cached_lix") == "very easy texts, children's books"
+    assert rs.describe("lix") is None
+    assert rs.describe("flesch_reading_easy") is None
+    with pytest.raises(UnknownStatError):
+        rs.describe("_n_words")
 
 
 @pytest.mark.parametrize(

@@ -71,6 +71,7 @@ class ReadabilityStats:
     Methods:
         reading_ease_to_grade: Years of schooling for a value of the reading ease
         describe_grade: School stage and reader age for the consensus grade or a grade formula
+        level_scale: Interpretation scale of a metric, level_scales by default
         describe_level: Band of the interpretation scale of a metric
         describe: Reading of any metric by its scale
         reading_time_by_speed: Reading time at a given speed
@@ -277,25 +278,45 @@ class ReadabilityStats:
             )
         return grade_to_age(getattr(self, stat), self.grade_age_levels, self.postgraduate_level)
 
+    def level_scale(self, stat: str) -> tuple[tuple[float, str], ...] | None:
+        """
+        Getting the interpretation scale of a metric
+
+        Description:
+            By default the scale of level_scales; a library whose scale depends
+            on the preset overrides the method, and describe_level and describe
+            follow it
+
+        Arguments:
+            stat (str): Name of the metric
+
+        Returns:
+            tuple[tuple[float, str], ...] | None: Lower bounds and their bands, None
+                for a metric without a scale
+        """
+        return self.level_scales.get(stat)
+
     def describe_level(self, stat: str = "flesch_reading_easy") -> str:
         """
         Getting the band of the interpretation scale of a metric
 
         Arguments:
-            stat (str): Name of a metric of level_scales, the reading ease by default
+            stat (str): Name of a metric with a scale (level_scale), the reading ease
+                by default
 
         Returns:
             str: Band of the scale
 
         Raises:
-            ParameterError: If the metric has no scale in level_scales
+            ParameterError: If the metric has no scale of bands
         """
-        if stat not in self.level_scales:
+        scale = self.level_scale(stat)
+        if scale is None:
             raise ParameterError(
-                f"The metric {stat} has no interpretation scale. "
-                f"Metrics with a scale: {tuple(self.level_scales)}"
+                f"The metric {stat} has no scale of bands. "
+                f"Metrics with one: {tuple(self.level_scales)}"
             )
-        return scale_level(getattr(self, stat), self.level_scales[stat])
+        return scale_level(getattr(self, stat), scale)
 
     def describe(self, stat: str) -> str | None:
         """
@@ -304,12 +325,13 @@ class ReadabilityStats:
         Description:
             The consensus grade and a grade formula give the school stage and
             reader age (describe_grade), a metric of grade_scales the stage and
-            age of the years of schooling its scale gives, a metric of
-            level_scales the band of its scale (describe_level); another metric
-            has no scale and gives None
+            age of the years of schooling its scale gives, a metric with a scale
+            of bands (level_scale) its band; another metric has no scale and
+            gives None. A metric is a name of stats_desc or a public property
+            of the class
 
         Arguments:
-            stat (str): Name of a metric, a property of the class
+            stat (str): Name of the metric
 
         Returns:
             str | None: Reading of the value; None for a metric without a scale
@@ -317,18 +339,23 @@ class ReadabilityStats:
         Raises:
             UnknownStatError: If the class has no such metric
         """
+        if not self._is_metric(stat):
+            raise UnknownStatError(
+                f"Unknown metric: {stat}. Available metrics: {tuple(self.stats_desc)}"
+            )
         if stat in ("consensus_grade", *self.grade_stats):
             return self.describe_grade(stat)
         if stat in self.grade_scales:
             grade = scale_level(getattr(self, stat), self.grade_scales[stat])
             return grade_to_age(grade, self.grade_age_levels, self.postgraduate_level)
-        if stat in self.level_scales:
-            return self.describe_level(stat)
-        if not isinstance(getattr(type(self), stat, None), property):
-            raise UnknownStatError(
-                f"Unknown metric: {stat}. Available metrics: {tuple(self.stats_desc)}"
-            )
-        return None
+        scale = self.level_scale(stat)
+        return None if scale is None else scale_level(getattr(self, stat), scale)
+
+    def _is_metric(self, stat: object) -> bool:
+        """Whether the name is a metric of stats_desc or a public property of the class"""
+        if not isinstance(stat, str) or stat.startswith("_"):
+            return False
+        return stat in self.stats_desc or isinstance(getattr(type(self), stat, None), property)
 
     def reading_time_by_speed(self, wpm: float) -> float:
         """

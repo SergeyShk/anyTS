@@ -27,7 +27,8 @@ A language library subclasses `ReadabilityStats`:
 | `smog_complex_syl_factor` | class attribute | Minimum number of syllables in a polysyllabic word of SMOG and Gunning fog |
 | `lix_long_word_letter_factor` | class attribute | Minimum number of letters in a long word of LIX and RIX |
 | `grade_age_levels`, `postgraduate_level` | class attributes | School stages and ages of `describe_grade` |
-| `level_scales` | class attribute | Interpretation scales of `describe_level` by metric, as lower bounds and their bands |
+| `level_scales` | class attribute | Interpretation scales by metric, as lower bounds and their bands |
+| `level_scale(stat)` | method | Interpretation scale of a metric for `describe_level` and `describe`; `level_scales` by default, overridden when the scale depends on the preset |
 | `grade_scales` | class attribute | Scales that convert a metric into years of schooling for `describe`, as lower bounds and grades |
 | `reading_speed`, `reading_speed_norms` | class attributes | Reading speed of `reading_time` and the speeds of the norms, words per minute |
 | `reading_ease_to_grade(flesch_reading_easy)` | method | Years of schooling for the reading ease in the consensus grade |
@@ -92,7 +93,7 @@ Parameters:
 ### describe_level
 
 <!-- --8<-- [start:ReadabilityStats-describe_level] -->
-Returns the band of the interpretation scale of a metric from `level_scales`; a metric without a scale there raises `ParameterError`.
+Returns the band of the interpretation scale of a metric (`level_scale`); a metric without a scale of bands raises `ParameterError`.
 
 Parameters:
 
@@ -117,7 +118,7 @@ The default scales are the school levels of Flesch for the reading ease (`anyts.
 ### describe
 
 <!-- --8<-- [start:ReadabilityStats-describe] -->
-Returns the reading of any metric by its scale: for the consensus grade and a grade formula the school stage and reader age (`describe_grade`), for a metric of `grade_scales` the stage and age of the years of schooling its scale gives, for a metric of `level_scales` the band of its scale (`describe_level`), and `None` for a metric without a scale. A name that is not a metric of the class raises `UnknownStatError`.
+Returns the reading of any metric by its scale: for the consensus grade and a grade formula the school stage and reader age (`describe_grade`), for a metric of `grade_scales` the stage and age of the years of schooling its scale gives, for a metric with a scale of bands (`level_scale`) its band, and `None` for a metric without a scale. A name that is neither in `stats_desc` nor a public property of the class raises `UnknownStatError`.
 
 Parameters:
 
