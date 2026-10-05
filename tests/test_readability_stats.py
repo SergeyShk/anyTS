@@ -315,6 +315,22 @@ def test_describe_level_scale():
         rs.describe("_n_words")
 
 
+class WithMu(Readability):
+    level_scales: ClassVar = {"mu_index": ((50, "high"), (0, "low"))}
+
+
+def test_describe_undefined():
+    """A metric with a scale whose value is undefined has no reading"""
+    # three words of three letters: no variance of the word length, µ is nan
+    rs = WithMu("The cat sat.")
+    assert isnan(rs.mu_index)
+    assert rs.describe("mu_index") is None
+    with pytest.raises(ParameterError, match=r"^The value must be a finite number, not nan$"):
+        rs.describe_level("mu_index")
+    with pytest.raises(ParameterError, match=r"^The metric lix has no scale of bands$"):
+        rs.describe_level("lix")
+
+
 @pytest.mark.parametrize(
     ("value", "band"),
     [

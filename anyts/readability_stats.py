@@ -1,5 +1,6 @@
 from collections.abc import Callable, Iterable, Mapping
-from math import floor, nan, sqrt
+from math import floor, isfinite, nan, sqrt
+from numbers import Real
 from statistics import median
 from typing import ClassVar, TypeVar
 
@@ -308,14 +309,12 @@ class ReadabilityStats:
             str: Band of the scale
 
         Raises:
-            ParameterError: If the metric has no scale of bands
+            ParameterError: If the metric has no scale of bands or its value is not
+                a finite number
         """
         scale = self.level_scale(stat)
         if scale is None:
-            raise ParameterError(
-                f"The metric {stat} has no scale of bands. "
-                f"Metrics with one: {tuple(self.level_scales)}"
-            )
+            raise ParameterError(f"The metric {stat} has no scale of bands")
         return scale_level(getattr(self, stat), scale)
 
     def describe(self, stat: str) -> str | None:
@@ -326,15 +325,16 @@ class ReadabilityStats:
             The consensus grade and a grade formula give the school stage and
             reader age (describe_grade), a metric of grade_scales the stage and
             age of the years of schooling its scale gives, a metric with a scale
-            of bands (level_scale) its band; another metric has no scale and
-            gives None. A metric is a name of stats_desc or a public property
-            of the class
+            of bands (level_scale) its band; a metric without a scale and an
+            undefined value (nan) give None. A metric is a name of stats_desc
+            or a public property of the class
 
         Arguments:
             stat (str): Name of the metric
 
         Returns:
             str | None: Reading of the value; None for a metric without a scale
+                or an undefined value
 
         Raises:
             UnknownStatError: If the class has no such metric
@@ -343,13 +343,16 @@ class ReadabilityStats:
             raise UnknownStatError(
                 f"Unknown metric: {stat}. Available metrics: {tuple(self.stats_desc)}"
             )
+        value = getattr(self, stat)
+        if isinstance(value, Real) and not isfinite(value):
+            return None
         if stat in ("consensus_grade", *self.grade_stats):
-            return self.describe_grade(stat)
+            return grade_to_age(value, self.grade_age_levels, self.postgraduate_level)
         if stat in self.grade_scales:
-            grade = scale_level(getattr(self, stat), self.grade_scales[stat])
+            grade = scale_level(value, self.grade_scales[stat])
             return grade_to_age(grade, self.grade_age_levels, self.postgraduate_level)
         scale = self.level_scale(stat)
-        return None if scale is None else scale_level(getattr(self, stat), scale)
+        return None if scale is None else scale_level(value, scale)
 
     def _is_metric(self, stat: object) -> bool:
         """Whether the name is a metric of stats_desc or a public property of the class"""

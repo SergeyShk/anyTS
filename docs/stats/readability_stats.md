@@ -93,7 +93,7 @@ Parameters:
 ### describe_level
 
 <!-- --8<-- [start:ReadabilityStats-describe_level] -->
-Returns the band of the interpretation scale of a metric (`level_scale`); a metric without a scale of bands raises `ParameterError`.
+Returns the band of the interpretation scale of a metric (`level_scale`); a metric without a scale of bands and an undefined value (nan) raise `ParameterError`.
 
 Parameters:
 
@@ -118,7 +118,7 @@ The default scales are the school levels of Flesch for the reading ease (`anyts.
 ### describe
 
 <!-- --8<-- [start:ReadabilityStats-describe] -->
-Returns the reading of any metric by its scale: for the consensus grade and a grade formula the school stage and reader age (`describe_grade`), for a metric of `grade_scales` the stage and age of the years of schooling its scale gives, for a metric with a scale of bands (`level_scale`) its band, and `None` for a metric without a scale. A name that is neither in `stats_desc` nor a public property of the class raises `UnknownStatError`.
+Returns the reading of any metric by its scale: for the consensus grade and a grade formula the school stage and reader age (`describe_grade`), for a metric of `grade_scales` the stage and age of the years of schooling its scale gives, for a metric with a scale of bands (`level_scale`) its band, and `None` for a metric without a scale or with an undefined value (nan). A name that is neither in `stats_desc` nor a public property of the class raises `UnknownStatError`.
 
 Parameters:
 
