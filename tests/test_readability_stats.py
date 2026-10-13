@@ -13,7 +13,6 @@ from anyts.constants import (
     LIX_LEVELS,
     READABILITY_PRESETS,
     READABILITY_STATS_DESC,
-    READING_EASE_GRADES,
     READING_EASE_LEVELS,
     RIX_GRADES,
     RIX_LEVELS,
@@ -309,17 +308,23 @@ class OwnLevels(Readability):
     level_scales: ClassVar = {"lix": LIX_LEVELS}
 
 
+class OwnGrades(Readability):
+    grade_scales: ClassVar = {"rix": ((0.4, 14), (0, 1))}
+
+
 def test_describe_by_grade_scale():
     rs = OwnLevels(TEXT)
     # RIX 0.5 - grade 3 of Anderson
     assert rs.describe("rix") == grade_to_age(3) == "elementary school, grades 1-5 (6-11 years)"
     assert rs.describe("flesch_reading_easy") is None
+    # A scale of bands comes first
+    assert OwnGrades(TEXT).describe("rix") == "3rd grade"
 
 
 def test_rix_levels_follow_the_grades():
     assert [bound for bound, _ in RIX_LEVELS] == [bound for bound, _ in RIX_GRADES]
     for (_, band), (_, grade) in zip(RIX_LEVELS[1:], RIX_GRADES[1:], strict=True):
-        assert band.startswith(str(grade))
+        assert band.split()[0].rstrip("stndrh") == str(grade)
     assert scale_level(7.2, RIX_LEVELS) == scale_level(50, RIX_LEVELS) == "college and above"
 
 
@@ -468,7 +473,6 @@ def test_mu_index():
 )
 def test_flesch_reading_easy_to_grade(flesch_reading_easy, grade):
     assert flesch_reading_easy_to_grade(flesch_reading_easy) == grade
-    assert scale_level(flesch_reading_easy, READING_EASE_GRADES) == grade
 
 
 def test_flesch_reading_easy_to_grade_bands():
@@ -476,6 +480,7 @@ def test_flesch_reading_easy_to_grade_bands():
     assert flesch_reading_easy_to_grade(70, bands) == 5
     assert flesch_reading_easy_to_grade(39.9, bands) == 13
     assert flesch_reading_easy_to_grade(39.9, bands, below=14) == 14
+    assert [flesch_reading_easy_to_grade(x, below=14) for x in (35, 20, -5)] == [12, 14, 14]
 
 
 def test_calc_consensus_grade():

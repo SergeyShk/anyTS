@@ -100,10 +100,10 @@ class ReadabilityStats:
             of describe_level by metric, as lower bounds and their bands
         grade_scales (dict[str, tuple[tuple[float, float], ...]]): Scales that convert
             a metric into years of schooling for describe, as lower bounds and grades;
-            describe reads a metric by them when it has no scale of bands
+            describe reads a metric by them when level_scale gives it no scale of bands
         reading_ease_grades (tuple[tuple[float, float], ...]): Scale that converts the
             reading ease into years of schooling for the consensus grade, as lower bounds
-            and grades
+            and grades; by default the bands of READING_EASE_GRADES and 13 below them
         postgraduate_level (tuple[str, str]): Stage and age above the last school stage
         reading_speed (float): Reading speed of reading_time, words per minute
         reading_speed_norms (dict[str, tuple[float, ...]]): Speeds of the reading norms,
@@ -131,7 +131,10 @@ class ReadabilityStats:
         "rix": RIX_LEVELS,
     }
     grade_scales: ClassVar[Mapping[str, tuple[tuple[float, float], ...]]] = {"rix": RIX_GRADES}
-    reading_ease_grades: ClassVar[tuple[tuple[float, float], ...]] = READING_EASE_GRADES
+    reading_ease_grades: ClassVar[tuple[tuple[float, float], ...]] = (
+        *READING_EASE_GRADES,
+        (0, 13),
+    )
     postgraduate_level: ClassVar[tuple[str, str]] = POSTGRADUATE_LEVEL
     reading_speed: ClassVar[float] = READING_SPEED_WPM
     reading_speed_norms: ClassVar[Mapping[str, tuple[float, ...]]] = READING_SPEED_NORMS

@@ -217,9 +217,8 @@ READABILITY_PRESETS: dict[str, dict[str, tuple[float, ...]]] = {
         "gunning_fog_index": (0.4,),
     }
 }
-# Lower bounds of the Flesch reading ease in descending order and the years of schooling
-# they give, the lowest band open below, as text_standard of textstat reads the table of
-# Flesch (1948)
+# Lower bounds of the Flesch reading ease and the years of schooling they give, as
+# text_standard of textstat reads the table of Flesch (1948); below the last bound - 13
 READING_EASE_GRADES: tuple[tuple[float, float], ...] = (
     (90, 5),
     (80, 6),
@@ -228,7 +227,6 @@ READING_EASE_GRADES: tuple[tuple[float, float], ...] = (
     (50, 10),
     (40, 11),
     (30, 12),
-    (0, 13),
 )
 # Scales of describe_level: lower bounds in descending order, the lowest band open below.
 # The reading ease by the school levels of Flesch (How to Write Plain English, 1979)

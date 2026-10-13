@@ -29,15 +29,15 @@ A language library subclasses `ReadabilityStats`:
 | `grade_age_levels`, `postgraduate_level` | class attributes | School stages and ages of `describe_grade` |
 | `level_scales` | class attribute | Interpretation scales by metric, as lower bounds and their bands |
 | `level_scale(stat)` | method | Interpretation scale of a metric for `describe_level` and `describe`; `level_scales` by default, overridden when the scale depends on the preset |
-| `grade_scales` | class attribute | Scales that convert a metric into years of schooling for `describe` of a metric without a scale of bands, as lower bounds and grades |
+| `grade_scales` | class attribute | Scales that convert a metric into years of schooling for `describe`, as lower bounds and grades; a metric with a scale of bands is read by its bands, so a library that reads it by years of schooling leaves it out of `level_scales` |
 | `reading_speed`, `reading_speed_norms` | class attributes | Reading speed of `reading_time` and the speeds of the norms, words per minute |
-| `reading_ease_grades` | class attribute | Scale that converts the reading ease into years of schooling for the consensus grade, as lower bounds and grades |
+| `reading_ease_grades` | class attribute | Scale that converts the reading ease into years of schooling for the consensus grade, as lower bounds and grades, the lowest band open below |
 | `reading_ease_to_grade(flesch_reading_easy)` | method | Years of schooling for the reading ease in the consensus grade; the band of `reading_ease_grades` by default, overridden when the scale depends on the preset |
 
 A formula of the library is a property of the subclass named in `stats_desc`, and in `grade_stats` when it gives years of schooling; its coefficients may live in the presets under its name. The preset is a parameter: a library sets its own default in its `__init__` and passes it on.
 <!-- --8<-- [end:ReadabilityStats-hooks] -->
 
-The core defaults are the original English formulas: the preset `original` of `anyts.constants.READABILITY_PRESETS`, the grade formulas Flesch-Kincaid, Coleman-Liau, ARI, SMOG and Gunning fog, polysyllabic words of three syllables and long words of seven letters, the school stages of the United States, the scales of the reading ease, LIX and RIX, the years of schooling of the reading ease of `text_standard` of textstat (`READING_EASE_GRADES`), and the reading speed of 238 words per minute with the norm `adult` - 183 words per minute aloud and 238 silently (Brysbaert, 2019).
+The core defaults are the original English formulas: the preset `original` of `anyts.constants.READABILITY_PRESETS`, the grade formulas Flesch-Kincaid, Coleman-Liau, ARI, SMOG and Gunning fog, polysyllabic words of three syllables and long words of seven letters, the school stages of the United States, the scales of the reading ease, LIX and RIX, the years of schooling of the reading ease of `text_standard` of textstat (`READING_EASE_GRADES`, 13 below 30), and the reading speed of 238 words per minute with the norm `adult` - 183 words per minute aloud and 238 silently (Brysbaert, 2019).
 
 ## Parameters
 
@@ -103,7 +103,7 @@ Parameters:
 | `stat` | str | `flesch_reading_easy` | Name of the metric |
 <!-- --8<-- [end:ReadabilityStats-describe_level] -->
 
-The default scales are the school levels of Flesch for the reading ease (`anyts.constants.READING_EASE_LEVELS`, How to Write Plain English, 1979), the text types of Björnsson for [LIX](readability_stats_funcs.md#lix-readability-index) (`LIX_LEVELS`) and the grades of Anderson for [RIX](readability_stats_funcs.md#rix-readability-index) (`RIX_LEVELS`), whose last band, over 7.2, is "college and above":
+The default scales are the school levels of Flesch for the reading ease (`anyts.constants.READING_EASE_LEVELS`, How to Write Plain English, 1979), the text types of Björnsson for [LIX](readability_stats_funcs.md#lix-readability-index) (`LIX_LEVELS`) and the grades of Anderson for [RIX](readability_stats_funcs.md#rix-readability-index) (`RIX_LEVELS`), whose last band, from 7.2 up, is "college and above":
 
 | Reading ease | Level |
 | :----------: | :---: |
