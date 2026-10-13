@@ -2192,7 +2192,7 @@
 <tr>
 <td style="text-align: center;"><code>grade_scales</code></td>
 <td style="text-align: center;">class attribute</td>
-<td style="text-align: center;">Scales that convert a metric into years of schooling for <code>describe</code>, as lower bounds and grades</td>
+<td style="text-align: center;">Scales that convert a metric into years of schooling for <code>describe</code>, as lower bounds and grades; a metric with a scale of bands is read by its bands, so a library that reads it by years of schooling leaves it out of <code>level_scales</code></td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>reading_speed</code>, <code>reading_speed_norms</code></td>
@@ -2200,16 +2200,21 @@
 <td style="text-align: center;">Reading speed of <code>reading_time</code> and the speeds of the norms, words per minute</td>
 </tr>
 <tr>
+<td style="text-align: center;"><code>reading_ease_grades</code></td>
+<td style="text-align: center;">class attribute</td>
+<td style="text-align: center;">Scale that converts the reading ease into years of schooling for the consensus grade, as lower bounds and grades, the lowest band open below</td>
+</tr>
+<tr>
 <td style="text-align: center;"><code>reading_ease_to_grade(flesch_reading_easy)</code></td>
 <td style="text-align: center;">method</td>
-<td style="text-align: center;">Years of schooling for the reading ease in the consensus grade</td>
+<td style="text-align: center;">Years of schooling for the reading ease in the consensus grade; the band of <code>reading_ease_grades</code> by default, overridden when the scale depends on the preset</td>
 </tr>
 </tbody>
 </table>
 <p>A formula of the library is a property of the subclass named in <code>stats_desc</code>, and in <code>grade_stats</code> when it gives years of schooling; its coefficients may live in the presets under its name. The preset is a parameter: a library sets its own default in its <code>__init__</code> and passes it on.</p>
 <!-- --8<-- [end:ReadabilityStats-hooks] -->
 
-<p>The core defaults are the original English formulas: the preset <code>original</code> of <code>anyts.constants.READABILITY_PRESETS</code>, the grade formulas Flesch-Kincaid, Coleman-Liau, ARI, SMOG and Gunning fog, polysyllabic words of three syllables and long words of seven letters, the school stages of the United States, the scales of the reading ease, LIX and RIX, and the reading speed of 238 words per minute with the norm <code>adult</code> - 183 words per minute aloud and 238 silently (Brysbaert, 2019).</p>
+<p>The core defaults are the original English formulas: the preset <code>original</code> of <code>anyts.constants.READABILITY_PRESETS</code>, the grade formulas Flesch-Kincaid, Coleman-Liau, ARI, SMOG and Gunning fog, polysyllabic words of three syllables and long words of seven letters, the school stages of the United States, the scales of the reading ease, LIX and RIX, the years of schooling of the reading ease of <code>text_standard</code> of textstat (<code>READING_EASE_GRADES</code>, 13 below 30), and the reading speed of 238 words per minute with the norm <code>adult</code> - 183 words per minute aloud and 238 silently (Brysbaert, 2019).</p>
 <h2 id="parameters">Parameters<a class="headerlink" href="#parameters" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -2333,7 +2338,7 @@
 <p>The formulas are described in the <a href="../readability_stats_funcs/">metric functions</a> section.</p>
 <h2 id="consensus_grade">Consensus grade<a class="headerlink" href="#consensus_grade" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:ReadabilityStats-consensus] -->
-<p>The formulas that give years of schooling (<code>grade_stats</code>) are summarized in the <code>consensus_grade</code> attribute: the median of their values rounded half up, together with the reading ease converted into years of schooling (<code>reading_ease_to_grade</code>) without rounding.</p>
+<p>The formulas that give years of schooling (<code>grade_stats</code>) are summarized in the <code>consensus_grade</code> attribute: the median of their values rounded half up, together with the reading ease converted into years of schooling (<code>reading_ease_to_grade</code>) without rounding. A library aligns the bounds of <code>reading_ease_grades</code> with its scale of the reading ease, so that the consensus grade and <code>describe</code> read the value alike.</p>
 <!-- --8<-- [end:ReadabilityStats-consensus] -->
 
 <h2 id="methods">Methods<a class="headerlink" href="#methods" title="Permanent link">&para;</a></h2>
@@ -2385,7 +2390,7 @@
 </table>
 <!-- --8<-- [end:ReadabilityStats-describe_level] -->
 
-<p>The default scales are the school levels of Flesch for the reading ease (<code>anyts.constants.READING_EASE_LEVELS</code>, How to Write Plain English, 1979) and the text types of Björnsson for <a href="../readability_stats_funcs/#lix-readability-index">LIX</a> (<code>LIX_LEVELS</code>):</p>
+<p>The default scales are the school levels of Flesch for the reading ease (<code>anyts.constants.READING_EASE_LEVELS</code>, How to Write Plain English, 1979), the text types of Björnsson for <a href="../readability_stats_funcs/#lix-readability-index">LIX</a> (<code>LIX_LEVELS</code>) and the grades of Anderson for <a href="../readability_stats_funcs/#rix-readability-index">RIX</a> (<code>RIX_LEVELS</code>), whose last band, from 7.2 up, is "college and above":</p>
 <table>
 <thead>
 <tr>
@@ -2430,7 +2435,7 @@
 </table>
 <h3 id="describe">describe<a class="headerlink" href="#describe" title="Permanent link">&para;</a></h3>
 <!-- --8<-- [start:ReadabilityStats-describe] -->
-<p>Returns the reading of any metric by its scale: for the consensus grade and a grade formula the school stage and reader age (<code>describe_grade</code>), for a metric of <code>grade_scales</code> the stage and age of the years of schooling its scale gives, for a metric with a scale of bands (<code>level_scale</code>) its band, and <code>None</code> for a metric without a scale or with an undefined value (nan). A name that is neither in <code>stats_desc</code> nor a public property of the class raises <code>UnknownStatError</code>.</p>
+<p>Returns the reading of any metric by its scale: for the consensus grade and a grade formula the school stage and reader age (<code>describe_grade</code>), for a metric with a scale of bands (<code>level_scale</code>) its band, for another metric of <code>grade_scales</code> the stage and age of the years of schooling its scale gives, and <code>None</code> for a metric without a scale or with an undefined value (nan). A name that is neither in <code>stats_desc</code> nor a public property of the class raises <code>UnknownStatError</code>.</p>
 <p>Parameters:</p>
 <table>
 <thead>
@@ -2452,7 +2457,7 @@
 </table>
 <!-- --8<-- [end:ReadabilityStats-describe] -->
 
-<p>By default RIX converts into the grades of Anderson (<code>anyts.constants.RIX_GRADES</code>, the table of the <a href="../readability_stats_funcs/#rix-readability-index">RIX</a> section, college as 13).</p>
+<p>By default RIX reads by its scale of bands; <code>grade_scales</code> keeps its grades as years of schooling (<code>anyts.constants.RIX_GRADES</code>, college as 13) for a library whose scales of bands leave RIX out.</p>
 <h3 id="reading_time_by_speed">reading_time_by_speed<a class="headerlink" href="#reading_time_by_speed" title="Permanent link">&para;</a></h3>
 <!-- --8<-- [start:ReadabilityStats-reading_time_by_speed] -->
 <p>Returns the reading time of the text in minutes at the given speed; a speed that is not a positive number raises <code>ParameterError</code>.</p>
