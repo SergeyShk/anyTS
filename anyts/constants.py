@@ -146,7 +146,7 @@ VISUALIZER_LABELS = {
 }
 
 # Basic statistics: the least syllables of a complex word and letters of a long one (the
-# bounds of Gunning's fog and of LIX), the characters counted as spaces
+# bounds of Gunning's fog and of LIX)
 COMPLEX_SYL_FACTOR = 3
 LONG_WORD_LETTER_FACTOR = 7
 # Spaces of BasicStats: the space separators of Unicode (category Zs) and the tab
