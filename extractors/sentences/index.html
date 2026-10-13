@@ -1974,7 +1974,7 @@
 </table>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>A regular expression as the tokenizer is a separator: the text is split with <code>re.split</code>. The sentences of any tokenizer are stripped of whitespace at the edges, before the length bounds, and empty ones are dropped.</p>
+<p>A regular expression as the tokenizer is a separator: the text is split with <code>re.split</code>. A blank line - a line break, optional whitespace and another line break - ends a sentence of any tokenizer: the text is split at blank lines first and every part goes to the tokenizer, so a heading or a paragraph without a final mark is a sentence of its own, and so is a part without words, such as a line of asterisks between sections, which the statistics leave out as a sentence without words. The sentences of any tokenizer are stripped of whitespace at the edges, before the length bounds, and empty ones are dropped.</p>
 </div>
 <!-- --8<-- [end:SentsExtractor-parameters] -->
 
@@ -2012,6 +2012,18 @@
 </code></pre></div>
 <p><em>Result</em>:</p>
 <div class="highlight"><pre><span></span><code><span class="o">(</span><span class="s1">'It rains.'</span>,<span class="w"> </span><span class="s1">'Does it?'</span>,<span class="w"> </span><span class="s1">'He said "Yes!"'</span>,<span class="w"> </span><span class="s1">'Then he left.'</span><span class="o">)</span>
+</code></pre></div>
+</div>
+<p>An example of sentence extraction from paragraphs without a final mark:</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<p><em>Code</em>:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts</span><span class="w"> </span><span class="kn">import</span> <span class="n">SentsExtractor</span>
+
+<span class="n">SentsExtractor</span><span class="p">()</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="s2">"What is new</span><span class="se">\n\n</span><span class="s2">Faster import</span><span class="se">\n</span><span class="s2">Fewer bugs</span><span class="se">\n\n</span><span class="s2">Thanks for reading!"</span><span class="p">)</span>
+</code></pre></div>
+<p><em>Result</em>:</p>
+<div class="highlight"><pre><span></span><code><span class="o">(</span><span class="s1">'What is new'</span>,<span class="w"> </span><span class="s1">'Faster import\nFewer bugs'</span>,<span class="w"> </span><span class="s1">'Thanks for reading!'</span><span class="o">)</span>
 </code></pre></div>
 </div>
 <p>An example of sentence extraction with a regular expression as the tokenizer:</p>

@@ -1739,6 +1739,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#start_sents_after_blank_lines" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        start_sents_after_blank_lines
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1882,6 +1893,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#start_sents_after_blank_lines" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        start_sents_after_blank_lines
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -2010,6 +2032,47 @@
 <span class="c1"># 0.8</span>
 <span class="n">nlp</span><span class="p">(</span><span class="s2">"?!"</span><span class="p">)</span><span class="o">.</span><span class="n">_</span><span class="o">.</span><span class="n">diversity</span>
 <span class="c1"># None</span>
+</code></pre></div>
+</div>
+<h2 id="start_sents_after_blank_lines">start_sents_after_blank_lines<a class="headerlink" href="#start_sents_after_blank_lines" title="Permanent link">&para;</a></h2>
+<div class="admonition info">
+<p><strong>anyts.components.start_sents_after_blank_lines</strong></p>
+</div>
+<!-- --8<-- [start:start_sents_after_blank_lines] -->
+<p>A component that starts a sentence at the first token after a blank line - a line break, optional whitespace and another line break - so that a heading, a list item or a paragraph without a final mark is a sentence of its own, as in the sentence extractor. It goes before the component that sets the sentences - the parser, <code>senter</code> or <code>sentencizer</code> - which keeps the starts it finds and places the others; the whitespace before such a start stays with the sentence before it. On its own the component leaves the sentences within a paragraph unsplit. A parsed document raises <code>SourceError</code>, since spaCy keeps its sentences. A language library registers the component under its prefix, <code>Language.component("&lt;prefix&gt;_blank_lines", func=start_sents_after_blank_lines)</code>.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>doc</code></td>
+<td style="text-align: center;">Doc</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Doc object</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:start_sents_after_blank_lines] -->
+
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">spacy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">spacy.language</span><span class="w"> </span><span class="kn">import</span> <span class="n">Language</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">anyts.components</span><span class="w"> </span><span class="kn">import</span> <span class="n">start_sents_after_blank_lines</span>
+
+<span class="n">Language</span><span class="o">.</span><span class="n">component</span><span class="p">(</span><span class="s2">"demo_blank_lines"</span><span class="p">,</span> <span class="n">func</span><span class="o">=</span><span class="n">start_sents_after_blank_lines</span><span class="p">)</span>
+<span class="n">nlp</span> <span class="o">=</span> <span class="n">spacy</span><span class="o">.</span><span class="n">blank</span><span class="p">(</span><span class="s2">"xx"</span><span class="p">)</span>
+<span class="n">nlp</span><span class="o">.</span><span class="n">add_pipe</span><span class="p">(</span><span class="s2">"demo_blank_lines"</span><span class="p">)</span>
+<span class="n">nlp</span><span class="o">.</span><span class="n">add_pipe</span><span class="p">(</span><span class="s2">"sentencizer"</span><span class="p">)</span>
+<span class="p">[</span><span class="n">sent</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">sent</span> <span class="ow">in</span> <span class="n">nlp</span><span class="p">(</span><span class="s2">"What is new</span><span class="se">\n\n</span><span class="s2">Faster import. Fewer bugs."</span><span class="p">)</span><span class="o">.</span><span class="n">sents</span><span class="p">]</span>
+<span class="c1"># ['What is new', 'Faster import.', 'Fewer bugs.']</span>
 </code></pre></div>
 </div>
 
