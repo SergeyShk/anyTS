@@ -61,7 +61,7 @@ The thresholds of the core are `COMPLEX_SYL_FACTOR = 3` and `LONG_WORD_LETTER_FA
 | `n_polysyllable_words` | int | Number of polysyllabic words |
 | `n_chars` | int | Number of characters without the line breaks |
 | `n_letters` | int | Number of letters |
-| `n_spaces` | int | Number of spaces and tabs |
+| `n_spaces` | int | Number of spaces of Unicode (category Zs), such as the no-break space, and tabs |
 | `n_syllables` | int | Number of syllables |
 | `n_punctuations` | int | Number of punctuation marks |
 | `c_punctuations` | dict[str, int] | Distribution of punctuation marks by type |

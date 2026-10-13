@@ -1,7 +1,11 @@
 import re
+import sys
+import unicodedata
 from collections import Counter
 from typing import ClassVar
 
+import numpy as np
+import pandas as pd
 import pytest
 import spacy
 
@@ -13,7 +17,7 @@ from anyts.basic_stats import (
     count_punctuations,
     dash_pattern,
 )
-from anyts.constants import BASIC_STATS_DESC, PUNCTUATION_TYPES
+from anyts.constants import BASIC_STATS_DESC, PUNCTUATION_TYPES, SPACES
 from anyts.exceptions import ParameterError, SourceError, SourceTypeError
 
 VOWELS = re.compile(r"[aeiouy]+", re.IGNORECASE)
@@ -409,6 +413,13 @@ def test_dash_pattern_default():
     assert dash_pattern(["or", "and"]).pattern == dash_pattern({"and", "or"}).pattern
 
 
+def test_dash_pattern_of_an_array():
+    pattern = dash_pattern(["or", "and"]).pattern
+    assert dash_pattern(np.array(["or", "and"])).pattern == pattern
+    assert dash_pattern(pd.Series(["or", "and"])).pattern == pattern
+    assert dash_pattern(np.array([], dtype=str), False).pattern == DASH_PATTERN.pattern
+
+
 @pytest.mark.parametrize(
     ("conjunctions", "error"),
     [
@@ -421,3 +432,14 @@ def test_dash_pattern_default():
 def test_dash_pattern_errors(conjunctions, error):
     with pytest.raises(error):
         dash_pattern(conjunctions)
+
+
+def test_spaces_of_unicode():
+    separators = {chr(code) for code in range(sys.maxunicode + 1)}
+    assert set(SPACES) == {char for char in separators if unicodedata.category(char) == "Zs"} | {
+        "\t"
+    }
+    # a no-break space, a narrow one, an ideographic one, a space and a tab; not a line break
+    bs = Stats("one\u00a0two\u202fthree\u3000four five\tsix\nseven", normalize=True)
+    assert bs.n_spaces == 5
+    assert bs.p_spaces == 5 / bs.n_chars

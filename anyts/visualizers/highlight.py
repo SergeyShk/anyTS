@@ -465,12 +465,13 @@ def get_text_sents(spans: Iterable[tuple[int, int, str]], words: Sequence[Word])
         >>> get_text_sents([(0, 13, "Hello, world."), (14, 18, "Bye.")], words)
         [Sent(start=0, end=13, n_words=2), Sent(start=14, end=18, n_words=1)]
     """
+    ordered = list(words)
     sents = []
     index = 0
     for start, end, _ in spans:
         n_words = 0
-        while index < len(words) and words[index].start < end:
-            n_words += words[index].start >= start
+        while index < len(ordered) and ordered[index].start < end:
+            n_words += ordered[index].start >= start
             index += 1
         sents.append(Sent(start, end, n_words))
     return sents
@@ -492,12 +493,13 @@ def group_words_by_sents(words: Sequence[Word], sents: Sequence[Sent]) -> list[l
     Returns:
         list[list[Word]]: Words of every sentence
     """
-    groups: list[list[Word]] = [[] for _ in sents]
+    ordered = list(sents)
+    groups: list[list[Word]] = [[] for _ in ordered]
     index = 0
     for word in words:
-        while index < len(sents) and sents[index].end <= word.start:
+        while index < len(ordered) and ordered[index].end <= word.start:
             index += 1
-        if index < len(sents) and sents[index].start <= word.start:
+        if index < len(ordered) and ordered[index].start <= word.start:
             groups[index].append(word)
     return groups
 

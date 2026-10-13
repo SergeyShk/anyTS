@@ -75,7 +75,7 @@ def fingerprinting(
         raise SourceTypeError("The texts must be a list of lists of words")
     for text in texts:
         check_words(text)
-    if not texts or any(not text for text in texts):
+    if len(texts) == 0 or any(not text for text in texts):
         raise SourceError("The data source has no words")
     if metric is not None and not callable(metric):
         raise SourceTypeError("The measure must be callable")

@@ -478,12 +478,13 @@ def count_words_by_spans(starts: Sequence[int], spans: Sequence[tuple[int, int]]
     """
     check_sequence(starts, "positions of the words")
     check_sequence(spans, "spans")
+    positions = list(starts)
     lengths = []
     index = 0
     for start, stop in spans:
         count = 0
-        while index < len(starts) and starts[index] < stop:
-            count += starts[index] >= start
+        while index < len(positions) and positions[index] < stop:
+            count += int(positions[index] >= start)
             index += 1
         lengths.append(count)
     return [length for length in lengths if length]
