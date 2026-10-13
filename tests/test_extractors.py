@@ -173,6 +173,40 @@ class TestSentsExtractor:
         with pytest.raises(KeyError):
             SentsExtractor(tokenizer=failing).extract(TEXT)
 
+    @pytest.mark.parametrize(
+        ("text", "expected"),
+        [
+            ("Notes without a dot\n\nThe cat sleeps", ("Notes without a dot", "The cat sleeps")),
+            ("One\n \t\nTwo\r\n\r\nThree\n\n\n\nFour", ("One", "Two", "Three", "Four")),
+            ("A list\n- one\n- two", ("A list\n- one\n- two",)),
+            ("\n\nOne\n\n", ("One",)),
+        ],
+    )
+    def test_blank_line_ends_a_sentence(self, text, expected):
+        assert SentsExtractor().extract(text) == expected
+
+    def test_blank_line_ends_a_sentence_of_any_tokenizer(self):
+        parts = []
+
+        def tokenizer(text):
+            parts.append(text)
+            return [text]
+
+        class Whole(SentsExtractor):
+            def sentenize(self, text):
+                return [text]
+
+        text = "One, two\n\nthree, four"
+        assert SentsExtractor(tokenizer=tokenizer).extract(text) == ("One, two", "three, four")
+        assert parts == ["One, two", "three, four"]
+        assert SentsExtractor(tokenizer=re.compile(r", ")).extract(text) == (
+            "One",
+            "two",
+            "three",
+            "four",
+        )
+        assert Whole().extract(text) == ("One, two", "three, four")
+
     def test_sentenize_hook(self):
         class LineSents(SentsExtractor):
             def sentenize(self, text):

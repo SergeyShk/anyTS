@@ -1,3 +1,4 @@
+import re
 from typing import ClassVar
 
 import pytest
@@ -359,3 +360,22 @@ def test_css():
     assert ".xx-hl-subjects { border-bottom: 2px solid #7c3aed; }" in css
     assert "color: #1f2328" not in HighlightedText.css()
     assert HighlightedText.css().startswith(".anyts-highlight")
+
+
+class Lines(Marks):
+    """A library whose sentences end only at a final mark"""
+
+    def iter_sents(self, text):
+        for match in re.finditer(r"[^.!?\s][^.!?]*[.!?]*", text):
+            yield match.start(), match.end(), match.group()
+
+
+def test_blank_line_ends_a_sentence_of_iter_sents():
+    sample = "Notes without a dot here\n\nThe old cat sleeps on the mat."
+    sents = [(h.start, h.end) for h in Lines(sample, layers=["long_sents"]).highlights]
+    assert [sample[start:end] for start, end in sents] == [
+        "Notes without a dot here",
+        "The old cat sleeps on the mat.",
+    ]
+    doc = spacy.blank("xx")(sample)
+    assert [h.start for h in Lines(doc, layers=["long_sents"]).highlights] == [0, 26]

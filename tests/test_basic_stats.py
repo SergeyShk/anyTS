@@ -96,6 +96,10 @@ def test_sentences_without_words_are_not_counted(source):
     assert Stats(source).n_sents == 2
 
 
+def test_blank_line_ends_a_sentence():
+    assert Stats("Notes without a dot\n\nThe cat sleeps").n_sents == 2
+
+
 def test_sentences_without_words_are_not_counted_in_a_doc():
     nlp = spacy.blank("xx")
     nlp.add_pipe("sentencizer")

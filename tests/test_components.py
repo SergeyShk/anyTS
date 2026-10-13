@@ -6,7 +6,7 @@ from spacy.language import Language
 from spacy.tokens import Doc
 
 from anyts import DiversityStats
-from anyts.components import StatsComponent
+from anyts.components import StatsComponent, start_sents_after_blank_lines
 from anyts.diversity_stats import check_params
 from anyts.exceptions import ParameterError, SourceError
 from anyts.utils import iter_doc_words
@@ -24,6 +24,9 @@ class DiversityComponent(StatsComponent):
     def compute(self, doc: Doc) -> DiversityStats:
         words = [word.lower() for _, _, word in iter_doc_words(doc)]
         return DiversityStats(words, window_len=self.window_len)
+
+
+Language.component("anyts_test_blank_lines", func=start_sents_after_blank_lines)
 
 
 @Language.factory("anyts_test_ratio")
@@ -183,3 +186,36 @@ def test_extension_of_another_package_is_kept(nlp):
     # A component added again takes its own extension back
     nlp.add_pipe("anyts_test_diversity", name="anyts_test_again")
     spacy.blank("xx").add_pipe("anyts_test_diversity", name="anyts_test_again")
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        (
+            "Notes without a dot\n\nThe cat sleeps. The dog eats.",
+            ["Notes without a dot", "The cat sleeps.", "The dog eats."],
+        ),
+        ("One. Two.\n\nThree.\n \nFour", ["One.", "Two.", "Three.", "Four"]),
+        ("One \n \t\nTwo\r\n\r\nThree\n\n\n\nFour", ["One", "Two", "Three", "Four"]),
+        ("A list\n- one\n- two", ["A list\n- one\n- two"]),
+        ("\n\nOne\n\n", ["One"]),
+    ],
+)
+def test_blank_lines_start_sentences(nlp, text, expected):
+    nlp.add_pipe("anyts_test_blank_lines")
+    nlp.add_pipe("sentencizer")
+    assert [sent.text.strip() for sent in nlp(text).sents] == expected
+    assert list(nlp.pipe([text, ""]))[1].text == ""
+
+
+def test_blank_lines_set_only_their_starts(nlp):
+    doc = start_sents_after_blank_lines(nlp("One. Two\n\nThree"))
+    assert [token.is_sent_start for token in doc] == [True, None, None, False, True]
+    doc = start_sents_after_blank_lines(nlp("One.\nTwo"))
+    assert [token.is_sent_start for token in doc] == [True, None, None, None]
+
+
+def test_blank_lines_of_a_parsed_document(nlp):
+    doc = Doc(nlp.vocab, words=["One", "two"], heads=[1, 1], deps=["dep", "ROOT"])
+    with pytest.raises(SourceError, match=r"^The sentences of a parsed document cannot be"):
+        start_sents_after_blank_lines(doc)

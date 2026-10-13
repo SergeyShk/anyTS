@@ -25,7 +25,7 @@ The core has no layers of its own: a language library subclasses `HighlightedTex
 | `iter_words(text)`, `iter_sents(text)` | methods | The words and the sentences of a string as triples of the start, the end and the text; by default those of the default tokenizers of `WordsExtractor` and `SentsExtractor` |
 | `doc_words(doc)` | method | The words of a `Doc`; by default `get_doc_words` |
 
-The sentences of a `Doc` come from its boundaries, or from `iter_sents` over its text when it has none, and the words of a sentence are those of `doc_words` or `iter_words` that start in it. `find` runs in `__init__`, so a subclass with parameters of its own stores them before it calls the `__init__` of the base; a fragment of another layer or one outside the text raises `ParameterError`.
+The sentences of a `Doc` come from its boundaries, or from `iter_sents` over its text when it has none. `iter_sents` gets the parts of a text between blank lines one by one, so a blank line ends a sentence whatever the method, and the words of a sentence are those of `doc_words` or `iter_words` that start in it. `find` runs in `__init__`, so a subclass with parameters of its own stores them before it calls the `__init__` of the base; a fragment of another layer or one outside the text raises `ParameterError`.
 <!-- --8<-- [end:HighlightedText-hooks] -->
 
 In the core the layers are empty and `css_prefix` is `anyts`.

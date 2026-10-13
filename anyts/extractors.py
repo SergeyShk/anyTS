@@ -13,6 +13,7 @@ from .utils import check_integer, check_words, has_words, is_punctuation
 
 Tokenizer = Pattern[str] | Callable[[str], Iterable[str]]
 SENTENCE_BOUNDARY = re.compile(r"(?<=[.!?…])\s+|(?<=[.!?…][\"'»”’)\]])\s+")
+BLANK_LINE = re.compile(r"\n\s*\n")
 
 
 def _char_class(chars: Iterable[str]) -> str:
@@ -197,8 +198,11 @@ class SentsExtractor(Extractor):
     Description:
         The default tokenizer is the method sentenize, which a language library
         overrides; here it splits the text at whitespace after ., !, ? or …,
-        optionally followed by a closing quote or bracket. The sentences are
-        stripped of whitespace at the edges
+        optionally followed by a closing quote or bracket. A blank line ends
+        a sentence whatever the tokenizer: the text is split at blank lines
+        first and every part is given to the tokenizer, so a part without
+        words is a sentence of its own. The sentences are stripped of
+        whitespace at the edges
 
     Arguments:
         tokenizer (pattern|callable): Tokenizer or regular expression
@@ -261,7 +265,13 @@ class SentsExtractor(Extractor):
         Raises:
             SourceTypeError: If the text is not a string or the tokenizer is set incorrectly
         """
-        sents = (sent for sent in map(str.strip, self._tokenize(text, self.sentenize)) if sent)
+        _check_text(text)
+        sents = (
+            sent
+            for part in BLANK_LINE.split(text)
+            for sent in map(str.strip, self._tokenize(part, self.sentenize))
+            if sent
+        )
         if self.min_len > 0:
             sents = (sent for sent in sents if len(sent) >= self.min_len)
         if self.max_len > 0:

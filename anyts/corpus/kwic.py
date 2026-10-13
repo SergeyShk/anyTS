@@ -7,16 +7,15 @@ from typing import NamedTuple
 from spacy.tokens import Doc, Token
 
 from ..exceptions import ParameterError, SourceTypeError
-from ..extractors import _iter_words
+from ..extractors import BLANK_LINE, _iter_words
 from ..utils import _unit_word, check_integer, iter_doc_units
 
 Tokenizer = Callable[[str], Iterable[tuple[int, int, str]]]
 Sentenizer = Callable[[str], Iterable[tuple[int, int, str]]]
 Lemmatizer = Callable[[str, Sequence[Token]], Iterable[str] | str]
 
-# The end of a paragraph, and of a sentence: a final mark, closing marks and whitespace
-PARAGRAPH = re.compile(r"\n[^\S\n]*\n")
-BOUNDARY = re.compile(rf"[.!?…][\"'»”’)\]]*\s|{PARAGRAPH.pattern}")
+# The end of a sentence: a final mark, closing marks and whitespace, or a blank line
+BOUNDARY = re.compile(rf"[.!?…][\"'»”’)\]]*\s|{BLANK_LINE.pattern}")
 
 
 class Concordance(NamedTuple):
@@ -229,13 +228,13 @@ def _boundary(
     gap = text[end:start]
     if doc is not None:
         first, last = tokens[index - 1][-1].i + 1, tokens[index][0].i
-        return bool(PARAGRAPH.search(gap)) or any(
+        return bool(BLANK_LINE.search(gap)) or any(
             doc[position].is_sent_start for position in range(first, last + 1)
         )
     if starts is None:
         return bool(BOUNDARY.search(gap))
     position = bisect_left(starts, end)
-    return bool(PARAGRAPH.search(gap)) or (position < len(starts) and starts[position] <= start)
+    return bool(BLANK_LINE.search(gap)) or (position < len(starts) and starts[position] <= start)
 
 
 def _normalize(word: str) -> str:
