@@ -2,7 +2,7 @@ from abc import ABCMeta, abstractmethod
 from typing import Any, TypeVar
 
 from spacy.language import Language
-from spacy.tokens import Doc
+from spacy.tokens import Doc, Token
 
 from .exceptions import ParameterError, SourceError
 from .extractors import BLANK_LINE
@@ -161,9 +161,10 @@ def start_sents_after_blank_lines(doc: Doc) -> Doc:
     Description:
         A component of spaCy for the pipeline before the component that sets
         the sentences - the parser, senter or sentencizer - which keeps the
-        starts set here and places the others; on its own it leaves the
-        sentences within a paragraph unsplit. A language library registers it
-        under its prefix: Language.component("<prefix>_blank_lines",
+        starts set here and places the others; the whitespace before such a
+        start stays with the sentence before it. On its own the component
+        leaves the sentences within a paragraph unsplit. A language library
+        registers it under its prefix: Language.component("<prefix>_blank_lines",
         func=start_sents_after_blank_lines)
 
     Arguments:
@@ -189,18 +190,23 @@ def start_sents_after_blank_lines(doc: Doc) -> Doc:
         >>> [sent.text for sent in nlp("Notes\\n\\nThe cat sleeps.").sents]
         ['Notes\\n\\n', 'The cat sleeps.']
     """
-    if doc.has_annotation("DEP"):
+    if len(doc) and doc.has_annotation("DEP"):
         raise SourceError(
             "The sentences of a parsed document cannot be changed: add the component "
             "before the parser"
         )
     text = doc.text
     end = None
+    spaces: list[Token] = []
     for token in doc:
         if token.is_space:
+            spaces.append(token)
             continue
         if end is not None and BLANK_LINE.search(text, end, token.idx):
+            for space in spaces:
+                space.is_sent_start = False
             token.is_sent_start = True
+        spaces = []
         end = token.idx + len(token)
     return doc
 

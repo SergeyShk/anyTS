@@ -82,7 +82,7 @@ A component of the lexical diversity of the words of a `Doc`.
     **anyts.components.start_sents_after_blank_lines**
 
 <!-- --8<-- [start:start_sents_after_blank_lines] -->
-A component that starts a sentence at the first token after a blank line - a line break, optional whitespace and another line break - so that a heading, a list item or a paragraph without a final mark is a sentence of its own, as in the sentence extractor. It goes before the component that sets the sentences - the parser, `senter` or `sentencizer` - which keeps the starts it finds and places the others; on its own it leaves the sentences within a paragraph unsplit. A parsed document raises `SourceError`, since spaCy keeps its sentences. A language library registers the component under its prefix, `Language.component("<prefix>_blank_lines", func=start_sents_after_blank_lines)`.
+A component that starts a sentence at the first token after a blank line - a line break, optional whitespace and another line break - so that a heading, a list item or a paragraph without a final mark is a sentence of its own, as in the sentence extractor. It goes before the component that sets the sentences - the parser, `senter` or `sentencizer` - which keeps the starts it finds and places the others; the whitespace before such a start stays with the sentence before it. On its own the component leaves the sentences within a paragraph unsplit. A parsed document raises `SourceError`, since spaCy keeps its sentences. A language library registers the component under its prefix, `Language.component("<prefix>_blank_lines", func=start_sents_after_blank_lines)`.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |

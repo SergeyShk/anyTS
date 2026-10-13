@@ -30,7 +30,7 @@ The default tokenizer is the method `sentenize(text)`, which a language library 
 | `max_len` | int | `0` | Maximum length of an extracted sentence in characters, `0` for no bound |
 
 !!! note "Note"
-    A regular expression as the tokenizer is a separator: the text is split with `re.split`. A blank line - a line break, optional whitespace and another line break - ends a sentence of any tokenizer: the text is split at blank lines first and every part goes to the tokenizer, so a heading or a paragraph without a final mark is a sentence of its own. The sentences of any tokenizer are stripped of whitespace at the edges, before the length bounds, and empty ones are dropped.
+    A regular expression as the tokenizer is a separator: the text is split with `re.split`. A blank line - a line break, optional whitespace and another line break - ends a sentence of any tokenizer: the text is split at blank lines first and every part goes to the tokenizer, so a heading or a paragraph without a final mark is a sentence of its own, and so is a part without words, such as a line of asterisks between sections, which the statistics leave out as a sentence without words. The sentences of any tokenizer are stripped of whitespace at the edges, before the length bounds, and empty ones are dropped.
 <!-- --8<-- [end:SentsExtractor-parameters] -->
 
 ## Methods

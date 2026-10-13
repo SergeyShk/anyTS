@@ -1,6 +1,6 @@
 import html
 import re
-from collections.abc import Iterable, Iterator, Mapping, Sequence
+from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from itertools import pairwise
 from types import MappingProxyType
@@ -9,7 +9,7 @@ from typing import ClassVar, NamedTuple
 from spacy.tokens import Doc, Token
 
 from ..exceptions import ParameterError, SourceError, SourceTypeError
-from ..extractors import SentsExtractor, _iter_words
+from ..extractors import BLANK_LINE, SentsExtractor, _iter_words
 from ..syntax import get_words
 from ..utils import _unit_word, iter_doc_tokens
 
@@ -96,7 +96,9 @@ class HighlightedText:
             iter_words, iter_sents - the words and the sentences of a string with
                 their positions, doc_words - the words of a Doc
         The sentences of a Doc come from its boundaries (iter_doc_sents), or
-        from iter_sents over its text without them; the words of a sentence are
+        from iter_sents over its text without them; iter_sents gets the parts
+        of a text between blank lines one by one, so that a blank line ends a
+        sentence as in SentsExtractor. The words of a sentence are
         those of doc_words or iter_words that start in it. The fragments are
         sorted by their start and then by descending end; fragments of
         different layers may overlap. The result shows in Jupyter as HTML with
@@ -141,13 +143,13 @@ class HighlightedText:
             spans = (
                 iter_doc_sents(source)
                 if source.has_annotation("SENT_START")
-                else self.iter_sents(self.text)
+                else _iter_part_sents(self.iter_sents, self.text)
             )
             sents = get_text_sents(spans, words)
         elif isinstance(source, str):
             self.text = source
             words = [Word(start, end, text) for start, end, text in self.iter_words(source)]
-            sents = get_text_sents(self.iter_sents(source), words)
+            sents = get_text_sents(_iter_part_sents(self.iter_sents, source), words)
         else:
             raise SourceTypeError("The data source is set incorrectly")
         if not words:
@@ -429,6 +431,16 @@ def iter_doc_sents(doc: Doc) -> Iterator[tuple[int, int, str]]:
             start = min(token.idx for token in tokens)
             end = max(token.idx + len(token) for token in tokens)
             yield start, end, text[start:end]
+
+
+def _iter_part_sents(
+    iter_sents: Callable[[str], Iterable[tuple[int, int, str]]], text: str
+) -> Iterator[tuple[int, int, str]]:
+    """Sentences of every part of a text between blank lines, at their positions in the text"""
+    bounds = [0, *(bound for match in BLANK_LINE.finditer(text) for bound in match.span())]
+    for start, end in zip(bounds[::2], [*bounds[1::2], len(text)], strict=True):
+        for first, last, sent in iter_sents(text[start:end]):
+            yield start + first, start + last, sent
 
 
 def get_text_sents(spans: Iterable[tuple[int, int, str]], words: Sequence[Word]) -> list[Sent]:

@@ -200,8 +200,9 @@ class SentsExtractor(Extractor):
         overrides; here it splits the text at whitespace after ., !, ? or …,
         optionally followed by a closing quote or bracket. A blank line ends
         a sentence whatever the tokenizer: the text is split at blank lines
-        first and every part is given to the tokenizer. The sentences are
-        stripped of whitespace at the edges
+        first and every part is given to the tokenizer, so a part without
+        words is a sentence of its own. The sentences are stripped of
+        whitespace at the edges
 
     Arguments:
         tokenizer (pattern|callable): Tokenizer or regular expression

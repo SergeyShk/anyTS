@@ -195,6 +195,7 @@ def test_extension_of_another_package_is_kept(nlp):
             "Notes without a dot\n\nThe cat sleeps. The dog eats.",
             ["Notes without a dot", "The cat sleeps.", "The dog eats."],
         ),
+        ("One. Two.\n\nThree.\n \nFour", ["One.", "Two.", "Three.", "Four"]),
         ("One \n \t\nTwo\r\n\r\nThree\n\n\n\nFour", ["One", "Two", "Three", "Four"]),
         ("A list\n- one\n- two", ["A list\n- one\n- two"]),
         ("\n\nOne\n\n", ["One"]),
@@ -203,12 +204,13 @@ def test_extension_of_another_package_is_kept(nlp):
 def test_blank_lines_start_sentences(nlp, text, expected):
     nlp.add_pipe("anyts_test_blank_lines")
     nlp.add_pipe("sentencizer")
-    assert [sent.text.strip() for sent in nlp(text).sents if sent.text.strip()] == expected
+    assert [sent.text.strip() for sent in nlp(text).sents] == expected
+    assert list(nlp.pipe([text, ""]))[1].text == ""
 
 
 def test_blank_lines_set_only_their_starts(nlp):
     doc = start_sents_after_blank_lines(nlp("One. Two\n\nThree"))
-    assert [token.is_sent_start for token in doc] == [True, None, None, None, True]
+    assert [token.is_sent_start for token in doc] == [True, None, None, False, True]
     doc = start_sents_after_blank_lines(nlp("One.\nTwo"))
     assert [token.is_sent_start for token in doc] == [True, None, None, None]
 
