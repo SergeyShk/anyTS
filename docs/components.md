@@ -75,3 +75,32 @@ A component of the lexical diversity of the words of a `Doc`.
     nlp("?!")._.diversity
     # None
     ```
+
+## start_sents_after_blank_lines
+
+!!! info ""
+    **anyts.components.start_sents_after_blank_lines**
+
+<!-- --8<-- [start:start_sents_after_blank_lines] -->
+A component that starts a sentence at the first token after a blank line - a line break, optional whitespace and another line break - so that a heading, a list item or a paragraph without a final mark is a sentence of its own, as in the sentence extractor. It goes before the component that sets the sentences - the parser, `senter` or `sentencizer` - which keeps the starts it finds and places the others; on its own it leaves the sentences within a paragraph unsplit. A parsed document raises `SourceError`, since spaCy keeps its sentences. A language library registers the component under its prefix, `Language.component("<prefix>_blank_lines", func=start_sents_after_blank_lines)`.
+
+| Parameter | Type | Default | Description |
+| :-------: | :--: | :-----: | :---------: |
+| `doc` | Doc | `-` | Doc object |
+<!-- --8<-- [end:start_sents_after_blank_lines] -->
+
+!!! example "Example"
+
+    ``` python
+    import spacy
+    from spacy.language import Language
+
+    from anyts.components import start_sents_after_blank_lines
+
+    Language.component("demo_blank_lines", func=start_sents_after_blank_lines)
+    nlp = spacy.blank("xx")
+    nlp.add_pipe("demo_blank_lines")
+    nlp.add_pipe("sentencizer")
+    [sent.text.strip() for sent in nlp("What is new\n\nFaster import. Fewer bugs.").sents]
+    # ['What is new', 'Faster import.', 'Fewer bugs.']
+    ```

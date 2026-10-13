@@ -8,7 +8,7 @@
 <!-- --8<-- [start:BasicStats] -->
 The basic statistics of a text: the counts of its sentences, words, characters, letters, spaces, syllables and punctuation marks, the distributions of the words by letters and by syllables, and the long, complex, simple, monosyllabic and polysyllabic words. The data source can be either a text or a `Doc` object of [spaCy](https://github.com/explosion/spaCy). Letters are counted by `str.isalpha`, so digits, hyphens and marks inside a word are not letters.
 
-The words of a string come from the word extractor and its sentences from the sentence extractor. The words of a `Doc` come from its tokens (punctuation marks and symbols such as `€` or `%` dropped) and its sentences from its boundaries, or from the sentence extractor when it has none; an extractor passed explicitly is used on the text of the `Doc`. A sentence of punctuation alone holds no word and is not counted.
+The words of a string come from the word extractor and its sentences from the sentence extractor. The words of a `Doc` come from its tokens (punctuation marks and symbols such as `€` or `%` dropped) and its sentences from its boundaries, or from the sentence extractor when it has none; an extractor passed explicitly is used on the text of the `Doc`. A blank line ends a sentence of a string, and of a `Doc` whose pipeline has the component `start_sents_after_blank_lines` before the parser. A sentence of punctuation alone holds no word and is not counted.
 <!-- --8<-- [end:BasicStats] -->
 
 ## Language hooks

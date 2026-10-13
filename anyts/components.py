@@ -5,6 +5,7 @@ from spacy.language import Language
 from spacy.tokens import Doc
 
 from .exceptions import ParameterError, SourceError
+from .extractors import BLANK_LINE
 from .utils import has_words
 
 Stats = TypeVar("Stats")
@@ -151,6 +152,57 @@ class StatsComponent(metaclass=ABCMeta):
         if self.accepts(doc):
             doc._.set(self.name, self.compute(doc))
         return doc
+
+
+def start_sents_after_blank_lines(doc: Doc) -> Doc:
+    """
+    Starting a sentence at the first token after a blank line
+
+    Description:
+        A component of spaCy for the pipeline before the component that sets
+        the sentences - the parser, senter or sentencizer - which keeps the
+        starts set here and places the others; on its own it leaves the
+        sentences within a paragraph unsplit. A language library registers it
+        under its prefix: Language.component("<prefix>_blank_lines",
+        func=start_sents_after_blank_lines)
+
+    Arguments:
+        doc (Doc): Doc object
+
+    Returns:
+        Doc: The document
+
+    Raises:
+        SourceError: If the document is parsed, since spaCy keeps the sentences
+            of a parsed document
+
+    Example:
+        >>> import spacy
+        >>> from spacy.language import Language
+        >>> from anyts.components import start_sents_after_blank_lines
+        >>> nlp = spacy.blank("xx")
+        >>> _ = nlp.add_pipe("sentencizer")
+        >>> [sent.text for sent in nlp("Notes\\n\\nThe cat sleeps.").sents]
+        ['Notes\\n\\nThe cat sleeps.']
+        >>> _ = Language.component("demo_blank_lines", func=start_sents_after_blank_lines)
+        >>> _ = nlp.add_pipe("demo_blank_lines", before="sentencizer")
+        >>> [sent.text for sent in nlp("Notes\\n\\nThe cat sleeps.").sents]
+        ['Notes\\n\\n', 'The cat sleeps.']
+    """
+    if doc.has_annotation("DEP"):
+        raise SourceError(
+            "The sentences of a parsed document cannot be changed: add the component "
+            "before the parser"
+        )
+    text = doc.text
+    end = None
+    for token in doc:
+        if token.is_space:
+            continue
+        if end is not None and BLANK_LINE.search(text, end, token.idx):
+            token.is_sent_start = True
+        end = token.idx + len(token)
+    return doc
 
 
 def _register(name: str) -> None:

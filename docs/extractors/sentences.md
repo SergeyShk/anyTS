@@ -30,7 +30,7 @@ The default tokenizer is the method `sentenize(text)`, which a language library 
 | `max_len` | int | `0` | Maximum length of an extracted sentence in characters, `0` for no bound |
 
 !!! note "Note"
-    A regular expression as the tokenizer is a separator: the text is split with `re.split`. The sentences of any tokenizer are stripped of whitespace at the edges, before the length bounds, and empty ones are dropped.
+    A regular expression as the tokenizer is a separator: the text is split with `re.split`. A blank line - a line break, optional whitespace and another line break - ends a sentence of any tokenizer: the text is split at blank lines first and every part goes to the tokenizer, so a heading or a paragraph without a final mark is a sentence of its own. The sentences of any tokenizer are stripped of whitespace at the edges, before the length bounds, and empty ones are dropped.
 <!-- --8<-- [end:SentsExtractor-parameters] -->
 
 ## Methods
@@ -61,6 +61,24 @@ An example of sentence extraction with the default tokenizer:
 
     ``` bash
     ('It rains.', 'Does it?', 'He said "Yes!"', 'Then he left.')
+    ```
+
+An example of sentence extraction from paragraphs without a final mark:
+
+!!! example "Example"
+
+    _Code_:
+
+    ``` python
+    from anyts import SentsExtractor
+
+    SentsExtractor().extract("What is new\n\nFaster import\nFewer bugs\n\nThanks for reading!")
+    ```
+
+    _Result_:
+
+    ``` bash
+    ('What is new', 'Faster import\nFewer bugs', 'Thanks for reading!')
     ```
 
 An example of sentence extraction with a regular expression as the tokenizer:
