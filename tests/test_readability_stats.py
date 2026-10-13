@@ -1,7 +1,8 @@
 import functools
 import re
 from collections import Counter
-from math import isnan, sqrt
+from math import floor, isnan, sqrt
+from statistics import median
 from typing import ClassVar
 
 import pytest
@@ -14,6 +15,7 @@ from anyts.constants import (
     READABILITY_STATS_DESC,
     READING_EASE_LEVELS,
     RIX_GRADES,
+    RIX_LEVELS,
 )
 from anyts.exceptions import ParameterError, SourceError, SourceTypeError, UnknownStatError
 from anyts.extractors import SentsExtractor, WordsExtractor
@@ -248,6 +250,22 @@ def test_consensus_grade_hook():
     assert Hard(TEXT).consensus_grade == 19.0
 
 
+def test_reading_ease_grades(rs):
+    class Scaled(Readability):
+        reading_ease_grades = ((90, 3), (50, 9), (0, 15))
+
+    scaled = Scaled(TEXT)
+    # reading ease 98.9 - grade 3 of the scale instead of 5
+    assert scaled.reading_ease_to_grade(scaled.flesch_reading_easy) == 3
+    assert scaled.reading_ease_to_grade(-40) == 15
+    grades = [floor(getattr(rs, stat) + 0.5) for stat in rs.grade_stats]
+    assert scaled.consensus_grade == median([*grades, 3])
+    for value in (120, 90, 89.9, 45, 30, 29.9, 0, -50):
+        assert rs.reading_ease_to_grade(value) == flesch_reading_easy_to_grade(value)
+    with pytest.raises(ParameterError, match=r"^The reading ease must be a finite number"):
+        rs.reading_ease_to_grade(float("nan"))
+
+
 def test_print_stats_hooks(capsys):
     Custom(TEXT).print_stats()
     lines = capsys.readouterr().out.split("\n")
@@ -266,22 +284,48 @@ def test_describe_level(rs):
     # reading ease 98.9 - 5th grade, LIX 15.6 - below 30
     assert rs.describe_level() == "5th grade"
     assert rs.describe_level("lix") == "very easy texts, children's books"
-    with pytest.raises(ParameterError, match=r"^The metric rix has no scale of bands"):
-        rs.describe_level("rix")
+    # RIX 0.5 - grade 3 of Anderson
+    assert rs.describe_level("rix") == "3rd grade"
+    with pytest.raises(ParameterError, match=r"^The metric mu_index has no scale of bands"):
+        rs.describe_level("mu_index")
 
 
 def test_describe(rs):
     for stat in ("consensus_grade", *rs.grade_stats):
         assert rs.describe(stat) == rs.describe_grade(stat)
-    for stat in ("flesch_reading_easy", "lix"):
+    for stat in ("flesch_reading_easy", "lix", "rix"):
         assert rs.describe(stat) == rs.describe_level(stat)
-    # RIX 0.5 - grade 3 of Anderson
-    assert rs.describe("rix") == grade_to_age(3) == "elementary school, grades 1-5 (6-11 years)"
     assert rs.describe("mu_index") is None
     assert rs.describe("reading_time") is None
     for stat in ("rix_grade", "bs", "_n_words", None, ["lix"]):
         with pytest.raises(UnknownStatError, match=r"^Unknown metric: .+\. Available metrics"):
             rs.describe(stat)
+
+
+class OwnLevels(Readability):
+    """Scales of bands without RIX, which keeps the scale of years of schooling"""
+
+    level_scales: ClassVar = {"lix": LIX_LEVELS}
+
+
+class OwnGrades(Readability):
+    grade_scales: ClassVar = {"rix": ((0.4, 14), (0, 1))}
+
+
+def test_describe_by_grade_scale():
+    rs = OwnLevels(TEXT)
+    # RIX 0.5 - grade 3 of Anderson
+    assert rs.describe("rix") == grade_to_age(3) == "elementary school, grades 1-5 (6-11 years)"
+    assert rs.describe("flesch_reading_easy") is None
+    # A scale of bands comes first
+    assert OwnGrades(TEXT).describe("rix") == "3rd grade"
+
+
+def test_rix_levels_follow_the_grades():
+    assert [bound for bound, _ in RIX_LEVELS] == [bound for bound, _ in RIX_GRADES]
+    for (_, band), (_, grade) in zip(RIX_LEVELS[1:], RIX_GRADES[1:], strict=True):
+        assert band.split()[0].rstrip("stndrh") == str(grade)
+    assert scale_level(7.2, RIX_LEVELS) == scale_level(50, RIX_LEVELS) == "college and above"
 
 
 class ByPreset(Readability):
@@ -436,6 +480,7 @@ def test_flesch_reading_easy_to_grade_bands():
     assert flesch_reading_easy_to_grade(70, bands) == 5
     assert flesch_reading_easy_to_grade(39.9, bands) == 13
     assert flesch_reading_easy_to_grade(39.9, bands, below=14) == 14
+    assert [flesch_reading_easy_to_grade(x, below=14) for x in (35, 20, -5)] == [12, 14, 14]
 
 
 def test_calc_consensus_grade():
