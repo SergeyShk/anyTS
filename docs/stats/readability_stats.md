@@ -29,14 +29,15 @@ A language library subclasses `ReadabilityStats`:
 | `grade_age_levels`, `postgraduate_level` | class attributes | School stages and ages of `describe_grade` |
 | `level_scales` | class attribute | Interpretation scales by metric, as lower bounds and their bands |
 | `level_scale(stat)` | method | Interpretation scale of a metric for `describe_level` and `describe`; `level_scales` by default, overridden when the scale depends on the preset |
-| `grade_scales` | class attribute | Scales that convert a metric into years of schooling for `describe`, as lower bounds and grades |
+| `grade_scales` | class attribute | Scales that convert a metric into years of schooling for `describe` of a metric without a scale of bands, as lower bounds and grades |
 | `reading_speed`, `reading_speed_norms` | class attributes | Reading speed of `reading_time` and the speeds of the norms, words per minute |
-| `reading_ease_to_grade(flesch_reading_easy)` | method | Years of schooling for the reading ease in the consensus grade |
+| `reading_ease_grades` | class attribute | Scale that converts the reading ease into years of schooling for the consensus grade, as lower bounds and grades |
+| `reading_ease_to_grade(flesch_reading_easy)` | method | Years of schooling for the reading ease in the consensus grade; the band of `reading_ease_grades` by default, overridden when the scale depends on the preset |
 
 A formula of the library is a property of the subclass named in `stats_desc`, and in `grade_stats` when it gives years of schooling; its coefficients may live in the presets under its name. The preset is a parameter: a library sets its own default in its `__init__` and passes it on.
 <!-- --8<-- [end:ReadabilityStats-hooks] -->
 
-The core defaults are the original English formulas: the preset `original` of `anyts.constants.READABILITY_PRESETS`, the grade formulas Flesch-Kincaid, Coleman-Liau, ARI, SMOG and Gunning fog, polysyllabic words of three syllables and long words of seven letters, the school stages of the United States, the scales of the reading ease, LIX and RIX, and the reading speed of 238 words per minute with the norm `adult` - 183 words per minute aloud and 238 silently (Brysbaert, 2019).
+The core defaults are the original English formulas: the preset `original` of `anyts.constants.READABILITY_PRESETS`, the grade formulas Flesch-Kincaid, Coleman-Liau, ARI, SMOG and Gunning fog, polysyllabic words of three syllables and long words of seven letters, the school stages of the United States, the scales of the reading ease, LIX and RIX, the years of schooling of the reading ease of `text_standard` of textstat (`READING_EASE_GRADES`), and the reading speed of 238 words per minute with the norm `adult` - 183 words per minute aloud and 238 silently (Brysbaert, 2019).
 
 ## Parameters
 
@@ -73,7 +74,7 @@ The formulas are described in the [metric functions](readability_stats_funcs.md)
 ## Consensus grade { #consensus_grade }
 
 <!-- --8<-- [start:ReadabilityStats-consensus] -->
-The formulas that give years of schooling (`grade_stats`) are summarized in the `consensus_grade` attribute: the median of their values rounded half up, together with the reading ease converted into years of schooling (`reading_ease_to_grade`) without rounding.
+The formulas that give years of schooling (`grade_stats`) are summarized in the `consensus_grade` attribute: the median of their values rounded half up, together with the reading ease converted into years of schooling (`reading_ease_to_grade`) without rounding. A library aligns the bounds of `reading_ease_grades` with its scale of the reading ease, so that the consensus grade and `describe` read the value alike.
 <!-- --8<-- [end:ReadabilityStats-consensus] -->
 
 ## Methods
@@ -102,7 +103,7 @@ Parameters:
 | `stat` | str | `flesch_reading_easy` | Name of the metric |
 <!-- --8<-- [end:ReadabilityStats-describe_level] -->
 
-The default scales are the school levels of Flesch for the reading ease (`anyts.constants.READING_EASE_LEVELS`, How to Write Plain English, 1979) and the text types of Björnsson for [LIX](readability_stats_funcs.md#lix-readability-index) (`LIX_LEVELS`):
+The default scales are the school levels of Flesch for the reading ease (`anyts.constants.READING_EASE_LEVELS`, How to Write Plain English, 1979), the text types of Björnsson for [LIX](readability_stats_funcs.md#lix-readability-index) (`LIX_LEVELS`) and the grades of Anderson for [RIX](readability_stats_funcs.md#rix-readability-index) (`RIX_LEVELS`), whose last band, over 7.2, is "college and above":
 
 | Reading ease | Level |
 | :----------: | :---: |
@@ -118,7 +119,7 @@ The default scales are the school levels of Flesch for the reading ease (`anyts.
 ### describe
 
 <!-- --8<-- [start:ReadabilityStats-describe] -->
-Returns the reading of any metric by its scale: for the consensus grade and a grade formula the school stage and reader age (`describe_grade`), for a metric of `grade_scales` the stage and age of the years of schooling its scale gives, for a metric with a scale of bands (`level_scale`) its band, and `None` for a metric without a scale or with an undefined value (nan). A name that is neither in `stats_desc` nor a public property of the class raises `UnknownStatError`.
+Returns the reading of any metric by its scale: for the consensus grade and a grade formula the school stage and reader age (`describe_grade`), for a metric with a scale of bands (`level_scale`) its band, for another metric of `grade_scales` the stage and age of the years of schooling its scale gives, and `None` for a metric without a scale or with an undefined value (nan). A name that is neither in `stats_desc` nor a public property of the class raises `UnknownStatError`.
 
 Parameters:
 
@@ -127,7 +128,7 @@ Parameters:
 | `stat` | str | `-` | Name of the metric |
 <!-- --8<-- [end:ReadabilityStats-describe] -->
 
-By default RIX converts into the grades of Anderson (`anyts.constants.RIX_GRADES`, the table of the [RIX](readability_stats_funcs.md#rix-readability-index) section, college as 13).
+By default RIX reads by its scale of bands; `grade_scales` keeps its grades as years of schooling (`anyts.constants.RIX_GRADES`, college as 13) for a library whose scales of bands leave RIX out.
 
 ### reading_time_by_speed
 

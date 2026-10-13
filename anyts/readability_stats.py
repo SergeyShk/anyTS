@@ -20,6 +20,7 @@ from .constants import (
     READING_SPEED_NORMS,
     READING_SPEED_WPM,
     RIX_GRADES,
+    RIX_LEVELS,
     SMOG_COMPLEX_SYL_FACTOR,
 )
 from .exceptions import ParameterError, SourceError, SourceTypeError, UnknownStatError
@@ -38,8 +39,8 @@ class ReadabilityStats:
         the consensus grade, the school stage and age of the reader and the
         reading time; the metrics are properties, computed on each access.
         A language library subclasses the class, sets its class attributes
-        and may override reading_ease_to_grade; its own formulas are
-        properties named in stats_desc. The defaults are the original English
+        and may override reading_ease_to_grade and level_scale; its own formulas
+        are properties named in stats_desc. The defaults are the original English
         formulas
 
     Arguments:
@@ -98,7 +99,11 @@ class ReadabilityStats:
         level_scales (dict[str, tuple[tuple[float, str], ...]]): Interpretation scales
             of describe_level by metric, as lower bounds and their bands
         grade_scales (dict[str, tuple[tuple[float, float], ...]]): Scales that convert
-            a metric into years of schooling for describe, as lower bounds and grades
+            a metric into years of schooling for describe, as lower bounds and grades;
+            describe reads a metric by them when it has no scale of bands
+        reading_ease_grades (tuple[tuple[float, float], ...]): Scale that converts the
+            reading ease into years of schooling for the consensus grade, as lower bounds
+            and grades
         postgraduate_level (tuple[str, str]): Stage and age above the last school stage
         reading_speed (float): Reading speed of reading_time, words per minute
         reading_speed_norms (dict[str, tuple[float, ...]]): Speeds of the reading norms,
@@ -123,8 +128,10 @@ class ReadabilityStats:
     level_scales: ClassVar[Mapping[str, tuple[tuple[float, str], ...]]] = {
         "flesch_reading_easy": READING_EASE_LEVELS,
         "lix": LIX_LEVELS,
+        "rix": RIX_LEVELS,
     }
     grade_scales: ClassVar[Mapping[str, tuple[tuple[float, float], ...]]] = {"rix": RIX_GRADES}
+    reading_ease_grades: ClassVar[tuple[tuple[float, float], ...]] = READING_EASE_GRADES
     postgraduate_level: ClassVar[tuple[str, str]] = POSTGRADUATE_LEVEL
     reading_speed: ClassVar[float] = READING_SPEED_WPM
     reading_speed_norms: ClassVar[Mapping[str, tuple[float, ...]]] = READING_SPEED_NORMS
@@ -248,16 +255,21 @@ class ReadabilityStats:
         Converting the Flesch reading ease into years of schooling
 
         Description:
-            Used for the consensus grade; by default flesch_reading_easy_to_grade
-            with its bands
+            Used for the consensus grade; by default the band of reading_ease_grades,
+            whose bounds a library aligns with the scale of the reading ease in
+            level_scales, so that the consensus grade and describe read the value alike
 
         Arguments:
             flesch_reading_easy (float): Value of the reading ease
 
         Returns:
             float: Years of schooling
+
+        Raises:
+            ParameterError: If the reading ease is not a finite number
         """
-        return flesch_reading_easy_to_grade(flesch_reading_easy)
+        check_number(flesch_reading_easy, "reading ease")
+        return scale_level(flesch_reading_easy, self.reading_ease_grades)
 
     def describe_grade(self, stat: str = "consensus_grade") -> str:
         """
@@ -323,11 +335,11 @@ class ReadabilityStats:
 
         Description:
             The consensus grade and a grade formula give the school stage and
-            reader age (describe_grade), a metric of grade_scales the stage and
-            age of the years of schooling its scale gives, a metric with a scale
-            of bands (level_scale) its band; a metric without a scale and an
-            undefined value (nan) give None. A metric is a name of stats_desc
-            or a public property of the class
+            reader age (describe_grade), a metric with a scale of bands
+            (level_scale) its band, another metric of grade_scales the stage and
+            age of the years of schooling its scale gives; a metric without a
+            scale and an undefined value (nan) give None. A metric is a name of
+            stats_desc or a public property of the class
 
         Arguments:
             stat (str): Name of the metric
@@ -348,11 +360,13 @@ class ReadabilityStats:
             return None
         if stat in ("consensus_grade", *self.grade_stats):
             return grade_to_age(value, self.grade_age_levels, self.postgraduate_level)
+        scale = self.level_scale(stat)
+        if scale is not None:
+            return scale_level(value, scale)
         if stat in self.grade_scales:
             grade = scale_level(value, self.grade_scales[stat])
             return grade_to_age(grade, self.grade_age_levels, self.postgraduate_level)
-        scale = self.level_scale(stat)
-        return None if scale is None else scale_level(value, scale)
+        return None
 
     def _is_metric(self, stat: object) -> bool:
         """Whether the name is a metric of stats_desc or a public property of the class"""
@@ -654,7 +668,8 @@ def calc_rix(n_long_words: int, n_sents: int) -> float:
     Description:
         Long words, of more than six letters, per sentence (Anderson, 1983),
         with no coefficients to fit. The higher the value, the harder the text;
-        RIX_GRADES gives the grade of Anderson for a value, 13 for college
+        the grades of Anderson are the bands of RIX_LEVELS, and RIX_GRADES gives
+        them as years of schooling, 13 for college
 
     References:
         Anderson, J. Lix and Rix: variations on a little-known readability index.
