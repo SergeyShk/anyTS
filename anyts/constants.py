@@ -149,7 +149,17 @@ VISUALIZER_LABELS = {
 # bounds of Gunning's fog and of LIX), the characters counted as spaces
 COMPLEX_SYL_FACTOR = 3
 LONG_WORD_LETTER_FACTOR = 7
-SPACES = (" ", "\t")
+# Spaces of BasicStats: the space separators of Unicode (category Zs) and the tab
+SPACES = (
+    " ",
+    "\u00a0",
+    "\u1680",
+    *map(chr, range(0x2000, 0x200B)),
+    "\u202f",
+    "\u205f",
+    "\u3000",
+    "\t",
+)
 BASIC_STATS_DESC = {
     "n_sents": "Sentences",
     "n_words": "Words",
