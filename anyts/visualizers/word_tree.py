@@ -184,7 +184,7 @@ class _WordTree:
             raise SourceTypeError("The texts must be a list of lists of words")
         for text in texts:
             check_words(text)
-        if not texts:
+        if len(texts) == 0:
             raise SourceError("The data source has no words")
         if not isinstance(keyword, str):
             raise SourceTypeError(f"The keyword must be a string, not {type(keyword).__name__}")

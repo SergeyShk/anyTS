@@ -1,6 +1,7 @@
 import re
 from typing import ClassVar
 
+import pandas as pd
 import pytest
 import spacy
 from spacy.tokens import Doc
@@ -298,6 +299,16 @@ def test_group_words_by_sents():
     words = [Word(0, 5, "Hello"), Word(7, 12, "world"), Word(14, 17, "How"), Word(30, 33, "end")]
     sents = [Sent(0, 13, 2), Sent(14, 28, 1)]
     assert group_words_by_sents(words, sents) == [words[:2], [words[2]]]
+
+
+def test_sentences_of_a_series():
+    words = [Word(0, 5, "Hello"), Word(7, 12, "world"), Word(14, 17, "How")]
+    sents = [Sent(0, 13, 2), Sent(14, 18, 1)]
+    spans = [(0, 13, "Hello, world."), (14, 18, "How?")]
+    gapped_words = pd.Series([None, *words]).iloc[1:]
+    gapped_sents = pd.Series([None, *sents]).iloc[1:]
+    assert get_text_sents(spans, gapped_words) == sents
+    assert group_words_by_sents(words, gapped_sents) == [words[:2], [words[2]]]
 
 
 def test_tokens_span():

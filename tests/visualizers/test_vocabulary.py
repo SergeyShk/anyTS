@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import pytest
 from matplotlib.axes import Axes
 
@@ -43,5 +44,13 @@ def test_frequency_spectrum_plot():
     assert frequency_spectrum_plot(words, ax=given) is given
     with pytest.raises(SourceError):
         frequency_spectrum_plot([])
+    for sequence in (np.array, pd.Series):
+        assert list(frequency_spectrum_plot(sequence(words)).get_lines()[0].get_ydata()) == [
+            2,
+            2,
+            2,
+        ]
+        with pytest.raises(SourceError):
+            frequency_spectrum_plot(sequence([], dtype=str))
     with pytest.raises(SourceTypeError):
         frequency_spectrum_plot("kitty is")

@@ -69,9 +69,10 @@ def dash_pattern(
     check_words(conjunctions, "conjunctions", ordered=False)
     if any(not conjunction for conjunction in conjunctions):
         raise ParameterError("A conjunction must not be empty")
+    unique = sorted(set(conjunctions))
     hanging = []
-    if conjunctions:
-        alternatives = "|".join(map(re.escape, sorted(set(conjunctions))))
+    if unique:
+        alternatives = "|".join(map(re.escape, unique))
         hanging.append(rf"[ \t]+(?i:{alternatives})(?!\w)")
     if hanging_before_comma:
         hanging.append(",")

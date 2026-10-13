@@ -371,6 +371,15 @@ def test_count_words_by_spans():
     assert count_words_by_spans(starts, []) == []
 
 
+def test_count_words_by_spans_of_an_array():
+    spans = [(0, 9), (10, 19), (20, 24)]
+    gapped = pd.Series([-5, 0, 4, 10, 14, 20]).iloc[1:]
+    for starts in (np.array([0, 4, 10, 14, 20]), gapped):
+        lengths = count_words_by_spans(starts, spans)
+        assert lengths == [2, 2, 1]
+        assert all(type(length) is int for length in lengths)
+
+
 @pytest.mark.parametrize(("starts", "spans"), [(iter([0]), [(0, 5)]), ([0], "0-5"), (None, [])])
 def test_count_words_by_spans_errors(starts, spans):
     with pytest.raises(SourceTypeError):

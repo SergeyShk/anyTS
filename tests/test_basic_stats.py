@@ -4,6 +4,8 @@ import unicodedata
 from collections import Counter
 from typing import ClassVar
 
+import numpy as np
+import pandas as pd
 import pytest
 import spacy
 
@@ -409,6 +411,13 @@ def test_dash_pattern_default():
     assert dash_pattern().pattern == DASH_PATTERN.pattern
     assert dash_pattern(set(), False).pattern == DASH_PATTERN.pattern
     assert dash_pattern(["or", "and"]).pattern == dash_pattern({"and", "or"}).pattern
+
+
+def test_dash_pattern_of_an_array():
+    pattern = dash_pattern(["or", "and"]).pattern
+    assert dash_pattern(np.array(["or", "and"])).pattern == pattern
+    assert dash_pattern(pd.Series(["or", "and"])).pattern == pattern
+    assert dash_pattern(np.array([], dtype=str), False).pattern == DASH_PATTERN.pattern
 
 
 @pytest.mark.parametrize(

@@ -2,6 +2,8 @@ from functools import partial
 from math import nan
 
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 import pytest
 from matplotlib.axes import Axes
 
@@ -137,6 +139,17 @@ def test_fingerprinting_no_words(texts):
     with pytest.raises(SourceError):
         fingerprinting(texts)
     assert plt.get_fignums() == []
+
+
+@pytest.mark.parametrize("sequence", [np.array, pd.Series])
+def test_fingerprinting_of_an_array(texts, sequence):
+    array = np.empty(len(texts), dtype=object)
+    array[:] = texts
+    values = [cells.compressed().tolist() for cells in _cells(fingerprinting(sequence(array)))]
+    assert values == [cells.compressed().tolist() for cells in _cells(fingerprinting(texts))]
+    with pytest.raises(SourceError):
+        fingerprinting(sequence([], dtype=object))
+    plt.close("all")
 
 
 def test_segment_values_end():

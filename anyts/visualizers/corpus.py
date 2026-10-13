@@ -47,7 +47,7 @@ def dispersion_plot(
     captions = merge_labels(VISUALIZER_LABELS["dispersion_plot"], labels)
     check_words(words)
     check_words(targets, "target words")
-    if not words or not targets:
+    if len(words) == 0 or len(targets) == 0:
         raise SourceError("The data source has no words")
     positions = [
         [index for index, word in enumerate(words) if word == target] for target in targets

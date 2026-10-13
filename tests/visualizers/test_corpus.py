@@ -1,6 +1,8 @@
 from math import inf, log2, nan
 
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 import pytest
 import spacy
 from matplotlib.axes import Axes
@@ -39,6 +41,20 @@ def test_dispersion_plot():
         dispersion_plot(spacy.blank("xx")("kitty is in"), ["kitty"])
     with pytest.raises(SourceTypeError):
         dispersion_plot(words, "kitty")
+    plt.close("all")
+
+
+@pytest.mark.parametrize("sequence", [np.array, pd.Series])
+def test_dispersion_plot_of_an_array(sequence):
+    ax = dispersion_plot(sequence(words), sequence(["kitty", "window"]))
+    assert [list(collection.get_positions()) for collection in ax.collections] == [
+        [0, 4, 8],
+        [3, 11],
+    ]
+    with pytest.raises(SourceError):
+        dispersion_plot(sequence([], dtype=str), ["kitty"])
+    with pytest.raises(SourceError):
+        dispersion_plot(words, sequence([], dtype=str))
     plt.close("all")
 
 

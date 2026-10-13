@@ -88,7 +88,7 @@ def frequency_spectrum_plot(
     """
     captions = merge_labels(VISUALIZER_LABELS["frequency_spectrum_plot"], labels)
     check_words(words)
-    if not words:
+    if len(words) == 0:
         raise SourceError("The data source has no words")
     check_axes(ax)
     if ax is None:

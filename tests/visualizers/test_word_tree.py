@@ -1,3 +1,5 @@
+import numpy as np
+import pandas as pd
 import pytest
 from graphviz import Digraph
 
@@ -53,6 +55,18 @@ def test_wordtree(texts):
     assert isinstance(g, Digraph)
     assert len(g.body) == 11
     assert g.name == "class"
+
+
+@pytest.mark.parametrize("sequence", [np.array, pd.Series])
+def test_wordtree_of_an_array(texts, sequence):
+    array = np.empty(len(texts), dtype=object)
+    array[:] = texts
+    assert (
+        wordtree(sequence(array), "class", max_n=2).source
+        == wordtree(texts, "class", max_n=2).source
+    )
+    with pytest.raises(SourceError):
+        wordtree(sequence([], dtype=object), "class")
 
 
 def test_wordtree_identifiers():
