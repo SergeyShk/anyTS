@@ -20,6 +20,32 @@ All exceptions of the library inherit the base class `AnyTSError` and a built-in
 The classes are available from `anyts` and from `anyts.exceptions`. A language library re-exports them under its own names as aliases, not subclasses, so its base class catches the errors of the core too.
 <!-- --8<-- [end:exceptions] -->
 
+## Messages { #messages }
+
+<!-- --8<-- [start:messages] -->
+The messages of the errors of `BasicStats`, `ReadabilityStats`, `DiversityStats` and `StatsComponent` come from their class attribute `messages`, a mapping of a key to a message; the messages with fields in braces are format strings. By default it is `anyts.constants.MESSAGES`, in English. A language library sets the messages of its language on its subclasses, `messages = {**MESSAGES, **own}`, and its users get them for a source without words, an extractor of another type, an unknown preset or metric and a parameter out of range. The functions `check_params`, `calc_windowed` and `calc_reading_time`, which these classes call, take the messages as the keyword `messages`.
+
+The checks of the types of arguments (`check_integer`, `check_number`, `check_words`, `check_sequence` of `anyts.utils`) and the other functions of the core keep their messages in English.
+<!-- --8<-- [end:messages] -->
+
+!!! example "Example"
+
+    ``` python
+    from anyts.constants import MESSAGES
+    from anyts.diversity_stats import DiversityStats
+
+
+    class Diversity(DiversityStats):
+        messages = {**MESSAGES, "no_words": "Il testo non contiene parole"}
+
+
+    try:
+        Diversity([])
+    except ValueError as e:
+        print(e)
+    # Il testo non contiene parole
+    ```
+
 !!! example "Example"
 
     ``` python

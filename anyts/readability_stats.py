@@ -11,6 +11,7 @@ from .constants import (
     GRADE_AGE_LEVELS,
     LIX_LEVELS,
     LIX_LONG_WORD_LETTER_FACTOR,
+    MESSAGES,
     POSTGRADUATE_LEVEL,
     READABILITY_GRADE_STATS,
     READABILITY_PRESETS,
@@ -108,6 +109,7 @@ class ReadabilityStats:
         reading_speed (float): Reading speed of reading_time, words per minute
         reading_speed_norms (dict[str, tuple[float, ...]]): Speeds of the reading norms,
             words per minute
+        messages (dict[str, str]): Messages of the errors by key (MESSAGES)
 
     Raises:
         SourceTypeError: If the source is neither a string, a Doc nor a BasicStats object,
@@ -138,6 +140,7 @@ class ReadabilityStats:
     postgraduate_level: ClassVar[tuple[str, str]] = POSTGRADUATE_LEVEL
     reading_speed: ClassVar[float] = READING_SPEED_WPM
     reading_speed_norms: ClassVar[Mapping[str, tuple[float, ...]]] = READING_SPEED_NORMS
+    messages: ClassVar[Mapping[str, str]] = MESSAGES
 
     def __init__(
         self,
@@ -146,32 +149,31 @@ class ReadabilityStats:
         words_extractor: WordsExtractor | None = None,
         preset: str = "original",
     ):
+        messages = self.messages
         if not isinstance(preset, str):
-            raise ParameterError(f"The preset must be a string, not {type(preset).__name__}")
+            raise ParameterError(messages["preset_type"].format(type=type(preset).__name__))
         if preset not in self.presets:
             raise ParameterError(
-                f"Unknown coefficient preset: {preset}. Available presets: {tuple(self.presets)}"
+                messages["unknown_preset"].format(preset=preset, presets=tuple(self.presets))
             )
         self.preset = preset
         self.coefficients = dict(self.presets[preset])
-        _check_extractors(sents_extractor, words_extractor)
+        _check_extractors(sents_extractor, words_extractor, messages)
         if isinstance(source, BasicStats):
             expected = self.basic_stats_class or BasicStats
             if not isinstance(source, expected):
                 raise SourceTypeError(
-                    f"The basic statistics must be a {expected.__name__} object, "
-                    f"not {type(source).__name__}"
+                    messages["basic_stats_type"].format(
+                        expected=expected.__name__, type=type(source).__name__
+                    )
                 )
             self.bs = source
         elif self.basic_stats_class is None:
-            raise SourceTypeError(
-                f"{type(self).__name__} has no basic_stats_class, the data source must be "
-                "a BasicStats object"
-            )
+            raise SourceTypeError(messages["no_basic_stats_class"].format(cls=type(self).__name__))
         else:
             self.bs = self.basic_stats_class(source, sents_extractor, words_extractor)
         if not self.bs.n_sents:
-            raise SourceError("The data source has no sentences")
+            raise SourceError(messages["no_sentences"])
 
     @property
     def flesch_reading_easy(self) -> float:
@@ -290,7 +292,7 @@ class ReadabilityStats:
         grade_stats = ("consensus_grade", *self.grade_stats)
         if stat not in grade_stats:
             raise ParameterError(
-                f"The metric {stat} is not a grade formula. Grade formulas: {grade_stats}"
+                self.messages["not_grade_formula"].format(stat=stat, grade_stats=grade_stats)
             )
         return grade_to_age(getattr(self, stat), self.grade_age_levels, self.postgraduate_level)
 
@@ -329,7 +331,7 @@ class ReadabilityStats:
         """
         scale = self.level_scale(stat)
         if scale is None:
-            raise ParameterError(f"The metric {stat} has no scale of bands")
+            raise ParameterError(self.messages["no_scale"].format(stat=stat))
         return scale_level(getattr(self, stat), scale)
 
     def describe(self, stat: str) -> str | None:
@@ -356,7 +358,7 @@ class ReadabilityStats:
         """
         if not self._is_metric(stat):
             raise UnknownStatError(
-                f"Unknown metric: {stat}. Available metrics: {tuple(self.stats_desc)}"
+                self.messages["unknown_metric"].format(stat=stat, metrics=tuple(self.stats_desc))
             )
         value = getattr(self, stat)
         if isinstance(value, Real) and not isfinite(value):
@@ -390,7 +392,7 @@ class ReadabilityStats:
         Raises:
             ParameterError: If the reading speed is not a positive number
         """
-        return calc_reading_time(self.bs.n_words, wpm)
+        return calc_reading_time(self.bs.n_words, wpm, messages=self.messages)
 
     def reading_time_by_norm(self, norm: str) -> tuple[float, ...]:
         """
@@ -407,8 +409,9 @@ class ReadabilityStats:
         """
         if not isinstance(norm, str) or norm not in self.reading_speed_norms:
             raise ParameterError(
-                f"Unknown reading speed norm: {norm}. "
-                f"Available norms: {tuple(self.reading_speed_norms)}"
+                self.messages["unknown_norm"].format(
+                    norm=norm, norms=tuple(self.reading_speed_norms)
+                )
             )
         return tuple(
             calc_reading_time(self.bs.n_words, wpm) for wpm in self.reading_speed_norms[norm]
@@ -876,7 +879,9 @@ def grade_to_age(
     return f"{education} ({age})"
 
 
-def calc_reading_time(n_words: int, wpm: float = READING_SPEED_WPM) -> float:
+def calc_reading_time(
+    n_words: int, wpm: float = READING_SPEED_WPM, *, messages: Mapping[str, str] = MESSAGES
+) -> float:
     """
     Computing the reading time of a text
 
@@ -891,6 +896,7 @@ def calc_reading_time(n_words: int, wpm: float = READING_SPEED_WPM) -> float:
     Arguments:
         n_words (int): Number of words
         wpm (float): Reading speed, words per minute
+        messages (dict[str, str]): Messages of the errors by key (MESSAGES)
 
     Returns:
         float: Reading time in minutes
@@ -900,5 +906,5 @@ def calc_reading_time(n_words: int, wpm: float = READING_SPEED_WPM) -> float:
     """
     check_number(wpm, "reading speed")
     if not wpm > 0:
-        raise ParameterError("The reading speed must be greater than 0")
+        raise ParameterError(messages["reading_speed"])
     return n_words / wpm

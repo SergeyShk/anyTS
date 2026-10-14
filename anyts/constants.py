@@ -83,6 +83,48 @@ DELTA_VARIANTS = {
     "cosine": "Cosine Delta - cosine distance of the z-scores",
 }
 
+# Messages of the errors of the statistics classes and the components by key; the messages
+# with fields in braces are format strings, and a language library passes its own over these
+MESSAGES = {
+    "source_type": "The data source is set incorrectly",
+    "no_words": "The data source has no words",
+    "no_sentences": "The data source has no sentences",
+    "sents_extractor_type": "The sentence extractor must be a SentsExtractor",
+    "words_extractor_type": "The word extractor must be a WordsExtractor",
+    "complex_syl_factor": "The minimum number of syllables in a complex word must be greater than 0",
+    "long_word_letter_factor": "The minimum number of letters in a long word must be greater than 0",
+    "preset_type": "The preset must be a string, not {type}",
+    "unknown_preset": "Unknown coefficient preset: {preset}. Available presets: {presets}",
+    "basic_stats_type": "The basic statistics must be a {expected} object, not {type}",
+    "no_basic_stats_class": (
+        "{cls} has no basic_stats_class, the data source must be a BasicStats object"
+    ),
+    "not_grade_formula": "The metric {stat} is not a grade formula. Grade formulas: {grade_stats}",
+    "no_scale": "The metric {stat} has no scale of bands",
+    "unknown_metric": "Unknown metric: {stat}. Available metrics: {metrics}",
+    "unknown_norm": "Unknown reading speed norm: {norm}. Available norms: {norms}",
+    "reading_speed": "The reading speed must be greater than 0",
+    "window_len": "The window size must be greater than 0",
+    "window_step": "The window step must be greater than 0",
+    "window_metric": "The metric must be a function, not {type}",
+    "confidence": "The confidence level must lie in the interval (0, 1)",
+    "mtld_threshold": "The TTR threshold of MTLD must lie in the interval (0, 1)",
+    "mtld_min_len": "The minimum factor length of MTLD cannot be negative",
+    "hdd_sample_size": "The HD-D sample size must be greater than 0",
+    "log_base": "The logarithm base must be greater than 1",
+    "missing_extension": (
+        "The extension {name} holds no {stats}: add the component {factory} "
+        "with the name {name} before {component}"
+    ),
+    "missing_extension_any": (
+        "The extension {name} holds no {stats}: add the component with the name {name} "
+        "before {component}"
+    ),
+    "foreign_extension": (
+        "The extension {name} of Doc belongs to another package: give the component another name"
+    ),
+}
+
 # Labels of the plots by the name of the visualizer; the labels with fields in braces are
 # format strings, and a language library passes its own labels over these
 VISUALIZER_LABELS = {
