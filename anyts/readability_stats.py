@@ -2,7 +2,7 @@ from collections.abc import Callable, Iterable, Mapping
 from math import floor, isfinite, nan, sqrt
 from numbers import Real
 from statistics import median
-from typing import ClassVar, TypeVar
+from typing import Any, ClassVar, TypeVar
 
 from spacy.tokens import Doc
 
@@ -26,7 +26,7 @@ from .constants import (
 )
 from .exceptions import ParameterError, SourceError, SourceTypeError, UnknownStatError
 from .extractors import SentsExtractor, WordsExtractor
-from .utils import check_number, safe_divide
+from .utils import check_messages, check_number, safe_divide
 
 Band = TypeVar("Band")
 
@@ -142,6 +142,10 @@ class ReadabilityStats:
     reading_speed_norms: ClassVar[Mapping[str, tuple[float, ...]]] = READING_SPEED_NORMS
     messages: ClassVar[Mapping[str, str]] = MESSAGES
 
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        super().__init_subclass__(**kwargs)
+        check_messages(cls.messages)
+
     def __init__(
         self,
         source: str | Doc | BasicStats,
@@ -253,7 +257,7 @@ class ReadabilityStats:
 
     @property
     def reading_time(self) -> float:
-        return calc_reading_time(self.bs.n_words, self.reading_speed)
+        return calc_reading_time(self.bs.n_words, self.reading_speed, messages=self.messages)
 
     def reading_ease_to_grade(self, flesch_reading_easy: float) -> float:
         """
@@ -414,7 +418,8 @@ class ReadabilityStats:
                 )
             )
         return tuple(
-            calc_reading_time(self.bs.n_words, wpm) for wpm in self.reading_speed_norms[norm]
+            calc_reading_time(self.bs.n_words, wpm, messages=self.messages)
+            for wpm in self.reading_speed_norms[norm]
         )
 
     def get_stats(self) -> dict[str, float]:

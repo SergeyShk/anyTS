@@ -18,7 +18,14 @@ from .constants import (
 )
 from .exceptions import ParameterError, SourceError, SourceTypeError
 from .extractors import SentsExtractor, WordsExtractor
-from .utils import check_integer, check_words, count_letters, has_words, iter_doc_words
+from .utils import (
+    check_integer,
+    check_messages,
+    check_words,
+    count_letters,
+    has_words,
+    iter_doc_words,
+)
 
 ELLIPSIS_PATTERN = re.compile(r"…|\.{3,}|(?<=[?!])\.{2}")
 # A dash typed with hyphens: a run of two or more, a hyphen after whitespace, the start of a
@@ -219,6 +226,10 @@ class BasicStats(metaclass=ABCMeta):
     stats_desc: ClassVar[Mapping[str, str]] = BASIC_STATS_DESC
     stats_headers: ClassVar[tuple[str, str]] = ("Statistic", "Value")
     messages: ClassVar[Mapping[str, str]] = MESSAGES
+
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        super().__init_subclass__(**kwargs)
+        check_messages(cls.messages)
 
     def __init__(
         self,

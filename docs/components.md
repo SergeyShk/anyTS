@@ -19,6 +19,7 @@ A language library subclasses `StatsComponent` for every class of its statistics
 | `compute(doc)` | The statistics of a document; an abstract method, so a subclass without it fails at `add_pipe` |
 | `prepare(nlp)` | Preparing the pipeline when the component is added, such as the rules of the tokenizer; nothing by default |
 | `accepts(doc)` | Whether a document gets the statistics; by default whether it has a word (`has_words`) |
+| `messages` | Messages of the errors by key, a class attribute; `MESSAGES` by default |
 | `from_extension(doc, name, stats_class, factory=None)` | The statistics another component put into the document, for reusing them instead of computing them again; an extension without statistics of the class raises `SourceError`, which names the factory to add. The other component must accept every document the reusing one does, since a document it passes leaves `None` |
 <!-- --8<-- [end:StatsComponent-hooks] -->
 
@@ -59,7 +60,7 @@ A component of the lexical diversity of the words of a `Doc`.
     @Language.factory("demo_diversity")
     class DiversityComponent(StatsComponent):
         def __init__(self, nlp, name="demo_diversity", window_len=50):
-            check_params(window_len=window_len)
+            check_params(window_len=window_len, messages=self.messages)
             self.window_len = window_len
             super().__init__(nlp, name)
 

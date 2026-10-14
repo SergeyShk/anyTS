@@ -153,6 +153,17 @@ The defaults of the visualizers of the core are `anyts.constants.VISUALIZER_LABE
     # {'title': 'My plot', 'xlabel': 'x'}
     ```
 
+## check_messages
+
+<!-- --8<-- [start:check_messages] -->
+Checks the messages of the errors a class of statistics raises: they must be complete, a string for every key of the defaults, so that an error never turns into a `KeyError`, and a message whose default has fields in braces may use only those fields, with a literal brace doubled (`{{`). The classes of statistics check the `messages` of a subclass when it is defined. Messages that are not a mapping of strings, lack a key or have another, or have a field their default lacks raise `ParameterError`.
+
+| Parameter | Type | Default | Description |
+| :-------: | :--: | :-----: | :---------: |
+| `messages` | dict[str, str] | `-` | Messages by key |
+| `defaults` | dict[str, str] | `MESSAGES` | Default messages by key |
+<!-- --8<-- [end:check_messages] -->
+
 ## iter_doc_tokens
 
 <!-- --8<-- [start:iter_doc_tokens] -->

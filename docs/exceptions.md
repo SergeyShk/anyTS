@@ -20,6 +20,24 @@ All exceptions of the library inherit the base class `AnyTSError` and a built-in
 The classes are available from `anyts` and from `anyts.exceptions`. A language library re-exports them under its own names as aliases, not subclasses, so its base class catches the errors of the core too.
 <!-- --8<-- [end:exceptions] -->
 
+!!! example "Example"
+
+    ``` python
+    from anyts import AnyTSError, ParameterError, WordsExtractor
+
+    try:
+        WordsExtractor(ngram_range=(2, 1))
+    except ParameterError as e:
+        print(e)
+    # The lower N-gram bound is greater than the upper
+
+    try:
+        WordsExtractor(tokenizer=42).extract("The cat sleeps.")
+    except AnyTSError as e:
+        print(type(e).__name__)
+    # SourceTypeError
+    ```
+
 ## Messages { #messages }
 
 <!-- --8<-- [start:messages] -->
@@ -44,22 +62,4 @@ The checks of the types of arguments (`check_integer`, `check_number`, `check_wo
     except ValueError as e:
         print(e)
     # Il testo non contiene parole
-    ```
-
-!!! example "Example"
-
-    ``` python
-    from anyts import AnyTSError, ParameterError, WordsExtractor
-
-    try:
-        WordsExtractor(ngram_range=(2, 1))
-    except ParameterError as e:
-        print(e)
-    # The lower N-gram bound is greater than the upper
-
-    try:
-        WordsExtractor(tokenizer=42).extract("The cat sleeps.")
-    except AnyTSError as e:
-        print(type(e).__name__)
-    # SourceTypeError
     ```

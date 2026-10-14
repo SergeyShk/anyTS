@@ -8,7 +8,7 @@ from spacy.tokens import Doc, Token
 from .constants import MESSAGES
 from .exceptions import ParameterError, SourceError
 from .extractors import BLANK_LINE
-from .utils import has_words
+from .utils import check_messages, has_words
 
 Stats = TypeVar("Stats")
 
@@ -51,6 +51,10 @@ class StatsComponent(metaclass=ABCMeta):
     """
 
     messages: ClassVar[Mapping[str, str]] = MESSAGES
+
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        super().__init_subclass__(**kwargs)
+        check_messages(cls.messages)
 
     def __init__(self, nlp: Language, name: str):
         self.name = name

@@ -15,7 +15,7 @@ A class for computing the main [lexical diversity](https://en.wikipedia.org/wiki
 ## Language hooks
 
 <!-- --8<-- [start:DiversityStats-hooks] -->
-The class takes the words as given: a language library extracts them from its sources (a string, a `Doc` object of [spaCy](https://github.com/explosion/spaCy)) with its own extractor and lower-cases them, since every metric counts lexemes. The printed table of `print_stats` takes its texts from two class attributes that a library overrides in a subclass: `stats_desc`, the descriptions of the metrics by their keys, and `stats_headers`, the headers of the two columns.
+The class takes the words as given: a language library extracts them from its sources (a string, a `Doc` object of [spaCy](https://github.com/explosion/spaCy)) with its own extractor and lower-cases them, since every metric counts lexemes. The printed table of `print_stats` takes its texts from two class attributes that a library overrides in a subclass: `stats_desc`, the descriptions of the metrics by their keys, and `stats_headers`, the headers of the two columns. The messages of its errors come from the class attribute `messages`.
 <!-- --8<-- [end:DiversityStats-hooks] -->
 
 ## Parameters
@@ -32,7 +32,7 @@ The class takes the words as given: a language library extracts them from its so
 <!-- --8<-- [end:DiversityStats-parameters] -->
 
 <!-- --8<-- [start:check_params] -->
-The parameters are checked by `check_params(window_len, mtld_threshold, mtld_min_len, hdd_sample_size, log_base)`, which raises `ParameterError` for a window, a sample size or a minimum factor length out of range, a threshold outside (0, 1) or a logarithm base not above 1. Called before the words are extracted, it reports a wrong parameter before an empty text.
+The parameters are checked by `check_params(window_len, mtld_threshold, mtld_min_len, hdd_sample_size, log_base, *, messages=MESSAGES)`, which raises `ParameterError` for a window, a sample size or a minimum factor length out of range, a threshold outside (0, 1) or a logarithm base not above 1. Called before the words are extracted, it reports a wrong parameter before an empty text.
 <!-- --8<-- [end:check_params] -->
 
 ## Conventions { #conventions }

@@ -27,6 +27,7 @@ from .exceptions import ParameterError, SourceError, UnknownStatError
 from .utils import (
     check_counts,
     check_integer,
+    check_messages,
     check_number,
     check_sequence,
     check_words,
@@ -212,6 +213,10 @@ class DiversityStats:
     stats_desc: ClassVar[Mapping[str, str]] = DIVERSITY_STATS_DESC
     stats_headers: ClassVar[tuple[str, str]] = ("Metric", "Value")
     messages: ClassVar[Mapping[str, str]] = MESSAGES
+
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        super().__init_subclass__(**kwargs)
+        check_messages(cls.messages)
 
     def __init__(
         self,
