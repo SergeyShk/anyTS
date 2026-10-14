@@ -532,6 +532,24 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Exceptions
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -548,6 +566,36 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#messages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Messages
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -1734,6 +1782,25 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#messages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Messages
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -1827,6 +1894,29 @@
 <span class="k">except</span> <span class="n">AnyTSError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
     <span class="nb">print</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
 <span class="c1"># SourceTypeError</span>
+</code></pre></div>
+</div>
+<h2 id="messages">Messages<a class="headerlink" href="#messages" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:messages] -->
+<p>The messages of the errors of <code>BasicStats</code>, <code>ReadabilityStats</code>, <code>DiversityStats</code> and <code>StatsComponent</code> come from their class attribute <code>messages</code>, a mapping of a key to a message; the messages with fields in braces are format strings. By default it is <code>anyts.constants.MESSAGES</code>, in English. A language library sets the messages of its language on its subclasses, <code>messages = {**MESSAGES, **own}</code>, and its users get them for a source without words, an extractor of another type, an unknown preset or metric and a parameter out of range. The functions <code>check_params</code>, <code>calc_windowed</code> and <code>calc_reading_time</code>, which these classes call, take the messages as the keyword <code>messages</code>.</p>
+<p>The checks of the types of arguments (<code>check_integer</code>, <code>check_number</code>, <code>check_words</code>, <code>check_sequence</code> of <code>anyts.utils</code>) and the other functions of the core keep their messages in English.</p>
+<!-- --8<-- [end:messages] -->
+
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">MESSAGES</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">anyts.diversity_stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">DiversityStats</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Diversity</span><span class="p">(</span><span class="n">DiversityStats</span><span class="p">):</span>
+    <span class="n">messages</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">MESSAGES</span><span class="p">,</span> <span class="s2">"no_words"</span><span class="p">:</span> <span class="s2">"Il testo non contiene parole"</span><span class="p">}</span>
+
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">Diversity</span><span class="p">([])</span>
+<span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+<span class="c1"># Il testo non contiene parole</span>
 </code></pre></div>
 </div>
 

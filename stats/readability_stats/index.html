@@ -2209,6 +2209,11 @@
 <td style="text-align: center;">method</td>
 <td style="text-align: center;">Years of schooling for the reading ease in the consensus grade; the band of <code>reading_ease_grades</code> by default, overridden when the scale depends on the preset</td>
 </tr>
+<tr>
+<td style="text-align: center;"><code>messages</code></td>
+<td style="text-align: center;">class attribute</td>
+<td style="text-align: center;">Messages of the errors by key; <code>MESSAGES</code> by default</td>
+</tr>
 </tbody>
 </table>
 <p>A formula of the library is a property of the subclass named in <code>stats_desc</code>, and in <code>grade_stats</code> when it gives years of schooling; its coefficients may live in the presets under its name. The preset is a parameter: a library sets its own default in its <code>__init__</code> and passes it on.</p>

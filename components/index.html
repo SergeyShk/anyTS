@@ -1957,6 +1957,10 @@
 <td style="text-align: center;">Whether a document gets the statistics; by default whether it has a word (<code>has_words</code>)</td>
 </tr>
 <tr>
+<td style="text-align: center;"><code>messages</code></td>
+<td style="text-align: center;">Messages of the errors by key, a class attribute; <code>MESSAGES</code> by default</td>
+</tr>
+<tr>
 <td style="text-align: center;"><code>from_extension(doc, name, stats_class, factory=None)</code></td>
 <td style="text-align: center;">The statistics another component put into the document, for reusing them instead of computing them again; an extension without statistics of the class raises <code>SourceError</code>, which names the factory to add. The other component must accept every document the reusing one does, since a document it passes leaves <code>None</code></td>
 </tr>
@@ -2017,7 +2021,7 @@
 <span class="nd">@Language</span><span class="o">.</span><span class="n">factory</span><span class="p">(</span><span class="s2">"demo_diversity"</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">DiversityComponent</span><span class="p">(</span><span class="n">StatsComponent</span><span class="p">):</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nlp</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"demo_diversity"</span><span class="p">,</span> <span class="n">window_len</span><span class="o">=</span><span class="mi">50</span><span class="p">):</span>
-        <span class="n">check_params</span><span class="p">(</span><span class="n">window_len</span><span class="o">=</span><span class="n">window_len</span><span class="p">)</span>
+        <span class="n">check_params</span><span class="p">(</span><span class="n">window_len</span><span class="o">=</span><span class="n">window_len</span><span class="p">,</span> <span class="n">messages</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">messages</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">window_len</span> <span class="o">=</span> <span class="n">window_len</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nlp</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
 
