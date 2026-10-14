@@ -174,13 +174,16 @@ def test_check_messages(messages, match):
         check_messages(messages)
 
 
-def test_messages_checked_when_a_class_is_defined():
+@pytest.mark.parametrize("base", [BasicStats, ReadabilityStats, DiversityStats, StatsComponent])
+def test_messages_checked_when_a_class_is_defined(base):
     """A library learns of a wrong message when it defines its class, not when a user errs"""
     with pytest.raises(ParameterError, match="lack the keys"):
 
-        class Incomplete(DiversityStats):
+        class Incomplete(base):
             messages: ClassVar[dict[str, str]] = {"no_words": "No words"}
 
+
+def test_doubled_braces():
     braces = {**MESSAGES, "no_words": "{No} words", "unknown_norm": "{{{norm}}}"}
     check_messages(braces)
 
