@@ -12,12 +12,20 @@ from .constants import (
     BASIC_STATS_DESC,
     COMPLEX_SYL_FACTOR,
     LONG_WORD_LETTER_FACTOR,
+    MESSAGES,
     PUNCTUATION_TYPES,
     SPACES,
 )
 from .exceptions import ParameterError, SourceError, SourceTypeError
 from .extractors import SentsExtractor, WordsExtractor
-from .utils import check_integer, check_words, count_letters, has_words, iter_doc_words
+from .utils import (
+    check_integer,
+    check_messages,
+    check_words,
+    count_letters,
+    has_words,
+    iter_doc_words,
+)
 
 ELLIPSIS_PATTERN = re.compile(r"…|\.{3,}|(?<=[?!])\.{2}")
 # A dash typed with hyphens: a run of two or more, a hyphen after whitespace, the start of a
@@ -110,30 +118,33 @@ PUNCTUATION_MARKS = {
 _DELETE_SPACES = str.maketrans("", "", "".join(SPACES))
 
 
-def _check_factor(value: int, what: str) -> None:
+def _check_factor(value: int, what: str, message: str) -> None:
     """
     Checking a threshold of the complex or the long words
 
     Arguments:
         value (int): Threshold
-        what (str): Name of the threshold, for the message of the error
+        what (str): Name of the threshold, for the message of a value that is not an integer
+        message (str): Message of a threshold below one
 
     Raises:
         ParameterError: If the threshold is not an integer or is below one
     """
     check_integer(value, what)
     if value < 1:
-        raise ParameterError(f"The {what} must be greater than 0")
+        raise ParameterError(message)
 
 
 def _check_extractors(
-    sents_extractor: SentsExtractor | None, words_extractor: WordsExtractor | None
+    sents_extractor: SentsExtractor | None,
+    words_extractor: WordsExtractor | None,
+    messages: Mapping[str, str] = MESSAGES,
 ) -> None:
     """Checking the types of the extractors given, SourceTypeError for another type"""
     if sents_extractor is not None and not isinstance(sents_extractor, SentsExtractor):
-        raise SourceTypeError("The sentence extractor must be a SentsExtractor")
+        raise SourceTypeError(messages["sents_extractor_type"])
     if words_extractor is not None and not isinstance(words_extractor, WordsExtractor):
-        raise SourceTypeError("The word extractor must be a WordsExtractor")
+        raise SourceTypeError(messages["words_extractor_type"])
 
 
 class BasicStats(metaclass=ABCMeta):
@@ -200,6 +211,7 @@ class BasicStats(metaclass=ABCMeta):
         join_hyphens (bool): Join the parts of the hyphenated words of a Doc
         stats_desc (dict[str, str]): Descriptions of the statistics for print_stats
         stats_headers (tuple[str, str]): Headers of the columns for print_stats
+        messages (dict[str, str]): Messages of the errors by key (MESSAGES)
 
     Raises:
         SourceTypeError: If the source is neither a string nor a Doc object, or an extractor
@@ -213,6 +225,11 @@ class BasicStats(metaclass=ABCMeta):
     join_hyphens: ClassVar[bool] = False
     stats_desc: ClassVar[Mapping[str, str]] = BASIC_STATS_DESC
     stats_headers: ClassVar[tuple[str, str]] = ("Statistic", "Value")
+    messages: ClassVar[Mapping[str, str]] = MESSAGES
+
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        super().__init_subclass__(**kwargs)
+        check_messages(cls.messages)
 
     def __init__(
         self,
@@ -223,9 +240,18 @@ class BasicStats(metaclass=ABCMeta):
         complex_syl_factor: int = COMPLEX_SYL_FACTOR,
         long_word_letter_factor: int = LONG_WORD_LETTER_FACTOR,
     ):
-        _check_extractors(sents_extractor, words_extractor)
-        _check_factor(complex_syl_factor, "minimum number of syllables in a complex word")
-        _check_factor(long_word_letter_factor, "minimum number of letters in a long word")
+        messages = self.messages
+        _check_extractors(sents_extractor, words_extractor, messages)
+        _check_factor(
+            complex_syl_factor,
+            "minimum number of syllables in a complex word",
+            messages["complex_syl_factor"],
+        )
+        _check_factor(
+            long_word_letter_factor,
+            "minimum number of letters in a long word",
+            messages["long_word_letter_factor"],
+        )
         sents: Iterable[Span] | Iterable[str]
         if isinstance(source, Doc):
             text = source.text
@@ -244,9 +270,9 @@ class BasicStats(metaclass=ABCMeta):
             sents = (sents_extractor or self.sents_extractor_class()).extract(text)
             words = (words_extractor or self.words_extractor_class()).extract(text)
         else:
-            raise SourceTypeError("The data source is set incorrectly")
+            raise SourceTypeError(messages["source_type"])
         if not words:
-            raise SourceError("The data source has no words")
+            raise SourceError(messages["no_words"])
 
         letters_per_word = tuple(count_letters(word) for word in words)
         syllables_per_word = tuple(self.count_syllables(word) for word in words)

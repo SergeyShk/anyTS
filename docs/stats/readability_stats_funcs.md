@@ -361,3 +361,4 @@ Parameters:
 | :-------: | :--: | :-----: | :---------: |
 | `n_words` | int | `-` | Number of words |
 | `wpm` | float | `238` | Reading speed, words per minute |
+| `messages` | dict[str, str] | `MESSAGES` | Messages of the errors by key, a keyword |

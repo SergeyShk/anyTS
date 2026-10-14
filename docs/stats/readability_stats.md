@@ -33,6 +33,7 @@ A language library subclasses `ReadabilityStats`:
 | `reading_speed`, `reading_speed_norms` | class attributes | Reading speed of `reading_time` and the speeds of the norms, words per minute |
 | `reading_ease_grades` | class attribute | Scale that converts the reading ease into years of schooling for the consensus grade, as lower bounds and grades, the lowest band open below |
 | `reading_ease_to_grade(flesch_reading_easy)` | method | Years of schooling for the reading ease in the consensus grade; the band of `reading_ease_grades` by default, overridden when the scale depends on the preset |
+| `messages` | class attribute | Messages of the errors by key; `MESSAGES` by default |
 
 A formula of the library is a property of the subclass named in `stats_desc`, and in `grade_stats` when it gives years of schooling; its coefficients may live in the presets under its name. The preset is a parameter: a library sets its own default in its `__init__` and passes it on.
 <!-- --8<-- [end:ReadabilityStats-hooks] -->

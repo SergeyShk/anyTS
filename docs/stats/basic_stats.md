@@ -23,6 +23,7 @@ A language library subclasses `BasicStats`:
 | `join_hyphens` | class attribute | Join the parts of the hyphenated words of a `Doc` (`iter_doc_words`); `False` by default |
 | `count_punctuations(text)` | method | The punctuation marks by type; `count_punctuations` of the module by default |
 | `stats_desc`, `stats_headers` | class attributes | The descriptions of the statistics and the headers of the columns for `print_stats` |
+| `messages` | class attribute | Messages of the errors by key; `MESSAGES` by default |
 
 The thresholds of the complex and the long words are parameters; a library sets its own defaults in its `__init__` and passes them on.
 <!-- --8<-- [end:BasicStats-hooks] -->

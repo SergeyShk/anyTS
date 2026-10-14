@@ -815,4 +815,5 @@ Parameters:
 | `window_len` | int | `100` | Window size |
 | `step` | int | `None` | Window step, by default equal to the window size |
 | `confidence` | float | `0.95` | Confidence level |
+| `messages` | dict[str, str] | `MESSAGES` | Messages of the errors by key, a keyword |
 <!-- --8<-- [end:calc_windowed] -->

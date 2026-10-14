@@ -1,12 +1,14 @@
 from abc import ABCMeta, abstractmethod
-from typing import Any, TypeVar
+from collections.abc import Mapping
+from typing import Any, ClassVar, TypeVar
 
 from spacy.language import Language
 from spacy.tokens import Doc, Token
 
+from .constants import MESSAGES
 from .exceptions import ParameterError, SourceError
 from .extractors import BLANK_LINE
-from .utils import has_words
+from .utils import check_messages, has_words
 
 Stats = TypeVar("Stats")
 
@@ -35,6 +37,9 @@ class StatsComponent(metaclass=ABCMeta):
         nlp (Language): Pipeline the component is added to
         name (str): Name of the component in the pipeline and of the extension
 
+    Class attributes:
+        messages (dict[str, str]): Messages of the errors by key (MESSAGES)
+
     Raises:
         ParameterError: If another package registered an extension of Doc with the name
 
@@ -44,6 +49,12 @@ class StatsComponent(metaclass=ABCMeta):
         compute: Computing the statistics of a document
         from_extension: Getting the statistics another component put into a document
     """
+
+    messages: ClassVar[Mapping[str, str]] = MESSAGES
+
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        super().__init_subclass__(**kwargs)
+        check_messages(cls.messages)
 
     def __init__(self, nlp: Language, name: str):
         self.name = name
@@ -57,13 +68,13 @@ class StatsComponent(metaclass=ABCMeta):
     @name.setter
     def name(self, name: str) -> None:
         # The pipeline renames its components by this attribute
-        _register(name)
+        _register(name, self.messages)
         self._name = name
 
     def __setstate__(self, state: dict[str, Any]) -> None:
         # An unpickled component, in another process, registers its extension again
         self.__dict__.update(state)
-        _register(self._name)
+        _register(self._name, self.messages)
 
     def prepare(self, nlp: Language) -> None:
         """
@@ -132,10 +143,11 @@ class StatsComponent(metaclass=ABCMeta):
         """
         stats = doc._.get(name) if Doc.has_extension(name) else None
         if not isinstance(stats, stats_class):
-            component = f"the component {factory}" if factory else "the component"
+            key = "missing_extension" if factory else "missing_extension_any"
             raise SourceError(
-                f"The extension {name} holds no {stats_class.__name__}: add {component} "
-                f"with the name {name} before {self.name}"
+                self.messages[key].format(
+                    name=name, stats=stats_class.__name__, factory=factory, component=self.name
+                )
             )
         return stats
 
@@ -211,11 +223,8 @@ def start_sents_after_blank_lines(doc: Doc) -> Doc:
     return doc
 
 
-def _register(name: str) -> None:
+def _register(name: str, messages: Mapping[str, str] = MESSAGES) -> None:
     """Registering the extension of a component, never over one of another package"""
     if Doc.has_extension(name) and Doc.get_extension(name) != (None, None, None, None):
-        raise ParameterError(
-            f"The extension {name} of Doc belongs to another package: give the component "
-            "another name"
-        )
+        raise ParameterError(messages["foreign_extension"].format(name=name))
     Doc.set_extension(name, default=None, force=True)

@@ -8,6 +8,7 @@ from string import Formatter
 
 from spacy.tokens import Doc, Span, Token
 
+from .constants import MESSAGES
 from .exceptions import ParameterError, SourceError, SourceTypeError
 
 # Punctuation, symbols, combining marks and invisible format characters
@@ -337,6 +338,56 @@ def merge_labels(
                     f"The label {key!r} does not format its fields: {error}"
                 ) from None
     return {**defaults, **labels}
+
+
+def check_messages(messages: object, defaults: Mapping[str, str] = MESSAGES) -> None:
+    """
+    Checking the messages of the errors a class of statistics raises
+
+    Description:
+        The messages are complete, a string for every key of the defaults, so
+        that an error never turns into a KeyError; a library merges its own over
+        the defaults ({**MESSAGES, **own}). A message whose default has fields in
+        braces is a format string of those fields only, with a literal brace
+        doubled ({{); the other messages are taken as they are
+
+    Arguments:
+        messages (dict[str, str]): Messages by key
+        defaults (dict[str, str]): Default messages by key
+
+    Raises:
+        ParameterError: If the messages are not a mapping of strings, lack a key
+            of the defaults or have another, or a format message has a field its
+            default lacks or is not a format string
+
+    Example:
+        >>> from anyts.constants import MESSAGES
+        >>> from anyts.utils import check_messages
+        >>> check_messages({**MESSAGES, "no_words": "Il testo non contiene parole"})
+    """
+    if not isinstance(messages, Mapping):
+        raise ParameterError(f"The messages must be a mapping, not {type(messages).__name__}")
+    missing = [key for key in defaults if key not in messages]
+    if missing:
+        raise ParameterError(f"The messages lack the keys {missing}")
+    unknown = [key for key in messages if key not in defaults]
+    if unknown:
+        raise ParameterError(f"Unknown messages: {unknown}. Available messages: {tuple(defaults)}")
+    if not all(isinstance(message, str) for message in messages.values()):
+        raise ParameterError("The messages must be strings")
+    for key, default in defaults.items():
+        fields = _format_fields(default)
+        if not fields:
+            continue
+        try:
+            extra = _format_fields(messages[key]) - fields
+        except ValueError as error:
+            raise ParameterError(f"The message {key!r} is not a format string: {error}") from None
+        if extra:
+            raise ParameterError(
+                f"The message {key!r} has unknown fields {sorted(extra)}; "
+                f"available fields: {sorted(fields)}"
+            )
 
 
 def _format_fields(label: str) -> set[str]:

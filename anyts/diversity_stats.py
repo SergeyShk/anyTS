@@ -17,6 +17,7 @@ from .constants import (
     DIVERSITY_STATS_DESC,
     HDD_SAMPLE_SIZE,
     MATTR_WINDOW_LEN,
+    MESSAGES,
     MTLD_BLOCK_SIZE,
     MTLD_MIN_LEN,
     MTLD_TTR_THRESHOLD,
@@ -26,6 +27,7 @@ from .exceptions import ParameterError, SourceError, UnknownStatError
 from .utils import (
     check_counts,
     check_integer,
+    check_messages,
     check_number,
     check_sequence,
     check_words,
@@ -80,6 +82,8 @@ def check_params(
     mtld_min_len: int = MTLD_MIN_LEN,
     hdd_sample_size: int = HDD_SAMPLE_SIZE,
     log_base: float = DIVERSITY_LOG_BASE,
+    *,
+    messages: Mapping[str, str] = MESSAGES,
 ) -> None:
     """
     Checking the parameters of the lexical diversity metrics
@@ -90,25 +94,26 @@ def check_params(
         mtld_min_len (int): Minimum factor length for MTLD, MA-MTLD and MTLD-W
         hdd_sample_size (int): Sample size for HD-D
         log_base (float): Logarithm base for the Summer, Maas and Dugast metrics
+        messages (dict[str, str]): Messages of the errors by key (MESSAGES)
 
     Raises:
         ParameterError: If a parameter is not a number of its type or is out of range
     """
     check_integer(window_len, "window size")
     if window_len < 1:
-        raise ParameterError("The window size must be greater than 0")
-    _check_mtld_params(mtld_threshold, mtld_min_len)
+        raise ParameterError(messages["window_len"])
+    _check_mtld_params(mtld_threshold, mtld_min_len, messages)
     check_integer(hdd_sample_size, "HD-D sample size")
     if hdd_sample_size < 1:
-        raise ParameterError("The HD-D sample size must be greater than 0")
-    _check_log_base(log_base)
+        raise ParameterError(messages["hdd_sample_size"])
+    _check_log_base(log_base, messages)
 
 
-def _check_log_base(base: float) -> None:
+def _check_log_base(base: float, messages: Mapping[str, str] = MESSAGES) -> None:
     """Checking the logarithm base of the Summer, Maas and Dugast metrics"""
     check_number(base, "logarithm base")
     if not base > 1:
-        raise ParameterError("The logarithm base must be greater than 1")
+        raise ParameterError(messages["log_base"])
 
 
 class DiversityStats:
@@ -197,6 +202,7 @@ class DiversityStats:
     Class attributes:
         stats_desc (dict[str, str]): Descriptions of the metrics for print_stats
         stats_headers (tuple[str, str]): Headers of the columns for print_stats
+        messages (dict[str, str]): Messages of the errors by key (MESSAGES)
 
     Raises:
         SourceTypeError: If the words are a string, a Doc, not iterable or not strings
@@ -206,6 +212,11 @@ class DiversityStats:
 
     stats_desc: ClassVar[Mapping[str, str]] = DIVERSITY_STATS_DESC
     stats_headers: ClassVar[tuple[str, str]] = ("Metric", "Value")
+    messages: ClassVar[Mapping[str, str]] = MESSAGES
+
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        super().__init_subclass__(**kwargs)
+        check_messages(cls.messages)
 
     def __init__(
         self,
@@ -216,13 +227,20 @@ class DiversityStats:
         hdd_sample_size: int = HDD_SAMPLE_SIZE,
         log_base: float = DIVERSITY_LOG_BASE,
     ):
-        check_params(window_len, mtld_threshold, mtld_min_len, hdd_sample_size, log_base)
+        check_params(
+            window_len,
+            mtld_threshold,
+            mtld_min_len,
+            hdd_sample_size,
+            log_base,
+            messages=self.messages,
+        )
         if not isinstance(words, Iterator):
             check_sequence(words)
         self.words = tuple(words)
         check_words(self.words)
         if not self.words:
-            raise SourceError("The data source has no words")
+            raise SourceError(self.messages["no_words"])
         self.window_len = window_len
         self.mtld_threshold = mtld_threshold
         self.mtld_min_len = mtld_min_len
@@ -438,9 +456,11 @@ class DiversityStats:
         calculators = self._calculators
         if not isinstance(stat, str) or stat not in calculators:
             raise UnknownStatError(
-                f"Unknown metric: {stat}. Available metrics: {tuple(calculators)}"
+                self.messages["unknown_metric"].format(stat=stat, metrics=tuple(calculators))
             )
-        return calc_windowed(self.words, calculators[stat], window_len, step, confidence)
+        return calc_windowed(
+            self.words, calculators[stat], window_len, step, confidence, messages=self.messages
+        )
 
     def get_stats(self) -> dict[str, float]:
         """
@@ -734,14 +754,16 @@ def calc_msttr(text: Sequence[str], segment_len: int = MATTR_WINDOW_LEN) -> floa
     return sum(ttr(segment) for segment in segments) / len(segments)
 
 
-def _check_mtld_params(threshold: float, min_len: int) -> None:
+def _check_mtld_params(
+    threshold: float, min_len: int, messages: Mapping[str, str] = MESSAGES
+) -> None:
     """Checking the TTR threshold and the minimum factor length of MTLD"""
     check_number(threshold, "TTR threshold of MTLD")
     if not 0 < threshold < 1:
-        raise ParameterError("The TTR threshold of MTLD must lie in the interval (0, 1)")
+        raise ParameterError(messages["mtld_threshold"])
     check_integer(min_len, "minimum factor length of MTLD")
     if min_len < 0:
-        raise ParameterError("The minimum factor length of MTLD cannot be negative")
+        raise ParameterError(messages["mtld_min_len"])
 
 
 def _count_mtld_factors(text: Sequence[str], threshold: float, min_len: int) -> float:
@@ -1637,6 +1659,8 @@ def calc_windowed(
     window_len: int = 100,
     step: int | None = None,
     confidence: float = 0.95,
+    *,
+    messages: Mapping[str, str] = MESSAGES,
 ) -> WindowStats:
     """
     Windowed computation of a metric
@@ -1655,6 +1679,7 @@ def calc_windowed(
         window_len (int): Window size
         step (int): Window step, by default equal to the window size (windows do not overlap)
         confidence (float): Confidence level
+        messages (dict[str, str]): Messages of the errors by key (MESSAGES)
 
     Returns:
         WindowStats: Mean, standard deviation, bounds of the interval and number of windows
@@ -1666,17 +1691,17 @@ def calc_windowed(
     """
     check_integer(window_len, "window size")
     if window_len < 1:
-        raise ParameterError("The window size must be greater than 0")
+        raise ParameterError(messages["window_len"])
     if step is None:
         step = window_len
     check_integer(step, "window step")
     if step < 1:
-        raise ParameterError("The window step must be greater than 0")
+        raise ParameterError(messages["window_step"])
     if not callable(func):
-        raise ParameterError(f"The metric must be a function, not {type(func).__name__}")
+        raise ParameterError(messages["window_metric"].format(type=type(func).__name__))
     check_number(confidence, "confidence level")
     if not 0 < confidence < 1:
-        raise ParameterError("The confidence level must lie in the interval (0, 1)")
+        raise ParameterError(messages["confidence"])
     starts = range(0, max(len(text) - window_len, 0) + 1, step)
     # The windows are slices of words checked on the way in
     func = _unchecked(func)
