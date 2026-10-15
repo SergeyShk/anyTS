@@ -415,11 +415,13 @@ def test_scale_level_of_a_wrong_scale(scale):
         scale_level(1, scale)
 
 
-@pytest.mark.parametrize("stat", [["lix"], None, 42, np.array(["lix"])])
+@pytest.mark.parametrize("stat", [["lix"], None, 42, np.array(["lix"]), np.array(["lix", "rix"])])
 def test_level_scale_of_a_name_that_is_not_a_string(rs, stat):
     assert rs.level_scale(stat) is None
     with pytest.raises(ParameterError, match="has no scale of bands"):
         rs.describe_level(stat)
+    with pytest.raises(ParameterError, match="is not a grade formula"):
+        rs.describe_grade(stat)
 
 
 def test_reading_time_by_speed(rs):

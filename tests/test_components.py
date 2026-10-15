@@ -234,6 +234,20 @@ def test_blank_lines_keep_the_opening_marks_with_the_first_word(nlp):
     # A paragraph of marks alone leaves the next paragraph to its own blank line
     doc = start_sents_after_blank_lines(nlp("Uno.\n\n* * *\n\nDos"))
     assert [token.text for token in doc if token.is_sent_start] == ["Uno", "*", "Dos"]
+    # A space after the mark keeps it with the word, a line break ends the marks
+    doc = start_sents_after_blank_lines(nlp("Fin:\n\n—\u00a0¡Vaya!"))
+    assert [(token.text, token.is_sent_start) for token in doc][3:] == [
+        ("—", True),
+        ("\u00a0", False),
+        ("¡", False),
+        ("Vaya", False),
+        ("!", None),
+    ]
+    doc = start_sents_after_blank_lines(nlp("Uno.\n\n* * *\nDos"))
+    assert [(token.text, token.is_sent_start) for token in doc][-2:] == [
+        ("\n", None),
+        ("Dos", None),
+    ]
 
 
 def test_blank_lines_of_a_parsed_document(nlp):

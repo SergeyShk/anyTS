@@ -216,7 +216,10 @@ def start_sents_after_blank_lines(doc: Doc) -> Doc:
     for token in doc:
         if token.is_space:
             spaces.append(token.i)
-            leading = False
+            # A space after an opening mark (—\u00a0¡) keeps it with the word, a line break does not
+            leading = leading and "\n" not in token.text
+            if leading:
+                starts[token.i] = -1
             continue
         if end is not None and BLANK_LINE.search(text, end, token.idx):
             starts[spaces] = -1

@@ -294,7 +294,7 @@ class ReadabilityStats:
             ParameterError: If the metric is not a grade formula
         """
         grade_stats = ("consensus_grade", *self.grade_stats)
-        if stat not in grade_stats:
+        if not isinstance(stat, str) or stat not in grade_stats:
             raise ParameterError(
                 self.messages["not_grade_formula"].format(stat=stat, grade_stats=grade_stats)
             )
@@ -333,7 +333,7 @@ class ReadabilityStats:
             ParameterError: If the metric has no scale of bands or its value is not
                 a finite number
         """
-        scale = self.level_scale(stat)
+        scale = self.level_scale(stat) if isinstance(stat, str) else None
         if scale is None:
             raise ParameterError(self.messages["no_scale"].format(stat=stat))
         return scale_level(getattr(self, stat), scale)
