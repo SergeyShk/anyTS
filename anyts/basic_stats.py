@@ -161,8 +161,7 @@ class BasicStats(metaclass=ABCMeta):
         from the sentence extractor; the words of a Doc come from its tokens and
         its sentences from its boundaries, or from the sentence extractor when it
         has none or only partial ones (has_sents); an extractor given is used on
-        the text of a Doc too. A
-        sentence counts when it holds a word
+        the text of a Doc too. A sentence counts when it holds a word
 
     Arguments:
         source (str|Doc): Data source (a string or a Doc object)

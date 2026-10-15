@@ -99,9 +99,9 @@ def sentence_lengths(
         sentence into words by words_extractor; a Doc by its sentence
         boundaries, with the words of iter_doc_words and join_hyphens, and a
         Doc without them or with partial ones (has_sents) as its text, by the
-        extractors; ready lengths (a
-        sequence or an iterator of integers that are not negative) are used as
-        they are. Sentences without words are skipped
+        extractors; ready lengths (a sequence or an iterator of integers that
+        are not negative) are used as they are. Sentences without words are
+        skipped
 
     Arguments:
         source (str|Doc|Iterable[int]): Text, Doc object or ready lengths

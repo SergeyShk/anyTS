@@ -88,13 +88,16 @@ Checks whether a `Doc` has its sentence boundaries: they count when every token 
 
     ``` python
     import spacy
+    from anyts.components import start_sents_after_blank_lines
     from anyts.utils import has_sents
 
     nlp = spacy.blank("xx")
-    has_sents(nlp("The cat sleeps. The dog eats."))
-    # False
+    text = "Notes\n\nThe cat sleeps. The dog eats."
+    doc = start_sents_after_blank_lines(nlp(text))
+    doc.has_annotation("SENT_START"), has_sents(doc)
+    # (True, False)
     nlp.add_pipe("sentencizer")
-    has_sents(nlp("The cat sleeps. The dog eats."))
+    has_sents(nlp(text))
     # True
     ```
 

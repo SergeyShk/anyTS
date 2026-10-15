@@ -97,10 +97,10 @@ class HighlightedText:
                 their positions, doc_words - the words of a Doc
         The sentences of a Doc come from its boundaries (iter_doc_sents), or
         from iter_sents over its text without them or with partial ones
-        (has_sents); iter_sents gets the parts
-        of a text between blank lines one by one, so that a blank line ends a
-        sentence as in SentsExtractor. The words of a sentence are
-        those of doc_words or iter_words that start in it. The fragments are
+        (has_sents); iter_sents gets the parts of a text between blank lines
+        one by one, so that a blank line ends a sentence as in SentsExtractor.
+        The words of a sentence are those of doc_words or iter_words that
+        start in it. The fragments are
         sorted by their start and then by descending end; fragments of
         different layers may overlap. The result shows in Jupyter as HTML with
         a legend (to_html)

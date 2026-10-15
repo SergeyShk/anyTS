@@ -68,7 +68,8 @@ def kwic(
         model, and fold lower-cases
         A phrase does not run across the end of a paragraph or of a sentence -
         a boundary of a Doc anywhere between its words, or without boundaries
-        the start of a sentence of sentenize, by default a final mark before
+        or with partial ones (has_sents) the start of a sentence of sentenize,
+        by default a final mark before
         whitespace - unless the keyword has a final mark or the start of a
         sentence of sentenize in the same place. The context is window words
         on each side as written, with the punctuation between them; whitespace
@@ -87,9 +88,9 @@ def kwic(
         fold (callable): Folding of a word form or a lemma before the comparison
         join_hyphens (bool): Join the parts of hyphenated words of a Doc
         sentenize (callable): Sentences of a string, of the keyword and of the
-            text of a Doc without boundaries, as triples of the start, the end
-            and the text; by default a sentence ends at a final mark before
-            whitespace
+            text of a Doc without boundaries or with partial ones, as triples of
+            the start, the end and the text; by default a sentence ends at a
+            final mark before whitespace
 
     Returns:
         list[Concordance]: Occurrences in the order of the text
