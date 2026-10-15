@@ -74,6 +74,30 @@ Checks whether a text, a `Doc` or a `Span` holds a word: an empty text or one of
     # (True, False, False)
     ```
 
+## has_sents
+
+<!-- --8<-- [start:has_sents] -->
+Checks whether a `Doc` has its sentence boundaries: they count when every token has them, as the parser, `senter` and `sentencizer` set them. The starts of a component that leaves the other tokens unset, such as `start_sents_after_blank_lines` run without the parser, are partial, and the statistics, `kwic`, `sentence_lengths` and the highlighting take the sentences of such a `Doc` from its text, as of a `Doc` without boundaries.
+
+| Parameter | Type | Default | Description |
+| :-------: | :--: | :-----: | :---------: |
+| `doc` | Doc | `-` | Doc object |
+<!-- --8<-- [end:has_sents] -->
+
+!!! example "Example"
+
+    ``` python
+    import spacy
+    from anyts.utils import has_sents
+
+    nlp = spacy.blank("xx")
+    has_sents(nlp("The cat sleeps. The dog eats."))
+    # False
+    nlp.add_pipe("sentencizer")
+    has_sents(nlp("The cat sleeps. The dog eats."))
+    # True
+    ```
+
 ## check_sequence
 
 <!-- --8<-- [start:check_sequence] -->

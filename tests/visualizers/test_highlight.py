@@ -6,6 +6,7 @@ import pytest
 import spacy
 from spacy.tokens import Doc
 
+from anyts.components import start_sents_after_blank_lines
 from anyts.exceptions import ParameterError, SourceError, SourceTypeError
 from anyts.utils import iter_doc_units
 from anyts.visualizers import Highlight, HighlightedText
@@ -118,6 +119,14 @@ def test_doc_without_the_annotations():
     assert not blank.has_annotation("SENT_START")
     assert spans(Marks(blank), "long_sents") == spans(Marks(text), "long_sents")
     assert Marks(blank, layers="all").layers == ("long_sents", "stopwords")
+
+
+def test_doc_with_partial_boundaries():
+    """The starts after the blank lines alone leave the sentences to the text"""
+    paragraphs = f"{text}\n\n{text}"
+    partial = start_sents_after_blank_lines(spacy.blank("xx")(paragraphs))
+    assert spans(Marks(partial), "long_sents") == spans(Marks(paragraphs), "long_sents")
+    assert len(spans(Marks(partial), "long_sents")) == 2
 
 
 @pytest.mark.parametrize(

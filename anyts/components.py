@@ -175,7 +175,9 @@ def start_sents_after_blank_lines(doc: Doc) -> Doc:
         the sentences - the parser, senter or sentencizer - which keeps the
         starts set here and places the others; the whitespace before such a
         start stays with the sentence before it. On its own the component
-        leaves the sentences within a paragraph unsplit. A language library
+        leaves the sentences within a paragraph unsplit, and its starts are
+        partial boundaries (has_sents), so the statistics take the sentences
+        of such a document from its text. A language library
         registers it under its prefix: Language.component("<prefix>_blank_lines",
         func=start_sents_after_blank_lines)
 

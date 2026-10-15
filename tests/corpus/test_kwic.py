@@ -5,6 +5,7 @@ import pytest
 import spacy
 from spacy.tokens import Doc
 
+from anyts.components import start_sents_after_blank_lines
 from anyts.corpus import Concordance, format_kwic, kwic, print_kwic
 from anyts.exceptions import ParameterError, SourceTypeError
 
@@ -251,6 +252,14 @@ def test_kwic_phrase_stops_at_a_sentence_start_on_a_mark():
     nlp.add_pipe("sentencizer")
     assert kwic(nlp("Dijo uno\n\nEl otro vino."), "uno el") == []
     assert len(kwic(nlp("Dijo uno\nEl otro vino."), "uno el")) == 1
+
+
+def test_kwic_of_a_doc_with_partial_boundaries():
+    # The starts after the blank lines alone do not let a phrase cross a final mark
+    text = "The cat sleeps. The dog eats\n\nThe bird sings. It flies."
+    doc = start_sents_after_blank_lines(spacy.blank("xx")(text))
+    assert kwic(doc, "sleeps the") == kwic(text, "sleeps the") == []
+    assert len(kwic(doc, "sings it")) == len(kwic(text, "sings it")) == 0
 
 
 SENT_END = re.compile(r"(?<=[.!?])\s+(?=[A-Z])")

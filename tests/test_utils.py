@@ -10,6 +10,7 @@ import pytest
 import spacy
 from spacy.tokens import Doc
 
+from anyts.components import start_sents_after_blank_lines
 from anyts.exceptions import ParameterError, SourceError, SourceTypeError
 from anyts.utils import (
     PUNCTUATION_CATEGORIES,
@@ -20,6 +21,7 @@ from anyts.utils import (
     check_words,
     count_letters,
     count_words_by_spans,
+    has_sents,
     has_words,
     is_punctuation,
     iter_doc_tokens,
@@ -132,6 +134,20 @@ def test_has_words(text, expected):
 @pytest.mark.parametrize("text", ["The cat sleeps", "?!", ""])
 def test_has_words_of_a_doc(nlp, text):
     assert has_words(nlp(text)) is has_words(text)
+
+
+def test_has_sents(nlp):
+    text = "The cat sleeps. The dog eats\n\nThe bird sings. It flies."
+    assert not has_sents(nlp(text))
+    sentencizer = spacy.blank("xx")
+    sentencizer.add_pipe("sentencizer")
+    assert has_sents(sentencizer(text))
+    # The starts after the blank lines alone leave the other tokens unset
+    partial = start_sents_after_blank_lines(nlp(text))
+    assert partial.has_annotation("SENT_START")
+    assert not has_sents(partial)
+    full = Doc(nlp.vocab, words=["The", "cat", "Dogs"], sent_starts=[True, False, True])
+    assert has_sents(full)
 
 
 def test_has_words_of_a_span(nlp):

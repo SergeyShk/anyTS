@@ -17,6 +17,7 @@ from anyts.basic_stats import (
     count_punctuations,
     dash_pattern,
 )
+from anyts.components import start_sents_after_blank_lines
 from anyts.constants import BASIC_STATS_DESC, PUNCTUATION_TYPES, SPACES
 from anyts.exceptions import ParameterError, SourceError, SourceTypeError
 
@@ -204,6 +205,13 @@ def test_doc_with_sentence_boundaries(bs):
     nlp = spacy.blank("xx")
     nlp.add_pipe("sentencizer")
     assert Stats(nlp(TEXT), normalize=True).get_stats() == bs.get_stats()
+
+
+def test_doc_with_partial_sentence_boundaries():
+    """The starts after the blank lines alone leave the sentences to the extractor"""
+    text = "The cat sleeps. The dog eats\n\nThe bird sings. It flies."
+    doc = start_sents_after_blank_lines(spacy.blank("xx")(text))
+    assert Stats(doc).n_sents == Stats(text).n_sents == 4
 
 
 def test_doc_with_extractors():

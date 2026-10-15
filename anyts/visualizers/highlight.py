@@ -11,7 +11,7 @@ from spacy.tokens import Doc, Token
 from ..exceptions import ParameterError, SourceError, SourceTypeError
 from ..extractors import BLANK_LINE, SentsExtractor, _iter_words
 from ..syntax import get_words
-from ..utils import _unit_word, iter_doc_tokens
+from ..utils import _unit_word, has_sents, iter_doc_tokens
 
 # Line breaks of Unix, Windows and old Mac texts
 LINE_BREAK = re.compile(r"\r\n?|\n")
@@ -96,7 +96,8 @@ class HighlightedText:
             iter_words, iter_sents - the words and the sentences of a string with
                 their positions, doc_words - the words of a Doc
         The sentences of a Doc come from its boundaries (iter_doc_sents), or
-        from iter_sents over its text without them; iter_sents gets the parts
+        from iter_sents over its text without them or with partial ones
+        (has_sents); iter_sents gets the parts
         of a text between blank lines one by one, so that a blank line ends a
         sentence as in SentsExtractor. The words of a sentence are
         those of doc_words or iter_words that start in it. The fragments are
@@ -142,7 +143,7 @@ class HighlightedText:
             words = self.doc_words(source)
             spans = (
                 iter_doc_sents(source)
-                if source.has_annotation("SENT_START")
+                if has_sents(source)
                 else _iter_part_sents(self.iter_sents, self.text)
             )
             sents = get_text_sents(spans, words)

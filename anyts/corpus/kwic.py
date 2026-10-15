@@ -8,7 +8,7 @@ from spacy.tokens import Doc, Token
 
 from ..exceptions import ParameterError, SourceTypeError
 from ..extractors import BLANK_LINE, _iter_words
-from ..utils import _unit_word, check_integer, iter_doc_units
+from ..utils import _unit_word, check_integer, has_sents, iter_doc_units
 
 Tokenizer = Callable[[str], Iterable[tuple[int, int, str]]]
 Sentenizer = Callable[[str], Iterable[tuple[int, int, str]]]
@@ -133,7 +133,7 @@ def kwic(
     if window < 0:
         raise ParameterError("The window cannot be negative")
     text, words, tokens = _source_words(source, split, join_hyphens)
-    doc = source if isinstance(source, Doc) and source.has_annotation("SENT_START") else None
+    doc = source if isinstance(source, Doc) and has_sents(source) else None
     starts = _sent_starts(text, sentenize) if doc is None and not all(key_gaps) else None
     lemmas = lemmatize or _lemmas
 

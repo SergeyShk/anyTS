@@ -9,7 +9,7 @@ from spacy.tokens import Doc
 from ..constants import VISUALIZER_LABELS
 from ..exceptions import ParameterError, SourceError, SourceTypeError
 from ..extractors import SentsExtractor, WordsExtractor
-from ..utils import check_integer, check_sequence, iter_doc_words, merge_labels
+from ..utils import check_integer, check_sequence, has_sents, iter_doc_words, merge_labels
 from ._axes import check_axes
 
 
@@ -98,7 +98,8 @@ def sentence_lengths(
         A string is split into sentences by sents_extractor and every
         sentence into words by words_extractor; a Doc by its sentence
         boundaries, with the words of iter_doc_words and join_hyphens, and a
-        Doc without them as its text, by the extractors; ready lengths (a
+        Doc without them or with partial ones (has_sents) as its text, by the
+        extractors; ready lengths (a
         sequence or an iterator of integers that are not negative) are used as
         they are. Sentences without words are skipped
 
@@ -135,7 +136,7 @@ def sentence_lengths(
         lengths = [len(words.extract(sent)) for sent in sents]
         return [length for length in lengths if length]
     if isinstance(source, Doc):
-        if source.has_annotation("SENT_START"):
+        if has_sents(source):
             lengths = [sum(1 for _ in iter_doc_words(sent, join_hyphens)) for sent in source.sents]
             return [length for length in lengths if length]
         return sentence_lengths(source.text, sents_extractor, words_extractor)
