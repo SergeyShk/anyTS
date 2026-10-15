@@ -334,7 +334,7 @@ Parameters:
     **anyts.readability_stats.scale_level()**
 
 <!-- --8<-- [start:scale_level] -->
-The band of a scale for a value: the scale is given as the lower bounds of its bands in descending order, the value falls into the first band whose bound it reaches, and the lowest band is open below. A value that is not a finite number and an empty scale raise `ParameterError`.
+The band of a scale for a value: the scale is given as the lower bounds of its bands in descending order, the value falls into the first band whose bound it reaches, and the lowest band is open below. A value that is not a finite number and a scale that is empty or not a list of pairs of a finite lower bound and a band raise `ParameterError`.
 
 Parameters:
 
