@@ -1873,7 +1873,7 @@
 <!-- --8<-- [end:sentence_lengths_plot] -->
 
 <!-- --8<-- [start:sentence_lengths] -->
-<p><code>sentence_lengths(source)</code> extracts the lengths: a string is split into sentences by the sentence extractor and every sentence into words by the word extractor; the sentences of a <code>Doc</code> come from its boundaries and its words from <code>iter_doc_words</code> with <code>join_hyphens</code>, while a <code>Doc</code> without boundaries is counted as its text, by the extractors; sentences without words are skipped. Ready lengths - a sequence or an iterator of integers that are not negative - are used as they are; a table, a set, a mapping, bytes or a length that is not an integer raise <code>SourceTypeError</code>, a negative length <code>SourceError</code>.</p>
+<p><code>sentence_lengths(source)</code> extracts the lengths: a string is split into sentences by the sentence extractor and every sentence into words by the word extractor; the sentences of a <code>Doc</code> come from its boundaries and its words from <code>iter_doc_words</code> with <code>join_hyphens</code>, while a <code>Doc</code> without boundaries, or with partial ones (<code>has_sents</code>), is counted as its text, by the extractors; sentences without words are skipped. Ready lengths - a sequence or an iterator of integers that are not negative - are used as they are; a table, a set, a mapping, bytes or a length that is not an integer raise <code>SourceTypeError</code>, a negative length <code>SourceError</code>.</p>
 <!-- --8<-- [end:sentence_lengths] -->
 
 <h2 id="parameters">Parameters<a class="headerlink" href="#parameters" title="Permanent link">&para;</a></h2>

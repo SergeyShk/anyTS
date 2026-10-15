@@ -2070,7 +2070,7 @@
 </tr>
 </tbody>
 </table>
-<p>The sentences of a <code>Doc</code> come from its boundaries, or from <code>iter_sents</code> over its text when it has none. <code>iter_sents</code> gets the parts of a text between blank lines one by one, so a blank line ends a sentence whatever the method, and the words of a sentence are those of <code>doc_words</code> or <code>iter_words</code> that start in it. <code>find</code> runs in <code>__init__</code>, so a subclass with parameters of its own stores them before it calls the <code>__init__</code> of the base; a fragment of another layer or one outside the text raises <code>ParameterError</code>.</p>
+<p>The sentences of a <code>Doc</code> come from its boundaries, or from <code>iter_sents</code> over its text when it has none or only partial ones (<code>has_sents</code>). <code>iter_sents</code> gets the parts of a text between blank lines one by one, so a blank line ends a sentence whatever the method, and the words of a sentence are those of <code>doc_words</code> or <code>iter_words</code> that start in it. <code>find</code> runs in <code>__init__</code>, so a subclass with parameters of its own stores them before it calls the <code>__init__</code> of the base; a fragment of another layer or one outside the text raises <code>ParameterError</code>.</p>
 <!-- --8<-- [end:HighlightedText-hooks] -->
 
 <p>In the core the layers are empty and <code>css_prefix</code> is <code>anyts</code>.</p>

@@ -1781,6 +1781,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#has_sents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        has_sents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#check_sequence" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1973,6 +1984,17 @@
     <span class="md-ellipsis">
       
         has_words
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#has_sents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        has_sents
       
     </span>
   </a>
@@ -2251,6 +2273,45 @@
 
 <span class="n">has_words</span><span class="p">(</span><span class="s2">"The cat sleeps"</span><span class="p">),</span> <span class="n">has_words</span><span class="p">(</span><span class="s2">"?!"</span><span class="p">),</span> <span class="n">has_words</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span>
 <span class="c1"># (True, False, False)</span>
+</code></pre></div>
+</div>
+<h2 id="has_sents">has_sents<a class="headerlink" href="#has_sents" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:has_sents] -->
+<p>Checks whether a <code>Doc</code> has its sentence boundaries: they count when every token has them, as the parser, <code>senter</code> and <code>sentencizer</code> set them. The starts of a component that leaves the other tokens unset, such as <code>start_sents_after_blank_lines</code> run without the parser, are partial, and the statistics, <code>kwic</code>, <code>sentence_lengths</code> and the highlighting take the sentences of such a <code>Doc</code> from its text, as of a <code>Doc</code> without boundaries.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>doc</code></td>
+<td style="text-align: center;">Doc</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Doc object</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:has_sents] -->
+
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">spacy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">anyts.components</span><span class="w"> </span><span class="kn">import</span> <span class="n">start_sents_after_blank_lines</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">anyts.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">has_sents</span>
+
+<span class="n">nlp</span> <span class="o">=</span> <span class="n">spacy</span><span class="o">.</span><span class="n">blank</span><span class="p">(</span><span class="s2">"xx"</span><span class="p">)</span>
+<span class="n">text</span> <span class="o">=</span> <span class="s2">"Notes</span><span class="se">\n\n</span><span class="s2">The cat sleeps. The dog eats."</span>
+<span class="n">doc</span> <span class="o">=</span> <span class="n">start_sents_after_blank_lines</span><span class="p">(</span><span class="n">nlp</span><span class="p">(</span><span class="n">text</span><span class="p">))</span>
+<span class="n">doc</span><span class="o">.</span><span class="n">has_annotation</span><span class="p">(</span><span class="s2">"SENT_START"</span><span class="p">),</span> <span class="n">has_sents</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span>
+<span class="c1"># (True, False)</span>
+<span class="n">nlp</span><span class="o">.</span><span class="n">add_pipe</span><span class="p">(</span><span class="s2">"sentencizer"</span><span class="p">)</span>
+<span class="n">has_sents</span><span class="p">(</span><span class="n">nlp</span><span class="p">(</span><span class="n">text</span><span class="p">))</span>
+<span class="c1"># True</span>
 </code></pre></div>
 </div>
 <h2 id="check_sequence">check_sequence<a class="headerlink" href="#check_sequence" title="Permanent link">&para;</a></h2>
