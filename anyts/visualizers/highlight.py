@@ -100,10 +100,9 @@ class HighlightedText:
         (has_sents); iter_sents gets the parts of a text between blank lines
         one by one, so that a blank line ends a sentence as in SentsExtractor.
         The words of a sentence are those of doc_words or iter_words that
-        start in it. The fragments are
-        sorted by their start and then by descending end; fragments of
-        different layers may overlap. The result shows in Jupyter as HTML with
-        a legend (to_html)
+        start in it. The fragments are sorted by their start and then by
+        descending end; fragments of different layers may overlap. The result
+        shows in Jupyter as HTML with a legend (to_html)
 
     Arguments:
         source (str|Doc): Data source (a string or a Doc object)

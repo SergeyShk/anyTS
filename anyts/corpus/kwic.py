@@ -69,11 +69,11 @@ def kwic(
         A phrase does not run across the end of a paragraph or of a sentence -
         a boundary of a Doc anywhere between its words, or without boundaries
         or with partial ones (has_sents) the start of a sentence of sentenize,
-        by default a final mark before
-        whitespace - unless the keyword has a final mark or the start of a
-        sentence of sentenize in the same place. The context is window words
-        on each side as written, with the punctuation between them; whitespace
-        collapses to one space; occurrences do not overlap
+        by default a final mark before whitespace - unless the keyword has a
+        final mark or the start of a sentence of sentenize in the same place.
+        The context is window words on each side as written, with the
+        punctuation between them; whitespace collapses to one space;
+        occurrences do not overlap
 
     Arguments:
         source (str|Doc): Text or Doc object
