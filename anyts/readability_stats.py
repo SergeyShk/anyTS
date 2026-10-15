@@ -294,7 +294,7 @@ class ReadabilityStats:
             ParameterError: If the metric is not a grade formula
         """
         grade_stats = ("consensus_grade", *self.grade_stats)
-        if stat not in grade_stats:
+        if not isinstance(stat, str) or stat not in grade_stats:
             raise ParameterError(
                 self.messages["not_grade_formula"].format(stat=stat, grade_stats=grade_stats)
             )
@@ -316,7 +316,7 @@ class ReadabilityStats:
             tuple[tuple[float, str], ...] | None: Lower bounds and their bands, None
                 for a metric without a scale
         """
-        return self.level_scales.get(stat)
+        return self.level_scales.get(stat) if isinstance(stat, str) else None
 
     def describe_level(self, stat: str = "flesch_reading_easy") -> str:
         """
@@ -333,7 +333,7 @@ class ReadabilityStats:
             ParameterError: If the metric has no scale of bands or its value is not
                 a finite number
         """
-        scale = self.level_scale(stat)
+        scale = self.level_scale(stat) if isinstance(stat, str) else None
         if scale is None:
             raise ParameterError(self.messages["no_scale"].format(stat=stat))
         return scale_level(getattr(self, stat), scale)
@@ -827,7 +827,8 @@ def scale_level(value: float, scale: Iterable[tuple[float, Band]]) -> Band:
         Any: Band of the scale
 
     Raises:
-        ParameterError: If the value is not a finite number or the scale is empty
+        ParameterError: If the value is not a finite number, or the scale is empty or
+            not a list of pairs of a finite lower bound and a band
 
     Example:
         >>> from anyts.constants import READING_EASE_LEVELS
@@ -836,9 +837,16 @@ def scale_level(value: float, scale: Iterable[tuple[float, Band]]) -> Band:
         ('college', 'professional')
     """
     check_number(value, "value")
-    bands = list(scale)
+    try:
+        bands = [(threshold, band) for threshold, band in scale]
+    except (TypeError, ValueError):
+        raise ParameterError(
+            "The scale must be a list of pairs of a lower bound and a band"
+        ) from None
     if not bands:
         raise ParameterError("The scale is empty")
+    for threshold, _ in bands:
+        check_number(threshold, "lower bound of a band")
     for threshold, band in bands:
         if value >= threshold:
             return band

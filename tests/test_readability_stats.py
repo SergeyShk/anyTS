@@ -5,6 +5,7 @@ from math import floor, isnan, sqrt
 from statistics import median
 from typing import ClassVar
 
+import numpy as np
 import pytest
 import spacy
 
@@ -406,6 +407,21 @@ def test_scale_level_bounds():
         scale_level(float("nan"), LIX_LEVELS)
     with pytest.raises(ParameterError, match=r"^The scale is empty$"):
         scale_level(1, ())
+
+
+@pytest.mark.parametrize("scale", [42, "abc", [5, 3], {80: "high"}, [(1, 2, 3)], [("a", "b")]])
+def test_scale_level_of_a_wrong_scale(scale):
+    with pytest.raises(ParameterError):
+        scale_level(1, scale)
+
+
+@pytest.mark.parametrize("stat", [["lix"], None, 42, np.array(["lix"]), np.array(["lix", "rix"])])
+def test_level_scale_of_a_name_that_is_not_a_string(rs, stat):
+    assert rs.level_scale(stat) is None
+    with pytest.raises(ParameterError, match="has no scale of bands"):
+        rs.describe_level(stat)
+    with pytest.raises(ParameterError, match="is not a grade formula"):
+        rs.describe_grade(stat)
 
 
 def test_reading_time_by_speed(rs):

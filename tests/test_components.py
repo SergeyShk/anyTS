@@ -215,7 +215,44 @@ def test_blank_lines_set_only_their_starts(nlp):
     assert [token.is_sent_start for token in doc] == [True, None, None, None]
 
 
+def test_blank_lines_keep_the_opening_marks_with_the_first_word(nlp):
+    """A dash or an opening mark of a paragraph does not end up a sentence of its own"""
+    doc = start_sents_after_blank_lines(nlp("Fin:\n\n--¡Vaya, vaya!\n\n«Bueno»"))
+    assert [(token.text, token.is_sent_start) for token in doc] == [
+        ("Fin", True),
+        (":", None),
+        ("\n\n", False),
+        ("--¡Vaya", True),
+        (",", None),
+        ("vaya", None),
+        ("!", None),
+        ("\n\n", False),
+        ("«", True),
+        ("Bueno", False),
+        ("»", None),
+    ]
+    # A paragraph of marks alone leaves the next paragraph to its own blank line
+    doc = start_sents_after_blank_lines(nlp("Uno.\n\n* * *\n\nDos"))
+    assert [token.text for token in doc if token.is_sent_start] == ["Uno", "*", "Dos"]
+    # A space after the mark keeps it with the word, a line break ends the marks
+    doc = start_sents_after_blank_lines(nlp("Fin:\n\n—\u00a0¡Vaya!"))
+    assert [(token.text, token.is_sent_start) for token in doc][3:] == [
+        ("—", True),
+        ("\u00a0", False),
+        ("¡", False),
+        ("Vaya", False),
+        ("!", None),
+    ]
+    doc = start_sents_after_blank_lines(nlp("Uno.\n\n* * *\nDos"))
+    assert [(token.text, token.is_sent_start) for token in doc][-2:] == [
+        ("\n", None),
+        ("Dos", None),
+    ]
+
+
 def test_blank_lines_of_a_parsed_document(nlp):
+    """A parsed document, passed through the pipeline again, keeps its sentences"""
     doc = Doc(nlp.vocab, words=["One", "two"], heads=[1, 1], deps=["dep", "ROOT"])
-    with pytest.raises(SourceError, match=r"^The sentences of a parsed document cannot be"):
-        start_sents_after_blank_lines(doc)
+    starts = [token.is_sent_start for token in doc]
+    assert start_sents_after_blank_lines(doc) is doc
+    assert [token.is_sent_start for token in doc] == starts
