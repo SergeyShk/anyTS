@@ -8,6 +8,7 @@ import spacy
 from matplotlib.axes import Axes
 
 from anyts import SentsExtractor, WordsExtractor
+from anyts.components import start_sents_after_blank_lines
 from anyts.exceptions import ParameterError, SourceError, SourceTypeError
 from anyts.visualizers import sentence_lengths, sentence_lengths_plot
 
@@ -36,6 +37,12 @@ def test_sentence_lengths():
         sentence_lengths([3.5, 2])
     with pytest.raises(SourceTypeError):
         sentence_lengths(42)
+
+
+def test_sentence_lengths_of_a_doc_with_partial_boundaries():
+    text = "The cat sleeps. The dog eats\n\nThe bird sings. It flies."
+    doc = start_sents_after_blank_lines(spacy.blank("xx")(text))
+    assert sentence_lengths(doc) == sentence_lengths(text) == [3, 3, 3, 2]
 
 
 @pytest.mark.parametrize(

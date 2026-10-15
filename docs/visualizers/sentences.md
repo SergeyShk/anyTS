@@ -10,7 +10,7 @@ The curve of the lengths of the sentences - the rhythm of a text: the length of 
 <!-- --8<-- [end:sentence_lengths_plot] -->
 
 <!-- --8<-- [start:sentence_lengths] -->
-`sentence_lengths(source)` extracts the lengths: a string is split into sentences by the sentence extractor and every sentence into words by the word extractor; the sentences of a `Doc` come from its boundaries and its words from `iter_doc_words` with `join_hyphens`, while a `Doc` without boundaries is counted as its text, by the extractors; sentences without words are skipped. Ready lengths - a sequence or an iterator of integers that are not negative - are used as they are; a table, a set, a mapping, bytes or a length that is not an integer raise `SourceTypeError`, a negative length `SourceError`.
+`sentence_lengths(source)` extracts the lengths: a string is split into sentences by the sentence extractor and every sentence into words by the word extractor; the sentences of a `Doc` come from its boundaries and its words from `iter_doc_words` with `join_hyphens`, while a `Doc` without boundaries, or with partial ones (`has_sents`), is counted as its text, by the extractors; sentences without words are skipped. Ready lengths - a sequence or an iterator of integers that are not negative - are used as they are; a table, a set, a mapping, bytes or a length that is not an integer raise `SourceTypeError`, a negative length `SourceError`.
 <!-- --8<-- [end:sentence_lengths] -->
 
 ## Parameters

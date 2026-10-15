@@ -23,6 +23,7 @@ from .utils import (
     check_messages,
     check_words,
     count_letters,
+    has_sents,
     has_words,
     iter_doc_words,
 )
@@ -159,8 +160,8 @@ class BasicStats(metaclass=ABCMeta):
         The words of a string come from the words extractor and its sentences
         from the sentence extractor; the words of a Doc come from its tokens and
         its sentences from its boundaries, or from the sentence extractor when it
-        has none; an extractor given is used on the text of a Doc too. A
-        sentence counts when it holds a word
+        has none or only partial ones (has_sents); an extractor given is used on
+        the text of a Doc too. A sentence counts when it holds a word
 
     Arguments:
         source (str|Doc): Data source (a string or a Doc object)
@@ -257,7 +258,7 @@ class BasicStats(metaclass=ABCMeta):
             text = source.text
             if sents_extractor is not None:
                 sents = sents_extractor.extract(text)
-            elif source.has_annotation("SENT_START"):
+            elif has_sents(source):
                 sents = source.sents
             else:
                 sents = self.sents_extractor_class().extract(text)

@@ -109,6 +109,39 @@ def has_words(source: str | Doc | Span) -> bool:
     return any(not char.isspace() and not is_punctuation(char) for char in text)
 
 
+def has_sents(doc: Doc) -> bool:
+    """
+    Checking whether a Doc has its sentence boundaries
+
+    Description:
+        The boundaries count when every token has them, as the parser, senter
+        and sentencizer set them; the starts of a component that leaves the
+        other tokens unset, such as start_sents_after_blank_lines run without
+        the parser, are partial, and the sentences of such a Doc come from its
+        text, as of a Doc without boundaries
+
+    Arguments:
+        doc (Doc): Doc object
+
+    Returns:
+        bool: Result of the check
+
+    Example:
+        >>> import spacy
+        >>> from spacy.tokens import Doc
+        >>> from anyts.utils import has_sents
+        >>> nlp = spacy.blank("xx")
+        >>> has_sents(nlp("The cat sleeps. The dog eats."))
+        False
+        >>> _ = nlp.add_pipe("sentencizer")
+        >>> has_sents(nlp("The cat sleeps. The dog eats."))
+        True
+        >>> has_sents(Doc(nlp.vocab, words=["Notes", "The", "cat"], sent_starts=[True, True, None]))
+        False
+    """
+    return doc.has_annotation("SENT_START", require_complete=True)
+
+
 def check_sequence(value: object, what: str = "words", ordered: bool = True) -> None:
     """
     Checking that an argument is a sequence and not a text or an iterator
