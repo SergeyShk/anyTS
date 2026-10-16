@@ -17,6 +17,7 @@ from anyts.corpus import sentence_rhythm, split_windows
 from anyts.diversity_stats import DiversityStats, calc_ttr, calc_windowed, check_params
 from anyts.exceptions import ParameterError, SourceError, SourceTypeError, UnknownStatError
 from anyts.readability_stats import ReadabilityStats, calc_reading_time
+from anyts.style_stats import StyleStats
 from anyts.utils import check_messages
 
 # Messages of a language library: every message differs from the default and keeps its fields
@@ -63,6 +64,10 @@ class CharNgrams(CharNgramsExtractor):
 
 
 class Matcher(ConnectorMatcher):
+    messages = OWN
+
+
+class Style(StyleStats):
     messages = OWN
 
 
@@ -168,6 +173,7 @@ CASES = [
     ("min_words_window", ParameterError, lambda: split_windows(TEXT, 5, 6, messages=OWN)),
     ("sentence_lengths", SourceTypeError, lambda: sentence_rhythm([1.5], messages=OWN)),
     ("negative_lengths", ParameterError, lambda: sentence_rhythm([-1], messages=OWN)),
+    ("top_n", ParameterError, lambda: Style(TEXT, top_n=0)),
 ]
 
 

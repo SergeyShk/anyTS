@@ -162,6 +162,7 @@ MESSAGES = {
     "min_words_window": "The smallest number of words in a window cannot be greater than the window",
     "sentence_lengths": "The sentence lengths must be integers",
     "negative_lengths": "The sentence lengths cannot be negative",
+    "top_n": "The number of the most frequent words must be greater than 0",
     "tokenizer": "The tokenizer is set incorrectly",
     "tokenizer_iterable": "The tokenizer must return an iterable object",
     "tokenizer_strings": "The tokenizer must return strings, not {type}",
@@ -279,6 +280,21 @@ PUNCTUATION_TYPES = {
     "parentheses": "Parentheses",
     "other": "Other marks",
 }
+
+# Style statistics: the SEO metrics of the services and the markers of the officialese
+STYLE_STATS_DESC = {
+    "classic_nausea": "Classic nausea",
+    "academic_nausea": "Academic nausea (%)",
+    "water": "Water content (%)",
+    "spam": "Spam score (%)",
+    "zipf_naturalness": "Naturalness by Zipf's law (%)",
+    "verbal_nouns": "Verbal nouns (% of nouns)",
+    "compound_prepositions": "Compound prepositions (per 100 words)",
+    "parentheticals": "Parenthetical expressions (per 100 words)",
+    "cliches": "Officialese cliches (per 100 words)",
+}
+# Number of the most frequent words of the academic nausea and the naturalness by Zipf's law
+NAUSEA_TOP_N = 10
 
 # Readability statistics: the least syllables of a polysyllabic word of SMOG and Gunning's
 # fog and letters of a long word of LIX and RIX
