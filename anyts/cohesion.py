@@ -8,7 +8,7 @@ import numpy as np
 
 from .constants import CONNECTOR_CLASSES, CONNECTOR_KINDS, CONNECTOR_POS, MESSAGES
 from .exceptions import ParameterError, SourceTypeError
-from .utils import check_messages, check_sequence, check_words, safe_divide
+from .utils import check_integer, check_messages, check_sequence, check_words, safe_divide
 
 
 def _check_sents(sents: Iterable[Iterable[object]], what: str, ordered: bool = True) -> None:
@@ -471,12 +471,19 @@ class ConnectorMatcher:
 
         Raises:
             SourceTypeError: If the words are not a list of strings or the parts of
-                speech are not a list
-            ParameterError: If the parts of speech are not as many as the words
+                speech are not a list of strings and None
+            ParameterError: If the number of the sentence is not an integer or the parts
+                of speech are not as many as the words
         """
         check_words(words)
+        check_integer(sent_index, "number of the sentence")
         if pos is not None:
             check_sequence(pos, "parts of speech")
+            for tag in pos:
+                if tag is not None and not isinstance(tag, str):
+                    raise SourceTypeError(
+                        f"A part of speech must be a string or None, not {type(tag).__name__}"
+                    )
             if len(pos) != len(words):
                 raise ParameterError(self.messages["connector_pos"])
         normalized = [self.normalize(word) for word in words]

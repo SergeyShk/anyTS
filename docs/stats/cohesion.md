@@ -126,7 +126,7 @@ The rules of a language are class attributes of a subclass, empty by default:
 | `classes`, `kinds` | class attributes | Classes and kinds of the dictionary; `CONNECTOR_CLASSES` and `CONNECTOR_KINDS` by default |
 | `messages` | class attribute | Messages of the errors by key; `MESSAGES` by default |
 
-The words of the lists are normalized forms, and the connectors that key them are written as in the dictionary.
+The words of the lists and the keys of `pos_extra` are normalized forms, while the other lists are keyed by the connector as the dictionary writes it.
 <!-- --8<-- [end:ConnectorMatcher-hooks] -->
 
 ### find
@@ -140,7 +140,7 @@ The words of the lists are normalized forms, and the connectors that key them ar
 | `sent_index` | int | `0` | Number of the sentence, written into the occurrences |
 | `pos` | list[str] | `None` | Parts of speech of the words |
 
-Words that are not a list of strings and parts of speech that are not a list raise `SourceTypeError`, parts of speech not as many as the words `ParameterError`.
+Words that are not a list of strings and parts of speech that are not a list of strings and `None` (the tags `token.pos_` of spaCy, not the numbers `token.pos`) raise `SourceTypeError`, a number of the sentence that is not an integer and parts of speech not as many as the words `ParameterError`.
 <!-- --8<-- [end:ConnectorMatcher-find] -->
 
 !!! example "Example"

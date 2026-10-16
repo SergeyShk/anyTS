@@ -358,6 +358,17 @@ def test_find_errors(matcher):
         matcher.find(["and"], pos="CCONJ")
     with pytest.raises(ParameterError, match="as many as the words"):
         matcher.find(["and", "so"], pos=["CCONJ"])
+    with pytest.raises(ParameterError, match="number of the sentence"):
+        matcher.find(["The", "before"], ["DET", "ADV"])
+    for sent_index in (None, "3", 1.5):
+        with pytest.raises(ParameterError, match="number of the sentence"):
+            matcher.find(["and"], sent_index)
+
+
+@pytest.mark.parametrize("tag", [89, spacy.blank("en")("and")[0]], ids=["number", "token"])
+def test_find_parts_of_speech_of_another_type(matcher, tag):
+    with pytest.raises(SourceTypeError, match="must be a string or None, not"):
+        matcher.find(["and"], pos=[tag])
 
 
 def test_own_classes_and_messages():
