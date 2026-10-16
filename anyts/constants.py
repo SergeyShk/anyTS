@@ -46,6 +46,20 @@ DIVERSITY_STATS_DESC = {
 # Relations that are not arguments of a word: coordination, parataxis, punctuation
 VALENCY_IGNORED_DEPS = frozenset({"cc", "conj", "parataxis", "punct"})
 
+# Classes and kinds of the connectors (discourse markers) and the parts of speech of
+# Universal Dependencies of a one-word connector
+CONNECTOR_CLASSES = (
+    "causal",
+    "adversative",
+    "concessive",
+    "temporal",
+    "additive",
+    "conditional",
+    "reformulative",
+)
+CONNECTOR_KINDS = ("primary", "secondary")
+CONNECTOR_POS = frozenset({"CCONJ", "SCONJ", "PART", "ADV", "ADP", "INTJ", "X"})
+
 # Measures of keyness, of association of collocations, of dispersion of words and of stylometry
 KEYNESS_MEASURES = {
     "log_likelihood": "Log-likelihood G²",
@@ -133,6 +147,15 @@ MESSAGES = {
     "ngram_len": "The N-gram length must be greater than 0",
     "top_words": "The number of words must be greater than 0",
     "top_ngrams": "The number of N-grams must be greater than 0",
+    "text_type": "A text string is expected, not {type}",
+    "tokenizer": "The tokenizer is set incorrectly",
+    "tokenizer_iterable": "The tokenizer must return an iterable object",
+    "tokenizer_strings": "The tokenizer must return strings, not {type}",
+    "connector_dict": "The connectors must be a dictionary of a phrase and its class and kind",
+    "connector_entry": "A connector must be a phrase with a pair of its class and kind: {connector}",
+    "connector_class": "Unknown class or kind of a connector: {cls}, {kind}",
+    "connector_pos_type": "A part of speech must be a string or None, not {type}",
+    "connector_pos": "The parts of speech must be as many as the words",
 }
 
 # Labels of the plots by the name of the visualizer; the labels with fields in braces are

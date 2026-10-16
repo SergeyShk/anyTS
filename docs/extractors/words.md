@@ -19,7 +19,7 @@ The language enters the extractor through the hooks that a language library over
 | `tokenize(text)` | method | a word character `\w` followed by word characters, combining marks, zero-width joiners and non-joiners and soft hyphens, so that a word in NFD, in Devanagari or in Persian with `U+200C` stays whole | the tokenizer when `tokenizer` is not given |
 | `lemmatize(word)` | method | the word itself | `use_lexemes=True` |
 | `number_pattern` | class attribute | a signed number with separators and an optional percent sign: `-5`, `1990-1995`, `1,500.50`, `12/03/2020`, `3:30`, `10%` | `filter_nums=True`, matched against the whole lower-cased word |
-| `messages` | class attribute | `MESSAGES` | the errors of `ngram_range`, `min_len`, `max_len` and `get_most_common` |
+| `messages` | class attribute | `MESSAGES` | the errors of the parameters, of the text and of the tokenizer |
 <!-- --8<-- [end:WordsExtractor-hooks] -->
 
 !!! example "Example"

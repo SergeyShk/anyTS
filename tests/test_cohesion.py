@@ -5,6 +5,7 @@ import sys
 from fractions import Fraction
 from itertools import combinations, pairwise
 from math import isnan
+from typing import ClassVar
 
 import numpy as np
 import pandas as pd
@@ -12,6 +13,8 @@ import pytest
 import spacy
 
 from anyts.cohesion import (
+    Connector,
+    ConnectorMatcher,
     Overlap,
     _count_sharing_pairs,
     _sum_dice,
@@ -23,7 +26,8 @@ from anyts.cohesion import (
     dice,
     dominant,
 )
-from anyts.exceptions import SourceTypeError
+from anyts.constants import MESSAGES
+from anyts.exceptions import ParameterError, SourceTypeError
 
 
 @pytest.mark.parametrize(
@@ -215,3 +219,188 @@ def test_dominant_checked():
         dominant({"Pres", "Past"})
     with pytest.raises(SourceTypeError, match=r"^The values must be strings, not Token$"):
         dominant(list(spacy.blank("xx")("Pres Pres")))
+
+
+CONNECTORS = {
+    "and": ("additive", "primary"),
+    "because": ("causal", "primary"),
+    "before": ("temporal", "primary"),
+    "after": ("temporal", "primary"),
+    "so": ("causal", "primary"),
+    "well": ("reformulative", "primary"),
+    "still": ("concessive", "primary"),
+    "however": ("adversative", "secondary"),
+    "above all": ("additive", "secondary"),
+    "as well as": ("additive", "secondary"),
+    "on the other hand": ("adversative", "secondary"),
+    "in addition": ("additive", "secondary"),
+    "e.g.": ("reformulative", "secondary"),
+    "Summing up": ("reformulative", "secondary"),
+    "summing": ("reformulative", "secondary"),
+}
+
+
+class Matcher(ConnectorMatcher):
+    """The context rules of a language, here on English words"""
+
+    pos_tags = frozenset({*ConnectorMatcher.pos_tags, "PROPN"})
+    pos_extra: ClassVar = {"summing": frozenset({"VERB"})}
+    not_after_pos = frozenset({"DET"})
+    start_only_pos = frozenset({"PROPN"})
+    blocked_after: ClassVar = {"before": frozenset({"the", "a"}), "after": frozenset({"the"})}
+    blocked_before: ClassVar = {"as well as": frozenset({"something"})}
+    blocked_after_pos: ClassVar = {"above all": frozenset({"DET"})}
+    not_at_start = frozenset({"well"})
+    only_after: ClassVar = {"still": frozenset({"and", "but"})}
+
+
+@pytest.fixture(scope="module")
+def matcher():
+    return Matcher(CONNECTORS)
+
+
+def texts(found):
+    return [connector.text for connector in found]
+
+
+def test_find_longest_without_overlaps():
+    found = ConnectorMatcher(CONNECTORS).find(
+        ["On", "the", "other", "hand", "and", "in", "addition"]
+    )
+    assert found == [
+        Connector(0, 0, 4, "on the other hand", "adversative", "secondary"),
+        Connector(0, 4, 5, "and", "additive", "primary"),
+        Connector(0, 5, 7, "in addition", "additive", "secondary"),
+    ]
+
+
+def test_find_by_the_normalized_forms():
+    matcher = ConnectorMatcher(CONNECTORS)
+    assert texts(matcher.find(["HOWEVER", "Summing", "UP"])) == ["however", "Summing up"]
+    assert texts(matcher.find(["e", "g", "water"])) == ["e.g."]
+    assert texts(matcher.find(["e.g.", "water"])) == ["e.g."]
+    assert matcher.find(["and"], sent_index=3)[0].sent == 3
+
+    class Apostrophes(ConnectorMatcher):
+        def normalize(self, text):
+            return text.lower().replace("’", "'")
+
+    assert texts(Apostrophes({"don't": ("adversative", "primary")}).find(["Don’t"])) == ["don't"]
+
+
+def test_rules_are_empty_by_default():
+    words = ["Well", "before", "the", "end", "and", "still"]
+    pos = ["PROPN", "ADV", "DET", "NOUN", "CCONJ", "ADV"]
+    assert texts(ConnectorMatcher(CONNECTORS).find(words)) == ["well", "before", "and", "still"]
+    assert texts(ConnectorMatcher(CONNECTORS).find(words, pos=pos)) == ["before", "and", "still"]
+
+
+@pytest.mark.parametrize(
+    ("text", "found"),
+    [
+        ("He left before the end", []),
+        ("He left before noon", ["before"]),
+        ("Before he left", ["before"]),
+        ("After the rain", []),
+        ("something as well as cats", ["well"]),
+        ("As well as cats", ["as well as"]),
+        ("Well he left", []),
+        ("He did well", ["well"]),
+        ("And still it rains", ["and", "still"]),
+        ("Still it rains", ["still"]),
+        ("It still rains", []),
+    ],
+)
+def test_context_rules(matcher, text, found):
+    assert texts(matcher.find(text.split())) == found
+
+
+def test_rules_of_the_parts_of_speech(matcher):
+    words = ["The", "before", "and", "the", "after"]
+    assert texts(matcher.find(words, pos=["DET", "ADV", "CCONJ", "DET", "ADV"])) == ["and"]
+    assert texts(matcher.find(words)) == ["before", "and", "after"]
+    assert texts(matcher.find(["So", "he", "left"], pos=["PROPN", "PRON", "VERB"])) == ["so"]
+    assert matcher.find(["Ann", "So", "left"], pos=["PROPN", "PROPN", "VERB"]) == []
+    assert texts(matcher.find(["summing"], pos=["VERB"])) == ["summing"]
+    assert matcher.find(["and"], pos=["VERB"]) == []
+    assert texts(matcher.find(["and"], pos=[None])) == ["and"]
+    words = ["above", "all", "the", "text"]
+    assert matcher.find(words, pos=["ADV", "ADV", "DET", "NOUN"]) == []
+    assert texts(matcher.find(words)) == ["above all"]
+    assert texts(matcher.find(["above", "all"], pos=["ADV", "ADV"])) == ["above all"]
+
+
+def test_a_connector_of_punctuation():
+    assert ConnectorMatcher({".": ("additive", "primary")}).find(["and", "so"]) == []
+
+
+@pytest.mark.parametrize(
+    ("connectors", "error", "message"),
+    [
+        (["and"], SourceTypeError, "must be a dictionary"),
+        ({"and": "additive"}, SourceTypeError, "a pair of its class and kind: 'and'"),
+        ({"and": ("additive",)}, SourceTypeError, "a pair of its class and kind"),
+        ({1: ("additive", "primary")}, SourceTypeError, "a pair of its class and kind"),
+        ({"and": ("additive", 1)}, SourceTypeError, "a pair of its class and kind"),
+        ({"and": ("other", "primary")}, ParameterError, "Unknown class or kind"),
+        ({"and": ("additive", "other")}, ParameterError, "Unknown class or kind"),
+    ],
+)
+def test_matcher_errors(connectors, error, message):
+    with pytest.raises(error, match=message):
+        ConnectorMatcher(connectors)
+
+
+def test_find_errors(matcher):
+    with pytest.raises(SourceTypeError):
+        matcher.find("and so")
+    with pytest.raises(SourceTypeError):
+        matcher.find(["and"], pos="CCONJ")
+    with pytest.raises(ParameterError, match="as many as the words"):
+        matcher.find(["and", "so"], pos=["CCONJ"])
+    with pytest.raises(ParameterError, match="number of the sentence"):
+        matcher.find(["The", "before"], ["DET", "ADV"])
+    for sent_index in (None, "3", 1.5):
+        with pytest.raises(ParameterError, match="number of the sentence"):
+            matcher.find(["and"], sent_index)
+
+
+@pytest.mark.parametrize("tag", [89, spacy.blank("en")("and")[0]], ids=["number", "token"])
+def test_find_parts_of_speech_of_another_type(matcher, tag):
+    with pytest.raises(SourceTypeError, match="must be a string or None, not"):
+        matcher.find(["and"], pos=[tag])
+
+
+def test_own_classes_and_messages():
+    class Own(ConnectorMatcher):
+        classes = ("contrast",)
+        kinds = ("single",)
+        messages: ClassVar = {**MESSAGES, "connector_class": "Own: {cls} {kind}"}
+
+    assert Own({"but": ("contrast", "single")}).find(["but"])[0].cls == "contrast"
+    with pytest.raises(ParameterError, match=r"^Own: additive primary$"):
+        Own({"and": ("additive", "primary")})
+    with pytest.raises(ParameterError, match="lack the keys"):
+
+        class Incomplete(ConnectorMatcher):
+            messages: ClassVar = {"connector_pos": "No"}
+
+
+def test_matcher_does_not_depend_on_the_hash_seed():
+    code = (
+        "from anyts.cohesion import ConnectorMatcher\n"
+        "m = ConnectorMatcher({'so': ('causal', 'primary'), 'so that': ('causal', 'secondary'),"
+        " 'so-so': ('additive', 'primary'), 'so far': ('temporal', 'secondary')})\n"
+        "print(m._by_first)"
+    )
+    outputs = {
+        subprocess.run(
+            [sys.executable, "-c", code],
+            capture_output=True,
+            check=True,
+            text=True,
+            env={**os.environ, "PYTHONHASHSEED": seed},
+        ).stdout
+        for seed in ("0", "1", "2")
+    }
+    assert len(outputs) == 1

@@ -96,26 +96,30 @@ def _check_length_bounds(
         raise ParameterError(reversed_bounds)
 
 
-def _check_text(text: object) -> None:
+def _check_text(text: object, messages: Mapping[str, str] = MESSAGES) -> None:
     """
     Checking that the source of an extractor is a string
 
     Arguments:
         text (object): Value to check
+        messages (dict[str, str]): Messages of the errors by key (MESSAGES)
 
     Raises:
         SourceTypeError: If the value is not a string
     """
     if not isinstance(text, str):
-        raise SourceTypeError(f"A text string is expected, not {type(text).__name__}")
+        raise SourceTypeError(messages["text_type"].format(type=type(text).__name__))
 
 
-def _check_tokens(tokens: Iterator[object]) -> Iterator[str]:
+def _check_tokens(
+    tokens: Iterator[object], messages: Mapping[str, str] = MESSAGES
+) -> Iterator[str]:
     """
     Checking that the tokenizer gives strings
 
     Arguments:
         tokens (iterator[object]): Tokens of the tokenizer
+        messages (dict[str, str]): Messages of the errors by key (MESSAGES)
 
     Returns:
         iterator[str]: The same tokens
@@ -125,7 +129,7 @@ def _check_tokens(tokens: Iterator[object]) -> Iterator[str]:
     """
     for token in tokens:
         if not isinstance(token, str):
-            raise SourceTypeError(f"The tokenizer must return strings, not {type(token).__name__}")
+            raise SourceTypeError(messages["tokenizer_strings"].format(type=type(token).__name__))
         yield token
 
 
@@ -183,18 +187,19 @@ class Extractor(metaclass=ABCMeta):
                 or returns something other than strings; the tokenizer's own errors
                 are not caught
         """
-        _check_text(text)
+        messages = self.messages
+        _check_text(text, messages)
         tokenizer = self.tokenizer or default
         if isinstance(tokenizer, Pattern):
             # re.split gives None for a group that took no part in the match
             return (token for token in tokenizer.split(text) if token is not None)
         if not callable(tokenizer):
-            raise SourceTypeError("The tokenizer is set incorrectly")
+            raise SourceTypeError(messages["tokenizer"])
         tokens = tokenizer(text)
         try:
-            return _check_tokens(iter(tokens))
+            return _check_tokens(iter(tokens), messages)
         except TypeError as e:
-            raise SourceTypeError("The tokenizer must return an iterable object") from e
+            raise SourceTypeError(messages["tokenizer_iterable"]) from e
 
 
 class SentsExtractor(Extractor):
@@ -282,7 +287,7 @@ class SentsExtractor(Extractor):
         Raises:
             SourceTypeError: If the text is not a string or the tokenizer is set incorrectly
         """
-        _check_text(text)
+        _check_text(text, self.messages)
         sents = (
             sent
             for part in BLANK_LINE.split(text)
@@ -556,7 +561,7 @@ class CharNgramsExtractor(Extractor):
         Raises:
             SourceTypeError: If the text is not a string or the tokenizer is set incorrectly
         """
-        _check_text(text)
+        _check_text(text, self.messages)
         if self.lowercase:
             text = text.lower()
         if self.within_words:

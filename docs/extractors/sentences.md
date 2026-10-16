@@ -12,7 +12,7 @@ A class for extracting sentences from a text. It allows using different tokenize
 ## Language hooks
 
 <!-- --8<-- [start:SentsExtractor-hooks] -->
-The default tokenizer is the method `sentenize(text)`, which a language library overrides in a subclass. Here it splits the text at whitespace after `.`, `!`, `?` or `…`, optionally followed by a closing quote or bracket; it knows no abbreviations, so `e.g. this` is two sentences. A piece without words, such as the dots of a spaced ellipsis `. . .` or a lone `!`, stays with the sentence before it, or with the one after it at the start of the text. The messages of the errors of the length bounds come from the class attribute `messages`, `MESSAGES` by default.
+The default tokenizer is the method `sentenize(text)`, which a language library overrides in a subclass. Here it splits the text at whitespace after `.`, `!`, `?` or `…`, optionally followed by a closing quote or bracket; it knows no abbreviations, so `e.g. this` is two sentences. A piece without words, such as the dots of a spaced ellipsis `. . .` or a lone `!`, stays with the sentence before it, or with the one after it at the start of the text. The messages of its errors come from the class attribute `messages`, `MESSAGES` by default.
 <!-- --8<-- [end:SentsExtractor-hooks] -->
 
 <!-- --8<-- [start:SentsExtractor-pipeline] -->
