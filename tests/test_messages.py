@@ -13,6 +13,7 @@ from anyts.basic_stats import BasicStats
 from anyts.cohesion import ConnectorMatcher
 from anyts.components import StatsComponent
 from anyts.constants import MESSAGES
+from anyts.corpus import sentence_rhythm, split_windows
 from anyts.diversity_stats import DiversityStats, calc_ttr, calc_windowed, check_params
 from anyts.exceptions import ParameterError, SourceError, SourceTypeError, UnknownStatError
 from anyts.readability_stats import ReadabilityStats, calc_reading_time
@@ -161,6 +162,11 @@ CASES = [
     ("connector_pos_type", SourceTypeError, lambda: Matcher({}).find(["and"], pos=[1])),
     ("connector_class", ParameterError, lambda: Matcher({"and": ("other", "primary")})),
     ("connector_pos", ParameterError, lambda: Matcher({}).find(["and"], pos=[])),
+    ("text_type", SourceTypeError, lambda: split_windows(5, messages=OWN)),
+    ("window_len", ParameterError, lambda: split_windows(TEXT, 0, messages=OWN)),
+    ("min_words", ParameterError, lambda: split_windows(TEXT, 5, 0, messages=OWN)),
+    ("min_words_window", ParameterError, lambda: split_windows(TEXT, 5, 6, messages=OWN)),
+    ("sentence_lengths", SourceTypeError, lambda: sentence_rhythm([1.5], messages=OWN)),
 ]
 
 

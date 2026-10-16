@@ -128,3 +128,9 @@ Returns the top words of the text as a list of (word, frequency) pairs, the most
     ``` bash
     [('the', 3), ('cat', 1)]
     ```
+
+## Ready words { #FixedWordsExtractor }
+
+<!-- --8<-- [start:FixedWordsExtractor] -->
+`FixedWordsExtractor(words)` of `anyts.extractors` gives the words it was made with for any text: a class that takes a word extractor gets the words already known, and the text is not tokenized twice. Words that are not a list of strings raise `SourceTypeError`.
+<!-- --8<-- [end:FixedWordsExtractor] -->

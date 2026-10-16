@@ -13,6 +13,8 @@ if TYPE_CHECKING:
         compare_features,
         compare_values,
         holm_correction,
+        sentence_rhythm,
+        split_windows,
     )
     from .dispersion import Dispersion, dispersion
     from .keyness import FrequencyReference, Keyword, check_keyness_params, keyness
@@ -58,6 +60,8 @@ _MODULES = {
     "mendenhall_curve": "stylometry",
     "mendenhall_distance": "stylometry",
     "print_kwic": "kwic",
+    "sentence_rhythm": "compare",
+    "split_windows": "compare",
     "z_scores": "stylometry",
     "zeta": "stylometry",
 }
@@ -90,6 +94,8 @@ __all__ = [
     "mendenhall_curve",
     "mendenhall_distance",
     "print_kwic",
+    "sentence_rhythm",
+    "split_windows",
     "z_scores",
     "zeta",
 ]

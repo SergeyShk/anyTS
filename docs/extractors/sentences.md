@@ -100,3 +100,9 @@ An example of sentence extraction with a regular expression as the tokenizer:
     ``` bash
     ('Rain today', 'sun tomorrow')
     ```
+
+## Ready sentences { #FixedSentsExtractor }
+
+<!-- --8<-- [start:FixedSentsExtractor] -->
+`FixedSentsExtractor(sents)` of `anyts.extractors` gives the sentences it was made with for any text: a class that takes a sentence extractor gets the sentences already known, and the text is not split twice. Sentences that are not a list of strings raise `SourceTypeError`.
+<!-- --8<-- [end:FixedSentsExtractor] -->

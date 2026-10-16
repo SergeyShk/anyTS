@@ -1,14 +1,18 @@
-from collections.abc import Iterable, Iterator, Mapping, Sequence, Set
-from math import nan, sqrt
-from numbers import Real
+from collections.abc import Collection, Iterable, Iterator, Mapping, Sequence, Set
+from itertools import pairwise
+from math import isnan, nan, sqrt
+from numbers import Integral, Real
 from typing import Any
 
 import numpy as np
 import pandas as pd
 from scipy.stats import mannwhitneyu
 
+from ..constants import CLOSING_MARKS, MESSAGES, OPENING_MARKS, SYMMETRIC_MARKS
 from ..exceptions import ParameterError, SourceTypeError
+from ..extractors import _iter_words
 from ..utils import check_integer, check_number, check_sequence
+from .kwic import Tokenizer
 
 Values = Sequence[float] | np.ndarray[Any, Any]
 
@@ -534,3 +538,162 @@ def holm_correction(p_values: Sequence[float]) -> np.ndarray:
     scaled = values[order] * (m - np.arange(m))
     adjusted[order] = np.minimum(np.maximum.accumulate(scaled), 1.0)
     return adjusted
+
+
+def split_windows(
+    text: str,
+    window: int | None = 1000,
+    min_words: int | None = None,
+    *,
+    tokenize: Tokenizer | None = None,
+    opening_marks: Collection[str] = OPENING_MARKS,
+    symmetric_marks: Collection[str] = SYMMETRIC_MARKS,
+    closing_marks: Collection[str] = CLOSING_MARKS,
+    messages: Mapping[str, str] = MESSAGES,
+) -> list[str]:
+    """
+    Splitting a text into windows of words
+
+    Description:
+        The text is cut into consecutive windows of exactly window words; the
+        incomplete rest at the end is a window only when it holds at least
+        min_words words (by default a whole window, so the rest is dropped), and
+        the features that depend on the length are comparable between the
+        windows of different texts. A boundary goes before the first word of a
+        window and the opening marks before it, so the punctuation stays in the
+        windows; a symmetric mark (a straight quote, the dash of an aside) that
+        is glued to the last word of the previous window or follows a closing
+        mark closes the previous window. The windows are stripped of whitespace;
+        window=None gives the whole text. The words and their positions come
+        from tokenize, the words of WordsExtractor by default
+
+    Arguments:
+        text (str): Text string
+        window (int): Size of a window in words; None - the whole text
+        min_words (int): Smallest number of words in a window; None - a whole
+            window, or one word when window is None
+        tokenize (callable): Words of a text with their start and end positions
+        opening_marks (collection[str]): Marks that open a phrase (OPENING_MARKS)
+        symmetric_marks (collection[str]): Opening marks that close a phrase as well
+            (SYMMETRIC_MARKS)
+        closing_marks (collection[str]): Marks that close a phrase (CLOSING_MARKS)
+        messages (dict[str, str]): Messages of the errors by key (MESSAGES)
+
+    Returns:
+        list[str]: Windows of the text; an empty list for a text without words or
+            shorter than min_words
+
+    Raises:
+        SourceTypeError: If the text is not a string or the tokenizer is not callable
+        ParameterError: If the size of a window or min_words is not an integer or is
+            below one, or min_words is greater than the window
+
+    Example:
+        >>> from anyts.corpus import split_windows
+        >>> split_windows('He said: "Go home." Then he left the room', 4)
+        ['He said: "Go home."', 'Then he left the']
+        >>> split_windows("One two three four five", 2, min_words=1)
+        ['One two', 'three four', 'five']
+    """
+    if not isinstance(text, str):
+        raise SourceTypeError(messages["text_type"].format(type=type(text).__name__))
+    _check_windows(window, min_words, messages)
+    if tokenize is not None and not callable(tokenize):
+        raise SourceTypeError(f"The tokenizer must be callable, not {type(tokenize).__name__}")
+    if min_words is None:
+        min_words = 1 if window is None else window
+    words = [(start, end) for start, end, _ in (tokenize or _iter_words)(text)]
+    if not words:
+        return []
+    size = len(words) if window is None else window
+    chunks = [range(start, min(start + size, len(words))) for start in range(0, len(words), size)]
+    boundaries = [0]
+    for chunk in chunks[1:]:
+        start = words[chunk[0]][0]
+        previous_end = words[chunk[0] - 1][1]
+        boundary = start
+        while boundary > previous_end and (
+            text[boundary - 1].isspace() or text[boundary - 1] in opening_marks
+        ):
+            boundary -= 1
+        while (
+            boundary < start
+            and text[boundary] in symmetric_marks
+            and (boundary == previous_end or text[boundary - 1] in closing_marks)
+        ):
+            boundary += 1
+            previous_end = boundary
+        boundaries.append(boundary)
+    boundaries.append(len(text))
+    return [
+        text[start:end].strip()
+        for (start, end), chunk in zip(pairwise(boundaries), chunks, strict=True)
+        if len(chunk) >= min_words
+    ]
+
+
+def _check_windows(
+    window: int | None, min_words: int | None, messages: Mapping[str, str] = MESSAGES
+) -> None:
+    """Checking the size of a window and the smallest number of words in it"""
+    if window is not None:
+        check_integer(window, "size of a window")
+        if window < 1:
+            raise ParameterError(messages["window_len"])
+    if min_words is not None:
+        check_integer(min_words, "smallest number of words in a window")
+        if min_words < 1:
+            raise ParameterError(messages["min_words"])
+        if window is not None and min_words > window:
+            raise ParameterError(messages["min_words_window"])
+
+
+def sentence_rhythm(
+    lengths: Sequence[int], *, messages: Mapping[str, str] = MESSAGES
+) -> dict[str, float]:
+    """
+    Computing the features of the rhythm of the sentences
+
+    Description:
+        The mean length of a sentence in words, the standard deviation, the
+        coefficient of variation and the autocorrelation at lag 1 - the link
+        between the lengths of neighbouring sentences (Yule 1939); the
+        autocorrelation needs at least three sentences, the deviation two, and
+        the features of no sentence are nan
+
+    Arguments:
+        lengths (list[int]): Lengths of the sentences in words
+        messages (dict[str, str]): Messages of the errors by key (MESSAGES)
+
+    Returns:
+        dict[str, float]: Features sents_mean, sents_std, sents_cv, sents_autocorr
+
+    Raises:
+        SourceTypeError: If the lengths are not a list of integers
+
+    Example:
+        >>> from anyts.corpus import sentence_rhythm
+        >>> {key: round(value, 3) for key, value in sentence_rhythm([4, 8, 2, 7]).items()}
+        {'sents_mean': 5.25, 'sents_std': 2.754, 'sents_cv': 0.525, 'sents_autocorr': -0.794}
+    """
+    check_sequence(lengths, "sentence lengths")
+    if not all(isinstance(length, Integral) for length in lengths):
+        raise SourceTypeError(messages["sentence_lengths"])
+    values = np.asarray(lengths, dtype=float)
+    if not len(values):
+        return dict.fromkeys(("sents_mean", "sents_std", "sents_cv", "sents_autocorr"), nan)
+    mean = float(values.mean())
+    std = float(values.std(ddof=1)) if len(values) > 1 else nan
+    centered = values - mean
+    variance = float((centered**2).sum())
+    autocorr = (
+        float((centered[:-1] * centered[1:]).sum() / variance)
+        if len(values) > 2 and variance
+        else nan
+    )
+    return {
+        "sents_mean": mean,
+        "sents_std": std,
+        "sents_cv": std / mean if mean and not isnan(std) else nan,
+        "sents_autocorr": autocorr,
+    }
