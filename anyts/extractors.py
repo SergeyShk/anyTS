@@ -3,13 +3,14 @@ import sys
 import unicodedata
 from abc import ABCMeta, abstractmethod
 from collections import Counter
-from collections.abc import Callable, Collection, Iterable, Iterator
+from collections.abc import Callable, Collection, Iterable, Iterator, Mapping
 from functools import cache
 from re import Pattern
-from typing import ClassVar
+from typing import Any, ClassVar
 
+from .constants import MESSAGES
 from .exceptions import ParameterError, SourceTypeError
-from .utils import check_integer, check_words, has_words, is_punctuation
+from .utils import check_integer, check_messages, check_words, has_words, is_punctuation
 
 Tokenizer = Pattern[str] | Callable[[str], Iterable[str]]
 SENTENCE_BOUNDARY = re.compile(r"(?<=[.!?…])\s+|(?<=[.!?…][\"'»”’)\]])\s+")
@@ -70,14 +71,18 @@ def _iter_words(text: str) -> Iterator[tuple[int, int, str]]:
 NUMBER_PATTERN = re.compile(r"[+\-−]?\d+(?:[.,:/-]\d+)*%?")
 
 
-def _check_length_bounds(min_len: int, max_len: int, unit: str) -> None:
+def _check_length_bounds(
+    min_len: int, max_len: int, unit: str, negative: str, reversed_bounds: str
+) -> None:
     """
     Checking the bounds of the length of an extracted unit
 
     Arguments:
         min_len (int): Minimum length, 0 for no bound
         max_len (int): Maximum length, 0 for no bound
-        unit (str): Name of the unit, for the message of the error
+        unit (str): Name of the unit, for the message of a bound that is not an integer
+        negative (str): Message of a negative bound
+        reversed_bounds (str): Message of a minimum greater than the maximum
 
     Raises:
         ParameterError: If a bound is not an integer, is negative or the minimum
@@ -86,9 +91,9 @@ def _check_length_bounds(min_len: int, max_len: int, unit: str) -> None:
     check_integer(min_len, f"minimum {unit} length")
     check_integer(max_len, f"maximum {unit} length")
     if min_len < 0 or max_len < 0:
-        raise ParameterError(f"The {unit} length bounds cannot be negative")
+        raise ParameterError(negative)
     if min_len and max_len and min_len > max_len:
-        raise ParameterError(f"The minimum {unit} length is greater than the maximum")
+        raise ParameterError(reversed_bounds)
 
 
 def _check_text(text: object) -> None:
@@ -135,7 +140,16 @@ class Extractor(metaclass=ABCMeta):
 
     Methods:
         extract: Extracting units from a text
+
+    Class attributes:
+        messages (dict[str, str]): Messages of the errors by key (MESSAGES)
     """
+
+    messages: ClassVar[Mapping[str, str]] = MESSAGES
+
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        super().__init_subclass__(**kwargs)
+        check_messages(cls.messages)
 
     @abstractmethod
     def __init__(
@@ -225,7 +239,10 @@ class SentsExtractor(Extractor):
         max_len: int = 0,
     ) -> None:
         super().__init__(tokenizer, min_len, max_len)
-        _check_length_bounds(min_len, max_len, "sentence")
+        messages = self.messages
+        _check_length_bounds(
+            min_len, max_len, "sentence", messages["sent_len_bounds"], messages["sent_len_order"]
+        )
         self.sents: tuple[str, ...] = ()
 
     def sentenize(self, text: str) -> Iterable[str]:
@@ -298,7 +315,8 @@ class WordsExtractor(Extractor):
         characters, combining marks, zero-width joiners and non-joiners and soft
         hyphens), the method lemmatize (by default the word itself) and the class
         attribute number_pattern (by default signed numbers with separators and an
-        optional percent sign: -5, 1990-1995, 1,500.50, 12/03/2020, 3:30, 10%). The
+        optional percent sign: -5, 1990-1995, 1,500.50, 12/03/2020, 3:30, 10%); the
+        messages of its errors come from the class attribute messages. The
         filters are applied in order: punctuation, numbers, lemmatization, lower
         case, stop words, word length
 
@@ -353,17 +371,20 @@ class WordsExtractor(Extractor):
             else None
         )
         self.lowercase = lowercase
+        messages = self.messages
         if not isinstance(ngram_range, tuple | list) or len(ngram_range) != 2:
-            raise ParameterError("The N-gram range must be a pair of integers")
+            raise ParameterError(messages["ngram_range"])
         lower, upper = ngram_range
         check_integer(lower, "lower N-gram bound")
         check_integer(upper, "upper N-gram bound")
         if lower < 1:
-            raise ParameterError("The lower N-gram bound must be greater than 0")
+            raise ParameterError(messages["ngram_lower"])
         if lower > upper:
-            raise ParameterError("The lower N-gram bound is greater than the upper")
+            raise ParameterError(messages["ngram_order"])
         self.ngram_range = (lower, upper)
-        _check_length_bounds(min_len, max_len, "word")
+        _check_length_bounds(
+            min_len, max_len, "word", messages["word_len_bounds"], messages["word_len_order"]
+        )
         self.words: tuple[str, ...] = ()
 
     def tokenize(self, text: str) -> Iterable[str]:
@@ -438,7 +459,7 @@ class WordsExtractor(Extractor):
         """
         check_integer(n, "number of words")
         if n < 1:
-            raise ParameterError("The number of words must be greater than 0")
+            raise ParameterError(self.messages["top_words"])
         return Counter(self.words).most_common(n)
 
     def __make_ngrams(self) -> tuple[str, ...]:
@@ -504,7 +525,7 @@ class CharNgramsExtractor(Extractor):
         super().__init__(tokenizer)
         check_integer(n, "N-gram length")
         if n < 1:
-            raise ParameterError("The N-gram length must be greater than 0")
+            raise ParameterError(self.messages["ngram_len"])
         self.n = n
         self.lowercase = lowercase
         self.within_words = within_words
@@ -566,5 +587,5 @@ class CharNgramsExtractor(Extractor):
         """
         check_integer(n, "number of N-grams")
         if n < 1:
-            raise ParameterError("The number of N-grams must be greater than 0")
+            raise ParameterError(self.messages["top_ngrams"])
         return Counter(self.ngrams).most_common(n)

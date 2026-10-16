@@ -2,7 +2,7 @@ from collections.abc import Callable, Iterable, Mapping
 from math import floor, isfinite, nan, sqrt
 from numbers import Real
 from statistics import median
-from typing import ClassVar
+from typing import Any, ClassVar
 
 from spacy.tokens import Doc
 
@@ -39,10 +39,10 @@ class ReadabilityStats(Stats):
         The common readability formulas over the basic statistics of a text,
         the consensus grade, the school stage and age of the reader and the
         reading time; the metrics are properties, computed on each access.
-        A language library subclasses the class, sets its class attributes
-        and may override reading_ease_to_grade and level_scale; its own formulas
-        are properties named in stats_desc. The defaults are the original English
-        formulas
+        A language library subclasses the class, sets its class attributes,
+        the scales of a preset among them, and may override reading_ease_to_grade
+        and level_scale; its own formulas are properties named in stats_desc.
+        The defaults are the original English formulas
         get_stats, to_dataframe and print_stats come from Stats
 
     Arguments:
@@ -56,7 +56,8 @@ class ReadabilityStats(Stats):
 
     Attributes:
         bs (BasicStats): Basic statistics of the text
-        preset (str): Name of the coefficient preset
+        preset (str): Name of the coefficient preset, read-only: another preset is
+            another object, which may reuse the basic statistics (bs)
         coefficients (dict[str, tuple[float, ...]]): Coefficients of the preset by
             formula, a copy that can be changed for one object; a formula missing
             from it takes the defaults of its function
@@ -75,7 +76,8 @@ class ReadabilityStats(Stats):
     Methods:
         reading_ease_to_grade: Years of schooling for a value of the reading ease
         describe_grade: School stage and reader age for the consensus grade or a grade formula
-        level_scale: Interpretation scale of a metric, level_scales by default
+        level_scale: Interpretation scale of a metric, that of preset_level_scales or
+            else of level_scales
         describe_level: Band of the interpretation scale of a metric
         describe: Reading of any metric by its scale
         reading_time_by_speed: Reading time at a given speed
@@ -98,12 +100,18 @@ class ReadabilityStats(Stats):
             describe_grade (grade_to_age)
         level_scales (dict[str, tuple[tuple[float, str], ...]]): Interpretation scales
             of describe_level and describe by metric, as lower bounds and their bands
+        preset_level_scales (dict[str, dict[str, tuple[tuple[float, str], ...]]]):
+            Interpretation scales by preset and metric, which take the place of those
+            of level_scales for the objects of the preset
         grade_scales (dict[str, tuple[tuple[float, float], ...]]): Scales that convert
             a metric into years of schooling for describe, as lower bounds and grades;
             describe reads a metric by them when level_scale gives it no scale of bands
         reading_ease_grades (tuple[tuple[float, float], ...]): Scale that converts the
             reading ease into years of schooling for the consensus grade, as lower bounds
             and grades; by default the bands of READING_EASE_GRADES and 13 below them
+        preset_reading_ease_grades (dict[str, tuple[tuple[float, float], ...]]): Scales
+            of the reading ease in years of schooling by preset, which take the place of
+            reading_ease_grades for the objects of the preset
         postgraduate_level (tuple[str, str]): Stage and age above the last school stage
         reading_speed (float): Reading speed of reading_time, words per minute
         reading_speed_norms (dict[str, tuple[float, ...]]): Speeds of the reading norms,
@@ -114,7 +122,8 @@ class ReadabilityStats(Stats):
             the basic statistics are of another class, an extractor is of another type,
             or a class without basic_stats_class is given a string or a Doc
         SourceError: If the source has no words or no sentences
-        ParameterError: If the coefficient preset is not a string or is unknown
+        ParameterError: If the coefficient preset is not a string or is unknown; when
+            a class is defined, if its scales of a preset name an unknown preset
     """
 
     basic_stats_class: ClassVar[type[BasicStats] | None] = None
@@ -130,14 +139,26 @@ class ReadabilityStats(Stats):
         "lix": LIX_LEVELS,
         "rix": RIX_LEVELS,
     }
+    preset_level_scales: ClassVar[Mapping[str, Mapping[str, tuple[tuple[float, str], ...]]]] = {}
     grade_scales: ClassVar[Mapping[str, tuple[tuple[float, float], ...]]] = {"rix": RIX_GRADES}
     reading_ease_grades: ClassVar[tuple[tuple[float, float], ...]] = (
         *READING_EASE_GRADES,
         (0, 13),
     )
+    preset_reading_ease_grades: ClassVar[Mapping[str, tuple[tuple[float, float], ...]]] = {}
     postgraduate_level: ClassVar[tuple[str, str]] = POSTGRADUATE_LEVEL
     reading_speed: ClassVar[float] = READING_SPEED_WPM
     reading_speed_norms: ClassVar[Mapping[str, tuple[float, ...]]] = READING_SPEED_NORMS
+
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        super().__init_subclass__(**kwargs)
+        for attribute in ("preset_level_scales", "preset_reading_ease_grades"):
+            unknown = [preset for preset in getattr(cls, attribute) if preset not in cls.presets]
+            if unknown:
+                raise ParameterError(
+                    f"The {attribute} of {cls.__name__} name unknown presets: {unknown}. "
+                    f"Available presets: {tuple(cls.presets)}"
+                )
 
     def __init__(
         self,
@@ -153,7 +174,7 @@ class ReadabilityStats(Stats):
             raise ParameterError(
                 messages["unknown_preset"].format(preset=preset, presets=tuple(self.presets))
             )
-        self.preset = preset
+        self._preset = preset
         self.coefficients = dict(self.presets[preset])
         _check_extractors(sents_extractor, words_extractor, messages)
         if isinstance(source, BasicStats):
@@ -171,6 +192,10 @@ class ReadabilityStats(Stats):
             self.bs = self.basic_stats_class(source, sents_extractor, words_extractor)
         if not self.bs.n_sents:
             raise SourceError(messages["no_sentences"])
+
+    @property
+    def preset(self) -> str:
+        return self._preset
 
     @property
     def flesch_reading_easy(self) -> float:
@@ -257,9 +282,10 @@ class ReadabilityStats(Stats):
         Converting the Flesch reading ease into years of schooling
 
         Description:
-            Used for the consensus grade; by default the band of reading_ease_grades,
-            whose bounds a library aligns with the scale of the reading ease in
-            level_scales, so that the consensus grade and describe read the value alike
+            Used for the consensus grade; by default the band of the scale of the
+            preset in preset_reading_ease_grades or else of reading_ease_grades,
+            whose bounds a library aligns with the scale of the reading ease, so
+            that the consensus grade and describe read the value alike
 
         Arguments:
             flesch_reading_easy (float): Value of the reading ease
@@ -271,7 +297,28 @@ class ReadabilityStats(Stats):
             ParameterError: If the reading ease is not a finite number
         """
         check_number(flesch_reading_easy, "reading ease")
-        return scale_level(flesch_reading_easy, self.reading_ease_grades)
+        grades = self.preset_reading_ease_grades.get(self.preset, self.reading_ease_grades)
+        return scale_level(flesch_reading_easy, grades)
+
+    def level_scale(self, stat: str) -> tuple[tuple[float, str], ...] | None:
+        """
+        Getting the interpretation scale of a metric
+
+        Description:
+            The scale of the preset in preset_level_scales, else that of level_scales
+
+        Arguments:
+            stat (str): Name of the metric
+
+        Returns:
+            tuple[tuple[float, str], ...] | None: Lower bounds and their bands, None
+                for a metric without a scale
+        """
+        if isinstance(stat, str):
+            scale = self.preset_level_scales.get(self.preset, {}).get(stat)
+            if scale is not None:
+                return scale
+        return super().level_scale(stat)
 
     def describe_grade(self, stat: str = "consensus_grade") -> str:
         """

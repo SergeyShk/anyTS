@@ -158,6 +158,42 @@ def test_default_preset(rs):
     assert rs.coefficients == READABILITY_PRESETS["original"]
 
 
+def test_preset_is_read_only(rs):
+    with pytest.raises(AttributeError):
+        rs.preset = "original"
+    assert Readability(rs.bs).bs is rs.bs
+
+
+class TwoPresets(Readability):
+    presets: ClassVar = {"plain": {}, "strict": {}}
+    preset_level_scales: ClassVar = {
+        "strict": {"flesch_reading_easy": ((99, "easy"), (0, "hard"))}
+    }
+    preset_reading_ease_grades: ClassVar = {"strict": ((99, 5), (0, 15))}
+
+    def __init__(self, source, preset="plain"):
+        super().__init__(source, preset=preset)
+
+
+def test_scales_by_preset():
+    plain, strict = TwoPresets(TEXT), TwoPresets(TEXT, preset="strict")
+    # reading ease 98.9 - 5th grade of the scale of the core
+    assert plain.describe("flesch_reading_easy") == plain.describe_level() == "5th grade"
+    assert strict.describe("flesch_reading_easy") == strict.describe_level() == "hard"
+    assert strict.level_scale("lix") == plain.level_scale("lix") == LIX_LEVELS
+    assert strict.level_scale(["lix"]) is None
+    assert plain.reading_ease_to_grade(98.9) == scale_level(98.9, plain.reading_ease_grades)
+    assert strict.reading_ease_to_grade(98.9) == 15
+    assert strict.consensus_grade != plain.consensus_grade
+
+
+@pytest.mark.parametrize("attribute", ["preset_level_scales", "preset_reading_ease_grades"])
+def test_scales_of_an_unknown_preset(attribute):
+    message = rf"^The {attribute} of Typo name unknown presets: \['strct'\]"
+    with pytest.raises(ParameterError, match=message):
+        type("Typo", (TwoPresets,), {attribute: {"strct": {}}})
+
+
 def test_coefficients_copy():
     rs = Readability(TEXT)
     rs.coefficients["flesch_reading_easy"] = (1.0, 62.3, 206.835)

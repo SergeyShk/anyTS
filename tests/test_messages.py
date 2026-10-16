@@ -8,7 +8,7 @@ import spacy
 from spacy.tokens import Doc
 
 import anyts
-from anyts import SentsExtractor
+from anyts import CharNgramsExtractor, SentsExtractor, WordsExtractor
 from anyts.basic_stats import BasicStats
 from anyts.components import StatsComponent
 from anyts.constants import MESSAGES
@@ -45,6 +45,18 @@ class Bare(ReadabilityStats):
 
 
 class Diversity(DiversityStats):
+    messages = OWN
+
+
+class Sents(SentsExtractor):
+    messages = OWN
+
+
+class Words(WordsExtractor):
+    messages = OWN
+
+
+class CharNgrams(CharNgramsExtractor):
     messages = OWN
 
 
@@ -119,6 +131,16 @@ CASES = [
     ("missing_extension_any", SourceError, lambda: component_error("")),
     ("foreign_extension", ParameterError, foreign_extension),
     ("foreign_extension", ParameterError, foreign_extension_on_unpickling),
+    ("sent_len_bounds", ParameterError, lambda: Sents(min_len=-1)),
+    ("sent_len_order", ParameterError, lambda: Sents(min_len=5, max_len=2)),
+    ("word_len_bounds", ParameterError, lambda: Words(max_len=-1)),
+    ("word_len_order", ParameterError, lambda: Words(min_len=5, max_len=2)),
+    ("ngram_range", ParameterError, lambda: Words(ngram_range=(1,))),
+    ("ngram_lower", ParameterError, lambda: Words(ngram_range=(0, 1))),
+    ("ngram_order", ParameterError, lambda: Words(ngram_range=(2, 1))),
+    ("ngram_len", ParameterError, lambda: CharNgrams(n=0)),
+    ("top_words", ParameterError, lambda: Words().get_most_common(0)),
+    ("top_ngrams", ParameterError, lambda: CharNgrams().get_most_common(0)),
 ]
 
 
@@ -175,7 +197,18 @@ def test_check_messages(messages, match):
         check_messages(messages)
 
 
-@pytest.mark.parametrize("base", [BasicStats, ReadabilityStats, DiversityStats, StatsComponent])
+@pytest.mark.parametrize(
+    "base",
+    [
+        BasicStats,
+        ReadabilityStats,
+        DiversityStats,
+        StatsComponent,
+        SentsExtractor,
+        WordsExtractor,
+        CharNgramsExtractor,
+    ],
+)
 def test_messages_checked_when_a_class_is_defined(base):
     """A library learns of a wrong message when it defines its class, not when a user errs"""
     with pytest.raises(ParameterError, match="lack the keys"):
