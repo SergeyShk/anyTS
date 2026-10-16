@@ -32,7 +32,7 @@ The parameters of a library - a pipeline that parses a string, a word extractor 
 ## Frequency dictionary { #FrequencyDictionary }
 
 <!-- --8<-- [start:FrequencyDictionary] -->
-The dictionary is any object of the protocol `FrequencyDictionary`: `lookup(lemma)` gives the entry of a lemma or `None`, `ipm(lemma)` its frequency per million words or 0, and `min_ipm` the lowest frequency of the dictionary. An entry (`FrequencyEntry`) has the frequency `ipm`, the range `range` (the parts of the corpus with the lemma) and the dispersion `dispersion`.
+The dictionary is any object of the protocol `FrequencyDictionary`: `lookup(lemma)` gives the entry of a lemma or `None`, `ipm(lemma)` its frequency per million words or 0, and `min_ipm` the lowest frequency of the dictionary, above zero. An entry (`FrequencyEntry`) has the frequency `ipm`, above zero, the range `range` (the parts of the corpus with the lemma) and the dispersion `dispersion`. Without `freq_dict_class` a dictionary without `lookup` and `ipm` raises `SourceTypeError`.
 <!-- --8<-- [end:FrequencyDictionary] -->
 
 <!-- --8<-- [start:FrequencyEntry] -->
@@ -66,7 +66,7 @@ The dictionary is any object of the protocol `FrequencyDictionary`: `lookup(lemm
 | `p_top1000`, `p_top2000`, `p_top5000`, `p_top10000`, `p_beyond_top10000` | float | Shares of the words with a lemma in the top 1000, 2000, 5000 and 10000 of the list and beyond it |
 | `lexical_density` | float | Share of content words |
 
-A mean over no words found is `nan`.
+A mean over no words found is `nan`, and so is a band beyond the size of the list (`top_size`).
 <!-- --8<-- [end:LexicalStats-attributes] -->
 
 ## Methods
@@ -97,7 +97,7 @@ $$
 | `lemmas` | list[str] | `-` | Keys of the words in the dictionary |
 | `freq_dict` | FrequencyDictionary | `-` | Frequency dictionary |
 
-No words give `nan`; keys that are not a list of strings and a dictionary without `ipm` and `min_ipm` raise `SourceTypeError`.
+No words give `nan`; keys that are not a list of strings and a dictionary without `ipm` and `min_ipm` raise `SourceTypeError`, a lowest frequency that is not above zero `ParameterError`.
 <!-- --8<-- [end:calc_surprisal] -->
 
 ### is_number
@@ -111,18 +111,27 @@ No words give `nan`; keys that are not a list of strings and a dictionary withou
 !!! example "Example"
 
     ``` python
+    from typing import NamedTuple
+
     from anyts.lexical_stats import LexicalStats, LexicalWord
+
+
+    class Entry(NamedTuple):
+        ipm: float
+        range: int
+        dispersion: float
 
 
     class Frequencies:
         min_ipm = 0.5
-        ipms = {"the": 50000.0, "cat": 100.0}
+        entries = {"the": Entry(50000.0, 40, 0.99), "cat": Entry(100.0, 38, 0.9)}
 
         def lookup(self, lemma):
-            return None
+            return self.entries.get(lemma)
 
         def ipm(self, lemma):
-            return self.ipms.get(lemma, 0.0)
+            entry = self.lookup(lemma)
+            return entry.ipm if entry is not None else 0.0
 
 
     class Lexical(LexicalStats):
@@ -133,6 +142,6 @@ No words give `nan`; keys that are not a list of strings and a dictionary withou
 
 
     stats = Lexical("The cat purrs")
-    stats.lexical_density, round(stats.surprisal, 3)
-    # (0.6666666666666666, 12.847)
+    stats.coverage, round(stats.mean_log_ipm, 3), round(stats.surprisal, 3)
+    # (0.6666666666666666, 3.349, 12.847)
     ```

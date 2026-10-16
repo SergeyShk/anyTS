@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from functools import cached_property
 from math import log2, log10, nan
 from numbers import Integral
@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
 
 class FrequencyEntry(Protocol):
-    """Entry of a frequency dictionary: the frequency, the range and the dispersion of a lemma"""
+    """Entry of a frequency dictionary: the positive frequency, the range and the dispersion of a lemma"""
 
     @property
     def ipm(self) -> float: ...
@@ -33,7 +33,7 @@ class FrequencyEntry(Protocol):
 
 
 class FrequencyDictionary(Protocol):
-    """Frequency dictionary of lemmas: their entries, frequencies and the lowest frequency"""
+    """Frequency dictionary of lemmas: their entries or None, frequencies and the lowest, positive frequency"""
 
     @property
     def min_ipm(self) -> float: ...
@@ -101,13 +101,18 @@ def calc_surprisal(lemmas: Sequence[str], freq_dict: FrequencyDictionary) -> flo
     Raises:
         SourceTypeError: If the lemmas are not a list of strings or the dictionary has
             no ipm and min_ipm
+        ParameterError: If the lowest frequency of the dictionary is not positive
     """
-    check_words(lemmas)
+    check_words(lemmas, "lemmas")
     if not callable(getattr(freq_dict, "ipm", None)) or not hasattr(freq_dict, "min_ipm"):
         raise SourceTypeError(
             f"The frequency dictionary must have ipm and min_ipm, not {type(freq_dict).__name__}"
         )
     floor = freq_dict.min_ipm
+    if not floor > 0:
+        raise ParameterError(
+            f"The lowest frequency of the dictionary must be positive, not {floor}"
+        )
     return _mean([-log2(max(freq_dict.ipm(lemma), floor) / 1_000_000) for lemma in lemmas])
 
 
@@ -124,7 +129,8 @@ class LexicalStats(Stats, metaclass=ABCMeta):
         subclasses the class and implements analyze - the words of a source
         with their lemmas and whether they are content words - and sets the
         dictionary, the keys of the words in it and the ranks of the lemmas.
-        The statistics by the dictionary are computed when first read.
+        The statistics by the dictionary are computed when first read, and a
+        band beyond the size of the list (top_size) is nan.
         get_stats, to_dataframe, print_stats and describe come from Stats
 
     Arguments:
@@ -173,19 +179,25 @@ class LexicalStats(Stats, metaclass=ABCMeta):
             print_stats
 
     Raises:
-        SourceTypeError: If the dictionary is not of freq_dict_class, or the class has
-            none and no dictionary is given
+        SourceTypeError: If the dictionary is not of freq_dict_class (without it, has no
+            lookup and ipm), or the class has none and no dictionary is given
         SourceError: If the source has no words
     """
 
     freq_dict_class: ClassVar[type[Any] | None] = None
-    stats_desc: ClassVar[dict[str, str]] = LEXICAL_STATS_DESC
+    stats_desc: ClassVar[Mapping[str, str]] = LEXICAL_STATS_DESC
 
     def __init__(self, source: str | Doc, freq_dict: FrequencyDictionary | None = None):
         messages = self.messages
         expected = self.freq_dict_class
-        if freq_dict is not None and expected is not None and not isinstance(freq_dict, expected):
-            raise SourceTypeError(messages["freq_dict_type"].format(expected=expected.__name__))
+        if freq_dict is not None and not (
+            isinstance(freq_dict, expected)
+            if expected is not None
+            else callable(getattr(freq_dict, "lookup", None))
+            and callable(getattr(freq_dict, "ipm", None))
+        ):
+            name = expected.__name__ if expected is not None else "FrequencyDictionary"
+            raise SourceTypeError(messages["freq_dict_type"].format(expected=name))
         words = tuple(self.analyze(source))
         if not words:
             raise SourceError(messages["no_words"])
@@ -203,12 +215,13 @@ class LexicalStats(Stats, metaclass=ABCMeta):
         self.n_content_words = sum(self._content)
         self.ranks = tuple(self.rank(lemma) for lemma in self.lemmas)
         self.lexical_density = self.n_content_words / self.n_words
-        bands = self.band_coverage(FREQUENCY_BANDS)
-        self.p_top1000 = bands[1000]
-        self.p_top2000 = bands[2000]
-        self.p_top5000 = bands[5000]
-        self.p_top10000 = bands[10000]
-        self.p_beyond_top10000 = 1 - bands[10000]
+        size = self.top_size()
+        bands = self.band_coverage([band for band in FREQUENCY_BANDS if band <= size])
+        self.p_top1000 = bands.get(1000, nan)
+        self.p_top2000 = bands.get(2000, nan)
+        self.p_top5000 = bands.get(5000, nan)
+        self.p_top10000 = bands.get(10000, nan)
+        self.p_beyond_top10000 = 1 - self.p_top10000
 
     @abstractmethod
     def analyze(self, source: str | Doc) -> Iterable[LexicalWord]:
@@ -272,7 +285,7 @@ class LexicalStats(Stats, metaclass=ABCMeta):
 
     @property
     def n_found(self) -> int:
-        return sum(1 for entry in self.entries if entry)
+        return sum(1 for entry in self.entries if entry is not None)
 
     @property
     def coverage(self) -> float:
@@ -280,7 +293,7 @@ class LexicalStats(Stats, metaclass=ABCMeta):
 
     @property
     def mean_ipm(self) -> float:
-        return _mean([entry.ipm for entry in self.entries if entry])
+        return _mean([entry.ipm for entry in self.entries if entry is not None])
 
     @property
     def mean_ipm_content(self) -> float:
@@ -288,7 +301,7 @@ class LexicalStats(Stats, metaclass=ABCMeta):
 
     @property
     def mean_log_ipm(self) -> float:
-        return _mean([log10(entry.ipm) for entry in self.entries if entry])
+        return _mean([log10(entry.ipm) for entry in self.entries if entry is not None])
 
     @property
     def mean_log_ipm_content(self) -> float:
@@ -296,11 +309,11 @@ class LexicalStats(Stats, metaclass=ABCMeta):
 
     @property
     def mean_range(self) -> float:
-        return _mean([entry.range for entry in self.entries if entry])
+        return _mean([entry.range for entry in self.entries if entry is not None])
 
     @property
     def mean_dispersion(self) -> float:
-        return _mean([entry.dispersion for entry in self.entries if entry])
+        return _mean([entry.dispersion for entry in self.entries if entry is not None])
 
     @cached_property
     def surprisal(self) -> float:
@@ -315,7 +328,7 @@ class LexicalStats(Stats, metaclass=ABCMeta):
         return [
             entry
             for entry, content in zip(self.entries, self._content, strict=True)
-            if entry and content
+            if entry is not None and content
         ]
 
     def band_coverage(

@@ -204,3 +204,50 @@ def test_without_a_list():
     unranked = Unranked(TEXT)
     assert unranked.ranks == (None,) * 10
     assert unranked.p_top1000 == 0.0 and unranked.p_beyond_top10000 == 1.0
+
+
+class Falsy(NamedTuple):
+    ipm: float
+    range: int
+    dispersion: float
+
+    def __bool__(self):
+        return False
+
+
+def test_an_entry_found_is_not_none():
+    class Odd(Dictionary):
+        entries: ClassVar = {"cat": Falsy(100.0, 38, 0.9)}
+
+    stats = English("the cat", freq_dict=Odd())
+    assert stats.n_found == 1 and stats.mean_ipm == 100.0
+    assert stats.mean_ipm_content == 100.0
+
+
+def test_a_short_list():
+    class Short(English):
+        def top_size(self):
+            return 5000
+
+    stats = Short(TEXT)
+    assert stats.p_top5000 == 0.8
+    assert isnan(stats.p_top10000) and isnan(stats.p_beyond_top10000)
+
+
+def test_a_dictionary_without_a_class():
+    class Bare(English):
+        freq_dict_class = None
+
+    with pytest.raises(SourceTypeError, match="must be a FrequencyDictionary"):
+        Bare(TEXT, freq_dict={})
+    assert Bare(TEXT, freq_dict=Dictionary()).n_found == 8
+
+
+def test_surprisal_needs_a_positive_floor():
+    class Zero(Dictionary):
+        min_ipm = 0
+
+    with pytest.raises(ParameterError, match="must be positive, not 0"):
+        calc_surprisal(["the"], Zero())
+    with pytest.raises(SourceTypeError, match="list of lemmas"):
+        calc_surprisal(5, Dictionary())
