@@ -270,8 +270,8 @@ def test_reading_ease_grades(rs):
 def test_print_stats_hooks(capsys):
     Custom(TEXT).print_stats()
     lines = capsys.readouterr().out.split("\n")
-    assert lines[0] == f"{'Measure':^45}|{'Score':^10}"
-    assert lines[2] == f"{'RIX grade':45}|{7.0:^10.2f}"
+    assert lines[0] == f"{'Measure':^11}|{'Score':^10}"
+    assert lines[2] == f"{'RIX grade':11}|{7.0:^10.2f}"
 
 
 def test_describe_grade(rs):
@@ -299,7 +299,7 @@ def test_describe(rs):
     assert rs.describe("mu_index") is None
     assert rs.describe("reading_time") is None
     for stat in ("rix_grade", "bs", "_n_words", None, ["lix"]):
-        with pytest.raises(UnknownStatError, match=r"^Unknown metric: .+\. Available metrics"):
+        with pytest.raises(UnknownStatError, match=r"^Unknown statistic: .+\. Available"):
             rs.describe(stat)
 
 
@@ -449,9 +449,10 @@ def test_get_stats(rs):
 def test_print_stats(capsys, rs):
     rs.print_stats()
     lines = capsys.readouterr().out.split("\n")
-    assert lines[0] == f"{'Metric':^45}|{'Value':^10}"
-    assert lines[1] == "-" * 55
-    assert lines[2] == f"{'Flesch reading ease':45}|{rs.flesch_reading_easy:^10.2f}"
+    left = max(map(len, READABILITY_STATS_DESC.values())) + 1
+    assert lines[0] == f"{'Metric':^{left}}|{'Value':^10}"
+    assert lines[1] == "-" * (left + 11)
+    assert lines[2] == f"{'Flesch reading ease':{left}}|{rs.flesch_reading_easy:^10.2f}"
     assert len(lines) == len(READABILITY_STATS_DESC) + 3
 
 

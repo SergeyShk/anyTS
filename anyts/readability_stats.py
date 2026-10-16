@@ -2,7 +2,7 @@ from collections.abc import Callable, Iterable, Mapping
 from math import floor, isfinite, nan, sqrt
 from numbers import Real
 from statistics import median
-from typing import Any, ClassVar, TypeVar
+from typing import ClassVar
 
 from spacy.tokens import Doc
 
@@ -24,14 +24,14 @@ from .constants import (
     RIX_LEVELS,
     SMOG_COMPLEX_SYL_FACTOR,
 )
-from .exceptions import ParameterError, SourceError, SourceTypeError, UnknownStatError
+from .exceptions import ParameterError, SourceError, SourceTypeError
 from .extractors import SentsExtractor, WordsExtractor
-from .utils import check_messages, check_number, safe_divide
+from .stats import Stats
+from .stats import scale_level as scale_level
+from .utils import check_number, safe_divide
 
-Band = TypeVar("Band")
 
-
-class ReadabilityStats:
+class ReadabilityStats(Stats):
     """
     Base of the readability metrics of a text
 
@@ -43,6 +43,7 @@ class ReadabilityStats:
         and may override reading_ease_to_grade and level_scale; its own formulas
         are properties named in stats_desc. The defaults are the original English
         formulas
+        get_stats, to_dataframe and print_stats come from Stats
 
     Arguments:
         source (str|Doc|BasicStats): Data source - a string, a Doc object or
@@ -79,8 +80,6 @@ class ReadabilityStats:
         describe: Reading of any metric by its scale
         reading_time_by_speed: Reading time at a given speed
         reading_time_by_norm: Reading times at the speeds of a norm
-        get_stats: Getting the computed readability metrics of the text
-        print_stats: Printing the computed readability metrics with descriptions
 
     Class attributes:
         basic_stats_class (type[BasicStats]): Basic statistics of a string or a Doc;
@@ -98,7 +97,7 @@ class ReadabilityStats:
         grade_age_levels (tuple[tuple[int, int, str, str], ...]): School stages of
             describe_grade (grade_to_age)
         level_scales (dict[str, tuple[tuple[float, str], ...]]): Interpretation scales
-            of describe_level by metric, as lower bounds and their bands
+            of describe_level and describe by metric, as lower bounds and their bands
         grade_scales (dict[str, tuple[tuple[float, float], ...]]): Scales that convert
             a metric into years of schooling for describe, as lower bounds and grades;
             describe reads a metric by them when level_scale gives it no scale of bands
@@ -109,7 +108,6 @@ class ReadabilityStats:
         reading_speed (float): Reading speed of reading_time, words per minute
         reading_speed_norms (dict[str, tuple[float, ...]]): Speeds of the reading norms,
             words per minute
-        messages (dict[str, str]): Messages of the errors by key (MESSAGES)
 
     Raises:
         SourceTypeError: If the source is neither a string, a Doc nor a BasicStats object,
@@ -140,11 +138,6 @@ class ReadabilityStats:
     postgraduate_level: ClassVar[tuple[str, str]] = POSTGRADUATE_LEVEL
     reading_speed: ClassVar[float] = READING_SPEED_WPM
     reading_speed_norms: ClassVar[Mapping[str, tuple[float, ...]]] = READING_SPEED_NORMS
-    messages: ClassVar[Mapping[str, str]] = MESSAGES
-
-    def __init_subclass__(cls, **kwargs: Any) -> None:
-        super().__init_subclass__(**kwargs)
-        check_messages(cls.messages)
 
     def __init__(
         self,
@@ -300,24 +293,6 @@ class ReadabilityStats:
             )
         return grade_to_age(getattr(self, stat), self.grade_age_levels, self.postgraduate_level)
 
-    def level_scale(self, stat: str) -> tuple[tuple[float, str], ...] | None:
-        """
-        Getting the interpretation scale of a metric
-
-        Description:
-            By default the scale of level_scales; a library whose scale depends
-            on the preset overrides the method, and describe_level and describe
-            follow it
-
-        Arguments:
-            stat (str): Name of the metric
-
-        Returns:
-            tuple[tuple[float, str], ...] | None: Lower bounds and their bands, None
-                for a metric without a scale
-        """
-        return self.level_scales.get(stat) if isinstance(stat, str) else None
-
     def describe_level(self, stat: str = "flesch_reading_easy") -> str:
         """
         Getting the band of the interpretation scale of a metric
@@ -360,10 +335,7 @@ class ReadabilityStats:
         Raises:
             UnknownStatError: If the class has no such metric
         """
-        if not self._is_metric(stat):
-            raise UnknownStatError(
-                self.messages["unknown_metric"].format(stat=stat, metrics=tuple(self.stats_desc))
-            )
+        self._check_stat(stat)
         value = getattr(self, stat)
         if isinstance(value, Real) and not isfinite(value):
             return None
@@ -376,12 +348,6 @@ class ReadabilityStats:
             grade = scale_level(value, self.grade_scales[stat])
             return grade_to_age(grade, self.grade_age_levels, self.postgraduate_level)
         return None
-
-    def _is_metric(self, stat: object) -> bool:
-        """Whether the name is a metric of stats_desc or a public property of the class"""
-        if not isinstance(stat, str) or stat.startswith("_"):
-            return False
-        return stat in self.stats_desc or isinstance(getattr(type(self), stat, None), property)
 
     def reading_time_by_speed(self, wpm: float) -> float:
         """
@@ -421,24 +387,6 @@ class ReadabilityStats:
             calc_reading_time(self.bs.n_words, wpm, messages=self.messages)
             for wpm in self.reading_speed_norms[norm]
         )
-
-    def get_stats(self) -> dict[str, float]:
-        """
-        Getting the computed readability metrics of the text
-
-        Returns:
-            dict[str, float]: Dictionary of the metrics of stats_desc
-        """
-        return {stat: getattr(self, stat) for stat in self.stats_desc}
-
-    def print_stats(self) -> None:
-        """Printing the computed readability metrics with descriptions"""
-        stat_header, value_header = self.stats_headers
-        print(f"{stat_header:^45}|{value_header:^10}")
-        print("-" * 55)
-        stats = self.get_stats()
-        for stat, value in self.stats_desc.items():
-            print(f"{value:45}|{stats[stat]:^10.2f}")
 
 
 def _word_letters(bs: BasicStats) -> int:
@@ -808,49 +756,6 @@ def calc_consensus_grade(
     if not values:
         raise ParameterError("The list of grade formulas is empty")
     return float(median(values))
-
-
-def scale_level(value: float, scale: Iterable[tuple[float, Band]]) -> Band:
-    """
-    Getting the band of a scale for a value
-
-    Description:
-        The scale is given as the lower bounds of its bands in descending
-        order; the value falls into the first band whose bound it reaches,
-        and the lowest band is open below
-
-    Arguments:
-        value (float): Value of a metric
-        scale (list[tuple[float, Any]]): Lower bounds and their bands in descending order
-
-    Returns:
-        Any: Band of the scale
-
-    Raises:
-        ParameterError: If the value is not a finite number, or the scale is empty or
-            not a list of pairs of a finite lower bound and a band
-
-    Example:
-        >>> from anyts.constants import READING_EASE_LEVELS
-        >>> from anyts.readability_stats import scale_level
-        >>> scale_level(45, READING_EASE_LEVELS), scale_level(-40, READING_EASE_LEVELS)
-        ('college', 'professional')
-    """
-    check_number(value, "value")
-    try:
-        bands = [(threshold, band) for threshold, band in scale]
-    except (TypeError, ValueError):
-        raise ParameterError(
-            "The scale must be a list of pairs of a lower bound and a band"
-        ) from None
-    if not bands:
-        raise ParameterError("The scale is empty")
-    for threshold, _ in bands:
-        check_number(threshold, "lower bound of a band")
-    for threshold, band in bands:
-        if value >= threshold:
-            return band
-    return bands[-1][1]
 
 
 def grade_to_age(

@@ -17,6 +17,7 @@ from anyts import (
     extractors,
     phonetics,
     readability_stats,
+    stats,
     syntax,
     utils,
 )
@@ -124,6 +125,7 @@ def test_public_api_has_sections():
         *public_names(components),
         *public_names(basic_stats),
         *public_names(readability_stats),
+        *public_names(stats),
         "BasicStats",
         "StatsComponent",
         "Dataset",

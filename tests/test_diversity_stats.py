@@ -772,19 +772,20 @@ def test_print_stats_class_attributes(capsys):
     assert "Yule's characteristic K" not in "\n".join(lines)
 
 
-def test_print_stats_order_and_missing_descriptions(capsys):
+def test_stats_desc_names_the_metrics(capsys):
     class Reversed(DiversityStats):
         stats_desc: ClassVar[dict[str, str]] = dict(reversed(DIVERSITY_STATS_DESC.items()))
 
     Reversed(riddle).print_stats()
     rows = capsys.readouterr().out.splitlines()[2:]
-    assert [row.split("|")[0].strip() for row in rows] == list(DIVERSITY_STATS_DESC.values())
+    assert [row.split("|")[0].strip() for row in rows] == list(Reversed.stats_desc.values())
 
     class Partial(DiversityStats):
         stats_desc: ClassVar[dict[str, str]] = {"ttr": "TTR"}
 
-    with pytest.raises(KeyError, match="rttr"):
-        Partial(riddle).print_stats()
+    partial = Partial(riddle)
+    assert partial.get_stats() == {"ttr": partial.ttr}
+    assert partial.describe("rttr") is None
 
 
 WORD_FUNCTIONS = list(

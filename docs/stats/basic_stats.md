@@ -22,10 +22,9 @@ A language library subclasses `BasicStats`:
 | `sents_extractor_class`, `words_extractor_class` | class attributes | The extractors used when none is given; `SentsExtractor` and `WordsExtractor` of the core by default |
 | `join_hyphens` | class attribute | Join the parts of the hyphenated words of a `Doc` (`iter_doc_words`); `False` by default |
 | `count_punctuations(text)` | method | The punctuation marks by type; `count_punctuations` of the module by default |
-| `stats_desc`, `stats_headers` | class attributes | The descriptions of the statistics and the headers of the columns for `print_stats` |
-| `messages` | class attribute | Messages of the errors by key; `MESSAGES` by default |
+| `stats_desc` | class attribute | The counts of `get_stats` with their descriptions for `print_stats` |
 
-The thresholds of the complex and the long words are parameters; a library sets its own defaults in its `__init__` and passes them on.
+The other hooks - `stats_headers`, `level_scales`, `messages` - are those of the base class `Stats`. The thresholds of the complex and the long words are parameters; a library sets its own defaults in its `__init__` and passes them on.
 <!-- --8<-- [end:BasicStats-hooks] -->
 
 ## Parameters
@@ -50,6 +49,9 @@ The thresholds of the core are `COMPLEX_SYL_FACTOR = 3` and `LONG_WORD_LETTER_FA
 <!-- --8<-- [start:BasicStats-attributes] -->
 | Attribute | Type | Description |
 | :-------: | :--: | :---------: |
+| `normalize` | bool | Whether the normalized statistics are computed |
+| `complex_syl_factor` | int | Minimum number of syllables in a complex word |
+| `long_word_letter_factor` | int | Minimum number of letters in a long word |
 | `c_letters` | dict[int, int] | Distribution of words by number of letters |
 | `c_syllables` | dict[int, int] | Distribution of words by number of syllables |
 | `n_sents` | int | Number of sentences containing words |
@@ -90,14 +92,16 @@ The counts of the words are normalized by the number of words, those of the char
 ### get_stats
 
 <!-- --8<-- [start:BasicStats-get_stats] -->
-Returns a dictionary with the computed statistics - a copy: editing it does not change the object.
+Returns a dictionary with the distributions `c_letters` and `c_syllables`, the counts of `stats_desc`, the distribution `c_punctuations` and, with `normalize=True`, the normalized counts - a copy: editing it does not change the object. With `flat=True` the distributions give keys of their own, such as `c_letters_3` and `c_punctuations_comma`, one for every value the text has.
 <!-- --8<-- [end:BasicStats-get_stats] -->
 
 ### print_stats
 
 <!-- --8<-- [start:BasicStats-print_stats] -->
-Prints a table with the counts of the statistics, their descriptions from `stats_desc` and the headers from `stats_headers`.
+Prints a table with the counts of `stats_desc`, their descriptions and the headers from `stats_headers`.
 <!-- --8<-- [end:BasicStats-print_stats] -->
+
+The frame of the statistics (`to_dataframe`) and their reading (`describe`) are those of the [statistics interface](stats.md).
 
 ## Punctuation marks { #count_punctuations }
 

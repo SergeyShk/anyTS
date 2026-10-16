@@ -101,7 +101,7 @@ MESSAGES = {
     ),
     "not_grade_formula": "The metric {stat} is not a grade formula. Grade formulas: {grade_stats}",
     "no_scale": "The metric {stat} has no scale of bands",
-    "unknown_metric": "Unknown metric: {stat}. Available metrics: {metrics}",
+    "unknown_stat": "Unknown statistic: {stat}. Available statistics: {stats}",
     "unknown_norm": "Unknown reading speed norm: {norm}. Available norms: {norms}",
     "reading_speed": "The reading speed must be greater than 0",
     "window_len": "The window size must be greater than 0",
