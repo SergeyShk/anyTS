@@ -404,9 +404,7 @@ class ConnectorMatcher:
 
     def __init__(self, connectors: Mapping[str, tuple[str, str]]):
         if not isinstance(connectors, Mapping):
-            raise SourceTypeError(
-                "The connectors must be a dictionary of a phrase and its class and kind"
-            )
+            raise SourceTypeError(self.messages["connector_dict"])
         self._entries: dict[str, tuple[str, str, str]] = {}
         patterns: dict[str, set[tuple[str, ...]]] = {}
         for connector, value in connectors.items():
@@ -417,8 +415,7 @@ class ConnectorMatcher:
                 and all(isinstance(item, str) for item in value)
             ):
                 raise SourceTypeError(
-                    f"A connector must be a phrase with a pair of its class and kind: "
-                    f"{connector!r}"
+                    self.messages["connector_entry"].format(connector=repr(connector))
                 )
             cls, kind = value
             if cls not in self.classes or kind not in self.kinds:
@@ -482,7 +479,7 @@ class ConnectorMatcher:
             for tag in pos:
                 if tag is not None and not isinstance(tag, str):
                     raise SourceTypeError(
-                        f"A part of speech must be a string or None, not {type(tag).__name__}"
+                        self.messages["connector_pos_type"].format(type=type(tag).__name__)
                     )
             if len(pos) != len(words):
                 raise ParameterError(self.messages["connector_pos"])

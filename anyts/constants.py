@@ -147,7 +147,14 @@ MESSAGES = {
     "ngram_len": "The N-gram length must be greater than 0",
     "top_words": "The number of words must be greater than 0",
     "top_ngrams": "The number of N-grams must be greater than 0",
+    "text_type": "A text string is expected, not {type}",
+    "tokenizer": "The tokenizer is set incorrectly",
+    "tokenizer_iterable": "The tokenizer must return an iterable object",
+    "tokenizer_strings": "The tokenizer must return strings, not {type}",
+    "connector_dict": "The connectors must be a dictionary of a phrase and its class and kind",
+    "connector_entry": "A connector must be a phrase with a pair of its class and kind: {connector}",
     "connector_class": "Unknown class or kind of a connector: {cls}, {kind}",
+    "connector_pos_type": "A part of speech must be a string or None, not {type}",
     "connector_pos": "The parts of speech must be as many as the words",
 }
 
