@@ -2201,14 +2201,19 @@
 <td style="text-align: center;">Interpretation scales by metric, as lower bounds and their bands</td>
 </tr>
 <tr>
+<td style="text-align: center;"><code>preset_level_scales</code></td>
+<td style="text-align: center;">class attribute</td>
+<td style="text-align: center;">Interpretation scales by preset and metric, which take the place of those of <code>level_scales</code> for the objects of the preset</td>
+</tr>
+<tr>
 <td style="text-align: center;"><code>level_scale(stat)</code></td>
 <td style="text-align: center;">method</td>
-<td style="text-align: center;">Interpretation scale of a metric for <code>describe_level</code> and <code>describe</code>; <code>level_scales</code> by default, overridden when the scale depends on the preset</td>
+<td style="text-align: center;">Interpretation scale of a metric for <code>describe_level</code> and <code>describe</code>; that of <code>preset_level_scales</code>, else of <code>level_scales</code> by default</td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>grade_scales</code></td>
 <td style="text-align: center;">class attribute</td>
-<td style="text-align: center;">Scales that convert a metric into years of schooling for <code>describe</code>, as lower bounds and grades; a metric with a scale of bands is read by its bands, so a library that reads it by years of schooling leaves it out of <code>level_scales</code></td>
+<td style="text-align: center;">Scales that convert a metric into years of schooling for <code>describe</code>, as lower bounds and grades; a metric with a scale of bands is read by its bands, so a library that reads it by years of schooling leaves it out of <code>level_scales</code> and <code>preset_level_scales</code></td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>reading_speed</code>, <code>reading_speed_norms</code></td>
@@ -2221,9 +2226,14 @@
 <td style="text-align: center;">Scale that converts the reading ease into years of schooling for the consensus grade, as lower bounds and grades, the lowest band open below</td>
 </tr>
 <tr>
+<td style="text-align: center;"><code>preset_reading_ease_grades</code></td>
+<td style="text-align: center;">class attribute</td>
+<td style="text-align: center;">Scales of <code>reading_ease_grades</code> by preset, which take its place for the objects of the preset</td>
+</tr>
+<tr>
 <td style="text-align: center;"><code>reading_ease_to_grade(flesch_reading_easy)</code></td>
 <td style="text-align: center;">method</td>
-<td style="text-align: center;">Years of schooling for the reading ease in the consensus grade; the band of <code>reading_ease_grades</code> by default, overridden when the scale depends on the preset</td>
+<td style="text-align: center;">Years of schooling for the reading ease in the consensus grade; the band of the scale of the preset in <code>preset_reading_ease_grades</code>, else of <code>reading_ease_grades</code> by default</td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>messages</code></td>
@@ -2232,7 +2242,7 @@
 </tr>
 </tbody>
 </table>
-<p>A formula of the library is a property of the subclass named in <code>stats_desc</code>, and in <code>grade_stats</code> when it gives years of schooling; its coefficients may live in the presets under its name. The preset is a parameter: a library sets its own default in its <code>__init__</code> and passes it on.</p>
+<p>A formula of the library is a property of the subclass named in <code>stats_desc</code>, and in <code>grade_stats</code> when it gives years of schooling; its coefficients may live in the presets under its name. The preset is a parameter: a library sets its own default in its <code>__init__</code> and passes it on. A preset unknown to <code>presets</code> among the keys of <code>preset_level_scales</code> or <code>preset_reading_ease_grades</code> raises <code>ParameterError</code> when the class is defined.</p>
 <!-- --8<-- [end:ReadabilityStats-hooks] -->
 
 <p>The core defaults are the original English formulas: the preset <code>original</code> of <code>anyts.constants.READABILITY_PRESETS</code>, the grade formulas Flesch-Kincaid, Coleman-Liau, ARI, SMOG and Gunning fog, polysyllabic words of three syllables and long words of seven letters, the school stages of the United States, the scales of the reading ease, LIX and RIX, the years of schooling of the reading ease of <code>text_standard</code> of textstat (<code>READING_EASE_GRADES</code>, 13 below 30), and the reading speed of 238 words per minute with the norm <code>adult</code> - 183 words per minute aloud and 238 silently (Brysbaert, 2019).</p>
@@ -2347,7 +2357,7 @@
 <tr>
 <td style="text-align: center;"><code>preset</code></td>
 <td style="text-align: center;">str</td>
-<td style="text-align: center;">Name of the coefficient preset</td>
+<td style="text-align: center;">Name of the coefficient preset, read-only: an object of another preset can reuse the basic statistics, <code>ReadabilityStats(rs.bs, preset=...)</code></td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>coefficients</code></td>
@@ -2359,7 +2369,7 @@
 <p>The formulas are described in the <a href="../readability_stats_funcs/">metric functions</a> section.</p>
 <h2 id="consensus_grade">Consensus grade<a class="headerlink" href="#consensus_grade" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:ReadabilityStats-consensus] -->
-<p>The formulas that give years of schooling (<code>grade_stats</code>) are summarized in the <code>consensus_grade</code> attribute: the median of their values rounded half up, together with the reading ease converted into years of schooling (<code>reading_ease_to_grade</code>) without rounding. A library aligns the bounds of <code>reading_ease_grades</code> with its scale of the reading ease, so that the consensus grade and <code>describe</code> read the value alike.</p>
+<p>The formulas that give years of schooling (<code>grade_stats</code>) are summarized in the <code>consensus_grade</code> attribute: the median of their values rounded half up, together with the reading ease converted into years of schooling (<code>reading_ease_to_grade</code>) without rounding. A library aligns the bounds of <code>reading_ease_grades</code>, or of the scale of each preset in <code>preset_reading_ease_grades</code>, with its scale of the reading ease, so that the consensus grade and <code>describe</code> read the value alike.</p>
 <!-- --8<-- [end:ReadabilityStats-consensus] -->
 
 <h2 id="methods">Methods<a class="headerlink" href="#methods" title="Permanent link">&para;</a></h2>

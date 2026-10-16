@@ -1948,7 +1948,7 @@
 
 <h2 id="language-hooks">Language hooks<a class="headerlink" href="#language-hooks" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:SentsExtractor-hooks] -->
-<p>The default tokenizer is the method <code>sentenize(text)</code>, which a language library overrides in a subclass. Here it splits the text at whitespace after <code>.</code>, <code>!</code>, <code>?</code> or <code>…</code>, optionally followed by a closing quote or bracket; it knows no abbreviations, so <code>e.g. this</code> is two sentences. A piece without words, such as the dots of a spaced ellipsis <code>. . .</code> or a lone <code>!</code>, stays with the sentence before it, or with the one after it at the start of the text.</p>
+<p>The default tokenizer is the method <code>sentenize(text)</code>, which a language library overrides in a subclass. Here it splits the text at whitespace after <code>.</code>, <code>!</code>, <code>?</code> or <code>…</code>, optionally followed by a closing quote or bracket; it knows no abbreviations, so <code>e.g. this</code> is two sentences. A piece without words, such as the dots of a spaced ellipsis <code>. . .</code> or a lone <code>!</code>, stays with the sentence before it, or with the one after it at the start of the text. The messages of the errors of the length bounds come from the class attribute <code>messages</code>, <code>MESSAGES</code> by default.</p>
 <!-- --8<-- [end:SentsExtractor-hooks] -->
 
 <!-- --8<-- [start:SentsExtractor-pipeline] -->
