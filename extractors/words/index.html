@@ -785,6 +785,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#FixedWordsExtractor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ready words
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1939,6 +1950,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#FixedWordsExtractor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ready words
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1961,7 +1983,7 @@
 
 <h1 id="word-extraction">Word extraction<a class="headerlink" href="#word-extraction" title="Permanent link">&para;</a></h1>
 <div class="admonition info">
-<p><strong>anyts.extractors.WordsExtractor</strong></p>
+<p><strong>anyts.extractors.WordsExtractor</strong>, <strong>anyts.extractors.FixedWordsExtractor</strong></p>
 </div>
 <h2 id="description">Description<a class="headerlink" href="#description" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:WordsExtractor] -->
@@ -2182,6 +2204,10 @@
 <div class="highlight"><pre><span></span><code><span class="o">[(</span><span class="s1">'the'</span>,<span class="w"> </span><span class="m">3</span><span class="o">)</span>,<span class="w"> </span><span class="o">(</span><span class="s1">'cat'</span>,<span class="w"> </span><span class="m">1</span><span class="o">)]</span>
 </code></pre></div>
 </div>
+<h2 id="FixedWordsExtractor">Ready words<a class="headerlink" href="#FixedWordsExtractor" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:FixedWordsExtractor] -->
+<p><code>FixedWordsExtractor(words)</code> of <code>anyts.extractors</code> gives the words it was made with for any text: a class that takes a word extractor gets the words already known, and the text is not tokenized twice. Words that are not a list of strings raise <code>SourceTypeError</code>.</p>
+<!-- --8<-- [end:FixedWordsExtractor] -->
 
 
 

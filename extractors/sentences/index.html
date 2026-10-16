@@ -746,6 +746,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#FixedSentsExtractor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ready sentences
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1917,6 +1928,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#FixedSentsExtractor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ready sentences
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1939,7 +1961,7 @@
 
 <h1 id="sentence-extraction">Sentence extraction<a class="headerlink" href="#sentence-extraction" title="Permanent link">&para;</a></h1>
 <div class="admonition info">
-<p><strong>anyts.extractors.SentsExtractor</strong></p>
+<p><strong>anyts.extractors.SentsExtractor</strong>, <strong>anyts.extractors.FixedSentsExtractor</strong></p>
 </div>
 <h2 id="description">Description<a class="headerlink" href="#description" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:SentsExtractor] -->
@@ -2058,6 +2080,10 @@
 <div class="highlight"><pre><span></span><code><span class="o">(</span><span class="s1">'Rain today'</span>,<span class="w"> </span><span class="s1">'sun tomorrow'</span><span class="o">)</span>
 </code></pre></div>
 </div>
+<h2 id="FixedSentsExtractor">Ready sentences<a class="headerlink" href="#FixedSentsExtractor" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:FixedSentsExtractor] -->
+<p><code>FixedSentsExtractor(sents)</code> of <code>anyts.extractors</code> gives the sentences it was made with for any text: a class that takes a sentence extractor gets the sentences already known, and the text is not split twice. Sentences that are not a list of strings raise <code>SourceTypeError</code>.</p>
+<!-- --8<-- [end:FixedSentsExtractor] -->
 
 
 
