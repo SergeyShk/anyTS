@@ -45,6 +45,9 @@ DIVERSITY_STATS_DESC = {
 
 # Relations that are not arguments of a word: coordination, parataxis, punctuation
 VALENCY_IGNORED_DEPS = frozenset({"cc", "conj", "parataxis", "punct"})
+# Relations of an auxiliary and of a copula of Universal Dependencies; ClearNLP has no
+# copula relation, its copula heads the clause
+AUXILIARY_DEPS = frozenset({"aux", "cop"})
 
 # Classes and kinds of the connectors (discourse markers) and the parts of speech of
 # Universal Dependencies of a one-word connector

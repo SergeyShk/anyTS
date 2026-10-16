@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 from collections import Counter
-from collections.abc import Iterable, Sequence
+from collections.abc import Callable, Iterable, Sequence
 from typing import TYPE_CHECKING
 
-from .constants import VALENCY_IGNORED_DEPS
+from .constants import AUXILIARY_DEPS, VALENCY_IGNORED_DEPS
+from .exceptions import SourceTypeError
 from .utils import is_punctuation
 
 if TYPE_CHECKING:
@@ -397,6 +398,100 @@ def has_feature(token: Token, field: str, value: str) -> bool:
         bool: Result of the check
     """
     return value in token.morph.get(field, [])
+
+
+def is_finite_verb(token: Token) -> bool:
+    """
+    Checking whether a token is a finite form of a verb
+
+    Arguments:
+        token (Token): Token
+
+    Returns:
+        bool: Result of the check
+    """
+    return token.pos_ == "VERB" and has_feature(token, "VerbForm", "Fin")
+
+
+def is_infinitive(token: Token) -> bool:
+    """
+    Checking whether a token is an infinitive
+
+    Arguments:
+        token (Token): Token
+
+    Returns:
+        bool: Result of the check
+    """
+    return has_feature(token, "VerbForm", "Inf")
+
+
+def predicate_form(token: Token, auxiliary_form: Callable[[Token], str] | None = None) -> str:
+    """
+    Getting the verb form of a predicate
+
+    Description:
+        The form the auxiliaries and copulas of a word give (the relations of
+        AUXILIARY_DEPS), as Universal Dependencies annotates them: a finite one
+        makes the predicate finite wherever it stands (had arrived, a German
+        gekommen sein wird); otherwise the form of the first one decides (to
+        have gone is an infinitive, being chosen a gerund), and without one the
+        form of the word itself. A past participle auxiliary counts as finite:
+        it follows a finite one, which the parser may attach to another word
+        (had been chosen); a present participle (having eaten) does not. An
+        auxiliary the model leaves without a form is read by auxiliary_form, a
+        hook of the language that gives its form or an empty string to skip it;
+        without the hook it is skipped
+
+    Arguments:
+        token (Token): Token
+        auxiliary_form (callable): Verb form of an auxiliary without the feature
+            VerbForm
+
+    Returns:
+        str: Value of VerbForm (Fin, Inf, Ger, Part and the others of the model),
+            an empty string for a word with no verb form
+
+    Raises:
+        SourceTypeError: If auxiliary_form is not callable
+
+    Example:
+        >>> import spacy
+        >>> from spacy.tokens import Doc
+        >>> from anyts.syntax import predicate_form
+        >>> doc = Doc(
+        ...     spacy.blank("en").vocab,
+        ...     words=["She", "had", "arrived"],
+        ...     heads=[2, 2, 2],
+        ...     deps=["nsubj", "aux", "ROOT"],
+        ...     morphs=["Case=Nom", "VerbForm=Fin", "VerbForm=Part"],
+        ... )
+        >>> predicate_form(doc[2]), predicate_form(doc[0])
+        ('Fin', '')
+    """
+    if auxiliary_form is not None and not callable(auxiliary_form):
+        raise SourceTypeError(
+            f"auxiliary_form must be callable, not {type(auxiliary_form).__name__}"
+        )
+    auxiliaries = [
+        (child, form)
+        for child in token.children
+        if base_dep(child) in AUXILIARY_DEPS
+        and (form := _verb_form(child) or (auxiliary_form(child) if auxiliary_form else ""))
+    ]
+    if not auxiliaries:
+        return _verb_form(token)
+    if any(form == "Fin" for _, form in auxiliaries):
+        return "Fin"
+    auxiliary, form = auxiliaries[0]
+    if form == "Part" and not has_feature(auxiliary, "Tense", "Pres"):
+        return "Fin"
+    return form
+
+
+def _verb_form(token: Token) -> str:
+    """Verb form of a token, an empty string without one"""
+    return next(iter(token.morph.get("VerbForm", [])), "")
 
 
 def calc_valency(token: Token, join_hyphens: bool = False) -> int:
