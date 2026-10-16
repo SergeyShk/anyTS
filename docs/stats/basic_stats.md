@@ -92,7 +92,7 @@ The counts of the words are normalized by the number of words, those of the char
 ### get_stats
 
 <!-- --8<-- [start:BasicStats-get_stats] -->
-Returns a dictionary with the distributions `c_letters` and `c_syllables`, the counts of `stats_desc`, the distribution `c_punctuations` and, with `normalize=True`, the normalized counts - a copy: editing it does not change the object. With `flat=True` the distributions give keys of their own, such as `c_letters_3` and `c_punctuations_comma`.
+Returns a dictionary with the distributions `c_letters` and `c_syllables`, the counts of `stats_desc`, the distribution `c_punctuations` and, with `normalize=True`, the normalized counts - a copy: editing it does not change the object. With `flat=True` the distributions give keys of their own, such as `c_letters_3` and `c_punctuations_comma`, one for every value the text has.
 <!-- --8<-- [end:BasicStats-get_stats] -->
 
 ### print_stats

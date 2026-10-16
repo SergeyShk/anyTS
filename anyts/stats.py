@@ -94,6 +94,10 @@ class Stats:
         """
         Getting the computed statistics as a one-row frame
 
+        Description:
+            A dictionary statistic gives columns only for the keys of this object,
+            so a count another object lacks is NaN in a frame of several objects
+
         Returns:
             pandas.DataFrame: Frame with a column for every key of the flat statistics
         """

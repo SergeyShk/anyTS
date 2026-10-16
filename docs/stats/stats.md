@@ -41,7 +41,7 @@ Parameters:
 ### to_dataframe
 
 <!-- --8<-- [start:Stats-to_dataframe] -->
-Returns the flat statistics, `get_stats(flat=True)`, as a `pandas.DataFrame` of one row with a column for every key; the frames of several texts join with `pandas.concat`.
+Returns the flat statistics, `get_stats(flat=True)`, as a `pandas.DataFrame` of one row with a column for every key. A dictionary statistic gives columns only for the keys the text has, so in the frames of several texts joined with `pandas.concat` a count a text lacks is `NaN`: fill the columns of such a statistic with 0, and only them, since `NaN` of another statistic is an undefined value.
 <!-- --8<-- [end:Stats-to_dataframe] -->
 
 ### print_stats

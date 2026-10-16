@@ -264,6 +264,9 @@ def test_get_stats(bs):
 def test_get_stats_flat(bs):
     stats = bs.get_stats(flat=True)
     assert stats["c_letters_3"] == bs.c_letters[3]
+    assert [key for key in stats if key.startswith("c_letters_")] == [
+        f"c_letters_{letters}" for letters in bs.c_letters
+    ]
     assert stats["c_punctuations_comma"] == bs.c_punctuations["comma"] == 4
     assert stats["p_letters"] == bs.p_letters
     assert not any(isinstance(value, dict) for value in stats.values())
