@@ -281,3 +281,24 @@ Counts the words in every span of a text - a sentence, say - by the positions of
     count_words_by_spans([0, 4, 10, 14, 20], [(0, 9), (9, 10), (10, 19), (20, 24)])
     # [2, 2, 1]
     ```
+
+## find_phrases
+
+<!-- --8<-- [start:find_phrases] -->
+Finds phrases in a sequence of words: the bounds of every phrase found as slices of the words, in order. The words and the phrases are compared by their normalized forms, the lower case by default; at every position the longest phrase is taken, the phrases found do not overlap, and empty phrases are skipped. Words that are not a list of strings raise `SourceTypeError`.
+
+| Parameter | Type | Default | Description |
+| :-------: | :--: | :-----: | :---------: |
+| `words` | list[str] | `-` | Words of the text |
+| `phrases` | list[str] | `-` | Phrases, words separated by spaces |
+| `normalize` | Callable | `str.lower` | Normalized form of a word and of a phrase |
+<!-- --8<-- [end:find_phrases] -->
+
+!!! example "Example"
+
+    ``` python
+    from anyts.utils import find_phrases
+
+    find_phrases(["In", "fact", "it", "rains"], ["in fact", "in"])
+    # [(0, 2)]
+    ```

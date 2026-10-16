@@ -3,7 +3,7 @@ from __future__ import annotations
 import math
 import sys
 import unicodedata
-from collections.abc import Iterable, Iterator, Mapping, Sequence, Set
+from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence, Set
 from functools import lru_cache
 from itertools import repeat
 from numbers import Integral, Real
@@ -633,3 +633,55 @@ def _unit_word(unit: Sequence[Token]) -> tuple[int, int, str]:
     text = "".join(token.text for token in unit)
     word = text.lstrip("\ufeff")
     return unit[0].idx + len(text) - len(word), unit[-1].idx + len(unit[-1]), word
+
+
+def find_phrases(
+    words: Sequence[str], phrases: Iterable[str], normalize: Callable[[str], str] = str.lower
+) -> list[tuple[int, int]]:
+    """
+    Finding phrases in a sequence of words
+
+    Description:
+        The words and the phrases are compared by their normalized forms; at
+        every position the longest phrase is taken, and the phrases found do not
+        overlap
+
+    Arguments:
+        words (list[str]): Words of the text
+        phrases (list[str]): Phrases, words separated by spaces
+        normalize (callable): Normalized form of a word and of a phrase, the lower
+            case by default
+
+    Returns:
+        list[tuple[int, int]]: Bounds of the phrases found as slices of words; empty
+            phrases are skipped
+
+    Raises:
+        SourceTypeError: If the words are not a list of strings
+
+    Example:
+        >>> from anyts.utils import find_phrases
+        >>> find_phrases(["In", "fact", "it", "rains"], ["in fact", "in"])
+        [(0, 2)]
+    """
+    check_words(words)
+    patterns = sorted(
+        {pattern for phrase in phrases if (pattern := tuple(normalize(phrase).split()))},
+        key=lambda pattern: (-len(pattern), pattern),
+    )
+    by_first: dict[str, list[tuple[str, ...]]] = {}
+    for pattern in patterns:
+        by_first.setdefault(pattern[0], []).append(pattern)
+    normalized = [normalize(word) for word in words]
+    spans = []
+    position = 0
+    while position < len(normalized):
+        for pattern in by_first.get(normalized[position], ()):
+            end = position + len(pattern)
+            if tuple(normalized[position:end]) == pattern:
+                spans.append((position, end))
+                position = end
+                break
+        else:
+            position += 1
+    return spans

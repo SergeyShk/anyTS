@@ -1,0 +1,277 @@
+from math import isnan, sqrt
+from typing import ClassVar
+
+import pytest
+import spacy
+
+from anyts.constants import MESSAGES, STYLE_STATS_DESC
+from anyts.exceptions import ParameterError, SourceError, SourceTypeError, UnknownStatError
+from anyts.extractors import WordsExtractor
+from anyts.style_stats import (
+    StyleStats,
+    calc_academic_nausea,
+    calc_classic_nausea,
+    calc_keyword_density,
+    calc_phrase_density,
+    calc_spam,
+    calc_water,
+    calc_zipf_naturalness,
+    check_params,
+    find_nausea_words,
+    in_order,
+)
+
+STOPWORDS = frozenset({"the", "and", "a", "of", "in", "it", "is", "to"})
+
+
+def test_classic_nausea():
+    assert calc_classic_nausea(["cat", "cat", "dog", "cat"]) == sqrt(3)
+    assert calc_classic_nausea([]) == 0.0
+
+
+def test_spam():
+    assert calc_spam(["cat", "cat", "dog", "cat"]) == 50.0
+    assert calc_spam([]) == 0.0
+
+
+def test_nausea_words_and_academic_nausea():
+    words = ["the", "cat", "and", "the", "dog", "and", "the", "cat", "ran"]
+    assert find_nausea_words(words, 2) == {"the": 3, "cat": 2}
+    assert find_nausea_words(words, 2, STOPWORDS) == {"cat": 2, "dog": 1}
+    assert find_nausea_words(words, 2, is_stopword=STOPWORDS.__contains__) == {"cat": 2, "dog": 1}
+    assert find_nausea_words(["The", "cat"], 1, ["the"]) == {"cat": 1}
+    upper = find_nausea_words(["THE", "cat"], 1, ["the"], normalize=str.upper)
+    assert upper == {"cat": 1}
+    assert calc_academic_nausea(words, 2, STOPWORDS) == pytest.approx(100 * 3 / 9)
+    assert calc_academic_nausea([], 2) == 0.0
+
+
+def test_water():
+    words = ["the", "cat", "and", "the", "dog"]
+    assert calc_water(words, STOPWORDS) == 60.0
+    assert calc_water(words, is_water_word=lambda word: word == "and") == 20.0
+    assert calc_water(words) == 0.0
+    assert calc_water(["The", "cat"], ["the"]) == 50.0
+
+
+@pytest.mark.parametrize(
+    ("words", "top_n", "expected"),
+    [
+        (
+            ["a", "a", "a", "a", "b", "b", "c"],
+            10,
+            100 * (1 - (abs(2 * 2 - 4) + abs(1 * 3 - 4)) / 8),
+        ),
+        (["a", "a", "b"], 10, 100.0),
+        (["a", "a", "a", "a", "b"], 10, 50.0),
+        (["a", "b", "c"], 10, nan := float("nan")),
+        (["a", "a", "a"], 10, nan),
+        (["a", "a", "b", "b"], 1, nan),
+        ([], 10, nan),
+        (["a", "a", "a", "a", "a", "a", "b", "b", "b", "b", "b", "b"], 10, 0.0),
+    ],
+)
+def test_zipf_naturalness(words, top_n, expected):
+    value = calc_zipf_naturalness(words, top_n)
+    assert (isnan(value) and isnan(expected)) or value == pytest.approx(expected)
+
+
+def test_keyword_density():
+    words = ["The", "cat", "and", "the", "cat", "and", "the", "dog"]
+    assert calc_keyword_density(words, ["the cat", "dog", ""]) == {
+        "the cat": 25.0,
+        "dog": 12.5,
+        "": 0.0,
+    }
+    assert list(calc_keyword_density(words, {"dog", "cat"})) == ["cat", "dog"]
+    assert calc_keyword_density(words, ["cat and cat"]) == {"cat and cat": 0.0}
+    assert calc_keyword_density(["a", "a", "a"], ["a a"]) == {"a a": pytest.approx(200 / 3)}
+
+
+def test_phrase_density():
+    words = ["we", "made", "a", "decision", "and", "makes", "a", "decision", "again"]
+    assert calc_phrase_density(words, ["make a decision"]) == 0.0
+
+    def expand(text, phrases):
+        return {"made a decision": "make a decision", "make a decision": "make a decision"}
+
+    assert calc_phrase_density(words, ["make a decision"], expand=expand) == pytest.approx(100 / 9)
+    assert calc_phrase_density(["A", "Lot"], ["a lot"]) == 50.0
+
+
+def test_check_params():
+    check_params(1)
+    with pytest.raises(ParameterError, match="greater than 0"):
+        check_params(0)
+    with pytest.raises(ParameterError, match="must be an integer"):
+        check_params(2.5)
+
+
+def test_in_order():
+    assert in_order({"b", "a"}) == ("a", "b")
+    assert in_order(["b", "a"]) == ("b", "a")
+    assert in_order({"b": 1, "a": 2}) == ("a", "b")
+
+
+@pytest.mark.parametrize(
+    ("func", "args"),
+    [
+        (calc_classic_nausea, ("cat",)),
+        (calc_spam, (["cat", 1],)),
+        (calc_water, (["cat"], "the")),
+        (find_nausea_words, (["cat"], 1, "the")),
+        (calc_keyword_density, (["cat"], "cat")),
+        (calc_phrase_density, (["cat"], "a cat")),
+    ],
+)
+def test_errors_of_the_words(func, args):
+    with pytest.raises(SourceTypeError):
+        func(*args)
+
+
+class EnglishStyle(StyleStats):
+    """The hooks of a language, on English words"""
+
+    compound_prepositions_list = ("in order to", "with regard to")
+    parentheticals_list = ("of course", "in fact")
+    cliches_list = ("make a decision",)
+
+    def is_stopword(self, word):
+        return word in STOPWORDS
+
+    def is_parenthetical(self, word):
+        return word == "however"
+
+    def expand_phrases(self, text, phrases):
+        expanded = {phrase: phrase for phrase in phrases}
+        if "make a decision" in phrases:
+            expanded["made a decision"] = "make a decision"
+        return expanded
+
+    def nouns(self):
+        return [(form, form.rstrip("s")) for form in self.forms if form in NOUNS]
+
+    def is_verbal_noun(self, lemma):
+        return lemma.endswith(("tion", "sion"))
+
+
+NOUNS = frozenset({"decision", "decisions", "report", "organization"})
+TEXT = (
+    "In fact the organization made a decision in order to write the report. "
+    "However the report is late, of course, and the decision is late"
+)
+
+
+@pytest.fixture(scope="module")
+def style():
+    return EnglishStyle(TEXT)
+
+
+def test_metrics_of_a_subclass(style):
+    words = style.words
+    assert len(words) == 25 and words[0] == "in"
+    assert style.forms == words
+    stats = style.get_stats()
+    assert list(stats) == list(STYLE_STATS_DESC)
+    assert stats["classic_nausea"] == sqrt(4)
+    assert stats["academic_nausea"] == pytest.approx(calc_academic_nausea(words, 10, STOPWORDS))
+    assert stats["water"] == pytest.approx(calc_water(words, STOPWORDS))
+    assert stats["verbal_nouns"] == pytest.approx(100 * 3 / 5)
+    assert stats["compound_prepositions"] == pytest.approx(100 / 25)
+    assert stats["parentheticals"] == pytest.approx(100 * 3 / 25)
+    assert stats["cliches"] == pytest.approx(100 / 25)
+
+
+def test_markers(style):
+    assert style.markers() == {
+        "verbal_nouns": ("organization", "decision", "decision"),
+        "compound_prepositions": ("in order to",),
+        "parentheticals": ("in fact", "however", "of course"),
+        "cliches": ("made a decision",),
+    }
+
+
+def test_nausea_words_and_keywords(style):
+    assert list(style.nausea_words())[:2] == ["decision", "report"]
+    assert style.keyword_density("decision", "the report") == {
+        "decision": 8.0,
+        "the report": 8.0,
+    }
+
+
+def test_defaults_of_the_base():
+    style = StyleStats("The cat and the dog")
+    assert style.words == ("the", "cat", "and", "the", "dog")
+    assert style.nausea_words() == {"the": 2, "cat": 1, "and": 1, "dog": 1}
+    assert style.water == 0.0
+    assert isnan(style.verbal_nouns)
+    assert style.compound_prepositions == style.parentheticals == style.cliches == 0.0
+    assert style.markers() == dict.fromkeys(
+        ("verbal_nouns", "compound_prepositions", "parentheticals", "cliches"), ()
+    )
+    assert style.describe("water") is None
+    assert not style.is_verbal_noun("organization")
+    assert not style.is_parenthetical("however")
+
+
+def test_source_of_a_doc_and_an_extractor():
+    doc = spacy.blank("en")("The cat, the well-known cat")
+    assert StyleStats(doc).words == ("the", "cat", "the", "well", "known", "cat")
+
+    class Joined(StyleStats):
+        join_hyphens = True
+
+    assert Joined(doc).words == ("the", "cat", "the", "well-known", "cat")
+    extractor = WordsExtractor(stopwords=["the"])
+    style = StyleStats(doc, words_extractor=extractor)
+    assert style.words == ("cat", "well", "known", "cat")
+    assert style.forms == ("the", "cat", "the", "well", "known", "cat")
+    assert StyleStats("The cat, the cat", words_extractor=extractor).words == ("cat", "cat")
+
+
+def test_parameters():
+    style = EnglishStyle(
+        TEXT, stopwords=["the"], top_n=2, cliches={"the report"}, nausea_stopwords=["the", "is"]
+    )
+    assert style.stopwords == ("the",) and style.top_n == 2
+    assert style.cliches_list == ("the report",)
+    assert style.cliches == pytest.approx(100 * 2 / 25)
+    assert style.water == pytest.approx(100 * 4 / 25)
+    assert list(style.nausea_words()) == ["in", "decision"]
+    assert EnglishStyle.cliches_list == ("make a decision",)
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "error"),
+    [
+        ({"source": 5}, SourceTypeError),
+        ({"source": "?!"}, SourceError),
+        ({"source": TEXT, "words_extractor": 5}, SourceTypeError),
+        ({"source": TEXT, "top_n": 0}, ParameterError),
+        ({"source": TEXT, "stopwords": "the"}, SourceTypeError),
+        ({"source": TEXT, "nausea_stopwords": [1]}, SourceTypeError),
+        ({"source": TEXT, "cliches": "make"}, SourceTypeError),
+    ],
+)
+def test_errors(kwargs, error):
+    with pytest.raises(error):
+        StyleStats(**kwargs)
+
+
+def test_describe_by_norms():
+    class Normed(StyleStats):
+        level_scales: ClassVar = {"spam": ((50, "spammed"), (0, "natural"))}
+
+    style = Normed("the cat and the cat")
+    assert style.describe("spam") == "natural"
+    assert style.describe("cliches") is None
+    with pytest.raises(UnknownStatError):
+        style.describe("unknown")
+
+
+def test_own_messages():
+    class Own(StyleStats):
+        messages: ClassVar = {**MESSAGES, "top_n": "Own top"}
+
+    with pytest.raises(ParameterError, match=r"^Own top$"):
+        Own(TEXT, top_n=0)
