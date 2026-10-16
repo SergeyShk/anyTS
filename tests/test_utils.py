@@ -440,3 +440,10 @@ def test_in_order():
     assert in_order({"b", "a"}) == ("a", "b")
     assert in_order(["b", "a"]) == ("b", "a")
     assert in_order({"b": 1, "a": 2}) == ("a", "b")
+
+
+def test_numbers_of_two_patterns_are_cached_apart():
+    roman = re.compile(r"[ivxlcdm]+")
+    assert not is_number("mix")
+    assert is_number("mix", roman)
+    assert not is_number("mix")

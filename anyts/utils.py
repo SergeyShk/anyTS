@@ -693,6 +693,7 @@ def find_phrases(
     return spans
 
 
+@lru_cache(maxsize=1 << 16)
 def is_number(word: str, pattern: Pattern[str] = NUMBER_PATTERN) -> bool:
     """
     Checking whether a word is a number
