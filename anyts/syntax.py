@@ -1,10 +1,14 @@
+from __future__ import annotations
+
 from collections import Counter
 from collections.abc import Iterable, Sequence
-
-from spacy.tokens import Token
+from typing import TYPE_CHECKING
 
 from .constants import VALENCY_IGNORED_DEPS
 from .utils import is_punctuation
+
+if TYPE_CHECKING:
+    from spacy.tokens import Token
 
 
 def is_word(token: Token) -> bool:

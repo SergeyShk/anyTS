@@ -1,16 +1,18 @@
+from __future__ import annotations
+
 from abc import ABCMeta, abstractmethod
 from collections.abc import Mapping
-from typing import Any, ClassVar, TypeVar, cast
-
-from spacy.attrs import SENT_START
-from spacy.language import Language
-from spacy.tokens import Doc
-from thinc.types import Ints2d
+from typing import TYPE_CHECKING, Any, ClassVar, TypeVar, cast
 
 from .constants import MESSAGES
 from .exceptions import ParameterError, SourceError
 from .extractors import BLANK_LINE
 from .utils import check_messages, has_words
+
+if TYPE_CHECKING:
+    from spacy.language import Language
+    from spacy.tokens import Doc
+    from thinc.types import Ints2d
 
 Stats = TypeVar("Stats")
 
@@ -143,7 +145,7 @@ class StatsComponent(metaclass=ABCMeta):
         Raises:
             SourceError: If the extension does not hold statistics of the class
         """
-        stats = doc._.get(name) if Doc.has_extension(name) else None
+        stats = doc._.get(name) if doc.has_extension(name) else None
         if not isinstance(stats, stats_class):
             key = "missing_extension" if factory else "missing_extension_any"
             raise SourceError(
@@ -205,6 +207,8 @@ def start_sents_after_blank_lines(doc: Doc) -> Doc:
         >>> [sent.text for sent in nlp("Notes\\n\\nThe cat sleeps.").sents]
         ['Notes\\n\\n', 'The cat sleeps.']
     """
+    from spacy.attrs import SENT_START
+
     if not len(doc) or doc.has_annotation("DEP"):
         return doc
     text = doc.text
@@ -230,12 +234,14 @@ def start_sents_after_blank_lines(doc: Doc) -> Doc:
             leading = not has_words(token.text)
         spaces = []
         end = token.idx + len(token)
-    doc.from_array([SENT_START], cast(Ints2d, starts.astype("uint64")))
+    doc.from_array([SENT_START], cast("Ints2d", starts.astype("uint64")))
     return doc
 
 
 def _register(name: str, messages: Mapping[str, str] = MESSAGES) -> None:
     """Registering the extension of a component, never over one of another package"""
+    from spacy.tokens import Doc
+
     if Doc.has_extension(name) and Doc.get_extension(name) != (None, None, None, None):
         raise ParameterError(messages["foreign_extension"].format(name=name))
     Doc.set_extension(name, default=None, force=True)

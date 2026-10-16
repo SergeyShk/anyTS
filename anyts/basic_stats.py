@@ -1,12 +1,12 @@
+from __future__ import annotations
+
 import re
 import unicodedata
 from abc import ABCMeta, abstractmethod
 from collections import Counter
 from collections.abc import Collection, Iterable, Mapping
 from re import Pattern
-from typing import ClassVar
-
-from spacy.tokens import Doc, Span
+from typing import TYPE_CHECKING, ClassVar
 
 from .constants import (
     BASIC_STATS_DESC,
@@ -25,8 +25,12 @@ from .utils import (
     count_letters,
     has_sents,
     has_words,
+    is_doc,
     iter_doc_words,
 )
+
+if TYPE_CHECKING:
+    from spacy.tokens import Doc, Span
 
 _NORMALIZED_STATS = (
     "p_unique_words",
@@ -260,7 +264,7 @@ class BasicStats(Stats, metaclass=ABCMeta):
             messages["long_word_letter_factor"],
         )
         sents: Iterable[Span] | Iterable[str]
-        if isinstance(source, Doc):
+        if is_doc(source):
             text = source.text
             if sents_extractor is not None:
                 sents = sents_extractor.extract(text)

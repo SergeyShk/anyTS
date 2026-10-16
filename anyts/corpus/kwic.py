@@ -1,18 +1,21 @@
+from __future__ import annotations
+
 import re
 import unicodedata
 from bisect import bisect_left
 from collections.abc import Callable, Iterable, Sequence
-from typing import NamedTuple
-
-from spacy.tokens import Doc, Token
+from typing import TYPE_CHECKING, NamedTuple
 
 from ..exceptions import ParameterError, SourceTypeError
 from ..extractors import BLANK_LINE, _iter_words
-from ..utils import _unit_word, check_integer, has_sents, iter_doc_units
+from ..utils import _unit_word, check_integer, has_sents, is_doc, iter_doc_units
+
+if TYPE_CHECKING:
+    from spacy.tokens import Doc, Token
 
 Tokenizer = Callable[[str], Iterable[tuple[int, int, str]]]
 Sentenizer = Callable[[str], Iterable[tuple[int, int, str]]]
-Lemmatizer = Callable[[str, Sequence[Token]], Iterable[str] | str]
+Lemmatizer = Callable[[str, Sequence["Token"]], Iterable[str] | str]
 
 # The end of a sentence: a final mark, closing marks and whitespace, or a blank line
 BOUNDARY = re.compile(rf"[.!?…][\"'»”’)\]]*\s|{BLANK_LINE.pattern}")
@@ -134,7 +137,7 @@ def kwic(
     if window < 0:
         raise ParameterError("The window cannot be negative")
     text, words, tokens = _source_words(source, split, join_hyphens)
-    doc = source if isinstance(source, Doc) and has_sents(source) else None
+    doc = source if is_doc(source) and has_sents(source) else None
     starts = _sent_starts(text, sentenize) if doc is None and not all(key_gaps) else None
     lemmas = lemmatize or _lemmas
 
@@ -191,7 +194,7 @@ def _source_words(
     source: str | Doc, split: Tokenizer, join_hyphens: bool
 ) -> tuple[str, list[tuple[int, int, str]], list[Sequence[Token]]]:
     """Text of a source, its words with their positions and their tokens (none for a string)"""
-    if isinstance(source, Doc):
+    if is_doc(source):
         tokens = list(iter_doc_units(source, join_hyphens))
         return source.text, [_unit_word(unit) for unit in tokens], list(tokens)
     if isinstance(source, str):

@@ -67,14 +67,41 @@ def _run(code: str) -> str:
 @pytest.mark.parametrize(
     ("module", "absent"),
     [
-        ("anyts", ("matplotlib", "graphviz", "pandas")),
-        ("anyts.visualizers.highlight", ("matplotlib", "graphviz", "pandas")),
-        ("anyts.corpus.kwic", ("pandas", "matplotlib")),
+        ("anyts", ("spacy", "scipy", "matplotlib", "graphviz", "pandas")),
+        ("anyts.basic_stats", ("spacy", "scipy", "pandas")),
+        ("anyts.readability_stats", ("spacy", "scipy", "pandas")),
+        ("anyts.components", ("spacy", "thinc", "scipy")),
+        ("anyts.visualizers.highlight", ("spacy", "matplotlib", "graphviz", "pandas")),
+        ("anyts.corpus.kwic", ("spacy", "pandas", "matplotlib")),
     ],
 )
 def test_imports_are_light(module, absent):
     loaded = _run(f"import sys, {module}; print(' '.join(sorted(sys.modules)))").split()
     assert not set(absent) & set(loaded)
+
+
+def test_no_module_imports_spacy():
+    """spaCy is loaded by the documents a user brings, never by the import of the core"""
+    code = (
+        "import importlib, pkgutil, sys, anyts\n"
+        "names = [m.name for m in pkgutil.walk_packages(anyts.__path__, 'anyts.')]\n"
+        "for name in names:\n"
+        "    importlib.import_module(name)\n"
+        "print(len(names), 'spacy' in sys.modules, 'thinc' in sys.modules)"
+    )
+    n_modules, spacy, thinc = _run(code).split()
+    assert int(n_modules) > 30
+    assert (spacy, thinc) == ("False", "False")
+
+
+def test_checks_of_spacy_objects_without_spacy():
+    code = (
+        "import sys\n"
+        "from anyts.utils import check_sequence, is_doc, is_span\n"
+        "check_sequence(['the', 'cat'])\n"
+        "print(is_doc('the cat'), is_span(['the']), 'spacy' in sys.modules)"
+    )
+    assert _run(code) == "False False False"
 
 
 def test_names_of_modules_keep_their_functions():

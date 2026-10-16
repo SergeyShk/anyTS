@@ -23,7 +23,9 @@ from anyts.utils import (
     count_words_by_spans,
     has_sents,
     has_words,
+    is_doc,
     is_punctuation,
+    is_span,
     iter_doc_tokens,
     iter_doc_units,
     iter_doc_words,
@@ -148,6 +150,22 @@ def test_has_sents(nlp):
     assert not has_sents(partial)
     full = Doc(nlp.vocab, words=["The", "cat", "Dogs"], sent_starts=[True, False, True])
     assert has_sents(full)
+
+
+def test_is_doc_and_is_span(nlp):
+    doc = nlp("The cat sleeps")
+    assert (is_doc(doc), is_doc(doc[:2]), is_doc(doc[0]), is_doc(doc.text)) == (
+        True,
+        False,
+        False,
+        False,
+    )
+    assert (is_span(doc[:2]), is_span(doc), is_span(doc[0]), is_span(None)) == (
+        True,
+        False,
+        False,
+        False,
+    )
 
 
 def test_has_words_of_a_span(nlp):

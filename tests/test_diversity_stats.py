@@ -10,6 +10,7 @@ from typing import ClassVar
 import numpy as np
 import pandas as pd
 import pytest
+import scipy.optimize
 import spacy
 from scipy.special import comb
 
@@ -837,13 +838,13 @@ def test_fit_zipf_mandelbrot_divergence(monkeypatch):
     def failing(*args, **kwargs):
         raise ValueError("Residuals are not finite in the initial point")
 
-    monkeypatch.setattr(diversity_stats, "least_squares", failing)
+    monkeypatch.setattr(scipy.optimize, "least_squares", failing)
     assert all(isnan(value) for value in fit_zipf_mandelbrot(words))
 
     class Unconverged:
         success = False
 
-    monkeypatch.setattr(diversity_stats, "least_squares", lambda *args, **kwargs: Unconverged())
+    monkeypatch.setattr(scipy.optimize, "least_squares", lambda *args, **kwargs: Unconverged())
     assert all(isnan(value) for value in fit_zipf_mandelbrot(words))
 
 
