@@ -7,8 +7,8 @@ import spacy
 from anyts.constants import LEXICAL_STATS_DESC, MESSAGES
 from anyts.exceptions import ParameterError, SourceError, SourceTypeError
 from anyts.extractors import WordsExtractor
-from anyts.lexical_stats import LexicalStats, LexicalWord, calc_surprisal, is_number
-from anyts.utils import is_doc, iter_doc_words
+from anyts.lexical_stats import LexicalStats, LexicalWord, calc_surprisal
+from anyts.utils import is_doc, is_number, iter_doc_words
 
 
 class Entry(NamedTuple):
@@ -142,13 +142,6 @@ def test_hooks_of_the_keys_and_the_list():
 def test_source_of_a_doc():
     doc = spacy.blank("en")("The cats sat")
     assert English(doc).lemmas == ("the", "cat", "sit")
-
-
-def test_numbers():
-    assert is_number("2020") and is_number("-5") and is_number("10%")
-    assert not is_number("cat")
-    roman = __import__("re").compile(r"[ivxlcdm]+")
-    assert is_number("XIV", roman) and not is_number("2020", roman)
 
 
 @pytest.mark.parametrize(

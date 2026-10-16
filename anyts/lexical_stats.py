@@ -5,13 +5,11 @@ from collections.abc import Iterable, Mapping, Sequence
 from functools import cached_property
 from math import log2, log10, nan
 from numbers import Integral
-from re import Pattern
 from statistics import fmean
 from typing import TYPE_CHECKING, Any, ClassVar, NamedTuple, Protocol
 
 from .constants import FREQUENCY_BANDS, LEXICAL_STATS_DESC
 from .exceptions import ParameterError, SourceError, SourceTypeError
-from .extractors import NUMBER_PATTERN
 from .stats import Stats
 from .utils import check_words, safe_divide
 
@@ -56,26 +54,6 @@ class LexicalWord(NamedTuple):
     word: str
     lemma: str
     content: bool
-
-
-def is_number(word: str, pattern: Pattern[str] = NUMBER_PATTERN) -> bool:
-    """
-    Checking whether a word is a number
-
-    Arguments:
-        word (str): Word
-        pattern (Pattern): Number of a language, matched against the whole lower-cased word;
-            NUMBER_PATTERN of the extractors by default
-
-    Returns:
-        bool: Result of the check
-
-    Example:
-        >>> from anyts.lexical_stats import is_number
-        >>> is_number("2020"), is_number("10%"), is_number("cat")
-        (True, True, False)
-    """
-    return pattern.fullmatch(word.lower()) is not None
 
 
 def _mean(values: Sequence[float]) -> float:
@@ -230,7 +208,7 @@ class LexicalStats(Stats, metaclass=ABCMeta):
 
         Description:
             The lemmas and the parts of speech depend on the language, so a
-            language library implements the method; the numbers (is_number) are
+            language library implements the method; the numbers (utils.is_number) are
             not words. A source of another type raises SourceTypeError
 
         Arguments:

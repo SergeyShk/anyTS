@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import math
+import re
 import sys
 import unicodedata
 from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, Sequence, Set
 from functools import lru_cache
 from itertools import repeat
 from numbers import Integral, Real
+from re import Pattern
 from string import Formatter
 from typing import TYPE_CHECKING, TypeGuard
 
@@ -20,6 +22,9 @@ if TYPE_CHECKING:
 PUNCTUATION_CATEGORIES = frozenset(
     ("Pc", "Pd", "Ps", "Pe", "Pi", "Pf", "Po", "Sm", "Sc", "Sk", "So", "Mn", "Mc", "Me", "Cf")
 )
+
+# A signed number with separators and an optional percent sign: -5, 1990-1995, 1,500.50, 10%
+NUMBER_PATTERN = re.compile(r"[+\-−]?\d+(?:[.,:/-]\d+)*%?")
 
 
 @lru_cache(maxsize=1 << 16)
@@ -686,3 +691,42 @@ def find_phrases(
         else:
             position += 1
     return spans
+
+
+def is_number(word: str, pattern: Pattern[str] = NUMBER_PATTERN) -> bool:
+    """
+    Checking whether a word is a number
+
+    Arguments:
+        word (str): Word
+        pattern (Pattern): Number of a language, matched against the whole lower-cased word;
+            NUMBER_PATTERN by default
+
+    Returns:
+        bool: Result of the check
+
+    Example:
+        >>> from anyts.utils import is_number
+        >>> is_number("2020"), is_number("10%"), is_number("cat")
+        (True, True, False)
+    """
+    return pattern.fullmatch(word.lower()) is not None
+
+
+def in_order(words: Collection[str]) -> tuple[str, ...]:
+    """
+    Putting a collection of words in a fixed order
+
+    Arguments:
+        words (list[str]|set[str]): Words; a set or a mapping is sorted, a list keeps
+            its order
+
+    Returns:
+        tuple[str]: Words in order
+
+    Example:
+        >>> from anyts.utils import in_order
+        >>> in_order({"dog", "cat"}), in_order(["dog", "cat"])
+        (('cat', 'dog'), ('dog', 'cat'))
+    """
+    return tuple(sorted(words)) if isinstance(words, Set | Mapping) else tuple(words)

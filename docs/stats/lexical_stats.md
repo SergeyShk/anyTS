@@ -1,7 +1,7 @@
 # Lexical sophistication
 
 !!! info ""
-    **anyts.lexical_stats.LexicalStats**, **anyts.lexical_stats.calc_surprisal()**, **anyts.lexical_stats.is_number()**
+    **anyts.lexical_stats.LexicalStats**, **anyts.lexical_stats.calc_surprisal()**
 
 ## Description
 
@@ -18,7 +18,7 @@ A language library subclasses `LexicalStats`:
 
 | Hook | Kind | Description |
 | :--: | :--: | :---------: |
-| `analyze(source)` | method | The words of a source as `LexicalWord`: the word, its lemma and whether it is a content word; an abstract method, since the lemmas and the parts of speech depend on the language. Numbers (`is_number`) are not words |
+| `analyze(source)` | method | The words of a source as `LexicalWord`: the word, its lemma and whether it is a content word; an abstract method, since the lemmas and the parts of speech depend on the language. Numbers (`is_number` of `anyts.utils`) are not words |
 | `freq_dict_class` | class attribute | Class of the frequency dictionary, made without arguments when none is given; a dictionary of another class is refused |
 | `dictionary_keys()` | method | Keys of the words in the dictionary; the lemmas by default, otherwise for instance a proper noun by its form |
 | `rank(lemma)` | method | Rank of a lemma in the list of the most frequent lemmas, `None` out of it; no list by default |
@@ -99,12 +99,6 @@ $$
 
 No words give `nan`; keys that are not a list of strings and a dictionary without `ipm` and `min_ipm` raise `SourceTypeError`, a lowest frequency that is not above zero `ParameterError`.
 <!-- --8<-- [end:calc_surprisal] -->
-
-### is_number
-
-<!-- --8<-- [start:is_number] -->
-`is_number(word, pattern)` checks whether a word is a number by a pattern matched against the whole lower-cased word, `NUMBER_PATTERN` of the extractors by default; a language passes its own (ordinals, Roman numerals).
-<!-- --8<-- [end:is_number] -->
 
 ## Usage example
 

@@ -302,3 +302,15 @@ Finds phrases in a sequence of words: the bounds of every phrase found as slices
     find_phrases(["In", "fact", "it", "rains"], ["in fact", "in"])
     # [(0, 2)]
     ```
+
+## is_number
+
+<!-- --8<-- [start:is_number] -->
+`is_number(word, pattern)` checks whether a word is a number by a pattern matched against the whole lower-cased word, `NUMBER_PATTERN` by default, the numbers of `WordsExtractor`; a language passes its own (ordinals, Roman numerals).
+<!-- --8<-- [end:is_number] -->
+
+## in_order
+
+<!-- --8<-- [start:in_order] -->
+`in_order(words)` puts a collection of words in a fixed order: a list keeps its order, a set or a mapping is sorted.
+<!-- --8<-- [end:in_order] -->

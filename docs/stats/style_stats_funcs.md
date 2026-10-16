@@ -170,15 +170,12 @@ Parameters:
 ## Parameters of the metrics { #check_params }
 
 !!! info ""
-    **anyts.style_stats.check_params()**, **anyts.style_stats.in_order()**
+    **anyts.style_stats.check_params()**
 
 <!-- --8<-- [start:StyleStats-check_params] -->
 `check_params(top_n, *, messages)` checks the number of the most frequent words: one that is not an integer of at least one raises `ParameterError`.
 <!-- --8<-- [end:StyleStats-check_params] -->
 
-<!-- --8<-- [start:in_order] -->
-`in_order(words)` puts a collection of words in a fixed order: a list keeps its order, a set or a mapping is sorted.
-<!-- --8<-- [end:in_order] -->
 
 !!! example "Example"
 
