@@ -13,6 +13,8 @@ from anyts.corpus import (
     check_comparison_params,
     compare_features,
     holm_correction,
+    sentence_rhythm,
+    split_windows,
 )
 from anyts.corpus.compare import (
     COMPARISON_COLUMNS,
@@ -343,3 +345,183 @@ def test_feature_columns():
     with pytest.raises(SourceTypeError, match="must be numeric"):
         _check_table(table.assign(x=[1 + 1j, 2 + 0j]))
     _check_table(table.assign(x=pd.Series([1.0, pd.NA], dtype=object)))
+
+
+WINDOW_TEXT = (
+    "The cat sat on the sill. It watched the birds, and the birds flew away. "
+    "The cat slept. Tomorrow it will sit on the sill again and watch."
+)
+
+
+def test_split_windows_of_exact_size():
+    windows = [
+        "The cat sat on the",
+        "sill. It watched the birds,",
+        "and the birds flew away.",
+        "The cat slept. Tomorrow it",
+        "will sit on the sill",
+    ]
+    assert split_windows(WINDOW_TEXT, 5) == windows
+    assert split_windows(WINDOW_TEXT, 5, min_words=3) == [*windows, "again and watch."]
+    assert split_windows(WINDOW_TEXT, None) == [WINDOW_TEXT]
+    assert split_windows(f" \n{WINDOW_TEXT}\n ", None) == [WINDOW_TEXT]
+    assert split_windows(WINDOW_TEXT, 100) == []
+    assert split_windows(WINDOW_TEXT, 100, min_words=1) == [WINDOW_TEXT]
+    assert split_windows(WINDOW_TEXT, None, min_words=100) == []
+    assert len(split_windows(WINDOW_TEXT, 8)) == 3
+
+
+@pytest.mark.parametrize(
+    ("n_words", "window", "min_words", "lengths"),
+    [
+        (1500, 1000, None, [1000]),
+        (1500, 1000, 500, [1000, 500]),
+        (2500, 1000, None, [1000, 1000]),
+        (3999, 1000, None, [1000, 1000, 1000]),
+        (999, 1000, None, []),
+    ],
+)
+def test_split_windows_counts(n_words, window, min_words, lengths):
+    windows = split_windows(" ".join(["a"] * n_words), window, min_words)
+    assert [len(chunk.split()) for chunk in windows] == lengths
+
+
+def test_split_windows_without_words():
+    assert split_windows("", 5) == []
+    assert split_windows("... !!!", 5) == []
+
+
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        ('one two three "four" five six', ['one two three "four"', "five six"]),
+        ("one two three (four) five six", ["one two three (four)", "five six"]),
+        ('one two three four "five" six', ["one two three four", '"five" six']),
+        ('one two three "four!" five six', ['one two three "four!"', "five six"]),
+    ],
+)
+def test_split_windows_marks_at_a_boundary(source, expected):
+    assert split_windows(source, 4, min_words=1) == expected
+
+
+def test_split_windows_marks_of_a_language():
+    low, high, dash = "„", "“", "—"
+    source = f"one two three {low}four{high} five six"
+    assert split_windows(source, 4, min_words=1) == [
+        f"one two three {low}four",
+        f"{high} five six",
+    ]
+    symmetric = {'"', high, dash}
+    assert split_windows(source, 4, min_words=1, symmetric_marks=symmetric) == [
+        f"one two three {low}four{high}",
+        "five six",
+    ]
+    source = f"one two three four{dash} five six"
+    assert split_windows(source, 4, min_words=1) == [f"one two three four{dash}", "five six"]
+    inverted = "¿"
+    source = f"one two three four {inverted}five six?"
+    assert split_windows(source, 4, min_words=1) == [
+        f"one two three four {inverted}",
+        "five six?",
+    ]
+    assert split_windows(source, 4, min_words=1, opening_marks={inverted}) == [
+        "one two three four",
+        f"{inverted}five six?",
+    ]
+
+
+def test_split_windows_with_a_tokenizer():
+    def spaces(text):
+        start = 0
+        for word in text.split(" "):
+            yield start, start + len(word), word
+            start += len(word) + 1
+
+    assert split_windows("a-b c-d e-f", 2, min_words=1) == ["a-b", "c-d", "e-f"]
+    assert split_windows("a-b c-d e-f", 2, min_words=1, tokenize=spaces) == ["a-b c-d", "e-f"]
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "error", "message"),
+    [
+        ({"window": 0}, ParameterError, "^The window size must be greater than 0$"),
+        ({"min_words": 0}, ParameterError, "^The smallest number of words in a window must be"),
+        ({"window": 5, "min_words": 6}, ParameterError, "cannot be greater than the window$"),
+        ({"window": 2.5}, ParameterError, "size of a window must be an integer"),
+        ({"tokenize": 5}, SourceTypeError, "^The tokenizer must be callable, not int$"),
+    ],
+)
+def test_split_windows_errors(kwargs, error, message):
+    with pytest.raises(error, match=message):
+        split_windows(WINDOW_TEXT, **kwargs)
+
+
+def test_split_windows_of_a_non_string():
+    with pytest.raises(SourceTypeError, match=r"^A text string is expected, not list$"):
+        split_windows(["text"], 5)
+
+
+def test_sentence_rhythm():
+    lengths = [4, 8, 2, 7]
+    rhythm = sentence_rhythm(lengths)
+    centered = np.array(lengths) - 5.25
+    assert rhythm["sents_mean"] == 5.25
+    assert rhythm["sents_std"] == pytest.approx(np.std(lengths, ddof=1))
+    assert rhythm["sents_cv"] == pytest.approx(rhythm["sents_std"] / 5.25)
+    assert rhythm["sents_autocorr"] == pytest.approx(
+        (centered[:-1] * centered[1:]).sum() / (centered**2).sum()
+    )
+    assert sentence_rhythm([5, 5, 5])["sents_std"] == 0
+    assert isnan(sentence_rhythm([5, 5, 5])["sents_autocorr"])
+    assert isnan(sentence_rhythm([3])["sents_std"])
+    assert isnan(sentence_rhythm([3, 4])["sents_autocorr"])
+    assert isnan(sentence_rhythm([0, 0])["sents_cv"])
+    assert all(isnan(value) for value in sentence_rhythm([]).values())
+    assert sentence_rhythm(np.array([4, 8, 2, 7])) == rhythm
+
+
+@pytest.mark.parametrize("lengths", [[4, 2.5], ["4"], "48"])
+def test_sentence_rhythm_errors(lengths):
+    with pytest.raises(SourceTypeError):
+        sentence_rhythm(lengths)
+
+
+def test_split_windows_english_marks():
+    left, right, dash = "“", "”", "—"
+    assert split_windows("one two three four 'five six' seven", 4, min_words=1) == [
+        "one two three four",
+        "'five six' seven",
+    ]
+    source = f"one two three {left}four!{right}{dash} five six"
+    assert split_windows(source, 4, min_words=1) == [
+        f"one two three {left}four!{right}{dash}",
+        "five six",
+    ]
+    assert split_windows('one two three {four}" five six', 4, min_words=1) == [
+        'one two three {four}"',
+        "five six",
+    ]
+
+
+@pytest.mark.parametrize(
+    ("marks", "error", "message"),
+    [
+        (None, SourceTypeError, "opening marks"),
+        ([1], SourceTypeError, "opening marks"),
+        ({"--"}, ParameterError, "must be one character, not '--'"),
+    ],
+)
+def test_split_windows_marks_errors(marks, error, message):
+    with pytest.raises(error, match=message):
+        split_windows(WINDOW_TEXT, 5, opening_marks=marks)
+
+
+def test_split_windows_marks_as_a_string():
+    assert split_windows(WINDOW_TEXT, 5, opening_marks="(") == split_windows(WINDOW_TEXT, 5)
+
+
+def test_sentence_rhythm_of_bools_and_negative_lengths():
+    with pytest.raises(SourceTypeError):
+        sentence_rhythm([True, False, True])
+    with pytest.raises(ParameterError, match="cannot be negative"):
+        sentence_rhythm([-3, 5, -2])

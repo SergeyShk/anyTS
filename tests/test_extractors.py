@@ -12,7 +12,13 @@ import spacy
 
 from anyts import CharNgramsExtractor, SentsExtractor, WordsExtractor
 from anyts.exceptions import ParameterError, SourceTypeError
-from anyts.extractors import NUMBER_PATTERN, Extractor, _word_pattern
+from anyts.extractors import (
+    NUMBER_PATTERN,
+    Extractor,
+    FixedSentsExtractor,
+    FixedWordsExtractor,
+    _word_pattern,
+)
 
 TEXT = (
     "Thesauri are a special class of lexicographic resources marked by the following"
@@ -528,3 +534,15 @@ class TestCharNgramsExtractor:
         for within_words in (False, True):
             with pytest.raises(SourceTypeError, match=r"^A text string is expected, not int$"):
                 CharNgramsExtractor(within_words=within_words).extract(42)  # type: ignore[arg-type]
+
+
+def test_fixed_extractors():
+    sents = FixedSentsExtractor(["It rains.", "Yes!"])
+    words = FixedWordsExtractor(("It", "rains"))
+    assert sents.extract("any text") == sents.extract("") == ("It rains.", "Yes!")
+    assert words.extract("any text") == ("It", "rains")
+    assert isinstance(sents, SentsExtractor) and isinstance(words, WordsExtractor)
+    with pytest.raises(SourceTypeError):
+        FixedWordsExtractor("It rains")
+    with pytest.raises(SourceTypeError):
+        FixedSentsExtractor([1, 2])

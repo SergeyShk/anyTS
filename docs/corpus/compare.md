@@ -1,7 +1,7 @@
 # Corpus comparison
 
 !!! info ""
-    **anyts.corpus.compare_features()**, **anyts.corpus.check_comparison_params()**, **anyts.corpus.compare_values()**, **anyts.corpus.calc_cohen_d()**, **anyts.corpus.calc_cliff_delta()**, **anyts.corpus.bootstrap_median_diff()**, **anyts.corpus.holm_correction()**
+    **anyts.corpus.compare_features()**, **anyts.corpus.check_comparison_params()**, **anyts.corpus.compare_values()**, **anyts.corpus.calc_cohen_d()**, **anyts.corpus.calc_cliff_delta()**, **anyts.corpus.bootstrap_median_diff()**, **anyts.corpus.holm_correction()**, **anyts.corpus.split_windows()**, **anyts.corpus.sentence_rhythm()**
 
 ## Description
 
@@ -97,4 +97,42 @@ The names of the columns are `anyts.corpus.COMPARISON_COLUMNS`, with `A` and `B`
     # 0.25
     holm_correction([0.01, 0.04, 0.03]).round(3).tolist()
     # [0.03, 0.06, 0.06]
+    ```
+
+## Windows of a text { #split_windows }
+
+<!-- --8<-- [start:split_windows] -->
+`split_windows(text, window, min_words)` cuts a text into consecutive windows of exactly `window` words, so that the features that depend on the length are comparable between the windows of different texts. The incomplete rest at the end is a window only when it holds at least `min_words` words; by default a whole window, so the rest is dropped. A boundary goes before the first word of a window and the opening marks before it, so the punctuation stays in the windows; a symmetric mark, such as a straight quote or the dash of an aside, closes the previous window when it is glued to its last word or follows a closing mark. The windows are stripped of whitespace; `window=None` gives the whole text. The words and their positions come from `tokenize`, the words of `WordsExtractor` by default, and the marks of a language are parameters.
+
+| Parameter | Type | Default | Description |
+| :-------: | :--: | :-----: | :---------: |
+| `text` | str | `-` | Text string |
+| `window` | int | `1000` | Size of a window in words; `None` - the whole text |
+| `min_words` | int | `None` | Smallest number of words in a window; `None` - a whole window, or one word without a window |
+| `tokenize` | Callable | `None` | Words of a text with their start and end positions |
+| `opening_marks` | Collection[str] | `OPENING_MARKS` | Marks that open a phrase |
+| `symmetric_marks` | Collection[str] | `SYMMETRIC_MARKS` | Opening marks that close a phrase as well |
+| `closing_marks` | Collection[str] | `CLOSING_MARKS` | Marks that close a phrase |
+| `messages` | dict[str, str] | `MESSAGES` | Messages of the errors by key |
+
+A text that is not a string, a tokenizer that is not callable and marks that are not a collection of strings raise `SourceTypeError`, a window or `min_words` that is not an integer of at least one, `min_words` above the window and a mark of more than one character `ParameterError`. A text without words or shorter than `min_words` gives an empty list.
+<!-- --8<-- [end:split_windows] -->
+
+The marks of the core are those of `anyts.constants`: quotes, brackets and dashes open a phrase, the straight quotes and the dashes are symmetric, and the final marks, the comma, the semicolon, the closing brackets, guillemet and quotes close one.
+
+## Rhythm of the sentences { #sentence_rhythm }
+
+<!-- --8<-- [start:sentence_rhythm] -->
+`sentence_rhythm(lengths)` gives the features of the rhythm of the sentences from their lengths in words: the mean length `sents_mean`, the standard deviation `sents_std`, the coefficient of variation `sents_cv` and the autocorrelation at lag 1 `sents_autocorr`, the link between the lengths of neighbouring sentences (Yule, 1939). The deviation needs two sentences, the autocorrelation three of unequal lengths and the coefficient of variation a mean above zero, otherwise they are `nan`, as are all of them without sentences; lengths that are not a list of integers raise `SourceTypeError`, a negative length `ParameterError`. The messages of the errors are the keyword `messages`.
+<!-- --8<-- [end:sentence_rhythm] -->
+
+!!! example "Example"
+
+    ``` python
+    from anyts.corpus import sentence_rhythm, split_windows
+
+    split_windows("One two three four five", 2, min_words=1)
+    # ['One two', 'three four', 'five']
+    {key: round(value, 3) for key, value in sentence_rhythm([4, 8, 2, 7]).items()}
+    # {'sents_mean': 5.25, 'sents_std': 2.754, 'sents_cv': 0.525, 'sents_autocorr': -0.794}
     ```

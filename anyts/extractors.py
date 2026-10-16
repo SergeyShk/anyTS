@@ -3,7 +3,7 @@ import sys
 import unicodedata
 from abc import ABCMeta, abstractmethod
 from collections import Counter
-from collections.abc import Callable, Collection, Iterable, Iterator, Mapping
+from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, Sequence
 from functools import cache
 from re import Pattern
 from typing import Any, ClassVar
@@ -594,3 +594,63 @@ class CharNgramsExtractor(Extractor):
         if n < 1:
             raise ParameterError(self.messages["top_ngrams"])
         return Counter(self.ngrams).most_common(n)
+
+
+class FixedSentsExtractor(SentsExtractor):
+    """
+    Sentence extractor that gives the sentences it was made with
+
+    Description:
+        For a class that takes an extractor when the sentences of the text are
+        already known, so that the text is not split twice; any text gives
+        the same sentences
+
+    Arguments:
+        sents (list[str]): Sentences
+
+    Raises:
+        SourceTypeError: If the sentences are not a list of strings
+
+    Example:
+        >>> from anyts.extractors import FixedSentsExtractor
+        >>> FixedSentsExtractor(["It rains.", "Yes!"]).extract("any text")
+        ('It rains.', 'Yes!')
+    """
+
+    def __init__(self, sents: Sequence[str]) -> None:
+        super().__init__()
+        check_words(sents, "sentences")
+        self.sents = tuple(sents)
+
+    def extract(self, text: str) -> tuple[str, ...]:
+        return self.sents
+
+
+class FixedWordsExtractor(WordsExtractor):
+    """
+    Word extractor that gives the words it was made with
+
+    Description:
+        For a class that takes an extractor when the words of the text are
+        already known, so that the text is not tokenized twice; any text gives
+        the same words
+
+    Arguments:
+        words (list[str]): Words
+
+    Raises:
+        SourceTypeError: If the words are not a list of strings
+
+    Example:
+        >>> from anyts.extractors import FixedWordsExtractor
+        >>> FixedWordsExtractor(["It", "rains"]).extract("any text")
+        ('It', 'rains')
+    """
+
+    def __init__(self, words: Sequence[str]) -> None:
+        super().__init__()
+        check_words(words)
+        self.words = tuple(words)
+
+    def extract(self, text: str) -> tuple[str, ...]:
+        return self.words
