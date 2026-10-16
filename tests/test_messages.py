@@ -10,6 +10,7 @@ from spacy.tokens import Doc
 import anyts
 from anyts import CharNgramsExtractor, SentsExtractor, WordsExtractor
 from anyts.basic_stats import BasicStats
+from anyts.cohesion import ConnectorMatcher
 from anyts.components import StatsComponent
 from anyts.constants import MESSAGES
 from anyts.diversity_stats import DiversityStats, calc_ttr, calc_windowed, check_params
@@ -57,6 +58,10 @@ class Words(WordsExtractor):
 
 
 class CharNgrams(CharNgramsExtractor):
+    messages = OWN
+
+
+class Matcher(ConnectorMatcher):
     messages = OWN
 
 
@@ -141,6 +146,8 @@ CASES = [
     ("ngram_len", ParameterError, lambda: CharNgrams(n=0)),
     ("top_words", ParameterError, lambda: Words().get_most_common(0)),
     ("top_ngrams", ParameterError, lambda: CharNgrams().get_most_common(0)),
+    ("connector_class", ParameterError, lambda: Matcher({"and": ("other", "primary")})),
+    ("connector_pos", ParameterError, lambda: Matcher({}).find(["and"], pos=[])),
 ]
 
 
@@ -207,6 +214,7 @@ def test_check_messages(messages, match):
         SentsExtractor,
         WordsExtractor,
         CharNgramsExtractor,
+        ConnectorMatcher,
     ],
 )
 def test_messages_checked_when_a_class_is_defined(base):

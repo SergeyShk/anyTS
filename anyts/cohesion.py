@@ -1,12 +1,14 @@
 from collections import Counter
-from collections.abc import Collection, Iterable, Sequence
+from collections.abc import Collection, Iterable, Mapping, Sequence
 from itertools import pairwise
 from math import fsum, nan
-from typing import NamedTuple
+from typing import Any, ClassVar, NamedTuple
 
 import numpy as np
 
-from .utils import check_sequence, check_words, safe_divide
+from .constants import CONNECTOR_CLASSES, CONNECTOR_KINDS, CONNECTOR_POS, MESSAGES
+from .exceptions import ParameterError, SourceTypeError
+from .utils import check_messages, check_sequence, check_words, safe_divide
 
 
 def _check_sents(sents: Iterable[Iterable[object]], what: str, ordered: bool = True) -> None:
@@ -290,3 +292,247 @@ def calc_repetition(sents: Sequence[Sequence[str]]) -> float:
     if not pairs:
         return nan
     return sum(1 for first, second in pairs if first == second) / len(pairs)
+
+
+class Connector(NamedTuple):
+    """
+    Occurrence of a connector in a sentence
+
+    Attributes:
+        sent (int): Number of the sentence
+        start (int): Position of the first word of the connector in the sentence
+        end (int): Position after the last word of the connector
+        text (str): Connector as the dictionary writes it
+        cls (str): Class of the connector
+        kind (str): Kind of the connector
+    """
+
+    sent: int
+    start: int
+    end: int
+    text: str
+    cls: str
+    kind: str
+
+
+class ConnectorMatcher:
+    """
+    Search of the connectors of a dictionary in the sentences of a text
+
+    Description:
+        A connector is matched by the normalized forms of its words (normalize,
+        the lower case by default), the longest one at every position, without
+        overlaps; a period or a hyphen inside a connector may be split off by
+        the tokenizer (e.g.). The words are those of one sentence without
+        punctuation, the first one its start. The context rules of a language
+        are class attributes: a connector followed by a word of blocked_after,
+        preceded by one of blocked_before or followed by a part of speech of
+        blocked_after_pos is no connector, nor is one of not_at_start opening
+        the sentence or one of only_after inside it after another word than
+        those listed. With the parts of speech given, a one-word connector
+        counts only with a part of speech of pos_tags or of pos_extra for its
+        form, never after a part of speech of not_after_pos, and with one of
+        start_only_pos only at the start of the sentence; without them the
+        rules that read a part of speech are skipped. The rules are empty by
+        default
+
+    Arguments:
+        connectors (dict[str, tuple[str, str]]): Class and kind by connector
+
+    Methods:
+        normalize: Normalized form of a word or a connector
+        find: Finding the connectors of a sentence
+
+    Class attributes:
+        classes (tuple[str, ...]): Classes of the connectors (CONNECTOR_CLASSES)
+        kinds (tuple[str, ...]): Kinds of the connectors (CONNECTOR_KINDS)
+        pos_tags (frozenset[str]): Parts of speech of a one-word connector (CONNECTOR_POS)
+        pos_extra (dict[str, frozenset[str]]): Parts of speech of a one-word connector
+            on top of pos_tags by its normalized form
+        not_after_pos (frozenset[str]): Parts of speech of the previous word that make
+            a one-word connector no connector
+        start_only_pos (frozenset[str]): Parts of speech of a one-word connector that
+            counts only at the start of a sentence
+        blocked_after (dict[str, frozenset[str]]): Words after a connector, by its text,
+            that make it no connector
+        blocked_before (dict[str, frozenset[str]]): Words before a connector, by its text,
+            that make it no connector
+        blocked_after_pos (dict[str, frozenset[str]]): Parts of speech of the word after
+            a connector, by its text, that make it no connector
+        not_at_start (frozenset[str]): Connectors, by their text, that do not count at the
+            start of a sentence
+        only_after (dict[str, frozenset[str]]): Connectors, by their text, that count
+            inside a sentence only after these words
+        messages (dict[str, str]): Messages of the errors by key (MESSAGES)
+
+    Raises:
+        SourceTypeError: If the connectors are not a dictionary of a phrase and a pair
+            of strings
+        ParameterError: If a connector has an unknown class or kind
+
+    Example:
+        >>> from anyts.cohesion import ConnectorMatcher
+        >>> class Matcher(ConnectorMatcher):
+        ...     blocked_after = {"before": frozenset({"the"})}
+        >>> matcher = Matcher({
+        ...     "however": ("adversative", "secondary"),
+        ...     "before": ("temporal", "primary"),
+        ...     "on the other hand": ("adversative", "secondary"),
+        ... })
+        >>> [c.text for c in matcher.find("On the other hand he left before".split())]
+        ['on the other hand', 'before']
+        >>> matcher.find("He left before the end".split())
+        []
+    """
+
+    classes: ClassVar[tuple[str, ...]] = CONNECTOR_CLASSES
+    kinds: ClassVar[tuple[str, ...]] = CONNECTOR_KINDS
+    pos_tags: ClassVar[frozenset[str]] = CONNECTOR_POS
+    pos_extra: ClassVar[Mapping[str, frozenset[str]]] = {}
+    not_after_pos: ClassVar[frozenset[str]] = frozenset()
+    start_only_pos: ClassVar[frozenset[str]] = frozenset()
+    blocked_after: ClassVar[Mapping[str, frozenset[str]]] = {}
+    blocked_before: ClassVar[Mapping[str, frozenset[str]]] = {}
+    blocked_after_pos: ClassVar[Mapping[str, frozenset[str]]] = {}
+    not_at_start: ClassVar[frozenset[str]] = frozenset()
+    only_after: ClassVar[Mapping[str, frozenset[str]]] = {}
+    messages: ClassVar[Mapping[str, str]] = MESSAGES
+
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        super().__init_subclass__(**kwargs)
+        check_messages(cls.messages)
+
+    def __init__(self, connectors: Mapping[str, tuple[str, str]]):
+        if not isinstance(connectors, Mapping):
+            raise SourceTypeError(
+                "The connectors must be a dictionary of a phrase and its class and kind"
+            )
+        self._entries: dict[str, tuple[str, str, str]] = {}
+        patterns: dict[str, set[tuple[str, ...]]] = {}
+        for connector, value in connectors.items():
+            if not (
+                isinstance(connector, str)
+                and isinstance(value, tuple | list)
+                and len(value) == 2
+                and all(isinstance(item, str) for item in value)
+            ):
+                raise SourceTypeError(
+                    f"A connector must be a phrase with a pair of its class and kind: "
+                    f"{connector!r}"
+                )
+            cls, kind = value
+            if cls not in self.classes or kind not in self.kinds:
+                raise ParameterError(self.messages["connector_class"].format(cls=cls, kind=kind))
+            key = " ".join(self.normalize(connector).split())
+            split = " ".join(key.replace("-", " ").replace(".", " ").split())
+            for variant in (key, split):
+                if variant:
+                    self._entries[variant] = (connector, cls, kind)
+                    pattern = tuple(variant.split())
+                    patterns.setdefault(pattern[0], set()).add(pattern)
+        self._by_first = {
+            first: tuple(sorted(group, key=lambda pattern: (-len(pattern), pattern)))
+            for first, group in patterns.items()
+        }
+
+    def normalize(self, text: str) -> str:
+        """
+        Getting the normalized form of a word or a connector
+
+        Description:
+            The lower case by default; a library overrides the method for the
+            letters its texts write in two ways
+
+        Arguments:
+            text (str): Word or connector
+
+        Returns:
+            str: Normalized form
+        """
+        return text.lower()
+
+    def find(
+        self,
+        words: Sequence[str],
+        sent_index: int = 0,
+        pos: Sequence[str | None] | None = None,
+    ) -> list[Connector]:
+        """
+        Finding the connectors of a sentence
+
+        Arguments:
+            words (list[str]): Words of the sentence without punctuation
+            sent_index (int): Number of the sentence, written into the occurrences
+            pos (list[str]): Parts of speech of the words, None for a word without one;
+                without them the rules that read a part of speech are skipped
+
+        Returns:
+            list[Connector]: Occurrences of the connectors in the order of the words
+
+        Raises:
+            SourceTypeError: If the words are not a list of strings or the parts of
+                speech are not a list
+            ParameterError: If the parts of speech are not as many as the words
+        """
+        check_words(words)
+        if pos is not None:
+            check_sequence(pos, "parts of speech")
+            if len(pos) != len(words):
+                raise ParameterError(self.messages["connector_pos"])
+        normalized = [self.normalize(word) for word in words]
+        found = []
+        position = 0
+        while position < len(normalized):
+            for pattern in self._by_first.get(normalized[position], ()):
+                end = position + len(pattern)
+                if tuple(normalized[position:end]) != pattern:
+                    continue
+                text, cls, kind = self._entries[" ".join(pattern)]
+                if self._is_blocked(text, normalized, position, end, pos):
+                    continue
+                if (
+                    len(pattern) == 1
+                    and pos is not None
+                    and not self._is_pos(pattern[0], pos, position)
+                ):
+                    continue
+                found.append(Connector(sent_index, position, end, text, cls, kind))
+                position = end
+                break
+            else:
+                position += 1
+        return found
+
+    def _is_blocked(
+        self,
+        text: str,
+        words: Sequence[str],
+        position: int,
+        end: int,
+        pos: Sequence[str | None] | None,
+    ) -> bool:
+        """Whether the context of the words of a connector makes them no connector"""
+        following = words[end] if end < len(words) else ""
+        previous = words[position - 1] if position else ""
+        if following in self.blocked_after.get(text, ()):
+            return True
+        if previous in self.blocked_before.get(text, ()):
+            return True
+        if position == 0 and text in self.not_at_start:
+            return True
+        if position and text in self.only_after and previous not in self.only_after[text]:
+            return True
+        if pos is None or end >= len(pos):
+            return False
+        return pos[end] in self.blocked_after_pos.get(text, ())
+
+    def _is_pos(self, word: str, pos: Sequence[str | None], position: int) -> bool:
+        """Whether the part of speech of a one-word connector lets it count"""
+        tag = pos[position]
+        if tag is None:
+            return True
+        if position and pos[position - 1] in self.not_after_pos:
+            return False
+        if tag in self.start_only_pos:
+            return position == 0
+        return tag in self.pos_tags or tag in self.pos_extra.get(word, ())

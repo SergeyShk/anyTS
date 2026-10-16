@@ -46,6 +46,20 @@ DIVERSITY_STATS_DESC = {
 # Relations that are not arguments of a word: coordination, parataxis, punctuation
 VALENCY_IGNORED_DEPS = frozenset({"cc", "conj", "parataxis", "punct"})
 
+# Classes and kinds of the connectors (discourse markers) and the parts of speech of
+# Universal Dependencies of a one-word connector
+CONNECTOR_CLASSES = (
+    "causal",
+    "adversative",
+    "concessive",
+    "temporal",
+    "additive",
+    "conditional",
+    "reformulative",
+)
+CONNECTOR_KINDS = ("primary", "secondary")
+CONNECTOR_POS = frozenset({"CCONJ", "SCONJ", "PART", "ADV", "ADP", "INTJ", "X"})
+
 # Measures of keyness, of association of collocations, of dispersion of words and of stylometry
 KEYNESS_MEASURES = {
     "log_likelihood": "Log-likelihood G²",
@@ -133,6 +147,8 @@ MESSAGES = {
     "ngram_len": "The N-gram length must be greater than 0",
     "top_words": "The number of words must be greater than 0",
     "top_ngrams": "The number of N-grams must be greater than 0",
+    "connector_class": "Unknown class or kind of a connector: {cls}, {kind}",
+    "connector_pos": "The parts of speech must be as many as the words",
 }
 
 # Labels of the plots by the name of the visualizer; the labels with fields in braces are
