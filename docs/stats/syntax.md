@@ -81,6 +81,54 @@ Checks whether a token carries a morphological feature with a given value: `has_
 | `value` | str | `-` | Value of the feature |
 <!-- --8<-- [end:has_feature] -->
 
+## Verb forms { #verb-forms }
+
+<!-- --8<-- [start:is_finite_verb] -->
+`is_finite_verb(token)` checks whether a token is a finite verb: the part of speech `VERB` with `VerbForm=Fin`, so a finite auxiliary (`AUX`) is not one.
+<!-- --8<-- [end:is_finite_verb] -->
+
+<!-- --8<-- [start:is_infinitive] -->
+`is_infinitive(token)` checks whether a token is an infinitive, `VerbForm=Inf` whatever its part of speech.
+<!-- --8<-- [end:is_infinitive] -->
+
+<!-- --8<-- [start:predicate_form] -->
+`predicate_form(token, auxiliary_form)` gives the verb form of a predicate: the form (`VerbForm`) of its first auxiliary or copula that has one - the relations `aux` and `cop` with their subtypes, `anyts.constants.AUXILIARY_DEPS` - or, without one, the form of the word itself. *Had arrived* is finite, *to have gone* an infinitive, *being chosen* a gerund. A participle auxiliary counts as finite, since it follows a finite one that the parser may attach to another word (*had been chosen*). An auxiliary the model leaves without a form is read by the hook `auxiliary_form` of a language, which gives its form, for instance by its ending, or an empty string to skip it; without the hook such an auxiliary is skipped. A word with no verb form gives an empty string, and a hook that is not callable raises `SourceTypeError`.
+
+| Parameter | Type | Default | Description |
+| :-------: | :--: | :-----: | :---------: |
+| `token` | Token | `-` | Token |
+| `auxiliary_form` | Callable[[Token], str] | `None` | Verb form of an auxiliary without `VerbForm` |
+<!-- --8<-- [end:predicate_form] -->
+
+!!! example "Example"
+
+    ``` python
+    import spacy
+    from spacy.tokens import Doc
+    from anyts.syntax import predicate_form
+
+    vocab = spacy.blank("en").vocab
+    doc = Doc(
+        vocab,
+        words=["She", "had", "been", "chosen"],
+        heads=[3, 3, 3, 3],
+        deps=["nsubj:pass", "aux", "aux:pass", "ROOT"],
+        morphs=["Case=Nom", "VerbForm=Fin", "VerbForm=Part", "VerbForm=Part"],
+    )
+    predicate_form(doc[3])
+    # 'Fin'
+    # An auxiliary the model left without a form, read by the hook
+    doc = Doc(
+        vocab,
+        words=["to", "have", "gone"],
+        heads=[2, 2, 2],
+        deps=["mark", "aux", "ROOT"],
+        morphs=["", "", "VerbForm=Part"],
+    )
+    predicate_form(doc[2]), predicate_form(doc[2], lambda aux: "Inf" if aux.lower_ == "have" else "")
+    # ('Part', 'Inf')
+    ```
+
 ## calc_valency
 
 <!-- --8<-- [start:calc_valency] -->

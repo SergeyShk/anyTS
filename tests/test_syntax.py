@@ -2,6 +2,7 @@ import pytest
 import spacy
 from spacy.tokens import Doc
 
+from anyts.exceptions import SourceTypeError
 from anyts.syntax import (
     base_dep,
     calc_coordination_chains,
@@ -12,16 +13,19 @@ from anyts.syntax import (
     get_children,
     get_words,
     has_feature,
+    is_finite_verb,
+    is_infinitive,
     is_root,
     is_word,
     joins_previous,
+    predicate_form,
     subtree_len,
 )
 
 VOCAB = spacy.blank("xx").vocab
 
 
-def parse(words, heads, deps, morphs=None, spaces=None):
+def parse(words, heads, deps, morphs=None, spaces=None, pos=None):
     """A Doc with a hand-made dependency tree: heads are the indices of the head tokens"""
     return Doc(
         VOCAB,
@@ -30,6 +34,7 @@ def parse(words, heads, deps, morphs=None, spaces=None):
         heads=heads,
         deps=deps,
         morphs=morphs,
+        pos=pos,
     )
 
 
@@ -100,6 +105,58 @@ def test_has_feature():
     assert has_feature(doc[1], "VerbForm", "Fin")
     assert not has_feature(doc[1], "VerbForm", "Inf")
     assert not has_feature(doc[0], "Mood", "Ind")
+
+
+def test_verb_forms():
+    doc = parse(
+        ["They", "will", "go", "to", "swim"],
+        [2, 2, 2, 4, 2],
+        ["nsubj", "aux", "ROOT", "mark", "xcomp"],
+        morphs=["Case=Nom", "VerbForm=Fin", "VerbForm=Fin", "", "VerbForm=Inf"],
+        pos=["PRON", "AUX", "VERB", "PART", "VERB"],
+    )
+    assert [is_finite_verb(token) for token in doc] == [False, False, True, False, False]
+    assert [is_infinitive(token) for token in doc] == [False, False, False, False, True]
+
+
+def predicate(words, deps, morphs):
+    """The last word with every other word attached to it"""
+    last = len(words) - 1
+    return parse(words, [last] * len(words), [*deps, "ROOT"], morphs)[last]
+
+
+@pytest.mark.parametrize(
+    ("words", "deps", "morphs", "form"),
+    [
+        (["arrived"], [], ["VerbForm=Part"], "Part"),
+        (["house"], [], ["Number=Sing"], ""),
+        (["had", "arrived"], ["aux"], ["VerbForm=Fin", "VerbForm=Part"], "Fin"),
+        (["to", "have", "gone"], ["mark", "aux"], ["", "VerbForm=Inf", "VerbForm=Part"], "Inf"),
+        (["being", "chosen"], ["aux:pass"], ["VerbForm=Ger", "VerbForm=Part"], "Ger"),
+        (["been", "chosen"], ["aux:pass"], ["VerbForm=Part", "VerbForm=Part"], "Fin"),
+        (["is", "nice"], ["cop"], ["VerbForm=Fin", "Degree=Pos"], "Fin"),
+        (["will", "have", "gone"], ["aux", "aux"], ["VerbForm=Fin", "VerbForm=Inf", ""], "Fin"),
+        (["had", "gone"], ["aux"], ["", "VerbForm=Part"], "Part"),
+        (["not", "gone"], ["advmod"], ["VerbForm=Fin", "VerbForm=Part"], "Part"),
+    ],
+)
+def test_predicate_form(words, deps, morphs, form):
+    assert predicate_form(predicate(words, deps, morphs)) == form
+
+
+def test_predicate_form_of_an_auxiliary_without_a_form():
+    token = predicate(["habéis", "llegado"], ["aux"], ["", "VerbForm=Part"])
+    assert predicate_form(token, lambda aux: "Fin") == "Fin"
+    assert predicate_form(token, lambda aux: "") == "Part"
+    token = predicate(["á", "haber", "llegado"], ["aux", "aux"], ["", "VerbForm=Inf", ""])
+    assert predicate_form(token, lambda aux: "Fin" if aux.text == "habéis" else "") == "Inf"
+    with_form = predicate(["had", "arrived"], ["aux"], ["VerbForm=Fin", "VerbForm=Part"])
+    assert predicate_form(with_form, lambda aux: pytest.fail("read by its form")) == "Fin"
+
+
+def test_predicate_form_hook_must_be_callable():
+    with pytest.raises(SourceTypeError, match="auxiliary_form must be callable, not str"):
+        predicate_form(predicate(["arrived"], [], ["VerbForm=Part"]), "Fin")
 
 
 def test_valency():
