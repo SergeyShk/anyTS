@@ -24,7 +24,9 @@ nav:
         - Metric functions: stats/readability_stats_funcs.md
       - Cohesion helpers: stats/cohesion.md
       - Dependency tree helpers: stats/syntax.md
-      - Style metrics: stats/style_stats.md
+      - Style metrics:
+        - Metrics module: stats/style_stats.md
+        - Metric functions: stats/style_stats_funcs.md
       - Phonetic helpers: stats/phonetics.md
     - Corpus measures:
       - Keywords: corpus/keyness.md

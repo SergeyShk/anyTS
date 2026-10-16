@@ -89,57 +89,7 @@ The other methods - `get_stats`, `to_dataframe`, `print_stats` and `describe` - 
 
 ## Metric functions
 
-### Nausea { #calc_classic_nausea }
-
-<!-- --8<-- [start:calc_classic_nausea] -->
-`calc_classic_nausea(text)` - the square root of the occurrences of the most frequent word (Advego); it grows with the text, and a text without words gives 0.
-<!-- --8<-- [end:calc_classic_nausea] -->
-
-<!-- --8<-- [start:find_nausea_words] -->
-`find_nausea_words(text, top_n, stopwords, *, is_stopword, normalize, messages)` - the `top_n` most frequent words without the stopwords with their occurrences, the most frequent first and words of equal frequency in the order of the text. A stopword is a word of the list `stopwords` by its normalized form, or without the list one the predicate `is_stopword` of a language accepts; without both no word is a stopword.
-<!-- --8<-- [end:find_nausea_words] -->
-
-<!-- --8<-- [start:calc_academic_nausea] -->
-`calc_academic_nausea(text, top_n, stopwords, *, is_stopword, normalize, messages)` - the occurrences of the words of `find_nausea_words` divided by the number of all the words, in percent (Advego). With the stopwords counted, the most frequent words of any text are its conjunctions and prepositions.
-<!-- --8<-- [end:calc_academic_nausea] -->
-
-### Water and spam { #calc_water }
-
-<!-- --8<-- [start:calc_water] -->
-`calc_water(text, stopwords, *, is_water_word, normalize)` - the share of the words that carry no content in percent (Text.ru): the words of the list `stopwords` by their normalized forms, or without the list those the predicate `is_water_word` of a language accepts.
-<!-- --8<-- [end:calc_water] -->
-
-<!-- --8<-- [start:calc_spam] -->
-`calc_spam(text)` - the share of the repeated words in percent (Text.ru), every occurrence of a word after the first: `100 * (1 - TTR)`.
-<!-- --8<-- [end:calc_spam] -->
-
-### Naturalness by Zipf's law { #calc_zipf_naturalness }
-
-<!-- --8<-- [start:calc_zipf_naturalness] -->
-`calc_zipf_naturalness(text, top_n, *, messages)` - the agreement of the frequencies of the most frequent words with the ideal distribution `f_r = f_1 / r`: `100 * (1 -` the mean relative deviation of the frequencies from the ideal ones`)` over the ranks from 2 to `min(top_n, V, f_1)`, since the first rank is ideal by construction and above `f_1` the ideal frequency falls below one. Negative values are cut to 0; without ranks to compare - all the words hapaxes, one lexeme or `top_n` below 2 - the value is `nan`.
-<!-- --8<-- [end:calc_zipf_naturalness] -->
-
-### Keywords and phrases { #calc_keyword_density }
-
-<!-- --8<-- [start:calc_keyword_density] -->
-`calc_keyword_density(text, keywords)` - the frequency of every keyword per 100 words (Text.ru). A keyword of several words is looked for as a sequence of words, its occurrences may overlap, and the words are compared in any case; the keywords of a set come in sorted order.
-<!-- --8<-- [end:calc_keyword_density] -->
-
-<!-- --8<-- [start:calc_phrase_density] -->
-`calc_phrase_density(text, phrases, *, expand, normalize)` - the occurrences of the phrases (`find_phrases`) per 100 words; the hook `expand` of a language spells the phrases out in the forms of the text, each variant with its phrase.
-<!-- --8<-- [end:calc_phrase_density] -->
-
-### Parameters { #check_params }
-
-<!-- --8<-- [start:StyleStats-check_params] -->
-`check_params(top_n, *, messages)` checks the number of the most frequent words, `ParameterError` for one that is not an integer of at least one.
-<!-- --8<-- [end:StyleStats-check_params] -->
-
-<!-- --8<-- [start:in_order] -->
-`in_order(words)` - the words of a list in their order, of a set or a mapping in sorted order.
-<!-- --8<-- [end:in_order] -->
-
-Words, stopwords, keywords and phrases that are not a list of strings raise `SourceTypeError` in every function.
+The metrics and their functions are described in the [metric functions](style_stats_funcs.md) section.
 
 ## Usage example
 
