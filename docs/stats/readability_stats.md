@@ -30,7 +30,7 @@ A language library subclasses `ReadabilityStats`:
 | `level_scales` | class attribute | Interpretation scales by metric, as lower bounds and their bands |
 | `preset_level_scales` | class attribute | Interpretation scales by preset and metric, which take the place of those of `level_scales` for the objects of the preset |
 | `level_scale(stat)` | method | Interpretation scale of a metric for `describe_level` and `describe`; that of `preset_level_scales`, else of `level_scales` by default |
-| `grade_scales` | class attribute | Scales that convert a metric into years of schooling for `describe`, as lower bounds and grades; a metric with a scale of bands is read by its bands, so a library that reads it by years of schooling leaves it out of `level_scales` |
+| `grade_scales` | class attribute | Scales that convert a metric into years of schooling for `describe`, as lower bounds and grades; a metric with a scale of bands is read by its bands, so a library that reads it by years of schooling leaves it out of `level_scales` and `preset_level_scales` |
 | `reading_speed`, `reading_speed_norms` | class attributes | Reading speed of `reading_time` and the speeds of the norms, words per minute |
 | `reading_ease_grades` | class attribute | Scale that converts the reading ease into years of schooling for the consensus grade, as lower bounds and grades, the lowest band open below |
 | `preset_reading_ease_grades` | class attribute | Scales of `reading_ease_grades` by preset, which take its place for the objects of the preset |
@@ -77,7 +77,7 @@ The formulas are described in the [metric functions](readability_stats_funcs.md)
 ## Consensus grade { #consensus_grade }
 
 <!-- --8<-- [start:ReadabilityStats-consensus] -->
-The formulas that give years of schooling (`grade_stats`) are summarized in the `consensus_grade` attribute: the median of their values rounded half up, together with the reading ease converted into years of schooling (`reading_ease_to_grade`) without rounding. A library aligns the bounds of `reading_ease_grades` with its scale of the reading ease, so that the consensus grade and `describe` read the value alike.
+The formulas that give years of schooling (`grade_stats`) are summarized in the `consensus_grade` attribute: the median of their values rounded half up, together with the reading ease converted into years of schooling (`reading_ease_to_grade`) without rounding. A library aligns the bounds of `reading_ease_grades`, or of the scale of each preset in `preset_reading_ease_grades`, with its scale of the reading ease, so that the consensus grade and `describe` read the value alike.
 <!-- --8<-- [end:ReadabilityStats-consensus] -->
 
 ## Methods

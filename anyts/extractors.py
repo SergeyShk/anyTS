@@ -315,7 +315,8 @@ class WordsExtractor(Extractor):
         characters, combining marks, zero-width joiners and non-joiners and soft
         hyphens), the method lemmatize (by default the word itself) and the class
         attribute number_pattern (by default signed numbers with separators and an
-        optional percent sign: -5, 1990-1995, 1,500.50, 12/03/2020, 3:30, 10%). The
+        optional percent sign: -5, 1990-1995, 1,500.50, 12/03/2020, 3:30, 10%); the
+        messages of its errors come from the class attribute messages. The
         filters are applied in order: punctuation, numbers, lemmatization, lower
         case, stop words, word length
 

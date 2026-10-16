@@ -41,9 +41,8 @@ class ReadabilityStats(Stats):
         reading time; the metrics are properties, computed on each access.
         A language library subclasses the class, sets its class attributes,
         the scales of a preset among them, and may override reading_ease_to_grade
-        and level_scale; its own formulas
-        are properties named in stats_desc. The defaults are the original English
-        formulas
+        and level_scale; its own formulas are properties named in stats_desc.
+        The defaults are the original English formulas
         get_stats, to_dataframe and print_stats come from Stats
 
     Arguments:
@@ -77,7 +76,8 @@ class ReadabilityStats(Stats):
     Methods:
         reading_ease_to_grade: Years of schooling for a value of the reading ease
         describe_grade: School stage and reader age for the consensus grade or a grade formula
-        level_scale: Interpretation scale of a metric, level_scales by default
+        level_scale: Interpretation scale of a metric, that of preset_level_scales or
+            else of level_scales
         describe_level: Band of the interpretation scale of a metric
         describe: Reading of any metric by its scale
         reading_time_by_speed: Reading time at a given speed
