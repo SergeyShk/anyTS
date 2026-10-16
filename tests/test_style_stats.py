@@ -296,20 +296,16 @@ class Folded(StyleStats):
 
 
 def test_normalize_hook():
-    style = Folded(
-        "We made our best endeavour in honour of the team and our best endeavor",
-        stopwords=["colour", "we", "endeavor"],
-        nausea_stopwords=["endeavor"],
-    )
+    text = "We made our best endeavour in honour of the team and our best endeavor"
+    style = Folded(text, stopwords=["colour", "we", "endeavor"], nausea_stopwords=["endeavor"])
     assert style.cliches == pytest.approx(100 * 2 / 14)
     assert style.parentheticals == pytest.approx(100 / 14)
     assert style.markers()["cliches"] == ("best endeavour", "best endeavor")
     assert style.markers()["parentheticals"] == ("in honour of",)
     assert style.water == pytest.approx(100 * 3 / 14)
     assert "endeavour" not in style.nausea_words()
-    assert style.academic_nausea == pytest.approx(
-        calc_academic_nausea(style.words, 10, ["endeavor", "endeavour"])
-    )
+    every = Folded(text, top_n=20, nausea_stopwords=["endeavor"])
+    assert every.academic_nausea == pytest.approx(100 * 12 / 14)
 
 
 def test_phrase_density_normalize():
