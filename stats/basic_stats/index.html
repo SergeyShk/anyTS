@@ -240,17 +240,8 @@
   
     
     
-      
-  
-  
-  
-    
-  
-  
-    
-    
       <li class="md-tabs__item md-tabs__item--active">
-        <a href="../diversity_stats/" class="md-tabs__link">
+        <a href="../stats/" class="md-tabs__link">
           
   
   
@@ -258,9 +249,6 @@
 
         </a>
       </li>
-    
-  
-
     
   
 
@@ -778,6 +766,34 @@
   
   
   
+    <li class="md-nav__item">
+      <a href="../stats/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Statistics interface
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
     
     
     
@@ -790,10 +806,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_1" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" >
         
           
-          <label class="md-nav__link" for="__nav_3_1" id="__nav_3_1_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="0">
             
   
   
@@ -811,8 +827,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_1_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_1">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1106,10 +1122,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4" >
         
           
-          <label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3_4" id="__nav_3_4_label" tabindex="0">
             
   
   
@@ -1127,8 +1143,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_3">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_4">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -2096,18 +2112,13 @@
 <td style="text-align: center;">The punctuation marks by type; <code>count_punctuations</code> of the module by default</td>
 </tr>
 <tr>
-<td style="text-align: center;"><code>stats_desc</code>, <code>stats_headers</code></td>
-<td style="text-align: center;">class attributes</td>
-<td style="text-align: center;">The descriptions of the statistics and the headers of the columns for <code>print_stats</code></td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>messages</code></td>
+<td style="text-align: center;"><code>stats_desc</code></td>
 <td style="text-align: center;">class attribute</td>
-<td style="text-align: center;">Messages of the errors by key; <code>MESSAGES</code> by default</td>
+<td style="text-align: center;">The counts of <code>get_stats</code> with their descriptions for <code>print_stats</code></td>
 </tr>
 </tbody>
 </table>
-<p>The thresholds of the complex and the long words are parameters; a library sets its own defaults in its <code>__init__</code> and passes them on.</p>
+<p>The other hooks - <code>stats_headers</code>, <code>level_scales</code>, <code>messages</code> - are those of the base class <code>Stats</code>. The thresholds of the complex and the long words are parameters; a library sets its own defaults in its <code>__init__</code> and passes them on.</p>
 <!-- --8<-- [end:BasicStats-hooks] -->
 
 <h2 id="parameters">Parameters<a class="headerlink" href="#parameters" title="Permanent link">&para;</a></h2>
@@ -2175,6 +2186,21 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td style="text-align: center;"><code>normalize</code></td>
+<td style="text-align: center;">bool</td>
+<td style="text-align: center;">Whether the normalized statistics are computed</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>complex_syl_factor</code></td>
+<td style="text-align: center;">int</td>
+<td style="text-align: center;">Minimum number of syllables in a complex word</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>long_word_letter_factor</code></td>
+<td style="text-align: center;">int</td>
+<td style="text-align: center;">Minimum number of letters in a long word</td>
+</tr>
 <tr>
 <td style="text-align: center;"><code>c_letters</code></td>
 <td style="text-align: center;">dict[int, int]</td>
@@ -2313,14 +2339,15 @@
 
 <h3 id="get_stats">get_stats<a class="headerlink" href="#get_stats" title="Permanent link">&para;</a></h3>
 <!-- --8<-- [start:BasicStats-get_stats] -->
-<p>Returns a dictionary with the computed statistics - a copy: editing it does not change the object.</p>
+<p>Returns a dictionary with the distributions <code>c_letters</code> and <code>c_syllables</code>, the counts of <code>stats_desc</code>, the distribution <code>c_punctuations</code> and, with <code>normalize=True</code>, the normalized counts - a copy: editing it does not change the object. With <code>flat=True</code> the distributions give keys of their own, such as <code>c_letters_3</code> and <code>c_punctuations_comma</code>, one for every value the text has.</p>
 <!-- --8<-- [end:BasicStats-get_stats] -->
 
 <h3 id="print_stats">print_stats<a class="headerlink" href="#print_stats" title="Permanent link">&para;</a></h3>
 <!-- --8<-- [start:BasicStats-print_stats] -->
-<p>Prints a table with the counts of the statistics, their descriptions from <code>stats_desc</code> and the headers from <code>stats_headers</code>.</p>
+<p>Prints a table with the counts of <code>stats_desc</code>, their descriptions and the headers from <code>stats_headers</code>.</p>
 <!-- --8<-- [end:BasicStats-print_stats] -->
 
+<p>The frame of the statistics (<code>to_dataframe</code>) and their reading (<code>describe</code>) are those of the <a href="../stats/">statistics interface</a>.</p>
 <h2 id="count_punctuations">Punctuation marks<a class="headerlink" href="#count_punctuations" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:count_punctuations] -->
 <p><code>count_punctuations(text, marks, dash_pattern)</code> counts punctuation marks by their types - the same distribution lives in the <code>c_punctuations</code> attribute: commas, periods, question and exclamation marks, ellipses, colons, semicolons, dashes, hyphens, guillemets, quotation marks, parentheses and the other marks. The dashes typed with hyphens (<code>dash_pattern</code>) are counted first, then the ellipses - the <code>…</code> character, three or more periods, or two periods after <code>?</code> and <code>!</code>, one mark whose periods do not count as periods (<code>Who?..</code> is a question and an ellipsis) - and then every mark by its type in <code>marks</code>; any other character of the Unicode categories P and S is another mark (<code>§</code>, <code>€</code>, <code>°</code>). <code>marks</code> maps every mark, a single character, to one of the types, otherwise <code>ParameterError</code>, and <code>dash_pattern</code> is a compiled regular expression; a text that is not a string, marks that are not a mapping and dashes that are not a compiled expression raise <code>SourceTypeError</code>.</p>

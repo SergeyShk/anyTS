@@ -13,7 +13,7 @@
         <link rel="canonical" href="https://sergeyshk.github.io/anyTS/stats/diversity_stats/">
       
       
-        <link rel="prev" href="../../extractors/char_ngrams/">
+        <link rel="prev" href="../stats/">
       
       
         <link rel="next" href="../diversity_stats_funcs/">
@@ -240,17 +240,8 @@
   
     
     
-      
-  
-  
-  
-    
-  
-  
-    
-    
       <li class="md-tabs__item md-tabs__item--active">
-        <a href="./" class="md-tabs__link">
+        <a href="../stats/" class="md-tabs__link">
           
   
   
@@ -258,9 +249,6 @@
 
         </a>
       </li>
-    
-  
-
     
   
 
@@ -776,6 +764,34 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../stats/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Statistics interface
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -792,10 +808,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_1" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" checked>
         
           
-          <label class="md-nav__link" for="__nav_3_1" id="__nav_3_1_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="0">
             
   
   
@@ -813,8 +829,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_1_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_3_1">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3_2">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1086,10 +1102,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4" >
         
           
-          <label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3_4" id="__nav_3_4_label" tabindex="0">
             
   
   
@@ -1107,8 +1123,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_3">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_4">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -2026,7 +2042,7 @@
 
 <h2 id="language-hooks">Language hooks<a class="headerlink" href="#language-hooks" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:DiversityStats-hooks] -->
-<p>The class takes the words as given: a language library extracts them from its sources (a string, a <code>Doc</code> object of <a href="https://github.com/explosion/spaCy">spaCy</a>) with its own extractor and lower-cases them, since every metric counts lexemes. The printed table of <code>print_stats</code> takes its texts from two class attributes that a library overrides in a subclass: <code>stats_desc</code>, the descriptions of the metrics by their keys, and <code>stats_headers</code>, the headers of the two columns. The messages of its errors come from the class attribute <code>messages</code>.</p>
+<p>The class takes the words as given: a language library extracts them from its sources (a string, a <code>Doc</code> object of <a href="https://github.com/explosion/spaCy">spaCy</a>) with its own extractor and lower-cases them, since every metric counts lexemes. The metrics of <code>get_stats</code> and the printed table of <code>print_stats</code> take their texts from two class attributes that a library overrides in a subclass: <code>stats_desc</code>, the metrics with their descriptions, and <code>stats_headers</code>, the headers of the two columns. The messages of its errors come from the class attribute <code>messages</code>.</p>
 <!-- --8<-- [end:DiversityStats-hooks] -->
 
 <h2 id="parameters">Parameters<a class="headerlink" href="#parameters" title="Permanent link">&para;</a></h2>
@@ -2388,7 +2404,7 @@
 </div>
 <h3 id="get_stats">get_stats<a class="headerlink" href="#get_stats" title="Permanent link">&para;</a></h3>
 <!-- --8<-- [start:DiversityStats-get_stats] -->
-<p>Returns a dictionary with the computed lexical diversity metrics.</p>
+<p>Returns a dictionary with the computed lexical diversity metrics of <code>stats_desc</code>.</p>
 <!-- --8<-- [end:DiversityStats-get_stats] -->
 
 <div class="admonition example">
@@ -2439,6 +2455,7 @@
 <p>Prints a table with the computed lexical diversity metrics, their descriptions from <code>stats_desc</code> and the headers from <code>stats_headers</code>.</p>
 <!-- --8<-- [end:DiversityStats-print_stats] -->
 
+<p>The frame of the metrics (<code>to_dataframe</code>) and their reading (<code>describe</code>) are those of the <a href="../stats/">statistics interface</a>.</p>
 <p>The example continues the previous one:</p>
 <div class="admonition example">
 <p class="admonition-title">Example</p>
@@ -2446,40 +2463,40 @@
 <div class="highlight"><pre><span></span><code><span class="n">ds</span><span class="o">.</span><span class="n">print_stats</span><span class="p">()</span>
 </code></pre></div>
 <p><em>Result</em>:</p>
-<div class="highlight"><pre><span></span><code><span class="w">                                  </span>Metric<span class="w">                                   </span><span class="p">|</span><span class="w">  </span>Value
--------------------------------------------------------------------------------------
-Type-Token<span class="w"> </span>Ratio<span class="w"> </span><span class="o">(</span>TTR<span class="o">)</span><span class="w">                                                     </span><span class="p">|</span><span class="w">   </span><span class="m">0</span>.73
-Root<span class="w"> </span>Type-Token<span class="w"> </span>Ratio<span class="w"> </span><span class="o">(</span>RTTR<span class="o">)</span><span class="w">                                               </span><span class="p">|</span><span class="w">   </span><span class="m">2</span>.84
-Corrected<span class="w"> </span>Type-Token<span class="w"> </span>Ratio<span class="w"> </span><span class="o">(</span>CTTR<span class="o">)</span><span class="w">                                          </span><span class="p">|</span><span class="w">   </span><span class="m">2</span>.01
-Herdan<span class="w"> </span>Type-Token<span class="w"> </span>Ratio<span class="w"> </span><span class="o">(</span>HTTR<span class="o">)</span><span class="w">                                             </span><span class="p">|</span><span class="w">   </span><span class="m">0</span>.89
-Summer<span class="w"> </span>Type-Token<span class="w"> </span>Ratio<span class="w"> </span><span class="o">(</span>STTR<span class="o">)</span><span class="w">                                             </span><span class="p">|</span><span class="w">   </span><span class="m">0</span>.25
-Maas<span class="w"> </span>Type-Token<span class="w"> </span>Ratio<span class="w"> </span><span class="o">(</span>MTTR<span class="o">)</span><span class="w">                                               </span><span class="p">|</span><span class="w">   </span><span class="m">0</span>.10
-Dugast<span class="w"> </span>Type-Token<span class="w"> </span>Ratio<span class="w"> </span><span class="o">(</span>DTTR<span class="o">)</span><span class="w">                                             </span><span class="p">|</span><span class="w">  </span><span class="m">10</span>.27
-Moving<span class="w"> </span>Average<span class="w"> </span>Type-Token<span class="w"> </span>Ratio<span class="w"> </span><span class="o">(</span>MATTR<span class="o">)</span><span class="w">                                    </span><span class="p">|</span><span class="w">   </span><span class="m">0</span>.73
-Mean<span class="w"> </span>Segmental<span class="w"> </span>Type-Token<span class="w"> </span>Ratio<span class="w"> </span><span class="o">(</span>MSTTR<span class="o">)</span><span class="w">                                    </span><span class="p">|</span><span class="w">   </span><span class="m">0</span>.73
-Measure<span class="w"> </span>of<span class="w"> </span>Textual<span class="w"> </span>Lexical<span class="w"> </span>Diversity<span class="w"> </span><span class="o">(</span>MTLD<span class="o">)</span><span class="w">                                </span><span class="p">|</span><span class="w">  </span><span class="m">15</span>.00
-Moving<span class="w"> </span>Average<span class="w"> </span>Measure<span class="w"> </span>of<span class="w"> </span>Textual<span class="w"> </span>Lexical<span class="w"> </span>Diversity<span class="w"> </span><span class="o">(</span>MA-MTLD<span class="o">)</span><span class="w">              </span><span class="p">|</span><span class="w">  </span><span class="m">12</span>.00
-Moving<span class="w"> </span>Average<span class="w"> </span>Measure<span class="w"> </span>of<span class="w"> </span>Textual<span class="w"> </span>Lexical<span class="w"> </span>Diversity<span class="w"> </span>with<span class="w"> </span>Wrap<span class="w"> </span><span class="o">(</span>MTLD-W<span class="o">)</span><span class="w">     </span><span class="p">|</span><span class="w">  </span><span class="m">13</span>.25
-Hypergeometric<span class="w"> </span>Distribution<span class="w"> </span>D<span class="w"> </span><span class="o">(</span>HD-D<span class="o">)</span><span class="w">                                       </span><span class="p">|</span><span class="w">   </span>nan
-Simpson<span class="s1">'s index (D)                                                        |   0.05</span>
-<span class="s1">Inverse Simpson'</span>s<span class="w"> </span>index<span class="w"> </span><span class="o">(</span><span class="m">1</span>/D<span class="o">)</span><span class="w">                                              </span><span class="p">|</span><span class="w">  </span><span class="m">21</span>.00
-Gini-Simpson<span class="w"> </span>index<span class="w"> </span><span class="o">(</span><span class="m">1</span>-D<span class="o">)</span><span class="w">                                                   </span><span class="p">|</span><span class="w">   </span><span class="m">0</span>.95
-Hapax<span class="w"> </span>index<span class="w"> </span><span class="o">(</span>Honoré<span class="s1">'s R)                                                   |  992.95</span>
-<span class="s1">Yule'</span>s<span class="w"> </span>characteristic<span class="w"> </span>K<span class="w">                                                    </span><span class="p">|</span><span class="w">  </span><span class="m">444</span>.44
-Yule<span class="s1">'s inverse characteristic I                                            |   8.64</span>
-<span class="s1">Herdan'</span>s<span class="w"> </span>Vm<span class="w">                                                                </span><span class="p">|</span><span class="w">   </span><span class="m">0</span>.14
-Sichel<span class="s1">'s S                                                                 |   0.18</span>
-<span class="s1">Michéa'</span>s<span class="w"> </span>M<span class="w">                                                                 </span><span class="p">|</span><span class="w">   </span><span class="m">5</span>.50
-Brunet<span class="s1">'s W                                                                 |   6.01</span>
-<span class="s1">Dugast'</span>s<span class="w"> </span>k<span class="w">                                                                 </span><span class="p">|</span><span class="w">  </span><span class="m">14</span>.78
-Baayen<span class="s1">'s P                                                                 |   0.53</span>
-<span class="s1">Hapax ratio                                                                |   0.73</span>
-<span class="s1">Exponent α₂                                                                |   0.50</span>
-<span class="s1">Shannon entropy (bits)                                                     |   3.32</span>
-<span class="s1">Evenness                                                                   |   0.96</span>
-<span class="s1">Perplexity                                                                 |  10.01</span>
-<span class="s1">Zipf'</span>s<span class="w"> </span>law<span class="w"> </span>slope<span class="w"> </span><span class="o">(</span>α<span class="o">)</span><span class="w">                                                       </span><span class="p">|</span><span class="w">   </span><span class="m">0</span>.49
-Heaps<span class="err">'</span><span class="w"> </span>law<span class="w"> </span>exponent<span class="w"> </span><span class="o">(</span>β<span class="o">)</span><span class="w">                                                    </span><span class="p">|</span><span class="w">   </span><span class="m">0</span>.84
+<div class="highlight"><pre><span></span><code><span class="w">                                </span>Metric<span class="w">                                 </span><span class="p">|</span><span class="w">  </span>Value
+----------------------------------------------------------------------------------
+Type-Token<span class="w"> </span>Ratio<span class="w"> </span><span class="o">(</span>TTR<span class="o">)</span><span class="w">                                                 </span><span class="p">|</span><span class="w">   </span><span class="m">0</span>.73
+Root<span class="w"> </span>Type-Token<span class="w"> </span>Ratio<span class="w"> </span><span class="o">(</span>RTTR<span class="o">)</span><span class="w">                                           </span><span class="p">|</span><span class="w">   </span><span class="m">2</span>.84
+Corrected<span class="w"> </span>Type-Token<span class="w"> </span>Ratio<span class="w"> </span><span class="o">(</span>CTTR<span class="o">)</span><span class="w">                                      </span><span class="p">|</span><span class="w">   </span><span class="m">2</span>.01
+Herdan<span class="w"> </span>Type-Token<span class="w"> </span>Ratio<span class="w"> </span><span class="o">(</span>HTTR<span class="o">)</span><span class="w">                                         </span><span class="p">|</span><span class="w">   </span><span class="m">0</span>.89
+Summer<span class="w"> </span>Type-Token<span class="w"> </span>Ratio<span class="w"> </span><span class="o">(</span>STTR<span class="o">)</span><span class="w">                                         </span><span class="p">|</span><span class="w">   </span><span class="m">0</span>.25
+Maas<span class="w"> </span>Type-Token<span class="w"> </span>Ratio<span class="w"> </span><span class="o">(</span>MTTR<span class="o">)</span><span class="w">                                           </span><span class="p">|</span><span class="w">   </span><span class="m">0</span>.10
+Dugast<span class="w"> </span>Type-Token<span class="w"> </span>Ratio<span class="w"> </span><span class="o">(</span>DTTR<span class="o">)</span><span class="w">                                         </span><span class="p">|</span><span class="w">  </span><span class="m">10</span>.27
+Moving<span class="w"> </span>Average<span class="w"> </span>Type-Token<span class="w"> </span>Ratio<span class="w"> </span><span class="o">(</span>MATTR<span class="o">)</span><span class="w">                                </span><span class="p">|</span><span class="w">   </span><span class="m">0</span>.73
+Mean<span class="w"> </span>Segmental<span class="w"> </span>Type-Token<span class="w"> </span>Ratio<span class="w"> </span><span class="o">(</span>MSTTR<span class="o">)</span><span class="w">                                </span><span class="p">|</span><span class="w">   </span><span class="m">0</span>.73
+Measure<span class="w"> </span>of<span class="w"> </span>Textual<span class="w"> </span>Lexical<span class="w"> </span>Diversity<span class="w"> </span><span class="o">(</span>MTLD<span class="o">)</span><span class="w">                            </span><span class="p">|</span><span class="w">  </span><span class="m">15</span>.00
+Moving<span class="w"> </span>Average<span class="w"> </span>Measure<span class="w"> </span>of<span class="w"> </span>Textual<span class="w"> </span>Lexical<span class="w"> </span>Diversity<span class="w"> </span><span class="o">(</span>MA-MTLD<span class="o">)</span><span class="w">          </span><span class="p">|</span><span class="w">  </span><span class="m">12</span>.00
+Moving<span class="w"> </span>Average<span class="w"> </span>Measure<span class="w"> </span>of<span class="w"> </span>Textual<span class="w"> </span>Lexical<span class="w"> </span>Diversity<span class="w"> </span>with<span class="w"> </span>Wrap<span class="w"> </span><span class="o">(</span>MTLD-W<span class="o">)</span><span class="w"> </span><span class="p">|</span><span class="w">  </span><span class="m">13</span>.25
+Hypergeometric<span class="w"> </span>Distribution<span class="w"> </span>D<span class="w"> </span><span class="o">(</span>HD-D<span class="o">)</span><span class="w">                                   </span><span class="p">|</span><span class="w">   </span>nan
+Simpson<span class="s1">'s index (D)                                                    |   0.05</span>
+<span class="s1">Inverse Simpson'</span>s<span class="w"> </span>index<span class="w"> </span><span class="o">(</span><span class="m">1</span>/D<span class="o">)</span><span class="w">                                          </span><span class="p">|</span><span class="w">  </span><span class="m">21</span>.00
+Gini-Simpson<span class="w"> </span>index<span class="w"> </span><span class="o">(</span><span class="m">1</span>-D<span class="o">)</span><span class="w">                                               </span><span class="p">|</span><span class="w">   </span><span class="m">0</span>.95
+Hapax<span class="w"> </span>index<span class="w"> </span><span class="o">(</span>Honoré<span class="s1">'s R)                                               |  992.95</span>
+<span class="s1">Yule'</span>s<span class="w"> </span>characteristic<span class="w"> </span>K<span class="w">                                                </span><span class="p">|</span><span class="w">  </span><span class="m">444</span>.44
+Yule<span class="s1">'s inverse characteristic I                                        |   8.64</span>
+<span class="s1">Herdan'</span>s<span class="w"> </span>Vm<span class="w">                                                            </span><span class="p">|</span><span class="w">   </span><span class="m">0</span>.14
+Sichel<span class="s1">'s S                                                             |   0.18</span>
+<span class="s1">Michéa'</span>s<span class="w"> </span>M<span class="w">                                                             </span><span class="p">|</span><span class="w">   </span><span class="m">5</span>.50
+Brunet<span class="s1">'s W                                                             |   6.01</span>
+<span class="s1">Dugast'</span>s<span class="w"> </span>k<span class="w">                                                             </span><span class="p">|</span><span class="w">  </span><span class="m">14</span>.78
+Baayen<span class="s1">'s P                                                             |   0.53</span>
+<span class="s1">Hapax ratio                                                            |   0.73</span>
+<span class="s1">Exponent α₂                                                            |   0.50</span>
+<span class="s1">Shannon entropy (bits)                                                 |   3.32</span>
+<span class="s1">Evenness                                                               |   0.96</span>
+<span class="s1">Perplexity                                                             |  10.01</span>
+<span class="s1">Zipf'</span>s<span class="w"> </span>law<span class="w"> </span>slope<span class="w"> </span><span class="o">(</span>α<span class="o">)</span><span class="w">                                                   </span><span class="p">|</span><span class="w">   </span><span class="m">0</span>.49
+Heaps<span class="err">'</span><span class="w"> </span>law<span class="w"> </span>exponent<span class="w"> </span><span class="o">(</span>β<span class="o">)</span><span class="w">                                                </span><span class="p">|</span><span class="w">   </span><span class="m">0</span>.84
 </code></pre></div>
 </div>
 
