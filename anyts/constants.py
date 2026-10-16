@@ -123,6 +123,16 @@ MESSAGES = {
     "foreign_extension": (
         "The extension {name} of Doc belongs to another package: give the component another name"
     ),
+    "sent_len_bounds": "The sentence length bounds cannot be negative",
+    "sent_len_order": "The minimum sentence length is greater than the maximum",
+    "word_len_bounds": "The word length bounds cannot be negative",
+    "word_len_order": "The minimum word length is greater than the maximum",
+    "ngram_range": "The N-gram range must be a pair of integers",
+    "ngram_lower": "The lower N-gram bound must be greater than 0",
+    "ngram_order": "The lower N-gram bound is greater than the upper",
+    "ngram_len": "The N-gram length must be greater than 0",
+    "top_words": "The number of words must be greater than 0",
+    "top_ngrams": "The number of N-grams must be greater than 0",
 }
 
 # Labels of the plots by the name of the visualizer; the labels with fields in braces are
