@@ -14,6 +14,7 @@ nav:
       - Word extraction: extractors/words.md
       - Character N-gram extraction: extractors/char_ngrams.md
     - Statistics:
+      - Statistics interface: stats/stats.md
       - Lexical diversity metrics:
         - Metrics module: stats/diversity_stats.md
         - Metric functions: stats/diversity_stats_funcs.md

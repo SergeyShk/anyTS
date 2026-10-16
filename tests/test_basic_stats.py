@@ -19,7 +19,7 @@ from anyts.basic_stats import (
 )
 from anyts.components import start_sents_after_blank_lines
 from anyts.constants import BASIC_STATS_DESC, PUNCTUATION_TYPES, SPACES
-from anyts.exceptions import ParameterError, SourceError, SourceTypeError
+from anyts.exceptions import ParameterError, SourceError, SourceTypeError, UnknownStatError
 
 VOWELS = re.compile(r"[aeiouy]+", re.IGNORECASE)
 
@@ -152,6 +152,7 @@ def test_custom_factors():
         "The cat sat on the mat. A beautiful day!", complex_syl_factor=2, long_word_letter_factor=3
     )
     assert (bs.n_complex_words, bs.n_simple_words, bs.n_long_words) == (1, 8, 7)
+    assert (bs.complex_syl_factor, bs.long_word_letter_factor, bs.normalize) == (2, 3, False)
 
 
 def test_letters_only():
@@ -235,30 +236,66 @@ def test_count_punctuations_hook():
     assert (bs.c_punctuations, bs.n_punctuations) == ({"marks": 2}, 2)
 
 
+NORMALIZED = (
+    "p_unique_words",
+    "p_long_words",
+    "p_complex_words",
+    "p_simple_words",
+    "p_monosyllable_words",
+    "p_polysyllable_words",
+    "p_letters",
+    "p_spaces",
+    "p_punctuations",
+)
+
+
 def test_get_stats(bs):
     stats = bs.get_stats()
-    for key in BASIC_STATS_DESC:
+    names = ("c_letters", "c_syllables", *BASIC_STATS_DESC, "c_punctuations", *NORMALIZED)
+    assert tuple(stats) == bs.stat_names() == names
+    for key in names:
         assert stats[key] == getattr(bs, key)
+    assert tuple(Stats(TEXT).get_stats()) == names[: -len(NORMALIZED)]
     stats["n_words"] = -1
     stats["c_letters"][2] = -1
     assert bs.n_words > 0 and bs.c_letters[2] > 0
 
 
+def test_get_stats_flat(bs):
+    stats = bs.get_stats(flat=True)
+    assert stats["c_letters_3"] == bs.c_letters[3]
+    assert stats["c_punctuations_comma"] == bs.c_punctuations["comma"] == 4
+    assert stats["p_letters"] == bs.p_letters
+    assert not any(isinstance(value, dict) for value in stats.values())
+    assert list(bs.to_dataframe().columns) == list(stats)
+
+
+def test_describe(bs):
+    assert bs.describe("n_words") is None
+    assert bs.describe("c_letters") is None
+    with pytest.raises(UnknownStatError, match=r"^Unknown statistic: p_letters"):
+        Stats(TEXT).describe("p_letters")
+    with pytest.raises(UnknownStatError, match=r"^Unknown statistic: normalize"):
+        bs.describe("normalize")
+
+
 def test_print_stats(capsys, bs):
     bs.print_stats()
     lines = capsys.readouterr().out.splitlines()
-    assert lines[0] == f"{'Statistic':^20}|{'Value':^10}"
+    assert lines[0].split("|")[0].strip() == "Statistic"
     assert len(lines) == len(BASIC_STATS_DESC) + 2
-    assert lines[3].startswith("Words") and str(bs.n_words) in lines[3]
+    assert [cell.strip() for cell in lines[3].split("|")] == ["Words", str(bs.n_words)]
 
     class Labelled(Stats):
         stats_desc: ClassVar[dict[str, str]] = {"n_words": "Palabras"}
         stats_headers = ("Estadística", "Valor")
 
-    Labelled(TEXT).print_stats()
+    labelled = Labelled(TEXT)
+    assert tuple(labelled.get_stats()) == ("c_letters", "c_syllables", "n_words", "c_punctuations")
+    labelled.print_stats()
     assert capsys.readouterr().out.splitlines()[::2] == [
-        f"{'Estadística':^20}|{'Valor':^10}",
-        f"{'Palabras':20}|{bs.n_words:^10}",
+        f"{'Estadística':^12}|{'Valor':^10}",
+        f"{'Palabras':12}|{bs.n_words:^10}",
     ]
 
 

@@ -4,7 +4,7 @@ from abc import ABCMeta, abstractmethod
 from collections import Counter
 from collections.abc import Collection, Iterable, Mapping
 from re import Pattern
-from typing import Any, ClassVar
+from typing import ClassVar
 
 from spacy.tokens import Doc, Span
 
@@ -18,9 +18,9 @@ from .constants import (
 )
 from .exceptions import ParameterError, SourceError, SourceTypeError
 from .extractors import SentsExtractor, WordsExtractor
+from .stats import Stats
 from .utils import (
     check_integer,
-    check_messages,
     check_words,
     count_letters,
     has_sents,
@@ -28,6 +28,17 @@ from .utils import (
     iter_doc_words,
 )
 
+_NORMALIZED_STATS = (
+    "p_unique_words",
+    "p_long_words",
+    "p_complex_words",
+    "p_simple_words",
+    "p_monosyllable_words",
+    "p_polysyllable_words",
+    "p_letters",
+    "p_spaces",
+    "p_punctuations",
+)
 ELLIPSIS_PATTERN = re.compile(r"…|\.{3,}|(?<=[?!])\.{2}")
 # A dash typed with hyphens: a run of two or more, a hyphen after whitespace, the start of a
 # line or a closing mark (the underscore of italics included), before a space, a tab or the end,
@@ -148,7 +159,7 @@ def _check_extractors(
         raise SourceTypeError(messages["words_extractor_type"])
 
 
-class BasicStats(metaclass=ABCMeta):
+class BasicStats(Stats, metaclass=ABCMeta):
     """
     Base of the basic statistics of a text
 
@@ -162,6 +173,7 @@ class BasicStats(metaclass=ABCMeta):
         its sentences from its boundaries, or from the sentence extractor when it
         has none or only partial ones (has_sents); an extractor given is used on
         the text of a Doc too. A sentence counts when it holds a word
+        get_stats, to_dataframe, print_stats and describe come from Stats
 
     Arguments:
         source (str|Doc): Data source (a string or a Doc object)
@@ -172,6 +184,9 @@ class BasicStats(metaclass=ABCMeta):
         long_word_letter_factor (int): Minimum number of letters in a long word
 
     Attributes:
+        normalize (bool): Whether the normalized statistics are computed
+        complex_syl_factor (int): Minimum number of syllables in a complex word
+        long_word_letter_factor (int): Minimum number of letters in a long word
         c_letters (dict[int, int]): Distribution of words by number of letters
         c_syllables (dict[int, int]): Distribution of words by number of syllables
         n_sents (int): Number of sentences containing words
@@ -203,16 +218,13 @@ class BasicStats(metaclass=ABCMeta):
         count_punctuations: Counting the punctuation marks of a text by type
         count_words_by_syllables: Number of words with at least the given number of syllables
         count_words_by_letters: Number of words with at least the given number of letters
-        get_stats: Getting the computed statistics of the text
-        print_stats: Printing the computed statistics of the text with descriptions
+        stat_names: Names of the statistics of get_stats
 
     Class attributes:
         sents_extractor_class (type[SentsExtractor]): Sentence extractor used when none is given
         words_extractor_class (type[WordsExtractor]): Word extractor used when none is given
         join_hyphens (bool): Join the parts of the hyphenated words of a Doc
-        stats_desc (dict[str, str]): Descriptions of the statistics for print_stats
-        stats_headers (tuple[str, str]): Headers of the columns for print_stats
-        messages (dict[str, str]): Messages of the errors by key (MESSAGES)
+        stats_desc (dict[str, str]): Counts of get_stats and their descriptions for print_stats
 
     Raises:
         SourceTypeError: If the source is neither a string nor a Doc object, or an extractor
@@ -225,12 +237,6 @@ class BasicStats(metaclass=ABCMeta):
     words_extractor_class: ClassVar[type[WordsExtractor]] = WordsExtractor
     join_hyphens: ClassVar[bool] = False
     stats_desc: ClassVar[Mapping[str, str]] = BASIC_STATS_DESC
-    stats_headers: ClassVar[tuple[str, str]] = ("Statistic", "Value")
-    messages: ClassVar[Mapping[str, str]] = MESSAGES
-
-    def __init_subclass__(cls, **kwargs: Any) -> None:
-        super().__init_subclass__(**kwargs)
-        check_messages(cls.messages)
 
     def __init__(
         self,
@@ -275,6 +281,9 @@ class BasicStats(metaclass=ABCMeta):
         if not words:
             raise SourceError(messages["no_words"])
 
+        self.normalize = normalize
+        self.complex_syl_factor = complex_syl_factor
+        self.long_word_letter_factor = long_word_letter_factor
         letters_per_word = tuple(count_letters(word) for word in words)
         syllables_per_word = tuple(self.count_syllables(word) for word in words)
         self.c_letters = dict(sorted(Counter(letters_per_word).items()))
@@ -374,27 +383,17 @@ class BasicStats(metaclass=ABCMeta):
         check_integer(min_letters, "minimum number of letters")
         return sum(count for cpw, count in self.c_letters.items() if cpw >= min_letters)
 
-    def get_stats(self) -> dict[str, Any]:
+    def stat_names(self) -> tuple[str, ...]:
         """
-        Getting the computed statistics of the text
+        Getting the names of the statistics of get_stats
 
         Returns:
-            dict[str, Any]: Dictionary of the computed statistics - a copy,
-                editing it does not change the object
+            tuple[str, ...]: The distributions of the words by letters and by syllables,
+                the counts of stats_desc, the distribution of the punctuation marks and,
+                with normalize, the normalized counts
         """
-        return {
-            key: dict(value) if isinstance(value, dict) else value
-            for key, value in vars(self).items()
-        }
-
-    def print_stats(self) -> None:
-        """Printing the computed statistics of the text with descriptions"""
-        stat_header, value_header = self.stats_headers
-        print(f"{stat_header:^20}|{value_header:^10}")
-        print("-" * 30)
-        stats = self.get_stats()
-        for stat, value in self.stats_desc.items():
-            print(f"{value:20}|{stats[stat]:^10}")
+        names = ("c_letters", "c_syllables", *self.stats_desc, "c_punctuations")
+        return (*names, *_NORMALIZED_STATS) if self.normalize else names
 
 
 def count_punctuations(

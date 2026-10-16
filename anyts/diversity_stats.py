@@ -24,10 +24,10 @@ from .constants import (
     MTLD_WINDOW_LEN,
 )
 from .exceptions import ParameterError, SourceError, UnknownStatError
+from .stats import Stats
 from .utils import (
     check_counts,
     check_integer,
-    check_messages,
     check_number,
     check_sequence,
     check_words,
@@ -116,7 +116,7 @@ def _check_log_base(base: float, messages: Mapping[str, str] = MESSAGES) -> None
         raise ParameterError(messages["log_base"])
 
 
-class DiversityStats:
+class DiversityStats(Stats):
     """
     Class for computing the main lexical diversity metrics of a text
 
@@ -126,6 +126,7 @@ class DiversityStats:
         Dugast, a 50-word MATTR window and MSTTR segment, the MTLD threshold 0.72
         (a factor closes at a TTR not above it) with a minimum factor of 10 words,
         an HD-D sample of 42 words; all of them are parameters of the class
+        get_stats, to_dataframe, print_stats and describe come from Stats
 
     References:
         https://en.wikipedia.org/wiki/Lexical_diversity
@@ -196,13 +197,11 @@ class DiversityStats:
 
     Methods:
         windowed: Windowed computation of a metric with the mean and a confidence interval
-        get_stats: Getting the computed lexical diversity metrics of the text
-        print_stats: Printing the computed lexical diversity metrics with descriptions
 
     Class attributes:
-        stats_desc (dict[str, str]): Descriptions of the metrics for print_stats
+        stats_desc (dict[str, str]): Metrics of get_stats and their descriptions for
+            print_stats
         stats_headers (tuple[str, str]): Headers of the columns for print_stats
-        messages (dict[str, str]): Messages of the errors by key (MESSAGES)
 
     Raises:
         SourceTypeError: If the words are a string, a Doc, not iterable or not strings
@@ -212,11 +211,6 @@ class DiversityStats:
 
     stats_desc: ClassVar[Mapping[str, str]] = DIVERSITY_STATS_DESC
     stats_headers: ClassVar[tuple[str, str]] = ("Metric", "Value")
-    messages: ClassVar[Mapping[str, str]] = MESSAGES
-
-    def __init_subclass__(cls, **kwargs: Any) -> None:
-        super().__init_subclass__(**kwargs)
-        check_messages(cls.messages)
 
     def __init__(
         self,
@@ -456,28 +450,11 @@ class DiversityStats:
         calculators = self._calculators
         if not isinstance(stat, str) or stat not in calculators:
             raise UnknownStatError(
-                self.messages["unknown_metric"].format(stat=stat, metrics=tuple(calculators))
+                self.messages["unknown_stat"].format(stat=stat, stats=tuple(calculators))
             )
         return calc_windowed(
             self.words, calculators[stat], window_len, step, confidence, messages=self.messages
         )
-
-    def get_stats(self) -> dict[str, float]:
-        """
-        Getting the computed lexical diversity metrics of the text
-
-        Returns:
-            dict[str, float]: Dictionary of the computed lexical diversity metrics
-        """
-        return {stat: getattr(self, stat) for stat in DIVERSITY_STATS_DESC}
-
-    def print_stats(self) -> None:
-        """Printing the computed lexical diversity metrics with descriptions"""
-        metric_header, value_header = self.stats_headers
-        print(f"{metric_header:^75}|{value_header:^10}")
-        print("-" * 85)
-        for stat, value in self.get_stats().items():
-            print(f"{self.stats_desc[stat]:75}|{value:^10.2f}")
 
 
 @_checks_words

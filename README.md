@@ -13,6 +13,7 @@
 ## Features
 
 * **[Extraction](https://sergeyshk.github.io/anyTS/extractors/sentences/)** - sentence, word and character N-gram extractors whose tokenizer, lemmatizer and number pattern are hooks a language library overrides
+* **[Statistics interface](https://sergeyshk.github.io/anyTS/stats/stats/)** - the base of every class of statistics: a dictionary of the statistics, nested or flat, a pandas frame, a printed table and the reading of a statistic by its scale
 * **[Basic statistics](https://sergeyshk.github.io/anyTS/stats/basic_stats/)** - sentences, words, syllables, letters, long and complex words, punctuation marks by type, with the syllables of a language library
 * **[Readability metrics](https://sergeyshk.github.io/anyTS/stats/readability_stats/)** - Flesch reading ease, Flesch-Kincaid, Coleman-Liau, ARI, SMOG, Gunning fog, LIX, RIX, Legibilidad µ, the consensus grade, the school stage and the reading time, with the coefficients of a language library
 * **[Lexical diversity](https://sergeyshk.github.io/anyTS/stats/diversity_stats/)** - 32 metrics: TTR and its variants, MATTR, MSTTR, MTLD, MA-MTLD, MTLD-W, HD-D, the indices of Simpson and Yule, entropy, the laws of Zipf and Heaps, over the whole text or over windows with confidence intervals

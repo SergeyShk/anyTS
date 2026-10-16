@@ -167,6 +167,8 @@ Returns a dictionary with the computed readability metrics of `stats_desc`.
 Prints a table with the computed readability metrics, their descriptions from `stats_desc` and the headers from `stats_headers`.
 <!-- --8<-- [end:ReadabilityStats-print_stats] -->
 
+The frame of the metrics (`to_dataframe`) is that of the [statistics interface](stats.md).
+
 ## Usage example
 
 A subclass with the basic statistics of a language - here the syllables are the groups of vowels, a rough rule for English.

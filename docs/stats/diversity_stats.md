@@ -15,7 +15,7 @@ A class for computing the main [lexical diversity](https://en.wikipedia.org/wiki
 ## Language hooks
 
 <!-- --8<-- [start:DiversityStats-hooks] -->
-The class takes the words as given: a language library extracts them from its sources (a string, a `Doc` object of [spaCy](https://github.com/explosion/spaCy)) with its own extractor and lower-cases them, since every metric counts lexemes. The printed table of `print_stats` takes its texts from two class attributes that a library overrides in a subclass: `stats_desc`, the descriptions of the metrics by their keys, and `stats_headers`, the headers of the two columns. The messages of its errors come from the class attribute `messages`.
+The class takes the words as given: a language library extracts them from its sources (a string, a `Doc` object of [spaCy](https://github.com/explosion/spaCy)) with its own extractor and lower-cases them, since every metric counts lexemes. The metrics of `get_stats` and the printed table of `print_stats` take their texts from two class attributes that a library overrides in a subclass: `stats_desc`, the metrics with their descriptions, and `stats_headers`, the headers of the two columns. The messages of its errors come from the class attribute `messages`.
 <!-- --8<-- [end:DiversityStats-hooks] -->
 
 ## Parameters
@@ -132,7 +132,7 @@ Returns a `WindowStats` named tuple with the fields `mean`, `std`, `lower`, `upp
 ### get_stats
 
 <!-- --8<-- [start:DiversityStats-get_stats] -->
-Returns a dictionary with the computed lexical diversity metrics.
+Returns a dictionary with the computed lexical diversity metrics of `stats_desc`.
 <!-- --8<-- [end:DiversityStats-get_stats] -->
 
 !!! example "Example"
@@ -189,6 +189,8 @@ Returns a dictionary with the computed lexical diversity metrics.
 Prints a table with the computed lexical diversity metrics, their descriptions from `stats_desc` and the headers from `stats_headers`.
 <!-- --8<-- [end:DiversityStats-print_stats] -->
 
+The frame of the metrics (`to_dataframe`) and their reading (`describe`) are those of the [statistics interface](stats.md).
+
 The example continues the previous one:
 
 !!! example "Example"
@@ -202,38 +204,38 @@ The example continues the previous one:
     _Result_:
 
     ``` bash
-                                      Metric                                   |  Value
-    -------------------------------------------------------------------------------------
-    Type-Token Ratio (TTR)                                                     |   0.73
-    Root Type-Token Ratio (RTTR)                                               |   2.84
-    Corrected Type-Token Ratio (CTTR)                                          |   2.01
-    Herdan Type-Token Ratio (HTTR)                                             |   0.89
-    Summer Type-Token Ratio (STTR)                                             |   0.25
-    Maas Type-Token Ratio (MTTR)                                               |   0.10
-    Dugast Type-Token Ratio (DTTR)                                             |  10.27
-    Moving Average Type-Token Ratio (MATTR)                                    |   0.73
-    Mean Segmental Type-Token Ratio (MSTTR)                                    |   0.73
-    Measure of Textual Lexical Diversity (MTLD)                                |  15.00
-    Moving Average Measure of Textual Lexical Diversity (MA-MTLD)              |  12.00
-    Moving Average Measure of Textual Lexical Diversity with Wrap (MTLD-W)     |  13.25
-    Hypergeometric Distribution D (HD-D)                                       |   nan
-    Simpson's index (D)                                                        |   0.05
-    Inverse Simpson's index (1/D)                                              |  21.00
-    Gini-Simpson index (1-D)                                                   |   0.95
-    Hapax index (Honoré's R)                                                   |  992.95
-    Yule's characteristic K                                                    |  444.44
-    Yule's inverse characteristic I                                            |   8.64
-    Herdan's Vm                                                                |   0.14
-    Sichel's S                                                                 |   0.18
-    Michéa's M                                                                 |   5.50
-    Brunet's W                                                                 |   6.01
-    Dugast's k                                                                 |  14.78
-    Baayen's P                                                                 |   0.53
-    Hapax ratio                                                                |   0.73
-    Exponent α₂                                                                |   0.50
-    Shannon entropy (bits)                                                     |   3.32
-    Evenness                                                                   |   0.96
-    Perplexity                                                                 |  10.01
-    Zipf's law slope (α)                                                       |   0.49
-    Heaps' law exponent (β)                                                    |   0.84
+                                    Metric                                 |  Value
+    ----------------------------------------------------------------------------------
+    Type-Token Ratio (TTR)                                                 |   0.73
+    Root Type-Token Ratio (RTTR)                                           |   2.84
+    Corrected Type-Token Ratio (CTTR)                                      |   2.01
+    Herdan Type-Token Ratio (HTTR)                                         |   0.89
+    Summer Type-Token Ratio (STTR)                                         |   0.25
+    Maas Type-Token Ratio (MTTR)                                           |   0.10
+    Dugast Type-Token Ratio (DTTR)                                         |  10.27
+    Moving Average Type-Token Ratio (MATTR)                                |   0.73
+    Mean Segmental Type-Token Ratio (MSTTR)                                |   0.73
+    Measure of Textual Lexical Diversity (MTLD)                            |  15.00
+    Moving Average Measure of Textual Lexical Diversity (MA-MTLD)          |  12.00
+    Moving Average Measure of Textual Lexical Diversity with Wrap (MTLD-W) |  13.25
+    Hypergeometric Distribution D (HD-D)                                   |   nan
+    Simpson's index (D)                                                    |   0.05
+    Inverse Simpson's index (1/D)                                          |  21.00
+    Gini-Simpson index (1-D)                                               |   0.95
+    Hapax index (Honoré's R)                                               |  992.95
+    Yule's characteristic K                                                |  444.44
+    Yule's inverse characteristic I                                        |   8.64
+    Herdan's Vm                                                            |   0.14
+    Sichel's S                                                             |   0.18
+    Michéa's M                                                             |   5.50
+    Brunet's W                                                             |   6.01
+    Dugast's k                                                             |  14.78
+    Baayen's P                                                             |   0.53
+    Hapax ratio                                                            |   0.73
+    Exponent α₂                                                            |   0.50
+    Shannon entropy (bits)                                                 |   3.32
+    Evenness                                                               |   0.96
+    Perplexity                                                             |  10.01
+    Zipf's law slope (α)                                                   |   0.49
+    Heaps' law exponent (β)                                                |   0.84
     ```
