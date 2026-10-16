@@ -66,9 +66,9 @@ CONNECTOR_POS = frozenset({"CCONJ", "SCONJ", "PART", "ADV", "ADP", "INTJ", "X"})
 # Marks at the boundary of a window of split_windows: the opening ones go with the next window;
 # a symmetric one (a straight quote, the dash of an aside) closes the previous window when it
 # is glued to its last word or follows a closing mark
-OPENING_MARKS = frozenset('«"„“‘([{—–―-')
-SYMMETRIC_MARKS = frozenset('"—–―-')
-CLOSING_MARKS = frozenset(".!?…,;)]»")
+OPENING_MARKS = frozenset("«\"'„“‘([{—–―-")
+SYMMETRIC_MARKS = frozenset("\"'—–―-")
+CLOSING_MARKS = frozenset(".!?…,;)]}»”’")
 
 # Measures of keyness, of association of collocations, of dispersion of words and of stylometry
 KEYNESS_MEASURES = {
@@ -161,6 +161,7 @@ MESSAGES = {
     "min_words": "The smallest number of words in a window must be greater than 0",
     "min_words_window": "The smallest number of words in a window cannot be greater than the window",
     "sentence_lengths": "The sentence lengths must be integers",
+    "negative_lengths": "The sentence lengths cannot be negative",
     "tokenizer": "The tokenizer is set incorrectly",
     "tokenizer_iterable": "The tokenizer must return an iterable object",
     "tokenizer_strings": "The tokenizer must return strings, not {type}",

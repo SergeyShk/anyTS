@@ -1,7 +1,7 @@
 # Word extraction
 
 !!! info ""
-    **anyts.extractors.WordsExtractor**
+    **anyts.extractors.WordsExtractor**, **anyts.extractors.FixedWordsExtractor**
 
 ## Description
 

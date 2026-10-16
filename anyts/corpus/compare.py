@@ -11,7 +11,7 @@ from scipy.stats import mannwhitneyu
 from ..constants import CLOSING_MARKS, MESSAGES, OPENING_MARKS, SYMMETRIC_MARKS
 from ..exceptions import ParameterError, SourceTypeError
 from ..extractors import _iter_words
-from ..utils import check_integer, check_number, check_sequence
+from ..utils import check_integer, check_number, check_sequence, check_words
 from .kwic import Tokenizer
 
 Values = Sequence[float] | np.ndarray[Any, Any]
@@ -584,9 +584,11 @@ def split_windows(
             shorter than min_words
 
     Raises:
-        SourceTypeError: If the text is not a string or the tokenizer is not callable
+        SourceTypeError: If the text is not a string, the tokenizer is not callable or
+            the marks are not a collection of strings
         ParameterError: If the size of a window or min_words is not an integer or is
-            below one, or min_words is greater than the window
+            below one, min_words is greater than the window, or a mark is not one
+            character
 
     Example:
         >>> from anyts.corpus import split_windows
@@ -600,6 +602,12 @@ def split_windows(
     _check_windows(window, min_words, messages)
     if tokenize is not None and not callable(tokenize):
         raise SourceTypeError(f"The tokenizer must be callable, not {type(tokenize).__name__}")
+    for marks, what in (
+        (opening_marks, "opening marks"),
+        (symmetric_marks, "symmetric marks"),
+        (closing_marks, "closing marks"),
+    ):
+        _check_marks(marks, what)
     if min_words is None:
         min_words = 1 if window is None else window
     words = [(start, end) for start, end, _ in (tokenize or _iter_words)(text)]
@@ -632,6 +640,16 @@ def split_windows(
     ]
 
 
+def _check_marks(marks: Collection[str], what: str) -> None:
+    """Checking that the marks are a collection of single characters"""
+    if isinstance(marks, str):
+        return
+    check_words(marks, what, ordered=False)
+    for mark in marks:
+        if len(mark) != 1:
+            raise ParameterError(f"A mark of the {what} must be one character, not {mark!r}")
+
+
 def _check_windows(
     window: int | None, min_words: int | None, messages: Mapping[str, str] = MESSAGES
 ) -> None:
@@ -658,8 +676,9 @@ def sentence_rhythm(
         The mean length of a sentence in words, the standard deviation, the
         coefficient of variation and the autocorrelation at lag 1 - the link
         between the lengths of neighbouring sentences (Yule 1939); the
-        autocorrelation needs at least three sentences, the deviation two, and
-        the features of no sentence are nan
+        autocorrelation needs at least three sentences of unequal lengths, the
+        deviation two sentences, the coefficient of variation a mean above zero;
+        otherwise, and without sentences, a feature is nan
 
     Arguments:
         lengths (list[int]): Lengths of the sentences in words
@@ -670,6 +689,7 @@ def sentence_rhythm(
 
     Raises:
         SourceTypeError: If the lengths are not a list of integers
+        ParameterError: If a length is negative
 
     Example:
         >>> from anyts.corpus import sentence_rhythm
@@ -677,8 +697,11 @@ def sentence_rhythm(
         {'sents_mean': 5.25, 'sents_std': 2.754, 'sents_cv': 0.525, 'sents_autocorr': -0.794}
     """
     check_sequence(lengths, "sentence lengths")
-    if not all(isinstance(length, Integral) for length in lengths):
+    items: Sequence[object] = lengths
+    if not all(not isinstance(length, bool) and isinstance(length, Integral) for length in items):
         raise SourceTypeError(messages["sentence_lengths"])
+    if any(length < 0 for length in lengths):
+        raise ParameterError(messages["negative_lengths"])
     values = np.asarray(lengths, dtype=float)
     if not len(values):
         return dict.fromkeys(("sents_mean", "sents_std", "sents_cv", "sents_autocorr"), nan)

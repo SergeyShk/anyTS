@@ -167,6 +167,7 @@ CASES = [
     ("min_words", ParameterError, lambda: split_windows(TEXT, 5, 0, messages=OWN)),
     ("min_words_window", ParameterError, lambda: split_windows(TEXT, 5, 6, messages=OWN)),
     ("sentence_lengths", SourceTypeError, lambda: sentence_rhythm([1.5], messages=OWN)),
+    ("negative_lengths", ParameterError, lambda: sentence_rhythm([-1], messages=OWN)),
 ]
 
 

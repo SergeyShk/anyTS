@@ -484,3 +484,44 @@ def test_sentence_rhythm():
 def test_sentence_rhythm_errors(lengths):
     with pytest.raises(SourceTypeError):
         sentence_rhythm(lengths)
+
+
+def test_split_windows_english_marks():
+    left, right, dash = "“", "”", "—"
+    assert split_windows("one two three four 'five six' seven", 4, min_words=1) == [
+        "one two three four",
+        "'five six' seven",
+    ]
+    source = f"one two three {left}four!{right}{dash} five six"
+    assert split_windows(source, 4, min_words=1) == [
+        f"one two three {left}four!{right}{dash}",
+        "five six",
+    ]
+    assert split_windows('one two three {four}" five six', 4, min_words=1) == [
+        'one two three {four}"',
+        "five six",
+    ]
+
+
+@pytest.mark.parametrize(
+    ("marks", "error", "message"),
+    [
+        (None, SourceTypeError, "opening marks"),
+        ([1], SourceTypeError, "opening marks"),
+        ({"--"}, ParameterError, "must be one character, not '--'"),
+    ],
+)
+def test_split_windows_marks_errors(marks, error, message):
+    with pytest.raises(error, match=message):
+        split_windows(WINDOW_TEXT, 5, opening_marks=marks)
+
+
+def test_split_windows_marks_as_a_string():
+    assert split_windows(WINDOW_TEXT, 5, opening_marks="(") == split_windows(WINDOW_TEXT, 5)
+
+
+def test_sentence_rhythm_of_bools_and_negative_lengths():
+    with pytest.raises(SourceTypeError):
+        sentence_rhythm([True, False, True])
+    with pytest.raises(ParameterError, match="cannot be negative"):
+        sentence_rhythm([-3, 5, -2])

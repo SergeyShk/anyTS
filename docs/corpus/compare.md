@@ -1,7 +1,7 @@
 # Corpus comparison
 
 !!! info ""
-    **anyts.corpus.compare_features()**, **anyts.corpus.check_comparison_params()**, **anyts.corpus.compare_values()**, **anyts.corpus.calc_cohen_d()**, **anyts.corpus.calc_cliff_delta()**, **anyts.corpus.bootstrap_median_diff()**, **anyts.corpus.holm_correction()**
+    **anyts.corpus.compare_features()**, **anyts.corpus.check_comparison_params()**, **anyts.corpus.compare_values()**, **anyts.corpus.calc_cohen_d()**, **anyts.corpus.calc_cliff_delta()**, **anyts.corpus.bootstrap_median_diff()**, **anyts.corpus.holm_correction()**, **anyts.corpus.split_windows()**, **anyts.corpus.sentence_rhythm()**
 
 ## Description
 
@@ -115,15 +115,15 @@ The names of the columns are `anyts.corpus.COMPARISON_COLUMNS`, with `A` and `B`
 | `closing_marks` | Collection[str] | `CLOSING_MARKS` | Marks that close a phrase |
 | `messages` | dict[str, str] | `MESSAGES` | Messages of the errors by key |
 
-A text that is not a string and a tokenizer that is not callable raise `SourceTypeError`, a window or `min_words` that is not an integer of at least one or `min_words` above the window `ParameterError`. A text without words or shorter than `min_words` gives an empty list.
+A text that is not a string, a tokenizer that is not callable and marks that are not a collection of strings raise `SourceTypeError`, a window or `min_words` that is not an integer of at least one, `min_words` above the window and a mark of more than one character `ParameterError`. A text without words or shorter than `min_words` gives an empty list.
 <!-- --8<-- [end:split_windows] -->
 
-The marks of the core are those of `anyts.constants`: quotes, brackets and dashes open a phrase, the straight quote and the dashes are symmetric, and the final marks, the comma, the semicolon and the closing brackets and guillemet close one.
+The marks of the core are those of `anyts.constants`: quotes, brackets and dashes open a phrase, the straight quotes and the dashes are symmetric, and the final marks, the comma, the semicolon, the closing brackets, guillemet and quotes close one.
 
 ## Rhythm of the sentences { #sentence_rhythm }
 
 <!-- --8<-- [start:sentence_rhythm] -->
-`sentence_rhythm(lengths)` gives the features of the rhythm of the sentences from their lengths in words: the mean length `sents_mean`, the standard deviation `sents_std`, the coefficient of variation `sents_cv` and the autocorrelation at lag 1 `sents_autocorr`, the link between the lengths of neighbouring sentences (Yule, 1939). The deviation needs two sentences and the autocorrelation three, otherwise they are `nan`; lengths that are not a list of integers raise `SourceTypeError`. The messages of the errors are the keyword `messages`.
+`sentence_rhythm(lengths)` gives the features of the rhythm of the sentences from their lengths in words: the mean length `sents_mean`, the standard deviation `sents_std`, the coefficient of variation `sents_cv` and the autocorrelation at lag 1 `sents_autocorr`, the link between the lengths of neighbouring sentences (Yule, 1939). The deviation needs two sentences, the autocorrelation three of unequal lengths and the coefficient of variation a mean above zero, otherwise they are `nan`, as are all of them without sentences; lengths that are not a list of integers raise `SourceTypeError`, a negative length `ParameterError`. The messages of the errors are the keyword `messages`.
 <!-- --8<-- [end:sentence_rhythm] -->
 
 !!! example "Example"

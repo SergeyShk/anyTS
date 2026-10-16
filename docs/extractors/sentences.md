@@ -1,7 +1,7 @@
 # Sentence extraction
 
 !!! info ""
-    **anyts.extractors.SentsExtractor**
+    **anyts.extractors.SentsExtractor**, **anyts.extractors.FixedSentsExtractor**
 
 ## Description
 
