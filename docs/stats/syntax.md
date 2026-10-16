@@ -3,7 +3,7 @@
 !!! info ""
     **anyts.syntax**
 
-Functions over the dependency tree of a spaCy `Doc`, a `Span` or a list of tokens. They use only what Universal Dependencies and the ClearNLP labels of the English models share: the head of a token, the relations `cc`, `conj`, `parataxis` and `punct`, and the root; everything else is up to a language library.
+Functions over the dependency tree of a spaCy `Doc`, a `Span` or a list of tokens. They use only what Universal Dependencies and the ClearNLP labels of the English models share: the head of a token, the relations `cc`, `conj`, `parataxis`, `punct` and `aux`, and the root; the copula `cop` of `predicate_form` exists in Universal Dependencies alone. Everything else is up to a language library.
 
 ## is_word
 
@@ -92,7 +92,7 @@ Checks whether a token carries a morphological feature with a given value: `has_
 <!-- --8<-- [end:is_infinitive] -->
 
 <!-- --8<-- [start:predicate_form] -->
-`predicate_form(token, auxiliary_form)` gives the verb form of a predicate: the form (`VerbForm`) of its first auxiliary or copula that has one - the relations `aux` and `cop` with their subtypes, `anyts.constants.AUXILIARY_DEPS` - or, without one, the form of the word itself. *Had arrived* is finite, *to have gone* an infinitive, *being chosen* a gerund. A participle auxiliary counts as finite, since it follows a finite one that the parser may attach to another word (*had been chosen*). An auxiliary the model leaves without a form is read by the hook `auxiliary_form` of a language, which gives its form, for instance by its ending, or an empty string to skip it; without the hook such an auxiliary is skipped. A word with no verb form gives an empty string, and a hook that is not callable raises `SourceTypeError`.
+`predicate_form(token, auxiliary_form)` gives the verb form of a predicate by the forms (`VerbForm`) of its auxiliaries and copulas - the relations `aux` and `cop` with their subtypes, `anyts.constants.AUXILIARY_DEPS` - as Universal Dependencies annotates them. A finite auxiliary makes the predicate finite wherever it stands (*had arrived*, the German *gekommen sein wird*); otherwise the form of the first auxiliary decides (*to have gone* is an infinitive, *being chosen* a gerund), and without auxiliaries the form of the word itself. A past participle auxiliary counts as finite, since it follows a finite one that the parser may attach to another word (*had been chosen*); a present participle (*having eaten*) does not. A ClearNLP parse has no copula relation, its copula heading the clause with a form of its own, and its passive auxiliary `auxpass` is not read. An auxiliary the model leaves without a form is read by the hook `auxiliary_form` of a language, which gives its form, for instance by its ending, or an empty string to skip it; without the hook such an auxiliary is skipped. A word with no verb form gives an empty string, and a hook that is not callable raises `SourceTypeError`.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |

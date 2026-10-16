@@ -138,10 +138,24 @@ def predicate(words, deps, morphs):
         (["will", "have", "gone"], ["aux", "aux"], ["VerbForm=Fin", "VerbForm=Inf", ""], "Fin"),
         (["had", "gone"], ["aux"], ["", "VerbForm=Part"], "Part"),
         (["not", "gone"], ["advmod"], ["VerbForm=Fin", "VerbForm=Part"], "Part"),
+        (["having", "eaten"], ["aux"], ["Tense=Pres|VerbForm=Part", "VerbForm=Part"], "Part"),
+        (["been", "eaten"], ["aux"], ["Tense=Past|VerbForm=Part", "VerbForm=Part"], "Fin"),
+        (["to", "be", "eaten"], ["mark", "aux"], ["", "VerbForm=Inf", "VerbForm=Part"], "Inf"),
     ],
 )
 def test_predicate_form(words, deps, morphs, form):
     assert predicate_form(predicate(words, deps, morphs)) == form
+
+
+def test_predicate_form_of_a_finite_auxiliary_after_another():
+    # A verb-final clause: dass er gekommen sein wird, every auxiliary on the participle
+    doc = parse(
+        ["dass", "er", "gekommen", "sein", "wird"],
+        [2, 2, 2, 2, 2],
+        ["mark", "nsubj", "ROOT", "aux", "aux"],
+        morphs=["", "Case=Nom", "VerbForm=Part", "VerbForm=Inf", "VerbForm=Fin"],
+    )
+    assert predicate_form(doc[2]) == "Fin"
 
 
 def test_predicate_form_of_an_auxiliary_without_a_form():

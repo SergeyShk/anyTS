@@ -431,14 +431,17 @@ def predicate_form(token: Token, auxiliary_form: Callable[[Token], str] | None =
     Getting the verb form of a predicate
 
     Description:
-        The form of the first auxiliary or copula of a word (the relations of
-        AUXILIARY_DEPS) that has a form: had arrived is finite, to have gone an
-        infinitive, being chosen a gerund; without one, the form of the word
-        itself. An auxiliary the model leaves without a form is read by
-        auxiliary_form, a hook of the language that gives its form or an empty
-        string to skip it; without the hook it is skipped. A participle
-        auxiliary counts as finite: it follows a finite one, which the model
-        may attach to another word
+        The form the auxiliaries and copulas of a word give (the relations of
+        AUXILIARY_DEPS), as Universal Dependencies annotates them: a finite one
+        makes the predicate finite wherever it stands (had arrived, a German
+        gekommen sein wird); otherwise the form of the first one decides (to
+        have gone is an infinitive, being chosen a gerund), and without one the
+        form of the word itself. A past participle auxiliary counts as finite:
+        it follows a finite one, which the parser may attach to another word
+        (had been chosen); a present participle (having eaten) does not. An
+        auxiliary the model leaves without a form is read by auxiliary_form, a
+        hook of the language that gives its form or an empty string to skip it;
+        without the hook it is skipped
 
     Arguments:
         token (Token): Token
@@ -470,15 +473,20 @@ def predicate_form(token: Token, auxiliary_form: Callable[[Token], str] | None =
         raise SourceTypeError(
             f"auxiliary_form must be callable, not {type(auxiliary_form).__name__}"
         )
-    forms = [
-        form
+    auxiliaries = [
+        (child, form)
         for child in token.children
         if base_dep(child) in AUXILIARY_DEPS
         and (form := _verb_form(child) or (auxiliary_form(child) if auxiliary_form else ""))
     ]
-    if not forms:
+    if not auxiliaries:
         return _verb_form(token)
-    return "Fin" if forms[0] == "Part" else forms[0]
+    if any(form == "Fin" for _, form in auxiliaries):
+        return "Fin"
+    auxiliary, form = auxiliaries[0]
+    if form == "Part" and not has_feature(auxiliary, "Tense", "Pres"):
+        return "Fin"
+    return form
 
 
 def _verb_form(token: Token) -> str:
