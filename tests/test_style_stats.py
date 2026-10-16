@@ -275,3 +275,45 @@ def test_own_messages():
 
     with pytest.raises(ParameterError, match=r"^Own top$"):
         Own(TEXT, top_n=0)
+
+
+@pytest.mark.parametrize(
+    "name", ["compound_prepositions_list", "parentheticals_list", "cliches_list"]
+)
+def test_lists_checked_when_a_class_is_defined(name):
+    with pytest.raises(SourceTypeError, match=name):
+        type("Bad", (StyleStats,), {name: "in fact"})
+
+
+class Folded(StyleStats):
+    """A normalized form that folds two spellings of the same word"""
+
+    parentheticals_list = ("in honor of",)
+    cliches_list = ("best endeavor",)
+
+    def normalize(self, word):
+        return word.lower().replace("our", "or")
+
+
+def test_normalize_hook():
+    style = Folded(
+        "We made our best endeavour in honour of the team and our best endeavor",
+        stopwords=["colour", "we", "endeavor"],
+        nausea_stopwords=["endeavor"],
+    )
+    assert style.cliches == pytest.approx(100 * 2 / 14)
+    assert style.parentheticals == pytest.approx(100 / 14)
+    assert style.markers()["cliches"] == ("best endeavour", "best endeavor")
+    assert style.markers()["parentheticals"] == ("in honour of",)
+    assert style.water == pytest.approx(100 * 3 / 14)
+    assert "endeavour" not in style.nausea_words()
+    assert style.academic_nausea == pytest.approx(
+        calc_academic_nausea(style.words, 10, ["endeavor", "endeavour"])
+    )
+
+
+def test_phrase_density_normalize():
+    words = ["best", "endeavour"]
+    assert calc_phrase_density(words, ["best endeavor"]) == 0.0
+    fold = Folded("x").normalize
+    assert calc_phrase_density(words, ["best endeavor"], normalize=fold) == 50.0

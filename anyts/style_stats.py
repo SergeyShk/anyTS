@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections import Counter
 from collections.abc import Callable, Collection, Mapping, Sequence, Set
 from math import nan, sqrt
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from .constants import MESSAGES, NAUSEA_TOP_N, STYLE_STATS_DESC
 from .exceptions import ParameterError, SourceError, SourceTypeError
@@ -55,7 +55,7 @@ def in_order(words: Collection[str]) -> tuple[str, ...]:
     return tuple(sorted(words)) if isinstance(words, Set | Mapping) else tuple(words)
 
 
-def _significant(
+def _stop_flags(
     text: Sequence[str],
     stopwords: Collection[str] | None,
     is_stopword: Callable[[str], bool] | None,
@@ -139,8 +139,8 @@ def find_nausea_words(
     """
     check_words(text)
     check_params(top_n, messages=messages)
-    skipped = _significant(text, stopwords, is_stopword, normalize)
-    significant = [word for word, stop in zip(text, skipped, strict=True) if not stop]
+    stops = _stop_flags(text, stopwords, is_stopword, normalize)
+    significant = [word for word, stop in zip(text, stops, strict=True) if not stop]
     return dict(Counter(significant).most_common(top_n))
 
 
@@ -219,7 +219,7 @@ def calc_water(
     """
     check_words(text)
     return safe_divide(
-        100 * sum(_significant(text, stopwords, is_water_word, normalize)), len(text)
+        100 * sum(_stop_flags(text, stopwords, is_water_word, normalize)), len(text)
     )
 
 
@@ -448,7 +448,8 @@ class StyleStats(Stats):
 
     Raises:
         SourceTypeError: If the source is neither a string nor a Doc object, the
-            extractor is of another type or a list is not a list of strings
+            extractor is of another type or a list is not a list of strings; when a
+            class is defined, if a list of its phrases is not a list of strings
         SourceError: If the source has no words
         ParameterError: If top_n is not an integer or is below one
     """
@@ -460,6 +461,11 @@ class StyleStats(Stats):
     cliches_list: tuple[str, ...] = ()
     stats_desc: ClassVar[Mapping[str, str]] = STYLE_STATS_DESC
     stats_headers: ClassVar[tuple[str, str]] = ("Metric", "Value")
+
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        super().__init_subclass__(**kwargs)
+        for name in ("compound_prepositions_list", "parentheticals_list", "cliches_list"):
+            check_words(getattr(cls, name), name, ordered=False)
 
     def __init__(
         self,

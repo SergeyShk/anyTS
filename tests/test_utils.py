@@ -21,6 +21,7 @@ from anyts.utils import (
     check_words,
     count_letters,
     count_words_by_spans,
+    find_phrases,
     has_sents,
     has_words,
     is_doc,
@@ -418,3 +419,8 @@ def test_count_words_by_spans_of_an_array():
 def test_count_words_by_spans_errors(starts, spans):
     with pytest.raises(SourceTypeError):
         count_words_by_spans(starts, spans)
+
+
+def test_find_phrases_of_a_string():
+    with pytest.raises(SourceTypeError, match="phrases"):
+        find_phrases(["in", "fact"], "in fact")

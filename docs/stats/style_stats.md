@@ -22,7 +22,7 @@ A language library subclasses `StyleStats`; by default the hooks know no languag
 | :--: | :--: | :---------: |
 | `words_extractor_class` | class attribute | Word extractor of a string and of the forms; `WordsExtractor` by default |
 | `join_hyphens` | class attribute | Join the parts of the hyphenated words of a `Doc` |
-| `compound_prepositions_list`, `parentheticals_list`, `cliches_list` | class attributes | Compound prepositions, parenthetical expressions and cliches; the parameter `cliches` takes the place of the last |
+| `compound_prepositions_list`, `parentheticals_list`, `cliches_list` | class attributes | Compound prepositions, parenthetical expressions and cliches, checked as lists of strings when the class is defined; the parameter `cliches` takes the place of the last |
 | `normalize(word)` | method | Normalized form of a word or a phrase, by which the lists are compared; the lower case by default |
 | `doc_words(doc)` | method | Words of a `Doc`; the words of `iter_doc_words` in lower case by default |
 | `is_stopword(word)` | method | Whether a word is a stopword of the academic nausea, when `nausea_stopwords` is not given |
@@ -32,6 +32,7 @@ A language library subclasses `StyleStats`; by default the hooks know no languag
 | `nouns()` | method | Word forms of the nouns of the text with their lemmas; none by default, so the share of the verbal nouns is `nan` |
 | `is_verbal_noun(lemma)` | method | Whether the lemma of a noun is a verbal noun |
 | `level_scales` | class attribute | Norms of the services by metric for `describe` |
+| `stats_desc`, `stats_headers` | class attributes | Metrics of `get_stats` with their descriptions, headers of the columns for `print_stats` |
 | `messages` | class attribute | Messages of the errors by key; `MESSAGES` by default |
 <!-- --8<-- [end:StyleStats-hooks] -->
 

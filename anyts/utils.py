@@ -3,7 +3,7 @@ from __future__ import annotations
 import math
 import sys
 import unicodedata
-from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence, Set
+from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, Sequence, Set
 from functools import lru_cache
 from itertools import repeat
 from numbers import Integral, Real
@@ -636,7 +636,7 @@ def _unit_word(unit: Sequence[Token]) -> tuple[int, int, str]:
 
 
 def find_phrases(
-    words: Sequence[str], phrases: Iterable[str], normalize: Callable[[str], str] = str.lower
+    words: Sequence[str], phrases: Collection[str], normalize: Callable[[str], str] = str.lower
 ) -> list[tuple[int, int]]:
     """
     Finding phrases in a sequence of words
@@ -657,7 +657,7 @@ def find_phrases(
             phrases are skipped
 
     Raises:
-        SourceTypeError: If the words are not a list of strings
+        SourceTypeError: If the words or the phrases are not a list of strings
 
     Example:
         >>> from anyts.utils import find_phrases
@@ -665,6 +665,7 @@ def find_phrases(
         [(0, 2)]
     """
     check_words(words)
+    check_words(phrases, "phrases", ordered=False)
     patterns = sorted(
         {pattern for phrase in phrases if (pattern := tuple(normalize(phrase).split()))},
         key=lambda pattern: (-len(pattern), pattern),
