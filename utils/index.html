@@ -1099,6 +1099,120 @@
   
   
   
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_7" id="__nav_3_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Style metrics
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Style metrics
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../stats/style_stats/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Metrics module
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../stats/style_stats_funcs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Metric functions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
     <li class="md-nav__item">
       <a href="../stats/phonetics/" class="md-nav__link">
         
@@ -1941,6 +2055,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#find_phrases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        find_phrases
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -2156,6 +2281,17 @@
     <span class="md-ellipsis">
       
         count_words_by_spans
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#find_phrases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        find_phrases
       
     </span>
   </a>
@@ -2744,6 +2880,49 @@
 
 <span class="n">count_words_by_spans</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">14</span><span class="p">,</span> <span class="mi">20</span><span class="p">],</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">9</span><span class="p">),</span> <span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span> <span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">19</span><span class="p">),</span> <span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">24</span><span class="p">)])</span>
 <span class="c1"># [2, 2, 1]</span>
+</code></pre></div>
+</div>
+<h2 id="find_phrases">find_phrases<a class="headerlink" href="#find_phrases" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:find_phrases] -->
+<p>Finds phrases in a sequence of words: the bounds of every phrase found as slices of the words, in order. The words and the phrases are compared by their normalized forms, the lower case by default; at every position the longest phrase is taken, the phrases found do not overlap, and empty phrases are skipped. Words that are not a list of strings raise <code>SourceTypeError</code>.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>words</code></td>
+<td style="text-align: center;">list[str]</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Words of the text</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>phrases</code></td>
+<td style="text-align: center;">list[str]</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Phrases, words separated by spaces</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>normalize</code></td>
+<td style="text-align: center;">Callable</td>
+<td style="text-align: center;"><code>str.lower</code></td>
+<td style="text-align: center;">Normalized form of a word and of a phrase</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:find_phrases] -->
+
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">find_phrases</span>
+
+<span class="n">find_phrases</span><span class="p">([</span><span class="s2">"In"</span><span class="p">,</span> <span class="s2">"fact"</span><span class="p">,</span> <span class="s2">"it"</span><span class="p">,</span> <span class="s2">"rains"</span><span class="p">],</span> <span class="p">[</span><span class="s2">"in fact"</span><span class="p">,</span> <span class="s2">"in"</span><span class="p">])</span>
+<span class="c1"># [(0, 2)]</span>
 </code></pre></div>
 </div>
 
