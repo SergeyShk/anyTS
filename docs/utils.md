@@ -101,6 +101,31 @@ Checks whether a `Doc` has its sentence boundaries: they count when every token 
     # True
     ```
 
+## is_doc, is_span
+
+<!-- --8<-- [start:is_doc] -->
+`is_doc(value)` checks whether a value is a `Doc` object of spaCy without importing spaCy: such an object exists only once spaCy is loaded, so before that every value gives `False`. The core takes a `Doc` this way, and `import anyts` loads no spaCy; a language library checks its sources so too, to keep its own import light.
+
+| Parameter | Type | Default | Description |
+| :-------: | :--: | :-----: | :---------: |
+| `value` | object | `-` | Value to check |
+<!-- --8<-- [end:is_doc] -->
+
+<!-- --8<-- [start:is_span] -->
+`is_span(value)` checks whether a value is a `Span` object of spaCy, without importing spaCy as `is_doc`.
+<!-- --8<-- [end:is_span] -->
+
+!!! example "Example"
+
+    ``` python
+    import spacy
+    from anyts.utils import is_doc, is_span
+
+    doc = spacy.blank("en")("The cat sleeps")
+    is_doc(doc), is_doc(doc[:2]), is_span(doc[:2]), is_doc("The cat sleeps")
+    # (True, False, True, False)
+    ```
+
 ## check_sequence
 
 <!-- --8<-- [start:check_sequence] -->

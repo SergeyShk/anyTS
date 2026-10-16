@@ -7,9 +7,6 @@ from typing import Any, ClassVar, NamedTuple, TypeVar, cast
 
 import numpy as np
 from numpy.lib.stride_tricks import sliding_window_view
-from scipy.optimize import least_squares
-from scipy.special import gammaln
-from scipy.stats import t as student_t
 
 from .constants import (
     BRUNET_W_EXPONENT,
@@ -973,6 +970,8 @@ def calc_hdd(text: Sequence[str], sample_size: int = HDD_SAMPLE_SIZE) -> float:
     n_words = len(text)
     if n_words < 50 or n_words < sample_size:
         return nan
+    from scipy.special import gammaln
+
     frequencies = np.fromiter(Counter(text).values(), dtype=np.int64)
     # probability that a lexeme is absent from the sample, in logarithms: C(N, k) overflows
     absent = np.exp(
@@ -1516,6 +1515,8 @@ def fit_zipf_mandelbrot(text: Sequence[str] | Mapping[str, int]) -> ZipfMandelbr
         log_c, q, s = (float(value) for value in params)
         return np.asarray(model(ranks, log_c, q, s) - log_frequencies)
 
+    from scipy.optimize import least_squares
+
     # not curve_fit: it warns when the covariance cannot be estimated
     try:
         result = least_squares(
@@ -1691,6 +1692,8 @@ def calc_windowed(
         mean = float(values.mean())
     if n_windows < 2 or not np.isfinite(mean):
         return WindowStats(mean, nan, nan, nan, n_windows)
+    from scipy.stats import t as student_t
+
     std = float(values.std(ddof=1))
     half_width = float(student_t.ppf((1 + confidence) / 2, n_windows - 1)) * std / sqrt(n_windows)
     return WindowStats(mean, std, mean - half_width, mean + half_width, n_windows)

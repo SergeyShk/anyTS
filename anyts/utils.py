@@ -1,15 +1,20 @@
+from __future__ import annotations
+
 import math
+import sys
 import unicodedata
 from collections.abc import Iterable, Iterator, Mapping, Sequence, Set
 from functools import lru_cache
 from itertools import repeat
 from numbers import Integral, Real
 from string import Formatter
-
-from spacy.tokens import Doc, Span, Token
+from typing import TYPE_CHECKING, TypeGuard
 
 from .constants import MESSAGES
 from .exceptions import ParameterError, SourceError, SourceTypeError
+
+if TYPE_CHECKING:
+    from spacy.tokens import Doc, Span, Token
 
 # Punctuation, symbols, combining marks and invisible format characters
 PUNCTUATION_CATEGORIES = frozenset(
@@ -84,6 +89,55 @@ def safe_divide(num: float | int, den: float | int, default: float | int = 0) ->
     if not den:
         return default
     return num / den
+
+
+def is_doc(value: object) -> TypeGuard[Doc]:
+    """
+    Checking whether a value is a Doc object of spaCy
+
+    Description:
+        The check does not import spaCy: a Doc exists only once spaCy is
+        loaded, so before that every value gives False
+
+    Arguments:
+        value (object): Value to check
+
+    Returns:
+        bool: Result of the check
+
+    Example:
+        >>> import spacy
+        >>> from anyts.utils import is_doc
+        >>> doc = spacy.blank("en")("The cat sleeps")
+        >>> is_doc(doc), is_doc(doc[:2]), is_doc("The cat sleeps")
+        (True, False, False)
+    """
+    tokens = sys.modules.get("spacy.tokens")
+    return tokens is not None and isinstance(value, tokens.Doc)
+
+
+def is_span(value: object) -> TypeGuard[Span]:
+    """
+    Checking whether a value is a Span object of spaCy
+
+    Description:
+        The check does not import spaCy, as is_doc
+
+    Arguments:
+        value (object): Value to check
+
+    Returns:
+        bool: Result of the check
+
+    Example:
+        >>> import spacy
+        >>> from anyts.utils import is_span
+        >>> doc = spacy.blank("en")("The cat sleeps")
+        >>> is_span(doc[:2]), is_span(doc)
+        (True, False)
+    """
+    tokens = sys.modules.get("spacy.tokens")
+    return tokens is not None and isinstance(value, tokens.Span)
 
 
 def has_words(source: str | Doc | Span) -> bool:
@@ -175,7 +229,7 @@ def check_sequence(value: object, what: str = "words", ordered: bool = True) -> 
     """
     if isinstance(value, str | bytes | bytearray):
         raise SourceTypeError(f"A list of {what} is expected, not a string")
-    if isinstance(value, Doc | Span):
+    if is_doc(value) or is_span(value):
         raise SourceTypeError(
             f"A list of {what} is expected, not a {type(value).__name__}: "
             "extract the words with WordsExtractor"

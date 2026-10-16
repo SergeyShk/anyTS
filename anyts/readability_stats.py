@@ -1,10 +1,10 @@
+from __future__ import annotations
+
 from collections.abc import Callable, Iterable, Mapping
 from math import floor, isfinite, nan, sqrt
 from numbers import Real
 from statistics import median
-from typing import Any, ClassVar
-
-from spacy.tokens import Doc
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from .basic_stats import BasicStats, _check_extractors
 from .constants import (
@@ -29,6 +29,9 @@ from .extractors import SentsExtractor, WordsExtractor
 from .stats import Stats
 from .stats import scale_level as scale_level
 from .utils import check_number, safe_divide
+
+if TYPE_CHECKING:
+    from spacy.tokens import Doc
 
 
 class ReadabilityStats(Stats):

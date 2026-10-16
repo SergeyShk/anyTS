@@ -1,16 +1,28 @@
+from __future__ import annotations
+
 from collections.abc import Iterable, Iterator, Mapping
 from numbers import Integral
+from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.axes import Axes
-from spacy.tokens import Doc
 
 from ..constants import VISUALIZER_LABELS
 from ..exceptions import ParameterError, SourceError, SourceTypeError
 from ..extractors import SentsExtractor, WordsExtractor
-from ..utils import check_integer, check_sequence, has_sents, iter_doc_words, merge_labels
+from ..utils import (
+    check_integer,
+    check_sequence,
+    has_sents,
+    is_doc,
+    iter_doc_words,
+    merge_labels,
+)
 from ._axes import check_axes
+
+if TYPE_CHECKING:
+    from spacy.tokens import Doc
 
 
 def sentence_lengths_plot(
@@ -135,7 +147,7 @@ def sentence_lengths(
         words = words_extractor or WordsExtractor()
         lengths = [len(words.extract(sent)) for sent in sents]
         return [length for length in lengths if length]
-    if isinstance(source, Doc):
+    if is_doc(source):
         if has_sents(source):
             lengths = [sum(1 for _ in iter_doc_words(sent, join_hyphens)) for sent in source.sents]
             return [length for length in lengths if length]

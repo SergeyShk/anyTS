@@ -1,17 +1,20 @@
+from __future__ import annotations
+
 import html
 import re
 from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from itertools import pairwise
 from types import MappingProxyType
-from typing import ClassVar, NamedTuple
-
-from spacy.tokens import Doc, Token
+from typing import TYPE_CHECKING, ClassVar, NamedTuple
 
 from ..exceptions import ParameterError, SourceError, SourceTypeError
 from ..extractors import BLANK_LINE, SentsExtractor, _iter_words
 from ..syntax import get_words
-from ..utils import _unit_word, has_sents, iter_doc_tokens
+from ..utils import _unit_word, has_sents, is_doc, iter_doc_tokens
+
+if TYPE_CHECKING:
+    from spacy.tokens import Doc, Token
 
 # Line breaks of Unix, Windows and old Mac texts
 LINE_BREAK = re.compile(r"\r\n?|\n")
@@ -136,7 +139,7 @@ class HighlightedText:
 
     def __init__(self, source: str | Doc, layers: Sequence[str] | str | None = None):
         doc = None
-        if isinstance(source, Doc):
+        if is_doc(source):
             doc = source
             self.text = source.text
             words = self.doc_words(source)
