@@ -16,6 +16,7 @@ from anyts.constants import MESSAGES
 from anyts.corpus import sentence_rhythm, split_windows
 from anyts.diversity_stats import DiversityStats, calc_ttr, calc_windowed, check_params
 from anyts.exceptions import ParameterError, SourceError, SourceTypeError, UnknownStatError
+from anyts.lexical_stats import LexicalStats, LexicalWord
 from anyts.readability_stats import ReadabilityStats, calc_reading_time
 from anyts.style_stats import StyleStats
 from anyts.utils import check_messages
@@ -69,6 +70,27 @@ class Matcher(ConnectorMatcher):
 
 class Style(StyleStats):
     messages = OWN
+
+
+class Frequencies:
+    min_ipm = 1.0
+
+    def lookup(self, lemma):
+        return None
+
+    def ipm(self, lemma):
+        return 0.0
+
+
+class Lexical(LexicalStats):
+    messages = OWN
+
+    def analyze(self, source):
+        return [LexicalWord(word, word, True) for word in source.split()]
+
+
+class Checked(Lexical):
+    freq_dict_class = Frequencies
 
 
 class Component(StatsComponent):
@@ -174,6 +196,10 @@ CASES = [
     ("sentence_lengths", SourceTypeError, lambda: sentence_rhythm([1.5], messages=OWN)),
     ("negative_lengths", ParameterError, lambda: sentence_rhythm([-1], messages=OWN)),
     ("top_n", ParameterError, lambda: Style(TEXT, top_n=0)),
+    ("freq_dict_type", SourceTypeError, lambda: Checked(TEXT, freq_dict={})),
+    ("no_freq_dict_class", SourceTypeError, lambda: Lexical(TEXT)),
+    ("bands_type", ParameterError, lambda: Lexical(TEXT, Frequencies()).band_coverage(5)),
+    ("band_bound", ParameterError, lambda: Lexical(TEXT, Frequencies()).band_coverage([0])),
 ]
 
 
