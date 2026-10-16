@@ -1227,6 +1227,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#verb-forms" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verb forms
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#calc_valency" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1994,6 +2005,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#verb-forms" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verb forms
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#calc_valency" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2039,7 +2061,7 @@
 <div class="admonition info">
 <p><strong>anyts.syntax</strong></p>
 </div>
-<p>Functions over the dependency tree of a spaCy <code>Doc</code>, a <code>Span</code> or a list of tokens. They use only what Universal Dependencies and the ClearNLP labels of the English models share: the head of a token, the relations <code>cc</code>, <code>conj</code>, <code>parataxis</code> and <code>punct</code>, and the root; everything else is up to a language library.</p>
+<p>Functions over the dependency tree of a spaCy <code>Doc</code>, a <code>Span</code> or a list of tokens. They use only what Universal Dependencies and the ClearNLP labels of the English models share: the head of a token, the relations <code>cc</code>, <code>conj</code>, <code>parataxis</code>, <code>punct</code> and <code>aux</code>, and the root; the copula <code>cop</code> of <code>predicate_form</code> exists in Universal Dependencies alone. Everything else is up to a language library.</p>
 <h2 id="is_word">is_word<a class="headerlink" href="#is_word" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:is_word] -->
 <p>Checks whether a token is a word: not whitespace and not a token of <code>is_punctuation</code>, so symbols like <code>%</code>, <code>€</code>, <code>+</code> and invisible characters are no words either.</p>
@@ -2170,6 +2192,71 @@
 </table>
 <!-- --8<-- [end:has_feature] -->
 
+<h2 id="verb-forms">Verb forms<a class="headerlink" href="#verb-forms" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:is_finite_verb] -->
+<p><code>is_finite_verb(token)</code> checks whether a token is a finite verb: the part of speech <code>VERB</code> with <code>VerbForm=Fin</code>, so a finite auxiliary (<code>AUX</code>) is not one.</p>
+<!-- --8<-- [end:is_finite_verb] -->
+
+<!-- --8<-- [start:is_infinitive] -->
+<p><code>is_infinitive(token)</code> checks whether a token is an infinitive, <code>VerbForm=Inf</code> whatever its part of speech.</p>
+<!-- --8<-- [end:is_infinitive] -->
+
+<!-- --8<-- [start:predicate_form] -->
+<p><code>predicate_form(token, auxiliary_form)</code> gives the verb form of a predicate by the forms (<code>VerbForm</code>) of its auxiliaries and copulas - the relations <code>aux</code> and <code>cop</code> with their subtypes, <code>anyts.constants.AUXILIARY_DEPS</code> - as Universal Dependencies annotates them. A finite auxiliary makes the predicate finite wherever it stands (<em>had arrived</em>, the German <em>gekommen sein wird</em>); otherwise the form of the first auxiliary decides (<em>to have gone</em> is an infinitive, <em>being chosen</em> a gerund), and without auxiliaries the form of the word itself. A past participle auxiliary counts as finite, since it follows a finite one that the parser may attach to another word (<em>had been chosen</em>); a present participle (<em>having eaten</em>) does not. A ClearNLP parse has no copula relation, its copula heading the clause with a form of its own, and its passive auxiliary <code>auxpass</code> is not read. An auxiliary the model leaves without a form is read by the hook <code>auxiliary_form</code> of a language, which gives its form, for instance by its ending, or an empty string to skip it; without the hook such an auxiliary is skipped. A word with no verb form gives an empty string, and a hook that is not callable raises <code>SourceTypeError</code>.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>token</code></td>
+<td style="text-align: center;">Token</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Token</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>auxiliary_form</code></td>
+<td style="text-align: center;">Callable[[Token], str]</td>
+<td style="text-align: center;"><code>None</code></td>
+<td style="text-align: center;">Verb form of an auxiliary without <code>VerbForm</code></td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:predicate_form] -->
+
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">spacy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">spacy.tokens</span><span class="w"> </span><span class="kn">import</span> <span class="n">Doc</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">anyts.syntax</span><span class="w"> </span><span class="kn">import</span> <span class="n">predicate_form</span>
+
+<span class="n">vocab</span> <span class="o">=</span> <span class="n">spacy</span><span class="o">.</span><span class="n">blank</span><span class="p">(</span><span class="s2">"en"</span><span class="p">)</span><span class="o">.</span><span class="n">vocab</span>
+<span class="n">doc</span> <span class="o">=</span> <span class="n">Doc</span><span class="p">(</span>
+    <span class="n">vocab</span><span class="p">,</span>
+    <span class="n">words</span><span class="o">=</span><span class="p">[</span><span class="s2">"She"</span><span class="p">,</span> <span class="s2">"had"</span><span class="p">,</span> <span class="s2">"been"</span><span class="p">,</span> <span class="s2">"chosen"</span><span class="p">],</span>
+    <span class="n">heads</span><span class="o">=</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span>
+    <span class="n">deps</span><span class="o">=</span><span class="p">[</span><span class="s2">"nsubj:pass"</span><span class="p">,</span> <span class="s2">"aux"</span><span class="p">,</span> <span class="s2">"aux:pass"</span><span class="p">,</span> <span class="s2">"ROOT"</span><span class="p">],</span>
+    <span class="n">morphs</span><span class="o">=</span><span class="p">[</span><span class="s2">"Case=Nom"</span><span class="p">,</span> <span class="s2">"VerbForm=Fin"</span><span class="p">,</span> <span class="s2">"VerbForm=Part"</span><span class="p">,</span> <span class="s2">"VerbForm=Part"</span><span class="p">],</span>
+<span class="p">)</span>
+<span class="n">predicate_form</span><span class="p">(</span><span class="n">doc</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+<span class="c1"># 'Fin'</span>
+<span class="c1"># An auxiliary the model left without a form, read by the hook</span>
+<span class="n">doc</span> <span class="o">=</span> <span class="n">Doc</span><span class="p">(</span>
+    <span class="n">vocab</span><span class="p">,</span>
+    <span class="n">words</span><span class="o">=</span><span class="p">[</span><span class="s2">"to"</span><span class="p">,</span> <span class="s2">"have"</span><span class="p">,</span> <span class="s2">"gone"</span><span class="p">],</span>
+    <span class="n">heads</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span>
+    <span class="n">deps</span><span class="o">=</span><span class="p">[</span><span class="s2">"mark"</span><span class="p">,</span> <span class="s2">"aux"</span><span class="p">,</span> <span class="s2">"ROOT"</span><span class="p">],</span>
+    <span class="n">morphs</span><span class="o">=</span><span class="p">[</span><span class="s2">""</span><span class="p">,</span> <span class="s2">""</span><span class="p">,</span> <span class="s2">"VerbForm=Part"</span><span class="p">],</span>
+<span class="p">)</span>
+<span class="n">predicate_form</span><span class="p">(</span><span class="n">doc</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span> <span class="n">predicate_form</span><span class="p">(</span><span class="n">doc</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="k">lambda</span> <span class="n">aux</span><span class="p">:</span> <span class="s2">"Inf"</span> <span class="k">if</span> <span class="n">aux</span><span class="o">.</span><span class="n">lower_</span> <span class="o">==</span> <span class="s2">"have"</span> <span class="k">else</span> <span class="s2">""</span><span class="p">)</span>
+<span class="c1"># ('Part', 'Inf')</span>
+</code></pre></div>
+</div>
 <h2 id="calc_valency">calc_valency<a class="headerlink" href="#calc_valency" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:calc_valency] -->
 <p>The valency of a token: the number of its dependent words, the relations <code>cc</code>, <code>conj</code> and <code>parataxis</code> left out; <code>calc_valency(token, join_hyphens=True)</code> counts a hyphenated dependent once, so <code>came</code> in <code>Some-one came</code> has one dependent and not two.</p>
