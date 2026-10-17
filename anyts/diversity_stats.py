@@ -47,13 +47,6 @@ def _checks_words(func: Function) -> Function:
     return cast(Function, checked)
 
 
-def _unchecked(func: Function) -> Function:
-    """The function without the check of its words, for words already checked"""
-    if isinstance(func, partial):
-        return cast(Function, partial(_unchecked(func.func), *func.args, **func.keywords))
-    return cast(Function, getattr(func, "__unchecked__", func))
-
-
 class WindowStats(NamedTuple):
     """
     Result of the windowed computation of a metric
@@ -111,6 +104,18 @@ def _check_log_base(base: float, messages: Mapping[str, str] = MESSAGES) -> None
     check_number(base, "logarithm base")
     if not base > 1:
         raise ParameterError(messages["log_base"])
+
+
+def _check_mtld_params(
+    threshold: float, min_len: int, messages: Mapping[str, str] = MESSAGES
+) -> None:
+    """Checking the TTR threshold and the minimum factor length of MTLD"""
+    check_number(threshold, "TTR threshold of MTLD")
+    if not 0 < threshold < 1:
+        raise ParameterError(messages["mtld_threshold"])
+    check_integer(min_len, "minimum factor length of MTLD")
+    if min_len < 0:
+        raise ParameterError(messages["mtld_min_len"])
 
 
 class DiversityStats(Stats):
@@ -454,6 +459,13 @@ class DiversityStats(Stats):
         )
 
 
+def _unchecked(func: Function) -> Function:
+    """The function without the check of its words, for words already checked"""
+    if isinstance(func, partial):
+        return cast(Function, partial(_unchecked(func.func), *func.args, **func.keywords))
+    return cast(Function, getattr(func, "__unchecked__", func))
+
+
 @_checks_words
 def calc_frequency_spectrum(text: Sequence[str]) -> dict[int, int]:
     """
@@ -728,36 +740,6 @@ def calc_msttr(text: Sequence[str], segment_len: int = MATTR_WINDOW_LEN) -> floa
     return sum(ttr(segment) for segment in segments) / len(segments)
 
 
-def _check_mtld_params(
-    threshold: float, min_len: int, messages: Mapping[str, str] = MESSAGES
-) -> None:
-    """Checking the TTR threshold and the minimum factor length of MTLD"""
-    check_number(threshold, "TTR threshold of MTLD")
-    if not 0 < threshold < 1:
-        raise ParameterError(messages["mtld_threshold"])
-    check_integer(min_len, "minimum factor length of MTLD")
-    if min_len < 0:
-        raise ParameterError(messages["mtld_min_len"])
-
-
-def _count_mtld_factors(text: Sequence[str], threshold: float, min_len: int) -> float:
-    """Counting the MTLD factors in one pass over the text"""
-    factors = 0.0
-    counts: Counter[str] = Counter()
-    factor_len = 0
-    for word in text:
-        counts[word] += 1
-        factor_len += 1
-        if len(counts) / factor_len <= threshold and factor_len >= min_len:
-            factors += 1
-            counts.clear()
-            factor_len = 0
-    if factor_len:
-        ttr = len(counts) / factor_len
-        factors += min(1.0, (1 - ttr) / (1 - threshold))
-    return factors
-
-
 @_checks_words
 def calc_mtld(
     text: Sequence[str], min_len: int = MTLD_MIN_LEN, threshold: float = MTLD_TTR_THRESHOLD
@@ -794,30 +776,56 @@ def calc_mtld(
     return (forward + backward) / 2
 
 
-def _previous_positions(text: Sequence[str], wrap: bool) -> np.ndarray:
-    """Position of the previous occurrence of the word for every position of the text (-1 without one)"""
-    ids: dict[str, int] = {}
-    codes = np.fromiter(
-        (ids.setdefault(word, len(ids)) for word in text), dtype=np.int64, count=len(text)
-    )
-    if wrap:
-        codes = np.concatenate([codes, codes])
-    order = np.argsort(codes, kind="stable")
-    previous = np.full(codes.size, -1, dtype=np.int64)
-    same = codes[order[1:]] == codes[order[:-1]]
-    previous[order[1:][same]] = order[:-1][same]
-    return previous
+def _count_mtld_factors(text: Sequence[str], threshold: float, min_len: int) -> float:
+    """Counting the MTLD factors in one pass over the text"""
+    factors = 0.0
+    counts: Counter[str] = Counter()
+    factor_len = 0
+    for word in text:
+        counts[word] += 1
+        factor_len += 1
+        if len(counts) / factor_len <= threshold and factor_len >= min_len:
+            factors += 1
+            counts.clear()
+            factor_len = 0
+    if factor_len:
+        ttr = len(counts) / factor_len
+        factors += min(1.0, (1 - ttr) / (1 - threshold))
+    return factors
 
 
-def _max_types(threshold: float, max_len: int) -> np.ndarray:
-    """The largest number of lexemes at which the TTR of a factor of each length is not above the threshold"""
-    lengths = np.arange(1, max_len + 1)
-    allowed = np.floor(threshold * lengths).astype(np.int64)
-    while np.any(higher := (allowed + 1) / lengths <= threshold):
-        allowed[higher] += 1
-    while np.any(lower := allowed / lengths > threshold):
-        allowed[lower] -= 1
-    return np.concatenate([[-1], allowed])
+@_checks_words
+def calc_mamtld(
+    text: Sequence[str], min_len: int = MTLD_MIN_LEN, threshold: float = MTLD_TTR_THRESHOLD
+) -> float:
+    """
+    Computing the Moving Average Measure of Textual Lexical Diversity (MA-MTLD)
+
+    Description:
+        A moving-window modification of MTLD after MTLD-MA of koRpus: a factor
+        starts at every position of the text, the value is the mean length of the
+        completed factors over a forward and a backward pass; factors close as in
+        calc_mtld, those not completed by the end of the text are ignored. koRpus
+        makes the forward pass only, closes a factor at TTR strictly below the
+        threshold and drops the factors shorter than the minimum length
+
+    Arguments:
+        text (list[str]): List of words
+        min_len (int): Minimum factor length
+        threshold (float): TTR threshold for completing a factor
+
+    Returns:
+        float: Value of the metric, nan if no factor completes
+
+    Raises:
+        ParameterError: If the TTR threshold is outside the interval (0, 1)
+            or the minimum factor length is negative
+        SourceTypeError: If the words are not a list of strings (check_words)
+    """
+    _check_mtld_params(threshold, min_len)
+    lengths = _mtld_factor_lengths(text, threshold, min_len, wrap=False)
+    lengths += _mtld_factor_lengths(text[::-1], threshold, min_len, wrap=False)
+    return safe_divide(sum(lengths), len(lengths), nan)
 
 
 def _mtld_factor_lengths(
@@ -878,38 +886,30 @@ def _mtld_factor_lengths(
     return [int(length) for length in lengths[lengths > 0]]
 
 
-@_checks_words
-def calc_mamtld(
-    text: Sequence[str], min_len: int = MTLD_MIN_LEN, threshold: float = MTLD_TTR_THRESHOLD
-) -> float:
-    """
-    Computing the Moving Average Measure of Textual Lexical Diversity (MA-MTLD)
+def _previous_positions(text: Sequence[str], wrap: bool) -> np.ndarray:
+    """Position of the previous occurrence of the word for every position of the text (-1 without one)"""
+    ids: dict[str, int] = {}
+    codes = np.fromiter(
+        (ids.setdefault(word, len(ids)) for word in text), dtype=np.int64, count=len(text)
+    )
+    if wrap:
+        codes = np.concatenate([codes, codes])
+    order = np.argsort(codes, kind="stable")
+    previous = np.full(codes.size, -1, dtype=np.int64)
+    same = codes[order[1:]] == codes[order[:-1]]
+    previous[order[1:][same]] = order[:-1][same]
+    return previous
 
-    Description:
-        A moving-window modification of MTLD after MTLD-MA of koRpus: a factor
-        starts at every position of the text, the value is the mean length of the
-        completed factors over a forward and a backward pass; factors close as in
-        calc_mtld, those not completed by the end of the text are ignored. koRpus
-        makes the forward pass only, closes a factor at TTR strictly below the
-        threshold and drops the factors shorter than the minimum length
 
-    Arguments:
-        text (list[str]): List of words
-        min_len (int): Minimum factor length
-        threshold (float): TTR threshold for completing a factor
-
-    Returns:
-        float: Value of the metric, nan if no factor completes
-
-    Raises:
-        ParameterError: If the TTR threshold is outside the interval (0, 1)
-            or the minimum factor length is negative
-        SourceTypeError: If the words are not a list of strings (check_words)
-    """
-    _check_mtld_params(threshold, min_len)
-    lengths = _mtld_factor_lengths(text, threshold, min_len, wrap=False)
-    lengths += _mtld_factor_lengths(text[::-1], threshold, min_len, wrap=False)
-    return safe_divide(sum(lengths), len(lengths), nan)
+def _max_types(threshold: float, max_len: int) -> np.ndarray:
+    """The largest number of lexemes at which the TTR of a factor of each length is not above the threshold"""
+    lengths = np.arange(1, max_len + 1)
+    allowed = np.floor(threshold * lengths).astype(np.int64)
+    while np.any(higher := (allowed + 1) / lengths <= threshold):
+        allowed[higher] += 1
+    while np.any(lower := allowed / lengths > threshold):
+        allowed[lower] -= 1
+    return np.concatenate([[-1], allowed])
 
 
 @_checks_words

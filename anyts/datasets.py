@@ -216,6 +216,13 @@ def _taken(error: OSError, target: Path) -> bool:
     return error.errno in (errno.EEXIST, errno.ENOTEMPTY) or target.exists()
 
 
+def _stem(name: str) -> str:
+    """Name of a file without all its extensions: corpus_v1.tar.xz - corpus_v1"""
+    while (stem := Path(name).stem) != name:
+        name = stem
+    return name
+
+
 def check_limit(limit: int | None) -> None:
     """
     Checking the number of records
@@ -426,13 +433,6 @@ def _is_outside(member: str) -> bool:
     """
     path = PureWindowsPath(member)
     return bool(path.anchor) or ".." in path.parts
-
-
-def _stem(name: str) -> str:
-    """Name of a file without all its extensions: corpus_v1.tar.xz - corpus_v1"""
-    while (stem := Path(name).stem) != name:
-        name = stem
-    return name
 
 
 def extract_archive(archive_file: str | Path, extract_dir: str | Path | None = None) -> str:

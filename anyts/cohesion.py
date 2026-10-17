@@ -11,13 +11,6 @@ from .exceptions import ParameterError, SourceTypeError
 from .utils import check_integer, check_messages, check_sequence, check_words, safe_divide
 
 
-def _check_sents(sents: Iterable[Iterable[object]], what: str, ordered: bool = True) -> None:
-    """Checking a list of sentences given as collections of their elements"""
-    check_sequence(sents, "sentences")
-    for sent in sents:
-        check_words(sent, what, ordered)
-
-
 class Overlap(NamedTuple):
     """
     Overlaps of the sentences of a text
@@ -69,6 +62,40 @@ def calc_overlap(sets: Sequence[Collection[str]], adjacent: bool = True) -> floa
     return _count_sharing_pairs(frozen) / (n_sents * (n_sents - 1) // 2)
 
 
+def _check_sents(sents: Iterable[Iterable[object]], what: str, ordered: bool = True) -> None:
+    """Checking a list of sentences given as collections of their elements"""
+    check_sequence(sents, "sentences")
+    for sent in sents:
+        check_words(sent, what, ordered)
+
+
+def _count_sharing_pairs(sets: Sequence[frozenset[str]], block_size: int = 4096) -> int:
+    """
+    Number of pairs of sentences with a shared element, over bit masks of the occurrences
+
+    Description:
+        Every element gets a mask of the sentences of a block it occurs in; the
+        union of the masks of sentence i gives the sentences it shares an
+        element with, and the bits after i are counted
+    """
+    total = 0
+    for start in range(0, len(sets), block_size):
+        end = min(start + block_size, len(sets))
+        masks: dict[str, int] = {}
+        for j in range(start, end):
+            bit = 1 << (j - start)
+            for element in sets[j]:
+                masks[element] = masks.get(element, 0) | bit
+        for i in range(end):
+            union = 0
+            for element in sets[i]:
+                union |= masks.get(element, 0)
+            if i >= start:
+                union >>= i - start + 1
+            total += union.bit_count()
+    return total
+
+
 def calc_proportional_overlap(sets: Sequence[Collection[str]], adjacent: bool = True) -> float:
     """
     Computing the mean share of shared elements in pairs of sentences
@@ -98,6 +125,39 @@ def calc_proportional_overlap(sets: Sequence[Collection[str]], adjacent: bool = 
     if adjacent:
         return sum(dice(first, second) for first, second in pairwise(frozen)) / (n_sents - 1)
     return _sum_dice(frozen) / (n_sents * (n_sents - 1) // 2)
+
+
+def _sum_dice(sets: Sequence[frozenset[str]]) -> float:
+    """
+    Sum of the Dice coefficients over all the pairs, over histograms of the lengths
+
+    Description:
+        A pair of sentences of lengths k and l gives 2/(k + l) for every shared
+        element, so the sum over the pairs holding an element is
+        (h·W·h - h·diag(W)) / 2, where h is the histogram of the lengths of its
+        sentences and W[k, l] = 2/(k + l); the sums of the elements are added
+        by fsum, so the result does not depend on their order
+    """
+    sizes = sorted({len(elements) for elements in sets if elements})
+    columns = {size: column for column, size in enumerate(sizes)}
+    postings: dict[str, list[int]] = {}
+    for elements in sets:
+        if not elements:
+            continue
+        column = columns[len(elements)]
+        for element in elements:
+            postings.setdefault(element, []).append(column)
+    rows = [row for row in postings.values() if len(row) > 1]
+    if not rows:
+        return 0.0
+    histograms = np.zeros((len(rows), len(sizes)))
+    for index, row in enumerate(rows):
+        np.add.at(histograms[index], row, 1)
+    lengths = np.array(sizes, dtype=float)
+    weights = 2 / (lengths[:, None] + lengths[None, :])
+    full = np.einsum("ik,kl,il->i", histograms, weights, histograms)
+    diagonal = (histograms * np.diag(weights)).sum(axis=1)
+    return fsum(full - diagonal) / 2
 
 
 def dice(first: frozenset[str], second: frozenset[str]) -> float:
@@ -150,66 +210,6 @@ def calc_overlaps(sets: Sequence[Collection[str]], proportional: bool = True) ->
         else nan,
         _sum_dice(frozen) / n_all if proportional else nan,
     )
-
-
-def _count_sharing_pairs(sets: Sequence[frozenset[str]], block_size: int = 4096) -> int:
-    """
-    Number of pairs of sentences with a shared element, over bit masks of the occurrences
-
-    Description:
-        Every element gets a mask of the sentences of a block it occurs in; the
-        union of the masks of sentence i gives the sentences it shares an
-        element with, and the bits after i are counted
-    """
-    total = 0
-    for start in range(0, len(sets), block_size):
-        end = min(start + block_size, len(sets))
-        masks: dict[str, int] = {}
-        for j in range(start, end):
-            bit = 1 << (j - start)
-            for element in sets[j]:
-                masks[element] = masks.get(element, 0) | bit
-        for i in range(end):
-            union = 0
-            for element in sets[i]:
-                union |= masks.get(element, 0)
-            if i >= start:
-                union >>= i - start + 1
-            total += union.bit_count()
-    return total
-
-
-def _sum_dice(sets: Sequence[frozenset[str]]) -> float:
-    """
-    Sum of the Dice coefficients over all the pairs, over histograms of the lengths
-
-    Description:
-        A pair of sentences of lengths k and l gives 2/(k + l) for every shared
-        element, so the sum over the pairs holding an element is
-        (h·W·h - h·diag(W)) / 2, where h is the histogram of the lengths of its
-        sentences and W[k, l] = 2/(k + l); the sums of the elements are added
-        by fsum, so the result does not depend on their order
-    """
-    sizes = sorted({len(elements) for elements in sets if elements})
-    columns = {size: column for column, size in enumerate(sizes)}
-    postings: dict[str, list[int]] = {}
-    for elements in sets:
-        if not elements:
-            continue
-        column = columns[len(elements)]
-        for element in elements:
-            postings.setdefault(element, []).append(column)
-    rows = [row for row in postings.values() if len(row) > 1]
-    if not rows:
-        return 0.0
-    histograms = np.zeros((len(rows), len(sizes)))
-    for index, row in enumerate(rows):
-        np.add.at(histograms[index], row, 1)
-    lengths = np.array(sizes, dtype=float)
-    weights = 2 / (lengths[:, None] + lengths[None, :])
-    full = np.einsum("ik,kl,il->i", histograms, weights, histograms)
-    diagonal = (histograms * np.diag(weights)).sum(axis=1)
-    return fsum(full - diagonal) / 2
 
 
 def count_given(sents: Sequence[Sequence[str]]) -> int:

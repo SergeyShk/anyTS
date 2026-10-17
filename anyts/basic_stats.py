@@ -134,35 +134,6 @@ PUNCTUATION_MARKS = {
 _DELETE_SPACES = str.maketrans("", "", "".join(SPACES))
 
 
-def _check_factor(value: int, what: str, message: str) -> None:
-    """
-    Checking a threshold of the complex or the long words
-
-    Arguments:
-        value (int): Threshold
-        what (str): Name of the threshold, for the message of a value that is not an integer
-        message (str): Message of a threshold below one
-
-    Raises:
-        ParameterError: If the threshold is not an integer or is below one
-    """
-    check_integer(value, what)
-    if value < 1:
-        raise ParameterError(message)
-
-
-def _check_extractors(
-    sents_extractor: SentsExtractor | None,
-    words_extractor: WordsExtractor | None,
-    messages: Mapping[str, str] = MESSAGES,
-) -> None:
-    """Checking the types of the extractors given, SourceTypeError for another type"""
-    if sents_extractor is not None and not isinstance(sents_extractor, SentsExtractor):
-        raise SourceTypeError(messages["sents_extractor_type"])
-    if words_extractor is not None and not isinstance(words_extractor, WordsExtractor):
-        raise SourceTypeError(messages["words_extractor_type"])
-
-
 class BasicStats(Stats, metaclass=ABCMeta):
     """
     Base of the basic statistics of a text
@@ -398,6 +369,35 @@ class BasicStats(Stats, metaclass=ABCMeta):
         """
         names = ("c_letters", "c_syllables", *self.stats_desc, "c_punctuations")
         return (*names, *_NORMALIZED_STATS) if self.normalize else names
+
+
+def _check_factor(value: int, what: str, message: str) -> None:
+    """
+    Checking a threshold of the complex or the long words
+
+    Arguments:
+        value (int): Threshold
+        what (str): Name of the threshold, for the message of a value that is not an integer
+        message (str): Message of a threshold below one
+
+    Raises:
+        ParameterError: If the threshold is not an integer or is below one
+    """
+    check_integer(value, what)
+    if value < 1:
+        raise ParameterError(message)
+
+
+def _check_extractors(
+    sents_extractor: SentsExtractor | None,
+    words_extractor: WordsExtractor | None,
+    messages: Mapping[str, str] = MESSAGES,
+) -> None:
+    """Checking the types of the extractors given, SourceTypeError for another type"""
+    if sents_extractor is not None and not isinstance(sents_extractor, SentsExtractor):
+        raise SourceTypeError(messages["sents_extractor_type"])
+    if words_extractor is not None and not isinstance(words_extractor, WordsExtractor):
+        raise SourceTypeError(messages["words_extractor_type"])
 
 
 def count_punctuations(

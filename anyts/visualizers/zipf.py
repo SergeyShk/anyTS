@@ -117,6 +117,13 @@ def zipf(
     return ax
 
 
+def _check_alpha(alpha: float) -> None:
+    """Checking the exponent α of the theoretical Zipf's law"""
+    check_number(alpha, "exponent α")
+    if alpha <= 0:
+        raise ParameterError("The exponent α must be greater than 0")
+
+
 def zipf_theory(
     size: int,
     num_ranks: int,
@@ -157,10 +164,3 @@ def zipf_theory(
     x = np.arange(1, num_ranks + 1, dtype=float)
     ax.plot(x, size * x ** (-alpha), linewidth=2, color="r", label=captions["theoretical"])
     return ax
-
-
-def _check_alpha(alpha: float) -> None:
-    """Checking the exponent α of the theoretical Zipf's law"""
-    check_number(alpha, "exponent α")
-    if alpha <= 0:
-        raise ParameterError("The exponent α must be greater than 0")

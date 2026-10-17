@@ -170,6 +170,15 @@ class StatsComponent(metaclass=ABCMeta):
         return doc
 
 
+def _register(name: str, messages: Mapping[str, str] = MESSAGES) -> None:
+    """Registering the extension of a component, never over one of another package"""
+    from spacy.tokens import Doc
+
+    if Doc.has_extension(name) and Doc.get_extension(name) != (None, None, None, None):
+        raise ParameterError(messages["foreign_extension"].format(name=name))
+    Doc.set_extension(name, default=None, force=True)
+
+
 def start_sents_after_blank_lines(doc: Doc) -> Doc:
     """
     Starting a sentence at the first token after a blank line
@@ -236,12 +245,3 @@ def start_sents_after_blank_lines(doc: Doc) -> Doc:
         end = token.idx + len(token)
     doc.from_array([SENT_START], cast("Ints2d", starts.astype("uint64")))
     return doc
-
-
-def _register(name: str, messages: Mapping[str, str] = MESSAGES) -> None:
-    """Registering the extension of a component, never over one of another package"""
-    from spacy.tokens import Doc
-
-    if Doc.has_extension(name) and Doc.get_extension(name) != (None, None, None, None):
-        raise ParameterError(messages["foreign_extension"].format(name=name))
-    Doc.set_extension(name, default=None, force=True)

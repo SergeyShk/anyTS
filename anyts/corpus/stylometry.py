@@ -107,6 +107,15 @@ def frequency_table(
     return pd.DataFrame(columns, index=list(rows))
 
 
+def _check_mapping(corpus: object, what: str) -> None:
+    """Checking that a corpus is a mapping of the names of its texts to their units"""
+    if not isinstance(corpus, Mapping):
+        raise SourceTypeError(
+            f"The {what} must be a mapping of the names of the texts to their units, "
+            f"not {type(corpus).__name__}"
+        )
+
+
 def z_scores(table: pd.DataFrame) -> pd.DataFrame:
     """
     Standardizing a table of frequencies by column
@@ -201,6 +210,35 @@ def delta(
     return pd.DataFrame(distances, index=scores.index, columns=scores.index)
 
 
+def _delta_distances(values: np.ndarray, others: np.ndarray | None, variant: str) -> np.ndarray:
+    """
+    Distances by a variant of Delta between rows of z-scores
+
+    Arguments:
+        values (ndarray): Z-scores of the texts, rows - the texts
+        others (ndarray): Z-scores of the second texts; None - pairwise within
+            values (the condensed form of pdist)
+        variant (str): Variant of Delta of DELTA_VARIANTS
+
+    Returns:
+        ndarray: Distances
+    """
+    n_units = values.shape[1]
+    if variant == "eder":
+        weights = (n_units - np.arange(1, n_units + 1) + 2) / n_units
+        values = values * weights
+        others = None if others is None else others * weights
+    metric = {"burrows": "cityblock", "quadratic": "euclidean", "eder": "cityblock"}.get(
+        variant, "cosine"
+    )
+    distances = pdist(values, metric) if others is None else cdist(values, others, metric)
+    if variant in ("burrows", "quadratic"):
+        return np.asarray(distances / n_units)
+    if variant == "cosine":
+        return np.asarray(np.nan_to_num(distances, nan=0.0))
+    return np.asarray(distances)
+
+
 def delta_profiles(
     reference: Mapping[str, Sequence[str]],
     samples: Mapping[str, Sequence[str]],
@@ -276,15 +314,6 @@ def delta_profiles(
     return pd.DataFrame(distances, index=list(samples), columns=list(reference))
 
 
-def _check_mapping(corpus: object, what: str) -> None:
-    """Checking that a corpus is a mapping of the names of its texts to their units"""
-    if not isinstance(corpus, Mapping):
-        raise SourceTypeError(
-            f"The {what} must be a mapping of the names of the texts to their units, "
-            f"not {type(corpus).__name__}"
-        )
-
-
 def _check_corpus(corpus: Mapping[str, Sequence[str]], what: str) -> None:
     """Checking that a corpus has texts, all of them sequences with units"""
     _check_mapping(corpus, f"{what} corpus")
@@ -303,35 +332,6 @@ def _relative_frequencies(corpus: Mapping[str, Sequence[str]], columns: pd.Index
         counts = Counter(units)
         rows.append([counts.get(unit, 0) / len(units) for unit in columns])
     return pd.DataFrame(rows, index=list(corpus), columns=columns)
-
-
-def _delta_distances(values: np.ndarray, others: np.ndarray | None, variant: str) -> np.ndarray:
-    """
-    Distances by a variant of Delta between rows of z-scores
-
-    Arguments:
-        values (ndarray): Z-scores of the texts, rows - the texts
-        others (ndarray): Z-scores of the second texts; None - pairwise within
-            values (the condensed form of pdist)
-        variant (str): Variant of Delta of DELTA_VARIANTS
-
-    Returns:
-        ndarray: Distances
-    """
-    n_units = values.shape[1]
-    if variant == "eder":
-        weights = (n_units - np.arange(1, n_units + 1) + 2) / n_units
-        values = values * weights
-        others = None if others is None else others * weights
-    metric = {"burrows": "cityblock", "quadratic": "euclidean", "eder": "cityblock"}.get(
-        variant, "cosine"
-    )
-    distances = pdist(values, metric) if others is None else cdist(values, others, metric)
-    if variant in ("burrows", "quadratic"):
-        return np.asarray(distances / n_units)
-    if variant == "cosine":
-        return np.asarray(np.nan_to_num(distances, nan=0.0))
-    return np.asarray(distances)
 
 
 def zeta(

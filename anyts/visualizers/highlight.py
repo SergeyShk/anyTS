@@ -386,6 +386,16 @@ class HighlightedText:
         return "".join(chunks)
 
 
+def _iter_part_sents(
+    iter_sents: Callable[[str], Iterable[tuple[int, int, str]]], text: str
+) -> Iterator[tuple[int, int, str]]:
+    """Sentences of every part of a text between blank lines, at their positions in the text"""
+    bounds = [0, *(bound for match in BLANK_LINE.finditer(text) for bound in match.span())]
+    for start, end in zip(bounds[::2], [*bounds[1::2], len(text)], strict=True):
+        for first, last, sent in iter_sents(text[start:end]):
+            yield start + first, start + last, sent
+
+
 def get_doc_words(doc: Doc) -> list[Word]:
     """
     Extracting the words of a Doc object with their positions
@@ -434,16 +444,6 @@ def iter_doc_sents(doc: Doc) -> Iterator[tuple[int, int, str]]:
             start = min(token.idx for token in tokens)
             end = max(token.idx + len(token) for token in tokens)
             yield start, end, text[start:end]
-
-
-def _iter_part_sents(
-    iter_sents: Callable[[str], Iterable[tuple[int, int, str]]], text: str
-) -> Iterator[tuple[int, int, str]]:
-    """Sentences of every part of a text between blank lines, at their positions in the text"""
-    bounds = [0, *(bound for match in BLANK_LINE.finditer(text) for bound in match.span())]
-    for start, end in zip(bounds[::2], [*bounds[1::2], len(text)], strict=True):
-        for first, last, sent in iter_sents(text[start:end]):
-            yield start + first, start + last, sent
 
 
 def get_text_sents(spans: Iterable[tuple[int, int, str]], words: Sequence[Word]) -> list[Sent]:

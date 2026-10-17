@@ -26,121 +26,56 @@ class _FreqNode:
     children: dict[str, "_FreqNode"]
 
 
-class _TreeDrawer:
+def wordtree(
+    texts: list[list[str]], keyword: str, max_n: int = 5, max_per_n: int = 8, **kwargs: Any
+) -> Digraph:
     """
-    Class for drawing a word tree
+    Building a word tree that shows the contexts of a keyword in texts
+
+    Description:
+        The N-grams of up to max_n words that start or end with the keyword
+        are counted in every text (a sentence, for instance); on each side the
+        max_per_n most frequent of every size are kept and joined into a tree,
+        with the size of the font by frequency. Rendering
+        needs the executables of Graphviz
+
+    References:
+        https://www.cg.tuwien.ac.at/courses/InfoVis/HallOfFame/2011/Gruppe05/Homepage/Paper/wordtree-paper-wattenberg.pdf
 
     Arguments:
+        texts (list[list[str]]): List of lists of words
         keyword (str): Keyword whose context is shown
-        fwd_tree (_FreqNode): Subtree after the keyword
-        bwd_tree (_FreqNode): Subtree before the keyword
-        max_font_size (int): Largest size of the font
-        min_font_size (int): Smallest size of the font
-        font_interp (Callable): Function of the relative frequency of a node, from 0 to
-            1, giving the share of the range of the font sizes, from 0 to 1
+        max_n (int): Largest size of the context
+        max_per_n (int): Largest number of examples for every size of the context
+        kwargs: Drawing parameters - max_font_size, min_font_size, font_interp
 
-    Attributes:
-        max_freq (int): Greatest frequency
-        graph (Digraph): Directed graph
+    Returns:
+        Digraph: Word tree
 
-    Methods:
-        interpolate_fontsize: Computing the size of the font of a node of the tree
-        add_node: Adding a node with a generated identifier and the word as its label
-        draw_subtree: Drawing a subtree of words
-        draw: Drawing the word tree as a directed graph
+    Raises:
+        SourceTypeError: If the texts are not a list of lists of words or the
+            keyword is not a string
+        SourceError: If there are no texts or the keyword has a word next to it
+            in none of them
+        ParameterError: If the size of the context is below 2 or the number of
+            examples below one
+
+    Example:
+        >>> from anyts.visualizers import wordtree
+        >>> tree = wordtree([["the", "cat", "sleeps"], ["the", "cat", "eats"]], "cat", max_n=2)
+        >>> tree.name, len(tree.body)
+        ('cat', 9)
     """
-
-    def __init__(
-        self,
-        keyword: str,
-        fwd_tree: _FreqNode,
-        bwd_tree: _FreqNode,
-        max_font_size: int = 30,
-        min_font_size: int = 12,
-        font_interp: Callable[[float], float] | None = None,
-    ) -> None:
-        self.keyword = keyword
-        self.fwd_tree = fwd_tree
-        self.bwd_tree = bwd_tree
-        self.max_font_size = max_font_size
-        self.min_font_size = min_font_size
-        self.font_interp = font_interp
-        self.max_freq = max(
-            [t.freq for t in fwd_tree.children.values()]
-            + [t.freq for t in bwd_tree.children.values()]
-        )
-        self.graph = Digraph(escape(keyword), format="png")
-        self.graph.attr("graph", rankdir="LR")
-        self.graph.attr("node", shape="plaintext", margin="0")
-        self._ids = count()
-
-    def interpolate_fontsize(self, freq: int) -> int:
-        """
-        Computing the size of the font of a node of the tree
-
-        Arguments:
-            freq (int): Frequency of the N-gram
-
-        Returns:
-            int: Size of the font
-        """
-        lower = self.min_font_size
-        upper = self.max_font_size
-        t = freq / self.max_freq
-
-        def quad(t: float) -> float:
-            return float(t ** (1.0 / 3))
-
-        font_interp = quad if self.font_interp is None else self.font_interp
-        return int(font_interp(t) * (upper - lower) + lower)
-
-    def add_node(self, word: str, fontsize: int) -> str:
-        """
-        Adding a node with a generated identifier and the word as its label
-
-        Description:
-            The identifier is n0, n1, ...: graphviz would read a colon in a word
-            as a port (10:30)
-
-        Arguments:
-            word (str): Word of the node
-            fontsize (int): Size of the font
-
-        Returns:
-            str: Identifier of the node
-        """
-        node = f"n{next(self._ids)}"
-        self.graph.node(node, label=escape(word), fontsize=str(fontsize))
-        return node
-
-    def draw_subtree(self, tree: _FreqNode, direction: _Direction, parent: str) -> None:
-        """
-        Drawing a subtree of words
-
-        Arguments:
-            tree (_FreqNode): Subtree of words
-            direction (_Direction): Direction of the subtree
-            parent (str): Identifier of the node the subtree grows from
-        """
-        for word, subtree in tree.children.items():
-            node = self.add_node(word, self.interpolate_fontsize(subtree.freq))
-            if direction == _Direction.Forward:
-                self.graph.edge(parent, node)
-            else:
-                self.graph.edge(node, parent)
-            self.draw_subtree(subtree, direction, node)
-
-    def draw(self) -> Digraph:
-        """
-        Drawing the word tree as a directed graph
-
-        Returns:
-            Digraph: Word tree
-        """
-        root = self.add_node(self.keyword, self.max_font_size)
-        self.draw_subtree(self.bwd_tree, _Direction.Backward, root)
-        self.draw_subtree(self.fwd_tree, _Direction.Forward, root)
-        return self.graph
+    wt = _WordTree(
+        texts,
+        keyword,
+        max_n=max_n,
+        max_per_n=max_per_n,
+    )
+    wt.search()
+    if not wt.ngrams:
+        raise SourceError("The keyword is not found or has no word next to it")
+    return wt.draw(**kwargs)
 
 
 class _WordTree:
@@ -300,53 +235,118 @@ class _WordTree:
         return _TreeDrawer(self.keyword, forward_tree, backward_tree, **kwargs).draw()
 
 
-def wordtree(
-    texts: list[list[str]], keyword: str, max_n: int = 5, max_per_n: int = 8, **kwargs: Any
-) -> Digraph:
+class _TreeDrawer:
     """
-    Building a word tree that shows the contexts of a keyword in texts
-
-    Description:
-        The N-grams of up to max_n words that start or end with the keyword
-        are counted in every text (a sentence, for instance); on each side the
-        max_per_n most frequent of every size are kept and joined into a tree,
-        with the size of the font by frequency. Rendering
-        needs the executables of Graphviz
-
-    References:
-        https://www.cg.tuwien.ac.at/courses/InfoVis/HallOfFame/2011/Gruppe05/Homepage/Paper/wordtree-paper-wattenberg.pdf
+    Class for drawing a word tree
 
     Arguments:
-        texts (list[list[str]]): List of lists of words
         keyword (str): Keyword whose context is shown
-        max_n (int): Largest size of the context
-        max_per_n (int): Largest number of examples for every size of the context
-        kwargs: Drawing parameters - max_font_size, min_font_size, font_interp
+        fwd_tree (_FreqNode): Subtree after the keyword
+        bwd_tree (_FreqNode): Subtree before the keyword
+        max_font_size (int): Largest size of the font
+        min_font_size (int): Smallest size of the font
+        font_interp (Callable): Function of the relative frequency of a node, from 0 to
+            1, giving the share of the range of the font sizes, from 0 to 1
 
-    Returns:
-        Digraph: Word tree
+    Attributes:
+        max_freq (int): Greatest frequency
+        graph (Digraph): Directed graph
 
-    Raises:
-        SourceTypeError: If the texts are not a list of lists of words or the
-            keyword is not a string
-        SourceError: If there are no texts or the keyword has a word next to it
-            in none of them
-        ParameterError: If the size of the context is below 2 or the number of
-            examples below one
-
-    Example:
-        >>> from anyts.visualizers import wordtree
-        >>> tree = wordtree([["the", "cat", "sleeps"], ["the", "cat", "eats"]], "cat", max_n=2)
-        >>> tree.name, len(tree.body)
-        ('cat', 9)
+    Methods:
+        interpolate_fontsize: Computing the size of the font of a node of the tree
+        add_node: Adding a node with a generated identifier and the word as its label
+        draw_subtree: Drawing a subtree of words
+        draw: Drawing the word tree as a directed graph
     """
-    wt = _WordTree(
-        texts,
-        keyword,
-        max_n=max_n,
-        max_per_n=max_per_n,
-    )
-    wt.search()
-    if not wt.ngrams:
-        raise SourceError("The keyword is not found or has no word next to it")
-    return wt.draw(**kwargs)
+
+    def __init__(
+        self,
+        keyword: str,
+        fwd_tree: _FreqNode,
+        bwd_tree: _FreqNode,
+        max_font_size: int = 30,
+        min_font_size: int = 12,
+        font_interp: Callable[[float], float] | None = None,
+    ) -> None:
+        self.keyword = keyword
+        self.fwd_tree = fwd_tree
+        self.bwd_tree = bwd_tree
+        self.max_font_size = max_font_size
+        self.min_font_size = min_font_size
+        self.font_interp = font_interp
+        self.max_freq = max(
+            [t.freq for t in fwd_tree.children.values()]
+            + [t.freq for t in bwd_tree.children.values()]
+        )
+        self.graph = Digraph(escape(keyword), format="png")
+        self.graph.attr("graph", rankdir="LR")
+        self.graph.attr("node", shape="plaintext", margin="0")
+        self._ids = count()
+
+    def interpolate_fontsize(self, freq: int) -> int:
+        """
+        Computing the size of the font of a node of the tree
+
+        Arguments:
+            freq (int): Frequency of the N-gram
+
+        Returns:
+            int: Size of the font
+        """
+        lower = self.min_font_size
+        upper = self.max_font_size
+        t = freq / self.max_freq
+
+        def quad(t: float) -> float:
+            return float(t ** (1.0 / 3))
+
+        font_interp = quad if self.font_interp is None else self.font_interp
+        return int(font_interp(t) * (upper - lower) + lower)
+
+    def add_node(self, word: str, fontsize: int) -> str:
+        """
+        Adding a node with a generated identifier and the word as its label
+
+        Description:
+            The identifier is n0, n1, ...: graphviz would read a colon in a word
+            as a port (10:30)
+
+        Arguments:
+            word (str): Word of the node
+            fontsize (int): Size of the font
+
+        Returns:
+            str: Identifier of the node
+        """
+        node = f"n{next(self._ids)}"
+        self.graph.node(node, label=escape(word), fontsize=str(fontsize))
+        return node
+
+    def draw_subtree(self, tree: _FreqNode, direction: _Direction, parent: str) -> None:
+        """
+        Drawing a subtree of words
+
+        Arguments:
+            tree (_FreqNode): Subtree of words
+            direction (_Direction): Direction of the subtree
+            parent (str): Identifier of the node the subtree grows from
+        """
+        for word, subtree in tree.children.items():
+            node = self.add_node(word, self.interpolate_fontsize(subtree.freq))
+            if direction == _Direction.Forward:
+                self.graph.edge(parent, node)
+            else:
+                self.graph.edge(node, parent)
+            self.draw_subtree(subtree, direction, node)
+
+    def draw(self) -> Digraph:
+        """
+        Drawing the word tree as a directed graph
+
+        Returns:
+            Digraph: Word tree
+        """
+        root = self.add_node(self.keyword, self.max_font_size)
+        self.draw_subtree(self.bwd_tree, _Direction.Backward, root)
+        self.draw_subtree(self.fwd_tree, _Direction.Forward, root)
+        return self.graph

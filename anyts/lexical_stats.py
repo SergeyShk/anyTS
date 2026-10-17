@@ -56,44 +56,6 @@ class LexicalWord(NamedTuple):
     content: bool
 
 
-def _mean(values: Sequence[float]) -> float:
-    return fmean(values) if values else nan
-
-
-def calc_surprisal(lemmas: Sequence[str], freq_dict: FrequencyDictionary) -> float:
-    """
-    Computing the mean surprisal of the words by the unigram model of a frequency dictionary
-
-    Description:
-        The mean over the words of -log2 P(w), where P(w) = ipm / 10^6; a word
-        out of the dictionary gets its lowest frequency (min_ipm), so every
-        word has a surprisal. The perplexity is 2 to the power of the surprisal
-
-    Arguments:
-        lemmas (list[str]): Keys of the words in the dictionary
-        freq_dict (FrequencyDictionary): Frequency dictionary with ipm and min_ipm
-
-    Returns:
-        float: Mean surprisal in bits, nan for no words
-
-    Raises:
-        SourceTypeError: If the lemmas are not a list of strings or the dictionary has
-            no ipm and min_ipm
-        ParameterError: If the lowest frequency of the dictionary is not positive
-    """
-    check_words(lemmas, "lemmas")
-    if not callable(getattr(freq_dict, "ipm", None)) or not hasattr(freq_dict, "min_ipm"):
-        raise SourceTypeError(
-            f"The frequency dictionary must have ipm and min_ipm, not {type(freq_dict).__name__}"
-        )
-    floor = freq_dict.min_ipm
-    if not floor > 0:
-        raise ParameterError(
-            f"The lowest frequency of the dictionary must be positive, not {floor}"
-        )
-    return _mean([-log2(max(freq_dict.ipm(lemma), floor) / 1_000_000) for lemma in lemmas])
-
-
 class LexicalStats(Stats, metaclass=ABCMeta):
     """
     Base of the lexical sophistication statistics of a text
@@ -340,3 +302,41 @@ class LexicalStats(Stats, metaclass=ABCMeta):
             band: safe_divide(sum(1 for rank in ranks if rank and rank <= band), len(ranks))
             for band in bands
         }
+
+
+def _mean(values: Sequence[float]) -> float:
+    return fmean(values) if values else nan
+
+
+def calc_surprisal(lemmas: Sequence[str], freq_dict: FrequencyDictionary) -> float:
+    """
+    Computing the mean surprisal of the words by the unigram model of a frequency dictionary
+
+    Description:
+        The mean over the words of -log2 P(w), where P(w) = ipm / 10^6; a word
+        out of the dictionary gets its lowest frequency (min_ipm), so every
+        word has a surprisal. The perplexity is 2 to the power of the surprisal
+
+    Arguments:
+        lemmas (list[str]): Keys of the words in the dictionary
+        freq_dict (FrequencyDictionary): Frequency dictionary with ipm and min_ipm
+
+    Returns:
+        float: Mean surprisal in bits, nan for no words
+
+    Raises:
+        SourceTypeError: If the lemmas are not a list of strings or the dictionary has
+            no ipm and min_ipm
+        ParameterError: If the lowest frequency of the dictionary is not positive
+    """
+    check_words(lemmas, "lemmas")
+    if not callable(getattr(freq_dict, "ipm", None)) or not hasattr(freq_dict, "min_ipm"):
+        raise SourceTypeError(
+            f"The frequency dictionary must have ipm and min_ipm, not {type(freq_dict).__name__}"
+        )
+    floor = freq_dict.min_ipm
+    if not floor > 0:
+        raise ParameterError(
+            f"The lowest frequency of the dictionary must be positive, not {floor}"
+        )
+    return _mean([-log2(max(freq_dict.ipm(lemma), floor) / 1_000_000) for lemma in lemmas])
