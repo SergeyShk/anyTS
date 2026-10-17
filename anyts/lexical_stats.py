@@ -304,6 +304,10 @@ class LexicalStats(Stats, metaclass=ABCMeta):
         }
 
 
+def _mean(values: Sequence[float]) -> float:
+    return fmean(values) if values else nan
+
+
 def calc_surprisal(lemmas: Sequence[str], freq_dict: FrequencyDictionary) -> float:
     """
     Computing the mean surprisal of the words by the unigram model of a frequency dictionary
@@ -336,7 +340,3 @@ def calc_surprisal(lemmas: Sequence[str], freq_dict: FrequencyDictionary) -> flo
             f"The lowest frequency of the dictionary must be positive, not {floor}"
         )
     return _mean([-log2(max(freq_dict.ipm(lemma), floor) / 1_000_000) for lemma in lemmas])
-
-
-def _mean(values: Sequence[float]) -> float:
-    return fmean(values) if values else nan
