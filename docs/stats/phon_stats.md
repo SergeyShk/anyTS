@@ -1,7 +1,7 @@
 # Phonetic statistics
 
 !!! info ""
-    **anyts.phon_stats.PhonStats**, **anyts.phon_stats.cv_pattern()**, **anyts.phon_stats.consonant_clusters()**, **anyts.phon_stats.count_hiatus()**, **anyts.phon_stats.check_params()**
+    **anyts.phon_stats.PhonStats**
 
 ## Description
 
@@ -67,23 +67,9 @@ A share or a ratio without sounds, clusters or syllables to divide by is `nan`, 
 
 The methods `get_stats`, `to_dataframe`, `print_stats` and `describe` are those of the [statistics interface](stats.md).
 
-## Functions
+## Metric functions
 
-<!-- --8<-- [start:cv_pattern] -->
-`cv_pattern(sounds, vowels, consonants)` gives the CV pattern of a word or a syllable: V for a vowel, C for a consonant, the other sounds (signs, digits) left out.
-<!-- --8<-- [end:cv_pattern] -->
-
-<!-- --8<-- [start:consonant_clusters] -->
-`consonant_clusters(sounds, consonants, skipped)` gives the lengths of the consonant clusters of a word in order: a cluster is a run of consonants, a single one included; a sound of `skipped` neither counts nor breaks the run, any other sound breaks it.
-<!-- --8<-- [end:consonant_clusters] -->
-
-<!-- --8<-- [start:count_hiatus] -->
-`count_hiatus(sounds, vowels, glides)` counts the hiatuses of a word by its vowels in a row: a run of two vowels or more is one hiatus, and a vowel of `glides` after a vowel makes none.
-<!-- --8<-- [end:count_hiatus] -->
-
-<!-- --8<-- [start:PhonStats-check_params] -->
-`check_params(window_len, *, messages)` checks the window of the alliteration and the assonance: one that is not an integer of at least 2 raises `ParameterError`.
-<!-- --8<-- [end:PhonStats-check_params] -->
+The metrics and their functions are described in the [metric functions](phon_stats_funcs.md) section.
 
 ## Usage example
 
