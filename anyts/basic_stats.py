@@ -108,7 +108,6 @@ def dash_pattern(
 
 DASH_PATTERN = dash_pattern()
 
-
 PUNCTUATION_MARKS = {
     ",": "comma",
     ".": "period",
@@ -132,8 +131,6 @@ PUNCTUATION_MARKS = {
     "(": "parentheses",
     ")": "parentheses",
 }
-
-
 _DELETE_SPACES = str.maketrans("", "", "".join(SPACES))
 
 
