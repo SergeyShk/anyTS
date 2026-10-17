@@ -11,7 +11,13 @@ import anyts
 from anyts import CharNgramsExtractor, SentsExtractor, WordsExtractor
 from anyts.basic_stats import BasicStats
 from anyts.cohesion_stats import CohesionStats, ConnectorMatcher
-from anyts.components import StatsComponent
+from anyts.components import (
+    DiversityStatsComponent,
+    PhonStatsComponent,
+    ReadabilityStatsComponent,
+    StatsComponent,
+    StyleStatsComponent,
+)
 from anyts.constants import MESSAGES
 from anyts.corpus import sentence_rhythm, split_windows
 from anyts.diversity_stats import DiversityStats, calc_ttr, calc_windowed, check_params
@@ -116,6 +122,27 @@ class Lemmas(Syntax):
 
 VOCAB = spacy.blank("xx").vocab
 PARSED = Doc(VOCAB, words=["Yes"], heads=[0], deps=["ROOT"])
+
+
+class OwnReadability(ReadabilityStatsComponent):
+    stats_class = Readability
+    messages = OWN
+
+
+class OwnDiversity(DiversityStatsComponent):
+    messages = OWN
+
+
+class OwnStyle(StyleStatsComponent):
+    messages = OWN
+
+
+class OwnPhon(PhonStatsComponent):
+    messages = OWN
+
+
+class BareComponent(StatsComponent):
+    messages = OWN
 
 
 class Component(StatsComponent):
@@ -230,6 +257,33 @@ CASES = [
     ("no_parse", SourceError, lambda: Syntax(Doc(VOCAB, words=["Yes"]))),
     ("no_lemmas", SourceError, lambda: Lemmas(PARSED)),
     ("source_type", SourceTypeError, lambda: Cohesion("Yes")),
+    ("no_stats_class", ParameterError, lambda: BareComponent(spacy.blank("en"), "own_bare")),
+    (
+        "stats_param",
+        ParameterError,
+        lambda: type("Typo", (BareComponent,), {"stats_class": dict, "stats_params": ("x",)})(
+            spacy.blank("en"), "own_typo"
+        ),
+    ),
+    (
+        "no_basic_stats_class",
+        SourceTypeError,
+        lambda: type("NoBasic", (OwnReadability,), {"stats_class": Bare})(spacy.blank("en"), "r"),
+    ),
+    (
+        "extension_name",
+        ParameterError,
+        lambda: OwnReadability(spacy.blank("en"), "own_r", basic=5),
+    ),
+    ("preset_type", ParameterError, lambda: OwnReadability(spacy.blank("en"), "own_r", preset=5)),
+    (
+        "unknown_preset",
+        ParameterError,
+        lambda: OwnReadability(spacy.blank("en"), "own_r", preset="x"),
+    ),
+    ("window_len", ParameterError, lambda: OwnDiversity(spacy.blank("en"), "own_d", window_len=0)),
+    ("top_n", ParameterError, lambda: OwnStyle(spacy.blank("en"), "own_s", top_n=0)),
+    ("phon_window_len", ParameterError, lambda: OwnPhon(spacy.blank("en"), "own_p", window_len=1)),
     ("sents_extractor_type", SourceTypeError, lambda: Cohesion(PARSED, sents_extractor="x")),
     ("no_pos", SourceError, lambda: Cohesion(PARSED)),
     ("no_lemmas", SourceError, lambda: Cohesion(Doc(VOCAB, words=["Yes"], pos=["INTJ"]))),

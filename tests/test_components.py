@@ -1,4 +1,5 @@
 import pickle
+from typing import ClassVar
 
 import pytest
 import spacy
@@ -6,9 +7,26 @@ from spacy.language import Language
 from spacy.tokens import Doc
 
 from anyts import DiversityStats
-from anyts.components import StatsComponent, start_sents_after_blank_lines
+from anyts.basic_stats import BasicStats
+from anyts.cohesion_stats import CohesionStats
+from anyts.components import (
+    BasicStatsComponent,
+    CohesionStatsComponent,
+    DiversityStatsComponent,
+    LexicalStatsComponent,
+    PhonStatsComponent,
+    ReadabilityStatsComponent,
+    StatsComponent,
+    StyleStatsComponent,
+    SyntaxStatsComponent,
+    start_sents_after_blank_lines,
+)
+from anyts.constants import MATTR_WINDOW_LEN, NAUSEA_TOP_N, PHON_WINDOW_LEN
 from anyts.diversity_stats import check_params
-from anyts.exceptions import ParameterError, SourceError
+from anyts.exceptions import ParameterError, SourceError, SourceTypeError
+from anyts.readability_stats import ReadabilityStats
+from anyts.style_stats import StyleStats
+from anyts.syntax_stats import SyntaxStats
 from anyts.utils import iter_doc_words
 
 
@@ -140,17 +158,45 @@ def test_from_extension_without_the_factory(nlp):
         reuser(nlp("1 cat"))
 
 
-def test_compute_is_required(nlp):
-    with pytest.raises(TypeError, match="abstract"):
+def test_stats_class_or_compute_is_required(nlp):
+    with pytest.raises(
+        ParameterError, match=r"^StatsComponent has no concrete class of statistics"
+    ):
         StatsComponent(nlp, "anyts_test_base")
 
     @Language.factory("anyts_test_unfinished")
     class Unfinished(StatsComponent):
         pass
 
-    with pytest.raises(TypeError, match="abstract"):
+    with pytest.raises(ParameterError, match=r"^Unfinished has no concrete class"):
         nlp.add_pipe("anyts_test_unfinished")
     assert nlp.pipe_names == []
+    # An abstract class of statistics is none either, and diversity has no default
+    for component in (
+        BasicStatsComponent,
+        LexicalStatsComponent,
+        PhonStatsComponent,
+        DiversityStatsComponent,
+    ):
+        with pytest.raises(ParameterError, match=rf"^{component.__name__} has no concrete class"):
+            component(nlp, "anyts_test_bare")
+    # Readability reads a Doc only through the basic statistics of a library
+    with pytest.raises(SourceTypeError, match=r"^ReadabilityStats has no basic_stats_class"):
+        ReadabilityStatsComponent(nlp, "anyts_test_bare")
+
+    class Unknown(ReadabilityStatsComponent):
+        stats_class = None
+
+    with pytest.raises(ParameterError, match=r"^Unknown has no concrete class"):
+        Unknown(nlp, "anyts_test_bare")
+
+
+def test_attributes_of_stats_params_are_required(nlp):
+    class Typo(Generic):
+        stats_params = ("sise",)
+
+    with pytest.raises(ParameterError, match=r"^Typo has no attribute sise of stats_params$"):
+        Typo(nlp, "anyts_test_typo")
 
 
 def test_pickled_component_registers_its_extension(nlp):
@@ -256,3 +302,162 @@ def test_blank_lines_of_a_parsed_document(nlp):
     starts = [token.is_sent_start for token in doc]
     assert start_sents_after_blank_lines(doc) is doc
     assert [token.is_sent_start for token in doc] == starts
+
+
+class Recorded:
+    """Statistics that keep their source and their keyword arguments"""
+
+    presets: ClassVar[dict[str, dict]] = {"original": {}, "other": {}}
+    basic_stats_class: ClassVar[type | None] = None
+
+    def __init__(self, source, **kwargs):
+        self.source = source
+        self.kwargs = kwargs
+
+
+class RecordedBasic(Recorded):
+    pass
+
+
+class RecordedReadability(Recorded):
+    basic_stats_class = RecordedBasic
+
+
+@Language.factory("anyts_test_generic")
+class Generic(StatsComponent):
+    """A component of a class of statistics with a parameter of its config"""
+
+    stats_class = Recorded
+    stats_params = ("size",)
+
+    def __init__(self, nlp: Language, name: str, size: int = 3):
+        self.size = size
+        super().__init__(nlp, name)
+
+
+@Language.factory("anyts_test_basic")
+class Basic(BasicStatsComponent):
+    stats_class = RecordedBasic
+
+
+@Language.factory("anyts_test_readability")
+class Readability(ReadabilityStatsComponent):
+    stats_class = RecordedReadability
+    basic_factory = "anyts_test_basic"
+
+
+def test_generic_compute(nlp):
+    nlp.add_pipe("anyts_test_generic", name="generic", config={"size": 7})
+    doc = nlp("The cat")
+    assert doc._.generic.source is doc and doc._.generic.kwargs == {"size": 7}
+    assert nlp.config["components"]["generic"] == {"factory": "anyts_test_generic", "size": 7}
+
+
+def test_component_saved_and_loaded(nlp, tmp_path):
+    nlp.add_pipe("anyts_test_generic", name="generic", config={"size": 7})
+    nlp.add_pipe("anyts_test_readability", name="readability", config={"preset": "other"})
+    nlp.to_disk(tmp_path)
+    loaded = spacy.load(tmp_path)
+    doc = loaded("The cat")
+    assert doc._.generic.kwargs == {"size": 7}
+    assert doc._.readability.kwargs == {"preset": "other"}
+
+
+def test_components_of_the_core_classes():
+    assert BasicStatsComponent.stats_class is BasicStats
+    assert ReadabilityStatsComponent.stats_class is ReadabilityStats
+    assert StyleStatsComponent.stats_class is StyleStats
+    assert SyntaxStatsComponent.stats_class is SyntaxStats
+    assert CohesionStatsComponent.stats_class is CohesionStats
+    assert DiversityStatsComponent.stats_class is None
+
+
+def test_syntax_and_cohesion_components_on_their_core_classes(nlp):
+    doc = Doc(
+        nlp.vocab,
+        words=["Cats", "sleep", ".", "Cats", "eat"],
+        heads=[1, 1, 1, 4, 4],
+        deps=["nsubj", "ROOT", "punct", "nsubj", "ROOT"],
+        pos=["NOUN", "VERB", "PUNCT", "NOUN", "VERB"],
+        lemmas=["cat", "sleep", ".", "cat", "eat"],
+    )
+    SyntaxStatsComponent(nlp, "anyts_test_syntax")(doc)
+    CohesionStatsComponent(nlp, "anyts_test_cohesion")(doc)
+    assert doc._.anyts_test_syntax.n_sents == 2
+    assert doc._.anyts_test_cohesion.noun_overlap_adjacent == 1.0
+
+
+def test_readability_component(nlp):
+    nlp.add_pipe("anyts_test_basic", name="basic")
+    nlp.add_pipe("anyts_test_readability", name="default")
+    nlp.add_pipe("anyts_test_readability", name="other", config={"preset": "other"})
+    nlp.add_pipe("anyts_test_readability", name="reused", config={"basic": "basic"})
+    doc = nlp("The cat")
+    assert doc._.default.kwargs == {} and doc._.default.source is doc
+    assert doc._.other.kwargs == {"preset": "other"}
+    assert doc._.reused.source is doc._.basic
+    missing = spacy.blank("xx")
+    missing.add_pipe("anyts_test_readability", config={"basic": "basic"})
+    with pytest.raises(SourceError, match=r"anyts_test_basic"):
+        missing("The cat")
+
+
+@pytest.mark.parametrize(
+    ("config", "message"),
+    [
+        ({"preset": "unknown"}, r"^Unknown coefficient preset: unknown"),
+        ({"preset": 5}, r"^The preset must be a string, not int$"),
+        ({"basic": 5}, r"^The name of an extension must be a string, not int$"),
+    ],
+)
+def test_readability_component_errors(nlp, config, message):
+    with pytest.raises(ParameterError, match=message):
+        nlp.add_pipe("anyts_test_readability", config=config)
+
+
+def test_components_pass_their_parameters(nlp):
+    class Diversity(DiversityStatsComponent):
+        stats_class = Recorded
+
+    class Style(StyleStatsComponent):
+        stats_class = Recorded
+
+    class Phon(PhonStatsComponent):
+        stats_class = Recorded
+
+    class Lexical(LexicalStatsComponent):
+        stats_class = Recorded
+
+    doc = nlp("The cat")
+    assert Diversity(nlp, "d").compute(doc).kwargs["window_len"] == MATTR_WINDOW_LEN
+    assert Diversity(nlp, "d", window_len=7).compute(doc).kwargs["window_len"] == 7
+    assert Style(nlp, "s").compute(doc).kwargs == {
+        "stopwords": None,
+        "top_n": NAUSEA_TOP_N,
+        "nausea_stopwords": None,
+    }
+    assert Style(nlp, "s", stopwords={"the"}, top_n=2).compute(doc).kwargs["top_n"] == 2
+    assert Phon(nlp, "p").compute(doc).kwargs == {"window_len": PHON_WINDOW_LEN}
+    assert Lexical(nlp, "l").compute(doc).kwargs == {"freq_dict": None}
+    lexical = Lexical(nlp, "l")
+    assert not lexical.accepts(nlp("1999 2020")) and lexical.accepts(nlp("1999 cats"))
+
+    class Ordinals(Lexical):
+        join_hyphens = True
+
+        def is_number(self, word):
+            return word in {"5-th", "1st"}
+
+    # The numbers of a language, a hyphenated one taken whole
+    ordinals = Ordinals(nlp, "o")
+    assert not ordinals.accepts(nlp("5-th 1st")) and ordinals.accepts(nlp("5-th cats"))
+    with pytest.raises(ParameterError):
+        Diversity(nlp, "d", window_len=0)
+    with pytest.raises(ParameterError):
+        Style(nlp, "s", top_n=0)
+    with pytest.raises(SourceTypeError):
+        Style(nlp, "s", stopwords="the")
+    with pytest.raises(SourceTypeError):
+        Style(nlp, "s", nausea_stopwords=[1])
+    with pytest.raises(ParameterError):
+        Phon(nlp, "p", window_len=1)
