@@ -248,7 +248,10 @@ MESSAGES = {
     "no_parse": "The data source has no dependency parse",
     "no_lemmas": "The data source has no lemmas",
     "no_pos": "The data source has no parts of speech",
-    "temporal_feature": "Unknown temporal feature of {cls}: {feature}. Available features: {features}",
+    "temporal_features": (
+        "The temporal features of {cls} must be one or more distinct features of {features}, "
+        "not {value}"
+    ),
     "tokenizer": "The tokenizer is set incorrectly",
     "tokenizer_iterable": "The tokenizer must return an iterable object",
     "tokenizer_strings": "The tokenizer must return strings, not {type}",

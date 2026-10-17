@@ -239,7 +239,7 @@ CASES = [
         lambda: Cohesion(Doc(VOCAB, words=["."], pos=["PUNCT"], lemmas=["."])),
     ),
     (
-        "temporal_feature",
+        "temporal_features",
         ParameterError,
         lambda: type("Bad", (Cohesion,), {"temporal_features": ("voice",)}),
     ),

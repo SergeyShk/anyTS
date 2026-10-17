@@ -525,6 +525,36 @@ def test_connectors_read_once_for_a_class():
     Counted(text_doc())
     Counted(text_doc())
     assert calls == [Counted]
+    assert Counted.connector_matcher() is Counted.connector_matcher()
+    assert calls == [Counted]
+
+    class Own(ConnectorMatcher):
+        pass
+
+    class Child(Counted):
+        connector_matcher_class = Own
+
+    # A subclass builds its own matcher, of its own class
+    assert type(Child.connector_matcher()) is Own
+    assert type(Counted.connector_matcher()) is ConnectorMatcher
+    assert calls == [Counted, Child]
+
+
+def test_densities_by_the_classes_of_the_matcher():
+    class Contrast(ConnectorMatcher):
+        classes = ("contrast",)
+        kinds = ("single",)
+
+    class Own(CohesionStats):
+        connector_matcher_class = Contrast
+
+        @classmethod
+        def load_connectors(cls):
+            return {"however": ("contrast", "single")}
+
+    stats = Own(text_doc())
+    assert stats.connectors == stats.connectors_contrast == stats.connectors_single == 1000 / 17
+    assert not hasattr(stats, "connectors_causal")
 
 
 def test_temporal_features():
@@ -532,8 +562,14 @@ def test_temporal_features():
         temporal_features = ("tense", "mood")
 
     assert Mood(text_doc()).temporal_cohesion == 1.0
-    with pytest.raises(ParameterError, match=r"^Unknown temporal feature of Bad: 'voice'"):
-        type("Bad", (CohesionStats,), {"temporal_features": ("tense", "voice")})
+
+
+@pytest.mark.parametrize(
+    "features", [("tense", "voice"), (), ("tense", "tense", "aspect"), "tense", ["tense"]]
+)
+def test_temporal_features_must_be_distinct_known_ones(features):
+    with pytest.raises(ParameterError, match=r"^The temporal features of Bad must be one or more"):
+        type("Bad", (CohesionStats,), {"temporal_features": features})
 
 
 def test_sentences_by_an_extractor():

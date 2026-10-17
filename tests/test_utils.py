@@ -542,4 +542,6 @@ def test_split_doc_units():
         ["Three"],
     ]
     assert split_doc_units(doc, Fixed([])) == []
+    # A Span: the sentences are found in its own text
+    assert texts(split_doc_units(doc[5:], Fixed(["Two.", "Three"]))) == [["Two"], ["Three"]]
     assert split_doc_units(doc, Fixed(["Four"])) == []

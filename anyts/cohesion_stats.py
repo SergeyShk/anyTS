@@ -37,10 +37,6 @@ if TYPE_CHECKING:
     from spacy.tokens import Doc, Token
 
 
-# Matchers of the dictionaries of the connectors by class of the statistics
-_MATCHERS: dict[type[CohesionStats], ConnectorMatcher] = {}
-
-
 class Overlap(NamedTuple):
     """
     Overlaps of the sentences of a text
@@ -247,6 +243,12 @@ class ConnectorMatcher:
                     )
             if len(pos) != len(words):
                 raise ParameterError(self.messages["connector_pos"])
+        return self._find(words, sent_index, pos)
+
+    def _find(
+        self, words: Sequence[str], sent_index: int, pos: Sequence[str | None] | None
+    ) -> list[Connector]:
+        """Connectors of a sentence whose words and parts of speech are checked"""
         normalized = [self.normalize(word) for word in words]
         found = []
         position = 0
@@ -403,24 +405,23 @@ class CohesionStats(Stats):
         aspect_repetition (float): The same for the aspect
         temporal_cohesion (float): Mean of the repetitions of temporal_features
         connectors (float): Connectors per 1000 words
-        connectors_causal, connectors_adversative, connectors_concessive,
-            connectors_temporal, connectors_additive, connectors_conditional,
-            connectors_reformulative (float): Connectors of a class per 1000 words
-        connectors_primary, connectors_secondary (float): Connectors of a kind per
-            1000 words
+        connectors_<class>, connectors_<kind> (float): Connectors of every class and
+            kind of the matcher per 1000 words: connectors_causal, ...,
+            connectors_primary, connectors_secondary by default
 
     Methods:
         analyze: Words of the sentences of a source with their features
         doc_units: Words of the sentences of a Doc as lists of tokens
         word_info: Features of a word of a Doc
         load_connectors: Dictionary of the connectors of the language
+        connector_matcher: Matcher of the dictionary of the class, built once
 
     Class attributes:
         sents_extractor_class (type): Sentence extractor of a Doc with no boundaries
         connector_matcher_class (type): Class that finds the connectors (ConnectorMatcher)
         join_hyphens (bool): Take a word the tokenizer split at its hyphens for one word
         temporal_features (tuple[str, ...]): Features of the verbs whose repetitions
-            make the temporal cohesion: tense, mood, aspect
+            make the temporal cohesion: one or more of tense, mood, aspect
         stats_desc (dict[str, str]): Statistics of get_stats and their descriptions for
             print_stats
 
@@ -430,7 +431,7 @@ class CohesionStats(Stats):
         SourceError: If the source has no parts of speech or no lemmas (analyze), or no
             words
         ParameterError: If a connector has an unknown class or kind; when a class is
-            defined, if a temporal feature is unknown
+            defined, if its temporal features are not one or more distinct known ones
     """
 
     sents_extractor_class: ClassVar[type[SentsExtractor]] = SentsExtractor
@@ -438,16 +439,22 @@ class CohesionStats(Stats):
     join_hyphens: ClassVar[bool] = False
     temporal_features: ClassVar[tuple[str, ...]] = ("tense", "aspect")
     stats_desc: ClassVar[Mapping[str, str]] = COHESION_STATS_DESC
+    _connector_matcher: ClassVar[ConnectorMatcher | None] = None
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
-        for feature in cls.temporal_features:
-            if feature not in TEMPORAL_FEATURES:
-                raise ParameterError(
-                    cls.messages["temporal_feature"].format(
-                        cls=cls.__name__, feature=repr(feature), features=TEMPORAL_FEATURES
-                    )
+        features = cls.temporal_features
+        if (
+            not isinstance(features, tuple)
+            or not features
+            or len(set(features)) != len(features)
+            or not set(features) <= set(TEMPORAL_FEATURES)
+        ):
+            raise ParameterError(
+                cls.messages["temporal_features"].format(
+                    cls=cls.__name__, features=TEMPORAL_FEATURES, value=repr(features)
                 )
+            )
 
     def __init__(
         self,
@@ -460,7 +467,7 @@ class CohesionStats(Stats):
             raise SourceTypeError(messages["sents_extractor_type"])
         self.sents_extractor = sents_extractor
         matcher = (
-            _default_matcher(type(self))
+            self.connector_matcher()
             if connectors is None
             else self.connector_matcher_class(connectors)
         )
@@ -512,7 +519,7 @@ class CohesionStats(Stats):
         self.connector_spans = tuple(
             connector
             for index, (words, sent) in enumerate(zip(self.words, sents, strict=True))
-            for connector in matcher.find(words, index, [word.pos for word in sent])
+            for connector in matcher._find(words, index, [word.pos for word in sent])
         )
         self.n_connectors = len(self.connector_spans)
         self.c_connectors = dict(
@@ -522,15 +529,10 @@ class CohesionStats(Stats):
         classes = Counter(connector.cls for connector in self.connector_spans)
         kinds = Counter(connector.kind for connector in self.connector_spans)
         self.connectors = self.n_connectors * per_1000
-        self.connectors_causal = classes["causal"] * per_1000
-        self.connectors_adversative = classes["adversative"] * per_1000
-        self.connectors_concessive = classes["concessive"] * per_1000
-        self.connectors_temporal = classes["temporal"] * per_1000
-        self.connectors_additive = classes["additive"] * per_1000
-        self.connectors_conditional = classes["conditional"] * per_1000
-        self.connectors_reformulative = classes["reformulative"] * per_1000
-        self.connectors_primary = kinds["primary"] * per_1000
-        self.connectors_secondary = kinds["secondary"] * per_1000
+        for name in matcher.classes:
+            setattr(self, f"connectors_{name}", classes[name] * per_1000)
+        for name in matcher.kinds:
+            setattr(self, f"connectors_{name}", kinds[name] * per_1000)
 
     def analyze(self, source: Doc) -> Iterable[Sequence[CohesionWord]]:
         """
@@ -604,23 +606,27 @@ class CohesionStats(Stats):
             CohesionWord: Word with its features
         """
         token = unit[0]
-        text = "".join(part.text for part in unit)
-        morph = token.morph
-        pron_type = morph.get("PronType", [])
+        if len(unit) == 1:
+            text, lemma = token.text, token.lemma_.lower()
+        else:
+            text = "".join(part.text for part in unit)
+            lemma = text.lower()
+        features = token.morph.to_dict()
+        pron_type = features.get("PronType", "").split(",")
         demonstrative = "Dem" in pron_type
         pos = token.pos_
         return CohesionWord(
             word=text,
-            lemma=token.lemma_.lower() if len(unit) == 1 else text.lower(),
+            lemma=lemma,
             pos=pos or None,
             noun=pos in ("NOUN", "PROPN"),
-            pronoun=pos == "PRON" or _is_pronominal_det(token, pron_type),
+            pronoun=pos == "PRON" or (pos == "DET" and _is_pronominal_det(features, pron_type)),
             demonstrative=demonstrative,
             argument=pos in ("NOUN", "PROPN", "PRON"),
             content=not demonstrative and pos in CONTENT_UD_POS,
-            tense=next(iter(morph.get("Tense", [])), None),
-            mood=next(iter(morph.get("Mood", [])), None),
-            aspect=next(iter(morph.get("Aspect", [])), None),
+            tense=_first_value(features, "Tense"),
+            mood=_first_value(features, "Mood"),
+            aspect=_first_value(features, "Aspect"),
         )
 
     @classmethod
@@ -637,22 +643,37 @@ class CohesionStats(Stats):
         """
         return {}
 
+    @classmethod
+    def connector_matcher(cls) -> ConnectorMatcher:
+        """
+        Getting the matcher of the dictionary of the connectors of the class
 
-def _default_matcher(cls: type[CohesionStats]) -> ConnectorMatcher:
-    """Matcher of the dictionary of a class, built once"""
-    matcher = _MATCHERS.get(cls)
-    if matcher is None:
-        matcher = _MATCHERS[cls] = cls.connector_matcher_class(cls.load_connectors())
-    return matcher
+        Description:
+            connector_matcher_class over load_connectors, built once for a class
+            and shared by its instances, for the search of the connectors outside
+            the statistics too (a sentence, a highlighting)
+
+        Returns:
+            ConnectorMatcher: Matcher of the dictionary
+        """
+        matcher = cls.__dict__.get("_connector_matcher")
+        if matcher is None:
+            matcher = cls.connector_matcher_class(cls.load_connectors())
+            cls._connector_matcher = matcher
+        return matcher
 
 
-def _is_pronominal_det(token: Token, pron_type: list[str]) -> bool:
+def _is_pronominal_det(features: Mapping[str, str], pron_type: list[str]) -> bool:
     """Whether a determiner points at something: my book, this book"""
-    if token.pos_ != "DET":
-        return False
-    if "Yes" in token.morph.get("Poss", []):
+    if "Yes" in features.get("Poss", "").split(","):
         return True
     return bool({"Dem", "Prs"} & set(pron_type))
+
+
+def _first_value(features: Mapping[str, str], field: str) -> str | None:
+    """First value of a morphological feature, None without it"""
+    value = features.get(field)
+    return value.split(",")[0] if value else None
 
 
 def calc_overlap(sets: Sequence[Collection[str]], adjacent: bool = True) -> float:
@@ -895,7 +916,7 @@ def calc_repetition(sents: Sequence[Sequence[str]]) -> float:
     Computing the share of adjacent pairs of sentences with the same dominant value
 
     Description:
-        The repetition of the tense and of the mood of Coh-Metrix (SMTEMP): a
+        The repetition of the tense and of the aspect of Coh-Metrix (SMTEMP): a
         pair of adjacent sentences is cohesive when the dominant values of the
         feature of their verbs are equal; a pair where one of the sentences has
         no verb with the feature is skipped

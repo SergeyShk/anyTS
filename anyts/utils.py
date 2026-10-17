@@ -506,20 +506,20 @@ def _unit_word(unit: Sequence[Token]) -> tuple[int, int, str]:
 
 
 def split_doc_units(
-    source: Doc, sents_extractor: SentsExtractor, join_hyphens: bool = False
+    source: Doc | Span, sents_extractor: SentsExtractor, join_hyphens: bool = False
 ) -> list[list[list[Token]]]:
     """
-    Splitting the words of a Doc object into the sentences of an extractor
+    Splitting the words of a Doc or Span object into the sentences of an extractor
 
     Description:
-        The sentences of sents_extractor are found in the text of the Doc in
+        The sentences of sents_extractor are found in the text of the source in
         their order, and a word of iter_doc_units belongs to the sentence its
         first token lies in; the words outside the sentences found (dropped by
         the extractor) are left out, so with no sentence found there are no
         words. For a Doc with no sentence boundaries, or one split otherwise
 
     Arguments:
-        source (Doc): Doc object
+        source (Doc|Span): Doc or Span object
         sents_extractor (SentsExtractor): Sentence extraction tool
         join_hyphens (bool): Join the parts of hyphenated words (iter_doc_units)
 
@@ -538,8 +538,9 @@ def split_doc_units(
         return []
     units: list[list[list[Token]]] = [[] for _ in spans]
     index = 0
+    offset = source.start_char if is_span(source) else 0
     for unit in iter_doc_units(source, join_hyphens):
-        position = unit[0].idx
+        position = unit[0].idx - offset
         while index + 1 < len(spans) and spans[index + 1][0] <= position:
             index += 1
         if spans[index][0] <= position < spans[index][1]:

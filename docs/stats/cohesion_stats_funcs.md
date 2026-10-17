@@ -82,7 +82,7 @@ The dominant value: the most frequent one, the first of the equally frequent; `N
 ## calc_repetition
 
 <!-- --8<-- [start:calc_repetition] -->
-The repetition of the tense and of the mood of Coh-Metrix (SMTEMP): the share of the adjacent pairs of sentences whose verbs have the same dominant value of the feature; a pair where one of the sentences has no verb with the feature is skipped, and without a single such pair the value is `nan`.
+The repetition of the tense and of the aspect of Coh-Metrix (SMTEMP): the share of the adjacent pairs of sentences whose verbs have the same dominant value of the feature; a pair where one of the sentences has no verb with the feature is skipped, and without a single such pair the value is `nan`.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |

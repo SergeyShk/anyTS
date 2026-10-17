@@ -21,9 +21,10 @@ A language library subclasses `CohesionStats`. By default the words and their fe
 | `analyze(source)` | method | Words of the sentences of a source as `CohesionWord`: the word, its lemma, its part of speech for the rules of the connectors, whether it is a noun, a pronoun, a demonstrative, an argument and a content word, its tense, mood and aspect; by default those of a `Doc`, sentence by sentence (`doc_units`), with the features of `word_info` - a library that reads a string or a `Doc` without these annotations overrides it |
 | `doc_units(doc)` | method | Words of the sentences of a `Doc` as lists of tokens: by its boundaries, or by the extractor over its text (`split_doc_units` of `anyts.utils`) |
 | `word_info(unit)` | method | Features of a word of a `Doc`; by default a noun is `NOUN` or `PROPN`, a pronoun `PRON` or a possessive, demonstrative or personal determiner, a demonstrative carries `PronType=Dem`, an argument is `NOUN`, `PROPN` or `PRON`, a content word one of `anyts.constants.CONTENT_UD_POS` and no demonstrative, and the tense, the mood and the aspect are the features `Tense`, `Mood` and `Aspect` |
-| `load_connectors()` | class method | Dictionary of the connectors of the language, class and kind by connector, read once for a class; empty by default |
+| `load_connectors()` | class method | Dictionary of the connectors of the language, class and kind by connector; empty by default |
+| `connector_matcher()` | class method | Matcher of that dictionary, built once for a class and shared by its instances - and by a search of the connectors outside the statistics |
 | `connector_matcher_class` | class attribute | Class that finds the connectors with the context rules of the language; `ConnectorMatcher` by default |
-| `temporal_features` | class attribute | Features of the verbs whose repetitions make the temporal cohesion, of `tense`, `mood` and `aspect`; the tense and the aspect by default, as in Coh-Metrix, and an unknown one raises `ParameterError` when the class is defined |
+| `temporal_features` | class attribute | Features of the verbs whose repetitions make the temporal cohesion, one or more distinct ones of `tense`, `mood` and `aspect` in a tuple, checked when the class is defined; the tense and the aspect by default, as in Coh-Metrix |
 | `sents_extractor_class`, `join_hyphens` | class attributes | Sentence extractor of a `Doc` without boundaries, joining of the hyphenated words of a `Doc` |
 | `stats_desc`, `stats_headers` | class attributes | Statistics of `get_stats` with their descriptions, headers of the columns for `print_stats` |
 | `messages` | class attribute | Messages of the errors by key; `MESSAGES` by default |
@@ -61,8 +62,7 @@ The parameters of a library - its model of a string, its word extractor - go to 
 | `tense_repetition`, `mood_repetition`, `aspect_repetition` | float | Shares of the adjacent pairs of sentences with the same dominant tense, mood and aspect |
 | `temporal_cohesion` | float | Mean of the repetitions of `temporal_features` |
 | `connectors` | float | Connectors per 1000 words |
-| `connectors_causal`, `connectors_adversative`, `connectors_concessive`, `connectors_temporal`, `connectors_additive`, `connectors_conditional`, `connectors_reformulative` | float | Connectors of a class per 1000 words |
-| `connectors_primary`, `connectors_secondary` | float | Connectors of a kind per 1000 words |
+| `connectors_<class>`, `connectors_<kind>` | float | Connectors of every class and kind of the matcher per 1000 words: `connectors_causal`, `connectors_adversative`, `connectors_concessive`, `connectors_temporal`, `connectors_additive`, `connectors_conditional`, `connectors_reformulative`, `connectors_primary` and `connectors_secondary` by default |
 
 An overlap of a text of one sentence, a repetition without two adjacent sentences with the feature, and a share without anything to divide by are `nan`.
 <!-- --8<-- [end:CohesionStats-attributes] -->
