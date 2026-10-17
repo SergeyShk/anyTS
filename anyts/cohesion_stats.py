@@ -84,6 +84,7 @@ class ConnectorMatcher:
         the longest one at every position, without overlaps; a period or a
         hyphen inside a connector may be split off by the tokenizer (e.g.).
         The context rules of a language are class attributes, empty by default
+        apart from the parts of speech of a one-word connector (pos_tags)
 
     Arguments:
         connectors (dict[str, tuple[str, str]]): Class and kind by connector

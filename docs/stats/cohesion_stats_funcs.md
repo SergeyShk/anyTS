@@ -111,7 +111,7 @@ A dictionary that is not a mapping of a phrase to a pair of strings raises `Sour
 <!-- --8<-- [end:ConnectorMatcher] -->
 
 <!-- --8<-- [start:ConnectorMatcher-hooks] -->
-The rules of a language are class attributes of a subclass, empty by default:
+The rules of a language are class attributes of a subclass, empty by default apart from `pos_tags`:
 
 | Hook | Kind | Description |
 | :--: | :--: | :---------: |
