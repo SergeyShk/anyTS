@@ -45,10 +45,11 @@ _NORMALIZED_STATS = (
 )
 ELLIPSIS_PATTERN = re.compile(r"…|\.{3,}|(?<=[?!])\.{2}")
 # A dash typed with hyphens: a run of two or more, a hyphen after whitespace, the start of a
-# line or a closing mark (the underscore of italics included), before a space, a tab or the end,
-# or between a letter and an opening or a closing mark
+# line or a closing mark (the underscore of italics included), before a space of SPACES or the
+# end, or between a letter and an opening or a closing mark
 _DASHES = (
-    r"-{2,}|(?:(?<=\s)|(?<=[.,;:!?…»”\"')\]_])|^)-(?!\d)|-(?=[ \t]|\Z)"
+    r"-{2,}|(?:(?<=\s)|(?<=[.,;:!?…»”\"')\]_])|^)-(?!\d)"
+    rf"|-(?=[{re.escape(''.join(SPACES))}]|\Z)"
     r"|(?<=[^\W\d_])-(?=[¿¡«“\"'(\[_])|(?<=[^\W\d_])-(?=[.,;:!?…»”\"')\]_])"
 )
 

@@ -15,10 +15,12 @@ from anyts.components import start_sents_after_blank_lines
 from anyts.exceptions import ParameterError, SourceError, SourceTypeError
 from anyts.utils import (
     PUNCTUATION_CATEGORIES,
+    add_tokenizer_rules,
     check_counts,
     check_integer,
     check_number,
     check_sequence,
+    check_word,
     check_words,
     count_letters,
     count_words_by_spans,
@@ -545,3 +547,76 @@ def test_split_doc_units():
     # A Span: the sentences are found in its own text
     assert texts(split_doc_units(doc[5:], Fixed(["Two.", "Three"]))) == [["Two"], ["Three"]]
     assert split_doc_units(doc, Fixed(["Four"])) == []
+
+
+def test_check_word():
+    check_word("cat")
+    with pytest.raises(SourceTypeError, match=r"^The word must be a string, not list$"):
+        check_word(["cat"])
+    with pytest.raises(SourceTypeError, match=r"^The syllable must be a string, not int$"):
+        check_word(1, "syllable")
+
+
+class OnlyIterable:
+    """Iterable again and again, with no length"""
+
+    def __iter__(self):
+        return iter(["the", "cat"])
+
+
+def test_check_sequence_requires_a_length():
+    with pytest.raises(SourceTypeError, match=r"^A list of words is expected, not OnlyIterable$"):
+        check_sequence(OnlyIterable())
+    check_sequence(range(3))
+
+
+def test_add_tokenizer_rules():
+    nlp = spacy.blank("en")
+    text = "--No, he said a|b ok~~"
+    assert [token.text for token in nlp(text)] == ["--No", ",", "he", "said", "a|b", "ok~~"]
+    add_tokenizer_rules(
+        nlp, prefixes=[r"-{2,}(?=\w)"], suffixes=[r"(?<=\w)~{2,}"], infixes=[r"(?<=\w)\|(?=\w)"]
+    )
+    assert [token.text for token in nlp(text)] == [
+        "--",
+        "No",
+        ",",
+        "he",
+        "said",
+        "a",
+        "|",
+        "b",
+        "ok",
+        "~~",
+    ]
+    # A rule the tokenizer has is not added again
+    search = nlp.tokenizer.prefix_search
+    add_tokenizer_rules(nlp, prefixes=[r"-{2,}(?=\w)"])
+    assert nlp.tokenizer.prefix_search is search
+
+
+def test_add_tokenizer_rules_of_abbreviations():
+    nlp = spacy.blank("en")
+    add_tokenizer_rules(nlp, abbreviations=["a.m.", "e.g.", "xyz."])
+    # A form the tokenizer keeps whole gives the others, a form it splits is left
+    assert [len(nlp(form)) for form in ("a.m.", "A.m.", "A.M.")] == [1, 1, 1]
+    assert [len(nlp(form)) for form in ("e.g.", "E.g.", "E.G.")] == [1, 1, 1]
+    assert len(nlp("Xyz.")) == 2
+    # The tokenizer keeps Q.E.D. whole by a pattern, not by a rule, so its other forms follow
+    assert [len(nlp(form)) for form in ("q.e.d.", "Q.e.d.")] == [2, 2]
+    add_tokenizer_rules(nlp, abbreviations=["q.e.d."])
+    assert [len(nlp(form)) for form in ("q.e.d.", "Q.e.d.", "Q.E.D.")] == [1, 1, 1]
+
+
+def test_add_tokenizer_rules_to_other_tokenizers():
+    nlp = spacy.blank("en")
+    nlp.tokenizer.prefix_search = None
+    add_tokenizer_rules(nlp, prefixes=[r"-{2,}(?=\w)"])
+    assert [token.text for token in nlp("--No")] == ["--", "No"]
+    # A rule that is not a regular expression is left, as is a tokenizer of another class
+    nlp.tokenizer.suffix_search = lambda text: None
+    add_tokenizer_rules(nlp, suffixes=[r"-{2,}"])
+    assert nlp.tokenizer.suffix_search("no--") is None
+    nlp.tokenizer = lambda text: spacy.tokens.Doc(nlp.vocab, words=text.split())
+    add_tokenizer_rules(nlp, prefixes=[r"-"])
+    assert [token.text for token in nlp("--No x")] == ["--No", "x"]

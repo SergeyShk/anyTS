@@ -415,6 +415,10 @@ def test_count_punctuations_hook_errors(kwargs, error, message):
         ("-¿What? -said Ann-! well", 3, 0),
         ("socio-economic.", 0, 1),
         ("e-mail.", 0, 1),
+        # A hanging hyphen before any space of Unicode or a tab, not before a line break
+        ("one-\u00a0two", 1, 0),
+        ("one-\u202ftwo", 1, 0),
+        ("one-\ttwo", 1, 0),
     ],
 )
 def test_count_punctuations_dashes(text, dashes, hyphens):

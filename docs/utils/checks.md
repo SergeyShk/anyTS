@@ -8,7 +8,7 @@ The checks of the input that the functions and the classes of the core share; th
 ## check_sequence
 
 <!-- --8<-- [start:check_sequence] -->
-Checks that an argument is a sequence and not a text or an iterator: a string (of characters or bytes), a `Doc`, a `Span`, an iterator or an object that cannot be iterated raises `SourceTypeError`, since a string would be iterated character by character and an iterator would be exhausted by the first pass over it; so does a table - a two-dimensional array or a `DataFrame`. A set or a mapping holds every item once, in no order of the text, and raises the error too, unless `ordered=False` - for a collection whose order and repeats do not matter, such as stop words.
+Checks that an argument is a sequence and not a text or an iterator: a string (of characters or bytes), a `Doc`, a `Span`, an iterator or an object that cannot be iterated or has no length raises `SourceTypeError`, since a string would be iterated character by character, an iterator would be exhausted by the first pass over it and the functions take the length of the words; so does a table - a two-dimensional array or a `DataFrame`. A set or a mapping holds every item once, in no order of the text, and raises the error too, unless `ordered=False` - for a collection whose order and repeats do not matter, such as stop words.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
@@ -28,6 +28,17 @@ Checks that an argument is a list of words: it passes `check_sequence` and every
 | `what` | str | `"words"` | What is expected, for the message of the error |
 | `ordered` | bool | `True` | Whether the order and the repeats of the words matter |
 <!-- --8<-- [end:check_words] -->
+
+## check_word
+
+<!-- --8<-- [start:check_word] -->
+Checks that an argument is a word: a value that is not a string raises `SourceTypeError`, for the functions of a single word such as the syllables of a language.
+
+| Parameter | Type | Default | Description |
+| :-------: | :--: | :-----: | :---------: |
+| `value` | object | `-` | Value to check |
+| `what` | str | `"word"` | What is expected, for the message of the error |
+<!-- --8<-- [end:check_word] -->
 
 ## check_counts
 

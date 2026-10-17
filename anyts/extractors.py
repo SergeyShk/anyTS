@@ -76,6 +76,40 @@ def _char_class(chars: Iterable[str]) -> str:
     )
 
 
+def iter_part_sents(
+    iter_sents: Callable[[str], Iterable[tuple[int, int, str]]], text: str
+) -> Iterator[tuple[int, int, str]]:
+    """
+    Extracting the sentences of every part of a text between blank lines
+
+    Description:
+        The parts between the blank lines (BLANK_LINE) are given to iter_sents
+        one by one, so that a blank line ends a sentence whatever the splitter,
+        and the positions of the sentences are moved to the text
+
+    Arguments:
+        iter_sents (Callable[[str], Iterable[tuple[int, int, str]]]): Sentences of a
+            string with their positions
+        text (str): Text string
+
+    Returns:
+        iterator[tuple[int, int, str]]: Position of the first character, position
+            after the last character and text of each sentence
+
+    Example:
+        >>> import re
+        >>> from anyts.extractors import iter_part_sents
+        >>> def lines(text):
+        ...     return [(m.start(), m.end(), m.group()) for m in re.finditer(r"[^.]+\\.", text)]
+        >>> list(iter_part_sents(lines, "One. Two\\n\\nThree."))
+        [(0, 4, 'One.'), (10, 16, 'Three.')]
+    """
+    bounds = [0, *(bound for match in BLANK_LINE.finditer(text) for bound in match.span())]
+    for start, end in zip(bounds[::2], [*bounds[1::2], len(text)], strict=True):
+        for first, last, sent in iter_sents(text[start:end]):
+            yield start + first, start + last, sent
+
+
 class Extractor(metaclass=ABCMeta):
     """
     Abstract class for extracting units from a text
