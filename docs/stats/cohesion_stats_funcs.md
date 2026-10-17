@@ -1,7 +1,7 @@
-# Cohesion helpers
+# Metric functions
 
 !!! info ""
-    **anyts.cohesion**
+    **anyts.cohesion_stats**
 
 Functions that measure how the sentences of a text are tied together by shared elements, in the manner of Coh-Metrix, and the search of the [connectors](#connectors) that tie them. A sentence is given as the collection of its elements - lemmas of nouns, arguments or content words, values of a feature of its verbs - so the functions see no language: a library chooses the elements.
 
@@ -82,7 +82,7 @@ The dominant value: the most frequent one, the first of the equally frequent; `N
 ## calc_repetition
 
 <!-- --8<-- [start:calc_repetition] -->
-The repetition of the tense and of the mood of Coh-Metrix (SMTEMP): the share of the adjacent pairs of sentences whose verbs have the same dominant value of the feature; a pair where one of the sentences has no verb with the feature is skipped, and without a single such pair the value is `nan`.
+The repetition of the tense and of the aspect of Coh-Metrix (SMTEMP): the share of the adjacent pairs of sentences whose verbs have the same dominant value of the feature; a pair where one of the sentences has no verb with the feature is skipped, and without a single such pair the value is `nan`.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
@@ -92,7 +92,7 @@ The repetition of the tense and of the mood of Coh-Metrix (SMTEMP): the share of
 !!! example "Example"
 
     ``` python
-    from anyts.cohesion import calc_overlaps, calc_repetition, count_given
+    from anyts.cohesion_stats import calc_overlaps, calc_repetition, count_given
 
     calc_overlaps([{"cat", "house"}, {"cat", "dog"}, {"bird"}])
     # Overlap(adjacent=0.5, all=0.3333333333333333, prop_adjacent=0.25, prop_all=0.16666666666666666)
@@ -146,7 +146,7 @@ Words that are not a list of strings and parts of speech that are not a list of 
 !!! example "Example"
 
     ``` python
-    from anyts.cohesion import ConnectorMatcher
+    from anyts.cohesion_stats import ConnectorMatcher
 
 
     class Matcher(ConnectorMatcher):

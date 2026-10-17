@@ -1,5 +1,6 @@
 import os
 import random
+import re
 import subprocess
 import sys
 from fractions import Fraction
@@ -11,8 +12,11 @@ import numpy as np
 import pandas as pd
 import pytest
 import spacy
+from spacy.tokens import Doc
 
-from anyts.cohesion import (
+from anyts.cohesion_stats import (
+    CohesionStats,
+    CohesionWord,
     Connector,
     ConnectorMatcher,
     Overlap,
@@ -26,8 +30,9 @@ from anyts.cohesion import (
     dice,
     dominant,
 )
-from anyts.constants import MESSAGES
-from anyts.exceptions import ParameterError, SourceTypeError
+from anyts.constants import COHESION_STATS_DESC, MESSAGES
+from anyts.exceptions import ParameterError, SourceError, SourceTypeError
+from anyts.extractors import SentsExtractor
 
 
 @pytest.mark.parametrize(
@@ -107,7 +112,7 @@ def test_sum_dice_exact():
 def test_sum_dice_does_not_depend_on_the_hash_seed():
     code = (
         "import random\n"
-        "from anyts.cohesion import _sum_dice\n"
+        "from anyts.cohesion_stats import _sum_dice\n"
         "rng = random.Random(5)\n"
         "sets = [frozenset(f'w{rng.randrange(400)}' for _ in range(rng.randrange(1, 25)))"
         " for _ in range(300)]\n"
@@ -388,7 +393,7 @@ def test_own_classes_and_messages():
 
 def test_matcher_does_not_depend_on_the_hash_seed():
     code = (
-        "from anyts.cohesion import ConnectorMatcher\n"
+        "from anyts.cohesion_stats import ConnectorMatcher\n"
         "m = ConnectorMatcher({'so': ('causal', 'primary'), 'so that': ('causal', 'secondary'),"
         " 'so-so': ('additive', 'primary'), 'so far': ('temporal', 'secondary')})\n"
         "print(m._by_first)"
@@ -404,3 +409,240 @@ def test_matcher_does_not_depend_on_the_hash_seed():
         for seed in ("0", "1", "2")
     }
     assert len(outputs) == 1
+
+
+# The cat sat on the mat. It saw this bird. However, the bird and the cat slept.
+CAT_TEXT = [
+    ("The", "DET", "the", "PronType=Art", True),
+    ("cat", "NOUN", "cat", "", True),
+    ("sat", "VERB", "sit", "Aspect=Perf|Mood=Ind|Tense=Past", True),
+    ("on", "ADP", "on", "", True),
+    ("the", "DET", "the", "PronType=Art", True),
+    ("mat", "NOUN", "mat", "", False),
+    (".", "PUNCT", ".", "", True),
+    ("It", "PRON", "it", "PronType=Prs", True),
+    ("saw", "VERB", "see", "Aspect=Perf|Mood=Ind|Tense=Past", True),
+    ("this", "DET", "this", "PronType=Dem", True),
+    ("bird", "NOUN", "bird", "", False),
+    (".", "PUNCT", ".", "", True),
+    ("However", "ADV", "however", "", False),
+    (",", "PUNCT", ",", "", True),
+    ("the", "DET", "the", "PronType=Art", True),
+    ("bird", "NOUN", "bird", "", True),
+    ("and", "CCONJ", "and", "", True),
+    ("the", "DET", "the", "PronType=Art", True),
+    ("cat", "NOUN", "cat", "", True),
+    ("slept", "VERB", "sleep", "Aspect=Imp|Mood=Ind|Tense=Past", False),
+    (".", "PUNCT", ".", "", False),
+]
+CAT_STARTS = {0, 7, 12}
+VOCAB = spacy.blank("en").vocab
+TEXT_CONNECTORS = {"however": ("adversative", "secondary"), "and": ("additive", "primary")}
+
+
+def text_doc(starts=CAT_STARTS, lemmas=True, pos=True):
+    words, tags, lemma_list, morphs, spaces = (
+        list(column) for column in zip(*CAT_TEXT, strict=True)
+    )
+    return Doc(
+        VOCAB,
+        words=words,
+        spaces=spaces,
+        pos=tags if pos else None,
+        lemmas=lemma_list if lemmas else None,
+        morphs=morphs,
+        sent_starts=[i in starts for i in range(len(words))] if starts is not None else None,
+    )
+
+
+class English(CohesionStats):
+    @classmethod
+    def load_connectors(cls):
+        return TEXT_CONNECTORS
+
+
+def test_cohesion_stats_counts():
+    stats = CohesionStats(text_doc())
+    assert stats.words == (
+        ("The", "cat", "sat", "on", "the", "mat"),
+        ("It", "saw", "this", "bird"),
+        ("However", "the", "bird", "and", "the", "cat", "slept"),
+    )
+    assert stats.lemmas[2] == ("however", "the", "bird", "and", "the", "cat", "sleep")
+    assert (stats.n_sents, stats.n_words, stats.n_nouns) == (3, 17, 5)
+    # It and this are pronouns, this a demonstrative; the article is neither
+    assert (stats.n_pronouns, stats.n_demonstratives) == (2, 1)
+    # cat, sit, mat | see, bird | however, bird, cat, sleep: bird and cat are given
+    assert (stats.n_content_words, stats.n_given) == (9, 2)
+    assert stats.n_connectors == 0 and stats.connector_spans == () and stats.c_connectors == {}
+
+
+def test_cohesion_stats_metrics():
+    stats = CohesionStats(text_doc())
+    values = stats.get_stats()
+    assert list(values) == list(COHESION_STATS_DESC)
+    # The nouns and the arguments share bird in the last pair, cat in the first and the last
+    for name in ("noun", "argument", "content"):
+        assert values[f"{name}_overlap_adjacent"] == 0.5
+        assert values[f"{name}_overlap_all"] == 2 / 3
+    assert values["content_overlap_prop_adjacent"] == pytest.approx((0 + 2 / 6) / 2)
+    assert values["content_overlap_prop_all"] == pytest.approx((0 + 2 / 7 + 2 / 6) / 3)
+    assert values["p_pronouns"] == 2 / 17 and values["p_demonstratives"] == 1 / 17
+    assert values["pronoun_noun_ratio"] == 2 / 5 and values["p_given"] == 2 / 9
+    # The tense repeats in both pairs, the aspect in the first only
+    assert (values["tense_repetition"], values["aspect_repetition"]) == (1.0, 0.5)
+    assert values["temporal_cohesion"] == 0.75
+    assert stats.mood_repetition == 1.0
+    assert all(values[name] == 0 for name in values if name.startswith("connectors"))
+
+
+def test_connectors():
+    stats = English(text_doc())
+    assert stats.connector_spans == (
+        Connector(2, 0, 1, "however", "adversative", "secondary"),
+        Connector(2, 3, 4, "and", "additive", "primary"),
+    )
+    assert stats.c_connectors == {"and": 1, "however": 1}
+    per_1000 = 1000 / 17
+    assert stats.connectors == 2 * per_1000
+    assert stats.connectors_adversative == stats.connectors_additive == per_1000
+    assert stats.connectors_primary == stats.connectors_secondary == per_1000
+    assert stats.connectors_causal == 0
+    # A dictionary given replaces that of the class
+    assert CohesionStats(text_doc(), connectors={"and": ("additive", "primary")}).n_connectors == 1
+    assert English(text_doc(), connectors={}).n_connectors == 0
+
+
+def test_connectors_read_once_for_a_class():
+    calls = []
+
+    class Counted(CohesionStats):
+        @classmethod
+        def load_connectors(cls):
+            calls.append(cls)
+            return TEXT_CONNECTORS
+
+    Counted(text_doc())
+    Counted(text_doc())
+    assert calls == [Counted]
+    assert Counted.connector_matcher() is Counted.connector_matcher()
+    assert calls == [Counted]
+
+    class Own(ConnectorMatcher):
+        pass
+
+    class Child(Counted):
+        connector_matcher_class = Own
+
+    # A subclass builds its own matcher, of its own class
+    assert type(Child.connector_matcher()) is Own
+    assert type(Counted.connector_matcher()) is ConnectorMatcher
+    assert calls == [Counted, Child]
+
+
+def test_densities_by_the_classes_of_the_matcher():
+    class Contrast(ConnectorMatcher):
+        classes = ("contrast",)
+        kinds = ("single",)
+
+    class Own(CohesionStats):
+        connector_matcher_class = Contrast
+
+        @classmethod
+        def load_connectors(cls):
+            return {"however": ("contrast", "single")}
+
+    stats = Own(text_doc())
+    assert stats.connectors == stats.connectors_contrast == stats.connectors_single == 1000 / 17
+    assert not hasattr(stats, "connectors_causal")
+
+
+def test_temporal_features():
+    class Mood(CohesionStats):
+        temporal_features = ("tense", "mood")
+
+    assert Mood(text_doc()).temporal_cohesion == 1.0
+
+
+@pytest.mark.parametrize(
+    "features",
+    [("tense", "voice"), (), ("tense", "tense", "aspect"), "tense", ["tense"], (["tense"],)],
+)
+def test_temporal_features_must_be_distinct_known_ones(features):
+    with pytest.raises(ParameterError, match=r"^The temporal features of Bad must be one or more"):
+        type("Bad", (CohesionStats,), {"temporal_features": features})
+
+
+def test_sentences_by_an_extractor():
+    # Without boundaries the Doc is split by the default extractor over its text
+    assert CohesionStats(text_doc(starts=None)).n_sents == 3
+
+    class Halves(SentsExtractor):
+        def sentenize(self, text):
+            return [text[:23], text[24:]]
+
+    stats = CohesionStats(text_doc(), sents_extractor=Halves())
+    assert stats.words == (
+        ("The", "cat", "sat", "on", "the", "mat"),
+        ("It", "saw", "this", "bird", "However", "the", "bird", "and", "the", "cat", "slept"),
+    )
+
+
+def test_default_word_info():
+    doc = Doc(
+        VOCAB,
+        words=["My", "well", "-", "known", "Ann"],
+        spaces=[True, False, False, True, False],
+        pos=["DET", "ADJ", "PUNCT", "ADJ", "PROPN"],
+        lemmas=["my", "well", "-", "know", "Ann"],
+        morphs=["Poss=Yes", "Degree=Pos", "", "", ""],
+        sent_starts=[True, False, False, False, False],
+    )
+
+    class Hyphens(CohesionStats):
+        join_hyphens = True
+
+    stats = CohesionStats(doc)
+    assert stats.n_words == 4 and stats.n_pronouns == 1
+    word = Hyphens(doc).analyze(doc)[0][1]
+    assert word == CohesionWord(
+        "well-known", "well-known", "ADJ", False, False, False, False, True
+    )
+    assert stats.lemmas == (("my", "well", "know", "ann"),)
+
+
+def test_own_analysis():
+    class Words(CohesionStats):
+        def analyze(self, source):
+            return [
+                [
+                    CohesionWord(word, word.lower(), None, True, False, False, True, True)
+                    for word in sent.split()
+                ]
+                for sent in source.split(". ")
+            ] + [[]]
+
+    stats = Words("Cats sleep. Cats eat")
+    assert stats.words == (("Cats", "sleep"), ("Cats", "eat"))
+    assert stats.noun_overlap_adjacent == 1.0
+    assert isnan(stats.tense_repetition) and isnan(stats.temporal_cohesion)
+
+
+@pytest.mark.parametrize(
+    ("source", "kwargs", "error", "message"),
+    [
+        ("The cat", {}, SourceTypeError, MESSAGES["source_type"]),
+        (None, {"sents_extractor": "x"}, SourceTypeError, MESSAGES["sents_extractor_type"]),
+        (text_doc(pos=False), {}, SourceError, MESSAGES["no_pos"]),
+        (text_doc(lemmas=False), {}, SourceError, MESSAGES["no_lemmas"]),
+        (
+            Doc(VOCAB, words=[".", "!"], pos=["PUNCT", "PUNCT"], lemmas=[".", "!"]),
+            {},
+            SourceError,
+            MESSAGES["no_words"],
+        ),
+    ],
+)
+def test_cohesion_stats_errors(source, kwargs, error, message):
+    with pytest.raises(error, match=f"^{re.escape(message)}$"):
+        CohesionStats(text_doc() if source is None else source, **kwargs)

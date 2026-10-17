@@ -19,6 +19,8 @@ from .exceptions import ParameterError, SourceError, SourceTypeError
 if TYPE_CHECKING:
     from spacy.tokens import Doc, Span, Token
 
+    from .extractors import SentsExtractor
+
 # Punctuation, symbols, combining marks and invisible format characters
 PUNCTUATION_CATEGORIES = frozenset(
     ("Pc", "Pd", "Ps", "Pe", "Pi", "Pf", "Po", "Sm", "Sc", "Sk", "So", "Mn", "Mc", "Me", "Cf")
@@ -501,6 +503,49 @@ def _unit_word(unit: Sequence[Token]) -> tuple[int, int, str]:
     text = "".join(token.text for token in unit)
     word = text.lstrip("\ufeff")
     return unit[0].idx + len(text) - len(word), unit[-1].idx + len(unit[-1]), word
+
+
+def split_doc_units(
+    source: Doc | Span, sents_extractor: SentsExtractor, join_hyphens: bool = False
+) -> list[list[list[Token]]]:
+    """
+    Splitting the words of a Doc or Span object into the sentences of an extractor
+
+    Description:
+        The sentences of sents_extractor are found in the text of the source in
+        their order, and a word of iter_doc_units belongs to the sentence its
+        first token lies in; the words outside the sentences found (dropped by
+        the extractor) are left out, so with no sentence found there are no
+        words. For a Doc with no sentence boundaries, or one split otherwise
+
+    Arguments:
+        source (Doc|Span): Doc or Span object
+        sents_extractor (SentsExtractor): Sentence extraction tool
+        join_hyphens (bool): Join the parts of hyphenated words (iter_doc_units)
+
+    Returns:
+        list[list[list[Token]]]: Tokens of every word of every sentence
+    """
+    text = source.text
+    spans = []
+    cursor = 0
+    for sent in sents_extractor.extract(text):
+        start = text.find(sent, cursor)
+        if start != -1:
+            spans.append((start, start + len(sent)))
+            cursor = start + len(sent)
+    if not spans:
+        return []
+    units: list[list[list[Token]]] = [[] for _ in spans]
+    index = 0
+    offset = source.start_char if is_span(source) else 0
+    for unit in iter_doc_units(source, join_hyphens):
+        position = unit[0].idx - offset
+        while index + 1 < len(spans) and spans[index + 1][0] <= position:
+            index += 1
+        if spans[index][0] <= position < spans[index][1]:
+            units[index].append(unit)
+    return units
 
 
 def safe_divide(num: float | int, den: float | int, default: float | int = 0) -> float:

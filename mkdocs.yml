@@ -22,7 +22,9 @@ nav:
       - Readability metrics:
         - Metrics module: stats/readability_stats.md
         - Metric functions: stats/readability_stats_funcs.md
-      - Cohesion helpers: stats/cohesion.md
+      - Cohesion statistics:
+        - Metrics module: stats/cohesion_stats.md
+        - Metric functions: stats/cohesion_stats_funcs.md
       - Syntactic statistics:
         - Metrics module: stats/syntax_stats.md
         - Metric functions: stats/syntax_stats_funcs.md
@@ -51,7 +53,13 @@ nav:
       - Text highlighting: visualizers/highlight.md
     - Components: components.md
     - Datasets: datasets.md
-    - Utilities: utils.md
+    - Utilities:
+      - Words and tokens: utils/words.md
+      - Collections and phrases: utils/collections.md
+      - spaCy objects: utils/spacy.md
+      - Arithmetic: utils/arithmetic.md
+      - Input checks: utils/checks.md
+      - Labels and messages: utils/messages.md
 
 theme:
   name: material

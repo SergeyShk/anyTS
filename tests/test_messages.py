@@ -10,7 +10,7 @@ from spacy.tokens import Doc
 import anyts
 from anyts import CharNgramsExtractor, SentsExtractor, WordsExtractor
 from anyts.basic_stats import BasicStats
-from anyts.cohesion import ConnectorMatcher
+from anyts.cohesion_stats import CohesionStats, ConnectorMatcher
 from anyts.components import StatsComponent
 from anyts.constants import MESSAGES
 from anyts.corpus import sentence_rhythm, split_windows
@@ -103,6 +103,10 @@ class Phon(PhonStats):
 
 
 class Syntax(SyntaxStats):
+    messages = OWN
+
+
+class Cohesion(CohesionStats):
     messages = OWN
 
 
@@ -225,6 +229,20 @@ CASES = [
     ("source_type", SourceTypeError, lambda: Syntax("Yes")),
     ("no_parse", SourceError, lambda: Syntax(Doc(VOCAB, words=["Yes"]))),
     ("no_lemmas", SourceError, lambda: Lemmas(PARSED)),
+    ("source_type", SourceTypeError, lambda: Cohesion("Yes")),
+    ("sents_extractor_type", SourceTypeError, lambda: Cohesion(PARSED, sents_extractor="x")),
+    ("no_pos", SourceError, lambda: Cohesion(PARSED)),
+    ("no_lemmas", SourceError, lambda: Cohesion(Doc(VOCAB, words=["Yes"], pos=["INTJ"]))),
+    (
+        "no_words",
+        SourceError,
+        lambda: Cohesion(Doc(VOCAB, words=["."], pos=["PUNCT"], lemmas=["."])),
+    ),
+    (
+        "temporal_features",
+        ParameterError,
+        lambda: type("Bad", (Cohesion,), {"temporal_features": ("voice",)}),
+    ),
     ("no_words", SourceError, lambda: Syntax(Doc(VOCAB, words=["."], heads=[0], deps=["ROOT"]))),
     (
         "phon_classes",

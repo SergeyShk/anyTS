@@ -40,6 +40,7 @@ from anyts.utils import (
     safe_divide,
     safe_mean,
     shannon_entropy,
+    split_doc_units,
 )
 
 
@@ -508,3 +509,39 @@ def test_shannon_entropy():
     counts = Counter("aab")
     counts.subtract("aa")
     assert shannon_entropy(counts) == 0.0
+
+
+def test_split_doc_units():
+    from anyts.extractors import SentsExtractor
+
+    class Fixed(SentsExtractor):
+        def __init__(self, sents):
+            super().__init__()
+            self.sents = sents
+
+        def sentenize(self, text):
+            return self.sents
+
+    doc = Doc(
+        spacy.blank("xx").vocab,
+        words=["One", "well", "-", "known", ".", "Two", ".", "Three"],
+        spaces=[True, False, False, False, True, False, True, False],
+    )
+
+    def texts(units):
+        return [["".join(token.text for token in unit) for unit in sent] for sent in units]
+
+    assert texts(split_doc_units(doc, Fixed(["One well-known.", "Two.", "Three"]))) == [
+        ["One", "well", "known"],
+        ["Two"],
+        ["Three"],
+    ]
+    # A sentence the extractor drops leaves its words out; joined parts are one word
+    assert texts(split_doc_units(doc, Fixed(["One well-known.", "Three"]), join_hyphens=True)) == [
+        ["One", "well-known"],
+        ["Three"],
+    ]
+    assert split_doc_units(doc, Fixed([])) == []
+    # A Span: the sentences are found in its own text
+    assert texts(split_doc_units(doc[5:], Fixed(["Two.", "Three"]))) == [["Two"], ["Three"]]
+    assert split_doc_units(doc, Fixed(["Four"])) == []
