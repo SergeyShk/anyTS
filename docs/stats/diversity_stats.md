@@ -9,13 +9,13 @@
 A class for computing the main [lexical diversity](https://en.wikipedia.org/wiki/Lexical_diversity) metrics of a text from its words.
 
 !!! note "Note"
-    The metrics are computed by accessing the corresponding attribute or by calling the `get_stats` method of the `DiversityStats` object.
+    The metrics are computed by accessing an attribute or by calling `get_stats`.
 <!-- --8<-- [end:DiversityStats] -->
 
 ## Language hooks
 
 <!-- --8<-- [start:DiversityStats-hooks] -->
-The class takes the words as given: a language library extracts them from its sources (a string, a `Doc` object of [spaCy](https://github.com/explosion/spaCy)) with its own extractor and lower-cases them, since every metric counts lexemes. The metrics of `get_stats` and the printed table of `print_stats` take their texts from two class attributes that a library overrides in a subclass: `stats_desc`, the metrics with their descriptions, and `stats_headers`, the headers of the two columns. The messages of its errors come from the class attribute `messages`.
+The class takes the words as given: a language library extracts them from its sources (a string, a [spaCy](https://github.com/explosion/spaCy) `Doc`) and lower-cases them, since every metric counts lexemes. A library overrides two class attributes in a subclass: `stats_desc`, the metrics of `get_stats` with their descriptions for `print_stats`, and `stats_headers`, the two column headers of `print_stats`. Error messages come from the class attribute `messages`.
 <!-- --8<-- [end:DiversityStats-hooks] -->
 
 ## Parameters
@@ -38,7 +38,7 @@ The parameters are checked by `check_params(window_len, mtld_threshold, mtld_min
 ## Conventions { #conventions }
 
 <!-- --8<-- [start:DiversityStats-conventions] -->
-The values of some metrics depend on conventions that differ between libraries. All of them except the comparison with the MTLD threshold are class parameters:
+Some metrics depend on conventions that differ between libraries. All of them except the comparison with the MTLD threshold are class parameters:
 
 | Parameter | Default | Other libraries |
 | :-------: | :-----: | :-------------: |
@@ -46,10 +46,10 @@ The values of some metrics depend on conventions that differ between libraries. 
 | MATTR window and MSTTR segment | 50 | quanteda and koRpus - 100 |
 | TTR threshold for MTLD | 0.72 | 0.66-0.75 in the literature |
 | Comparison with the MTLD threshold | a factor closes at TTR ≤ 0.72 (McCarthy & Jarvis, 2010) | lexical-diversity and TAALED - strict `<`; the values differ when TTR hits the threshold exactly |
-| Minimum MTLD factor length | 10 | koRpus applies it only to MTLD-MA and drops the shorter factors instead of extending them, LexicalRichness and textcomplexity do not apply it |
+| Minimum MTLD factor length | 10 | koRpus - only in MTLD-MA, dropping shorter factors instead of extending them; LexicalRichness and textcomplexity - not applied |
 | HD-D sample size | 42 | 35-50 in the literature |
 
-According to Zenker and Kyle (2021), MATTR, MTLD and HD-D are stable on texts of 50-200 words and longer, MTLD-W, MA-MTLD and Maas are unstable on short texts, and the TTR family never stabilizes. To compare texts of different lengths use the [windowed computation](#windowed) with confidence intervals.
+According to Zenker and Kyle (2021), MATTR, MTLD and HD-D are stable on texts of 50-200 words and longer, MTLD-W, MA-MTLD and Maas are unstable on short texts, and the TTR family never stabilizes. Texts of different lengths are compared by the [windowed computation](#windowed) with confidence intervals.
 <!-- --8<-- [end:DiversityStats-conventions] -->
 
 ## Attributes
@@ -58,7 +58,7 @@ According to Zenker and Kyle (2021), MATTR, MTLD and HD-D are stable on texts of
 | Attribute | Type | Description |
 | :-------: | :--: | :---------: |
 | `words` | tuple[str] | Tuple of the words |
-| `window_len`, `mtld_threshold`, `mtld_min_len`, `hdd_sample_size`, `log_base` | int/float | The parameters of the metrics; changing them on the object changes the metrics |
+| `window_len`, `mtld_threshold`, `mtld_min_len`, `hdd_sample_size`, `log_base` | int/float | Parameters of the metrics, changeable on the object |
 | `frequency_spectrum` | dict[int, int] | Frequency spectrum - the number of lexemes with a given frequency |
 | `ttr` | float | Type-Token Ratio (TTR) |
 | `rttr` | float | Root Type-Token Ratio (RTTR) |
@@ -95,7 +95,7 @@ According to Zenker and Kyle (2021), MATTR, MTLD and HD-D are stable on texts of
 | `heaps_beta` | float | Heaps' law exponent |
 
 !!! note "Note"
-    Every metric can also be computed by its function; the metrics and their functions are described in the corresponding [section](diversity_stats_funcs.md).
+    Every metric can also be computed by its [function](diversity_stats_funcs.md).
 <!-- --8<-- [end:DiversityStats-attributes] -->
 
 ## Methods
@@ -103,7 +103,7 @@ According to Zenker and Kyle (2021), MATTR, MTLD and HD-D are stable on texts of
 ### windowed
 
 <!-- --8<-- [start:DiversityStats-windowed] -->
-Windowed computation of a metric by its name, as in [`calc_windowed`](diversity_stats_funcs.md#calc_windowed): its value over consecutive text windows of equal length, the mean, the sample standard deviation and the confidence interval of the mean by Student's distribution. The edge cases (short texts, `nan` and infinite values) are described there.
+Windowed computation of a metric by its name with [`calc_windowed`](diversity_stats_funcs.md#calc_windowed): the mean of its values over consecutive windows of equal length, the sample standard deviation and the confidence interval of the mean. The edge cases (short texts, `nan` and infinite values) are described there.
 
 Parameters:
 
@@ -111,7 +111,7 @@ Parameters:
 | :-------: | :--: | :-----: | :---------: |
 | `stat` | str | `-` | Metric name from `get_stats` |
 | `window_len` | int | `100` | Window size |
-| `step` | int | `None` | Window step, by default equal to the window size (windows do not overlap) |
+| `step` | int | `None` | Window step, by default the window size (windows do not overlap) |
 | `confidence` | float | `0.95` | Confidence level |
 
 Returns a `WindowStats` named tuple with the fields `mean`, `std`, `lower`, `upper` and `n_windows`. An unknown metric name raises `UnknownStatError`.
