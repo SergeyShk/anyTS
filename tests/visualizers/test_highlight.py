@@ -575,9 +575,14 @@ def test_find_phrase_highlights_normalizes_every_word_alone():
     ]
     # A normalization that is not idempotent is applied once
     stems = find_phrase_highlights(
-        words_of("glad to"), ["glad"], "phrases", lambda p: p, lambda w: w[:3]
+        words_of("glad to"), ["glad"], "phrases", lambda p: p, lambda w: w[:-1]
     )
     assert [h.note for h in stems] == ["glad"]
+
+
+def test_find_phrase_highlights_reads_a_set_in_order():
+    found = find_phrase_highlights(words_of("In fact"), {"in fact", "In fact"}, "phrases")
+    assert [h.note for h in found] == ["\u00abIn fact\u00bb"]
 
 
 @pytest.mark.parametrize("phrases", ["in fact", ["in fact", 1], {"in fact": 1}])

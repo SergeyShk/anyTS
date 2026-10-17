@@ -130,7 +130,7 @@ The layers that the languages share are found by functions that take the languag
 <!-- --8<-- [end:find_words] -->
 
 <!-- --8<-- [start:find_phrase_highlights] -->
-`find_phrase_highlights(words, phrases, layer, note, normalize)` - a layer of the phrases of a list, such as compound prepositions, clichés or parentheticals: the phrases are matched by the normalized forms of their words, every word normalized alone as in the text (`find_phrases`), and a mapping gives their variants - contractions, forms of verbs - with the phrase each stands for, the first of the variants that normalize alike winning. A fragment covers the words from the first to the last, and the note reads the phrase of the list, in quotes by default.
+`find_phrase_highlights(words, phrases, layer, note, normalize)` - a layer of the phrases of a list, such as compound prepositions, clichés or parentheticals: the phrases are matched by the normalized forms of their words, every word normalized alone as in the text (`find_phrases`), and a mapping gives their variants - contractions, forms of verbs - with the phrase each stands for, the first of the variants that normalize alike winning; a set of phrases is read in order (`in_order`). A fragment covers the words from the first to the last, and the note reads the phrase of the list, in quotes by default.
 <!-- --8<-- [end:find_phrase_highlights] -->
 
 <!-- --8<-- [start:find_connector_highlights] -->

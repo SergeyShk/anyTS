@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import html
 import re
-from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
+from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from itertools import pairwise
 from types import MappingProxyType
@@ -20,6 +20,7 @@ from ..utils import (
     check_words,
     find_phrases,
     has_sents,
+    in_order,
     is_doc,
     iter_doc_tokens,
 )
@@ -700,7 +701,7 @@ def find_words(
 
 def find_phrase_highlights(
     words: Sequence[Word],
-    phrases: Mapping[str, str] | Iterable[str],
+    phrases: Mapping[str, str] | Collection[str],
     layer: str,
     note: Callable[[str], str] | None = None,
     normalize: Callable[[str], str] = str.lower,
@@ -710,11 +711,12 @@ def find_phrase_highlights(
 
     Description:
         The phrases are matched by the normalized forms of their words, every
-        word normalized alone as in the text (find_phrases); a mapping gives the variants of the phrases of a list -
-        their contractions, the forms of their verbs - with the phrase each
-        stands for, the first of the variants that normalize alike winning. A
-        fragment covers the words from the first to the last, and the note
-        reads the phrase of the list
+        word normalized alone as in the text (find_phrases); a mapping gives
+        the variants of the phrases of a list - their contractions, the forms
+        of their verbs - with the phrase each stands for, the first of the
+        variants that normalize alike winning, and a set is read in order
+        (in_order). A fragment covers the words from the first to the last,
+        and the note reads the phrase of the list
 
     Arguments:
         words (list[Word]): Words with their positions
@@ -737,8 +739,7 @@ def find_phrase_highlights(
         check_words(list(phrases.values()), "phrases")
         pairs: Iterable[tuple[str, str]] = phrases.items()
     else:
-        pairs = ((phrase, phrase) for phrase in phrases)
-    # Every word is normalized once and alone, in the phrases as in the text
+        pairs = ((phrase, phrase) for phrase in in_order(phrases))
     forms: dict[str, str] = {}
     for variant, phrase in pairs:
         forms.setdefault(" ".join(normalize(part) for part in variant.split()), phrase)
