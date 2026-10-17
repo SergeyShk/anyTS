@@ -6,7 +6,7 @@
 ## Description
 
 <!-- --8<-- [start:PhonStats] -->
-The phonetic statistics of a text: the shares of the vowels, the sonorants and the voiced and voiceless obstruents, the ratio of the consonants to the vowels, the consonant clusters, the hiatuses, the entropy of the CV patterns of the words, the hardness, the alliteration and the assonance, the open syllables and the mean length of a syllable. A sound is a letter of a word by default, or a sound of its transcription when a library gives one. The data source can be a text or a `Doc` object of [spaCy](https://github.com/explosion/spaCy); the words are taken in lower case, and an extractor passed explicitly is used on the text of a `Doc`.
+The phonetic statistics of a text: the shares of the vowels, the sonorants and the voiced and voiceless obstruents, the ratio of the consonants to the vowels, the consonant clusters, the hiatuses, the entropy of the CV patterns of the words, the hardness, the alliteration and the assonance, the open syllables and the mean length of a syllable. A sound is a letter of a word by default, or a sound of its transcription when a library gives one. The data source is a text or a `Doc` object of [spaCy](https://github.com/explosion/spaCy); the words are taken in lower case, and an extractor passed explicitly is used on the text of a `Doc`.
 
 A source that is neither a string nor a `Doc` and an extractor of another type raise `SourceTypeError`, a source without words `SourceError`, a window that is not an integer of at least 2 `ParameterError`.
 <!-- --8<-- [end:PhonStats] -->
@@ -18,13 +18,13 @@ A language library subclasses `PhonStats`:
 
 | Hook | Kind | Description |
 | :--: | :--: | :---------: |
-| `vowels`, `sonorants`, `voiced`, `voiceless` | class attributes | Classes of the sounds - the vowels, the sonorants and the voiced and voiceless obstruents; the consonants are the last three, and the classes and `skipped` must not overlap, checked when the class is defined |
+| `vowels`, `sonorants`, `voiced`, `voiceless` | class attributes | Classes of the sounds - the vowels, the sonorants and the voiced and voiceless obstruents; the last three are the consonants. The classes and `skipped` must not overlap, checked when the class is defined |
 | `skipped` | class attribute | Sounds that neither count nor break a consonant cluster, such as a sign that marks the consonant before it |
 | `glides` | class attribute | Vowels that make no hiatus after a vowel, such as a letter that writes a glide and a vowel |
 | `transcribe(word)` | method | Sounds of a word; its letters by default |
-| `syllabify(word)` | method | Syllables of a word as it writes them; an abstract method, since syllables depend on the language |
+| `syllabify(word)` | method | Syllables of a word as it writes them; an abstract method |
 | `syllable_sounds(word)` | method | Sounds of every syllable of a word; the transcription of every syllable of `syllabify` by default |
-| `word_hiatus(word)` | method | Number of the hiatuses of a word; its runs of vowels by `count_hiatus` with `glides` by default, otherwise for instance the vowels at the boundaries of its syllables |
+| `word_hiatus(word)` | method | Number of the hiatuses of a word; its runs of vowels by `count_hiatus` with `glides` by default, or for instance the vowels at the boundaries of its syllables |
 | `doc_words(doc)` | method | Words of a `Doc`; those of `iter_doc_words` in lower case by default |
 | `words_extractor_class`, `join_hyphens` | class attributes | Word extractor of a string, joining of the hyphenated words of a `Doc` |
 | `stats_desc`, `stats_headers` | class attributes | Statistics of `get_stats` with their descriptions, headers of the columns for `print_stats` |

@@ -6,7 +6,7 @@
 ## Description
 
 <!-- --8<-- [start:LexicalStats] -->
-Lexical sophistication in the manner of TAALES (Kyle, Crossley and Berger, 2018) - how rare the words of a text are in the language: the mean frequency, range and dispersion of the words by a frequency dictionary, the surprisal and the perplexity by its unigram model, the shares of the frequency bands of a list of the most frequent lemmas and the lexical density, the share of the content words. The statistics by the dictionary are computed when first read, so the bands and the lexical density need no dictionary data.
+Lexical sophistication in the manner of TAALES (Kyle, Crossley and Berger, 2018) - how rare the words of a text are: the mean frequency, range and dispersion of the words by a frequency dictionary, the surprisal and the perplexity by its unigram model, the shares of the frequency bands of a list of the most frequent lemmas and the lexical density, the share of the content words. The statistics by the dictionary are computed when first read, so the bands and the lexical density need no dictionary data.
 
 A dictionary of another class than that of the library raises `SourceTypeError`, a source without words `SourceError`.
 <!-- --8<-- [end:LexicalStats] -->
@@ -18,15 +18,15 @@ A language library subclasses `LexicalStats`:
 
 | Hook | Kind | Description |
 | :--: | :--: | :---------: |
-| `analyze(source)` | method | The words of a source as `LexicalWord`: the word, its lemma and whether it is a content word; an abstract method, since the lemmas and the parts of speech depend on the language. Numbers (`is_number` of `anyts.utils`) are not words |
+| `analyze(source)` | method | The words of a source as `LexicalWord`: the word, its lemma and whether it is a content word; an abstract method. Numbers (`is_number` of `anyts.utils`) are not words |
 | `freq_dict_class` | class attribute | Class of the frequency dictionary, made without arguments when none is given; a dictionary of another class is refused |
-| `dictionary_keys()` | method | Keys of the words in the dictionary; the lemmas by default, otherwise for instance a proper noun by its form |
+| `dictionary_keys()` | method | Keys of the words in the dictionary; the lemmas by default, or for instance a proper noun by its form |
 | `rank(lemma)` | method | Rank of a lemma in the list of the most frequent lemmas, `None` out of it; no list by default |
 | `top_size()` | method | Size of the list, the upper bound of `band_coverage`; 10000 by default |
 | `stats_desc`, `stats_headers` | class attributes | Statistics of `get_stats` with their descriptions, headers of the columns for `print_stats` |
 | `messages` | class attribute | Messages of the errors by key; `MESSAGES` by default |
 
-The parameters of a library - a pipeline that parses a string, a word extractor - are those of its `__init__`, which passes the source and the dictionary on.
+A library takes its own parameters, such as a pipeline or a word extractor, in its `__init__` and passes the source and the dictionary on.
 <!-- --8<-- [end:LexicalStats-hooks] -->
 
 ## Frequency dictionary { #FrequencyDictionary }
@@ -84,7 +84,7 @@ The other methods - `get_stats`, `to_dataframe`, `print_stats` and `describe` - 
 ### calc_surprisal
 
 <!-- --8<-- [start:calc_surprisal] -->
-The mean surprisal of the words by the unigram model of a frequency dictionary, in bits; a word out of the dictionary gets its lowest frequency `min_ipm`, so every word has a surprisal. The perplexity is 2 to its power.
+The mean surprisal of the words by the unigram model of a frequency dictionary, in bits; a word out of the dictionary gets its lowest frequency `min_ipm`. The perplexity is 2 to its power.
 
 Formula:
 

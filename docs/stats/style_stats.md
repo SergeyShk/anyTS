@@ -6,9 +6,9 @@
 ## Description
 
 <!-- --8<-- [start:StyleStats] -->
-The style metrics of a text: the SEO metrics of the services Advego and Text.ru - the classic and the academic nausea, the water content, the spam score, the naturalness by Zipf's law and the density of keywords - and the markers of the officialese style: the verbal nouns, the compound prepositions, the parenthetical expressions and the cliches. The services do not publish their formulas, so the common definitions are taken; they are given in the functions below. The data source can be a text or a `Doc` object of [spaCy](https://github.com/explosion/spaCy).
+The style metrics of a text: the SEO metrics of Advego and Text.ru - the classic and the academic nausea, the water content, the spam score, the naturalness by Zipf's law and the keyword density - and the markers of the officialese style: the verbal nouns, the compound prepositions, the parenthetical expressions and the cliches. The services publish no formulas, so the common definitions are taken, as the metric functions give them. The data source is a text or a `Doc` object of [spaCy](https://github.com/explosion/spaCy).
 
-The words of a string come from the word extractor, in lower case by default; the words of a `Doc` come from its tokens, and an extractor passed explicitly is used on the text of a `Doc`. The SEO metrics are counted on these words; the markers on the word forms in lower case (`forms`), whatever the extractor.
+The SEO metrics are counted on the words of the word extractor, in lower case by default, or on the tokens of a `Doc`; an extractor passed explicitly is used on the text of a `Doc`. The markers are counted on the word forms in lower case (`forms`), whatever the extractor.
 
 A source that is neither a string nor a `Doc`, an extractor of another type and a list that is not a list of strings raise `SourceTypeError`, a source without words `SourceError`, a `top_n` that is not an integer of at least one `ParameterError`.
 <!-- --8<-- [end:StyleStats] -->
@@ -16,20 +16,20 @@ A source that is neither a string nor a `Doc`, an extractor of another type and 
 ## Language hooks
 
 <!-- --8<-- [start:StyleStats-hooks] -->
-A language library subclasses `StyleStats`; by default the hooks know no language, so the stopwords, the water, the markers and the verbal nouns are empty:
+A language library subclasses `StyleStats`; by default the hooks know no language, so there are no stopwords, water, markers or verbal nouns:
 
 | Hook | Kind | Description |
 | :--: | :--: | :---------: |
 | `words_extractor_class` | class attribute | Word extractor of a string and of the forms; `WordsExtractor` by default |
 | `join_hyphens` | class attribute | Join the parts of the hyphenated words of a `Doc` |
-| `compound_prepositions_list`, `parentheticals_list`, `cliches_list` | class attributes | Compound prepositions, parenthetical expressions and cliches, checked as lists of strings when the class is defined; the parameter `cliches` takes the place of the last |
+| `compound_prepositions_list`, `parentheticals_list`, `cliches_list` | class attributes | Compound prepositions, parenthetical expressions and cliches, checked as lists of strings when the class is defined; the parameter `cliches` replaces the last |
 | `normalize(word)` | method | Normalized form of a word or a phrase, by which the lists are compared; the lower case by default |
 | `doc_words(doc)` | method | Words of a `Doc`; the words of `iter_doc_words` in lower case by default |
 | `is_stopword(word)` | method | Whether a word is a stopword of the academic nausea, when `nausea_stopwords` is not given |
 | `is_water_word(word)` | method | Whether a word is water, when `stopwords` is not given; `is_stopword` by default |
 | `is_parenthetical(word)` | method | Whether a word is a parenthetical expression by itself, outside the phrases of `parentheticals_list` |
 | `expand_phrases(text, phrases)` | method | Variants of the phrases in the forms of a text (the forms of a verb, contractions), each with its phrase |
-| `nouns()` | method | Word forms of the nouns of the text with their lemmas; none by default, so the share of the verbal nouns is `nan` |
+| `nouns()` | method | Word forms of the nouns with their lemmas; none by default, so the share of the verbal nouns is `nan` |
 | `is_verbal_noun(lemma)` | method | Whether the lemma of a noun is a verbal noun |
 | `level_scales` | class attribute | Norms of the services by metric for `describe` |
 | `stats_desc`, `stats_headers` | class attributes | Metrics of `get_stats` with their descriptions, headers of the columns for `print_stats` |
@@ -68,7 +68,7 @@ A set of words is taken in sorted order.
 | `parentheticals` | float | Parenthetical expressions per 100 words |
 | `cliches` | float | Cliches per 100 words |
 
-The metrics are properties computed on each access. A parenthetical expression is a phrase of `parentheticals_list` or a word of `is_parenthetical` outside those phrases; the phrases of the three lists are found with the variants of `expand_phrases`.
+The metrics are properties computed on each access. A parenthetical expression is a phrase of `parentheticals_list` or a word of `is_parenthetical` outside those phrases; the phrases of the three lists are found with their variants (`expand_phrases`).
 <!-- --8<-- [end:StyleStats-attributes] -->
 
 ## Methods
@@ -82,7 +82,7 @@ The metrics are properties computed on each access. A parenthetical expression i
 ### markers
 
 <!-- --8<-- [start:StyleStats-markers] -->
-Returns the markers of the officialese found in the text by metric - `verbal_nouns`, `compound_prepositions`, `parentheticals`, `cliches` - as the forms write them, in the order of the text.
+Returns the markers of the officialese found by metric - `verbal_nouns`, `compound_prepositions`, `parentheticals`, `cliches` - as the forms write them, in the order of the text.
 <!-- --8<-- [end:StyleStats-markers] -->
 
 The other methods - `get_stats`, `to_dataframe`, `print_stats` and `describe` - are those of the [statistics interface](stats.md).
