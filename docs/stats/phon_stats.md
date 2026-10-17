@@ -6,7 +6,7 @@
 ## Description
 
 <!-- --8<-- [start:PhonStats] -->
-The phonetic statistics of a text: the shares of the vowels and of the sonorant, voiced and voiceless consonants, the ratio of the consonants to the vowels, the consonant clusters, the hiatuses, the entropy of the CV patterns of the words, the hardness, the alliteration and the assonance, the open syllables and the mean length of a syllable. A sound is a letter of a word by default, or a sound of its transcription when a library gives one. The data source can be a text or a `Doc` object of [spaCy](https://github.com/explosion/spaCy); the words are taken in lower case, and an extractor passed explicitly is used on the text of a `Doc`.
+The phonetic statistics of a text: the shares of the vowels, the sonorants and the voiced and voiceless obstruents, the ratio of the consonants to the vowels, the consonant clusters, the hiatuses, the entropy of the CV patterns of the words, the hardness, the alliteration and the assonance, the open syllables and the mean length of a syllable. A sound is a letter of a word by default, or a sound of its transcription when a library gives one. The data source can be a text or a `Doc` object of [spaCy](https://github.com/explosion/spaCy); the words are taken in lower case, and an extractor passed explicitly is used on the text of a `Doc`.
 
 A source that is neither a string nor a `Doc` and an extractor of another type raise `SourceTypeError`, a source without words `SourceError`, a window that is not an integer of at least 2 `ParameterError`.
 <!-- --8<-- [end:PhonStats] -->
@@ -18,7 +18,7 @@ A language library subclasses `PhonStats`:
 
 | Hook | Kind | Description |
 | :--: | :--: | :---------: |
-| `vowels`, `sonorants`, `voiced`, `voiceless` | class attributes | Classes of the sounds; the consonants are the last three |
+| `vowels`, `sonorants`, `voiced`, `voiceless` | class attributes | Classes of the sounds - the vowels, the sonorants and the voiced and voiceless obstruents; the consonants are the last three, and the classes and `skipped` must not overlap, checked when the class is defined |
 | `skipped` | class attribute | Sounds that neither count nor break a consonant cluster, such as a sign that marks the consonant before it |
 | `glides` | class attribute | Vowels that make no hiatus after a vowel, such as a letter that writes a glide and a vowel |
 | `transcribe(word)` | method | Sounds of a word; its letters by default |
@@ -47,10 +47,11 @@ A language library subclasses `PhonStats`:
 | Attribute | Type | Description |
 | :-------: | :--: | :---------: |
 | `words` | tuple[str] | Words in lower case |
+| `window_len` | int | Window of the alliteration and the assonance |
 | `syllables`, `sounds` | tuple | Syllables (`syllabify`) and sounds (`transcribe`) of every word |
 | `n_vowels`, `n_sonorants`, `n_voiced`, `n_voiceless`, `n_consonants` | int | Numbers of the sounds by class |
 | `c_clusters` | dict[int, int] | Number of the consonant clusters by length (`consonant_clusters`) |
-| `c_syllable_patterns` | dict[str, int] | Number of the syllables by CV pattern |
+| `c_syllable_patterns` | dict[str, int] | Number of the syllables by CV pattern; a syllable without a sound of the classes (a number) is no syllable |
 | `p_vowels`, `p_sonorants`, `p_voiced`, `p_voiceless` | float | Shares of the sounds by class |
 | `consonant_vowel_ratio` | float | Ratio of the consonants to the vowels |
 | `p_heavy_clusters` | float | Share of the clusters of three consonants or more |
@@ -80,9 +81,9 @@ The methods `get_stats`, `to_dataframe`, `print_stats` and `describe` are those 
 `count_hiatus(sounds, vowels, glides)` counts the hiatuses of a word by its vowels in a row: a run of two vowels or more is one hiatus, and a vowel of `glides` after a vowel makes none.
 <!-- --8<-- [end:count_hiatus] -->
 
-<!-- --8<-- [start:check_params-phon] -->
+<!-- --8<-- [start:PhonStats-check_params] -->
 `check_params(window_len, *, messages)` checks the window of the alliteration and the assonance: one that is not an integer of at least 2 raises `ParameterError`.
-<!-- --8<-- [end:check_params-phon] -->
+<!-- --8<-- [end:PhonStats-check_params] -->
 
 ## Usage example
 

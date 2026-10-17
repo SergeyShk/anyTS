@@ -186,3 +186,25 @@ def test_check_params_and_messages():
 def test_syllabify_is_required():
     with pytest.raises(TypeError, match="abstract"):
         PhonStats(TEXT)
+
+
+def test_syllables_without_sounds():
+    stats = English("1999 2020")
+    assert isnan(stats.p_open_syllables) and isnan(stats.mean_syllable_len)
+    assert stats.c_syllable_patterns == {}
+    with_number = English(TEXT + " 1999")
+    assert with_number.c_syllable_patterns == English(TEXT).c_syllable_patterns
+    assert with_number.mean_syllable_len == English(TEXT).mean_syllable_len
+
+
+@pytest.mark.parametrize(
+    ("attributes", "message"),
+    [
+        ({"voiced": VOICED | SONORANTS}, "sonorants and voiced of Bad overlap"),
+        ({"vowels": VOWELS | {"y"}}, "vowels and sonorants of Bad overlap: \\['y'\\]"),
+        ({"skipped": frozenset("t")}, "voiceless and skipped of Bad overlap"),
+    ],
+)
+def test_classes_of_sounds_are_disjoint(attributes, message):
+    with pytest.raises(ParameterError, match=message):
+        type("Bad", (English,), attributes)

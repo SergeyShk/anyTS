@@ -168,6 +168,7 @@ MESSAGES = {
     "bands_type": "The bounds of the bands must be a list, not {type}",
     "band_bound": "A bound of a band must be an integer from 1 to {size}, not {band}",
     "phon_window_len": "The size of a window must be at least 2",
+    "phon_classes": "The sounds of {first} and {second} of {cls} overlap: {sounds}",
     "tokenizer": "The tokenizer is set incorrectly",
     "tokenizer_iterable": "The tokenizer must return an iterable object",
     "tokenizer_strings": "The tokenizer must return strings, not {type}",

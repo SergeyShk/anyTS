@@ -4,7 +4,7 @@ from abc import ABCMeta, abstractmethod
 from collections import Counter
 from collections.abc import Collection, Mapping, Sequence
 from math import log2, nan
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from .constants import MESSAGES, PHON_STATS_DESC, PHON_WINDOW_LEN
 from .exceptions import ParameterError, SourceError, SourceTypeError
@@ -38,11 +38,12 @@ class PhonStats(Stats, metaclass=ABCMeta):
     Base of the phonetic statistics of a text
 
     Description:
-        The sounds of a text: the shares of the vowels and of the sonorant,
-        voiced and voiceless consonants, the consonant clusters, the hiatuses,
+        The sounds of a text: the shares of the vowels, the sonorants and the
+        voiced and voiceless obstruents, the consonant clusters, the hiatuses,
         the entropy of the CV patterns of the words, the hardness, the
         alliteration and the assonance (calc_repetition_index), the open
-        syllables and the mean length of a syllable. A language library
+        syllables and the mean length of a syllable; a syllable without a
+        sound of the classes (a number) is no syllable. A language library
         subclasses the class, sets its classes of sounds and implements
         syllabify; its sounds are the letters of a word by default, or the
         sounds of its transcription (transcribe). Hardness is the voiceless
@@ -86,8 +87,9 @@ class PhonStats(Stats, metaclass=ABCMeta):
     Class attributes:
         words_extractor_class (type[WordsExtractor]): Word extractor of a string
         join_hyphens (bool): Join the parts of the hyphenated words of a Doc
-        vowels, sonorants, voiced, voiceless (frozenset[str]): Classes of the sounds
-        skipped (frozenset[str]): Sounds that keep a consonant cluster whole
+        vowels, sonorants, voiced, voiceless (frozenset[str]): Classes of the sounds: the
+            vowels, the sonorants and the voiced and voiceless obstruents, disjoint
+        skipped (frozenset[str]): Sounds that keep a consonant cluster whole, in no class
         glides (frozenset[str]): Vowels that make no hiatus after a vowel
         stats_desc (dict[str, str]): Statistics of get_stats and their descriptions for
             print_stats
@@ -96,7 +98,8 @@ class PhonStats(Stats, metaclass=ABCMeta):
         SourceTypeError: If the source is neither a string nor a Doc object or the
             extractor is of another type
         SourceError: If the source has no words
-        ParameterError: If the window is not an integer or is below 2
+        ParameterError: If the window is not an integer or is below 2; when a class is
+            defined, if its classes of sounds or skipped overlap
     """
 
     words_extractor_class: ClassVar[type[WordsExtractor]] = WordsExtractor
@@ -108,6 +111,18 @@ class PhonStats(Stats, metaclass=ABCMeta):
     skipped: ClassVar[frozenset[str]] = frozenset()
     glides: ClassVar[frozenset[str]] = frozenset()
     stats_desc: ClassVar[Mapping[str, str]] = PHON_STATS_DESC
+
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        super().__init_subclass__(**kwargs)
+        classes = ("vowels", "sonorants", "voiced", "voiceless", "skipped")
+        for index, first in enumerate(classes):
+            for second in classes[index + 1 :]:
+                if shared := getattr(cls, first) & getattr(cls, second):
+                    raise ParameterError(
+                        cls.messages["phon_classes"].format(
+                            first=first, second=second, cls=cls.__name__, sounds=sorted(shared)
+                        )
+                    )
 
     def __init__(
         self,
@@ -145,7 +160,8 @@ class PhonStats(Stats, metaclass=ABCMeta):
             for sound, number in Counter(word_sounds).items():
                 sounds[sound] += number * count
             for syllable in self.syllable_sounds(word):
-                syllables[tuple(syllable)] += count
+                if cv_pattern(syllable, self.vowels, consonants):
+                    syllables[tuple(syllable)] += count
             for size in consonant_clusters(word_sounds, consonants, self.skipped):
                 clusters[size] += count
             if pattern := cv_pattern(word_sounds, self.vowels, consonants):

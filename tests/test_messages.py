@@ -209,6 +209,11 @@ CASES = [
     ("bands_type", ParameterError, lambda: Lexical(TEXT, Frequencies()).band_coverage(5)),
     ("band_bound", ParameterError, lambda: Lexical(TEXT, Frequencies()).band_coverage([0])),
     ("phon_window_len", ParameterError, lambda: Phon(TEXT, window_len=1)),
+    (
+        "phon_classes",
+        ParameterError,
+        lambda: type("Bad", (Phon,), {"vowels": frozenset("a"), "skipped": frozenset("a")}),
+    ),
 ]
 
 
