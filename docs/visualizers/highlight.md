@@ -24,8 +24,10 @@ The core has no layers of its own: a language library subclasses `HighlightedTex
 | `find(layer, words, sents, doc)` | method | The fragments of a layer: a list of `Highlight` from the words and the sentences of the text and the `Doc` (`None` for a string) |
 | `iter_words(text)`, `iter_sents(text)` | methods | The words and the sentences of a string as triples of the start, the end and the text; by default those of the default tokenizers of `WordsExtractor` and `SentsExtractor` |
 | `doc_words(doc)` | method | The words of a `Doc`; by default `get_doc_words` |
+| `annotation_names` | class attribute | Names of the annotations in the message of a layer a source does not allow, `dict[str, str]`; English by default |
+| `messages` | class attribute | Messages of the errors by key; `MESSAGES` by default |
 
-The sentences of a `Doc` come from its boundaries, or from `iter_sents` over its text when it has none or only partial ones (`has_sents`). `iter_sents` gets the parts of a text between blank lines one by one, so a blank line ends a sentence whatever the method, and the words of a sentence are those of `doc_words` or `iter_words` that start in it. `find` runs in `__init__`, so a subclass with parameters of its own stores them before it calls the `__init__` of the base; a fragment of another layer or one outside the text raises `ParameterError`.
+The sentences of a `Doc` come from its boundaries, or from `iter_sents` over its text when it has none or only partial ones (`has_sents`). `iter_sents` gets the parts of a text between blank lines one by one, so a blank line ends a sentence whatever the method, and the words of a sentence are those of `doc_words` or `iter_words` that start in it. `find` runs in `__init__`, so a subclass with parameters of its own stores them before it calls the `__init__` of the base - checking them by `check_params` - and its layers can be found by the finders below with the language as their parameters; a fragment of another layer or one outside the text raises `ParameterError`.
 <!-- --8<-- [end:HighlightedText-hooks] -->
 
 In the core the layers are empty and `css_prefix` is `anyts`.
@@ -108,6 +110,48 @@ The class method `css()` returns the styles `to_html` adds: the container, the l
 <!-- --8<-- [start:split_segments] -->
 `split_segments(length, highlights)` - the segments of a text with the same set of fragments: their bounds are the starts and the ends of all the fragments, and overlapping or nested fragments give segments with several layers.
 <!-- --8<-- [end:split_segments] -->
+
+## Finders of the layers { #finders }
+
+<!-- --8<-- [start:highlight-finders] -->
+The layers that the languages share are found by functions that take the language as their parameters: the notes of the fragments - callables where they read a number, so a language writes its plural forms, English by default - the counts of syllables, the normalized forms of the words, the stems, the matcher of the connectors. A library calls them from its `find`.
+<!-- --8<-- [end:highlight-finders] -->
+
+<!-- --8<-- [start:find_long_sents] -->
+`find_long_sents(sents, long_sent_word_factor, note)` - the layer `long_sents`: the sentences of that number of words or more, the note by their number of words.
+<!-- --8<-- [end:find_long_sents] -->
+
+<!-- --8<-- [start:find_complex_words] -->
+`find_complex_words(words, complex_syl_factor, count_syllables, note)` - the layer `complex_words`: the words of that number of syllables of `count_syllables` or more, the note by their number of syllables.
+<!-- --8<-- [end:find_complex_words] -->
+
+<!-- --8<-- [start:find_words] -->
+`find_words(words, is_match, layer, note)` - a layer of single words, such as stopwords, rare words or verbal nouns: the words of the check `is_match` of a language, with one note.
+<!-- --8<-- [end:find_words] -->
+
+<!-- --8<-- [start:find_phrase_highlights] -->
+`find_phrase_highlights(words, phrases, layer, note, normalize)` - a layer of the phrases of a list, such as compound prepositions, clichés or parentheticals: the phrases are matched by the normalized forms of their words (`find_phrases`), and a mapping gives their variants - contractions, forms of verbs - with the phrase each stands for, the first of the variants that normalize alike winning. A fragment covers the words from the first to the last, and the note reads the phrase of the list, in quotes by default.
+<!-- --8<-- [end:find_phrase_highlights] -->
+
+<!-- --8<-- [start:find_connector_highlights] -->
+`find_connector_highlights(words, sents, matcher, note, pos)` - the layer `connectors`: the connectors of a `ConnectorMatcher` of the language inside every sentence, in the whole text without the sentences; a one-word connector is checked by its part of speech when a word of the sentence has one - its own, or that of the hook `pos`. The note gives the class and the kind of the connector by default.
+<!-- --8<-- [end:find_connector_highlights] -->
+
+<!-- --8<-- [start:find_split_predicate_highlights] -->
+`find_split_predicate_highlights(pairs, note)` - the layer `split_predicates`: a fragment for every pair of a light verb and its noun a language finds, from the first word of the pair to the last; the note reads their lemmas by default.
+<!-- --8<-- [end:find_split_predicate_highlights] -->
+
+<!-- --8<-- [start:calc_alliteration_runs] -->
+`calc_alliteration_runs(words, frequencies, threshold, stem, is_transparent)` - the repetitions of a consonant in neighbouring words: a run of two words or more with the consonant in the stem of each - the stem of a language leaving out the endings that repeat by agreement - whose probability under an independent spread of the consonants, the product over its words of $1 - (1 - f)^n$ with $f$ the frequency of the consonant and $n$ the length of the stem, is below the threshold (`anyts.constants.ALLITERATION_THRESHOLD`, 0.001). The consonants are the keys of `frequencies`; a transparent word - by default one shorter than `ALLITERATION_MIN_WORD_LEN` (3) letters, a stopword for a language - neither breaks nor continues a run; the words are taken in lower case.
+<!-- --8<-- [end:calc_alliteration_runs] -->
+
+<!-- --8<-- [start:find_alliteration] -->
+`find_alliteration(words, sents, frequencies, threshold, stem, is_transparent, note)` - the layer `alliteration`: the runs of `calc_alliteration_runs` inside every sentence, in the whole text without the sentences, the note by the consonant.
+<!-- --8<-- [end:find_alliteration] -->
+
+<!-- --8<-- [start:HighlightedText-check_params] -->
+`check_params(long_sent_word_factor, complex_syl_factor, alliteration_threshold, *, messages)` checks the parameters of the highlighting of a library: a number of words or syllables that is not an integer of at least one, or a threshold outside the interval (0, 1], raises `ParameterError`.
+<!-- --8<-- [end:HighlightedText-check_params] -->
 
 ## Usage example
 

@@ -6,6 +6,7 @@ import pytest
 import spacy
 from spacy.tokens import Doc
 
+from anyts.cohesion_stats import ConnectorMatcher
 from anyts.components import start_sents_after_blank_lines
 from anyts.exceptions import ParameterError, SourceError, SourceTypeError
 from anyts.utils import iter_doc_units
@@ -13,6 +14,15 @@ from anyts.visualizers import Highlight, HighlightedText
 from anyts.visualizers.highlight import (
     Sent,
     Word,
+    calc_alliteration_runs,
+    check_params,
+    find_alliteration,
+    find_complex_words,
+    find_connector_highlights,
+    find_long_sents,
+    find_phrase_highlights,
+    find_split_predicate_highlights,
+    find_words,
     get_doc_words,
     get_text_sents,
     group_words_by_sents,
@@ -131,7 +141,7 @@ def test_doc_with_partial_boundaries():
 
 @pytest.mark.parametrize(
     ("layer", "requirement"),
-    [("subjects", "a dependency parse$"), ("nouns", "the parts of speech and the lemmas$")],
+    [("subjects", "a dependency parse$"), ("nouns", "the parts of speech, the lemmas$")],
 )
 def test_layers_unavailable(layer, requirement):
     with pytest.raises(ParameterError, match=f"^The layer {layer} needs a Doc with {requirement}"):
@@ -231,7 +241,7 @@ def test_layer_requirements_listed():
             "subjects": ("DEP", "POS", "LEMMA")
         }
 
-    message = r"needs a Doc with a dependency parse, the parts of speech and the lemmas$"
+    message = r"needs a Doc with a dependency parse, the parts of speech, the lemmas$"
     with pytest.raises(ParameterError, match=message):
         Heavy(text, layers="subjects")
     with pytest.raises(ParameterError, match=r"^The layer long_sents is not available$"):
@@ -399,3 +409,144 @@ def test_blank_line_ends_a_sentence_of_iter_sents():
     ]
     doc = spacy.blank("xx")(sample)
     assert [h.start for h in Lines(doc, layers=["long_sents"]).highlights] == [0, 26]
+
+
+def test_check_params():
+    check_params(30, 4, 0.001)
+    check_params(1, 1, 1)
+    for args, message in [
+        ((0, 4, 0.001), r"^The number of words of a long sentence must be greater than 0$"),
+        ((30, 0, 0.001), r"^The minimum number of syllables in a complex word"),
+        ((30, 4, 0), r"^The threshold of the alliteration must lie in the interval \(0, 1\]$"),
+        ((30, 4, 1.5), r"^The threshold of the alliteration"),
+        ((2.5, 4, 0.001), r"^The number of words of a long sentence must be an integer"),
+        ((30, 4, "x"), r"^The threshold of the alliteration must be a number"),
+    ]:
+        with pytest.raises(ParameterError, match=message):
+            check_params(*args)
+
+
+def words_of(text):
+    return [Word(m.start(), m.end(), m.group()) for m in re.finditer(r"\w+", text)]
+
+
+def test_find_long_sents_and_complex_words():
+    sents = [Sent(0, 10, 1), Sent(11, 30, 6)]
+    assert find_long_sents(sents, 5) == [Highlight(11, 30, "long_sents", "long sentence, 6 words")]
+    assert find_long_sents(sents, 1, lambda n: f"{n}")[0] == Highlight(0, 10, "long_sents", "1")
+    words = words_of("a beautiful extraordinary cat")
+    vowels = lambda word: len(re.findall("[aeiouy]+", word))  # noqa: E731
+    assert find_complex_words(words, 4, vowels) == [
+        Highlight(12, 25, "complex_words", "complex word, 5 syllables")
+    ]
+    assert find_complex_words(words, 1, vowels, str)[0].note == "1"
+
+
+def test_find_words():
+    words = words_of("The cat and the dog")
+    stop = lambda word: word.text.lower() in STOPWORDS  # noqa: E731
+    assert find_words(words, stop, "stopwords", "stopword") == [
+        Highlight(0, 3, "stopwords", "stopword"),
+        Highlight(8, 11, "stopwords", "stopword"),
+        Highlight(12, 15, "stopwords", "stopword"),
+    ]
+    assert find_words(words, lambda word: False, "stopwords") == []
+
+
+def test_find_phrase_highlights():
+    words = words_of("In fact, the cat sat in front of the mat")
+    found = find_phrase_highlights(words, ["in front of", "in fact"], "phrases")
+    assert [(h.start, h.end, h.note) for h in found] == [
+        (0, 7, "\u00abin fact\u00bb"),
+        (21, 32, "\u00abin front of\u00bb"),
+    ]
+    # Variants that stand for a phrase of the list, matched by an own normalization
+    variants = {"IN FRONT OF": "in front of", "in   front of": "before"}
+    found = find_phrase_highlights(
+        words, variants, "phrases", lambda p: f"phrase: {p}", normalize=str.upper
+    )
+    assert [h.note for h in found] == ["phrase: in front of"]
+
+
+class Connectors(ConnectorMatcher):
+    pos_tags = frozenset({"ADV", "CCONJ"})
+
+
+def test_find_connector_highlights():
+    matcher = Connectors({"however": ("adversative", "secondary"), "and": ("additive", "primary")})
+    words = [
+        Word(*w) for w in [(0, 7, "However"), (8, 11, "cat"), (12, 15, "and"), (16, 19, "dog")]
+    ]
+    found = find_connector_highlights(words, None, matcher)
+    assert [(h.start, h.end, h.note) for h in found] == [
+        (0, 7, "however: adversative, secondary"),
+        (12, 15, "and: additive, primary"),
+    ]
+    # The parts of speech of the words, or of the hook, check a one-word connector
+    tagged = [word._replace(pos="NOUN" if word.text == "and" else "ADV") for word in words]
+    assert [h.note.split(":")[0] for h in find_connector_highlights(tagged, None, matcher)] == [
+        "however"
+    ]
+    by_hook = find_connector_highlights(
+        words, [Sent(0, 19, 4)], matcher, str, lambda w: "CCONJ" if w.text == "and" else "NOUN"
+    )
+    assert [h.note for h in by_hook] == [
+        "Connector(sent=0, start=2, end=3, text='and', cls='additive', kind='primary')"
+    ]
+
+
+def test_find_split_predicate_highlights():
+    doc = Doc(
+        spacy.blank("xx").vocab,
+        words=["They", "made", "a", "decision"],
+        lemmas=["they", "make", "a", "decision"],
+    )
+    found = find_split_predicate_highlights([(doc[1], doc[3])])
+    assert found == [Highlight(5, 20, "split_predicates", "split predicate: make decision")]
+    assert (
+        find_split_predicate_highlights([(doc[1], doc[3])], lambda v, n: v.text)[0].note == "made"
+    )
+    assert find_split_predicate_highlights([]) == []
+
+
+FREQUENCIES = {"s": 0.06, "t": 0.09, "z": 0.001}
+
+
+def test_calc_alliteration_runs():
+    # zoo and zebra repeat the rare z, the frequent t of tall tree is not enough
+    words = ["zoo", "zebra", "tall", "tree"]
+    assert calc_alliteration_runs(words, FREQUENCIES) == [(0, 2, "z")]
+    assert calc_alliteration_runs(words, FREQUENCIES, threshold=1) == [(0, 2, "z"), (2, 4, "t")]
+    # A transparent word neither breaks nor continues a run, a word without the consonant breaks it
+    assert calc_alliteration_runs(["Zoo", "of", "zebra"], FREQUENCIES) == [(0, 3, "z")]
+    assert calc_alliteration_runs(["zoo", "cat", "zebra"], FREQUENCIES) == []
+    opaque = calc_alliteration_runs(["zoo", "of", "zebra"], FREQUENCIES, is_transparent=bool)
+    assert opaque == []
+    # The stem of a language: here the first letter alone, so a repetition is less likely
+    first = calc_alliteration_runs(
+        ["sass", "sits"], FREQUENCIES, threshold=0.01, stem=lambda w: w[0]
+    )
+    assert first == [(0, 2, "s")]
+    assert calc_alliteration_runs(["sass", "sits"], FREQUENCIES, threshold=0.01) == []
+
+
+def test_find_alliteration():
+    text = "Zoo zebra. Zany cat"
+    words = words_of(text)
+    sents = [Sent(0, 10, 2), Sent(11, 19, 2)]
+    assert find_alliteration(words, sents, FREQUENCIES) == [
+        Highlight(0, 9, "alliteration", "alliteration on z")
+    ]
+    whole = find_alliteration(words, None, FREQUENCIES, note=lambda c: c.upper())
+    assert whole == [Highlight(0, 15, "alliteration", "Z")]
+
+
+class Translated(Marks):
+    annotation_names: ClassVar[dict[str, str]] = {"POS": "parts of speech", "LEMMA": "lemmas"}
+
+
+def test_annotation_names():
+    with pytest.raises(
+        ParameterError, match=r"^The layer nouns needs a Doc with parts of speech, lemmas$"
+    ):
+        Translated(text, ["nouns"])
