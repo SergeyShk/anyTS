@@ -4,7 +4,7 @@ import math
 import re
 import sys
 import unicodedata
-from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, Sequence, Set
+from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, Sequence, Set, Sized
 from functools import lru_cache
 from itertools import repeat
 from numbers import Integral, Real
@@ -17,6 +17,7 @@ from .constants import MESSAGES
 from .exceptions import ParameterError, SourceError, SourceTypeError
 
 if TYPE_CHECKING:
+    from spacy.language import Language
     from spacy.tokens import Doc, Span, Token
 
     from .extractors import SentsExtractor
@@ -548,6 +549,105 @@ def split_doc_units(
     return units
 
 
+def add_tokenizer_rules(
+    nlp: Language,
+    prefixes: Sequence[str] = (),
+    suffixes: Sequence[str] = (),
+    infixes: Sequence[str] = (),
+    abbreviations: Collection[str] = (),
+) -> None:
+    """
+    Adding the rules of a language to the tokenizer of a pipeline
+
+    Description:
+        The prefixes, the suffixes and the infixes are regular expressions
+        joined to those of the tokenizer - a prefix anchored at the start and
+        a suffix at the end, every branch of it - so that the tokens of a Doc
+        match the words a library splits a string into, such as the dashes of
+        a dialogue glued to the words. An abbreviation becomes a single token
+        in lower case, capitalized and in upper case when the tokenizer keeps
+        one of its forms whole. A rule the tokenizer has as an alternative of
+        its own is not added twice, and a tokenizer that is not the Tokenizer
+        of spaCy, or whose rules are not regular expressions, is left as it is
+
+    Arguments:
+        nlp (Language): Pipeline whose tokenizer gets the rules
+        prefixes (list[str]): Patterns of the prefixes, without the anchor
+        suffixes (list[str]): Patterns of the suffixes, without the anchor
+        infixes (list[str]): Patterns of the infixes
+        abbreviations (list[str]|set[str]): Abbreviations in lower case
+
+    Raises:
+        SourceTypeError: If the rules are not lists of strings or the abbreviations
+            not a collection of strings
+
+    Example:
+        >>> import spacy
+        >>> from anyts.utils import add_tokenizer_rules
+        >>> nlp = spacy.blank("en")
+        >>> [token.text for token in nlp("--No, he said.")]
+        ['--No', ',', 'he', 'said', '.']
+        >>> add_tokenizer_rules(nlp, prefixes=[r"-{2,}(?=\\w)"])
+        >>> [token.text for token in nlp("--No, he said.")]
+        ['--', 'No', ',', 'he', 'said', '.']
+    """
+    from spacy.symbols import ORTH
+    from spacy.tokenizer import Tokenizer
+
+    for rules, what in ((prefixes, "prefixes"), (suffixes, "suffixes"), (infixes, "infixes")):
+        check_words(rules, what)
+    check_words(abbreviations, "abbreviations", ordered=False)
+    tokenizer = nlp.tokenizer
+    if not isinstance(tokenizer, Tokenizer):
+        return
+    found_prefixes = _extend_rules(tokenizer.prefix_search, [f"^(?:{rule})" for rule in prefixes])
+    found_suffixes = _extend_rules(tokenizer.suffix_search, [f"(?:{rule})$" for rule in suffixes])
+    found_infixes = _extend_rules(tokenizer.infix_finditer, list(infixes))
+    if found_prefixes is not None:
+        tokenizer.prefix_search = found_prefixes.search
+    if found_suffixes is not None:
+        tokenizer.suffix_search = found_suffixes.search
+    if found_infixes is not None:
+        tokenizer.infix_finditer = found_infixes.finditer
+    rules = tokenizer.rules
+    pairs: dict[str, dict[int, str]] = {}
+    for form, rule in rules.items():
+        if len(rule) == 1:
+            pairs.setdefault(form.lower(), rule[0])
+    for abbreviation in in_order(abbreviations):
+        forms = (abbreviation, abbreviation[:1].upper() + abbreviation[1:], abbreviation.upper())
+        # A pattern of the tokenizer, not a rule, may keep a form whole (A.M.)
+        pair = pairs.get(abbreviation)
+        if pair is None and any(len(tokenizer(form)) == 1 for form in forms):
+            pair = {}
+        if pair is None:
+            continue
+        for form in forms:
+            if form not in rules:
+                tokenizer.add_special_case(form, [{**pair, ORTH: form}])
+
+
+def _extend_rules(method: object, rules: list[str]) -> Pattern[str] | None:
+    """
+    Regular expression of a tokenizer extended with the rules it does not have yet
+
+    Description:
+        Read from a bound method of the tokenizer (prefix_search, suffix_search,
+        infix_finditer); no method gives the rules alone, and a method not bound
+        to a regular expression or one that has every rule as an alternative of
+        its own gives None, so the tokenizer is not reloaded
+    """
+    if method is None:
+        return re.compile("|".join(rules)) if rules else None
+    pattern = getattr(getattr(method, "__self__", None), "pattern", None)
+    if not isinstance(pattern, str):
+        return None
+    missing = [rule for rule in rules if f"|{rule}|" not in f"|{pattern}|"]
+    if not missing:
+        return None
+    return re.compile("|".join([pattern, *missing]))
+
+
 def safe_divide(num: float | int, den: float | int, default: float | int = 0) -> float:
     """
     Dividing two numbers safely
@@ -622,8 +722,8 @@ def check_sequence(value: object, what: str = "words", ordered: bool = True) -> 
 
     Raises:
         SourceTypeError: If a string (of characters or bytes), a Doc, a Span, an
-            iterator, a non-iterable object, a table or, with ordered, a set or a
-            mapping is passed
+            iterator, an object without iteration or without a length, a table or,
+            with ordered, a set or a mapping is passed
 
     Example:
         >>> from anyts.utils import check_sequence
@@ -643,7 +743,8 @@ def check_sequence(value: object, what: str = "words", ordered: bool = True) -> 
         )
     if isinstance(value, Iterator):
         raise SourceTypeError(f"A list of {what} is expected, not an iterator")
-    if not isinstance(value, Iterable):
+    sized: object = value
+    if not isinstance(value, Iterable) or not isinstance(sized, Sized):
         raise SourceTypeError(f"A list of {what} is expected, not {type(value).__name__}")
     ndim = getattr(value, "ndim", 1)
     if ndim != 1:
@@ -680,6 +781,29 @@ def check_words(value: Iterable[object], what: str = "words", ordered: bool = Tr
     if not all(map(isinstance, value, repeat(str))):
         item = next(item for item in value if not isinstance(item, str))
         raise SourceTypeError(f"The {what} must be strings, not {type(item).__name__}")
+
+
+def check_word(value: object, what: str = "word") -> None:
+    """
+    Checking that an argument is a word: a string
+
+    Arguments:
+        value (object): Value to check
+        what (str): What is expected, for the message of the error
+
+    Raises:
+        SourceTypeError: If the value is not a string
+
+    Example:
+        >>> from anyts.utils import check_word
+        >>> check_word("cat")
+        >>> check_word(["cat"])
+        Traceback (most recent call last):
+        ...
+        anyts.exceptions.SourceTypeError: The word must be a string, not list
+    """
+    if not isinstance(value, str):
+        raise SourceTypeError(f"The {what} must be a string, not {type(value).__name__}")
 
 
 def check_counts(value: object) -> None:

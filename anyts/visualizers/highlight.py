@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, NamedTuple
 
 from ..constants import ALLITERATION_MIN_WORD_LEN, ALLITERATION_THRESHOLD, MESSAGES
 from ..exceptions import ParameterError, SourceError, SourceTypeError
-from ..extractors import BLANK_LINE, SentsExtractor, _iter_words
+from ..extractors import SentsExtractor, _iter_words, iter_part_sents
 from ..syntax_stats import get_words
 from ..utils import (
     _unit_word,
@@ -200,13 +200,13 @@ class HighlightedText:
             spans = (
                 iter_doc_sents(source)
                 if has_sents(source)
-                else _iter_part_sents(self.iter_sents, self.text)
+                else iter_part_sents(self.iter_sents, self.text)
             )
             sents = get_text_sents(spans, words)
         elif isinstance(source, str):
             self.text = source
             words = [Word(start, end, text) for start, end, text in self.iter_words(source)]
-            sents = get_text_sents(_iter_part_sents(self.iter_sents, source), words)
+            sents = get_text_sents(iter_part_sents(self.iter_sents, source), words)
         else:
             raise SourceTypeError(self.messages["source_type"])
         if not words:
@@ -442,16 +442,6 @@ class HighlightedText:
                 chunk = f'<span class="{p}-hl {classes}"{title}>{chunk}</span>'
             chunks.append(chunk)
         return "".join(chunks)
-
-
-def _iter_part_sents(
-    iter_sents: Callable[[str], Iterable[tuple[int, int, str]]], text: str
-) -> Iterator[tuple[int, int, str]]:
-    """Sentences of every part of a text between blank lines, at their positions in the text"""
-    bounds = [0, *(bound for match in BLANK_LINE.finditer(text) for bound in match.span())]
-    for start, end in zip(bounds[::2], [*bounds[1::2], len(text)], strict=True):
-        for first, last, sent in iter_sents(text[start:end]):
-            yield start + first, start + last, sent
 
 
 def get_doc_words(doc: Doc) -> list[Word]:

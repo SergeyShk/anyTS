@@ -3,7 +3,7 @@
 !!! info ""
     **anyts.utils**
 
-Checks of the objects of spaCy without importing it, the words of a `Doc` and their morphology, the parts of a word the tokenizer split at its hyphens and the sentences of a `Doc`.
+Checks of the objects of spaCy without importing it, the words of a `Doc` and their morphology, the parts of a word the tokenizer split at its hyphens, the sentences of a `Doc` and the rules a language adds to the tokenizer of spaCy.
 
 ## is_doc, is_span
 
@@ -148,3 +148,29 @@ Splits the words of a `Doc` into the sentences of a sentence extractor, for a `D
 | `sents_extractor` | SentsExtractor | `-` | Sentence extraction tool |
 | `join_hyphens` | bool | `False` | Join the parts of hyphenated words |
 <!-- --8<-- [end:split_doc_units] -->
+
+## add_tokenizer_rules
+
+<!-- --8<-- [start:add_tokenizer_rules] -->
+Adds the rules of a language to the tokenizer of a pipeline, so that the tokens of a `Doc` match the words a library splits a string into: the prefixes, the suffixes and the infixes are regular expressions joined to those of the tokenizer - a prefix anchored at the start and a suffix at the end, every branch of it - such as the dashes of a dialogue glued to the words, and an abbreviation becomes a single token in lower case, capitalized and in upper case when the tokenizer keeps one of its forms whole. A rule the tokenizer has as an alternative of its own is not added twice; a tokenizer that is not the `Tokenizer` of spaCy, or whose rules are not regular expressions, is left as it is. Rules that are not lists of strings and abbreviations that are not a collection of strings raise `SourceTypeError`.
+
+| Parameter | Type | Default | Description |
+| :-------: | :--: | :-----: | :---------: |
+| `nlp` | Language | `-` | Pipeline whose tokenizer gets the rules |
+| `prefixes` | list[str] | `()` | Patterns of the prefixes, without the anchor |
+| `suffixes` | list[str] | `()` | Patterns of the suffixes, without the anchor |
+| `infixes` | list[str] | `()` | Patterns of the infixes |
+| `abbreviations` | list[str] | `()` | Abbreviations in lower case |
+<!-- --8<-- [end:add_tokenizer_rules] -->
+
+!!! example "Example"
+
+    ``` python
+    import spacy
+    from anyts.utils import add_tokenizer_rules
+
+    nlp = spacy.blank("en")
+    add_tokenizer_rules(nlp, prefixes=[r"-{2,}(?=\w)"])
+    [token.text for token in nlp("--No, he said.")]
+    # ['--', 'No', ',', 'he', 'said', '.']
+    ```

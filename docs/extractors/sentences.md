@@ -1,7 +1,7 @@
 # Sentence extraction
 
 !!! info ""
-    **anyts.extractors.SentsExtractor**, **anyts.extractors.FixedSentsExtractor**
+    **anyts.extractors.SentsExtractor**, **anyts.extractors.iter_part_sents()**, **anyts.extractors.FixedSentsExtractor**
 
 ## Description
 
@@ -100,6 +100,12 @@ An example of sentence extraction with a regular expression as the tokenizer:
     ``` bash
     ('Rain today', 'sun tomorrow')
     ```
+
+## Sentences of the parts of a text { #iter_part_sents }
+
+<!-- --8<-- [start:iter_part_sents] -->
+`iter_part_sents(iter_sents, text)` gives the sentences of a splitter with positions - `iter_sents`, the start, the end and the text of every sentence of a string - for every part of a text between blank lines (`BLANK_LINE`) one by one, at their positions in the whole text, so that a blank line ends a sentence whatever the splitter, as in `SentsExtractor`.
+<!-- --8<-- [end:iter_part_sents] -->
 
 ## Ready sentences { #FixedSentsExtractor }
 

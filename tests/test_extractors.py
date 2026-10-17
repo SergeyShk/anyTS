@@ -18,6 +18,7 @@ from anyts.extractors import (
     FixedSentsExtractor,
     FixedWordsExtractor,
     _word_pattern,
+    iter_part_sents,
 )
 
 TEXT = (
@@ -546,3 +547,17 @@ def test_fixed_extractors():
         FixedWordsExtractor("It rains")
     with pytest.raises(SourceTypeError):
         FixedSentsExtractor([1, 2])
+
+
+def test_iter_part_sents():
+    def by_periods(text):
+        return [(m.start(), m.end(), m.group()) for m in re.finditer(r"[^.\s][^.]*\.?", text)]
+
+    text = "One. Two\n\nThree. Four\n \n\n"
+    assert list(iter_part_sents(by_periods, text)) == [
+        (0, 4, "One."),
+        (5, 8, "Two"),
+        (10, 16, "Three."),
+        (17, 21, "Four"),
+    ]
+    assert list(iter_part_sents(by_periods, "")) == []
