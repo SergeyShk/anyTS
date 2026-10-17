@@ -44,12 +44,14 @@ _NORMALIZED_STATS = (
     "p_punctuations",
 )
 ELLIPSIS_PATTERN = re.compile(r"…|\.{3,}|(?<=[?!])\.{2}")
+# The spaces of a line: the separators of Unicode and the tab (SPACES)
+_SPACE = f"[{re.escape(''.join(SPACES))}]"
 # A dash typed with hyphens: a run of two or more, a hyphen after whitespace, the start of a
-# line or a closing mark (the underscore of italics included), before a space of SPACES or the
+# line or a closing mark (the underscore of italics included), before a space of a line or the
 # end, or between a letter and an opening or a closing mark
 _DASHES = (
     r"-{2,}|(?:(?<=\s)|(?<=[.,;:!?…»”\"')\]_])|^)-(?!\d)"
-    rf"|-(?=[{re.escape(''.join(SPACES))}]|\Z)"
+    rf"|-(?=(?:{_SPACE})|\Z)"
     r"|(?<=[^\W\d_])-(?=[¿¡«“\"'(\[_])|(?<=[^\W\d_])-(?=[.,;:!?…»”\"')\]_])"
 )
 
@@ -63,11 +65,12 @@ def dash_pattern(
     Description:
         A dash typed with hyphens is a run of two or more hyphens, a hyphen
         after whitespace, at the start of a line or after a closing mark, before
-        a space, a tab or the end of the text, or between a letter and an
-        opening or a closing mark. A hanging hyphen, glued to a letter or a
-        digit and carried on to a later word ("pre- and post-war", "5- and
-        10-year"), stays a hyphen when one of the conjunctions, in any case,
-        follows it after a space, and with hanging_before_comma when a comma
+        a space of a line (SPACES: the separators of Unicode and the tab) or
+        the end of the text, or between a letter and an opening or a closing
+        mark. A hanging hyphen, glued to a letter or a digit and carried on to
+        a later word ("pre- and post-war", "5- and 10-year"), stays a hyphen
+        when one of the conjunctions, in any case, follows it after such
+        spaces, and with hanging_before_comma when a comma
         follows it ("two-, three- and four-year"); a language whose dialogue
         closes a line with a hyphen before a comma ("-Come -he said-, and
         left") leaves it off
@@ -98,7 +101,7 @@ def dash_pattern(
     hanging = []
     if unique:
         alternatives = "|".join(map(re.escape, unique))
-        hanging.append(rf"[ \t]+(?i:{alternatives})(?!\w)")
+        hanging.append(rf"{_SPACE}+(?i:{alternatives})(?!\w)")
     if hanging_before_comma:
         hanging.append(",")
     if not hanging:

@@ -495,3 +495,9 @@ def test_spaces_of_unicode():
     bs = Stats("one\u00a0two\u202fthree\u3000four five\tsix\nseven", normalize=True)
     assert bs.n_spaces == 5
     assert bs.p_spaces == 5 / bs.n_chars
+
+
+@pytest.mark.parametrize("space", [" ", "\u00a0", "\u202f", "\t"])
+def test_hanging_hyphen_before_a_conjunction_after_any_space(space):
+    counts = count_punctuations(f"pre-{space}and post-war", dash_pattern=dash_pattern(["and"]))
+    assert (counts["dash"], counts["hyphen"]) == (0, 2)

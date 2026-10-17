@@ -551,31 +551,35 @@ def split_doc_units(
 
 def add_tokenizer_rules(
     nlp: Language,
-    prefixes: Iterable[str] = (),
-    suffixes: Iterable[str] = (),
-    infixes: Iterable[str] = (),
-    abbreviations: Iterable[str] = (),
+    prefixes: Sequence[str] = (),
+    suffixes: Sequence[str] = (),
+    infixes: Sequence[str] = (),
+    abbreviations: Collection[str] = (),
 ) -> None:
     """
     Adding the rules of a language to the tokenizer of a pipeline
 
     Description:
         The prefixes, the suffixes and the infixes are regular expressions
-        joined to those of the tokenizer - the prefixes anchored at the start,
-        the suffixes at the end - so that the tokens of a Doc match the words
-        a library splits a string into, such as the dashes of a dialogue glued
-        to the words. An abbreviation becomes a single token in lower case,
-        capitalized and in upper case when the tokenizer keeps one of its forms
-        whole. A rule the tokenizer has is not added twice, and a tokenizer
-        that is not the Tokenizer of spaCy, or whose rules are not regular
-        expressions, is left as it is
+        joined to those of the tokenizer - a prefix anchored at the start and
+        a suffix at the end, every branch of it - so that the tokens of a Doc
+        match the words a library splits a string into, such as the dashes of
+        a dialogue glued to the words. An abbreviation becomes a single token
+        in lower case, capitalized and in upper case when the tokenizer keeps
+        one of its forms whole. A rule the tokenizer has as an alternative of
+        its own is not added twice, and a tokenizer that is not the Tokenizer
+        of spaCy, or whose rules are not regular expressions, is left as it is
 
     Arguments:
         nlp (Language): Pipeline whose tokenizer gets the rules
         prefixes (list[str]): Patterns of the prefixes, without the anchor
         suffixes (list[str]): Patterns of the suffixes, without the anchor
         infixes (list[str]): Patterns of the infixes
-        abbreviations (list[str]): Abbreviations in lower case
+        abbreviations (list[str]|set[str]): Abbreviations in lower case
+
+    Raises:
+        SourceTypeError: If the rules are not lists of strings or the abbreviations
+            not a collection of strings
 
     Example:
         >>> import spacy
@@ -590,11 +594,14 @@ def add_tokenizer_rules(
     from spacy.symbols import ORTH
     from spacy.tokenizer import Tokenizer
 
+    for rules, what in ((prefixes, "prefixes"), (suffixes, "suffixes"), (infixes, "infixes")):
+        check_words(rules, what)
+    check_words(abbreviations, "abbreviations", ordered=False)
     tokenizer = nlp.tokenizer
     if not isinstance(tokenizer, Tokenizer):
         return
-    found_prefixes = _extend_rules(tokenizer.prefix_search, [f"^{rule}" for rule in prefixes])
-    found_suffixes = _extend_rules(tokenizer.suffix_search, [f"{rule}$" for rule in suffixes])
+    found_prefixes = _extend_rules(tokenizer.prefix_search, [f"^(?:{rule})" for rule in prefixes])
+    found_suffixes = _extend_rules(tokenizer.suffix_search, [f"(?:{rule})$" for rule in suffixes])
     found_infixes = _extend_rules(tokenizer.infix_finditer, list(infixes))
     if found_prefixes is not None:
         tokenizer.prefix_search = found_prefixes.search
@@ -607,7 +614,7 @@ def add_tokenizer_rules(
     for form, rule in rules.items():
         if len(rule) == 1:
             pairs.setdefault(form.lower(), rule[0])
-    for abbreviation in abbreviations:
+    for abbreviation in in_order(abbreviations):
         forms = (abbreviation, abbreviation[:1].upper() + abbreviation[1:], abbreviation.upper())
         # A pattern of the tokenizer, not a rule, may keep a form whole (A.M.)
         pair = pairs.get(abbreviation)
@@ -627,15 +634,15 @@ def _extend_rules(method: object, rules: list[str]) -> Pattern[str] | None:
     Description:
         Read from a bound method of the tokenizer (prefix_search, suffix_search,
         infix_finditer); no method gives the rules alone, and a method not bound
-        to a regular expression or one that has every rule gives None, so the
-        tokenizer is not reloaded
+        to a regular expression or one that has every rule as an alternative of
+        its own gives None, so the tokenizer is not reloaded
     """
     if method is None:
         return re.compile("|".join(rules)) if rules else None
     pattern = getattr(getattr(method, "__self__", None), "pattern", None)
     if not isinstance(pattern, str):
         return None
-    missing = [rule for rule in rules if rule not in pattern]
+    missing = [rule for rule in rules if f"|{rule}|" not in f"|{pattern}|"]
     if not missing:
         return None
     return re.compile("|".join([pattern, *missing]))

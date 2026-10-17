@@ -620,3 +620,39 @@ def test_add_tokenizer_rules_to_other_tokenizers():
     nlp.tokenizer = lambda text: spacy.tokens.Doc(nlp.vocab, words=text.split())
     add_tokenizer_rules(nlp, prefixes=[r"-"])
     assert [token.text for token in nlp("--No x")] == ["--No", "x"]
+
+
+def test_add_tokenizer_rules_anchor_every_branch():
+    nlp = spacy.blank("en")
+    add_tokenizer_rules(nlp, prefixes=[r"#|@"], suffixes=[r"~|\^"])
+    assert [token.text for token in nlp("a@b c^d")] == ["a@b", "c^d"]
+    assert [token.text for token in nlp("@b c^")] == ["@", "b", "c", "^"]
+
+
+def test_add_tokenizer_rules_inside_a_rule_of_the_tokenizer():
+    # \+ and / lie inside rules of spaCy, which are other alternatives
+    nlp = spacy.blank("en")
+    assert [token.text for token in nlp("+5 1/2")] == ["+5", "1/2"]
+    add_tokenizer_rules(nlp, prefixes=[r"\+"], infixes=["/"])
+    assert [token.text for token in nlp("+5 1/2")] == ["+", "5", "1", "/", "2"]
+
+
+def test_add_tokenizer_rules_without_infixes():
+    nlp = spacy.blank("en")
+    nlp.tokenizer.infix_finditer = None
+    add_tokenizer_rules(nlp, prefixes=[r"-{2,}(?=\w)"])
+    assert nlp.tokenizer.infix_finditer is None
+    assert [token.text for token in nlp("ab cd")] == ["ab", "cd"]
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "message"),
+    [
+        ({"prefixes": r"-{2,}"}, r"^A list of prefixes is expected, not a string$"),
+        ({"infixes": [1]}, r"^The infixes must be strings, not int$"),
+        ({"abbreviations": "sr."}, r"^A list of abbreviations is expected, not a string$"),
+    ],
+)
+def test_add_tokenizer_rules_checks_the_rules(kwargs, message):
+    with pytest.raises(SourceTypeError, match=message):
+        add_tokenizer_rules(spacy.blank("en"), **kwargs)

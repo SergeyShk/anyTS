@@ -1,7 +1,7 @@
 # Sentence extraction
 
 !!! info ""
-    **anyts.extractors.SentsExtractor**, **anyts.extractors.FixedSentsExtractor**
+    **anyts.extractors.SentsExtractor**, **anyts.extractors.iter_part_sents()**, **anyts.extractors.FixedSentsExtractor**
 
 ## Description
 
