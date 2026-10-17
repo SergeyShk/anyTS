@@ -220,6 +220,8 @@ MESSAGES = {
         "The extension {name} holds no {stats}: add the component with the name {name} "
         "before {component}"
     ),
+    "extension_name": "The name of an extension must be a string, not {type}",
+    "no_stats_class": "{cls} has neither a concrete stats_class nor a compute of its own",
     "foreign_extension": (
         "The extension {name} of Doc belongs to another package: give the component another name"
     ),
