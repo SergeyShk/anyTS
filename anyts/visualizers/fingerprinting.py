@@ -37,13 +37,12 @@ def fingerprinting(
     Description:
         Every text is cut into segments of segment_len words with a sliding
         step of a tenth of a segment, the last one ending with the text, and
-        the measure is computed for every segment. A text is a block of squares in the order of its segments,
-        row by row, 8 rows high, or a single column when it has at most 8
-        segments. The blocks are laid out left to right in an area 2 · x_size
-        wide, which grows downwards from 2 · y_size when they need more height.
-        The colour scale runs from the smallest to the greatest finite value
-        over all the texts; undefined values (nan) and the empty cells of a
-        block are light grey
+        the measure is computed for every segment. A text is a block of
+        squares in the order of its segments, row by row, 8 rows high, or a
+        single column when it has at most 8 segments; the blocks go left to
+        right and wrap downwards. The colour scale runs from the smallest to
+        the greatest finite value over all the texts; undefined values (nan)
+        and the empty cells of a block are light grey
 
     References:
         https://www.uni-konstanz.de/mmsp/pubsys/publishedFiles/KeOe07.pdf

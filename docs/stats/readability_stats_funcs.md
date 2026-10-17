@@ -10,7 +10,7 @@ The coefficients of the formulas are parameters; the defaults below are those of
 <!-- --8<-- [start:calc_flesch_reading_easy] -->
 Computation of the Flesch reading ease (Flesch, 1948).
 
-The higher the value, the easier the text; the scale runs nominally from 0 to 100, though the simplest texts go above 100 and the hardest below 0.
+The higher the value, the easier the text: nominally 0 to 100, though the simplest texts go above 100 and the hardest below 0.
 
 Formula:
 
@@ -290,7 +290,7 @@ Parameters:
     **anyts.readability_stats.calc_consensus_grade()**
 
 <!-- --8<-- [start:calc_consensus_grade] -->
-Computation of the consensus grade: the median of the values of the grade formulas rounded half up, together with the reading ease converted into years of schooling by `to_grade` and added without rounding - so a band of 8.5 votes for 8.5. No values at all and a grade that is not a finite number raise `ParameterError`, a `to_grade` that is not callable `SourceTypeError`.
+Computation of the consensus grade: the median of the values of the grade formulas rounded half up, together with the reading ease in years of schooling by `to_grade`, not rounded - so a band of 8.5 votes for 8.5. No values at all, a grade or a reading ease that is not a finite number raise `ParameterError`, a `to_grade` that is not callable `SourceTypeError`.
 
 Parameters:
 

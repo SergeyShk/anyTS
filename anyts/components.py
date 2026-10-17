@@ -41,21 +41,14 @@ class StatsComponent:
     Base of a component of spaCy that puts the statistics of a text into doc._.<name>
 
     Description:
-        A language library subclasses the class for every class of statistics
-        and registers the subclass as a factory under the prefix of the library,
-        Language.factory("<prefix>_<statistics>"), so that the factories of
-        several libraries live in one process; add_pipe(factory, name=...)
-        names the extension, which follows the component when the pipeline
-        renames it; a component taken from another pipeline is the same object
-        there, writing to the extension of its last name. The subclass sets
-        stats_class, the class of statistics made of a document, and checks its
-        parameters before it calls the __init__ of the base, so that a wrong one
-        fails at add_pipe; a subclass with no class of statistics and no compute
-        of its own fails at add_pipe too. The components of the classes of the
-        core (BasicStatsComponent and the others) carry their parameters, so a
-        library sets its subclass of the statistics on them
-        A document without words passes untouched, its extension left at None
-        (accepts). spaCy does not serialize the objects in the extensions, so
+        A language library subclasses it for every class of statistics and
+        registers the subclass as a factory under its prefix,
+        Language.factory("<prefix>_<statistics>"). The subclass sets
+        stats_class and checks its parameters before calling the __init__ of
+        the base, so that a wrong one fails at add_pipe. The extension takes the
+        name of the pipe and follows it when the pipeline renames it. A document
+        without words passes untouched, its extension left at None (accepts).
+        spaCy does not serialize the statistics in the extensions, so
         Doc.to_bytes(), DocBin with store_user_data=True and nlp.pipe with
         n_process > 1 fail on them
 
@@ -146,9 +139,8 @@ class StatsComponent:
         Computing the statistics of a document
 
         Description:
-            An object of stats_class made of the document, with the attributes of
-            the component named in stats_params as its keyword arguments; a
-            component that computes otherwise, such as one that reuses the
+            stats_class(doc, **params) with the attributes named in stats_params;
+            a component that computes otherwise, such as one reusing the
             statistics of another component, overrides the method
 
         Arguments:
@@ -175,10 +167,10 @@ class StatsComponent:
         Getting the statistics another component put into a document
 
         Description:
-            For a component that reuses the statistics of another one instead of
-            computing them again; that component must come first in the pipeline
-            and accept every document the reusing one accepts, since a document
-            it passes leaves None in its extension
+            For reusing the statistics of another component instead of computing
+            them again; that component must come first in the pipeline and accept
+            every document this one accepts, since a document it passes leaves
+            None in its extension
 
         Arguments:
             doc (Doc): Doc object
@@ -244,10 +236,8 @@ class ReadabilityStatsComponent(StatsComponent):
 
     Description:
         Puts an object of stats_class (ReadabilityStats) into doc._.<name>, of
-        the document or of the basic statistics another component put into it;
-        a language library sets its subclass of ReadabilityStats and the factory
-        of its component of the basic statistics (basic_factory), named in the
-        error when they are missing
+        the document or of the basic statistics of another component; a
+        language library sets its subclass of ReadabilityStats and basic_factory
 
     Arguments:
         nlp (Language): Pipeline the component is added to
@@ -258,7 +248,8 @@ class ReadabilityStatsComponent(StatsComponent):
             instead of computing them again
 
     Class attributes:
-        basic_factory (str|None): Factory of the component of the basic statistics
+        basic_factory (str|None): Factory of the component of the basic statistics,
+            named in the error when they are missing
 
     Raises:
         ParameterError: If the class of statistics is not concrete, the preset is not a
@@ -369,11 +360,10 @@ class LexicalStatsComponent(StatsComponent):
     Description:
         Puts an object of stats_class, a subclass of LexicalStats of a language
         library, into doc._.<name>, with the frequency dictionary of the
-        attribute freq_dict - None by default, for the dictionary of the class;
-        a library sets the attribute in the constructor of its component, from a
-        directory of its parameters for instance. A document gets the statistics
-        when it has a word (iter_doc_words with join_hyphens) other than a number
-        of the language (is_number), so that the class finds a word in it
+        attribute freq_dict (None by default, for the dictionary of the class),
+        which a library sets in the constructor of its component. A document
+        gets the statistics when it has a word (iter_doc_words with
+        join_hyphens) other than a number (is_number)
 
     Class attributes:
         join_hyphens (bool): Take a word the tokenizer split at its hyphens for one word
@@ -506,17 +496,14 @@ def start_sents_after_blank_lines(doc: Doc) -> Doc:
     Starting a sentence at the first token after a blank line
 
     Description:
-        A component of spaCy for the pipeline before the component that sets
-        the sentences - the parser, senter or sentencizer - which keeps the
-        starts set here and places the others; the whitespace before such a
-        start stays with the sentence before it, and the marks that open a
-        paragraph (a dash of a dialogue, ¡, «) stay with its first word. On
-        its own the component leaves the sentences within a paragraph
-        unsplit, and its starts are partial boundaries (has_sents), so the
-        statistics take the sentences of such a document from its text. A
-        parsed document, such as one passed through the pipeline again,
-        passes untouched, since spaCy keeps its sentences. A language library
-        registers it under its prefix: Language.component("<prefix>_blank_lines",
+        A spaCy component that goes before the parser, senter or sentencizer,
+        which keeps the starts set here and places the others. The whitespace
+        before such a start stays with the sentence before it, and the marks
+        that open a paragraph (a dash of a dialogue, ¡, «) stay with its first
+        word. Alone, it sets partial boundaries (has_sents), so the statistics
+        take the sentences from the text. A parsed document passes untouched,
+        since spaCy keeps its sentences. A language library registers it under
+        its prefix: Language.component("<prefix>_blank_lines",
         func=start_sents_after_blank_lines)
 
     Arguments:

@@ -47,20 +47,15 @@ class StyleStats(Stats):
     Base of the style metrics of a text
 
     Description:
-        The SEO metrics of the services Advego and Text.ru - the nausea, the
-        water content, the spam score, the naturalness by Zipf's law and the
-        density of keywords - and the markers of the officialese style: the
-        verbal nouns, the compound prepositions, the parenthetical expressions
-        and the cliches. The formulas of the services are not published, so the
-        common definitions are taken, described in the functions. A language
-        library subclasses the class and sets its hooks: the lists of phrases,
-        the stopwords and the water of the language, the spelling of the phrases
-        in the forms of a text, the nouns and the verbal nouns, the norms of the
-        services (level_scales)
-        The words of a string come from the word extractor, in lower case by
-        default; the words of a Doc come from its tokens (doc_words), and an
-        extractor given is used on the text of a Doc. The markers are counted
-        on the word forms in lower case (forms), whatever the extractor.
+        The SEO metrics of Advego and Text.ru and the markers of the officialese
+        style. The services publish no formulas, so the common definitions are
+        taken (see the functions). A language library subclasses the class and
+        sets its hooks: the lists of phrases, the stopwords, the spelling of
+        phrases, the nouns and the norms of the services (level_scales)
+        A string gives the words of the word extractor, in lower case by
+        default; a Doc gives its tokens (doc_words), or the words of an
+        extractor given on its text. The markers are counted on the word forms
+        in lower case (forms), whatever the extractor.
         get_stats, to_dataframe, print_stats and describe come from Stats
 
     Arguments:
@@ -179,9 +174,8 @@ class StyleStats(Stats):
         Getting the normalized form of a word or a phrase
 
         Description:
-            The lower case by default; a library overrides the method for the
-            letters its texts write in two ways. The lists of stopwords and the
-            phrases are compared by it
+            The lower case by default; a library overrides it for letters
+            written in two ways. The stopwords and the phrases are compared by it
 
         Arguments:
             word (str): Word or phrase
@@ -213,7 +207,7 @@ class StyleStats(Stats):
 
         Description:
             No word by default; a library gives the function words of its
-            language. The list nausea_stopwords takes the place of the method
+            language. The list nausea_stopwords, when given, replaces it
 
         Arguments:
             word (str): Word
@@ -228,7 +222,7 @@ class StyleStats(Stats):
         Checking whether a word is water
 
         Description:
-            is_stopword by default; the list stopwords takes the place of the method
+            is_stopword by default; the list stopwords, when given, replaces it
 
         Arguments:
             word (str): Word
@@ -243,8 +237,8 @@ class StyleStats(Stats):
         Checking whether a word is a parenthetical expression by itself
 
         Description:
-            No word by default; a word the method accepts counts among the
-            parenthetical expressions outside the phrases of parentheticals_list
+            No word by default; an accepted word counts as a parenthetical
+            expression outside the phrases of parentheticals_list
 
         Arguments:
             word (str): Word
@@ -260,7 +254,7 @@ class StyleStats(Stats):
 
         Description:
             Every phrase as it is by default; a library adds the forms of a verb
-            or the contractions its text may have, each with its phrase
+            or the contractions, each with its phrase
 
         Arguments:
             text (list[str]): List of words
@@ -398,10 +392,9 @@ class StyleStats(Stats):
         Getting the markers of the officialese found in the text
 
         Description:
-            The words and phrases the metrics verbal_nouns, compound_prepositions,
-            parentheticals and cliches are counted from, in the order of the text
-            as the forms write them; a phrase is found with the variants of
-            expand_phrases
+            The words and phrases counted by verbal_nouns, compound_prepositions,
+            parentheticals and cliches, in the order of the text as the forms
+            write them; a phrase is found with the variants of expand_phrases
 
         Returns:
             dict[str, tuple[str, ...]]: Name of the metric - the words and phrases found
@@ -427,9 +420,9 @@ def calc_classic_nausea(text: Sequence[str]) -> float:
     Computing the classic nausea
 
     Description:
-        The square root of the occurrences of the most frequent word (Advego).
-        It measures how much one word is pressed, whatever the length of the
-        text, so it grows with the text
+        The square root of the occurrences of the most frequent word (Advego):
+        how much one word is pressed. Not corrected for length, it grows with
+        the text
 
     References:
         https://advego.com/text/seo/
@@ -462,11 +455,10 @@ def find_nausea_words(
     Finding the most frequent significant words of the academic nausea
 
     Description:
-        The top_n most frequent words without the stopwords with their
-        occurrences, the most frequent first and words of equal frequency in
-        the order of the text. A stopword is a word of the list stopwords, by
-        its normalized form, or without the list one the predicate is_stopword
-        of a language accepts; without both no word is a stopword
+        The top_n most frequent words without the stopwords, the most frequent
+        first, ties in the order of the text. A stopword is a word of stopwords
+        by its normalized form or, without the list, one is_stopword accepts;
+        without both there are none
 
     Arguments:
         text (list[str]): List of words
@@ -524,11 +516,8 @@ def calc_academic_nausea(
     Computing the academic nausea
 
     Description:
-        The share of the occurrences of the most frequent significant words in
-        percent (Advego): the occurrences of the top_n words of
-        find_nausea_words divided by the number of all the words. With the
-        stopwords counted, the ten most frequent words of any text are mostly
-        conjunctions and prepositions
+        The occurrences of the top_n words of find_nausea_words over the number
+        of all the words, in percent (Advego)
 
     References:
         https://advego.com/text/seo/
@@ -565,9 +554,9 @@ def calc_water(
     Computing the water content
 
     Description:
-        The share of the words that carry no content in percent (Text.ru): the
-        words of the list stopwords, by their normalized forms, or without the
-        list those the predicate is_water_word of a language accepts
+        The share of the words without content in percent (Text.ru): the words
+        of stopwords by their normalized forms or, without the list, those
+        is_water_word accepts
 
     References:
         https://text.ru/seo
@@ -623,13 +612,10 @@ def calc_zipf_naturalness(
 
     Description:
         The agreement of the frequencies of the most frequent words with the
-        ideal distribution f_r = f_1 / r, f_1 being the frequency of the most
-        frequent word and r the rank: 100 · (1 - the mean relative deviation of
-        the frequencies from the ideal ones) over the ranks from 2 to
-        min(top_n, V, f_1), since rank 1 is ideal by construction and above f_1
-        the ideal frequency is below one. Negative values are cut to 0; nan
-        without ranks to compare: all the words are hapaxes, one lexeme or
-        top_n below 2
+        ideal f_r = f_1 / r, f_1 being the top frequency and r the rank:
+        100 · (1 - the mean relative deviation from the ideal) over the ranks 2
+        to min(top_n, V, f_1). Negative values are cut to 0; nan without ranks
+        to compare: all the words hapaxes, one lexeme or top_n below 2
 
     References:
         https://en.wikipedia.org/wiki/Zipf's_law
@@ -668,10 +654,10 @@ def calc_keyword_density(text: Sequence[str], keywords: Collection[str]) -> dict
     Computing the density of keywords
 
     Description:
-        The frequency of every keyword per 100 words of the text (Text.ru). A
-        keyword of several words separated by spaces is looked for as a
-        sequence of words, and its occurrences may overlap. The words are
-        compared in any case; the keywords of a set come in sorted order
+        The occurrences of every keyword per 100 words (Text.ru). A keyword of
+        several words separated by spaces is a sequence of words, and its
+        occurrences may overlap. The case is ignored; the keywords of a set come
+        in sorted order
 
     References:
         https://text.ru/seo
@@ -718,10 +704,9 @@ def calc_phrase_density(
     Computing the density of the phrases of a list
 
     Description:
-        The occurrences of the phrases (find_phrases) per 100 words; the hook
-        expand of a language spells the phrases out in the forms the text has
-        (the forms of a verb, contractions), giving every variant with its
-        phrase
+        The occurrences of the phrases (find_phrases) per 100 words; expand
+        spells the phrases out in the forms of the text (the forms of a verb,
+        contractions), every variant with its phrase
 
     Arguments:
         text (list[str]): List of words

@@ -44,11 +44,8 @@ _NORMALIZED_STATS = (
     "p_punctuations",
 )
 ELLIPSIS_PATTERN = re.compile(r"…|\.{3,}|(?<=[?!])\.{2}")
-# The spaces of a line: the separators of Unicode and the tab (SPACES)
 _SPACE = f"[{re.escape(''.join(SPACES))}]"
-# A dash typed with hyphens: a run of two or more, a hyphen after whitespace, the start of a
-# line or a closing mark (the underscore of italics included), before a space of a line or the
-# end, or between a letter and an opening or a closing mark
+# The dashes of dash_pattern; the underscore of italics counts as an opening or a closing mark
 _DASHES = (
     r"-{2,}|(?:(?<=\s)|(?<=[.,;:!?…»”\"')\]_])|^)-(?!\d)"
     rf"|-(?=(?:{_SPACE})|\Z)"
@@ -63,17 +60,15 @@ def dash_pattern(
     Building the pattern of the dashes typed with hyphens
 
     Description:
-        A dash typed with hyphens is a run of two or more hyphens, a hyphen
-        after whitespace, at the start of a line or after a closing mark, before
-        a space of a line (SPACES: the separators of Unicode and the tab) or
-        the end of the text, or between a letter and an opening or a closing
-        mark. A hanging hyphen, glued to a letter or a digit and carried on to
-        a later word ("pre- and post-war", "5- and 10-year"), stays a hyphen
-        when one of the conjunctions, in any case, follows it after such
-        spaces, and with hanging_before_comma when a comma
-        follows it ("two-, three- and four-year"); a language whose dialogue
-        closes a line with a hyphen before a comma ("-Come -he said-, and
-        left") leaves it off
+        A dash typed with hyphens is a run of two or more hyphens, or a hyphen
+        after whitespace, a closing mark or at the start of a line, before a
+        space of a line (SPACES) or the end of the text, or between a letter
+        and an opening or a closing mark. A hanging hyphen glued to a letter
+        or a digit ("pre- and post-war", "5- and 10-year") stays a hyphen
+        before spaces of a line and one of the conjunctions, case ignored, and
+        with hanging_before_comma before a comma ("two-, three- and
+        four-year"); a language whose dialogue closes a line with a hyphen
+        before a comma ("-Come -he said-, and left") leaves it off
 
     Arguments:
         conjunctions (Collection[str]): Conjunctions after a hanging hyphen
@@ -143,16 +138,15 @@ class BasicStats(Stats, metaclass=ABCMeta):
     Base of the basic statistics of a text
 
     Description:
-        Counts of the sentences, the words, the characters, the syllables and
-        the punctuation marks of a text. A language library subclasses the
-        class and implements count_syllables; the class attributes and
-        count_punctuations may be overridden as well
-        The words of a string come from the words extractor and its sentences
-        from the sentence extractor; the words of a Doc come from its tokens and
-        its sentences from its boundaries, or from the sentence extractor when it
-        has none or only partial ones (has_sents); an extractor given is used on
-        the text of a Doc too. A sentence counts when it holds a word
-        get_stats, to_dataframe, print_stats and describe come from Stats
+        Counts of the sentences, words, characters, syllables and punctuation
+        marks of a text. A language library implements count_syllables and
+        may override count_punctuations and the class attributes
+        The words and the sentences of a string come from the extractors. A Doc
+        gives its tokens as words and its boundaries as sentences, or those of
+        the sentence extractor when it has none or only partial ones
+        (has_sents); an extractor given is used on its text instead. A sentence
+        counts when it holds a word
+        The other methods come from Stats
 
     Arguments:
         source (str|Doc): Data source (a string or a Doc object)
@@ -304,8 +298,7 @@ class BasicStats(Stats, metaclass=ABCMeta):
         Counting the syllables of a word
 
         Description:
-            Syllables depend on the language, so a language library implements
-            the method
+            Implemented by a language library
 
         Arguments:
             word (str): Word
@@ -367,9 +360,8 @@ class BasicStats(Stats, metaclass=ABCMeta):
         Getting the names of the statistics of get_stats
 
         Returns:
-            tuple[str, ...]: The distributions of the words by letters and by syllables,
-                the counts of stats_desc, the distribution of the punctuation marks and,
-                with normalize, the normalized counts
+            tuple[str, ...]: c_letters, c_syllables, the counts of stats_desc,
+                c_punctuations and, with normalize, the normalized counts
         """
         names = ("c_letters", "c_syllables", *self.stats_desc, "c_punctuations")
         return (*names, *_NORMALIZED_STATS) if self.normalize else names
@@ -413,18 +405,17 @@ def count_punctuations(
     Counting punctuation marks by type
 
     Description:
-        The types of PUNCTUATION_TYPES. The dashes typed with hyphens
-        (dash_pattern) are counted first, then the ellipses (…, three or more
-        periods, or two after ? and !: "Who?.." is a question and an ellipsis),
-        then every other mark by marks - so ¿ and ¡ are question and
-        exclamation marks, a hyphen inside a word, before a digit or at a line
-        break inside a word is a hyphen; any other character of the Unicode
-        categories P and S is another mark. A library passes its marks, each
-        a single character of a type of PUNCTUATION_TYPES, and its dashes (dash_pattern)
+        The dashes typed with hyphens (dash_pattern) are counted first, then
+        the ellipses (…, three or more periods, or two after ? and !: "Who?.."
+        is a question and an ellipsis), then every other mark by marks; any
+        other character of the Unicode categories P and S is another mark. With
+        the defaults ¿ and ¡ are question and exclamation marks, and a hyphen
+        inside a word, before a digit or at a line break inside a word is a
+        hyphen
 
     Arguments:
         text (str): Text string
-        marks (dict[str, str]): Type of every mark
+        marks (dict[str, str]): Type of every mark, among PUNCTUATION_TYPES
         dash_pattern (Pattern): Dashes typed with hyphens
 
     Returns:

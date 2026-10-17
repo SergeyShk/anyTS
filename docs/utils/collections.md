@@ -14,7 +14,7 @@ A fixed order of a collection, the search of phrases in a list of words and the 
 ## find_phrases
 
 <!-- --8<-- [start:find_phrases] -->
-Finds phrases in a sequence of words: the bounds of every phrase found as slices of the words, in order. The words and the phrases are compared by their normalized forms, the lower case by default; at every position the longest phrase is taken, the phrases found do not overlap, and empty phrases are skipped. Words that are not a list of strings raise `SourceTypeError`.
+Finds phrases in a sequence of words and gives their bounds as slices of the words, in order. The words and the phrases are compared by their normalized forms, the lower case by default; at every position the longest phrase is taken, the phrases found do not overlap, and empty phrases are skipped. Words that are not a list of strings raise `SourceTypeError`.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |

@@ -10,7 +10,7 @@ Plotting [Zipf's law](https://en.wikipedia.org/wiki/Zipf%27s_law) from a counter
 
 !!! quote "Definition"
 
-    Zipf's law (the rank-frequency law) is an empirical regularity of the distribution of the frequencies of words in a natural language: if all the words of a language, or of a long enough text, are ordered by descending frequency, the frequency of the n-th word of the list is roughly inversely proportional to its number n, the rank of the word. The second most frequent word occurs about half as often as the first, the third a third as often, and so on.
+    Zipf's law (the rank-frequency law) is an empirical regularity of the frequencies of words in a natural language: with the words of a language, or of a long enough text, ordered by descending frequency, the frequency of the n-th word is roughly inversely proportional to its rank n. The second most frequent word occurs about half as often as the first, the third a third as often, and so on.
 <!-- --8<-- [end:zipf] -->
 
 ## Parameters
@@ -28,7 +28,7 @@ Plotting [Zipf's law](https://en.wikipedia.org/wiki/Zipf%27s_law) from a counter
 | `ax` | Axes | `None` | Axes of matplotlib for the plot; if not given, a new figure is created |
 | `labels` | dict[str, str] | `None` | Labels of the plot over the defaults: `title`, `xlabel`, `ylabel`, `experimental` and `theoretical` (the curves), `fit` (a format string with `q` and `s`) |
 
-The function returns the `Axes` with the plot; a `num_words` greater than the number of word types does not extend the curves beyond the data, a counter whose words are not strings raises `SourceTypeError`, an empty counter or a frequency that is not above zero `SourceError`, and a `num_words` below one or an exponent that is not a finite number above zero `ParameterError` - all before a figure is created.
+The function returns the `Axes` with the plot; a `num_words` greater than the number of word types does not extend the curves beyond the data. A counter whose words are not strings raises `SourceTypeError`, an empty counter or a frequency that is not above zero `SourceError`, and a `num_words` below one or an exponent that is not a finite number above zero `ParameterError`, all before a figure is created.
 <!-- --8<-- [end:zipf-parameters] -->
 
 <!-- --8<-- [start:zipf_theory] -->

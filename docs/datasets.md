@@ -17,7 +17,7 @@ An abstract dataset: a name, a dictionary of reference information `meta` and th
 <!-- --8<-- [end:Dataset] -->
 
 <!-- --8<-- [start:Dataset-hooks] -->
-The class attributes `repr_name` and `name_key` are the name of the class in `repr` and the key of the name in `info`; a language library overrides them in a subclass.
+The class attributes `repr_name` and `name_key` are the name of the class in `repr` and the key of the name in `info`; a subclass overrides them.
 <!-- --8<-- [end:Dataset-hooks] -->
 
 In the core `repr_name` is `"Dataset"` and `name_key` is `"name"`.
@@ -25,7 +25,7 @@ In the core `repr_name` is `"Dataset"` and `name_key` is `"name"`.
 ## fetch_archive
 
 <!-- --8<-- [start:fetch_archive] -->
-Downloads the archive of a dataset, verifies it and extracts the files. The archive is verified and extracted when it is downloaded now or when `missing` says the extracted files are not all in place. An archive that fails the SHA-256 checksum, given in either case, is removed and downloaded again once, and a second failure raises `DownloadError`. The files are extracted aside, next to the archive, and replace the directory of the dataset (or a link in its place) only once the extraction is complete; the earlier directory is moved aside first and removed only once the new files are in place, so an interrupted extraction or a failed replacement leaves the earlier files as they were, and concurrent calls do not share their partial files. The name of the archive must have an extension, since the directory is named after the archive without it; otherwise `ParameterError` is raised before the download.
+Downloads the archive of a dataset; when it is just downloaded or `missing` says the extracted files are not all in place, verifies it and extracts the files. The SHA-256 checksum may be in upper or lower case; an archive that fails it is removed and downloaded again once, and a second failure raises `DownloadError`. The files are extracted aside, next to the archive, and replace the directory of the dataset (or a link in its place) only once complete, the earlier directory removed only once they are in place: an interrupted extraction or a failed replacement leaves the earlier files intact, and concurrent calls do not share partial files. The name of the archive needs an extension, since the directory is named after the archive without it; otherwise `ParameterError` is raised before the download.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
@@ -40,7 +40,7 @@ Downloads the archive of a dataset, verifies it and extracts the files. The arch
 ## download_file
 
 <!-- --8<-- [start:download_file] -->
-Downloads a file into a directory and returns its path, or an empty string if the file is already there and `force` is off. The name of the file is the last part of the path of the address, decoded; an address without one needs `filename`, and a name with a drive or a separator raises `DownloadError`. The file is written under a temporary name of its own and renamed once it is complete, so a broken, interrupted or cut download - shorter than the length the server announced - raises `DownloadError` and leaves no partial file, and concurrent downloads do not share their partial files; the server is waited for `DOWNLOAD_TIMEOUT` (60) seconds at most.
+Downloads a file into a directory and returns its path, or an empty string if the file is already there and `force` is off. The name of the file is the decoded last part of the path of the address; an address without one needs `filename`, and a name with a drive or a separator raises `DownloadError`. The file is written under a temporary name and renamed once complete: a broken, interrupted or cut download (shorter than the announced length) raises `DownloadError` and leaves no partial file, and concurrent downloads do not share partial files. The server is waited for at most `DOWNLOAD_TIMEOUT` (60) seconds.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
@@ -56,7 +56,7 @@ In the core `USER_AGENT` is `"anyTS"`; a language library passes its own name.
 ## extract_archive
 
 <!-- --8<-- [start:extract_archive] -->
-Extracts a ZIP or TAR archive and returns the directory with the files. Paths leading outside the directory - absolute, with a drive or a network share, or with `..` - and links are refused before anything is written, whatever the version of Python. The archive is extracted aside and put in place only once complete: a single root directory takes the name of the archive without its extensions (`corpus_v1.tar.xz` - `corpus_v1`) with its subdirectories, replacing an earlier extraction, and the files of an archive without one root go into the directory, replacing those of the same names and keeping the others; a file in the place of a directory or the other way round is refused before anything is replaced. A missing file, a file that is not an archive, a corrupted or empty archive, a directory that cannot be created and files that cannot be replaced raise `DataFileError`.
+Extracts a ZIP or TAR archive and returns the directory with the files. Paths leading outside the directory (absolute, with a drive or a network share, or with `..`) and links are refused before anything is written, on any version of Python. The archive is extracted aside and put in place once complete: a single root directory takes the name of the archive without its extensions (`corpus_v1.tar.xz` - `corpus_v1`), replacing an earlier extraction; otherwise the files go into the directory, replacing those of the same names and keeping the others. A file in the place of a directory or the other way round is refused before anything is replaced. A missing file, a file that is not an archive, a corrupted or empty archive, a directory that cannot be created and files that cannot be replaced raise `DataFileError`.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
@@ -95,7 +95,7 @@ Converts a string or a `Path` into a `Path`, expanding a leading `~` into the ho
 <!-- --8<-- [end:length_filters] -->
 
 <!-- --8<-- [start:substring_filter] -->
-`substring_filter(field, value, fold)` returns the predicate that keeps the records whose field holds the substring `value`. Both are folded by `fold` before the comparison, so that the differences of case and diacritics a language ignores do not count; the substring is plain text, not a regular expression, a field that is not a string does not match, and a value that is not a string raises `ParameterError`.
+`substring_filter(field, value, fold)` returns the predicate that keeps the records whose field holds the substring `value`. Both are folded by `fold`, so the differences of case and diacritics a language ignores do not count. The substring is plain text, not a regular expression; a field that is not a string does not match, and a value that is not a string raises `ParameterError`.
 <!-- --8<-- [end:substring_filter] -->
 
 In the core `fold` is `fold_diacritics`.

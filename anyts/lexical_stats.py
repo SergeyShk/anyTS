@@ -61,15 +61,12 @@ class LexicalStats(Stats, metaclass=ABCMeta):
 
     Description:
         Lexical sophistication in the manner of TAALES - how rare the words of a
-        text are in the language: the mean frequency, range and dispersion of
-        the words by a frequency dictionary, the surprisal and the perplexity by
-        its unigram model, the shares of the frequency bands of a list of the
-        most frequent lemmas and the lexical density. A language library
-        subclasses the class and implements analyze - the words of a source
-        with their lemmas and whether they are content words - and sets the
-        dictionary, the keys of the words in it and the ranks of the lemmas.
-        The statistics by the dictionary are computed when first read, and a
-        band beyond the size of the list (top_size) is nan.
+        text are: statistics by a frequency dictionary and its unigram model,
+        the shares of the frequency bands of a list of the most frequent lemmas
+        and the lexical density. A language library subclasses the class,
+        implements analyze and sets the dictionary, the keys of the words and
+        the ranks of the lemmas. The statistics by the dictionary are computed
+        when first read; a band beyond top_size is nan.
         get_stats, to_dataframe, print_stats and describe come from Stats
 
     Arguments:
@@ -168,9 +165,8 @@ class LexicalStats(Stats, metaclass=ABCMeta):
         Getting the words of a source with their lemmas and their kind
 
         Description:
-            The lemmas and the parts of speech depend on the language, so a
-            language library implements the method; the numbers (utils.is_number) are
-            not words. A source of another type raises SourceTypeError
+            Implemented by a language library; numbers (utils.is_number) are not
+            words. A source of another type raises SourceTypeError
 
         Arguments:
             source (str|Doc): Data source
@@ -308,9 +304,9 @@ def calc_surprisal(lemmas: Sequence[str], freq_dict: FrequencyDictionary) -> flo
     Computing the mean surprisal of the words by the unigram model of a frequency dictionary
 
     Description:
-        The mean over the words of -log2 P(w), where P(w) = ipm / 10^6; a word
-        out of the dictionary gets its lowest frequency (min_ipm), so every
-        word has a surprisal. The perplexity is 2 to the power of the surprisal
+        The mean of -log2 P(w) over the words, P(w) = ipm / 10^6; a word out of
+        the dictionary gets its lowest frequency (min_ipm). The perplexity is 2
+        to the power of the surprisal
 
     Arguments:
         lemmas (list[str]): Keys of the words in the dictionary

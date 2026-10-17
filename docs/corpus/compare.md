@@ -6,7 +6,7 @@
 ## Description
 
 <!-- --8<-- [start:compare_features] -->
-Comparing two corpora feature by feature. Each corpus comes as a table of the features of its windows - texts split into parts of about the same size, so that the features do not depend on the length of the texts. `compare_features(table_a, table_b, labels, n_bootstrap, seed)` compares the tables column by column and returns one row per feature, sorted by descending absolute Cliff's delta, the features without statistics last. The bootstrap resamples whole texts by the level `text` of the index of a table; a table without that level has every row taken for a text of its own. A column missing from one of the tables gives `nan`.
+Comparing two corpora feature by feature. Each corpus is a table of the features of its windows, parts of the texts of about equal size, so the features do not depend on text length. `compare_features(table_a, table_b, labels, n_bootstrap, seed)` gives one row per column, by descending absolute Cliff's delta, the features without statistics last. The bootstrap resamples whole texts by the index level `text`; without it every row is a text of its own. A column missing from one table gives `nan`.
 <!-- --8<-- [end:compare_features] -->
 
 ## Statistics
@@ -20,16 +20,16 @@ For a feature with the values $x_1 \dots x_{n_A}$ in corpus A and $y_1 \dots y_{
 | `median_diff`, `ci_low`, `ci_high` | the difference of the medians and its 95% percentile bootstrap interval: both sets are resampled `n_bootstrap` times (`bootstrap_median_diff`) |
 | `cohen_d` | $d = (\bar{x} - \bar{y}) / s$, $s$ - the pooled standard deviation; 0.2 - a small effect, 0.5 - medium, 0.8 - large (`calc_cohen_d`) |
 | `cliff_delta` | $\delta = P(x > y) - P(x < y)$ from −1 to 1; $\lvert\delta\rvert$ < 0.147 - a negligible effect, < 0.33 - small, < 0.474 - medium, large otherwise (Romano et al. 2006; `calc_cliff_delta`) |
-| `auc` | the feature as a classifier on its own: the share of the pairs of windows where the value in A is greater than in B, ties counted as half; $\delta = 2 \cdot AUC - 1$, 0.5 - the feature does not tell the corpora apart |
+| `auc` | the feature as a classifier: the share of the pairs of windows with the value in A greater than in B, ties counted as half; $\delta = 2 \cdot AUC - 1$, 0.5 - the feature does not tell the corpora apart |
 | `u`, `p_value` | the Mann-Whitney U statistic and the two-sided p-value (`scipy.stats.mannwhitneyu`) |
 | `p_holm` | the p-value with Holm's correction for the number of features (`holm_correction`) |
 | `n_A`, `n_B` | number of windows with a defined value |
 | `n_texts_A`, `n_texts_B` | number of texts behind those windows |
 
-The names of the columns are `anyts.corpus.COMPARISON_COLUMNS`, with `A` and `B` replaced by the labels of the corpora. Cliff's delta and the AUC come from the same U statistic and agree with each other; Cohen's d is sensitive to outliers and to departures from normality, so it is best read next to the delta.
+The columns are `anyts.corpus.COMPARISON_COLUMNS` with `A` and `B` replaced by the labels of the corpora. Cliff's delta and the AUC come from the same U statistic and agree; Cohen's d is sensitive to outliers and non-normality, so it is best read next to the delta.
 
 !!! warning "Windows of one text are not independent"
-    The test and the effect sizes take every window for an independent observation, and the windows of one text are not. With few texts in a corpus the p-values are too small and reflect the texts chosen as much as the corpora. The bootstrap resamples whole texts instead (a cluster bootstrap), so its interval accounts for the spread between the texts; it needs at least two texts on each side and is rough with only a few.
+    The test and the effect sizes take the windows for independent observations, which the windows of one text are not: with few texts the p-values are too small and reflect the chosen texts as much as the corpora. The bootstrap resamples whole texts (a cluster bootstrap), so its interval covers the spread between texts; it needs at least two texts on each side and is rough with few.
 <!-- --8<-- [end:compare_features-statistics] -->
 
 ## Parameters
@@ -45,7 +45,7 @@ The names of the columns are `anyts.corpus.COMPARISON_COLUMNS`, with `A` and `B`
 <!-- --8<-- [end:compare_features-parameters] -->
 
 <!-- --8<-- [start:check_comparison_params] -->
-`check_comparison_params(labels=("A", "B"), n_bootstrap=1000, seed=0)` checks the parameters of `compare_features` and raises `ParameterError` unless the labels are two strings that give distinct columns (`("diff", "B")` would repeat `median_diff`), the number of bootstrap samples is an integer of at least one and the seed is `None`, a non-negative integer or a numpy `Generator`. Called before the tables are built from texts, it reports a wrong parameter before the texts are processed.
+`check_comparison_params(labels=("A", "B"), n_bootstrap=1000, seed=0)` checks the parameters of `compare_features` before the texts are processed: it raises `ParameterError` unless the labels are two strings that give distinct columns (`("diff", "B")` would repeat `median_diff`), the number of bootstrap samples is an integer of at least one and the seed is `None`, a non-negative integer or a numpy `Generator`.
 <!-- --8<-- [end:check_comparison_params] -->
 
 !!! example "Example"
@@ -67,7 +67,7 @@ The names of the columns are `anyts.corpus.COMPARISON_COLUMNS`, with `A` and `B`
 ## Functions of the statistics
 
 <!-- --8<-- [start:compare_values] -->
-`compare_values(values_a, values_b, n_bootstrap=1000, rng=None, texts_a=None, texts_b=None)` compares two sets of values of one feature, undefined and infinite values - a missing value (`None`, `NA`) included - dropped together with their texts, and returns the values of one row in the order of `anyts.corpus.COMPARISON_COLUMNS`, `p_holm` left `nan`; `texts_a` and `texts_b` give the text of every value for the bootstrap.
+`compare_values(values_a, values_b, n_bootstrap=1000, rng=None, texts_a=None, texts_b=None)` compares two sets of values of one feature and returns one row in the order of `anyts.corpus.COMPARISON_COLUMNS`, `p_holm` left `nan`. Undefined and infinite values, missing ones (`None`, `NA`) included, are dropped with their texts; `texts_a` and `texts_b` give the text of every value for the bootstrap.
 <!-- --8<-- [end:compare_values] -->
 
 <!-- --8<-- [start:calc_cohen_d] -->
@@ -75,11 +75,11 @@ The names of the columns are `anyts.corpus.COMPARISON_COLUMNS`, with `A` and `B`
 <!-- --8<-- [end:calc_cohen_d] -->
 
 <!-- --8<-- [start:calc_cliff_delta] -->
-`calc_cliff_delta(values_a, values_b)` - Cliff's delta, the share of the pairs where the first value is greater minus the share where it is smaller; `nan` for an empty set or an undefined value. It is computed by sorting, in $O((n_A + n_B) \log n_B)$ time and linear memory.
+`calc_cliff_delta(values_a, values_b)` - Cliff's delta, the share of the pairs where the first value is greater minus the share where it is smaller; `nan` for an empty set or an undefined value. Computed by sorting, in $O((n_A + n_B) \log n_B)$ time and linear memory.
 <!-- --8<-- [end:calc_cliff_delta] -->
 
 <!-- --8<-- [start:bootstrap_median_diff] -->
-`bootstrap_median_diff(values_a, values_b, n_bootstrap=1000, rng=None, confidence=0.95, texts_a=None, texts_b=None)` - the percentile bootstrap interval of the difference of the medians. With `texts_a` and `texts_b` whole texts are resampled, and the median of a draw is that of the values of the drawn texts put together; with fewer than two texts on a side the interval is `nan`.
+`bootstrap_median_diff(values_a, values_b, n_bootstrap=1000, rng=None, confidence=0.95, texts_a=None, texts_b=None)` - the percentile bootstrap interval of the difference of the medians. With `texts_a` and `texts_b` whole texts are resampled, the median of a draw taken over the values of its texts; with fewer than two texts on a side the interval is `nan`.
 <!-- --8<-- [end:bootstrap_median_diff] -->
 
 <!-- --8<-- [start:holm_correction] -->
@@ -102,7 +102,7 @@ The names of the columns are `anyts.corpus.COMPARISON_COLUMNS`, with `A` and `B`
 ## Windows of a text { #split_windows }
 
 <!-- --8<-- [start:split_windows] -->
-`split_windows(text, window, min_words)` cuts a text into consecutive windows of exactly `window` words, so that the features that depend on the length are comparable between the windows of different texts. The incomplete rest at the end is a window only when it holds at least `min_words` words; by default a whole window, so the rest is dropped. A boundary goes before the first word of a window and the opening marks before it, so the punctuation stays in the windows; a symmetric mark, such as a straight quote or the dash of an aside, closes the previous window when it is glued to its last word or follows a closing mark. The windows are stripped of whitespace; `window=None` gives the whole text. The words and their positions come from `tokenize`, the words of `WordsExtractor` by default, and the marks of a language are parameters.
+`split_windows(text, window, min_words)` cuts a text into consecutive windows of exactly `window` words, so the features that depend on length are comparable between texts. The rest is a window only with at least `min_words` words (by default a whole window, so it is dropped). A boundary goes before the first word of a window and its opening marks; a symmetric mark, such as a straight quote or the dash of an aside, closes the previous window when glued to its last word or after a closing mark. Windows are stripped of whitespace; `window=None` gives the whole text. The words and their positions come from `tokenize`, by default the words of `WordsExtractor`.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
@@ -123,7 +123,7 @@ The marks of the core are those of `anyts.constants`: quotes, brackets and dashe
 ## Rhythm of the sentences { #sentence_rhythm }
 
 <!-- --8<-- [start:sentence_rhythm] -->
-`sentence_rhythm(lengths)` gives the features of the rhythm of the sentences from their lengths in words: the mean length `sents_mean`, the standard deviation `sents_std`, the coefficient of variation `sents_cv` and the autocorrelation at lag 1 `sents_autocorr`, the link between the lengths of neighbouring sentences (Yule, 1939). The deviation needs two sentences, the autocorrelation three of unequal lengths and the coefficient of variation a mean above zero, otherwise they are `nan`, as are all of them without sentences; lengths that are not a list of integers raise `SourceTypeError`, a negative length `ParameterError`. The messages of the errors are the keyword `messages`.
+`sentence_rhythm(lengths)` gives the rhythm of the sentences from their lengths in words: the mean `sents_mean`, the standard deviation `sents_std`, the coefficient of variation `sents_cv` and the lag-1 autocorrelation of neighbouring lengths `sents_autocorr` (Yule, 1939). The deviation needs two sentences, the autocorrelation three of unequal lengths, the coefficient of variation a mean above zero; otherwise, and without sentences, a feature is `nan`. Lengths that are not a list of integers raise `SourceTypeError`, a negative length `ParameterError`, with the messages of the keyword `messages`.
 <!-- --8<-- [end:sentence_rhythm] -->
 
 !!! example "Example"

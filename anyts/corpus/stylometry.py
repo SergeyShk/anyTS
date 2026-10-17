@@ -92,8 +92,8 @@ def frequency_table(
         for unit, share in row.items():
             shares.setdefault(unit, []).append(share)
     n_texts = len(rows)
-    # fsum keeps the mean free of the order of the texts, and 12 significant digits
-    # let equal rational means tie, so that they go alphabetically
+    # fsum makes the mean independent of the order of the texts; 12 significant digits let
+    # equal rational means tie and go alphabetically
     means = {unit: float(f"{fsum(values) / n_texts:.12g}") for unit, values in shares.items()}
     selected = sorted(
         (unit for unit in means if len(shares[unit]) / n_texts >= culling),
@@ -253,11 +253,11 @@ def delta_profiles(
     Description:
         Authorship attribution: the most frequent units and the mean and
         deviation of the z-scores come from the reference texts or from a
-        separate set statistics (the training windows, when the references are
-        too few); the samples are scaled by the same statistics and compared
-        by the variant of Delta, as in delta. The nearest reference in a row is
-        the presumed author; the result for a sample does not depend on the
-        other samples
+        separate set statistics (such as training windows when the references
+        are too few); the samples are scaled by the same statistics and
+        compared by the variant of Delta, as in delta. The nearest reference in
+        a row is the presumed author; the result for a sample does not depend
+        on the other samples
 
     Arguments:
         reference (dict[str, list[str]]): Units of the reference texts by name
@@ -435,8 +435,8 @@ def kilgarriff_chi2(words_a: Sequence[str], words_b: Sequence[str], n_mfw: int =
         Over the n most frequent words of the joint corpus (Kilgarriff 2001):
         for every word the expected frequencies in the corpora are proportional
         to their sizes, χ² = Σ (O − E)² / E over the words and both corpora.
-        The value grows with the size of the corpora, so pairs of corpora are
-        comparable with each other at equal sizes
+        The value grows with the size of the corpora, so only pairs of equal
+        sizes are comparable
 
     References:
         https://www.sketchengine.eu/wp-content/uploads/comparing_corpora_2001.pdf

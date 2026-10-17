@@ -1,6 +1,6 @@
 # Metric functions
 
-The functions see no language: a word is given as its sounds or its letters - the characters of a string, the sounds of a transcription - and the classes of the sounds or the features to count come through the parameters, so a library chooses them.
+The functions know no language: a word is given as its letters (the characters of a string) or the sounds of its transcription, and the classes of the sounds or the features to count come through the parameters.
 
 ## CV pattern
 
@@ -42,7 +42,7 @@ Parameters:
     **anyts.phon_stats.count_hiatus()**
 
 <!-- --8<-- [start:count_hiatus] -->
-The number of the hiatuses of a word by its vowels in a row: a run of two vowels or more is one hiatus, and a vowel of `glides` after a vowel makes none.
+The number of the hiatuses of a word by its vowels in a row: a run of two vowels or more is one hiatus; a vowel of `glides` after a vowel makes none.
 
 Parameters:
 
@@ -59,13 +59,13 @@ Parameters:
     **anyts.phon_stats.calc_repetition_index()**
 
 <!-- --8<-- [start:calc_repetition_index] -->
-The repetition index: the ratio of the number of windows of `window_len` neighbouring words where a feature - a letter or a sound, as a library chooses - occurs in two words or more, summed over the features, to the number expected if the words stood in random order. A window of shuffled words is a sample of them without replacement, so for a feature found in \(K\) of the \(N\) words of the text, a window of \(w\) words holds it in two words or more with the hypergeometric probability
+The repetition index: the number of windows of `window_len` neighbouring words where a feature (a letter or a sound) occurs in two words or more, summed over the features, divided by the number expected if the words stood in random order. A window of shuffled words is a sample without replacement, so for a feature found in \(K\) of the \(N\) words, a window of \(w\) words holds it in two words or more with the hypergeometric probability
 
 $$
 P = 1 - \frac{\binom{N-K}{w} + K \binom{N-K}{w-1}}{\binom{N}{w}}
 $$
 
-and the expected number is the sum of these probabilities over the features times the \(N - w + 1\) windows. The expectation comes from the text itself, so the index tells whether the repetitions gather in neighbouring words, not how frequent a feature is: it averages to 1 over the orders of the words, and is well above 1 when the repetitions come closer than chance. A word counts a feature once, however often it holds it; `nan` for a text shorter than the window and for a text where no feature is shared by two words.
+and the expected number is the sum of these probabilities over the features times the \(N - w + 1\) windows. Since the expectation comes from the text itself, the index shows whether the repetitions gather in neighbouring words, not how frequent a feature is: it averages to 1 over the orders of the words and is well above 1 when the repetitions come closer than chance. A word counts a feature once; the index is `nan` for a text shorter than the window or with no feature shared by two words.
 <!-- --8<-- [end:calc_repetition_index] -->
 
 <!-- --8<-- [start:calc_repetition_index-parameters] -->

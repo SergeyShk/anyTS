@@ -47,17 +47,13 @@ class PhonStats(Stats, metaclass=ABCMeta):
     Base of the phonetic statistics of a text
 
     Description:
-        The sounds of a text: the shares of the vowels, the sonorants and the
-        voiced and voiceless obstruents, the consonant clusters, the hiatuses,
-        the entropy of the CV patterns of the words, the hardness, the
-        alliteration and the assonance (calc_repetition_index), the open
-        syllables and the mean length of a syllable; a syllable without a
-        sound of the classes (a number) is no syllable. A language library
-        subclasses the class, sets its classes of sounds and implements
-        syllabify; its sounds are the letters of a word by default, or the
-        sounds of its transcription (transcribe). Hardness is the voiceless
-        consonants to the vowels and the sonorants; a heavy cluster has three
-        consonants or more.
+        The sounds of a text: the shares of the classes of sounds, the
+        consonant clusters, the hiatuses, the CV patterns, the hardness, the
+        alliteration and the assonance (calc_repetition_index) and the
+        syllables; a syllable without a sound of the classes (a number) is no
+        syllable. A language library subclasses the class, sets its classes of
+        sounds and implements syllabify. The sounds are the letters of a word by
+        default, or those of its transcription (transcribe).
         get_stats, to_dataframe, print_stats and describe come from Stats
 
     Arguments:
@@ -252,8 +248,7 @@ class PhonStats(Stats, metaclass=ABCMeta):
         Getting the syllables of a word
 
         Description:
-            Syllables depend on the language, so a language library implements
-            the method
+            Implemented by a language library
 
         Arguments:
             word (str): Word in lower case
@@ -268,9 +263,9 @@ class PhonStats(Stats, metaclass=ABCMeta):
         Getting the sounds of every syllable of a word
 
         Description:
-            The sounds of every syllable of syllabify (transcribe) by default; a
-            library whose sounds depend on the place of a syllable in the word
-            gives them otherwise
+            The transcription of every syllable of syllabify by default; a
+            library whose sounds depend on the place of a syllable gives them
+            otherwise
 
         Arguments:
             word (str): Word in lower case
@@ -373,8 +368,7 @@ def count_hiatus(
 
     Description:
         A run of two vowels or more is one hiatus; a vowel of glides after a
-        vowel stands for a glide and a vowel and makes none (a letter that
-        writes both)
+        vowel makes none (a letter that writes a glide and a vowel)
 
     Arguments:
         sounds (list[str]): Sounds or letters of the word
@@ -411,12 +405,11 @@ def calc_repetition_index(
     Computing the repetition index
 
     Description:
-        The ratio of the number of windows of window_len neighbouring words
-        where a feature occurs in two words or more, summed over the features,
-        to the number expected if the words stood in random order: about 1 - random
-        repetitions, well above 1 - the repetitions gather in neighbouring
-        words. The features of a word are the characters of a string or the
-        items of a collection, each counted once
+        The windows of window_len neighbouring words where a feature occurs in
+        two words or more, summed over the features, over the number expected
+        in random order: about 1 for random repetitions, well above 1 when they
+        gather. A word counts each of its features (the characters of a string
+        or the items of a collection) once
 
     Arguments:
         words (list[str]|list[list[str]]): Features of every word, such as its
@@ -490,8 +483,7 @@ def _count_windows(
     features, and the number of the words with every feature
 
     Description:
-        The features are counted in blocks of columns, so that a large alphabet
-        takes little memory
+        Counted in blocks of columns, so that a large alphabet takes little memory
     """
     observed = 0
     counts: list[int] = []

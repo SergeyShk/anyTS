@@ -6,34 +6,34 @@
 ## Description
 
 <!-- --8<-- [start:StatsComponent] -->
-The base of the components of [spaCy](https://github.com/explosion/spaCy) that put the statistics of a text into an extension of `Doc`: a component registers the extension when it is added to a pipeline and, for every document, computes the statistics and puts them into `doc._.<name>`. Writing components in general is described in the [documentation of spaCy](https://spacy.io/usage/processing-pipelines#custom-components).
+The base of the components of [spaCy](https://github.com/explosion/spaCy) that put the statistics of a text into an extension of `Doc`: a component registers the extension when added to a pipeline and puts the statistics of every document into `doc._.<name>`. Writing components in general is described in the [documentation of spaCy](https://spacy.io/usage/processing-pipelines#custom-components).
 <!-- --8<-- [end:StatsComponent] -->
 
 ## Language hooks
 
 <!-- --8<-- [start:StatsComponent-hooks] -->
-A language library subclasses `StatsComponent` for every class of its statistics and registers the subclass as a factory under the prefix of the library - `Language.factory("<prefix>_<statistics>")` - so that the factories of several libraries live in one process. Declared as entry points of `spacy_factories`, the factories load with `spacy.load` without importing the library. The subclass sets the class of its statistics and checks its parameters in its `__init__` before it calls the `__init__` of the base, so a wrong parameter fails at `add_pipe`. For the classes of statistics of the core the components below carry the parameters and their checks already, and a library sets its subclass of the statistics on them.
+A language library subclasses `StatsComponent` for every class of its statistics and registers the subclass as a factory under its prefix, `Language.factory("<prefix>_<statistics>")`, so that the factories of several libraries live in one process; declared as entry points of `spacy_factories`, they load with `spacy.load` without importing the library. The subclass sets the class of its statistics and checks its parameters in its `__init__` before calling the `__init__` of the base, so a wrong parameter fails at `add_pipe`. The components of the classes of statistics of the core already carry their parameters and checks; a library sets its subclass of the statistics on them.
 
 | Hook | Description |
 | :--: | :---------: |
-| `stats_class` | Class of statistics made of a document, a class attribute; `None` by default, and a component with neither a concrete class nor a `compute` of its own raises `ParameterError` at `add_pipe` |
-| `stats_params` | Attributes of the component passed to the class of statistics as its keyword arguments, a class attribute; none by default, and a name the component lacks raises `ParameterError` at `add_pipe` |
-| `compute(doc)` | The statistics of a document: `stats_class(doc, **params)` by default; a component that computes otherwise, such as one that reuses the statistics of another component, overrides it |
+| `stats_class` | Class attribute: the class of statistics made of a document, `None` by default; a component with neither a concrete class nor its own `compute` raises `ParameterError` at `add_pipe` |
+| `stats_params` | Class attribute: the attributes of the component passed to the class of statistics as keyword arguments, none by default; a name the component lacks raises `ParameterError` at `add_pipe` |
+| `compute(doc)` | The statistics of a document, `stats_class(doc, **params)` by default; overridden by a component that computes otherwise, such as one reusing the statistics of another component |
 | `prepare(nlp)` | Preparing the pipeline when the component is added, such as the rules of the tokenizer; nothing by default |
 | `accepts(doc)` | Whether a document gets the statistics; by default whether it has a word (`has_words`) |
-| `messages` | Messages of the errors by key, a class attribute; `MESSAGES` by default |
-| `from_extension(doc, name, stats_class, factory=None)` | The statistics another component put into the document, for reusing them instead of computing them again; an extension without statistics of the class raises `SourceError`, which names the factory to add. The other component must accept every document the reusing one does, since a document it passes leaves `None` |
+| `messages` | Class attribute: the messages of the errors by key, `MESSAGES` by default |
+| `from_extension(doc, name, stats_class, factory=None)` | The statistics another component put into the document, for reuse instead of computing them again; an extension without statistics of the class raises `SourceError`, which names the factory to add. The other component must accept every document the reusing one does, since a document it passes leaves `None` |
 <!-- --8<-- [end:StatsComponent-hooks] -->
 
 ## Names { #names }
 
 <!-- --8<-- [start:StatsComponent-names] -->
-The name of the pipe is the name of the extension: `nlp.add_pipe(factory, name="basic")` puts the statistics into `doc._.basic`. Without `name` the pipe and the extension keep the name of the factory. The extension follows the pipe when the pipeline renames it (`nlp.rename_pipe`), and a name taken by an extension of another package raises `ParameterError` instead of replacing it. A component taken from another pipeline (`add_pipe(name, source=other)`) is the same object in both, so under a new name it writes to that extension in the other pipeline too; a component of its own comes from the factory, `add_pipe(factory, name=...)`. The same component can be added twice under different names, with different parameters. A document with no words - an empty string, whitespace, punctuation alone - passes through a component untouched, its extension left at `None`.
+The name of the pipe is the name of the extension: `nlp.add_pipe(factory, name="basic")` puts the statistics into `doc._.basic`. Without `name` both take the name of the factory. The extension follows the pipe when the pipeline renames it (`nlp.rename_pipe`), and a name taken by an extension of another package raises `ParameterError` instead of replacing it. A component taken from another pipeline (`add_pipe(name, source=other)`) is the same object in both, so under a new name it writes to that extension in the other pipeline too; a separate component comes from the factory, `add_pipe(factory, name=...)`. The same component can be added twice under different names, with different parameters. A document with no words - an empty string, whitespace, punctuation alone - passes through a component untouched, its extension left at `None`.
 <!-- --8<-- [end:StatsComponent-names] -->
 
 <!-- --8<-- [start:StatsComponent-serialization] -->
 !!! warning "Serialization"
-    A component keeps an object of statistics in `doc._.<name>`, and spaCy cannot serialize it: `Doc.to_bytes()`, `DocBin(store_user_data=True)` and `nlp.pipe(..., n_process>1)` fail with these components in the pipeline. To save a document, leave the user data out (`doc.to_bytes(exclude=["user_data"])`) or keep `doc._.<name>.get_stats()` on your own; for multiprocessing compute the statistics in the main process after `nlp.pipe`, without the components.
+    A component keeps an object of statistics in `doc._.<name>`, and spaCy cannot serialize it: `Doc.to_bytes()`, `DocBin(store_user_data=True)` and `nlp.pipe(..., n_process>1)` fail with these components in the pipeline. To save a document, leave the user data out (`doc.to_bytes(exclude=["user_data"])`) or keep `doc._.<name>.get_stats()` separately; for multiprocessing compute the statistics in the main process after `nlp.pipe`, without the components.
 <!-- --8<-- [end:StatsComponent-serialization] -->
 
 ## Parameters
@@ -87,7 +87,7 @@ A component of the lexical diversity of the words of a `Doc`.
 ## Components of the classes of statistics { #class-components }
 
 <!-- --8<-- [start:class-components] -->
-Each class of statistics of the core has a component that carries its parameters as the parameters of the config of the pipe, checks them at `add_pipe` and passes them to the class; a language library subclasses it, sets its subclass of the statistics as `stats_class` and registers it under its prefix:
+Each class of statistics of the core has a component that takes its parameters in the config of the pipe, checks them at `add_pipe` and passes them to the class; a language library subclasses it, sets its subclass of the statistics as `stats_class` and registers it under its prefix:
 
 ``` python
 @Language.factory("<prefix>_phon")
@@ -129,7 +129,7 @@ With `preset` left at `None` the config of a saved pipeline holds no preset, and
 <!-- --8<-- [end:DiversityStatsComponent] -->
 
 <!-- --8<-- [start:LexicalStatsComponent] -->
-`LexicalStatsComponent` puts the lexical sophistication statistics into the extension, with the frequency dictionary of its attribute `freq_dict` - `None` by default, for the dictionary of the class; a library sets the attribute in the constructor of its component, from a directory of its parameters for instance. A document gets the statistics when it has a word - of `iter_doc_words` with `join_hyphens` - other than a number of the method `is_number`, `anyts.utils.is_number` by default; a library gives the numbers its class leaves out, so that a document of numbers alone passes untouched.
+`LexicalStatsComponent` puts the lexical sophistication statistics into the extension, with the frequency dictionary of its attribute `freq_dict`: `None` by default, for the dictionary of the class, and set by a library in the constructor of its component. A document gets the statistics when it has a word of `iter_doc_words` (with `join_hyphens`) other than a number of the method `is_number`, `anyts.utils.is_number` by default; a library gives the numbers its class leaves out, so a document of numbers alone passes untouched.
 <!-- --8<-- [end:LexicalStatsComponent] -->
 
 <!-- --8<-- [start:StyleStatsComponent] -->
@@ -162,7 +162,7 @@ Stopwords that are not a list of strings raise `SourceTypeError`, a `top_n` that
     **anyts.components.start_sents_after_blank_lines**
 
 <!-- --8<-- [start:start_sents_after_blank_lines] -->
-A component that starts a sentence at the first token after a blank line - a line break, optional whitespace and another line break - so that a heading, a list item or a paragraph without a final mark is a sentence of its own, as in the sentence extractor. It goes before the component that sets the sentences - the parser, `senter` or `sentencizer` - which keeps the starts it finds and places the others; the whitespace before such a start stays with the sentence before it, and the marks that open a paragraph (a dash of a dialogue, `¡`, `«`) stay with its first word. On its own the component leaves the sentences within a paragraph unsplit, and its starts are partial boundaries (`has_sents`), so the statistics take the sentences of such a document from its text. A parsed document, such as one passed through the pipeline again, passes untouched, since spaCy keeps its sentences. A language library registers the component under its prefix, `Language.component("<prefix>_blank_lines", func=start_sents_after_blank_lines)`.
+A component that starts a sentence at the first token after a blank line - a line break, optional whitespace and another line break - so that a heading, a list item or a paragraph without a final mark is a sentence of its own, as in the sentence extractor. It goes before the parser, `senter` or `sentencizer`, which keeps its starts and places the others. The whitespace before such a start stays with the sentence before it, and the marks that open a paragraph (a dash of a dialogue, `¡`, `«`) stay with its first word. Alone, the component leaves the sentences within a paragraph unsplit and sets partial boundaries (`has_sents`), so the statistics take the sentences of such a document from its text. A parsed document, such as one passed through the pipeline again, passes untouched, since spaCy keeps its sentences. A language library registers the component under its prefix, `Language.component("<prefix>_blank_lines", func=start_sents_after_blank_lines)`.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |

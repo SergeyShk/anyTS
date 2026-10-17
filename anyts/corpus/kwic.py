@@ -56,27 +56,18 @@ def kwic(
     Building a KWIC concordance (keyword in context)
 
     Description:
-        The occurrences of a word or a phrase are looked for among the words of
-        the text by the word form, ignoring case or not, or by the lemma. The
-        words of a string and of the keyword come from tokenize, those of a Doc
-        from its tokens (iter_doc_units with join_hyphens), so a library passes
-        the tokenizer that splits a string as its pipeline does; punctuation and
-        symbols are not words. By lemma, a word matches when one of its lemmas
-        (lemmatize) is one of the lemmas of the words of the keyword; the lemmas
-        are folded by fold, and so are the word forms with ignore_case. The
-        compared forms are in the composed form of Unicode (NFC), without soft
-        hyphens. By default a word is a run of word characters, kept whole
-        across its inner hyphens with join_hyphens, the lemmas of a word are the
-        word itself and, for a word of a Doc with lemmas, the lemma of the
-        model, and fold lower-cases
-        A phrase does not run across the end of a paragraph or of a sentence -
-        a boundary of a Doc anywhere between its words, or without boundaries
-        or with partial ones (has_sents) the start of a sentence of sentenize,
-        by default a final mark before whitespace - unless the keyword has a
-        final mark or the start of a sentence of sentenize in the same place.
-        The context is window words on each side as written, with the
-        punctuation between them; whitespace collapses to one space;
-        occurrences do not overlap
+        Occurrences of a word or a phrase are found among the words of the text
+        by the word form or by the lemma, when a word shares a lemma with its
+        word of the keyword. The words of a string and of the keyword come from
+        tokenize, those of a Doc from its tokens (iter_doc_units); punctuation
+        and symbols are not words. Lemmas, and word forms with ignore_case, are
+        folded by fold; forms are compared in NFC, without soft hyphens. A
+        phrase does not cross the end of a paragraph or a sentence - a boundary
+        of a Doc anywhere between its words, or without boundaries or with
+        partial ones (has_sents) a sentence start of sentenize - unless the
+        keyword has such an end in the same place. The context is window words
+        on each side as written, punctuation included; whitespace collapses to
+        one space; occurrences do not overlap
 
     Arguments:
         source (str|Doc): Text or Doc object
@@ -87,9 +78,11 @@ def kwic(
         tokenize (callable): Words of a string as triples of the start, the end
             and the text; a run of word characters by default
         lemmatize (callable): Lemmas of a word, given its text and its tokens
-            in a Doc (none for a string and the keyword); a string is one lemma
+            in a Doc (none for a string and the keyword); a string is one lemma;
+            by default the word and, in a Doc with lemmas, the lemma of the model
         fold (callable): Folding of a word form or a lemma before the comparison
-        join_hyphens (bool): Join the parts of hyphenated words of a Doc
+        join_hyphens (bool): Join the parts of hyphenated words of a Doc, and of
+            a string with the default tokenizer
         sentenize (callable): Sentences of a string, of the keyword and of the
             text of a Doc without boundaries or with partial ones, as triples of
             the start, the end and the text; by default a sentence ends at a
@@ -222,11 +215,10 @@ def _boundary(
     Whether a sentence or a paragraph ends before a word
 
     Description:
-        By the sentence boundaries of a Doc - at any token from the one after
-        the previous word to the first token of the word, so that a start on an
-        opening mark counts - or by the starts of the sentences of sentenize
-        from the end of the previous word to the start of the word, and by the
-        paragraph breaks; by the final marks before whitespace otherwise
+        By a sentence start of a Doc at any token from the one after the
+        previous word to the first token of the word (so a start on an opening
+        mark counts), or of sentenize between the two words, and by a paragraph
+        break; otherwise by a final mark before whitespace
     """
     end, start = words[index - 1][1], words[index][0]
     gap = text[end:start]
@@ -271,8 +263,7 @@ def format_kwic(concordances: Iterable[Concordance], width: int = 40) -> str:
     Description:
         The left context is cut from the left and aligned to the right, the
         right one is cut from the right; lines are separated by line breaks.
-        The lines are taken in the composed form of Unicode (NFC), so that the
-        widths count characters as they are shown
+        The lines are taken in NFC, so the widths count characters as shown
 
     Arguments:
         concordances (list[Concordance]): Lines of the concordance

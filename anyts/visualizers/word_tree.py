@@ -36,8 +36,8 @@ def wordtree(
         The N-grams of up to max_n words that start or end with the keyword
         are counted in every text (a sentence, for instance); on each side the
         max_per_n most frequent of every size are kept and joined into a tree,
-        with the size of the font by frequency. Rendering
-        needs the executables of Graphviz
+        with the size of the font by frequency. Rendering needs the
+        executables of Graphviz
 
     References:
         https://www.cg.tuwien.ac.at/courses/InfoVis/HallOfFame/2011/Gruppe05/Homepage/Paper/wordtree-paper-wattenberg.pdf

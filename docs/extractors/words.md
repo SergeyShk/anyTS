@@ -12,7 +12,7 @@ A class for extracting words from a text. It allows using different tokenizers, 
 ## Language hooks
 
 <!-- --8<-- [start:WordsExtractor-hooks] -->
-The language enters the extractor through the hooks that a language library overrides in a subclass:
+A language library overrides these hooks in a subclass:
 
 | Hook | Kind | Default | Used for |
 | :--: | :--: | :-----: | :------: |
@@ -62,7 +62,7 @@ The language enters the extractor through the hooks that a language library over
 | `max_len` | int | `0` | Maximum length of an extracted word in characters, `0` for no bound |
 
 !!! note "Note"
-    A regular expression as the tokenizer is a separator: the text is split with `re.split`. The filters are applied in order: punctuation, numbers, lemmatization, lower case, stop words, word length. A lower-case stop word list also filters a capitalized word at the start of a sentence. A punctuation mark is a token consisting entirely of marks and symbols, including multi-character ones: `?!`, `--`, `…`, `€` (see `anyts.utils.is_punctuation`). Empty and whitespace tokens are dropped before the filters. N-grams join the words with `_`.
+    A regular expression as the tokenizer is a separator for `re.split`. The filters are applied in order: punctuation, numbers, lemmatization, lower case, stop words, word length. A punctuation mark is a token of marks and symbols only, multi-character ones included: `?!`, `--`, `…`, `€` (`anyts.utils.is_punctuation`). Empty and whitespace tokens are dropped before the filters. N-grams join the words with `_`.
 <!-- --8<-- [end:WordsExtractor-parameters] -->
 
 ## Methods
@@ -132,5 +132,5 @@ Returns the top words of the text as a list of (word, frequency) pairs, the most
 ## Ready words { #FixedWordsExtractor }
 
 <!-- --8<-- [start:FixedWordsExtractor] -->
-`FixedWordsExtractor(words)` of `anyts.extractors` gives the words it was made with for any text: a class that takes a word extractor gets the words already known, and the text is not tokenized twice. Words that are not a list of strings raise `SourceTypeError`.
+`FixedWordsExtractor(words)` of `anyts.extractors` gives the words it was made with for any text, so a class that takes a word extractor gets known words without tokenizing the text again. Words that are not a list of strings raise `SourceTypeError`.
 <!-- --8<-- [end:FixedWordsExtractor] -->

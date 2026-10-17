@@ -1,6 +1,6 @@
 # Metric functions
 
-The services do not publish their formulas, so the common definitions are taken. The language of a function - the stopwords, the water, the normalized form of a word, the spelling of phrases - comes through its keyword parameters; words, stopwords, keywords and phrases that are not a list of strings raise `SourceTypeError`.
+The services publish no formulas, so the common definitions are taken. The language - the stopwords, the water, the normalized form of a word, the spelling of phrases - comes through the keyword parameters; words, stopwords, keywords and phrases that are not a list of strings raise `SourceTypeError`.
 
 ## Classic nausea
 
@@ -8,7 +8,7 @@ The services do not publish their formulas, so the common definitions are taken.
     **anyts.style_stats.calc_classic_nausea()**
 
 <!-- --8<-- [start:calc_classic_nausea] -->
-Computation of the classic nausea (Advego): how much one word is pressed. It is not corrected for text length and grows with the text; a text without words gives 0.
+Computation of the classic nausea (Advego): how much one word is pressed. Not corrected for text length, it grows with the text; no words give 0.
 
 Formula:
 
@@ -31,7 +31,7 @@ Parameters:
     **anyts.style_stats.find_nausea_words()**
 
 <!-- --8<-- [start:find_nausea_words] -->
-The `top_n` most frequent words without the stopwords with their occurrences, the most frequent first and words of equal frequency in the order of the text. A stopword is a word of the list `stopwords` by its normalized form, or without the list one the predicate `is_stopword` of a language accepts; without both no word is a stopword.
+The `top_n` most frequent words without the stopwords, with their occurrences: the most frequent first, words of equal frequency in the order of the text. A stopword is a word of `stopwords` by its normalized form or, without the list, a word `is_stopword` accepts; without both there are no stopwords.
 
 Parameters:
 
@@ -51,7 +51,7 @@ Parameters:
     **anyts.style_stats.calc_academic_nausea()**
 
 <!-- --8<-- [start:calc_academic_nausea] -->
-Computation of the academic nausea (Advego): the share of the occurrences of the most frequent significant words (`find_nausea_words`) among all the words, in percent. With the stopwords counted, the most frequent words of any text would be its conjunctions and prepositions.
+Computation of the academic nausea (Advego): the share of the occurrences of the most frequent significant words (`find_nausea_words`) among all the words, in percent. With the stopwords, the most frequent words of any text would be its conjunctions and prepositions.
 
 Formula:
 
@@ -77,7 +77,7 @@ Parameters:
     **anyts.style_stats.calc_water()**
 
 <!-- --8<-- [start:calc_water] -->
-Computation of the water content (Text.ru): the share of the words that carry no content, in percent - the words of the list `stopwords` by their normalized forms, or without the list those the predicate `is_water_word` of a language accepts.
+Computation of the water content (Text.ru): the share of the words without content, in percent - the words of `stopwords` by their normalized forms or, without the list, those `is_water_word` accepts.
 
 Parameters:
 
@@ -116,7 +116,7 @@ Parameters:
     **anyts.style_stats.calc_zipf_naturalness()**
 
 <!-- --8<-- [start:calc_zipf_naturalness] -->
-Computation of the naturalness of a text by Zipf's law: the agreement of the frequencies of the most frequent words with the ideal distribution $f_r = f_1 / r$, where $r$ is the rank of a word. The first rank is ideal by construction, and above $f_1$ the ideal frequency falls below one, so the ranks run from 2 to $R = \min(\textrm{top\_n}, V, f_1)$. Negative values are cut to 0; without ranks to compare - all the words hapaxes, one lexeme or `top_n` below 2 - the value is `nan`.
+Computation of the naturalness by Zipf's law: the agreement of the frequencies of the most frequent words with the ideal distribution $f_r = f_1 / r$, where $r$ is the rank. The first rank is ideal by construction, and above $f_1$ the ideal frequency falls below one, so the ranks run from 2 to $R = \min(\textrm{top\_n}, V, f_1)$. Negative values are cut to 0; without ranks to compare - all the words hapaxes, one lexeme or `top_n` below 2 - the value is `nan`.
 
 Formula:
 
@@ -139,7 +139,7 @@ Parameters:
     **anyts.style_stats.calc_keyword_density()**
 
 <!-- --8<-- [start:calc_keyword_density] -->
-Computation of the density of keywords (Text.ru): the frequency of every keyword per 100 words of the text. A keyword of several words separated by spaces is looked for as a sequence of words, its occurrences may overlap, and the words are compared in any case; the keywords of a set come in sorted order.
+Computation of the keyword density (Text.ru): the occurrences of every keyword per 100 words. A keyword of several words separated by spaces is a sequence of words whose occurrences may overlap; the case is ignored, and the keywords of a set come in sorted order.
 
 Parameters:
 
@@ -155,7 +155,7 @@ Parameters:
     **anyts.style_stats.calc_phrase_density()**
 
 <!-- --8<-- [start:calc_phrase_density] -->
-Computation of the density of the phrases of a list: their occurrences (`find_phrases`) per 100 words. The hook `expand` of a language spells the phrases out in the forms of the text - the forms of a verb, contractions - giving every variant with its phrase; the style metrics count the compound prepositions and the cliches so.
+Computation of the density of the phrases of a list: their occurrences (`find_phrases`) per 100 words. The hook `expand` spells the phrases out in the forms of the text - the forms of a verb, contractions - every variant with its phrase; so the style metrics count the compound prepositions and the cliches.
 
 Parameters:
 

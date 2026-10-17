@@ -49,21 +49,17 @@ def compare_features(
     Comparing two corpora by the tables of the features of their windows
 
     Description:
-        The tables are compared column by column: for every feature the two
-        sets of values give the means and the medians, the difference of the
-        medians with its bootstrap interval, Cohen's d, Cliff's delta, the AUC
-        (the share of the pairs of windows where the value in A is greater than
-        in B, ties counted as half; Cliff's delta = 2·AUC − 1), the two-sided
-        Mann-Whitney U test and Holm's correction for the number of features.
-        Undefined and infinite values are dropped; with fewer than two values
-        on a side the statistics are nan. The rows are sorted by descending
-        absolute Cliff's delta, the features without statistics last
-        The test and the effect sizes take the windows as independent, while
-        the windows of one text are not: with few texts the p-values are too
-        small. The bootstrap resamples whole texts by the level text of the
-        index, so its interval accounts for the spread between texts; a table
-        without that level takes every row for a text of its own. A column
-        missing from one of the tables gives nan
+        For every column: the means and medians, the difference of the medians
+        with its bootstrap interval, Cohen's d, Cliff's delta, the AUC (the
+        share of the pairs of windows with A greater, ties as half; Cliff's
+        delta = 2·AUC − 1), the two-sided Mann-Whitney U test and Holm's
+        correction over the features. Undefined and infinite values are
+        dropped; with fewer than two values on a side the statistics are nan.
+        Rows go by descending absolute Cliff's delta, the features without
+        statistics last. The test and the effect sizes take the windows as
+        independent, so with few texts the p-values are too small. The
+        bootstrap resamples whole texts by the index level text, or single rows
+        without it. A column missing from one of the tables gives nan
 
     References:
         https://doi.org/10.1037/0033-2909.114.3.494
@@ -159,10 +155,9 @@ def check_comparison_params(
     Checking the parameters of compare_features
 
     Description:
-        Meant to be called before the tables of the features are built, so
-        that a wrong parameter fails before the texts are processed. The names
-        of the corpora must give distinct columns: ("diff", "B") would repeat
-        median_diff
+        Called before the tables are built, it fails on a wrong parameter
+        before the texts are processed. The names of the corpora must give
+        distinct columns: ("diff", "B") would repeat median_diff
 
     Arguments:
         labels (tuple[str, str]): Names of the corpora for the columns
@@ -424,11 +419,10 @@ def bootstrap_median_diff(
     Computing the percentile bootstrap interval of the difference of the medians
 
     Description:
-        Both sets are resampled with replacement n_bootstrap times, and the
-        bounds are the percentiles (1 − confidence) / 2 and
-        1 − (1 − confidence) / 2 of median_a − median_b. With the texts of the
-        values given, whole texts are resampled (a cluster bootstrap), which
-        needs at least two texts on each side
+        Both sets are resampled with replacement n_bootstrap times; the bounds
+        are the percentiles (1 − confidence) / 2 and 1 − (1 − confidence) / 2
+        of median_a − median_b. With the texts given, whole texts are resampled
+        (a cluster bootstrap), which needs at least two texts on each side
 
     Arguments:
         values_a (list[float]): Values in the first corpus
@@ -555,24 +549,21 @@ def split_windows(
     Splitting a text into windows of words
 
     Description:
-        The text is cut into consecutive windows of exactly window words; the
-        incomplete rest at the end is a window only when it holds at least
-        min_words words (by default a whole window, so the rest is dropped), and
-        the features that depend on the length are comparable between the
-        windows of different texts. A boundary goes before the first word of a
-        window and the opening marks before it, so the punctuation stays in the
-        windows; a symmetric mark (a straight quote, the dash of an aside) that
-        is glued to the last word of the previous window or follows a closing
-        mark closes the previous window. The windows are stripped of whitespace;
-        window=None gives the whole text. The words and their positions come
-        from tokenize, the words of WordsExtractor by default
+        Consecutive windows of exactly window words, so the features that
+        depend on length are comparable between texts; the rest is a window
+        only with at least min_words words. A boundary goes before the first
+        word of a window and its opening marks; a symmetric mark (a straight
+        quote, the dash of an aside) glued to the last word of the previous
+        window or after a closing mark closes that window. The windows are
+        stripped of whitespace
 
     Arguments:
         text (str): Text string
         window (int): Size of a window in words; None - the whole text
         min_words (int): Smallest number of words in a window; None - a whole
             window, or one word when window is None
-        tokenize (callable): Words of a text with their start and end positions
+        tokenize (callable): Words of a text with their start and end positions;
+            the words of WordsExtractor by default
         opening_marks (collection[str]): Marks that open a phrase (OPENING_MARKS)
         symmetric_marks (collection[str]): Opening marks that close a phrase as well
             (SYMMETRIC_MARKS)

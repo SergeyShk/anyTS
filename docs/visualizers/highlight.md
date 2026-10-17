@@ -6,7 +6,7 @@
 ## Description
 
 <!-- --8<-- [start:HighlightedText] -->
-The machinery of the highlighting of a text by layers, in the manner of the style checkers: every layer marks the fragments of a text that a statistic counts - long sentences, complex words, the passive. The data source can be either a text or a `Doc` object of [spaCy](https://github.com/explosion/spaCy). The result shows in Jupyter as HTML with styles and a legend; the method `to_html` returns the same markup for documentation and web applications, and the fragments are kept in the attribute `highlights` for a rendering of one's own. Fragments of different layers may overlap.
+Highlighting of a text by layers, in the manner of the style checkers: every layer marks the fragments of a text that a statistic counts - long sentences, complex words, the passive. The data source is a text or a `Doc` object of [spaCy](https://github.com/explosion/spaCy). The result shows in Jupyter as HTML with styles and a legend; `to_html` returns the markup, and `highlights` keeps the fragments for a rendering of one's own. Fragments of different layers may overlap.
 <!-- --8<-- [end:HighlightedText] -->
 
 ## Language hooks
@@ -27,7 +27,7 @@ The core has no layers of its own: a language library subclasses `HighlightedTex
 | `annotation_names` | class attribute | Names of the annotations in the message of a layer a source does not allow, `dict[str, str]`; English by default |
 | `messages` | class attribute | Messages of the errors by key; `MESSAGES` by default |
 
-The sentences of a `Doc` come from its boundaries, or from `iter_sents` over its text when it has none or only partial ones (`has_sents`). `iter_sents` gets the parts of a text between blank lines one by one, so a blank line ends a sentence whatever the method, and the words of a sentence are those of `doc_words` or `iter_words` that start in it. `find` runs in `__init__`, so a subclass with parameters of its own stores them before it calls the `__init__` of the base - checking them by `check_params` - and its layers can be found by the finders below with the language as their parameters; a fragment of another layer or one outside the text raises `ParameterError`.
+The sentences of a `Doc` come from its boundaries, or from `iter_sents` over its text when it has none or partial ones (`has_sents`). `iter_sents` gets the parts of a text between blank lines one by one, so a blank line always ends a sentence; a sentence holds the words of `doc_words` or `iter_words` that start in it. `find` runs in `__init__`: a subclass stores its own parameters, checked by `check_params`, before calling the `__init__` of the base, and may find its layers with the finders of the layers. A fragment of another layer or one outside the text raises `ParameterError`.
 <!-- --8<-- [end:HighlightedText-hooks] -->
 
 In the core the layers are empty and `css_prefix` is `anyts`.
@@ -63,7 +63,7 @@ A `Highlight` fragment is an immutable object with the fields `start` and `end` 
 ### to_html
 
 <!-- --8<-- [start:HighlightedText-to_html] -->
-Returns the HTML markup of the highlighted text: a `div` of the class `<prefix>-highlight` with the legend and its counts and the text, where the highlighted segments are wrapped in a `span` of the classes `<prefix>-hl` and `<prefix>-hl-<layer>`, the notes going to the attribute `title`; `<prefix>` is the prefix of the CSS classes. Overlapping fragments of different layers give segments with several classes, in the order of drawing. Line breaks (`\n`, `\r\n`, `\r`) are kept as character references, one per break, so the markup can be put into Markdown.
+Returns the HTML markup of the highlighted text: a `div` of the class `<prefix>-highlight` with the legend, its counts and the text, where a highlighted segment is a `span` of the classes `<prefix>-hl` and `<prefix>-hl-<layer>` with the notes in its `title`; `<prefix>` is `css_prefix`. Overlapping fragments of different layers give segments with several classes, in the order of drawing. Line breaks (`\n`, `\r\n`, `\r`) become character references, one per break, so the markup can go into Markdown.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
@@ -114,7 +114,7 @@ The class method `css()` returns the styles `to_html` adds: the container, the l
 ## Finders of the layers { #finders }
 
 <!-- --8<-- [start:highlight-finders] -->
-The layers that the languages share are found by functions that take the language as their parameters: the notes of the fragments - callables where they read a number, so a language writes its plural forms, English by default - the counts of syllables, the normalized forms of the words, the stems, the matcher of the connectors. A library calls them from its `find`.
+The layers the languages share are found by functions that take the language as parameters: the notes of the fragments (callables where they read a number, so a language writes its plural forms; English by default), the counts of syllables, the normalized forms of the words, the stems, the matcher of the connectors. A subclass calls them from its `find`.
 <!-- --8<-- [end:highlight-finders] -->
 
 <!-- --8<-- [start:find_long_sents] -->
@@ -130,7 +130,7 @@ The layers that the languages share are found by functions that take the languag
 <!-- --8<-- [end:find_words] -->
 
 <!-- --8<-- [start:find_phrase_highlights] -->
-`find_phrase_highlights(words, phrases, layer, note, normalize)` - a layer of the phrases of a list, such as compound prepositions, clichés or parentheticals: the phrases are matched by the normalized forms of their words, every word normalized alone as in the text (`find_phrases`), and a mapping gives their variants - contractions, forms of verbs - with the phrase each stands for, the first of the variants that normalize alike winning; a set of phrases is read in order (`in_order`). A fragment covers the words from the first to the last, and the note reads the phrase of the list, in quotes by default.
+`find_phrase_highlights(words, phrases, layer, note, normalize)` - a layer of the phrases of a list, such as compound prepositions, clichés or parentheticals. The phrases are matched by the normalized forms of their words, each normalized alone as in the text (`find_phrases`). A mapping gives their variants - contractions, forms of verbs - with the phrase each stands for; of the variants that normalize alike the first wins. A set of phrases is read in order (`in_order`). A fragment spans the phrase in the text; its note reads the phrase of the list, in quotes by default.
 <!-- --8<-- [end:find_phrase_highlights] -->
 
 <!-- --8<-- [start:find_connector_highlights] -->
@@ -142,7 +142,7 @@ The layers that the languages share are found by functions that take the languag
 <!-- --8<-- [end:find_split_predicate_highlights] -->
 
 <!-- --8<-- [start:calc_alliteration_runs] -->
-`calc_alliteration_runs(words, frequencies, threshold, stem, is_transparent)` - the repetitions of a consonant in neighbouring words: a run of two words or more with the consonant in the stem of each - the stem of a language leaving out the endings that repeat by agreement - whose probability under an independent spread of the consonants, the product over its words of $1 - (1 - f)^n$ with $f$ the frequency of the consonant and $n$ the length of the stem, is below the threshold (`anyts.constants.ALLITERATION_THRESHOLD`, 0.001). The consonants are the keys of `frequencies`; a transparent word - by default one shorter than `ALLITERATION_MIN_WORD_LEN` (3) letters, a stopword for a language - neither breaks nor continues a run; the words are taken in lower case.
+`calc_alliteration_runs(words, frequencies, threshold, stem, is_transparent)` - the runs of two or more neighbouring words with a consonant of `frequencies` in the stem of each (the stem of a language leaves out the endings that repeat by agreement) and a probability below the threshold (`anyts.constants.ALLITERATION_THRESHOLD`, 0.001). The probability under an independent spread of the consonants is the product over the words of $1 - (1 - f)^n$, $f$ the frequency of the consonant and $n$ the length of the stem. A transparent word - by default one shorter than `ALLITERATION_MIN_WORD_LEN` (3) letters, a stopword for a language - neither breaks nor continues a run; the words are taken in lower case.
 <!-- --8<-- [end:calc_alliteration_runs] -->
 
 <!-- --8<-- [start:find_alliteration] -->
@@ -150,7 +150,7 @@ The layers that the languages share are found by functions that take the languag
 <!-- --8<-- [end:find_alliteration] -->
 
 <!-- --8<-- [start:HighlightedText-check_params] -->
-`check_params(long_sent_word_factor, complex_syl_factor, alliteration_threshold, *, messages)` checks the parameters of the highlighting of a library: a number of words or syllables that is not an integer of at least one, or a threshold outside the interval (0, 1], raises `ParameterError`.
+`check_params(long_sent_word_factor, complex_syl_factor, alliteration_threshold, *, messages)` checks the parameters of the highlighting: a number of words or syllables that is not an integer of at least one, or a threshold outside the interval (0, 1], raises `ParameterError`.
 <!-- --8<-- [end:HighlightedText-check_params] -->
 
 ## Usage example

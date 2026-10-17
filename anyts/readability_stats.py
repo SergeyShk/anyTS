@@ -39,14 +39,12 @@ class ReadabilityStats(Stats):
     Base of the readability metrics of a text
 
     Description:
-        The common readability formulas over the basic statistics of a text,
-        the consensus grade, the school stage and age of the reader and the
-        reading time; the metrics are properties, computed on each access.
-        A language library subclasses the class, sets its class attributes,
-        the scales of a preset among them, and may override reading_ease_to_grade
-        and level_scale; its own formulas are properties named in stats_desc.
-        The defaults are the original English formulas
-        get_stats, to_dataframe and print_stats come from Stats
+        Readability formulas over the basic statistics of a text; the metrics
+        are properties computed on each access. A language library sets the
+        class attributes, may override reading_ease_to_grade and level_scale,
+        and adds its formulas as properties named in stats_desc. The defaults
+        are the original English formulas
+        The other methods come from Stats
 
     Arguments:
         source (str|Doc|BasicStats): Data source - a string, a Doc object or
@@ -59,8 +57,8 @@ class ReadabilityStats(Stats):
 
     Attributes:
         bs (BasicStats): Basic statistics of the text
-        preset (str): Name of the coefficient preset, read-only: another preset is
-            another object, which may reuse the basic statistics (bs)
+        preset (str): Name of the coefficient preset, read-only; an object of
+            another preset may reuse bs
         coefficients (dict[str, tuple[float, ...]]): Coefficients of the preset by
             formula, a copy that can be changed for one object; a formula missing
             from it takes the defaults of its function
@@ -79,8 +77,7 @@ class ReadabilityStats(Stats):
     Methods:
         reading_ease_to_grade: Years of schooling for a value of the reading ease
         describe_grade: School stage and reader age for the consensus grade or a grade formula
-        level_scale: Interpretation scale of a metric, that of preset_level_scales or
-            else of level_scales
+        level_scale: Interpretation scale of a metric
         describe_level: Band of the interpretation scale of a metric
         describe: Reading of any metric by its scale
         reading_time_by_speed: Reading time at a given speed
@@ -104,17 +101,16 @@ class ReadabilityStats(Stats):
         level_scales (dict[str, tuple[tuple[float, str], ...]]): Interpretation scales
             of describe_level and describe by metric, as lower bounds and their bands
         preset_level_scales (dict[str, dict[str, tuple[tuple[float, str], ...]]]):
-            Interpretation scales by preset and metric, which take the place of those
-            of level_scales for the objects of the preset
-        grade_scales (dict[str, tuple[tuple[float, float], ...]]): Scales that convert
-            a metric into years of schooling for describe, as lower bounds and grades;
-            describe reads a metric by them when level_scale gives it no scale of bands
-        reading_ease_grades (tuple[tuple[float, float], ...]): Scale that converts the
-            reading ease into years of schooling for the consensus grade, as lower bounds
-            and grades; by default the bands of READING_EASE_GRADES and 13 below them
+            Interpretation scales by preset and metric, in place of level_scales for
+            the preset
+        grade_scales (dict[str, tuple[tuple[float, float], ...]]): Scales of a metric in
+            years of schooling, as lower bounds and grades, for describe when
+            level_scale gives no scale of bands
+        reading_ease_grades (tuple[tuple[float, float], ...]): Scale of the reading ease
+            in years of schooling for the consensus grade, as lower bounds and grades;
+            READING_EASE_GRADES and 13 below them by default
         preset_reading_ease_grades (dict[str, tuple[tuple[float, float], ...]]): Scales
-            of the reading ease in years of schooling by preset, which take the place of
-            reading_ease_grades for the objects of the preset
+            of reading_ease_grades by preset, in its place for the preset
         postgraduate_level (tuple[str, str]): Stage and age above the last school stage
         reading_speed (float): Reading speed of reading_time, words per minute
         reading_speed_norms (dict[str, tuple[float, ...]]): Speeds of the reading norms,
@@ -286,9 +282,7 @@ class ReadabilityStats(Stats):
 
         Description:
             Used for the consensus grade; by default the band of the scale of the
-            preset in preset_reading_ease_grades or else of reading_ease_grades,
-            whose bounds a library aligns with the scale of the reading ease, so
-            that the consensus grade and describe read the value alike
+            preset in preset_reading_ease_grades, else of reading_ease_grades
 
         Arguments:
             flesch_reading_easy (float): Value of the reading ease
@@ -371,8 +365,7 @@ class ReadabilityStats(Stats):
             The consensus grade and a grade formula give the school stage and
             reader age (describe_grade), a metric with a scale of bands
             (level_scale) its band, another metric of grade_scales the stage and
-            age of the years of schooling its scale gives; a metric without a
-            scale and an undefined value (nan) give None. A metric is a name of
+            age of the years of schooling its scale gives. A metric is a name of
             stats_desc or a public property of the class
 
         Arguments:
@@ -457,10 +450,9 @@ def calc_flesch_reading_easy(
 
     Description:
         c - a * ASL - b * ASW with the mean sentence length in words and the
-        mean word length in syllables; the higher the value, the easier the
-        text, nominally from 0 to 100, though the simplest texts go above 100
-        and the hardest below 0. The defaults are those of Flesch (1948) for
-        English
+        mean word length in syllables. The higher the value, the easier the
+        text: nominally 0 to 100, though the simplest texts go above 100 and
+        the hardest below 0. The defaults are those of Flesch (1948) for English
 
     References:
         Flesch, R. A new readability yardstick. Journal of Applied Psychology,
@@ -650,10 +642,10 @@ def calc_lix(n_long_words: int, n_words: int, n_sents: int) -> float:
     Computing the LIX readability index
 
     Description:
-        The mean sentence length plus the percentage of long words, words of
-        more than six letters (Björnsson, 1968), with no coefficients to fit.
-        The higher the value, the harder the text; the text types of Björnsson
-        are the bands of LIX_LEVELS
+        The mean sentence length plus the percentage of long words, of more
+        than six letters (Björnsson, 1968); no coefficients. The higher the
+        value, the harder the text; the text types of Björnsson are the bands
+        of LIX_LEVELS
 
     References:
         Björnsson, C. H. Läsbarhet. Liber, 1968
@@ -675,10 +667,10 @@ def calc_rix(n_long_words: int, n_sents: int) -> float:
     Computing the RIX readability index
 
     Description:
-        Long words, of more than six letters, per sentence (Anderson, 1983),
-        with no coefficients to fit. The higher the value, the harder the text;
-        the grades of Anderson are the bands of RIX_LEVELS, and RIX_GRADES gives
-        them as years of schooling, 13 for college
+        Long words, of more than six letters, per sentence (Anderson, 1983); no
+        coefficients. The higher the value, the harder the text; the grades of
+        Anderson are the bands of RIX_LEVELS, and RIX_GRADES gives them as
+        years of schooling, 13 for college
 
     References:
         Anderson, J. Lix and Rix: variations on a little-known readability index.
@@ -700,10 +692,10 @@ def calc_mu_index(c_letters: Mapping[int, int]) -> float:
 
     Description:
         The mean number of letters per word divided by its sample variance
-        (divided by n - 1), times 100 (Muñoz Baquedano and Muñoz Urra, 2006),
-        with no coefficients to fit; the higher the value, the easier the text.
-        Words without letters (numbers) are left out; with fewer than two
-        words or without variability the index is undefined (nan)
+        (divided by n - 1), times 100 (Muñoz Baquedano and Muñoz Urra, 2006);
+        no coefficients. The higher the value, the easier the text. Words
+        without letters (numbers) are left out; with fewer than two words or
+        without variability the index is undefined (nan)
 
     References:
         Muñoz Baquedano, M. Legibilidad y variabilidad de los textos. Boletín de
@@ -742,12 +734,11 @@ def flesch_reading_easy_to_grade(
     Converting the Flesch reading ease into years of schooling
 
     Description:
-        The grade of the first band whose lower bound the value reaches; by
-        default the bands of text_standard of textstat, which follow the table
-        of Flesch (1948) down to 60 and split his lower bands, with 8.5 for
-        its grades 8 and 9: 90-100 - 5,
+        The grade of the first band whose lower bound the value reaches;
+        values above 100 belong to the first band. By default the bands of
+        text_standard of textstat, after the table of Flesch (1948): 90-100 - 5,
         80-90 - 6, 70-80 - 7, 60-70 - 8.5, 50-60 - 10, 40-50 - 11, 30-40 - 12,
-        below 30 - 13. Values above 100 belong to the first band
+        below 30 - 13
 
     Arguments:
         flesch_reading_easy (float): Value of the reading ease

@@ -6,9 +6,9 @@
 ## Description
 
 <!-- --8<-- [start:CohesionStats] -->
-The cohesion statistics of a text in the manner of Coh-Metrix: the overlap of the nouns, of the arguments (nouns and pronouns) and of the content words between adjacent sentences and between all pairs of sentences, the givenness (pronouns, demonstratives, lemmas used before), the temporal cohesion - the repetition of the tense and of the aspect of the verbs of adjacent sentences - and the connectors of a dictionary by class and kind per 1000 words. The sentences are compared by lemmas. The data source is a `Doc` object of [spaCy](https://github.com/explosion/spaCy) with the parts of speech and the lemmas, split into sentences by its boundaries, or by the sentence extractor over its text when one is given or the `Doc` has none.
+The cohesion statistics of a text in the manner of Coh-Metrix: the overlap of the nouns, the arguments (nouns and pronouns) and the content words between adjacent and between all pairs of sentences, the givenness (pronouns, demonstratives, lemmas used before), the temporal cohesion (the repetition of the tense and the aspect of the verbs of adjacent sentences) and the connectors of a dictionary by class and kind per 1000 words. The sentences are compared by lemmas. The data source is a `Doc` object of [spaCy](https://github.com/explosion/spaCy) with the parts of speech and the lemmas, split into sentences by its boundaries, or by the sentence extractor over its text when one is given or the `Doc` has none.
 
-An extractor of another type and a source that is not a `Doc` raise `SourceTypeError`, a source without the parts of speech, without the lemmas or without words `SourceError`; a dictionary of connectors that is not a dictionary of phrases and pairs of strings raises `SourceTypeError`, an unknown class or kind `ParameterError`.
+An extractor of another type, a source that is not a `Doc` and connectors that are not a dictionary of phrases and pairs of strings raise `SourceTypeError`; a source without parts of speech, lemmas or words raises `SourceError`, and an unknown class or kind of a connector `ParameterError`.
 <!-- --8<-- [end:CohesionStats] -->
 
 ## Language hooks
@@ -18,13 +18,13 @@ A language library subclasses `CohesionStats`. By default the words and their fe
 
 | Hook | Kind | Description |
 | :--: | :--: | :---------: |
-| `analyze(source)` | method | Words of the sentences of a source as `CohesionWord`: the word, its lemma, its part of speech for the rules of the connectors, whether it is a noun, a pronoun, a demonstrative, an argument and a content word, its tense, mood and aspect; by default those of a `Doc`, sentence by sentence (`doc_units`), with the features of `word_info` - a library that reads a string or a `Doc` without these annotations overrides it |
+| `analyze(source)` | method | Words of the sentences of a source as `CohesionWord`: the word, its lemma, its part of speech, whether it is a noun, a pronoun, a demonstrative, an argument and a content word, its tense, mood and aspect; by default those of a `Doc`, sentence by sentence (`doc_units`), with the features of `word_info`; a library that reads a string or a `Doc` without these annotations overrides it |
 | `doc_units(doc)` | method | Words of the sentences of a `Doc` as lists of tokens: by its boundaries, or by the extractor over its text (`split_doc_units` of `anyts.utils`) |
 | `word_info(unit)` | method | Features of a word of a `Doc`; by default a noun is `NOUN` or `PROPN`, a pronoun `PRON` or a possessive, demonstrative or personal determiner, a demonstrative carries `PronType=Dem`, an argument is `NOUN`, `PROPN` or `PRON`, a content word one of `anyts.constants.CONTENT_UD_POS` and no demonstrative, and the tense, the mood and the aspect are the features `Tense`, `Mood` and `Aspect` |
 | `load_connectors()` | class method | Dictionary of the connectors of the language, class and kind by connector; empty by default |
-| `connector_matcher()` | class method | Matcher of that dictionary, built once for a class and shared by its instances - and by a search of the connectors outside the statistics |
+| `connector_matcher()` | class method | Matcher of that dictionary, built once for a class and shared by its instances and by searches outside the statistics |
 | `connector_matcher_class` | class attribute | Class that finds the connectors with the context rules of the language; `ConnectorMatcher` by default. A matcher with other classes or kinds gives other `connectors_*` attributes, so the subclass sets its own `stats_desc` too |
-| `temporal_features` | class attribute | Features of the verbs whose repetitions make the temporal cohesion, one or more distinct ones of `tense`, `mood` and `aspect` in a tuple, checked when the class is defined; the tense and the aspect by default, as in Coh-Metrix |
+| `temporal_features` | class attribute | Features of the verbs whose repetitions make the temporal cohesion: a tuple of one or more distinct ones of `tense`, `mood` and `aspect`, checked when the class is defined; `tense` and `aspect` by default, as in Coh-Metrix |
 | `sents_extractor_class`, `join_hyphens` | class attributes | Sentence extractor of a `Doc` without boundaries, joining of the hyphenated words of a `Doc` |
 | `stats_desc`, `stats_headers` | class attributes | Statistics of `get_stats` with their descriptions, headers of the columns for `print_stats` |
 | `messages` | class attribute | Messages of the errors by key; `MESSAGES` by default |
