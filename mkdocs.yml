@@ -28,6 +28,7 @@ nav:
       - Style metrics:
         - Metrics module: stats/style_stats.md
         - Metric functions: stats/style_stats_funcs.md
+      - Phonetic statistics: stats/phon_stats.md
       - Phonetic helpers: stats/phonetics.md
     - Corpus measures:
       - Keywords: corpus/keyness.md
