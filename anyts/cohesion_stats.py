@@ -407,7 +407,8 @@ class CohesionStats(Stats):
         connectors (float): Connectors per 1000 words
         connectors_<class>, connectors_<kind> (float): Connectors of every class and
             kind of the matcher per 1000 words: connectors_causal, ...,
-            connectors_primary, connectors_secondary by default
+            connectors_primary, connectors_secondary by default; a matcher with
+            other classes or kinds needs a stats_desc of its own
 
     Methods:
         analyze: Words of the sentences of a source with their features
@@ -440,6 +441,16 @@ class CohesionStats(Stats):
     temporal_features: ClassVar[tuple[str, ...]] = ("tense", "aspect")
     stats_desc: ClassVar[Mapping[str, str]] = COHESION_STATS_DESC
     _connector_matcher: ClassVar[ConnectorMatcher | None] = None
+    # The densities of the default classes and kinds, set by name with those of the matcher
+    connectors_causal: float
+    connectors_adversative: float
+    connectors_concessive: float
+    connectors_temporal: float
+    connectors_additive: float
+    connectors_conditional: float
+    connectors_reformulative: float
+    connectors_primary: float
+    connectors_secondary: float
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
@@ -447,8 +458,8 @@ class CohesionStats(Stats):
         if (
             not isinstance(features, tuple)
             or not features
+            or not all(isinstance(name, str) and name in TEMPORAL_FEATURES for name in features)
             or len(set(features)) != len(features)
-            or not set(features) <= set(TEMPORAL_FEATURES)
         ):
             raise ParameterError(
                 cls.messages["temporal_features"].format(

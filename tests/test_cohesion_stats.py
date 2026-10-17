@@ -565,7 +565,8 @@ def test_temporal_features():
 
 
 @pytest.mark.parametrize(
-    "features", [("tense", "voice"), (), ("tense", "tense", "aspect"), "tense", ["tense"]]
+    "features",
+    [("tense", "voice"), (), ("tense", "tense", "aspect"), "tense", ["tense"], (["tense"],)],
 )
 def test_temporal_features_must_be_distinct_known_ones(features):
     with pytest.raises(ParameterError, match=r"^The temporal features of Bad must be one or more"):
