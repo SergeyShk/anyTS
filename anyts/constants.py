@@ -105,6 +105,39 @@ CONNECTOR_CLASSES = (
 )
 CONNECTOR_KINDS = ("primary", "secondary")
 CONNECTOR_POS = frozenset({"ADP", "ADV", "CCONJ", "INTJ", "PART", "SCONJ", "X"})
+# Parts of speech of Universal Dependencies of a content word, and the features of a verb
+# whose repetition in adjacent sentences the temporal cohesion reads
+CONTENT_UD_POS = frozenset({"ADJ", "ADV", "NOUN", "PROPN", "VERB"})
+TEMPORAL_FEATURES = ("tense", "mood", "aspect")
+
+# Cohesion statistics of a text in the manner of Coh-Metrix
+COHESION_STATS_DESC = {
+    "noun_overlap_adjacent": "Noun overlap in adjacent sentences",
+    "noun_overlap_all": "Noun overlap in all pairs of sentences",
+    "argument_overlap_adjacent": "Argument overlap in adjacent sentences",
+    "argument_overlap_all": "Argument overlap in all pairs of sentences",
+    "content_overlap_adjacent": "Content word overlap in adjacent sentences",
+    "content_overlap_all": "Content word overlap in all pairs of sentences",
+    "content_overlap_prop_adjacent": "Share of shared content words in adjacent sentences",
+    "content_overlap_prop_all": "Share of shared content words in all pairs of sentences",
+    "p_pronouns": "Share of pronouns",
+    "pronoun_noun_ratio": "Ratio of pronouns to nouns",
+    "p_demonstratives": "Share of demonstratives",
+    "p_given": "Share of content words seen before",
+    "tense_repetition": "Repetition of the tense in adjacent sentences",
+    "aspect_repetition": "Repetition of the aspect in adjacent sentences",
+    "temporal_cohesion": "Temporal cohesion",
+    "connectors": "Connectors per 1000 words",
+    "connectors_causal": "Causal connectors per 1000 words",
+    "connectors_adversative": "Adversative connectors per 1000 words",
+    "connectors_concessive": "Concessive connectors per 1000 words",
+    "connectors_temporal": "Temporal connectors per 1000 words",
+    "connectors_additive": "Additive connectors per 1000 words",
+    "connectors_conditional": "Conditional connectors per 1000 words",
+    "connectors_reformulative": "Reformulative connectors per 1000 words",
+    "connectors_primary": "Primary connectors per 1000 words",
+    "connectors_secondary": "Secondary connectors per 1000 words",
+}
 
 # Marks at the boundary of a window of split_windows: the opening ones go with the next window;
 # a symmetric one (a straight quote, the dash of an aside) closes the previous window when it
@@ -214,6 +247,8 @@ MESSAGES = {
     "phon_classes": "The sounds of {first} and {second} of {cls} overlap: {sounds}",
     "no_parse": "The data source has no dependency parse",
     "no_lemmas": "The data source has no lemmas",
+    "no_pos": "The data source has no parts of speech",
+    "temporal_feature": "Unknown temporal feature of {cls}: {feature}. Available features: {features}",
     "tokenizer": "The tokenizer is set incorrectly",
     "tokenizer_iterable": "The tokenizer must return an iterable object",
     "tokenizer_strings": "The tokenizer must return strings, not {type}",

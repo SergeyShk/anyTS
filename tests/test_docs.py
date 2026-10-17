@@ -9,7 +9,7 @@ import pytest
 
 from anyts import (
     basic_stats,
-    cohesion,
+    cohesion_stats,
     components,
     datasets,
     diversity_stats,
@@ -120,7 +120,7 @@ def test_public_api_has_sections():
         *public_names(utils),
         *public_names(extractors),
         *public_names(diversity_stats),
-        *public_names(cohesion),
+        *public_names(cohesion_stats),
         *public_names(syntax_stats),
         *public_names(datasets),
         *public_names(components),
