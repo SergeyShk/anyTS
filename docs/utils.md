@@ -167,10 +167,44 @@ Checks whether a `Doc` has its sentence boundaries: they count when every token 
     # True
     ```
 
+## is_word
+
+<!-- --8<-- [start:is_word] -->
+Checks whether a token is a word: not whitespace and not a token of `is_punctuation`, so symbols like `%`, `€`, `+` and invisible characters are no words either. The words of `iter_doc_tokens` and the nodes of the dependency tree of the syntactic statistics are such tokens.
+<!-- --8<-- [end:is_word] -->
+
+## has_feature
+
+<!-- --8<-- [start:has_feature] -->
+Checks whether a token carries a morphological feature with a given value: `has_feature(token, "VerbForm", "Fin")`.
+
+| Parameter | Type | Default | Description |
+| :-------: | :--: | :-----: | :---------: |
+| `token` | Token | `-` | Token |
+| `field` | str | `-` | Name of the feature |
+| `value` | str | `-` | Value of the feature |
+<!-- --8<-- [end:has_feature] -->
+
+## Verb forms { #verb-forms }
+
+<!-- --8<-- [start:is_finite_verb] -->
+`is_finite_verb(token)` checks whether a token is a finite verb: the part of speech `VERB` with `VerbForm=Fin`, so a finite auxiliary (`AUX`) is not one.
+<!-- --8<-- [end:is_finite_verb] -->
+
+<!-- --8<-- [start:is_infinitive] -->
+`is_infinitive(token)` checks whether a token is an infinitive, `VerbForm=Inf` whatever its part of speech.
+<!-- --8<-- [end:is_infinitive] -->
+
+## joins_previous
+
+<!-- --8<-- [start:joins_previous] -->
+A tokenizer may split a word at its hyphens (`well-known` into `well`, `-`, `known`). `joins_previous(token)` checks whether a token continues such a word: it is a word that follows a hyphen with no whitespace around it, the hyphen follows a word, and no sentence starts at the hyphen or at the word. `iter_doc_units` and the functions of the dependency tree join the parts of a word by this rule with `join_hyphens=True`.
+<!-- --8<-- [end:joins_previous] -->
+
 ## iter_doc_tokens
 
 <!-- --8<-- [start:iter_doc_tokens] -->
-Yields the tokens of the words of a `Doc` or a `Span`: whitespace tokens and the tokens of `is_punctuation`, symbols like `%` and `€` included, are skipped.
+Yields the tokens of the words of a `Doc` or a `Span` (`is_word`): whitespace tokens and the tokens of `is_punctuation`, symbols like `%` and `€` included, are skipped.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
@@ -180,7 +214,7 @@ Yields the tokens of the words of a `Doc` or a `Span`: whitespace tokens and the
 ## iter_doc_units
 
 <!-- --8<-- [start:iter_doc_units] -->
-Yields the words of a `Doc` or a `Span` as lists of tokens: one token each, as in `iter_doc_tokens`. With `join_hyphens=True` a word that the tokenizer split at its hyphens (`well-known` into `well`, `-`, `known`) is joined back when no whitespace separates its parts and no sentence starts at a hyphen or a part; a language library whose own tokenizer keeps such words whole turns it on, so that a string and a `Doc` give the same words.
+Yields the words of a `Doc` or a `Span` as lists of tokens: one token each, as in `iter_doc_tokens`. With `join_hyphens=True` a word that the tokenizer split at its hyphens (`well-known` into `well`, `-`, `known`) is joined back when no whitespace separates its parts and no sentence starts at a hyphen or a part (`joins_previous`); a language library whose own tokenizer keeps such words whole turns it on, so that a string and a `Doc` give the same words.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
@@ -224,6 +258,27 @@ Divides two numbers and returns `default` for a zero denominator.
 | `den` | float/int | `-` | Denominator |
 | `default` | float/int | `0` | Value returned for a zero denominator |
 <!-- --8<-- [end:safe_divide] -->
+
+## safe_mean
+
+<!-- --8<-- [start:safe_mean] -->
+The arithmetic mean of numbers, `default` for no numbers.
+
+| Parameter | Type | Default | Description |
+| :-------: | :--: | :-----: | :---------: |
+| `values` | list[float] | `-` | Numbers |
+| `default` | float | `nan` | Value returned for no numbers |
+<!-- --8<-- [end:safe_mean] -->
+
+## shannon_entropy
+
+<!-- --8<-- [start:shannon_entropy] -->
+The Shannon entropy in bits of a distribution given by the count of every value, such as a `Counter`: $-\sum p_i \log_2 p_i$ with $p_i$ the share of a value; 0 for one value, `nan` for no counts; a zero count is left out, as $0 \log_2 0 = 0$.
+
+| Parameter | Type | Default | Description |
+| :-------: | :--: | :-----: | :---------: |
+| `counts` | dict[object, int] | `-` | Count of every value |
+<!-- --8<-- [end:shannon_entropy] -->
 
 ## check_sequence
 

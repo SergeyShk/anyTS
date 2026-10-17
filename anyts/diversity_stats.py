@@ -29,6 +29,7 @@ from .utils import (
     check_sequence,
     check_words,
     safe_divide,
+    shannon_entropy,
 )
 
 Calculator = Callable[[Sequence[str]], float]
@@ -1373,10 +1374,7 @@ def calc_entropy(text: Sequence[str]) -> float:
     Raises:
         SourceTypeError: If the words are not a list of strings (check_words)
     """
-    n_words = len(text)
-    if not n_words:
-        return nan
-    return -sum(freq / n_words * log2(freq / n_words) for freq in Counter(text).values()) or 0.0
+    return shannon_entropy(Counter(text))
 
 
 @_checks_words

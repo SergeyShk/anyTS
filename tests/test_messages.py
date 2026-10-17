@@ -20,6 +20,7 @@ from anyts.lexical_stats import LexicalStats, LexicalWord
 from anyts.phon_stats import PhonStats
 from anyts.readability_stats import ReadabilityStats, calc_reading_time
 from anyts.style_stats import StyleStats
+from anyts.syntax_stats import SyntaxStats
 from anyts.utils import check_messages
 
 # Messages of a language library: every message differs from the default and keeps its fields
@@ -99,6 +100,18 @@ class Phon(PhonStats):
 
     def syllabify(self, word):
         return [word]
+
+
+class Syntax(SyntaxStats):
+    messages = OWN
+
+
+class Lemmas(Syntax):
+    requires_lemmas = True
+
+
+VOCAB = spacy.blank("xx").vocab
+PARSED = Doc(VOCAB, words=["Yes"], heads=[0], deps=["ROOT"])
 
 
 class Component(StatsComponent):
@@ -209,6 +222,10 @@ CASES = [
     ("bands_type", ParameterError, lambda: Lexical(TEXT, Frequencies()).band_coverage(5)),
     ("band_bound", ParameterError, lambda: Lexical(TEXT, Frequencies()).band_coverage([0])),
     ("phon_window_len", ParameterError, lambda: Phon(TEXT, window_len=1)),
+    ("source_type", SourceTypeError, lambda: Syntax("Yes")),
+    ("no_parse", SourceError, lambda: Syntax(Doc(VOCAB, words=["Yes"]))),
+    ("no_lemmas", SourceError, lambda: Lemmas(PARSED)),
+    ("no_words", SourceError, lambda: Syntax(Doc(VOCAB, words=["."], heads=[0], deps=["ROOT"]))),
     (
         "phon_classes",
         ParameterError,

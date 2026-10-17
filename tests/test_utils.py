@@ -23,17 +23,23 @@ from anyts.utils import (
     count_letters,
     count_words_by_spans,
     find_phrases,
+    has_feature,
     has_sents,
     has_words,
     in_order,
     is_doc,
+    is_finite_verb,
+    is_infinitive,
     is_number,
     is_punctuation,
     is_span,
     iter_doc_tokens,
     iter_doc_units,
     iter_doc_words,
+    joins_previous,
     safe_divide,
+    safe_mean,
+    shannon_entropy,
 )
 
 
@@ -447,3 +453,58 @@ def test_numbers_of_two_patterns_are_cached_apart():
     assert not is_number("mix")
     assert is_number("mix", roman)
     assert not is_number("mix")
+
+
+def test_has_feature():
+    doc = Doc(
+        spacy.blank("xx").vocab,
+        words=["Children", "play"],
+        morphs=["Number=Plur", "Mood=Ind|VerbForm=Fin"],
+    )
+    assert has_feature(doc[1], "VerbForm", "Fin")
+    assert not has_feature(doc[1], "VerbForm", "Inf")
+    assert not has_feature(doc[0], "Mood", "Ind")
+
+
+def test_joins_previous():
+    vocab = spacy.blank("xx").vocab
+    doc = Doc(
+        vocab,
+        words=["Some", "-", "one", "came", "with", "a", "well", "-", "known", "cat", "."],
+        spaces=[False, False, True, True, True, True, False, False, True, False, False],
+    )
+    assert [token.text for token in doc if joins_previous(token)] == ["one", "known"]
+    spaced = Doc(vocab, words=["Some", "-", "one"])
+    assert not joins_previous(spaced[2])
+    assert not joins_previous(spaced[0])
+
+
+def test_verb_forms():
+    doc = Doc(
+        spacy.blank("xx").vocab,
+        words=["They", "will", "go", "to", "swim"],
+        morphs=["Case=Nom", "VerbForm=Fin", "VerbForm=Fin", "", "VerbForm=Inf"],
+        pos=["PRON", "AUX", "VERB", "PART", "VERB"],
+    )
+    assert [is_finite_verb(token) for token in doc] == [False, False, True, False, False]
+    assert [is_infinitive(token) for token in doc] == [False, False, False, False, True]
+
+
+def test_safe_mean():
+    assert safe_mean([1, 2, 4]) == 7 / 3
+    assert math.isnan(safe_mean([]))
+    assert safe_mean([], 0) == 0
+
+
+def test_shannon_entropy():
+    assert shannon_entropy({"a": 2, "b": 2}) == 1.0
+    assert shannon_entropy(Counter("aab")) == -(
+        2 / 3 * math.log2(2 / 3) + 1 / 3 * math.log2(1 / 3)
+    )
+    assert shannon_entropy({"a": 5}) == 0.0
+    assert math.isnan(shannon_entropy({})) and math.isnan(shannon_entropy({"a": 0}))
+    # A zero count is left out, as 0 log 0 = 0
+    assert shannon_entropy({"a": 0, "b": 2}) == 0.0
+    counts = Counter("aab")
+    counts.subtract("aa")
+    assert shannon_entropy(counts) == 0.0

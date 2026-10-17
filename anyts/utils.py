@@ -9,8 +9,9 @@ from functools import lru_cache
 from itertools import repeat
 from numbers import Integral, Real
 from re import Pattern
+from statistics import fmean
 from string import Formatter
-from typing import TYPE_CHECKING, TypeGuard
+from typing import TYPE_CHECKING, Any, TypeGuard
 
 from .constants import MESSAGES
 from .exceptions import ParameterError, SourceError, SourceTypeError
@@ -317,13 +318,105 @@ def has_sents(doc: Doc) -> bool:
     return doc.has_annotation("SENT_START", require_complete=True)
 
 
+def is_word(token: Token) -> bool:
+    """
+    Checking whether a token is a word - not a punctuation mark and not whitespace
+
+    Description:
+        The tokens of is_punctuation (symbols like %, €, + and invisible
+        characters) are no words either
+
+    Arguments:
+        token (Token): Token
+
+    Returns:
+        bool: Result of the check
+    """
+    return not token.is_space and not is_punctuation(token.text)
+
+
+def has_feature(token: Token, field: str, value: str) -> bool:
+    """
+    Checking whether a token carries a morphological feature with a given value
+
+    Arguments:
+        token (Token): Token
+        field (str): Name of the feature of Universal Dependencies (VerbForm, Mood)
+        value (str): Value of the feature (Part, Ger, Fin)
+
+    Returns:
+        bool: Result of the check
+    """
+    return value in token.morph.get(field, [])
+
+
+def is_finite_verb(token: Token) -> bool:
+    """
+    Checking whether a token is a finite form of a verb
+
+    Arguments:
+        token (Token): Token
+
+    Returns:
+        bool: Result of the check
+    """
+    return token.pos_ == "VERB" and has_feature(token, "VerbForm", "Fin")
+
+
+def is_infinitive(token: Token) -> bool:
+    """
+    Checking whether a token is an infinitive
+
+    Arguments:
+        token (Token): Token
+
+    Returns:
+        bool: Result of the check
+    """
+    return has_feature(token, "VerbForm", "Inf")
+
+
+def joins_previous(token: Token) -> bool:
+    """
+    Checking whether a token continues a word the tokenizer split at its hyphens
+
+    Description:
+        The token is a word that follows a hyphen with no whitespace around it,
+        and the hyphen follows a word, with no sentence starting at the hyphen
+        or at the token: known in well-known; iter_doc_units joins such words
+
+    Arguments:
+        token (Token): Token
+
+    Returns:
+        bool: Result of the check
+    """
+    i = token.i
+    if i < 2:
+        return False
+    doc = token.doc
+    return _joins(doc[i - 2], doc[i - 1], token)
+
+
+def _joins(word: Token, hyphen: Token, token: Token) -> bool:
+    """Whether a token continues a word through a hyphen, the rule of joins_previous"""
+    return (
+        hyphen.text == "-"
+        and not word.whitespace_
+        and not hyphen.whitespace_
+        and is_word(word)
+        and is_word(token)
+        and not hyphen.is_sent_start
+        and not token.is_sent_start
+    )
+
+
 def iter_doc_tokens(source: Doc | Span) -> Iterator[Token]:
     """
     Extracting the tokens of the words from a Doc or Span object
 
     Description:
-        Whitespace tokens and the tokens of is_punctuation (symbols like %
-        and € included) are skipped
+        The tokens that are no words (is_word) are skipped
 
     Arguments:
         source (Doc|Span): Doc or Span object
@@ -332,7 +425,7 @@ def iter_doc_tokens(source: Doc | Span) -> Iterator[Token]:
         generator[Token]: Token of each word
     """
     for token in source:
-        if not token.is_space and not is_punctuation(token.text):
+        if is_word(token):
             yield token
 
 
@@ -343,8 +436,7 @@ def iter_doc_units(source: Doc | Span, join_hyphens: bool = False) -> Iterator[l
     Description:
         The words of iter_doc_tokens, one token each; with join_hyphens, a word
         the tokenizer split at its hyphens (well-known into well, -, known) is
-        joined back when no whitespace separates its parts and no sentence
-        starts at a hyphen or a part
+        joined back by joins_previous
 
     Arguments:
         source (Doc|Span): Doc or Span object
@@ -357,7 +449,7 @@ def iter_doc_units(source: Doc | Span, join_hyphens: bool = False) -> Iterator[l
     index = 0
     while index < len(tokens):
         token = tokens[index]
-        if token.is_space or is_punctuation(token.text):
+        if not is_word(token):
             index += 1
             continue
         last = index
@@ -365,12 +457,7 @@ def iter_doc_units(source: Doc | Span, join_hyphens: bool = False) -> Iterator[l
             join_hyphens
             and last + 2 < len(tokens)
             and tokens[last + 1].text == "-"
-            and not tokens[last].whitespace_
-            and not tokens[last + 1].whitespace_
-            and not tokens[last + 2].is_space
-            and not is_punctuation(tokens[last + 2].text)
-            and not tokens[last + 1].is_sent_start
-            and not tokens[last + 2].is_sent_start
+            and _joins(tokens[last], tokens[last + 1], tokens[last + 2])
         ):
             last += 2
         yield tokens[index : last + 1]
@@ -431,6 +518,44 @@ def safe_divide(num: float | int, den: float | int, default: float | int = 0) ->
     if not den:
         return default
     return num / den
+
+
+def safe_mean(values: Sequence[float], default: float = math.nan) -> float:
+    """
+    Computing the mean of numbers safely
+
+    Arguments:
+        values (list[float]): Numbers
+        default (float): Value returned for no numbers
+
+    Returns:
+        float: Arithmetic mean
+    """
+    return fmean(values) if values else default
+
+
+def shannon_entropy(counts: Mapping[Any, int]) -> float:
+    """
+    Computing the Shannon entropy of a distribution by its counts
+
+    Arguments:
+        counts (dict[object, int]): Count of every value, such as a Counter
+
+    Returns:
+        float: Entropy in bits, 0 for one value and nan for no counts; a zero count is
+            left out
+
+    Example:
+        >>> from anyts.utils import shannon_entropy
+        >>> shannon_entropy({"a": 2, "b": 2})
+        1.0
+    """
+    total = sum(counts.values())
+    if not total:
+        return math.nan
+    return (
+        -sum(count / total * math.log2(count / total) for count in counts.values() if count) or 0.0
+    )
 
 
 def check_sequence(value: object, what: str = "words", ordered: bool = True) -> None:

@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABCMeta, abstractmethod
 from collections import Counter
 from collections.abc import Collection, Mapping, Sequence
-from math import comb, fsum, log2, nan
+from math import comb, fsum, nan
 from typing import TYPE_CHECKING, Any, ClassVar
 
 import numpy as np
@@ -19,6 +19,7 @@ from .utils import (
     is_doc,
     iter_doc_words,
     safe_divide,
+    shannon_entropy,
 )
 
 if TYPE_CHECKING:
@@ -196,7 +197,7 @@ class PhonStats(Stats, metaclass=ABCMeta):
         )
         n_hiatus = sum(self.word_hiatus(word) * count for word, count in counts.items())
         self.p_hiatus = n_hiatus / len(words) if n_sounds else nan
-        self.cv_entropy = _entropy(patterns)
+        self.cv_entropy = shannon_entropy(patterns)
         self.hardness = safe_divide(self.n_voiceless, self.n_vowels + self.n_sonorants, nan)
         self.alliteration = calc_repetition_index(self.sounds, window_len, consonants)
         self.assonance = calc_repetition_index(self.sounds, window_len, self.vowels)
@@ -294,14 +295,6 @@ class PhonStats(Stats, metaclass=ABCMeta):
             int: Number of hiatuses
         """
         return count_hiatus(self.transcribe(word), self.vowels, self.glides)
-
-
-def _entropy(counts: Counter[str]) -> float:
-    """Shannon entropy in bits of a distribution by counts, nan without counts"""
-    total = sum(counts.values())
-    if not total:
-        return nan
-    return -sum(count / total * log2(count / total) for count in counts.values()) or 0.0
 
 
 def cv_pattern(sounds: Sequence[str], vowels: Collection[str], consonants: Collection[str]) -> str:

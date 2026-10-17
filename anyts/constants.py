@@ -48,6 +48,49 @@ VALENCY_IGNORED_DEPS = frozenset({"cc", "conj", "parataxis", "punct"})
 # Relations of an auxiliary and of a copula of Universal Dependencies; ClearNLP has no
 # copula relation, its copula heads the clause
 AUXILIARY_DEPS = frozenset({"aux", "cop"})
+# Relations of the head of a clause and of a subordinate clause, of a subject and of a
+# modifier of a noun, which Universal Dependencies and ClearNLP share; a subtype counts
+# as its base relation
+CLAUSE_DEPS = frozenset({"acl", "advcl", "ccomp", "csubj", "parataxis"})
+SUBORDINATE_CLAUSE_DEPS = frozenset({"acl", "advcl", "ccomp", "csubj"})
+SUBJECT_DEPS = frozenset({"csubj", "nsubj"})
+NOUN_MODIFIER_DEPS = frozenset({"acl", "amod", "det", "nmod", "nummod"})
+# Relations of the dependents that mark a passive and of its agent, by Universal
+# Dependencies and by ClearNLP
+PASSIVE_DEPS = frozenset(
+    {"aux:pass", "auxpass", "csubj:pass", "csubjpass", "nsubj:pass", "nsubjpass"}
+)
+AGENT_DEPS = frozenset({"agent", "obl:agent"})
+# Verb forms whose clauses are counted apart from the clauses of a finite verb
+NONFINITE_CLAUSE_FORMS = frozenset({"Conv", "Ger", "Part"})
+
+# Syntactic statistics of a text by its dependency tree
+SYNTAX_STATS_DESC = {
+    "mean_dependency_distance": "Mean dependency distance",
+    "std_dependency_distance": "Standard deviation of the dependency distance",
+    "max_dependency_distance": "Mean of the longest dependencies of the sentences",
+    "p_adjacent_dependencies": "Share of adjacent dependencies",
+    "tree_depth": "Depth of the dependency tree",
+    "leaves_per_sent": "Leaves per sentence",
+    "subtrees_per_sent": "Subtrees per sentence",
+    "nodes_per_leaf": "Mean of the nodes per leaf of the sentences",
+    "verb_valency": "Valency of the finite verbs",
+    "coordination_chains_per_sent": "Coordination chains per sentence",
+    "mean_coordination_chain_len": "Mean length of a coordination chain",
+    "clauses_per_sent": "Clauses per sentence",
+    "mean_clause_len": "Mean length of a clause (words)",
+    "subordinate_clauses_per_sent": "Subordinate clauses per sentence",
+    "p_complex_sents": "Share of sentences with a subordinate clause",
+    "modifiers_per_noun": "Modifiers per noun phrase",
+    "participle_clauses_per_sent": "Participial clauses per sentence",
+    "mean_participle_clause_len": "Mean length of a participial clause (words)",
+    "p_passive": "Share of passive forms among the verbs",
+    "p_agentless_passive": "Share of agentless forms among the passive ones",
+    "infinitives_per_sent": "Infinitives per sentence",
+    "negations_per_sent": "Words of negation per sentence",
+    "split_predicates_per_sent": "Split predicates per sentence",
+    "noun_verb_ratio": "Ratio of nouns to verbs",
+}
 
 # Classes and kinds of the connectors (discourse markers) and the parts of speech of
 # Universal Dependencies of a one-word connector
@@ -169,6 +212,8 @@ MESSAGES = {
     "band_bound": "A bound of a band must be an integer from 1 to {size}, not {band}",
     "phon_window_len": "The size of a window must be at least 2",
     "phon_classes": "The sounds of {first} and {second} of {cls} overlap: {sounds}",
+    "no_parse": "The data source has no dependency parse",
+    "no_lemmas": "The data source has no lemmas",
     "tokenizer": "The tokenizer is set incorrectly",
     "tokenizer_iterable": "The tokenizer must return an iterable object",
     "tokenizer_strings": "The tokenizer must return strings, not {type}",

@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, ClassVar, NamedTuple
 
 from ..exceptions import ParameterError, SourceError, SourceTypeError
 from ..extractors import BLANK_LINE, SentsExtractor, _iter_words
-from ..syntax import get_words
+from ..syntax_stats import get_words
 from ..utils import _unit_word, has_sents, is_doc, iter_doc_tokens
 
 if TYPE_CHECKING:

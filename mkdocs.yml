@@ -23,7 +23,9 @@ nav:
         - Metrics module: stats/readability_stats.md
         - Metric functions: stats/readability_stats_funcs.md
       - Cohesion helpers: stats/cohesion.md
-      - Dependency tree helpers: stats/syntax.md
+      - Syntactic statistics:
+        - Metrics module: stats/syntax_stats.md
+        - Metric functions: stats/syntax_stats_funcs.md
       - Lexical sophistication: stats/lexical_stats.md
       - Style metrics:
         - Metrics module: stats/style_stats.md
