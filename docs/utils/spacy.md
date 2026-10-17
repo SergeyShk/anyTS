@@ -3,12 +3,12 @@
 !!! info ""
     **anyts.utils**
 
-Checks of the objects of spaCy without importing it, the words of a `Doc` and their morphology, the parts of a word the tokenizer split at its hyphens, the sentences of a `Doc` and the rules a language adds to the tokenizer of spaCy.
+Checks of spaCy objects without importing spaCy, the words of a `Doc` and their morphology, the parts of a hyphenated word, the sentences of a `Doc` and the tokenizer rules of a language.
 
 ## is_doc, is_span
 
 <!-- --8<-- [start:is_doc] -->
-`is_doc(value)` checks whether a value is a `Doc` object of spaCy without importing spaCy: such an object exists only once spaCy is loaded, so before that every value gives `False`. The core takes a `Doc` this way, and `import anyts` loads no spaCy; a language library checks its sources so too, to keep its own import light.
+`is_doc(value)` checks whether a value is a `Doc` object of spaCy without importing spaCy: such an object exists only once spaCy is loaded, so before that every value gives `False`. A library checks its sources this way to keep its import free of spaCy.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
@@ -33,7 +33,7 @@ Checks of the objects of spaCy without importing it, the words of a `Doc` and th
 ## has_sents
 
 <!-- --8<-- [start:has_sents] -->
-Checks whether a `Doc` has its sentence boundaries: they count when every token has them, as the parser, `senter` and `sentencizer` set them. The starts of a component that leaves the other tokens unset, such as `start_sents_after_blank_lines` run without the parser, are partial, and the statistics, `kwic`, `sentence_lengths` and the highlighting take the sentences of such a `Doc` from its text, as of a `Doc` without boundaries.
+Checks whether a `Doc` has its sentence boundaries: they count when every token has them, as after the parser, `senter` or `sentencizer`. The starts of a component that leaves the other tokens unset, such as `start_sents_after_blank_lines` without the parser, are partial; the statistics, `kwic`, `sentence_lengths` and the highlighting take the sentences of such a `Doc` from its text.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
@@ -88,7 +88,7 @@ Checks whether a token carries a morphological feature with a given value: `has_
 ## joins_previous
 
 <!-- --8<-- [start:joins_previous] -->
-A tokenizer may split a word at its hyphens (`well-known` into `well`, `-`, `known`). `joins_previous(token)` checks whether a token continues such a word: it is a word that follows a hyphen with no whitespace around it, the hyphen follows a word, and no sentence starts at the hyphen or at the word. `iter_doc_units` and the functions of the dependency tree join the parts of a word by this rule with `join_hyphens=True`.
+`joins_previous(token)` checks whether a token continues a word the tokenizer split at its hyphens (`well-known` into `well`, `-`, `known`): the token is a word right after a hyphen that follows a word, with no whitespace around the hyphen and no sentence starting at the hyphen or the token. `iter_doc_units` and the functions of the dependency tree join the parts of a word by this rule with `join_hyphens=True`.
 <!-- --8<-- [end:joins_previous] -->
 
 ## iter_doc_tokens
@@ -104,7 +104,7 @@ Yields the tokens of the words of a `Doc` or a `Span` (`is_word`): whitespace to
 ## iter_doc_units
 
 <!-- --8<-- [start:iter_doc_units] -->
-Yields the words of a `Doc` or a `Span` as lists of tokens: one token each, as in `iter_doc_tokens`. With `join_hyphens=True` a word that the tokenizer split at its hyphens (`well-known` into `well`, `-`, `known`) is joined back when no whitespace separates its parts and no sentence starts at a hyphen or a part (`joins_previous`); a language library whose own tokenizer keeps such words whole turns it on, so that a string and a `Doc` give the same words.
+Yields the words of a `Doc` or a `Span` as lists of tokens: one token each, as in `iter_doc_tokens`. With `join_hyphens=True` a word that the tokenizer split at its hyphens (`well-known` into `well`, `-`, `known`) is joined back by the rule of `joins_previous`; a language library whose tokenizer keeps such words whole turns it on, so that a string and a `Doc` give the same words.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
@@ -140,7 +140,7 @@ Yields the words of `iter_doc_units` as tuples: the position of the first charac
 ## split_doc_units
 
 <!-- --8<-- [start:split_doc_units] -->
-Splits the words of a `Doc` into the sentences of a sentence extractor, for a `Doc` without sentence boundaries or one to split otherwise: the sentences are found in its text in their order, and a word of `iter_doc_units` belongs to the sentence its first token lies in. The words outside the sentences found - those the extractor drops - are left out, so with no sentence found there are no words.
+Splits the words of a `Doc` into the sentences of a sentence extractor, for a `Doc` without sentence boundaries or one to split otherwise: the sentences are found in its text in their order, and a word of `iter_doc_units` belongs to the sentence its first token lies in. The words outside the sentences found, those the extractor drops, are left out, so no sentence found gives no words.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
@@ -152,7 +152,7 @@ Splits the words of a `Doc` into the sentences of a sentence extractor, for a `D
 ## add_tokenizer_rules
 
 <!-- --8<-- [start:add_tokenizer_rules] -->
-Adds the rules of a language to the tokenizer of a pipeline, so that the tokens of a `Doc` match the words a library splits a string into: the prefixes, the suffixes and the infixes are regular expressions joined to those of the tokenizer - a prefix anchored at the start and a suffix at the end, every branch of it - such as the dashes of a dialogue glued to the words, and an abbreviation becomes a single token in lower case, capitalized and in upper case when the tokenizer keeps one of its forms whole. A rule the tokenizer has as an alternative of its own is not added twice; a tokenizer that is not the `Tokenizer` of spaCy, or whose rules are not regular expressions, is left as it is. Rules that are not lists of strings and abbreviations that are not a collection of strings raise `SourceTypeError`.
+Adds the rules of a language to the tokenizer of a pipeline, so that the tokens of a `Doc` match the words a library splits a string into. The prefixes (such as the dashes of a dialogue glued to a word), suffixes and infixes are regular expressions joined to those of the tokenizer, every branch of a prefix anchored at the start and of a suffix at the end. An abbreviation becomes a single token in lower case, capitalized and in upper case when the tokenizer keeps one of its forms whole. A rule the tokenizer already has as an alternative is not added twice; a tokenizer that is not the `Tokenizer` of spaCy, or whose rules are not regular expressions, is left as it is. Rules that are not lists of strings and abbreviations that are not a collection of strings raise `SourceTypeError`.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |

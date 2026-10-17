@@ -48,9 +48,8 @@ VALENCY_IGNORED_DEPS = frozenset({"cc", "conj", "parataxis", "punct"})
 # Relations of an auxiliary and of a copula of Universal Dependencies; ClearNLP has no
 # copula relation, its copula heads the clause
 AUXILIARY_DEPS = frozenset({"aux", "cop"})
-# Relations of the head of a clause and of a subordinate clause, of a subject and of a
-# modifier of a noun, which Universal Dependencies and ClearNLP share; a subtype counts
-# as its base relation
+# Relations of the head of a clause and of a subordinate clause, of a subject and of a noun
+# modifier, shared by Universal Dependencies and ClearNLP; a subtype counts as its base one
 CLAUSE_DEPS = frozenset({"acl", "advcl", "ccomp", "csubj", "parataxis"})
 SUBORDINATE_CLAUSE_DEPS = frozenset({"acl", "advcl", "ccomp", "csubj"})
 SUBJECT_DEPS = frozenset({"csubj", "nsubj"})
@@ -139,8 +138,8 @@ COHESION_STATS_DESC = {
     "connectors_secondary": "Secondary connectors per 1000 words",
 }
 
-# Marks at the boundary of a window of split_windows: the opening ones go with the next window;
-# a symmetric one (a straight quote, the dash of an aside) closes the previous window when it
+# Marks at a window boundary of split_windows: an opening one goes with the next window; a
+# symmetric one (a straight quote, the dash of an aside) closes the previous window when it
 # is glued to its last word or follows a closing mark
 OPENING_MARKS = frozenset("«\"'„“‘([{—–―-")
 SYMMETRIC_MARKS = frozenset("\"'—–―-")
@@ -183,8 +182,8 @@ DELTA_VARIANTS = {
     "cosine": "Cosine Delta - cosine distance of the z-scores",
 }
 
-# Messages of the errors of the statistics classes and the components by key; the messages
-# with fields in braces are format strings, and a language library passes its own over these
+# Error messages of the statistics classes and the components by key; those with fields in
+# braces are format strings, and a language library passes its own over these
 MESSAGES = {
     "source_type": "The data source is set incorrectly",
     "no_words": "The data source has no words",
@@ -273,8 +272,8 @@ MESSAGES = {
     "connector_pos": "The parts of speech must be as many as the words",
 }
 
-# Labels of the plots by the name of the visualizer; the labels with fields in braces are
-# format strings, and a language library passes its own labels over these
+# Plot labels by the name of the visualizer; those with fields in braces are format
+# strings, and a language library passes its own over these
 VISUALIZER_LABELS = {
     "zipf": {
         "title": "Zipf's law",
@@ -400,7 +399,7 @@ PHON_STATS_DESC = {
 # Window in words of the alliteration and the assonance
 PHON_WINDOW_LEN = 3
 # Highlighting of the alliteration: the probability below which a repetition of a consonant
-# is one, and the length of the words shorter than which the words are transparent
+# counts, and the word length below which words are transparent
 ALLITERATION_THRESHOLD = 0.001
 ALLITERATION_MIN_WORD_LEN = 3
 

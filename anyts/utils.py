@@ -38,12 +38,10 @@ def is_punctuation(token: str) -> bool:
 
     Description:
         Characters of the Unicode categories P (punctuation), S (symbols),
-        M (combining marks) and Cf (invisible format characters: the zero-width
-        space, the byte order mark, the zero-width joiner), so "?!", "--", "«",
-        "€", "№" and a lone zero-width space are punctuation too, while a token
-        with a letter or a digit is not; an empty token is punctuation as well.
-        The results are cached by token, so the function is meant for tokens,
-        not whole texts
+        M (combining marks) and Cf (invisible format characters such as the
+        zero-width space), so "?!", "€", "№" and an empty token are punctuation,
+        and a token with a letter or a digit is not. The results are cached, so
+        the function is meant for tokens, not whole texts
 
     Arguments:
         token (str): Token
@@ -86,9 +84,8 @@ def count_letters(word: str) -> int:
     Counting the letters of a string
 
     Description:
-        Letters of any alphabet (str.isalpha), without digits, hyphens and marks;
-        the results are cached by word form, so the function is meant for words,
-        not whole texts
+        Letters of any alphabet (str.isalpha), not digits, hyphens or marks; the
+        results are cached, so the function is meant for words, not whole texts
 
     Arguments:
         word (str): Word form
@@ -109,8 +106,8 @@ def has_words(source: str | Doc | Span) -> bool:
     Checking whether a text holds a word
 
     Description:
-        An empty text or one of whitespace and the characters of is_punctuation
-        alone (?!, ..., a zero-width space) holds no word
+        An empty text or one of whitespace and is_punctuation characters alone
+        (?!, ..., a zero-width space) holds no word
 
     Arguments:
         source (str|Doc|Span): Text, Doc or Span object
@@ -204,10 +201,8 @@ def count_words_by_spans(starts: Sequence[int], spans: Sequence[tuple[int, int]]
     Counting the words in every span of a text by the positions of the words and the spans
 
     Description:
-        The words and the spans are ordered by position; a word belongs to the
-        span of its first character, and a span without words is skipped, so
-        the lengths of the sentences of a text come out of the positions of its
-        words and sentences
+        A word belongs to the span of its first character, and a span without
+        words is skipped
 
     Arguments:
         starts (list[int]): Positions of the first characters of the words in order
@@ -293,11 +288,10 @@ def has_sents(doc: Doc) -> bool:
     Checking whether a Doc has its sentence boundaries
 
     Description:
-        The boundaries count when every token has them, as the parser, senter
-        and sentencizer set them; the starts of a component that leaves the
-        other tokens unset, such as start_sents_after_blank_lines run without
-        the parser, are partial, and the sentences of such a Doc come from its
-        text, as of a Doc without boundaries
+        The boundaries count when every token has them, as after the parser,
+        senter or sentencizer; partial starts, such as those of
+        start_sents_after_blank_lines without the parser, do not, and the
+        sentences of such a Doc come from its text
 
     Arguments:
         doc (Doc): Doc object
@@ -384,9 +378,9 @@ def joins_previous(token: Token) -> bool:
     Checking whether a token continues a word the tokenizer split at its hyphens
 
     Description:
-        The token is a word that follows a hyphen with no whitespace around it,
-        and the hyphen follows a word, with no sentence starting at the hyphen
-        or at the token: known in well-known; iter_doc_units joins such words
+        A word right after a hyphen that follows a word, with no whitespace
+        around the hyphen and no sentence starting at it or at the token: known
+        in well-known; iter_doc_units joins such words
 
     Arguments:
         token (Token): Token
@@ -513,11 +507,10 @@ def split_doc_units(
     Splitting the words of a Doc or Span object into the sentences of an extractor
 
     Description:
-        The sentences of sents_extractor are found in the text of the source in
-        their order, and a word of iter_doc_units belongs to the sentence its
-        first token lies in; the words outside the sentences found (dropped by
-        the extractor) are left out, so with no sentence found there are no
-        words. For a Doc with no sentence boundaries, or one split otherwise
+        For a Doc with no sentence boundaries, or one split otherwise. The
+        sentences are found in the text in their order, and a word of
+        iter_doc_units belongs to the sentence its first token lies in; words
+        outside the sentences found are left out, so no sentence gives no words
 
     Arguments:
         source (Doc|Span): Doc or Span object
@@ -560,15 +553,15 @@ def add_tokenizer_rules(
     Adding the rules of a language to the tokenizer of a pipeline
 
     Description:
-        The prefixes, the suffixes and the infixes are regular expressions
-        joined to those of the tokenizer - a prefix anchored at the start and
-        a suffix at the end, every branch of it - so that the tokens of a Doc
-        match the words a library splits a string into, such as the dashes of
-        a dialogue glued to the words. An abbreviation becomes a single token
-        in lower case, capitalized and in upper case when the tokenizer keeps
-        one of its forms whole. A rule the tokenizer has as an alternative of
-        its own is not added twice, and a tokenizer that is not the Tokenizer
-        of spaCy, or whose rules are not regular expressions, is left as it is
+        The rules make the tokens of a Doc match the words a library splits a
+        string into, such as the dashes of a dialogue glued to a word. The
+        prefixes, suffixes and infixes are joined to the regular expressions of
+        the tokenizer, every branch of a prefix anchored at the start and of a
+        suffix at the end. An abbreviation becomes one token in
+        lower case, capitalized and in upper case when the tokenizer keeps one
+        of its forms whole. A rule the tokenizer already has as an alternative
+        is not added twice; a tokenizer that is not the Tokenizer of spaCy, or
+        whose rules are not regular expressions, is left as it is
 
     Arguments:
         nlp (Language): Pipeline whose tokenizer gets the rules
@@ -633,9 +626,9 @@ def _extend_rules(method: object, rules: list[str]) -> Pattern[str] | None:
 
     Description:
         Read from a bound method of the tokenizer (prefix_search, suffix_search,
-        infix_finditer); no method gives the rules alone, and a method not bound
-        to a regular expression or one that has every rule as an alternative of
-        its own gives None, so the tokenizer is not reloaded
+        infix_finditer); no method gives the rules alone. None for a method not
+        bound to a regular expression or one that already has every rule, so
+        the tokenizer is not reloaded
     """
     if method is None:
         return re.compile("|".join(rules)) if rules else None
@@ -708,12 +701,8 @@ def check_sequence(value: object, what: str = "words", ordered: bool = True) -> 
     Checking that an argument is a sequence and not a text or an iterator
 
     Description:
-        A string would be iterated character by character, an iterator would
-        be exhausted by the first pass over it, and a table (a two-dimensional
-        array or a DataFrame) by its rows or columns. A set or a mapping holds
-        every item once, in no order of the text, so it passes only with
-        ordered=False - for a collection whose order and repeats do not
-        matter, such as stop words
+        A set or a mapping holds every item once, in no order of the text, so it
+        passes only with ordered=False, for a collection such as stop words
 
     Arguments:
         value (object): Value to check
@@ -722,8 +711,9 @@ def check_sequence(value: object, what: str = "words", ordered: bool = True) -> 
 
     Raises:
         SourceTypeError: If a string (of characters or bytes), a Doc, a Span, an
-            iterator, an object without iteration or without a length, a table or,
-            with ordered, a set or a mapping is passed
+            iterator, an object without iteration or without a length, a table
+            (a two-dimensional array or a DataFrame) or, with ordered, a set or a
+            mapping is passed
 
     Example:
         >>> from anyts.utils import check_sequence
@@ -843,8 +833,7 @@ def check_integer(value: object, what: str) -> None:
     Checking that a parameter is an integer
 
     Description:
-        A bool or a float, even a whole one, is not taken for an integer, since it
-        would fail only later, as an index or a count
+        A bool or a float, even a whole one, is not taken for an integer
 
     Arguments:
         value (object): Value to check
@@ -900,12 +889,11 @@ def merge_labels(
     Merging the labels given for a plot over its default ones
 
     Description:
-        A label that is not given keeps its default, so a single label can be
-        changed alone. A default with fields in braces is a format string: a
-        label given for it may use only those fields, and a literal brace in it
-        is doubled ({{); it is tried on the samples of its fields, so that a
-        format spec the values do not take fails before the plot. The other
-        labels are taken as they are
+        A label not given keeps its default. A default with fields in braces is
+        a format string: a label given for it may use only those fields, with a
+        literal brace doubled ({{), and is tried on the samples of its fields,
+        so that a wrong format spec fails before the plot. The other labels are
+        taken as they are
 
     Arguments:
         defaults (dict[str, str]): Default labels by key
@@ -982,11 +970,11 @@ def check_messages(messages: object, defaults: Mapping[str, str] = MESSAGES) -> 
     Checking the messages of the errors a class of statistics raises
 
     Description:
-        The messages are complete, a string for every key of the defaults, so
-        that an error never turns into a KeyError; a library merges its own over
-        the defaults ({**MESSAGES, **own}). A message whose default has fields in
-        braces is a format string of those fields only, with a literal brace
-        doubled ({{); the other messages are taken as they are
+        The messages must be complete, a string for every key of the defaults,
+        so that an error never turns into a KeyError; a library merges its own
+        over the defaults ({**MESSAGES, **own}). A message whose default has
+        fields in braces may use only those fields, with a literal brace doubled
+        ({{); the others are taken as they are
 
     Arguments:
         messages (dict[str, str]): Messages by key

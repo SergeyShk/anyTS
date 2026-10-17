@@ -4,7 +4,7 @@
     **anyts.exceptions**
 
 <!-- --8<-- [start:exceptions] -->
-All exceptions of the library inherit the base class `AnyTSError` and a built-in Python class, so they can be caught by either, and `except ValueError` keeps working.
+All exceptions of the library inherit the base class `AnyTSError` and a built-in Python class, and can be caught by either.
 
 | Exception | Built-in class | When raised |
 | :-------- | :------------- | :---------- |
@@ -41,7 +41,7 @@ The classes are available from `anyts` and from `anyts.exceptions`. A language l
 ## Messages { #messages }
 
 <!-- --8<-- [start:messages] -->
-The messages of the errors of the classes of statistics (`Stats` and its subclasses), of `StatsComponent`, of the extractors `SentsExtractor`, `WordsExtractor` and `CharNgramsExtractor` and of `ConnectorMatcher` come from their class attribute `messages`, a mapping of a key to a message; the messages with fields in braces are format strings. By default it is `anyts.constants.MESSAGES`, in English. A language library sets the messages of its language on its subclasses, `messages = {**MESSAGES, **own}`, and its users get them for a source without words, an extractor of another type, an unknown preset or statistic, a parameter out of range, the bounds of the lengths, the N-grams and the top of an extractor, a text that is not a string or a wrong tokenizer, and a dictionary of connectors of a wrong form or wrong parts of speech: every error such a class raises itself. The functions `check_params`, `calc_windowed` and `calc_reading_time`, which these classes call, take the messages as the keyword `messages`.
+The errors of the classes of statistics (`Stats` and its subclasses), of `StatsComponent`, of the extractors `SentsExtractor`, `WordsExtractor` and `CharNgramsExtractor` and of `ConnectorMatcher` take their messages from the class attribute `messages`, a mapping of a key to a message, `anyts.constants.MESSAGES` in English by default; the messages with fields in braces are format strings. A language library sets the messages of its language on its subclasses, `messages = {**MESSAGES, **own}`, and they cover every error such a class raises itself. The functions `check_params`, `calc_windowed` and `calc_reading_time`, which these classes call, take the messages as the keyword `messages`.
 
 The shared checks of `anyts.utils` (`check_integer`, `check_number`, `check_words`, `check_sequence`), which these classes call too, and the other functions of the core keep their messages in English.
 <!-- --8<-- [end:messages] -->

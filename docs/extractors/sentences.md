@@ -30,7 +30,7 @@ The default tokenizer is the method `sentenize(text)`, which a language library 
 | `max_len` | int | `0` | Maximum length of an extracted sentence in characters, `0` for no bound |
 
 !!! note "Note"
-    A regular expression as the tokenizer is a separator: the text is split with `re.split`. A blank line - a line break, optional whitespace and another line break - ends a sentence of any tokenizer: the text is split at blank lines first and every part goes to the tokenizer, so a heading or a paragraph without a final mark is a sentence of its own, and so is a part without words, such as a line of asterisks between sections, which the statistics leave out as a sentence without words. The sentences of any tokenizer are stripped of whitespace at the edges, before the length bounds, and empty ones are dropped.
+    A regular expression as the tokenizer is a separator for `re.split`. A blank line - a line break, optional whitespace and another line break - ends a sentence of any tokenizer: the text is split at blank lines first and every part goes to the tokenizer, so a heading or a paragraph without a final mark is a sentence of its own, and so is a part without words, such as a line of asterisks, which the statistics leave out. The sentences are stripped of whitespace at the edges before the length bounds, and empty ones are dropped.
 <!-- --8<-- [end:SentsExtractor-parameters] -->
 
 ## Methods
@@ -104,11 +104,11 @@ An example of sentence extraction with a regular expression as the tokenizer:
 ## Sentences of the parts of a text { #iter_part_sents }
 
 <!-- --8<-- [start:iter_part_sents] -->
-`iter_part_sents(iter_sents, text)` gives the sentences of a splitter with positions - `iter_sents`, the start, the end and the text of every sentence of a string - for every part of a text between blank lines (`BLANK_LINE`) one by one, at their positions in the whole text, so that a blank line ends a sentence whatever the splitter, as in `SentsExtractor`.
+`iter_part_sents(iter_sents, text)` runs a splitter - `iter_sents`, giving the start, the end and the text of every sentence of a string - on every part of a text between blank lines (`BLANK_LINE`) and gives the sentences at their positions in the whole text, so that a blank line ends a sentence whatever the splitter, as in `SentsExtractor`.
 <!-- --8<-- [end:iter_part_sents] -->
 
 ## Ready sentences { #FixedSentsExtractor }
 
 <!-- --8<-- [start:FixedSentsExtractor] -->
-`FixedSentsExtractor(sents)` of `anyts.extractors` gives the sentences it was made with for any text: a class that takes a sentence extractor gets the sentences already known, and the text is not split twice. Sentences that are not a list of strings raise `SourceTypeError`.
+`FixedSentsExtractor(sents)` of `anyts.extractors` gives the sentences it was made with for any text, so a class that takes a sentence extractor gets known sentences without splitting the text again. Sentences that are not a list of strings raise `SourceTypeError`.
 <!-- --8<-- [end:FixedSentsExtractor] -->

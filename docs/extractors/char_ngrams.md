@@ -6,9 +6,9 @@
 ## Description
 
 <!-- --8<-- [start:CharNgramsExtractor] -->
-A class for extracting character N-grams from a text - sequences of N characters taken with a sliding window over the string. Character N-grams are a standard feature of stylometry and authorship attribution (Stamatatos 2009) and can replace words as the units of a text in measures such as Burrows's Delta.
+A class for extracting character N-grams from a text - sequences of N characters taken with a sliding window over the string. Character N-grams are a standard feature of stylometry and authorship attribution (Stamatatos 2009) and can replace words in measures such as Burrows's Delta.
 
-Whitespace runs are collapsed into a single space beforehand, punctuation marks are kept. With `within_words=True` N-grams do not cross word boundaries: the text is split into words by the tokenizer, punctuation is dropped, and words shorter than N yield no N-grams.
+Whitespace runs are collapsed into a single space, punctuation marks are kept. With `within_words=True` N-grams do not cross word boundaries: the text is split into words by the tokenizer, punctuation is dropped, and words shorter than N yield no N-grams.
 <!-- --8<-- [end:CharNgramsExtractor] -->
 
 ## Language hooks

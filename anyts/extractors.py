@@ -39,9 +39,9 @@ def _word_pattern() -> Pattern[str]:
 
     Description:
         A word character \\w followed by word characters, combining marks, the
-        zero-width non-joiner and joiner and the soft hyphen. The combining marks
-        are read from unicodedata on first use, which takes tens of milliseconds,
-        so a library that overrides the tokenizers does not pay for it on import
+        zero-width non-joiner and joiner and the soft hyphen. Built on first use,
+        not on import, since reading the combining marks takes tens of
+        milliseconds
 
     Returns:
         Pattern: Compiled regular expression
@@ -196,12 +196,10 @@ class SentsExtractor(Extractor):
 
     Description:
         The default tokenizer is the method sentenize, which a language library
-        overrides; here it splits the text at whitespace after ., !, ? or …,
-        optionally followed by a closing quote or bracket. A blank line ends
-        a sentence whatever the tokenizer: the text is split at blank lines
-        first and every part is given to the tokenizer, so a part without
-        words is a sentence of its own. The sentences are stripped of
-        whitespace at the edges
+        overrides; here it splits at whitespace after ., !, ? or …, optionally
+        followed by a closing quote or bracket. The text is split at blank lines
+        first and every part goes to the tokenizer, so a blank line ends a
+        sentence and a part without words is a sentence of its own
 
     Arguments:
         tokenizer (pattern|callable): Tokenizer or regular expression
@@ -314,9 +312,9 @@ def iter_part_sents(
     Extracting the sentences of every part of a text between blank lines
 
     Description:
-        The parts between the blank lines (BLANK_LINE) are given to iter_sents
-        one by one, so that a blank line ends a sentence whatever the splitter,
-        and the positions of the sentences are moved to the text
+        Every part between blank lines (BLANK_LINE) goes to iter_sents, so that
+        a blank line ends a sentence whatever the splitter; the positions are
+        those in the whole text
 
     Arguments:
         iter_sents (Callable[[str], Iterable[tuple[int, int, str]]]): Sentences of a
@@ -354,13 +352,11 @@ class WordsExtractor(Extractor):
         ('better', 'friends', 'dollars', 'better_friends', 'friends_dollars')
 
     Description:
-        The language comes through three hooks a language library overrides:
-        the method tokenize (by default a word character \\w followed by word
-        characters, combining marks, zero-width joiners and non-joiners and soft
-        hyphens), the method lemmatize (by default the word itself) and the class
-        attribute number_pattern (by default signed numbers with separators and an
-        optional percent sign: -5, 1990-1995, 1,500.50, 12/03/2020, 3:30, 10%); the
-        messages of its errors come from the class attribute messages. The
+        A language library overrides the methods tokenize (by default a word
+        character \\w followed by word characters, combining marks, zero-width
+        joiners and non-joiners and soft hyphens) and lemmatize (by default the
+        word itself) and sets the class attribute number_pattern (NUMBER_PATTERN
+        by default: -5, 1990-1995, 1,500.50, 12/03/2020, 3:30, 10%). The
         filters are applied in order: punctuation, numbers, lemmatization, lower
         case, stop words, word length
 
@@ -640,9 +636,8 @@ class FixedSentsExtractor(SentsExtractor):
     Sentence extractor that gives the sentences it was made with
 
     Description:
-        For a class that takes an extractor when the sentences of the text are
-        already known, so that the text is not split twice; any text gives
-        the same sentences
+        Any text gives the same sentences: for a class that takes an extractor
+        when the sentences are already known, so that the text is not split twice
 
     Arguments:
         sents (list[str]): Sentences
@@ -670,9 +665,8 @@ class FixedWordsExtractor(WordsExtractor):
     Word extractor that gives the words it was made with
 
     Description:
-        For a class that takes an extractor when the words of the text are
-        already known, so that the text is not tokenized twice; any text gives
-        the same words
+        Any text gives the same words: for a class that takes an extractor when
+        the words are already known, so that the text is not tokenized twice
 
     Arguments:
         words (list[str]): Words
