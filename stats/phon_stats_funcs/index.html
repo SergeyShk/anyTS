@@ -10,10 +10,10 @@
       
       
       
-        <link rel="canonical" href="https://sergeyshk.github.io/anyTS/stats/phonetics/">
+        <link rel="canonical" href="https://sergeyshk.github.io/anyTS/stats/phon_stats_funcs/">
       
       
-        <link rel="prev" href="../style_stats_funcs/">
+        <link rel="prev" href="../phon_stats/">
       
       
         <link rel="next" href="../../corpus/keyness/">
@@ -27,7 +27,7 @@
     
     
       
-        <title>Phonetic helpers - anyTS</title>
+        <title>Metric functions - anyTS</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#phonetic-helpers" class="md-skip">
+        <a href="#metric-functions" class="md-skip">
           Skip to content
         </a>
       
@@ -112,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Phonetic helpers
+              Metric functions
             
           </span>
         </div>
@@ -1250,6 +1250,86 @@
   
   
   
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_9" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3_9" id="__nav_3_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phonetic statistics
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_9_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Phonetic statistics
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phon_stats/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Metrics module
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
     <li class="md-nav__item md-nav__item--active">
       
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
@@ -1265,7 +1345,7 @@
   <span class="md-ellipsis">
     
   
-    Phonetic helpers
+    Metric functions
   
 
     
@@ -1283,7 +1363,7 @@
   <span class="md-ellipsis">
     
   
-    Phonetic helpers
+    Metric functions
   
 
     
@@ -1309,10 +1389,54 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#calc_repetition_index" class="md-nav__link">
+  <a href="#cv-pattern" class="md-nav__link">
     <span class="md-ellipsis">
       
-        calc_repetition_index
+        CV pattern
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consonant-clusters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consonant clusters
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hiatuses" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hiatuses
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#repetition-index" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Repetition index
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#check_params" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parameters of the metrics
       
     </span>
   </a>
@@ -1322,6 +1446,14 @@
     </ul>
   
 </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
       
     </li>
   
@@ -1949,10 +2081,54 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#calc_repetition_index" class="md-nav__link">
+  <a href="#cv-pattern" class="md-nav__link">
     <span class="md-ellipsis">
       
-        calc_repetition_index
+        CV pattern
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consonant-clusters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consonant clusters
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hiatuses" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hiatuses
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#repetition-index" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Repetition index
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#check_params" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parameters of the metrics
       
     </span>
   </a>
@@ -1979,12 +2155,129 @@
   
 
 
-<h1 id="phonetic-helpers">Phonetic helpers<a class="headerlink" href="#phonetic-helpers" title="Permanent link">&para;</a></h1>
+<h1 id="metric-functions">Metric functions<a class="headerlink" href="#metric-functions" title="Permanent link">&para;</a></h1>
+<p>The functions see no language: a word is given as its sounds or its letters - the characters of a string, the sounds of a transcription - and the classes of the sounds or the features to count come through the parameters, so a library chooses them.</p>
+<h2 id="cv-pattern">CV pattern<a class="headerlink" href="#cv-pattern" title="Permanent link">&para;</a></h2>
 <div class="admonition info">
-<p><strong>anyts.phonetics</strong></p>
+<p><strong>anyts.phon_stats.cv_pattern()</strong></p>
 </div>
-<p>Functions over the sounds or the letters of the words of a text. A word is given as the collection of its features - the characters of a string, the sounds of a transcription - so the functions see no language: a library chooses the features.</p>
-<h2 id="calc_repetition_index">calc_repetition_index<a class="headerlink" href="#calc_repetition_index" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:cv_pattern] -->
+<p>The CV pattern of a word or a syllable: V for a vowel, C for a consonant, the other sounds (signs, digits, letters of another script) left out.</p>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>sounds</code></td>
+<td style="text-align: center;">list[str]</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Sounds or letters of the word</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>vowels</code></td>
+<td style="text-align: center;">Collection[str]</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Vowels</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>consonants</code></td>
+<td style="text-align: center;">Collection[str]</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Consonants</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:cv_pattern] -->
+
+<h2 id="consonant-clusters">Consonant clusters<a class="headerlink" href="#consonant-clusters" title="Permanent link">&para;</a></h2>
+<div class="admonition info">
+<p><strong>anyts.phon_stats.consonant_clusters()</strong></p>
+</div>
+<!-- --8<-- [start:consonant_clusters] -->
+<p>The lengths of the consonant clusters of a word in order: a cluster is a run of consonants, a single one included; a sound of <code>skipped</code> neither counts nor breaks the run, any other sound breaks it.</p>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>sounds</code></td>
+<td style="text-align: center;">list[str]</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Sounds or letters of the word</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>consonants</code></td>
+<td style="text-align: center;">Collection[str]</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Consonants</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>skipped</code></td>
+<td style="text-align: center;">Collection[str]</td>
+<td style="text-align: center;"><code>()</code></td>
+<td style="text-align: center;">Sounds that keep a cluster whole, such as a sign that marks the consonant before it</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:consonant_clusters] -->
+
+<h2 id="hiatuses">Hiatuses<a class="headerlink" href="#hiatuses" title="Permanent link">&para;</a></h2>
+<div class="admonition info">
+<p><strong>anyts.phon_stats.count_hiatus()</strong></p>
+</div>
+<!-- --8<-- [start:count_hiatus] -->
+<p>The number of the hiatuses of a word by its vowels in a row: a run of two vowels or more is one hiatus, and a vowel of <code>glides</code> after a vowel makes none.</p>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>sounds</code></td>
+<td style="text-align: center;">list[str]</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Sounds or letters of the word</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>vowels</code></td>
+<td style="text-align: center;">Collection[str]</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Vowels</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>glides</code></td>
+<td style="text-align: center;">Collection[str]</td>
+<td style="text-align: center;"><code>()</code></td>
+<td style="text-align: center;">Vowels that make no hiatus after a vowel, such as a letter that writes a glide and a vowel</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:count_hiatus] -->
+
+<h2 id="repetition-index">Repetition index<a class="headerlink" href="#repetition-index" title="Permanent link">&para;</a></h2>
+<div class="admonition info">
+<p><strong>anyts.phon_stats.calc_repetition_index()</strong></p>
+</div>
 <!-- --8<-- [start:calc_repetition_index] -->
 <p>The repetition index: the ratio of the number of windows of <code>window_len</code> neighbouring words where a feature - a letter or a sound, as a library chooses - occurs in two words or more, summed over the features, to the number expected if the words stood in random order. A window of shuffled words is a sample of them without replacement, so for a feature found in <span class="arithmatex">\(K\)</span> of the <span class="arithmatex">\(N\)</span> words of the text, a window of <span class="arithmatex">\(w\)</span> words holds it in two words or more with the hypergeometric probability</p>
 <div class="arithmatex">\[
@@ -2026,12 +2319,26 @@ P = 1 - \frac{\binom{N-K}{w} + K \binom{N-K}{w-1}}{\binom{N}{w}}
 </table>
 <!-- --8<-- [end:calc_repetition_index-parameters] -->
 
+<h2 id="check_params">Parameters of the metrics<a class="headerlink" href="#check_params" title="Permanent link">&para;</a></h2>
+<div class="admonition info">
+<p><strong>anyts.phon_stats.check_params()</strong></p>
+</div>
+<!-- --8<-- [start:PhonStats-check_params] -->
+<p><code>check_params(window_len, *, messages)</code> checks the window of the alliteration and the assonance: one that is not an integer of at least 2 raises <code>ParameterError</code>.</p>
+<!-- --8<-- [end:PhonStats-check_params] -->
+
 <div class="admonition example">
 <p class="admonition-title">Example</p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts.phonetics</span><span class="w"> </span><span class="kn">import</span> <span class="n">calc_repetition_index</span>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts.phon_stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">calc_repetition_index</span><span class="p">,</span> <span class="n">consonant_clusters</span><span class="p">,</span> <span class="n">count_hiatus</span><span class="p">,</span> <span class="n">cv_pattern</span>
 
-<span class="n">words</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"sea"</span><span class="p">,</span> <span class="s2">"sun"</span><span class="p">,</span> <span class="s2">"gas"</span><span class="p">,</span> <span class="s2">"fog"</span><span class="p">,</span> <span class="s2">"box"</span><span class="p">,</span> <span class="s2">"hat"</span><span class="p">]</span>
-<span class="n">calc_repetition_index</span><span class="p">(</span><span class="n">words</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="p">{</span><span class="s2">"s"</span><span class="p">})</span>
+<span class="n">vowels</span><span class="p">,</span> <span class="n">consonants</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="s2">"aeiou"</span><span class="p">),</span> <span class="nb">set</span><span class="p">(</span><span class="s2">"bcdfghjklmnpqrstvwxyz"</span><span class="p">)</span>
+<span class="n">cv_pattern</span><span class="p">(</span><span class="s2">"strong"</span><span class="p">,</span> <span class="n">vowels</span><span class="p">,</span> <span class="n">consonants</span><span class="p">)</span>
+<span class="c1"># 'CCCVCC'</span>
+<span class="n">consonant_clusters</span><span class="p">(</span><span class="s2">"strength"</span><span class="p">,</span> <span class="n">consonants</span><span class="p">)</span>
+<span class="c1"># (3, 4)</span>
+<span class="n">count_hiatus</span><span class="p">(</span><span class="s2">"cooperation"</span><span class="p">,</span> <span class="n">vowels</span><span class="p">)</span>
+<span class="c1"># 2</span>
+<span class="n">calc_repetition_index</span><span class="p">([</span><span class="s2">"sea"</span><span class="p">,</span> <span class="s2">"sun"</span><span class="p">,</span> <span class="s2">"gas"</span><span class="p">,</span> <span class="s2">"fog"</span><span class="p">,</span> <span class="s2">"box"</span><span class="p">,</span> <span class="s2">"hat"</span><span class="p">],</span> <span class="mi">2</span><span class="p">,</span> <span class="p">{</span><span class="s2">"s"</span><span class="p">})</span>
 <span class="c1"># 2.0</span>
 </code></pre></div>
 </div>
