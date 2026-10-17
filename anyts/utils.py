@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import math
+import re
 import sys
 import unicodedata
 from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, Sequence, Set
 from functools import lru_cache
 from itertools import repeat
 from numbers import Integral, Real
+from re import Pattern
 from string import Formatter
 from typing import TYPE_CHECKING, TypeGuard
 
@@ -20,6 +22,9 @@ if TYPE_CHECKING:
 PUNCTUATION_CATEGORIES = frozenset(
     ("Pc", "Pd", "Ps", "Pe", "Pi", "Pf", "Po", "Sm", "Sc", "Sk", "So", "Mn", "Mc", "Me", "Cf")
 )
+
+# A signed number with separators and an optional percent sign: -5, 1990-1995, 1,500.50, 10%
+NUMBER_PATTERN = re.compile(r"[+\-−]?\d+(?:[.,:/-]\d+)*%?")
 
 
 @lru_cache(maxsize=1 << 16)
@@ -51,6 +56,27 @@ def is_punctuation(token: str) -> bool:
 
 
 @lru_cache(maxsize=1 << 16)
+def is_number(word: str, pattern: Pattern[str] = NUMBER_PATTERN) -> bool:
+    """
+    Checking whether a word is a number
+
+    Arguments:
+        word (str): Word
+        pattern (Pattern): Number of a language, matched against the whole lower-cased word;
+            NUMBER_PATTERN by default
+
+    Returns:
+        bool: Result of the check
+
+    Example:
+        >>> from anyts.utils import is_number
+        >>> is_number("2020"), is_number("10%"), is_number("cat")
+        (True, True, False)
+    """
+    return pattern.fullmatch(word.lower()) is not None
+
+
+@lru_cache(maxsize=1 << 16)
 def count_letters(word: str) -> int:
     """
     Counting the letters of a string
@@ -74,21 +100,139 @@ def count_letters(word: str) -> int:
     return sum(map(str.isalpha, word))
 
 
-def safe_divide(num: float | int, den: float | int, default: float | int = 0) -> float:
+def has_words(source: str | Doc | Span) -> bool:
     """
-    Dividing two numbers safely
+    Checking whether a text holds a word
+
+    Description:
+        An empty text or one of whitespace and the characters of is_punctuation
+        alone (?!, ..., a zero-width space) holds no word
 
     Arguments:
-        num (float|int): Numerator
-        den (float|int): Denominator
-        default (float|int): Value returned for a zero denominator
+        source (str|Doc|Span): Text, Doc or Span object
 
     Returns:
-        float: Result of the division
+        bool: Result of the check
+
+    Example:
+        >>> from anyts.utils import has_words
+        >>> has_words("The cat sleeps"), has_words("?!"), has_words("")
+        (True, False, False)
     """
-    if not den:
-        return default
-    return num / den
+    text = source if isinstance(source, str) else source.text
+    return any(not char.isspace() and not is_punctuation(char) for char in text)
+
+
+def in_order(words: Collection[str]) -> tuple[str, ...]:
+    """
+    Putting a collection of words in a fixed order
+
+    Arguments:
+        words (list[str]|set[str]): Words; a set or a mapping is sorted, a list keeps
+            its order
+
+    Returns:
+        tuple[str]: Words in order
+
+    Example:
+        >>> from anyts.utils import in_order
+        >>> in_order({"dog", "cat"}), in_order(["dog", "cat"])
+        (('cat', 'dog'), ('dog', 'cat'))
+    """
+    return tuple(sorted(words)) if isinstance(words, Set | Mapping) else tuple(words)
+
+
+def find_phrases(
+    words: Sequence[str], phrases: Collection[str], normalize: Callable[[str], str] = str.lower
+) -> list[tuple[int, int]]:
+    """
+    Finding phrases in a sequence of words
+
+    Description:
+        The words and the phrases are compared by their normalized forms; at
+        every position the longest phrase is taken, and the phrases found do not
+        overlap
+
+    Arguments:
+        words (list[str]): Words of the text
+        phrases (list[str]): Phrases, words separated by spaces
+        normalize (callable): Normalized form of a word and of a phrase, the lower
+            case by default
+
+    Returns:
+        list[tuple[int, int]]: Bounds of the phrases found as slices of words; empty
+            phrases are skipped
+
+    Raises:
+        SourceTypeError: If the words or the phrases are not a list of strings
+
+    Example:
+        >>> from anyts.utils import find_phrases
+        >>> find_phrases(["In", "fact", "it", "rains"], ["in fact", "in"])
+        [(0, 2)]
+    """
+    check_words(words)
+    check_words(phrases, "phrases", ordered=False)
+    patterns = sorted(
+        {pattern for phrase in phrases if (pattern := tuple(normalize(phrase).split()))},
+        key=lambda pattern: (-len(pattern), pattern),
+    )
+    by_first: dict[str, list[tuple[str, ...]]] = {}
+    for pattern in patterns:
+        by_first.setdefault(pattern[0], []).append(pattern)
+    normalized = [normalize(word) for word in words]
+    spans = []
+    position = 0
+    while position < len(normalized):
+        for pattern in by_first.get(normalized[position], ()):
+            end = position + len(pattern)
+            if tuple(normalized[position:end]) == pattern:
+                spans.append((position, end))
+                position = end
+                break
+        else:
+            position += 1
+    return spans
+
+
+def count_words_by_spans(starts: Sequence[int], spans: Sequence[tuple[int, int]]) -> list[int]:
+    """
+    Counting the words in every span of a text by the positions of the words and the spans
+
+    Description:
+        The words and the spans are ordered by position; a word belongs to the
+        span of its first character, and a span without words is skipped, so
+        the lengths of the sentences of a text come out of the positions of its
+        words and sentences
+
+    Arguments:
+        starts (list[int]): Positions of the first characters of the words in order
+        spans (list[tuple[int, int]]): Spans in order - the start and the position
+            after the end
+
+    Returns:
+        list[int]: Number of words in every span with words
+
+    Raises:
+        SourceTypeError: If the positions or the spans are not a sequence
+
+    Example:
+        >>> from anyts.utils import count_words_by_spans
+        >>> count_words_by_spans([0, 4, 10, 14, 20], [(0, 9), (9, 10), (10, 19), (20, 24)])
+        [2, 2, 1]
+    """
+    check_sequence(starts, "positions of the words")
+    check_sequence(spans, "spans")
+    positions = list(starts)
+    lengths = []
+    index = 0
+    for start, stop in spans:
+        count = 0
+        while index < len(positions) and positions[index] < stop:
+            count += int(positions[index] >= start)
+            index += 1
+        lengths.append(count)
+    return [length for length in lengths if length]
 
 
 def is_doc(value: object) -> TypeGuard[Doc]:
@@ -140,29 +284,6 @@ def is_span(value: object) -> TypeGuard[Span]:
     return tokens is not None and isinstance(value, tokens.Span)
 
 
-def has_words(source: str | Doc | Span) -> bool:
-    """
-    Checking whether a text holds a word
-
-    Description:
-        An empty text or one of whitespace and the characters of is_punctuation
-        alone (?!, ..., a zero-width space) holds no word
-
-    Arguments:
-        source (str|Doc|Span): Text, Doc or Span object
-
-    Returns:
-        bool: Result of the check
-
-    Example:
-        >>> from anyts.utils import has_words
-        >>> has_words("The cat sleeps"), has_words("?!"), has_words("")
-        (True, False, False)
-    """
-    text = source if isinstance(source, str) else source.text
-    return any(not char.isspace() and not is_punctuation(char) for char in text)
-
-
 def has_sents(doc: Doc) -> bool:
     """
     Checking whether a Doc has its sentence boundaries
@@ -194,6 +315,122 @@ def has_sents(doc: Doc) -> bool:
         False
     """
     return doc.has_annotation("SENT_START", require_complete=True)
+
+
+def iter_doc_tokens(source: Doc | Span) -> Iterator[Token]:
+    """
+    Extracting the tokens of the words from a Doc or Span object
+
+    Description:
+        Whitespace tokens and the tokens of is_punctuation (symbols like %
+        and € included) are skipped
+
+    Arguments:
+        source (Doc|Span): Doc or Span object
+
+    Returns:
+        generator[Token]: Token of each word
+    """
+    for token in source:
+        if not token.is_space and not is_punctuation(token.text):
+            yield token
+
+
+def iter_doc_units(source: Doc | Span, join_hyphens: bool = False) -> Iterator[list[Token]]:
+    """
+    Extracting words from a Doc or Span object as lists of tokens
+
+    Description:
+        The words of iter_doc_tokens, one token each; with join_hyphens, a word
+        the tokenizer split at its hyphens (well-known into well, -, known) is
+        joined back when no whitespace separates its parts and no sentence
+        starts at a hyphen or a part
+
+    Arguments:
+        source (Doc|Span): Doc or Span object
+        join_hyphens (bool): Join the parts of hyphenated words
+
+    Returns:
+        generator[list[Token]]: Tokens of each word
+    """
+    tokens = list(source)
+    index = 0
+    while index < len(tokens):
+        token = tokens[index]
+        if token.is_space or is_punctuation(token.text):
+            index += 1
+            continue
+        last = index
+        while (
+            join_hyphens
+            and last + 2 < len(tokens)
+            and tokens[last + 1].text == "-"
+            and not tokens[last].whitespace_
+            and not tokens[last + 1].whitespace_
+            and not tokens[last + 2].is_space
+            and not is_punctuation(tokens[last + 2].text)
+            and not tokens[last + 1].is_sent_start
+            and not tokens[last + 2].is_sent_start
+        ):
+            last += 2
+        yield tokens[index : last + 1]
+        index = last + 1
+
+
+def iter_doc_words(
+    source: Doc | Span, join_hyphens: bool = False
+) -> Iterator[tuple[int, int, str]]:
+    """
+    Extracting words with positions from a Doc or Span object
+
+    Description:
+        The words of iter_doc_units with the positions of their tokens; a byte
+        order mark glued to the start of a word, as in a file read with utf-8
+        instead of utf-8-sig, is dropped
+
+    Arguments:
+        source (Doc|Span): Doc or Span object
+        join_hyphens (bool): Join the parts of hyphenated words
+
+    Returns:
+        generator[tuple[int, int, str]]: Position of the first character,
+            position after the last character and text of each word
+
+    Example:
+        >>> import spacy
+        >>> from anyts.utils import iter_doc_words
+        >>> doc = spacy.blank("xx")("A well-known cat")
+        >>> [word for _, _, word in iter_doc_words(doc)]
+        ['A', 'well', 'known', 'cat']
+        >>> list(iter_doc_words(doc, join_hyphens=True))
+        [(0, 1, 'A'), (2, 12, 'well-known'), (13, 16, 'cat')]
+    """
+    for unit in iter_doc_units(source, join_hyphens):
+        yield _unit_word(unit)
+
+
+def _unit_word(unit: Sequence[Token]) -> tuple[int, int, str]:
+    """Positions and text of a word of iter_doc_units, a byte order mark at its start left out"""
+    text = "".join(token.text for token in unit)
+    word = text.lstrip("\ufeff")
+    return unit[0].idx + len(text) - len(word), unit[-1].idx + len(unit[-1]), word
+
+
+def safe_divide(num: float | int, den: float | int, default: float | int = 0) -> float:
+    """
+    Dividing two numbers safely
+
+    Arguments:
+        num (float|int): Numerator
+        den (float|int): Denominator
+        default (float|int): Value returned for a zero denominator
+
+    Returns:
+        float: Result of the division
+    """
+    if not den:
+        return default
+    return num / den
 
 
 def check_sequence(value: object, what: str = "words", ordered: bool = True) -> None:
@@ -494,195 +731,3 @@ def _format_fields(label: str) -> set[str]:
         if spec:
             fields |= _format_fields(spec)
     return fields
-
-
-def iter_doc_tokens(source: Doc | Span) -> Iterator[Token]:
-    """
-    Extracting the tokens of the words from a Doc or Span object
-
-    Description:
-        Whitespace tokens and the tokens of is_punctuation (symbols like %
-        and € included) are skipped
-
-    Arguments:
-        source (Doc|Span): Doc or Span object
-
-    Returns:
-        generator[Token]: Token of each word
-    """
-    for token in source:
-        if not token.is_space and not is_punctuation(token.text):
-            yield token
-
-
-def iter_doc_units(source: Doc | Span, join_hyphens: bool = False) -> Iterator[list[Token]]:
-    """
-    Extracting words from a Doc or Span object as lists of tokens
-
-    Description:
-        The words of iter_doc_tokens, one token each; with join_hyphens, a word
-        the tokenizer split at its hyphens (well-known into well, -, known) is
-        joined back when no whitespace separates its parts and no sentence
-        starts at a hyphen or a part
-
-    Arguments:
-        source (Doc|Span): Doc or Span object
-        join_hyphens (bool): Join the parts of hyphenated words
-
-    Returns:
-        generator[list[Token]]: Tokens of each word
-    """
-    tokens = list(source)
-    index = 0
-    while index < len(tokens):
-        token = tokens[index]
-        if token.is_space or is_punctuation(token.text):
-            index += 1
-            continue
-        last = index
-        while (
-            join_hyphens
-            and last + 2 < len(tokens)
-            and tokens[last + 1].text == "-"
-            and not tokens[last].whitespace_
-            and not tokens[last + 1].whitespace_
-            and not tokens[last + 2].is_space
-            and not is_punctuation(tokens[last + 2].text)
-            and not tokens[last + 1].is_sent_start
-            and not tokens[last + 2].is_sent_start
-        ):
-            last += 2
-        yield tokens[index : last + 1]
-        index = last + 1
-
-
-def iter_doc_words(
-    source: Doc | Span, join_hyphens: bool = False
-) -> Iterator[tuple[int, int, str]]:
-    """
-    Extracting words with positions from a Doc or Span object
-
-    Description:
-        The words of iter_doc_units with the positions of their tokens; a byte
-        order mark glued to the start of a word, as in a file read with utf-8
-        instead of utf-8-sig, is dropped
-
-    Arguments:
-        source (Doc|Span): Doc or Span object
-        join_hyphens (bool): Join the parts of hyphenated words
-
-    Returns:
-        generator[tuple[int, int, str]]: Position of the first character,
-            position after the last character and text of each word
-
-    Example:
-        >>> import spacy
-        >>> from anyts.utils import iter_doc_words
-        >>> doc = spacy.blank("xx")("A well-known cat")
-        >>> [word for _, _, word in iter_doc_words(doc)]
-        ['A', 'well', 'known', 'cat']
-        >>> list(iter_doc_words(doc, join_hyphens=True))
-        [(0, 1, 'A'), (2, 12, 'well-known'), (13, 16, 'cat')]
-    """
-    for unit in iter_doc_units(source, join_hyphens):
-        yield _unit_word(unit)
-
-
-def count_words_by_spans(starts: Sequence[int], spans: Sequence[tuple[int, int]]) -> list[int]:
-    """
-    Counting the words in every span of a text by the positions of the words and the spans
-
-    Description:
-        The words and the spans are ordered by position; a word belongs to the
-        span of its first character, and a span without words is skipped, so
-        the lengths of the sentences of a text come out of the positions of its
-        words and sentences
-
-    Arguments:
-        starts (list[int]): Positions of the first characters of the words in order
-        spans (list[tuple[int, int]]): Spans in order - the start and the position
-            after the end
-
-    Returns:
-        list[int]: Number of words in every span with words
-
-    Raises:
-        SourceTypeError: If the positions or the spans are not a sequence
-
-    Example:
-        >>> from anyts.utils import count_words_by_spans
-        >>> count_words_by_spans([0, 4, 10, 14, 20], [(0, 9), (9, 10), (10, 19), (20, 24)])
-        [2, 2, 1]
-    """
-    check_sequence(starts, "positions of the words")
-    check_sequence(spans, "spans")
-    positions = list(starts)
-    lengths = []
-    index = 0
-    for start, stop in spans:
-        count = 0
-        while index < len(positions) and positions[index] < stop:
-            count += int(positions[index] >= start)
-            index += 1
-        lengths.append(count)
-    return [length for length in lengths if length]
-
-
-def _unit_word(unit: Sequence[Token]) -> tuple[int, int, str]:
-    """Positions and text of a word of iter_doc_units, a byte order mark at its start left out"""
-    text = "".join(token.text for token in unit)
-    word = text.lstrip("\ufeff")
-    return unit[0].idx + len(text) - len(word), unit[-1].idx + len(unit[-1]), word
-
-
-def find_phrases(
-    words: Sequence[str], phrases: Collection[str], normalize: Callable[[str], str] = str.lower
-) -> list[tuple[int, int]]:
-    """
-    Finding phrases in a sequence of words
-
-    Description:
-        The words and the phrases are compared by their normalized forms; at
-        every position the longest phrase is taken, and the phrases found do not
-        overlap
-
-    Arguments:
-        words (list[str]): Words of the text
-        phrases (list[str]): Phrases, words separated by spaces
-        normalize (callable): Normalized form of a word and of a phrase, the lower
-            case by default
-
-    Returns:
-        list[tuple[int, int]]: Bounds of the phrases found as slices of words; empty
-            phrases are skipped
-
-    Raises:
-        SourceTypeError: If the words or the phrases are not a list of strings
-
-    Example:
-        >>> from anyts.utils import find_phrases
-        >>> find_phrases(["In", "fact", "it", "rains"], ["in fact", "in"])
-        [(0, 2)]
-    """
-    check_words(words)
-    check_words(phrases, "phrases", ordered=False)
-    patterns = sorted(
-        {pattern for phrase in phrases if (pattern := tuple(normalize(phrase).split()))},
-        key=lambda pattern: (-len(pattern), pattern),
-    )
-    by_first: dict[str, list[tuple[str, ...]]] = {}
-    for pattern in patterns:
-        by_first.setdefault(pattern[0], []).append(pattern)
-    normalized = [normalize(word) for word in words]
-    spans = []
-    position = 0
-    while position < len(normalized):
-        for pattern in by_first.get(normalized[position], ()):
-            end = position + len(pattern)
-            if tuple(normalized[position:end]) == pattern:
-                spans.append((position, end))
-                position = end
-                break
-        else:
-            position += 1
-    return spans

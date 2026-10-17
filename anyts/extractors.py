@@ -10,7 +10,15 @@ from typing import Any, ClassVar
 
 from .constants import MESSAGES
 from .exceptions import ParameterError, SourceTypeError
-from .utils import check_integer, check_messages, check_words, has_words, is_punctuation
+from .utils import NUMBER_PATTERN as NUMBER_PATTERN
+from .utils import (
+    check_integer,
+    check_messages,
+    check_words,
+    has_words,
+    is_number,
+    is_punctuation,
+)
 
 Tokenizer = Pattern[str] | Callable[[str], Iterable[str]]
 SENTENCE_BOUNDARY = re.compile(r"(?<=[.!?…])\s+|(?<=[.!?…][\"'»”’)\]])\s+")
@@ -66,9 +74,6 @@ def _iter_words(text: str) -> Iterator[tuple[int, int, str]]:
     return (
         (match.start(), match.end(), match.group()) for match in _word_pattern().finditer(text)
     )
-
-
-NUMBER_PATTERN = re.compile(r"[+\-−]?\d+(?:[.,:/-]\d+)*%?")
 
 
 def _check_length_bounds(
@@ -433,7 +438,7 @@ class WordsExtractor(Extractor):
         if self.filter_punct:
             words = (word for word in words if not is_punctuation(word))
         if self.filter_nums:
-            words = (word for word in words if not self.number_pattern.fullmatch(word.lower()))
+            words = (word for word in words if not is_number(word, self.number_pattern))
         if self.use_lexemes:
             words = (self.lemmatize(word) for word in words)
         if self.lowercase:

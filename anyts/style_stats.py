@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections import Counter
-from collections.abc import Callable, Collection, Mapping, Sequence, Set
+from collections.abc import Callable, Collection, Mapping, Sequence
 from math import nan, sqrt
 from typing import TYPE_CHECKING, Any, ClassVar
 
@@ -13,6 +13,7 @@ from .utils import (
     check_integer,
     check_words,
     find_phrases,
+    in_order,
     is_doc,
     iter_doc_words,
     safe_divide,
@@ -39,20 +40,6 @@ def check_params(top_n: int, *, messages: Mapping[str, str] = MESSAGES) -> None:
     check_integer(top_n, "number of the most frequent words")
     if top_n < 1:
         raise ParameterError(messages["top_n"])
-
-
-def in_order(words: Collection[str]) -> tuple[str, ...]:
-    """
-    Putting a collection of words in a fixed order
-
-    Arguments:
-        words (list[str]|set[str]): Words; a set or a mapping is sorted, a list keeps
-            its order
-
-    Returns:
-        tuple[str]: Words in order
-    """
-    return tuple(sorted(words)) if isinstance(words, Set | Mapping) else tuple(words)
 
 
 def _stop_flags(

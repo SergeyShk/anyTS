@@ -163,6 +163,10 @@ MESSAGES = {
     "sentence_lengths": "The sentence lengths must be integers",
     "negative_lengths": "The sentence lengths cannot be negative",
     "top_n": "The number of the most frequent words must be greater than 0",
+    "freq_dict_type": "The frequency dictionary must be a {expected}",
+    "no_freq_dict_class": "{cls} has no frequency dictionary of its own: pass freq_dict",
+    "bands_type": "The bounds of the bands must be a list, not {type}",
+    "band_bound": "A bound of a band must be an integer from 1 to {size}, not {band}",
     "tokenizer": "The tokenizer is set incorrectly",
     "tokenizer_iterable": "The tokenizer must return an iterable object",
     "tokenizer_strings": "The tokenizer must return strings, not {type}",
@@ -280,6 +284,27 @@ PUNCTUATION_TYPES = {
     "parentheses": "Parentheses",
     "other": "Other marks",
 }
+
+# Lexical sophistication by a frequency dictionary, in the manner of TAALES
+LEXICAL_STATS_DESC = {
+    "coverage": "Share of words found in the frequency dictionary",
+    "mean_ipm": "Mean frequency (ipm)",
+    "mean_ipm_content": "Mean frequency of content words (ipm)",
+    "mean_log_ipm": "Mean log frequency (lg ipm)",
+    "mean_log_ipm_content": "Mean log frequency of content words",
+    "mean_range": "Mean range",
+    "mean_dispersion": "Mean dispersion (D)",
+    "surprisal": "Mean surprisal (bits)",
+    "perplexity": "Unigram perplexity",
+    "p_top1000": "Share of words in the top 1000",
+    "p_top2000": "Share of words in the top 2000",
+    "p_top5000": "Share of words in the top 5000",
+    "p_top10000": "Share of words in the top 10000",
+    "p_beyond_top10000": "Share of words beyond the top 10000",
+    "lexical_density": "Lexical density",
+}
+# Bounds of the frequency bands - the sizes of the lists of the most frequent lemmas
+FREQUENCY_BANDS = (1000, 2000, 5000, 10000)
 
 # Style statistics: the SEO metrics of the services and the markers of the officialese
 STYLE_STATS_DESC = {

@@ -18,7 +18,6 @@ from anyts.style_stats import (
     calc_zipf_naturalness,
     check_params,
     find_nausea_words,
-    in_order,
 )
 
 STOPWORDS = frozenset({"the", "and", "a", "of", "in", "it", "is", "to"})
@@ -105,12 +104,6 @@ def test_check_params():
         check_params(0)
     with pytest.raises(ParameterError, match="must be an integer"):
         check_params(2.5)
-
-
-def test_in_order():
-    assert in_order({"b", "a"}) == ("a", "b")
-    assert in_order(["b", "a"]) == ("b", "a")
-    assert in_order({"b": 1, "a": 2}) == ("a", "b")
 
 
 @pytest.mark.parametrize(

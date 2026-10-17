@@ -1,4 +1,5 @@
 import math
+import re
 import string
 import sys
 import unicodedata
@@ -24,7 +25,9 @@ from anyts.utils import (
     find_phrases,
     has_sents,
     has_words,
+    in_order,
     is_doc,
+    is_number,
     is_punctuation,
     is_span,
     iter_doc_tokens,
@@ -424,3 +427,23 @@ def test_count_words_by_spans_errors(starts, spans):
 def test_find_phrases_of_a_string():
     with pytest.raises(SourceTypeError, match="phrases"):
         find_phrases(["in", "fact"], "in fact")
+
+
+def test_numbers():
+    assert is_number("2020") and is_number("-5") and is_number("10%")
+    assert not is_number("cat")
+    roman = re.compile(r"[ivxlcdm]+")
+    assert is_number("XIV", roman) and not is_number("2020", roman)
+
+
+def test_in_order():
+    assert in_order({"b", "a"}) == ("a", "b")
+    assert in_order(["b", "a"]) == ("b", "a")
+    assert in_order({"b": 1, "a": 2}) == ("a", "b")
+
+
+def test_numbers_of_two_patterns_are_cached_apart():
+    roman = re.compile(r"[ivxlcdm]+")
+    assert not is_number("mix")
+    assert is_number("mix", roman)
+    assert not is_number("mix")
