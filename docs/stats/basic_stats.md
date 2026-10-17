@@ -6,9 +6,9 @@
 ## Description
 
 <!-- --8<-- [start:BasicStats] -->
-The basic statistics of a text: the counts of its sentences, words, characters, letters, spaces, syllables and punctuation marks, the distributions of the words by letters and by syllables, and the long, complex, simple, monosyllabic and polysyllabic words. The data source can be either a text or a `Doc` object of [spaCy](https://github.com/explosion/spaCy). Letters are counted by `str.isalpha`, so digits, hyphens and marks inside a word are not letters.
+The basic statistics of a text: the counts of its sentences, words, characters, letters, spaces, syllables and punctuation marks, the distributions of the words by letters and by syllables, and the long, complex, simple, monosyllabic and polysyllabic words. The data source is a text or a `Doc` object of [spaCy](https://github.com/explosion/spaCy). Letters are counted by `str.isalpha`, so digits, hyphens and marks inside a word are not letters.
 
-The words of a string come from the word extractor and its sentences from the sentence extractor. The words of a `Doc` come from its tokens (punctuation marks and symbols such as `€` or `%` dropped) and its sentences from its boundaries, or from the sentence extractor when it has none or only partial ones (`has_sents`); an extractor passed explicitly is used on the text of the `Doc`. A blank line ends a sentence of a string and of a `Doc` without boundaries; a `Doc` with boundaries follows the rule when its pipeline starts a sentence after a blank line (`start_sents_after_blank_lines`, registered by a language library under its own name) before the parser, `senter` or `sentencizer`. A sentence of punctuation alone holds no word and is not counted.
+The words and the sentences of a string come from the extractors. A `Doc` gives its tokens as words, without punctuation marks and symbols such as `€` or `%`, and its boundaries as sentences, or those of the sentence extractor when it has none or only partial ones (`has_sents`); an extractor given is used on its text instead. A blank line ends a sentence of a string and of a `Doc` without boundaries; a `Doc` with boundaries does so when its pipeline has `start_sents_after_blank_lines` (registered by a language library under its own name) before the parser, `senter` or `sentencizer`. A sentence without words, such as punctuation alone, is not counted.
 <!-- --8<-- [end:BasicStats] -->
 
 ## Language hooks
@@ -18,13 +18,13 @@ A language library subclasses `BasicStats`:
 
 | Hook | Kind | Description |
 | :--: | :--: | :---------: |
-| `count_syllables(word)` | method | The syllables of a word; an abstract method, since syllables depend on the language |
-| `sents_extractor_class`, `words_extractor_class` | class attributes | The extractors used when none is given; `SentsExtractor` and `WordsExtractor` of the core by default |
+| `count_syllables(word)` | method | The syllables of a word; abstract |
+| `sents_extractor_class`, `words_extractor_class` | class attributes | The extractors used when none is given; `SentsExtractor` and `WordsExtractor` by default |
 | `join_hyphens` | class attribute | Join the parts of the hyphenated words of a `Doc` (`iter_doc_words`); `False` by default |
 | `count_punctuations(text)` | method | The punctuation marks by type; `count_punctuations` of the module by default |
 | `stats_desc` | class attribute | The counts of `get_stats` with their descriptions for `print_stats` |
 
-The other hooks - `stats_headers`, `level_scales`, `messages` - are those of the base class `Stats`. The thresholds of the complex and the long words are parameters; a library sets its own defaults in its `__init__` and passes them on.
+The other hooks, `stats_headers`, `level_scales` and `messages`, come from `Stats`. The thresholds of the complex and the long words are parameters; a library sets its own defaults in its `__init__` and passes them on.
 <!-- --8<-- [end:BasicStats-hooks] -->
 
 ## Parameters
@@ -78,7 +78,7 @@ The thresholds of the core are `COMPLEX_SYL_FACTOR = 3` and `LONG_WORD_LETTER_FA
 | `p_spaces` | float | Normalized number of spaces |
 | `p_punctuations` | float | Normalized number of punctuation marks |
 
-The counts of the words are normalized by the number of words, those of the characters by the number of characters; the normalized statistics are computed with `normalize=True`.
+With `normalize=True` the counts of the words are divided by the number of words, those of the characters by the number of characters.
 <!-- --8<-- [end:BasicStats-attributes] -->
 
 ## Methods
@@ -92,7 +92,7 @@ The counts of the words are normalized by the number of words, those of the char
 ### get_stats
 
 <!-- --8<-- [start:BasicStats-get_stats] -->
-Returns a dictionary with the distributions `c_letters` and `c_syllables`, the counts of `stats_desc`, the distribution `c_punctuations` and, with `normalize=True`, the normalized counts - a copy: editing it does not change the object. With `flat=True` the distributions give keys of their own, such as `c_letters_3` and `c_punctuations_comma`, one for every value the text has.
+Returns a dictionary with the distributions `c_letters` and `c_syllables`, the counts of `stats_desc`, the distribution `c_punctuations` and, with `normalize=True`, the normalized counts, as a copy: editing it does not change the object. With `flat=True` the distributions give a key for every value the text has, such as `c_letters_3` and `c_punctuations_comma`.
 <!-- --8<-- [end:BasicStats-get_stats] -->
 
 ### print_stats
@@ -106,15 +106,15 @@ The frame of the statistics (`to_dataframe`) and their reading (`describe`) are 
 ## Punctuation marks { #count_punctuations }
 
 <!-- --8<-- [start:count_punctuations] -->
-`count_punctuations(text, marks, dash_pattern)` counts punctuation marks by their types - the same distribution lives in the `c_punctuations` attribute: commas, periods, question and exclamation marks, ellipses, colons, semicolons, dashes, hyphens, guillemets, quotation marks, parentheses and the other marks. The dashes typed with hyphens (`dash_pattern`) are counted first, then the ellipses - the `…` character, three or more periods, or two periods after `?` and `!`, one mark whose periods do not count as periods (`Who?..` is a question and an ellipsis) - and then every mark by its type in `marks`; any other character of the Unicode categories P and S is another mark (`§`, `€`, `°`). `marks` maps every mark, a single character, to one of the types, otherwise `ParameterError`, and `dash_pattern` is a compiled regular expression; a text that is not a string, marks that are not a mapping and dashes that are not a compiled expression raise `SourceTypeError`.
+`count_punctuations(text, marks, dash_pattern)` counts punctuation marks by type, the distribution of `c_punctuations`: commas, periods, question and exclamation marks, ellipses, colons, semicolons, dashes, hyphens, guillemets, quotation marks, parentheses and other marks. Dashes typed with hyphens (`dash_pattern`) are counted first, then ellipses - `…`, three or more periods, or two after `?` and `!`, one mark whose periods are not counted as periods (`Who?..` is a question and an ellipsis) - then each mark by its type in `marks`; any other character of the Unicode categories P and S is another mark (`§`, `€`, `°`). A mark of `marks` that is not a single character or has an unknown type raises `ParameterError`; a text that is not a string, `marks` that are not a mapping and a `dash_pattern` that is not a compiled regular expression raise `SourceTypeError`.
 <!-- --8<-- [end:count_punctuations] -->
 
-In the core the types are `anyts.constants.PUNCTUATION_TYPES`, and `marks` and `dash_pattern` are `PUNCTUATION_MARKS` and `DASH_PATTERN` of `anyts.basic_stats`. The marks count the inverted `¿` and `¡` as question and exclamation marks (`¿So?` carries two question marks), `—`, `–` and the horizontal bar `―` as dashes, a hyphen inside a word, before a digit or at the end of a line inside a word as a hyphen (`well-known`, `-5`), `«»` as guillemets and `"“”‘’` as quotation marks. A dash typed with hyphens is a run of two or more hyphens, a hyphen after whitespace, at the start of a line or after a closing mark, before a space of a line - a separator of Unicode such as the no-break space, or a tab (`SPACES`) - or the end of the text, or between a letter and an opening or a closing mark (`--Hello --said John`, `- They left - he said`).
+In the core the types are `anyts.constants.PUNCTUATION_TYPES`, and `marks` and `dash_pattern` are `PUNCTUATION_MARKS` and `DASH_PATTERN` of `anyts.basic_stats`. The marks count `¿` and `¡` as question and exclamation marks (`¿So?` has two), `—`, `–` and the horizontal bar `―` as dashes, `«»` as guillemets and `"“”‘’` as quotation marks; a hyphen inside a word, before a digit or at a line break inside a word is a hyphen (`well-known`, `-5`). A dash typed with hyphens is a run of two or more hyphens, or a hyphen after whitespace, a closing mark or at the start of a line, before a space of a line (a Unicode separator such as the no-break space, or a tab: `SPACES`) or the end of the text, or between a letter and an opening or a closing mark (`--Hello --said John`, `- They left - he said`).
 
 ## Dashes typed with hyphens { #dash_pattern }
 
 <!-- --8<-- [start:dash_pattern] -->
-`dash_pattern(conjunctions, hanging_before_comma)` builds the `dash_pattern` of `count_punctuations`. A hanging hyphen glued to a letter or a digit and carried on to a later word (`pre- and post-war`, `5- and 10-year`) stays a hyphen when one of the `conjunctions`, in any case, follows it after spaces of a line, and with `hanging_before_comma` when a comma follows it (`two-, three- and four-year`). A language whose dialogue closes a line with a hyphen before a comma (`-Come -he said-, and left`) leaves `hanging_before_comma` off. Without the parameters the pattern is `DASH_PATTERN`.
+`dash_pattern(conjunctions, hanging_before_comma)` builds the `dash_pattern` of `count_punctuations`. A hanging hyphen glued to a letter or a digit and carried on to a later word (`pre- and post-war`, `5- and 10-year`) stays a hyphen before spaces of a line and one of the `conjunctions`, case ignored, and with `hanging_before_comma` before a comma (`two-, three- and four-year`). A language whose dialogue closes a line with a hyphen before a comma (`-Come -he said-, and left`) leaves `hanging_before_comma` off. Without the parameters the pattern is `DASH_PATTERN`.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |

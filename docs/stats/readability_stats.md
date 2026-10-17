@@ -6,7 +6,7 @@
 ## Description
 
 <!-- --8<-- [start:ReadabilityStats] -->
-The [readability](https://en.wikipedia.org/wiki/Readability) metrics of a text from its basic statistics: the mean sentence length in words, the mean word length in syllables or letters, the share of polysyllabic and of long words and the variability of word length. The data source can be a text, a `Doc` object of [spaCy](https://github.com/explosion/spaCy) or ready basic statistics - then the text is not counted again; the extractors are passed on to the basic statistics of a text or a `Doc`, while ready ones are taken as they are. The letters of the formulas are those of the counted words, so a word extractor that drops words does not lengthen the mean word.
+The [readability](https://en.wikipedia.org/wiki/Readability) metrics of a text from its basic statistics: the mean sentence length in words, the mean word length in syllables or letters, the share of polysyllabic and of long words and the variability of word length. The data source is a text, a `Doc` object of [spaCy](https://github.com/explosion/spaCy) or ready basic statistics, which are reused as they are; the extractors are passed on to the basic statistics of a text or a `Doc`. The formulas count only the letters of the counted words, so a word extractor that drops words does not lengthen the mean word.
 
 The metrics are properties computed on each access, so a change of the `coefficients` of an object applies at once.
 
@@ -20,7 +20,7 @@ A language library subclasses `ReadabilityStats`:
 
 | Hook | Kind | Description |
 | :--: | :--: | :---------: |
-| `basic_stats_class` | class attribute | Its subclass of `BasicStats`, which counts a string or a `Doc`; without it the source must be a `BasicStats` object |
+| `basic_stats_class` | class attribute | Its subclass of `BasicStats` for a string or a `Doc`; without it the source must be a `BasicStats` object |
 | `presets` | class attribute | Coefficients of the formulas by preset; a formula missing from a preset takes the defaults of its function |
 | `grade_stats` | class attribute | Grade formulas of the consensus grade |
 | `stats_desc`, `stats_headers` | class attributes | Metrics of `get_stats` with their descriptions, headers of the columns for `print_stats` |
@@ -28,12 +28,12 @@ A language library subclasses `ReadabilityStats`:
 | `lix_long_word_letter_factor` | class attribute | Minimum number of letters in a long word of LIX and RIX |
 | `grade_age_levels`, `postgraduate_level` | class attributes | School stages and ages of `describe_grade` |
 | `level_scales` | class attribute | Interpretation scales by metric, as lower bounds and their bands |
-| `preset_level_scales` | class attribute | Interpretation scales by preset and metric, which take the place of those of `level_scales` for the objects of the preset |
+| `preset_level_scales` | class attribute | Interpretation scales by preset and metric, in place of `level_scales` for the preset |
 | `level_scale(stat)` | method | Interpretation scale of a metric for `describe_level` and `describe`; that of `preset_level_scales`, else of `level_scales` by default |
-| `grade_scales` | class attribute | Scales that convert a metric into years of schooling for `describe`, as lower bounds and grades; a metric with a scale of bands is read by its bands, so a library that reads it by years of schooling leaves it out of `level_scales` and `preset_level_scales` |
+| `grade_scales` | class attribute | Scales of a metric in years of schooling for `describe`, as lower bounds and grades; a scale of bands comes first, so a metric read by years of schooling stays out of `level_scales` and `preset_level_scales` |
 | `reading_speed`, `reading_speed_norms` | class attributes | Reading speed of `reading_time` and the speeds of the norms, words per minute |
-| `reading_ease_grades` | class attribute | Scale that converts the reading ease into years of schooling for the consensus grade, as lower bounds and grades, the lowest band open below |
-| `preset_reading_ease_grades` | class attribute | Scales of `reading_ease_grades` by preset, which take its place for the objects of the preset |
+| `reading_ease_grades` | class attribute | Scale of the reading ease in years of schooling for the consensus grade, as lower bounds and grades, the lowest band open below |
+| `preset_reading_ease_grades` | class attribute | Scales of `reading_ease_grades` by preset, in its place for the preset |
 | `reading_ease_to_grade(flesch_reading_easy)` | method | Years of schooling for the reading ease in the consensus grade; the band of the scale of the preset in `preset_reading_ease_grades`, else of `reading_ease_grades` by default |
 | `messages` | class attribute | Messages of the errors by key; `MESSAGES` by default |
 
@@ -51,7 +51,7 @@ The core defaults are the original English formulas: the preset `original` of `a
 | `words_extractor` | WordsExtractor | `None` | Word extraction tool |
 | `preset` | str | `original` | Coefficient preset |
 
-The core class has no basic statistics of its own (`basic_stats_class` is `None`), so it takes only a ready `BasicStats` object of a library.
+In the core `basic_stats_class` is `None`, so the class takes only a ready `BasicStats` object of a library.
 
 ## Attributes
 
@@ -77,7 +77,7 @@ The formulas are described in the [metric functions](readability_stats_funcs.md)
 ## Consensus grade { #consensus_grade }
 
 <!-- --8<-- [start:ReadabilityStats-consensus] -->
-The formulas that give years of schooling (`grade_stats`) are summarized in the `consensus_grade` attribute: the median of their values rounded half up, together with the reading ease converted into years of schooling (`reading_ease_to_grade`) without rounding. A library aligns the bounds of `reading_ease_grades`, or of the scale of each preset in `preset_reading_ease_grades`, with its scale of the reading ease, so that the consensus grade and `describe` read the value alike.
+The `consensus_grade` attribute is the median of the values of the grade formulas (`grade_stats`) rounded half up, together with the reading ease in years of schooling (`reading_ease_to_grade`), not rounded. A library aligns the bounds of `reading_ease_grades`, and of each scale of `preset_reading_ease_grades`, with its scale of the reading ease, so that the consensus grade and `describe` read the value alike.
 <!-- --8<-- [end:ReadabilityStats-consensus] -->
 
 ## Methods
@@ -131,7 +131,7 @@ Parameters:
 | `stat` | str | `-` | Name of the metric |
 <!-- --8<-- [end:ReadabilityStats-describe] -->
 
-By default RIX reads by its scale of bands; `grade_scales` keeps its grades as years of schooling (`anyts.constants.RIX_GRADES`, college as 13) for a library whose scales of bands leave RIX out.
+By default RIX is read by its scale of bands; `grade_scales` keeps its grades as years of schooling (`anyts.constants.RIX_GRADES`, college as 13) for a library whose scales of bands leave RIX out.
 
 ### reading_time_by_speed
 
@@ -160,13 +160,13 @@ Parameters:
 ### get_stats
 
 <!-- --8<-- [start:ReadabilityStats-get_stats] -->
-Returns a dictionary with the computed readability metrics of `stats_desc`.
+Returns a dictionary of the readability metrics of `stats_desc`.
 <!-- --8<-- [end:ReadabilityStats-get_stats] -->
 
 ### print_stats
 
 <!-- --8<-- [start:ReadabilityStats-print_stats] -->
-Prints a table with the computed readability metrics, their descriptions from `stats_desc` and the headers from `stats_headers`.
+Prints a table of the readability metrics with their descriptions from `stats_desc` under the headers of `stats_headers`.
 <!-- --8<-- [end:ReadabilityStats-print_stats] -->
 
 The frame of the metrics (`to_dataframe`) is that of the [statistics interface](stats.md).

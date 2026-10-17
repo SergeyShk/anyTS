@@ -18,12 +18,8 @@ class Stats:
     Base of the classes of statistics of a text
 
     Description:
-        The common interface of the statistics of a text: their dictionary,
-        nested or flat, a one-row frame, a printed table with descriptions and
-        the reading of a statistic by its scale. A class names its statistics
-        in stats_desc, each an attribute or a property of the object; the
-        values of a dictionary statistic become keys of their own in the flat
-        dictionary, joined to its name with an underscore
+        The common interface of the statistics of a text. A class names its
+        statistics in stats_desc, each an attribute or a property of the object
 
     Methods:
         stat_names: Names of the statistics of get_stats
@@ -84,8 +80,7 @@ class Stats:
                 their own, joined to the name of the statistic with an underscore
 
         Returns:
-            dict[str, Any]: Dictionary of the statistics of stat_names - a copy,
-                editing it does not change the object
+            dict[str, Any]: Copy of the statistics of stat_names
         """
         stats = {stat: getattr(self, stat) for stat in self.stat_names()}
         return _flatten(stats) if flat else _copy(stats)
@@ -95,8 +90,8 @@ class Stats:
         Getting the computed statistics as a one-row frame
 
         Description:
-            A dictionary statistic gives columns only for the keys of this object,
-            so a count another object lacks is NaN in a frame of several objects
+            A dictionary statistic gives columns only for the keys of this object:
+            in a frame of several objects a count one lacks is NaN
 
         Returns:
             pandas.DataFrame: Frame with a column for every key of the flat statistics
@@ -122,8 +117,8 @@ class Stats:
         Getting the interpretation scale of a statistic
 
         Description:
-            By default the scale of level_scales; a class whose scale depends
-            on its parameters overrides the method, and describe follows it
+            level_scales by default; a class whose scales depend on its
+            parameters overrides the method, which describe follows
 
         Arguments:
             stat (str): Name of the statistic
@@ -139,9 +134,8 @@ class Stats:
         Getting the reading of a statistic by its scale
 
         Description:
-            The band of the scale of the statistic (level_scale); a statistic
-            without a scale and an undefined value (nan) give None. A statistic
-            is a name of stat_names or a public property of the class
+            The band of the scale of level_scale. A statistic is a name of
+            stat_names or a public property of the class
 
         Arguments:
             stat (str): Name of the statistic
@@ -203,9 +197,8 @@ def scale_level(value: float, scale: Iterable[tuple[float, Band]]) -> Band:
     Getting the band of a scale for a value
 
     Description:
-        The scale is given as the lower bounds of its bands in descending
-        order; the value falls into the first band whose bound it reaches,
-        and the lowest band is open below
+        The first band whose lower bound the value reaches; the lowest band
+        is open below
 
     Arguments:
         value (float): Value of a metric

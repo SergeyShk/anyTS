@@ -6,7 +6,7 @@
 ## Description
 
 <!-- --8<-- [start:Stats] -->
-The common interface of the classes of statistics: the dictionary of the statistics, nested or flat, a one-row frame of [pandas](https://pandas.pydata.org/), a printed table with descriptions and the reading of a statistic by its scale. `BasicStats`, `ReadabilityStats` and `DiversityStats` are built on it, and a language library builds its own classes of statistics on it too.
+The common interface of the classes of statistics: the dictionary of the statistics, nested or flat, a one-row frame of [pandas](https://pandas.pydata.org/), a printed table with descriptions and the reading of a statistic by its scale. Every class of statistics is built on it, those of a language library too.
 <!-- --8<-- [end:Stats] -->
 
 ## Hooks
@@ -29,7 +29,7 @@ A class of statistics subclasses `Stats`:
 ### get_stats
 
 <!-- --8<-- [start:Stats-get_stats] -->
-Returns a dictionary of the statistics of `stat_names` - a copy: editing it does not change the object. With `flat=True` the values of a dictionary statistic become keys of their own, joined to its name with an underscore: the distribution `{3: 5}` of `c_lengths` gives the key `c_lengths_3`.
+Returns a copy of the statistics of `stat_names`: editing it does not change the object. With `flat=True` the values of a dictionary statistic become keys of their own, joined to its name with an underscore: the distribution `{3: 5}` of `c_lengths` gives the key `c_lengths_3`.
 
 Parameters:
 
@@ -41,13 +41,13 @@ Parameters:
 ### to_dataframe
 
 <!-- --8<-- [start:Stats-to_dataframe] -->
-Returns the flat statistics, `get_stats(flat=True)`, as a `pandas.DataFrame` of one row with a column for every key. A dictionary statistic gives columns only for the keys the text has, so in the frames of several texts joined with `pandas.concat` a count a text lacks is `NaN`: fill the columns of such a statistic with 0, and only them, since `NaN` of another statistic is an undefined value.
+Returns the flat statistics, `get_stats(flat=True)`, as a `pandas.DataFrame` of one row with a column for every key. A dictionary statistic gives columns only for the keys the text has, so in frames of several texts joined with `pandas.concat` a count a text lacks is `NaN`. Only these columns may be filled with 0: elsewhere `NaN` is an undefined value.
 <!-- --8<-- [end:Stats-to_dataframe] -->
 
 ### print_stats
 
 <!-- --8<-- [start:Stats-print_stats] -->
-Prints a table of the statistics of `stats_desc` with their descriptions under the headers of `stats_headers`, a float with two decimals; each column is as wide as its longest text.
+Prints a table of the statistics of `stats_desc` with their descriptions under the headers of `stats_headers`, floats with two decimals; each column is as wide as its longest text.
 <!-- --8<-- [end:Stats-print_stats] -->
 
 ### describe
@@ -62,7 +62,7 @@ Parameters:
 | `stat` | str | `-` | Name of the statistic |
 <!-- --8<-- [end:Stats-describe] -->
 
-The band is found by [`scale_level`](readability_stats_funcs.md#band-of-a-scale); `ReadabilityStats` reads the grade formulas by school stages besides.
+The band is found by [`scale_level`](readability_stats_funcs.md#band-of-a-scale); `ReadabilityStats` also reads the grade formulas by school stages.
 
 ## Usage example
 
