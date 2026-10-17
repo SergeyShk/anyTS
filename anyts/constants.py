@@ -167,6 +167,8 @@ MESSAGES = {
     "no_freq_dict_class": "{cls} has no frequency dictionary of its own: pass freq_dict",
     "bands_type": "The bounds of the bands must be a list, not {type}",
     "band_bound": "A bound of a band must be an integer from 1 to {size}, not {band}",
+    "phon_window_len": "The size of a window must be at least 2",
+    "phon_classes": "The sounds of {first} and {second} of {cls} overlap: {sounds}",
     "tokenizer": "The tokenizer is set incorrectly",
     "tokenizer_iterable": "The tokenizer must return an iterable object",
     "tokenizer_strings": "The tokenizer must return strings, not {type}",
@@ -284,6 +286,25 @@ PUNCTUATION_TYPES = {
     "parentheses": "Parentheses",
     "other": "Other marks",
 }
+
+# Phonetic statistics of a text: its sounds, consonant clusters, syllables and repetitions
+PHON_STATS_DESC = {
+    "p_vowels": "Share of vowels",
+    "p_sonorants": "Share of sonorant consonants",
+    "p_voiced": "Share of voiced obstruents",
+    "p_voiceless": "Share of voiceless obstruents",
+    "consonant_vowel_ratio": "Ratio of consonants to vowels",
+    "p_heavy_clusters": "Share of clusters of 3 consonants or more",
+    "p_hiatus": "Hiatuses per word",
+    "cv_entropy": "Entropy of the CV patterns of words (bits)",
+    "hardness": "Hardness",
+    "alliteration": "Alliteration index",
+    "assonance": "Assonance index",
+    "p_open_syllables": "Share of open syllables",
+    "mean_syllable_len": "Mean length of a syllable (sounds)",
+}
+# Window in words of the alliteration and the assonance
+PHON_WINDOW_LEN = 3
 
 # Lexical sophistication by a frequency dictionary, in the manner of TAALES
 LEXICAL_STATS_DESC = {

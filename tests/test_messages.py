@@ -17,6 +17,7 @@ from anyts.corpus import sentence_rhythm, split_windows
 from anyts.diversity_stats import DiversityStats, calc_ttr, calc_windowed, check_params
 from anyts.exceptions import ParameterError, SourceError, SourceTypeError, UnknownStatError
 from anyts.lexical_stats import LexicalStats, LexicalWord
+from anyts.phon_stats import PhonStats
 from anyts.readability_stats import ReadabilityStats, calc_reading_time
 from anyts.style_stats import StyleStats
 from anyts.utils import check_messages
@@ -91,6 +92,13 @@ class Lexical(LexicalStats):
 
 class Checked(Lexical):
     freq_dict_class = Frequencies
+
+
+class Phon(PhonStats):
+    messages = OWN
+
+    def syllabify(self, word):
+        return [word]
 
 
 class Component(StatsComponent):
@@ -200,6 +208,12 @@ CASES = [
     ("no_freq_dict_class", SourceTypeError, lambda: Lexical(TEXT)),
     ("bands_type", ParameterError, lambda: Lexical(TEXT, Frequencies()).band_coverage(5)),
     ("band_bound", ParameterError, lambda: Lexical(TEXT, Frequencies()).band_coverage([0])),
+    ("phon_window_len", ParameterError, lambda: Phon(TEXT, window_len=1)),
+    (
+        "phon_classes",
+        ParameterError,
+        lambda: type("Bad", (Phon,), {"vowels": frozenset("a"), "skipped": frozenset("a")}),
+    ),
 ]
 
 
