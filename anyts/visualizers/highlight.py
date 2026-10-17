@@ -131,9 +131,8 @@ class HighlightedText:
     Base of the highlighting of a text by layers, in the manner of the style checkers
 
     Description:
-        A layer marks the fragments of a text that a statistic counts. The
-        layers and their search belong to a language library, which subclasses
-        the class and sets:
+        A layer marks the fragments of a text that a statistic counts. A
+        language library subclasses the class, sets the class attributes
             layers_desc - the layers in the order of drawing with their legends
             default_layers - the layers on by default
             layer_annotations - the annotations of a Doc a layer needs (DEP, POS,
@@ -143,17 +142,14 @@ class HighlightedText:
             annotation_names - the names of the annotations in the message of
                 an unavailable layer
             messages - the messages of the errors by key
-            find - the fragments of a layer
-            iter_words, iter_sents - the words and the sentences of a string with
-                their positions, doc_words - the words of a Doc
-        The sentences of a Doc come from its boundaries (iter_doc_sents), or
-        from iter_sents over its text without them or with partial ones
-        (has_sents); iter_sents gets the parts of a text between blank lines
-        one by one, so that a blank line ends a sentence as in SentsExtractor.
-        The words of a sentence are those of doc_words or iter_words that
-        start in it. The fragments are sorted by their start and then by
-        descending end; fragments of different layers may overlap. The result
-        shows in Jupyter as HTML with a legend (to_html)
+        and implements find, overriding iter_words, iter_sents and doc_words
+        when needed. The sentences of a Doc come from its boundaries
+        (iter_doc_sents), or from iter_sents over its text without them or with
+        partial ones (has_sents); iter_sents gets the parts of a text between
+        blank lines one by one, so a blank line ends a sentence as in
+        SentsExtractor. The words of a sentence are those that start in it.
+        Fragments of different layers may overlap. The result shows in Jupyter
+        as HTML with a legend (to_html)
 
     Arguments:
         source (str|Doc): Data source (a string or a Doc object)
@@ -164,7 +160,7 @@ class HighlightedText:
     Attributes:
         text (str): Text of the source
         layers (tuple[str]): Layers turned on, in the order of drawing
-        highlights (tuple[Highlight]): Highlighted fragments in the order of the text
+        highlights (tuple[Highlight]): Highlighted fragments by start, then by descending end
         counts (dict[str, int]): Number of fragments of every layer
 
     Methods:
@@ -700,13 +696,12 @@ def find_phrase_highlights(
     Finding the phrases of a list
 
     Description:
-        The phrases are matched by the normalized forms of their words, every
-        word normalized alone as in the text (find_phrases); a mapping gives
-        the variants of the phrases of a list - their contractions, the forms
-        of their verbs - with the phrase each stands for, the first of the
-        variants that normalize alike winning, and a set is read in order
-        (in_order). A fragment covers the words from the first to the last,
-        and the note reads the phrase of the list
+        The phrases are matched by the normalized forms of their words, each
+        normalized alone as in the text (find_phrases). A mapping gives
+        variants of the phrases - contractions, forms of verbs - with the
+        phrase each stands for; of the variants that normalize alike the first
+        wins. A set is read in order (in_order). A fragment covers the words
+        from the first to the last, and the note reads the phrase of the list
 
     Arguments:
         words (list[Word]): Words with their positions
@@ -824,15 +819,14 @@ def calc_alliteration_runs(
     Finding the repetitions of a consonant in neighbouring words
 
     Description:
-        A repetition is a run of two neighbouring words or more with the same
-        consonant in the stem of each: the stem of a language leaves out the
-        endings that repeat by agreement. The transparent words - shorter than
-        ALLITERATION_MIN_WORD_LEN letters by default, such as stopwords for a
-        language - neither break nor continue a run. The probability of a run
-        under an independent spread of the consonants is the product over its
-        words of 1 - (1 - f)^n, where f is the frequency of the consonant and n
-        the length of the stem; a run is alliteration when the probability is
-        below the threshold. The words are taken in lower case
+        A run of two or more neighbouring words with the same consonant in the
+        stem of each (the stem of a language leaves out the endings that repeat
+        by agreement) whose probability under an independent spread of the
+        consonants, the product over its words of 1 - (1 - f)^n (f the
+        frequency of the consonant, n the length of the stem), is below the
+        threshold. Transparent words - by default shorter than
+        ALLITERATION_MIN_WORD_LEN letters, such as stopwords for a language -
+        neither break nor continue a run. The words are taken in lower case
 
     Arguments:
         words (list[str]): Words of a sentence

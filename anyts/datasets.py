@@ -31,7 +31,7 @@ USER_AGENT = "anyTS"
 # Whether tarfile has the data filter (Python 3.11.4+)
 TAR_DATA_FILTER = hasattr(tarfile, "data_filter")
 
-# The starts of a path that expandusers turns into the home directory
+# The starts of a path that expanduser turns into the home directory
 _HOME = tuple(f"~{sep}" for sep in (os.sep, os.altsep) if sep)
 
 
@@ -106,12 +106,12 @@ def fetch_archive(
     Downloading the archive of a dataset, verifying it and extracting the files
 
     Description:
-        The archive is verified and extracted when it is downloaded now or the
+        The archive is verified and extracted when just downloaded or when the
         extracted files are missing. An archive that fails the SHA-256 checksum
         is removed and downloaded again once. The extracted files replace the
-        directory of the dataset only once the extraction is complete, and the
-        earlier directory is removed only once they are in place; concurrent
-        calls do not share their partial files
+        directory of the dataset only once complete, and the earlier directory
+        is removed only once they are in place; concurrent calls do not share
+        their partial files
 
     Arguments:
         url (str): Address of the archive

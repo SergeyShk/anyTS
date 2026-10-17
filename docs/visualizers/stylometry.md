@@ -10,7 +10,7 @@ Plots for [stylometry](../corpus/stylometry.md): a dendrogram and the multidimen
 ## Dendrogram { #dendrogram_plot }
 
 <!-- --8<-- [start:dendrogram_plot] -->
-Hierarchical clustering by `scipy.cluster.hierarchy` over the matrix of distances between texts; Ward's method by default, as in [Evert et al. (2015)](https://aclanthology.org/W15-0709.pdf); the labels of the leaves are the names of the texts of the index of the matrix. The columns are taken in the order of the rows; a matrix with other texts in the columns than in the rows, fewer than two texts, an infinite or negative distance, asymmetry or a distance on the diagonal raises `SourceError` before a figure is created.
+Hierarchical clustering by `scipy.cluster.hierarchy` over the matrix of distances between texts, Ward's method by default as in [Evert et al. (2015)](https://aclanthology.org/W15-0709.pdf); the leaves are labelled by the index of the matrix. The columns are taken in the order of the rows; other texts in the columns than in the rows, fewer than two texts, an infinite or negative distance, asymmetry or a distance on the diagonal raise `SourceError` before a figure is created.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
@@ -37,7 +37,7 @@ Principal component analysis of the z-scores of the relative frequencies of the 
 ## Multidimensional scaling { #mds_plot }
 
 <!-- --8<-- [start:mds_plot] -->
-Classical multidimensional scaling (Torgerson 1952) of any matrix of distances: the double centering of the matrix of squared distances and the two leading eigenvectors; the distances between the points approximate the distances of the matrix. The columns are taken in the order of the rows; a matrix with other texts in the columns than in the rows, fewer than two texts, an infinite or negative distance, asymmetry or a distance on the diagonal raises `SourceError` before a figure is created.
+Classical multidimensional scaling (Torgerson 1952) of any matrix of distances: the two leading eigenvectors of the double-centred squared distances, so the distances between the points approximate those of the matrix. The columns are taken in the order of the rows; other texts in the columns than in the rows, fewer than two texts, an infinite or negative distance, asymmetry or a distance on the diagonal raise `SourceError` before a figure is created.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |

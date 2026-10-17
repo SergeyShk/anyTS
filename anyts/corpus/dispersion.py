@@ -47,15 +47,13 @@ def dispersion(
     Computing the dispersion of words over the parts of a text
 
     Description:
-        The text is split into parts: parts is either the number of parts of
-        about equal size or the sizes of the parts in order (sentences,
-        paragraphs, chapters), which add up to the number of words. For every
-        word its frequencies by part are taken and the measures of dispersion
-        of Gries (2008, 2020) computed: DP and normalized DP, Juilland's D,
-        Carroll's D2, Rosengren's S and the Kullback-Leibler divergence; Gries
-        recommends DP
-        Words are compared as they are: case and lemmatization belong to the
-        extraction
+        parts is the number of parts of about equal size or the sizes of the
+        parts in order (sentences, paragraphs, chapters), adding up to the
+        number of words. For every word the measures of Gries (2008, 2020) are
+        computed from its frequencies by part: DP and normalized DP, Juilland's
+        D, Carroll's D2, Rosengren's S and the Kullback-Leibler divergence;
+        Gries recommends DP. Words are compared as they are: case and
+        lemmatization belong to the extraction
 
     References:
         https://www.stgries.info/research/2020_STG_Dispersion_PHCL.pdf
@@ -186,9 +184,9 @@ def calc_dp(frequencies: Sequence[int], sizes: Sequence[int]) -> float:
 
     Description:
         By Gries (2008): 0.5 · Σ |v_i / f − s_i|, where v_i is the frequency of
-        the word in part i, f the frequency of the word and s_i the share of
-        part i in the text; 0 - the word is spread in proportion to the sizes
-        of the parts, 1 − s_i - it is all in part i, so at most 1 − min(s_i)
+        the word in part i, f its total frequency and s_i the share of part i
+        in the text; 0 - in proportion to the sizes of the parts, 1 − s_i - all
+        in part i, so at most 1 − min(s_i)
 
     Arguments:
         frequencies (list[int]): Frequencies of the word by part
@@ -243,11 +241,10 @@ def calc_juilland_d(frequencies: Sequence[int], sizes: Sequence[int]) -> float:
 
     Description:
         By Juilland and Chang-Rodríguez (1964) as written by Gries (2020):
-        1 − V / sqrt(n − 1), where V is the coefficient of variation (the ratio
-        of the population standard deviation to the mean; Gries (2008) takes
-        the sample one) of the relative frequencies of
-        the word by part v_i / n_i and n the number of parts; 1 - even,
-        0 - in one part
+        1 − V / sqrt(n − 1), where V is the coefficient of variation of the
+        relative frequencies of the word by part v_i / n_i (the population
+        standard deviation over the mean; Gries (2008) takes the sample one)
+        and n the number of parts; 1 - even, 0 - in one part
 
     Arguments:
         frequencies (list[int]): Frequencies of the word by part

@@ -8,7 +8,7 @@
 <!-- --8<-- [start:keyness] -->
 Keyword extraction (keyness) for a target corpus against a reference one: the words that occur significantly more often in the target corpus than in the reference.
 
-For every word two values are computed that [Gabrielatos and Marchi](http://eprints.lancs.ac.uk/51449/4/Gabrielatos_Marchi_Keyness.pdf) and [Hardie](http://cass.lancs.ac.uk/log-ratio-an-informal-introduction/) recommend reading together: the log-likelihood $G^2$ with its p-value (the significance of the difference - whether there is one) and Log Ratio (the size of the effect - how large it is). The chosen measure `score` is computed as well and used for the sorting. The measures of significance ($G^2$, chi-square, BIC) and ELL, the effect size of $G^2$, are signed: negative when the word is more frequent in the reference; the other measures of effect (%DIFF, Log Ratio, odds ratio) are directional by construction.
+Every word gets two values that [Gabrielatos and Marchi](http://eprints.lancs.ac.uk/51449/4/Gabrielatos_Marchi_Keyness.pdf) and [Hardie](http://cass.lancs.ac.uk/log-ratio-an-informal-introduction/) recommend reading together: the log-likelihood $G^2$ with its p-value (whether there is a difference) and Log Ratio (how large it is), plus the chosen measure `score`, which sorts the list. The measures of significance ($G^2$, chi-square, BIC) and ELL, the effect size of $G^2$, are negative when the word is more frequent in the reference; %DIFF, Log Ratio and the odds ratio are directional by construction.
 
 The reference may be a list of words, a mapping of frequencies (its size is the sum of the counts) or a `FrequencyReference`. Words are compared as they are: case, lemmatization and stop words belong to the word extractor, and both corpora have to be extracted the same way.
 <!-- --8<-- [end:keyness] -->
@@ -25,10 +25,10 @@ For a word of frequency $a$ in a target corpus of size $c$ and of frequency $b$ 
 | %DIFF | `diff` | $\frac{NF_a - NF_b}{NF_b} \cdot 100$ | [Gabrielatos and Marchi (2011)](http://eprints.lancs.ac.uk/51449/4/Gabrielatos_Marchi_Keyness.pdf); $NF$ - frequency per million words |
 | Log Ratio | `log_ratio` | $\log_2 \frac{NF_a}{NF_b}$ | [Hardie (2014)](http://cass.lancs.ac.uk/log-ratio-an-informal-introduction/); one means the word is twice as frequent in the target corpus |
 | BIC | `bic` | $\operatorname{sign}(G^2) \cdot (\lvert G^2 \rvert - \ln N)$ | Wilson (2013); in absolute value above 2 - positive evidence of a difference, above 6 - strong, above 10 - very strong; a negative value with $\lvert G^2 \rvert < \ln N$ means no evidence, not the opposite direction |
-| ELL | `ell` | $\frac{G^2}{N \ln \min(E_1, E_2)}$ | Johnston, Berry and Mielke (2006); size of the effect of $G^2$, the share of the greatest possible departure from the expected frequencies, from 0 to 1; `nan` when the least expected frequency is at most one - then the logarithm is zero or negative; just above one the measure grows without bound |
+| ELL | `ell` | $\frac{G^2}{N \ln \min(E_1, E_2)}$ | Johnston, Berry and Mielke (2006); effect size of $G^2$, the share of the greatest possible departure from the expected frequencies, from 0 to 1; `nan` when the least expected frequency is at most one (a logarithm of zero or below), unbounded just above one |
 | Odds ratio | `odds_ratio` | $\frac{a / (c - a)}{b / (d - b)}$ | one means equal odds; `inf` if the word fills the whole target corpus, 0 - the whole reference |
 
-A zero frequency in one of the corpora is replaced with 0.5 for %DIFF, Log Ratio and the odds ratio (Hardie 2014). The p-value of $G^2$ comes from the chi-square distribution with one degree of freedom (`calc_p_value`). The measures are available as the functions `calc_log_likelihood`, `calc_chi2`, `calc_diff`, `calc_log_ratio`, `calc_bic`, `calc_ell` and `calc_odds_ratio` with the arguments `(a, b, c, d)` of the module `anyts.corpus.keyness`; their names and descriptions are in `anyts.constants.KEYNESS_MEASURES`.
+A zero frequency in one of the corpora is replaced with 0.5 for %DIFF, Log Ratio and the odds ratio (Hardie 2014). The p-value of $G^2$ comes from the chi-square distribution with one degree of freedom (`calc_p_value`). The module `anyts.corpus.keyness` gives them as the functions `calc_log_likelihood`, `calc_chi2`, `calc_diff`, `calc_log_ratio`, `calc_bic`, `calc_ell` and `calc_odds_ratio` of `(a, b, c, d)`; their names and descriptions are in `anyts.constants.KEYNESS_MEASURES`.
 <!-- --8<-- [end:keyness-measures] -->
 
 ## Parameters
@@ -45,7 +45,7 @@ A zero frequency in one of the corpora is replaced with 0.5 for %DIFF, Log Ratio
 <!-- --8<-- [end:keyness-parameters] -->
 
 <!-- --8<-- [start:check_keyness_params] -->
-`check_keyness_params(measure="log_likelihood", min_freq=1, top_n=None, target=None)` checks the parameters of `keyness` and raises `ParameterError` unless the measure is one of `KEYNESS_MEASURES`, the minimum frequency is an integer and the number of keywords is `None` or an integer of at least one; with `target` it also raises `SourceTypeError` unless the target corpus is a list of strings or a mapping of strings to whole frequencies, and `SourceError` for a negative, nan or infinite frequency. A library that builds the reference from a frequency dictionary calls it first, so that a wrong parameter or target fails before the dictionary is read.
+`check_keyness_params(measure="log_likelihood", min_freq=1, top_n=None, target=None)` checks the parameters of `keyness` before a frequency dictionary is read: it raises `ParameterError` unless the measure is one of `KEYNESS_MEASURES`, the minimum frequency is an integer and the number of keywords is `None` or an integer of at least one. With `target` it also raises `SourceTypeError` unless the target corpus is a list of strings or a mapping of strings to whole frequencies, and `SourceError` for a negative, nan or infinite frequency.
 <!-- --8<-- [end:check_keyness_params] -->
 
 ## Reference by frequencies
@@ -61,7 +61,7 @@ A zero frequency in one of the corpora is replaced with 0.5 for %DIFF, Log Ratio
 | `key` | callable | `None` | Key of a word of the target corpus in `counts`, such as its lemma; `None` - the word itself |
 | `keep` | callable | `None` | Whether a word of the target corpus is counted; `None` - every word |
 
-The words of the target that `keep` passes are counted under their `key`, and the words it leaves out do not count in the size of the target either; negative keywords come only from the keys of `counts` that `keep` passes. The frequency of a key missing from `counts` is `missing`: a dictionary gives its least frequency, an upper bound of the true one, so such a word may be a positive keyword but never a negative one.
+Only the words of the target that `keep` passes are counted, under their `key`, in the frequencies and in the size alike. A key missing from `counts` has the frequency `missing`, such as the least frequency of a dictionary: an upper bound, so its word may be a positive keyword but never a negative one. Negative keywords come only from the keys of `counts` that `keep` passes.
 <!-- --8<-- [end:FrequencyReference] -->
 
 ## Result

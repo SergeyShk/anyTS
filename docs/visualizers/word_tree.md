@@ -6,7 +6,7 @@
 ## Description
 
 <!-- --8<-- [start:wordtree] -->
-Building a [word tree](https://www.weblyzard.com/word-tree/) that shows the contexts of a keyword in a text: the N-grams of up to `max_n` words that start or end with the keyword are counted in every list of words - a sentence, for instance. Every level of the tree keeps the `max_per_n` most frequent N-grams that continue a kept shorter one, alphabetically when equal. The kept N-grams are joined into two trees, the words after the keyword and before it, with the size of the font by frequency ([Wattenberg and Viégas 2008](https://www.cg.tuwien.ac.at/courses/InfoVis/HallOfFame/2011/Gruppe05/Homepage/Paper/wordtree-paper-wattenberg.pdf)). Rendering needs the executables of [Graphviz](https://graphviz.org/download/).
+Building a [word tree](https://www.weblyzard.com/word-tree/) of the contexts of a keyword: the N-grams of up to `max_n` words that start or end with the keyword are counted in every list of words, such as a sentence. Every level keeps the `max_per_n` most frequent N-grams that continue a kept shorter one, alphabetically when equal; they are joined into two trees, after the keyword and before it, the size of the font by frequency ([Wattenberg and Viégas 2008](https://www.cg.tuwien.ac.at/courses/InfoVis/HallOfFame/2011/Gruppe05/Homepage/Paper/wordtree-paper-wattenberg.pdf)). Rendering needs the executables of [Graphviz](https://graphviz.org/download/).
 <!-- --8<-- [end:wordtree] -->
 
 ## Parameters
@@ -18,7 +18,7 @@ Building a [word tree](https://www.weblyzard.com/word-tree/) that shows the cont
 | `keyword` | str | `-` | Keyword whose contexts are shown |
 | `max_n` | int | `5` | Largest size of the context |
 | `max_per_n` | int | `8` | Largest number of examples for every size of the context |
-| `**kwargs` | - | `-` | Drawing parameters: `max_font_size` (default `30`), `min_font_size` (`12`), `font_interp` - a function of the relative frequency of a node, its frequency over the greatest one (0 to 1], that gives the share of the range from `min_font_size` to `max_font_size`, from 0 to 1; the cube root by default |
+| `**kwargs` | - | `-` | Drawing parameters: `max_font_size` (default `30`), `min_font_size` (`12`), `font_interp` - a function of the relative frequency of a node (its frequency over the greatest one, in (0, 1]) giving the share of the range from `min_font_size` to `max_font_size`, from 0 to 1; the cube root by default |
 
 The function returns a `Digraph` of graphviz.
 <!-- --8<-- [end:wordtree-parameters] -->

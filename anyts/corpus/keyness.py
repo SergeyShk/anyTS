@@ -18,12 +18,11 @@ class FrequencyReference(NamedTuple):
     Reference corpus given by its frequencies, such as a frequency dictionary
 
     Description:
-        The words of the target corpus that keep passes are counted by their key,
-        and the frequency of a key missing from counts is missing: a dictionary
-        gives its least frequency, an upper bound, so such a word may be a
+        The words of the target corpus that keep passes are counted by their
+        key. A key missing from counts has the frequency missing, an upper
+        bound such as the least frequency of a dictionary, so its word may be a
         positive keyword but never a negative one. Negative keywords come only
-        from the keys of counts that keep passes, since the words it leaves out
-        are not counted in the target
+        from the keys of counts that keep passes
 
     Attributes:
         counts (dict[str, float]): Frequencies of the keys in the reference corpus
@@ -83,17 +82,13 @@ def keyness(
     Description:
         For every word the log-likelihood G² with its p-value (significance)
         and Log Ratio (effect size) are computed, as Gabrielatos and Hardie
-        recommend, with the chosen measure score, which sorts the list. The
-        measures of significance (G², chi-square, BIC) and ELL, the effect
-        size of G², are negative when the word is more frequent in the
-        reference. A zero frequency is replaced with 0.5 for %DIFF, Log Ratio
-        and the odds ratio (Hardie 2014)
-        The reference may be a list of words, their frequencies (the size is
-        their sum) or a FrequencyReference with a size of its own, which a
-        language library builds from its frequency dictionary
+        recommend, with the chosen measure score, which sorts the list. G²,
+        chi-square, BIC and ELL are negative when the word is more frequent in
+        the reference. A zero frequency is replaced with 0.5 for %DIFF, Log
+        Ratio and the odds ratio (Hardie 2014). The size of a mapping of
+        frequencies is their sum; a FrequencyReference has a size of its own.
         Positive keywords are more frequent in the target corpus, negative ones
-        in the reference; min_freq is the least frequency of a word in the
-        corpus where it is more frequent
+        in the reference
 
     References:
         https://ucrel.lancs.ac.uk/llwizard.html
@@ -155,8 +150,8 @@ def keyness(
         raise SourceError("The data source has no words")
     calc = MEASURES[measure]
     rows = []
-    # A positive keyword occurs in the target; a negative one needs a frequency of its own
-    # in the reference, since that of a missing key only bounds it from above
+    # A negative keyword needs a frequency of its own in the reference: that of a missing key
+    # is only an upper bound
     candidates: Iterable[str] = counts_target
     if not positive:
         candidates = counts_reference if keep is None else filter(keep, counts_reference)
@@ -242,8 +237,8 @@ def check_keyness_params(
     Checking the parameters of keyness
 
     Description:
-        Meant to be called before the reference is built, so that a wrong
-        parameter or target corpus fails before a frequency dictionary is read
+        Called before the reference is built, it fails on a wrong parameter or
+        target corpus before a frequency dictionary is read
 
     Arguments:
         measure (str): Measure of KEYNESS_MEASURES
@@ -344,8 +339,8 @@ def calc_chi2(a: float, b: float, c: float, d: float) -> float:
     Description:
         Over the 2×2 contingency table of the word and the other words of each
         corpus, χ² = N·(|a·(d − b) − b·(c − a)| − N/2)² / ((a + b)·(c − a + d − b)·c·d),
-        N = c + d
-        The sign is negative when the word is more frequent in the reference
+        N = c + d. The sign is negative when the word is more frequent in the
+        reference
 
     Arguments:
         a (float): Frequency of the word in the target corpus

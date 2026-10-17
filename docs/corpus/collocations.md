@@ -8,7 +8,7 @@
 <!-- --8<-- [start:collocations] -->
 Collocation extraction - pairs of words that occur together more often than independence would give: fixed expressions, terminology, the combinatorics of a word. The measures of association are those of [Sketch Engine](https://www.sketchengine.eu/wp-content/uploads/ske-statistics.pdf) and of [`nltk.metrics.association`](https://www.nltk.org/api/nltk.metrics.association.html).
 
-Pairs of words are ordered, as in NLTK: the right word occurs no more than `window` words after the left one, and every pair of positions is counted once; `window=1` gives bigrams. Inside the measure the frequency of a pair is divided by the size of the window (Church and Hanks 1990, as in NLTK), so that the expected frequency does not depend on the window and Dice and the minimum sensitivity do not exceed one; the field `freq_pair` keeps the undivided frequency. With `window > 1` the scale of the Dice measures therefore shifts: a pair always side by side gets a logDice of $14 - \log_2 window$ (13 at a window of 2) and not 14 as in Sketch Engine, which uses the raw co-occurrence; 14 is reached only by a pair that occurs at every distance within the window. The parameter `node` keeps the pairs with the given word on the left or on the right - the combinatorics of one word.
+Pairs are ordered, as in NLTK: the right word occurs at most `window` words after the left one, each pair of positions counted once; `window=1` gives bigrams. The measures take the pair frequency divided by the window (Church and Hanks 1990, as in NLTK), which keeps the expected frequency independent of the window and Dice and the minimum sensitivity at most one; `freq_pair` stays undivided. So with `window > 1` an always adjacent pair gets a logDice of $14 - \log_2 window$ (13 at a window of 2), not 14 as in Sketch Engine with its raw co-occurrence; 14 needs a pair at every distance within the window. `node` keeps the pairs with the given word on either side.
 
 Words are compared as they are: case, lemmatization and stop words belong to the word extractor; lemmas suit fixed expressions, word forms suit grammatical constructions.
 <!-- --8<-- [end:collocations] -->
@@ -29,7 +29,7 @@ For a pair of words of frequencies $f_a$ and $f_b$, a pair frequency $f_{ab}$ an
 | NPMI | `npmi` | $\frac{MI}{-\log_2 (f_{ab} / N)}$ | Bouma (2009); from −1 to 1, one means the words occur only together |
 | Minimum sensitivity | `min_sensitivity` | $\min(\frac{f_{ab}}{f_a}, \frac{f_{ab}}{f_b})$ | Pedersen (1998); from 0 to 1 |
 
-The measures are available as the functions `calc_mi`, `calc_mi3`, `calc_t_score`, `calc_dice`, `calc_logdice`, `calc_log_likelihood`, `calc_npmi` and `calc_min_sensitivity` with the arguments `(freq_a, freq_b, freq_ab, n)` of the module `anyts.corpus.collocations`; their names and descriptions are in `anyts.constants.COLLOCATION_MEASURES`.
+The module `anyts.corpus.collocations` gives them as the functions `calc_mi`, `calc_mi3`, `calc_t_score`, `calc_dice`, `calc_logdice`, `calc_log_likelihood`, `calc_npmi` and `calc_min_sensitivity` of `(freq_a, freq_b, freq_ab, n)`; their names and descriptions are in `anyts.constants.COLLOCATION_MEASURES`.
 <!-- --8<-- [end:collocations-measures] -->
 
 ## Parameters

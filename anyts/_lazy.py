@@ -9,11 +9,11 @@ class LazyPackage(ModuleType):
     Package whose names are imported from their modules on first use
 
     Description:
-        The module of every name is in the mapping _MODULES of the package, so
-        that importing one module does not load the dependencies of the others;
-        a module of the package is imported as its attribute too. A module
-        named as one of its functions (zipf, kwic) keeps the function under
-        that name in the package, as an eager import would
+        The mapping _MODULES of the package gives the module of every name, so
+        importing one module does not load the dependencies of the others; a
+        module of the package is imported as its attribute too. A module named
+        as one of its functions (zipf, kwic) leaves the function under that
+        name in the package, as an eager import would
     """
 
     def __getattr__(self, name: str) -> Any:

@@ -41,12 +41,11 @@ def collocations(
     Finding the collocations of a sequence of words
 
     Description:
-        Pairs of words are ordered: the right word occurs no more than window
-        words after the left one, every pair of positions counted once;
-        window = 1 gives bigrams. Inside the measure the frequency of the pair
-        is divided by the window (Church and Hanks 1990, as in NLTK), while
-        freq_pair keeps the undivided frequency; so with window > 1 a pair
-        always side by side gets a logDice of 14 − log2(window), not 14.
+        Pairs are ordered: the right word occurs at most window words after
+        the left one, each pair of positions counted once; window = 1 gives
+        bigrams. The measures divide the pair frequency by the window (Church
+        and Hanks 1990, as in NLTK), freq_pair keeps it undivided: with
+        window > 1 a pair always side by side gets a logDice of 14 − log2(window).
         Words are compared as they are: case, lemmatization and stop words
         belong to the extraction
 
@@ -248,9 +247,8 @@ def calc_log_likelihood(freq_a: int, freq_b: int, freq_ab: float, n: int) -> flo
         n (int): Number of words of the text
 
     Returns:
-        float: G², nan if one of the words fills the whole text or the table is
-            degenerate (a pair of a word with itself in a window above one gives
-            a negative cell)
+        float: G², nan if one of the words fills the whole text or a cell is
+            negative (a word paired with itself in a window above one)
     """
     if freq_a >= n or freq_b >= n:
         return nan
