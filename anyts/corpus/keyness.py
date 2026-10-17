@@ -69,14 +69,6 @@ class Keyword(NamedTuple):
     score: float
 
 
-def _check_words_or_counts(words: Iterable[object]) -> None:
-    """Checking the words of a corpus given as a list (check_words) or a counter (check_counts)"""
-    if isinstance(words, Mapping):
-        check_counts(words)
-    else:
-        check_words(words)
-
-
 def keyness(
     target: Sequence[str] | Mapping[str, int],
     reference: Sequence[str] | Mapping[str, float] | FrequencyReference,
@@ -206,6 +198,40 @@ def keyness(
     return keywords[:top_n] if top_n else keywords
 
 
+def _check_words_or_counts(words: Iterable[object]) -> None:
+    """Checking the words of a corpus given as a list (check_words) or a counter (check_counts)"""
+    if isinstance(words, Mapping):
+        check_counts(words)
+    else:
+        check_words(words)
+
+
+def _check_target(target: Iterable[object]) -> None:
+    """Checking that the target corpus is a list of words or a mapping of words to whole frequencies"""
+    _check_words_or_counts(target)
+    if isinstance(target, Mapping) and not all(
+        float(count).is_integer() for count in target.values()
+    ):
+        raise SourceTypeError("The frequencies of the target corpus must be whole numbers")
+
+
+def _count(
+    words: Sequence[str] | Mapping[str, float],
+    key: Callable[[str], str] | None = None,
+    keep: Callable[[str], bool] | None = None,
+) -> Mapping[str, float]:
+    """Frequencies of the words that keep passes, summed by key when one is given"""
+    if key is None and keep is None:
+        return words if isinstance(words, Mapping) else Counter(words)
+    counts: dict[str, float] = {}
+    pairs = words.items() if isinstance(words, Mapping) else ((word, 1) for word in words)
+    for word, count in pairs:
+        if keep is None or keep(word):
+            word_key = word if key is None else key(word)
+            counts[word_key] = counts.get(word_key, 0) + count
+    return counts
+
+
 def check_keyness_params(
     measure: str = "log_likelihood",
     min_freq: int = 1,
@@ -251,40 +277,6 @@ def check_keyness_params(
         _check_target(target)
 
 
-def _check_target(target: Iterable[object]) -> None:
-    """Checking that the target corpus is a list of words or a mapping of words to whole frequencies"""
-    _check_words_or_counts(target)
-    if isinstance(target, Mapping) and not all(
-        float(count).is_integer() for count in target.values()
-    ):
-        raise SourceTypeError("The frequencies of the target corpus must be whole numbers")
-
-
-def _count(
-    words: Sequence[str] | Mapping[str, float],
-    key: Callable[[str], str] | None = None,
-    keep: Callable[[str], bool] | None = None,
-) -> Mapping[str, float]:
-    """Frequencies of the words that keep passes, summed by key when one is given"""
-    if key is None and keep is None:
-        return words if isinstance(words, Mapping) else Counter(words)
-    counts: dict[str, float] = {}
-    pairs = words.items() if isinstance(words, Mapping) else ((word, 1) for word in words)
-    for word, count in pairs:
-        if keep is None or keep(word):
-            word_key = word if key is None else key(word)
-            counts[word_key] = counts.get(word_key, 0) + count
-    return counts
-
-
-def _sign(a: float, b: float, c: float, d: float) -> int:
-    return 1 if a / c >= b / d else -1
-
-
-def _adjust(a: float, b: float) -> tuple[float, float]:
-    return a or ZERO_ADJUSTMENT, b or ZERO_ADJUSTMENT
-
-
 def calc_log_likelihood(a: float, b: float, c: float, d: float) -> float:
     """
     Computing the log-likelihood G² of the frequencies of a word in two corpora
@@ -320,6 +312,10 @@ def calc_log_likelihood(a: float, b: float, c: float, d: float) -> float:
     expected_b = d * total / (c + d)
     value = 2 * (_xlog(a, expected_a) + _xlog(b, expected_b))
     return _sign(a, b, c, d) * value
+
+
+def _sign(a: float, b: float, c: float, d: float) -> int:
+    return 1 if a / c >= b / d else -1
 
 
 def _xlog(observed: float, expected: float) -> float:
@@ -389,6 +385,10 @@ def calc_diff(a: float, b: float, c: float, d: float) -> float:
     """
     a, b = _adjust(a, b)
     return (a / c - b / d) / (b / d) * 100
+
+
+def _adjust(a: float, b: float) -> tuple[float, float]:
+    return a or ZERO_ADJUSTMENT, b or ZERO_ADJUSTMENT
 
 
 def calc_log_ratio(a: float, b: float, c: float, d: float) -> float:

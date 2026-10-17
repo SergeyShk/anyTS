@@ -66,6 +66,42 @@ def dendrogram_plot(
     return ax
 
 
+def _distance_matrix(distances: pd.DataFrame, purpose: str) -> np.ndarray:
+    """
+    Values of a matrix of distances between at least two texts, its columns in
+    the order of its rows
+
+    Description:
+        The distances are finite and non-negative, the matrix symmetric with
+        zeros on the diagonal, up to a rounding error
+    """
+    if not isinstance(distances, pd.DataFrame):
+        raise SourceTypeError(
+            f"The distances must be a DataFrame with the names of the texts, "
+            f"not {type(distances).__name__}"
+        )
+    purpose = purpose.capitalize()
+    if distances.shape[0] != distances.shape[1] or len(distances) < 2:
+        raise SourceError(f"{purpose} needs a square matrix of at least two texts")
+    if distances.index.has_duplicates or set(distances.columns) != set(distances.index):
+        raise SourceError(f"{purpose} needs the same texts in the rows and the columns")
+    try:
+        values: np.ndarray = distances.loc[:, distances.index].to_numpy(dtype=float)
+    except (TypeError, ValueError) as e:
+        raise SourceTypeError("The distances must be numbers") from e
+    if not np.isfinite(values).all():
+        raise SourceError(f"{purpose} needs every distance to be finite")
+    # A distance below zero by a rounding error only is zero
+    if ((values < 0) & ~np.isclose(values, 0)).any():
+        raise SourceError(f"{purpose} needs non-negative distances")
+    if not np.allclose(values, values.T):
+        raise SourceError(f"{purpose} needs a symmetric matrix of distances")
+    if not np.allclose(np.diagonal(values), 0):
+        raise SourceError(f"{purpose} needs zero distances on the diagonal")
+    clipped: np.ndarray = np.clip(values, 0, None)
+    return clipped
+
+
 def pca_plot(
     corpus: Mapping[str, Sequence[str]],
     n_mfw: int | None = 100,
@@ -124,6 +160,15 @@ def pca_plot(
     return ax
 
 
+def _check_corpus(corpus: object) -> None:
+    """Checking that a corpus is a mapping of the names of its texts to their units"""
+    if not isinstance(corpus, Mapping):
+        raise SourceTypeError(
+            f"The corpus must be a mapping of the names of the texts to their units, "
+            f"not {type(corpus).__name__}"
+        )
+
+
 def mds_plot(
     distances: pd.DataFrame, ax: Axes | None = None, labels: Mapping[str, str] | None = None
 ) -> Axes:
@@ -172,51 +217,6 @@ def mds_plot(
     ax.set_ylabel(captions["ylabel"])
     ax.set_title(captions["title"])
     return ax
-
-
-def _check_corpus(corpus: object) -> None:
-    """Checking that a corpus is a mapping of the names of its texts to their units"""
-    if not isinstance(corpus, Mapping):
-        raise SourceTypeError(
-            f"The corpus must be a mapping of the names of the texts to their units, "
-            f"not {type(corpus).__name__}"
-        )
-
-
-def _distance_matrix(distances: pd.DataFrame, purpose: str) -> np.ndarray:
-    """
-    Values of a matrix of distances between at least two texts, its columns in
-    the order of its rows
-
-    Description:
-        The distances are finite and non-negative, the matrix symmetric with
-        zeros on the diagonal, up to a rounding error
-    """
-    if not isinstance(distances, pd.DataFrame):
-        raise SourceTypeError(
-            f"The distances must be a DataFrame with the names of the texts, "
-            f"not {type(distances).__name__}"
-        )
-    purpose = purpose.capitalize()
-    if distances.shape[0] != distances.shape[1] or len(distances) < 2:
-        raise SourceError(f"{purpose} needs a square matrix of at least two texts")
-    if distances.index.has_duplicates or set(distances.columns) != set(distances.index):
-        raise SourceError(f"{purpose} needs the same texts in the rows and the columns")
-    try:
-        values: np.ndarray = distances.loc[:, distances.index].to_numpy(dtype=float)
-    except (TypeError, ValueError) as e:
-        raise SourceTypeError("The distances must be numbers") from e
-    if not np.isfinite(values).all():
-        raise SourceError(f"{purpose} needs every distance to be finite")
-    # A distance below zero by a rounding error only is zero
-    if ((values < 0) & ~np.isclose(values, 0)).any():
-        raise SourceError(f"{purpose} needs non-negative distances")
-    if not np.allclose(values, values.T):
-        raise SourceError(f"{purpose} needs a symmetric matrix of distances")
-    if not np.allclose(np.diagonal(values), 0):
-        raise SourceError(f"{purpose} needs zero distances on the diagonal")
-    clipped: np.ndarray = np.clip(values, 0, None)
-    return clipped
 
 
 def mendenhall_plot(

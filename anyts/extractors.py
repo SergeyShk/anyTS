@@ -25,25 +25,10 @@ SENTENCE_BOUNDARY = re.compile(r"(?<=[.!?…])\s+|(?<=[.!?…][\"'»”’)\]])\
 BLANK_LINE = re.compile(r"\n\s*\n")
 
 
-def _char_class(chars: Iterable[str]) -> str:
-    """
-    Building the body of a regular expression class from characters
-
-    Arguments:
-        chars (iterable[str]): Characters in ascending order
-
-    Returns:
-        str: Ranges of consecutive characters, escaped
-    """
-    ranges: list[list[int]] = []
-    for code in map(ord, chars):
-        if ranges and ranges[-1][1] == code - 1:
-            ranges[-1][1] = code
-        else:
-            ranges.append([code, code])
-    return "".join(
-        re.escape(chr(first)) + ("-" + re.escape(chr(last)) if last > first else "")
-        for first, last in ranges
+def _iter_words(text: str) -> Iterator[tuple[int, int, str]]:
+    """Words of the default tokenizer of WordsExtractor with their positions"""
+    return (
+        (match.start(), match.end(), match.group()) for match in _word_pattern().finditer(text)
     )
 
 
@@ -69,73 +54,26 @@ def _word_pattern() -> Pattern[str]:
     return re.compile(rf"\w[\w{continuation}]*")
 
 
-def _iter_words(text: str) -> Iterator[tuple[int, int, str]]:
-    """Words of the default tokenizer of WordsExtractor with their positions"""
-    return (
-        (match.start(), match.end(), match.group()) for match in _word_pattern().finditer(text)
-    )
-
-
-def _check_length_bounds(
-    min_len: int, max_len: int, unit: str, negative: str, reversed_bounds: str
-) -> None:
+def _char_class(chars: Iterable[str]) -> str:
     """
-    Checking the bounds of the length of an extracted unit
+    Building the body of a regular expression class from characters
 
     Arguments:
-        min_len (int): Minimum length, 0 for no bound
-        max_len (int): Maximum length, 0 for no bound
-        unit (str): Name of the unit, for the message of a bound that is not an integer
-        negative (str): Message of a negative bound
-        reversed_bounds (str): Message of a minimum greater than the maximum
-
-    Raises:
-        ParameterError: If a bound is not an integer, is negative or the minimum
-            is greater than the maximum
-    """
-    check_integer(min_len, f"minimum {unit} length")
-    check_integer(max_len, f"maximum {unit} length")
-    if min_len < 0 or max_len < 0:
-        raise ParameterError(negative)
-    if min_len and max_len and min_len > max_len:
-        raise ParameterError(reversed_bounds)
-
-
-def _check_text(text: object, messages: Mapping[str, str] = MESSAGES) -> None:
-    """
-    Checking that the source of an extractor is a string
-
-    Arguments:
-        text (object): Value to check
-        messages (dict[str, str]): Messages of the errors by key (MESSAGES)
-
-    Raises:
-        SourceTypeError: If the value is not a string
-    """
-    if not isinstance(text, str):
-        raise SourceTypeError(messages["text_type"].format(type=type(text).__name__))
-
-
-def _check_tokens(
-    tokens: Iterator[object], messages: Mapping[str, str] = MESSAGES
-) -> Iterator[str]:
-    """
-    Checking that the tokenizer gives strings
-
-    Arguments:
-        tokens (iterator[object]): Tokens of the tokenizer
-        messages (dict[str, str]): Messages of the errors by key (MESSAGES)
+        chars (iterable[str]): Characters in ascending order
 
     Returns:
-        iterator[str]: The same tokens
-
-    Raises:
-        SourceTypeError: If a token is not a string, such as a spaCy token
+        str: Ranges of consecutive characters, escaped
     """
-    for token in tokens:
-        if not isinstance(token, str):
-            raise SourceTypeError(messages["tokenizer_strings"].format(type=type(token).__name__))
-        yield token
+    ranges: list[list[int]] = []
+    for code in map(ord, chars):
+        if ranges and ranges[-1][1] == code - 1:
+            ranges[-1][1] = code
+        else:
+            ranges.append([code, code])
+    return "".join(
+        re.escape(chr(first)) + ("-" + re.escape(chr(last)) if last > first else "")
+        for first, last in ranges
+    )
 
 
 class Extractor(metaclass=ABCMeta):
@@ -205,6 +143,43 @@ class Extractor(metaclass=ABCMeta):
             return _check_tokens(iter(tokens), messages)
         except TypeError as e:
             raise SourceTypeError(messages["tokenizer_iterable"]) from e
+
+
+def _check_text(text: object, messages: Mapping[str, str] = MESSAGES) -> None:
+    """
+    Checking that the source of an extractor is a string
+
+    Arguments:
+        text (object): Value to check
+        messages (dict[str, str]): Messages of the errors by key (MESSAGES)
+
+    Raises:
+        SourceTypeError: If the value is not a string
+    """
+    if not isinstance(text, str):
+        raise SourceTypeError(messages["text_type"].format(type=type(text).__name__))
+
+
+def _check_tokens(
+    tokens: Iterator[object], messages: Mapping[str, str] = MESSAGES
+) -> Iterator[str]:
+    """
+    Checking that the tokenizer gives strings
+
+    Arguments:
+        tokens (iterator[object]): Tokens of the tokenizer
+        messages (dict[str, str]): Messages of the errors by key (MESSAGES)
+
+    Returns:
+        iterator[str]: The same tokens
+
+    Raises:
+        SourceTypeError: If a token is not a string, such as a spaCy token
+    """
+    for token in tokens:
+        if not isinstance(token, str):
+            raise SourceTypeError(messages["tokenizer_strings"].format(type=type(token).__name__))
+        yield token
 
 
 class SentsExtractor(Extractor):
@@ -305,6 +280,31 @@ class SentsExtractor(Extractor):
             sents = (sent for sent in sents if len(sent) <= self.max_len)
         self.sents = tuple(sents)
         return self.sents
+
+
+def _check_length_bounds(
+    min_len: int, max_len: int, unit: str, negative: str, reversed_bounds: str
+) -> None:
+    """
+    Checking the bounds of the length of an extracted unit
+
+    Arguments:
+        min_len (int): Minimum length, 0 for no bound
+        max_len (int): Maximum length, 0 for no bound
+        unit (str): Name of the unit, for the message of a bound that is not an integer
+        negative (str): Message of a negative bound
+        reversed_bounds (str): Message of a minimum greater than the maximum
+
+    Raises:
+        ParameterError: If a bound is not an integer, is negative or the minimum
+            is greater than the maximum
+    """
+    check_integer(min_len, f"minimum {unit} length")
+    check_integer(max_len, f"maximum {unit} length")
+    if min_len < 0 or max_len < 0:
+        raise ParameterError(negative)
+    if min_len and max_len and min_len > max_len:
+        raise ParameterError(reversed_bounds)
 
 
 class WordsExtractor(Extractor):

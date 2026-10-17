@@ -664,6 +664,25 @@ def merge_labels(
     return {**defaults, **labels}
 
 
+def _format_fields(label: str) -> set[str]:
+    """
+    Names of the fields of a format string, those in the format specs included
+
+    Raises:
+        ValueError: If the string is not a format string or has an unknown conversion
+    """
+    fields = set()
+    for _, name, spec, conversion in Formatter().parse(label):
+        if name is None:
+            continue
+        if conversion not in (None, "r", "s", "a"):
+            raise ValueError(f"Unknown conversion specifier {conversion}")
+        fields.add(name)
+        if spec:
+            fields |= _format_fields(spec)
+    return fields
+
+
 def check_messages(messages: object, defaults: Mapping[str, str] = MESSAGES) -> None:
     """
     Checking the messages of the errors a class of statistics raises
@@ -712,22 +731,3 @@ def check_messages(messages: object, defaults: Mapping[str, str] = MESSAGES) -> 
                 f"The message {key!r} has unknown fields {sorted(extra)}; "
                 f"available fields: {sorted(fields)}"
             )
-
-
-def _format_fields(label: str) -> set[str]:
-    """
-    Names of the fields of a format string, those in the format specs included
-
-    Raises:
-        ValueError: If the string is not a format string or has an unknown conversion
-    """
-    fields = set()
-    for _, name, spec, conversion in Formatter().parse(label):
-        if name is None:
-            continue
-        if conversion not in (None, "r", "s", "a"):
-            raise ValueError(f"Unknown conversion specifier {conversion}")
-        fields.add(name)
-        if spec:
-            fields |= _format_fields(spec)
-    return fields

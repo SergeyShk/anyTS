@@ -58,6 +58,27 @@ def joins_previous(token: Token) -> bool:
     )
 
 
+def get_words(tokens: Iterable[Token], join_hyphens: bool = False) -> list[Token]:
+    """
+    Getting the words of a sequence of tokens
+
+    Description:
+        With join_hyphens, a word the tokenizer split at its hyphens is one
+        word, given by its part that holds its relation: the head of the
+        sentence or the part hanging outside the word, the nearest to the root,
+        as in get_children; by its first part when a hyphen holds the relation
+        or the parts form a loop
+
+    Arguments:
+        tokens (Doc|Span|list[Token]): Sequence of tokens
+        join_hyphens (bool): Join the parts of hyphenated words (joins_previous)
+
+    Returns:
+        list[Token]: List of words
+    """
+    return [_word_part(unit) for unit in _word_units(tokens, join_hyphens)]
+
+
 def _word_units(tokens: Iterable[Token], join_hyphens: bool) -> list[list[Token]]:
     """
     Words of a sequence of tokens as lists of their tokens
@@ -82,24 +103,17 @@ def _word_units(tokens: Iterable[Token], join_hyphens: bool) -> list[list[Token]
     return units
 
 
-def _hyphenated_word(token: Token) -> list[Token] | None:
-    """Tokens of the hyphenated word a token or an inner hyphen belongs to, None for no word"""
-    doc = token.doc
-    i = token.i
-    if not is_word(token):
-        if token.text != "-" or i + 1 >= len(doc) or not joins_previous(doc[i + 1]):
-            return None
-        i += 1
-    elif (i == 0 or doc[i - 1].text != "-") and (i + 1 >= len(doc) or doc[i + 1].text != "-"):
-        # A word without a hyphen next to it is a word of its own, the common case
-        return [token]
-    start = i
-    while joins_previous(doc[start]):
-        start -= 2
-    end = i
-    while end + 2 < len(doc) and joins_previous(doc[end + 2]):
-        end += 2
-    return list(doc[start : end + 1])
+def _word_part(unit: Sequence[Token]) -> Token:
+    """
+    Part that gives a word: the one holding the head of its sentence or hanging
+    outside it (_word_head), the first part when that is a hyphen or there is none
+    """
+    if len(unit) == 1:
+        return unit[0]
+    part = next((token for token in unit if is_root(token)), None)
+    if part is None:
+        part = _word_head(unit)
+    return part if part is not None and is_word(part) else unit[0]
 
 
 def _word_head(unit: Sequence[Token]) -> Token | None:
@@ -120,62 +134,6 @@ def _word_head(unit: Sequence[Token]) -> Token | None:
     if len(outside) == 1:
         return outside[0]
     return min(outside, key=lambda token: (sum(1 for _ in token.ancestors), not is_word(token)))
-
-
-def _word_part(unit: Sequence[Token]) -> Token:
-    """
-    Part that gives a word: the one holding the head of its sentence or hanging
-    outside it (_word_head), the first part when that is a hyphen or there is none
-    """
-    if len(unit) == 1:
-        return unit[0]
-    part = next((token for token in unit if is_root(token)), None)
-    if part is None:
-        part = _word_head(unit)
-    return part if part is not None and is_word(part) else unit[0]
-
-
-def _unit_parents(units: Sequence[Sequence[Token]]) -> list[int | None]:
-    """
-    Index of the word every word of a sequence hangs on, through punctuation and
-    tokens outside the sequence; None for a word with no such head
-    """
-    unit_of = {token.i: n for n, unit in enumerate(units) for token in unit}
-    parents: list[int | None] = []
-    for n, unit in enumerate(units):
-        head = _word_head(unit)
-        parent = None
-        token = head.head if head is not None else None
-        seen = set()
-        while token is not None and token.i not in seen:
-            seen.add(token.i)
-            if unit_of.get(token.i, n) != n:
-                parent = unit_of[token.i]
-                break
-            token = None if is_root(token) else token.head
-        parents.append(parent)
-    return parents
-
-
-def get_words(tokens: Iterable[Token], join_hyphens: bool = False) -> list[Token]:
-    """
-    Getting the words of a sequence of tokens
-
-    Description:
-        With join_hyphens, a word the tokenizer split at its hyphens is one
-        word, given by its part that holds its relation: the head of the
-        sentence or the part hanging outside the word, the nearest to the root,
-        as in get_children; by its first part when a hyphen holds the relation
-        or the parts form a loop
-
-    Arguments:
-        tokens (Doc|Span|list[Token]): Sequence of tokens
-        join_hyphens (bool): Join the parts of hyphenated words (joins_previous)
-
-    Returns:
-        list[Token]: List of words
-    """
-    return [_word_part(unit) for unit in _word_units(tokens, join_hyphens)]
 
 
 def is_root(token: Token) -> bool:
@@ -242,6 +200,26 @@ def get_children(token: Token, join_hyphens: bool = False) -> list[Token]:
             if head is not None and head.head.i in ids:
                 children[unit[0].i] = _word_part(unit)
     return [children[start] for start in sorted(children)]
+
+
+def _hyphenated_word(token: Token) -> list[Token] | None:
+    """Tokens of the hyphenated word a token or an inner hyphen belongs to, None for no word"""
+    doc = token.doc
+    i = token.i
+    if not is_word(token):
+        if token.text != "-" or i + 1 >= len(doc) or not joins_previous(doc[i + 1]):
+            return None
+        i += 1
+    elif (i == 0 or doc[i - 1].text != "-") and (i + 1 >= len(doc) or doc[i + 1].text != "-"):
+        # A word without a hyphen next to it is a word of its own, the common case
+        return [token]
+    start = i
+    while joins_previous(doc[start]):
+        start -= 2
+    end = i
+    while end + 2 < len(doc) and joins_previous(doc[end + 2]):
+        end += 2
+    return list(doc[start : end + 1])
 
 
 def count_children(token: Token, join_hyphens: bool = False) -> int:
@@ -383,6 +361,28 @@ def calc_tree_depth(tokens: Iterable[Token], join_hyphens: bool = False) -> int:
         (sum(1 for ancestor in token.ancestors if ancestor.i in ids) for token in words),
         default=0,
     )
+
+
+def _unit_parents(units: Sequence[Sequence[Token]]) -> list[int | None]:
+    """
+    Index of the word every word of a sequence hangs on, through punctuation and
+    tokens outside the sequence; None for a word with no such head
+    """
+    unit_of = {token.i: n for n, unit in enumerate(units) for token in unit}
+    parents: list[int | None] = []
+    for n, unit in enumerate(units):
+        head = _word_head(unit)
+        parent = None
+        token = head.head if head is not None else None
+        seen = set()
+        while token is not None and token.i not in seen:
+            seen.add(token.i)
+            if unit_of.get(token.i, n) != n:
+                parent = unit_of[token.i]
+                break
+            token = None if is_root(token) else token.head
+        parents.append(parent)
+    return parents
 
 
 def has_feature(token: Token, field: str, value: str) -> bool:

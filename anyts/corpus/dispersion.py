@@ -180,15 +180,6 @@ def _cell_measures(
     )
 
 
-def _proportions(
-    frequencies: Sequence[int], sizes: Sequence[int]
-) -> tuple[np.ndarray, np.ndarray]:
-    counts = np.asarray(frequencies, dtype=float)
-    shares = np.asarray(sizes, dtype=float)
-    shares = shares / shares.sum()
-    return counts, shares
-
-
 def calc_dp(frequencies: Sequence[int], sizes: Sequence[int]) -> float:
     """
     Computing the deviation of proportions DP
@@ -216,6 +207,15 @@ def calc_dp(frequencies: Sequence[int], sizes: Sequence[int]) -> float:
     if not total:
         return nan
     return float(0.5 * np.abs(counts / total - shares).sum())
+
+
+def _proportions(
+    frequencies: Sequence[int], sizes: Sequence[int]
+) -> tuple[np.ndarray, np.ndarray]:
+    counts = np.asarray(frequencies, dtype=float)
+    shares = np.asarray(sizes, dtype=float)
+    shares = shares / shares.sum()
+    return counts, shares
 
 
 def calc_dp_norm(frequencies: Sequence[int], sizes: Sequence[int]) -> float:
