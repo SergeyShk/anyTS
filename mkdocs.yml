@@ -3,6 +3,8 @@ site_url: https://sergeyshk.github.io/anyTS/
 site_description: "The language-independent core of text statistics libraries"
 repo_url: https://github.com/SergeyShk/anyTS
 
+not_in_nav: |
+  stats/phonetics.md
 nav:
     - Home:
       - About: index.md

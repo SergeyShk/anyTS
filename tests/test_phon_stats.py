@@ -329,9 +329,9 @@ def test_calc_repetition_index_tokens():
 @pytest.mark.parametrize(
     ("window_len", "message"),
     [
-        (1, r"^The window must be at least 2$"),
-        (2.0, r"^The window must be an integer, not float$"),
-        (True, r"^The window must be an integer, not bool$"),
+        (1, r"^The size of a window must be at least 2$"),
+        (2.0, r"^The size of a window must be an integer, not float$"),
+        (True, r"^The size of a window must be an integer, not bool$"),
     ],
 )
 def test_calc_repetition_index_window(window_len, message):

@@ -456,9 +456,7 @@ def calc_repetition_index(
     if features is not None:
         check_words(features, "features", ordered=False)
         features = frozenset(features)
-    check_integer(window_len, "window")
-    if window_len < 2:
-        raise ParameterError("The window must be at least 2")
+    check_params(window_len)
     n_words = len(words)
     if n_words < window_len:
         return nan
