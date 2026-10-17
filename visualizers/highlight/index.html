@@ -2168,6 +2168,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#finders" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Finders of the layers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#usage-example" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2594,6 +2605,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#finders" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Finders of the layers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#usage-example" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2685,9 +2707,19 @@
 <td style="text-align: center;">method</td>
 <td style="text-align: center;">The words of a <code>Doc</code>; by default <code>get_doc_words</code></td>
 </tr>
+<tr>
+<td style="text-align: center;"><code>annotation_names</code></td>
+<td style="text-align: center;">class attribute</td>
+<td style="text-align: center;">Names of the annotations in the message of a layer a source does not allow, <code>dict[str, str]</code>; English by default</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>messages</code></td>
+<td style="text-align: center;">class attribute</td>
+<td style="text-align: center;">Messages of the errors by key; <code>MESSAGES</code> by default</td>
+</tr>
 </tbody>
 </table>
-<p>The sentences of a <code>Doc</code> come from its boundaries, or from <code>iter_sents</code> over its text when it has none or only partial ones (<code>has_sents</code>). <code>iter_sents</code> gets the parts of a text between blank lines one by one, so a blank line ends a sentence whatever the method, and the words of a sentence are those of <code>doc_words</code> or <code>iter_words</code> that start in it. <code>find</code> runs in <code>__init__</code>, so a subclass with parameters of its own stores them before it calls the <code>__init__</code> of the base; a fragment of another layer or one outside the text raises <code>ParameterError</code>.</p>
+<p>The sentences of a <code>Doc</code> come from its boundaries, or from <code>iter_sents</code> over its text when it has none or only partial ones (<code>has_sents</code>). <code>iter_sents</code> gets the parts of a text between blank lines one by one, so a blank line ends a sentence whatever the method, and the words of a sentence are those of <code>doc_words</code> or <code>iter_words</code> that start in it. <code>find</code> runs in <code>__init__</code>, so a subclass with parameters of its own stores them before it calls the <code>__init__</code> of the base - checking them by <code>check_params</code> - and its layers can be found by the finders below with the language as their parameters; a fragment of another layer or one outside the text raises <code>ParameterError</code>.</p>
 <!-- --8<-- [end:HighlightedText-hooks] -->
 
 <p>In the core the layers are empty and <code>css_prefix</code> is <code>anyts</code>.</p>
@@ -2826,6 +2858,47 @@
 <!-- --8<-- [start:split_segments] -->
 <p><code>split_segments(length, highlights)</code> - the segments of a text with the same set of fragments: their bounds are the starts and the ends of all the fragments, and overlapping or nested fragments give segments with several layers.</p>
 <!-- --8<-- [end:split_segments] -->
+
+<h2 id="finders">Finders of the layers<a class="headerlink" href="#finders" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:highlight-finders] -->
+<p>The layers that the languages share are found by functions that take the language as their parameters: the notes of the fragments - callables where they read a number, so a language writes its plural forms, English by default - the counts of syllables, the normalized forms of the words, the stems, the matcher of the connectors. A library calls them from its <code>find</code>.</p>
+<!-- --8<-- [end:highlight-finders] -->
+
+<!-- --8<-- [start:find_long_sents] -->
+<p><code>find_long_sents(sents, long_sent_word_factor, note)</code> - the layer <code>long_sents</code>: the sentences of that number of words or more, the note by their number of words.</p>
+<!-- --8<-- [end:find_long_sents] -->
+
+<!-- --8<-- [start:find_complex_words] -->
+<p><code>find_complex_words(words, complex_syl_factor, count_syllables, note)</code> - the layer <code>complex_words</code>: the words of that number of syllables of <code>count_syllables</code> or more, the note by their number of syllables.</p>
+<!-- --8<-- [end:find_complex_words] -->
+
+<!-- --8<-- [start:find_words] -->
+<p><code>find_words(words, is_match, layer, note)</code> - a layer of single words, such as stopwords, rare words or verbal nouns: the words of the check <code>is_match</code> of a language, with one note.</p>
+<!-- --8<-- [end:find_words] -->
+
+<!-- --8<-- [start:find_phrase_highlights] -->
+<p><code>find_phrase_highlights(words, phrases, layer, note, normalize)</code> - a layer of the phrases of a list, such as compound prepositions, clichés or parentheticals: the phrases are matched by the normalized forms of their words, every word normalized alone as in the text (<code>find_phrases</code>), and a mapping gives their variants - contractions, forms of verbs - with the phrase each stands for, the first of the variants that normalize alike winning; a set of phrases is read in order (<code>in_order</code>). A fragment covers the words from the first to the last, and the note reads the phrase of the list, in quotes by default.</p>
+<!-- --8<-- [end:find_phrase_highlights] -->
+
+<!-- --8<-- [start:find_connector_highlights] -->
+<p><code>find_connector_highlights(words, sents, matcher, note, pos)</code> - the layer <code>connectors</code>: the connectors of a <code>ConnectorMatcher</code> of the language inside every sentence, in the whole text when the sentences are <code>None</code>; a one-word connector is checked by its part of speech when a word of the sentence has one - its own, or that of the hook <code>pos</code>. The note gives the class and the kind of the connector by default.</p>
+<!-- --8<-- [end:find_connector_highlights] -->
+
+<!-- --8<-- [start:find_split_predicate_highlights] -->
+<p><code>find_split_predicate_highlights(pairs, note)</code> - the layer <code>split_predicates</code>: a fragment for every pair of a light verb and its noun a language finds, from the first word of the pair to the last; the note reads their lemmas by default.</p>
+<!-- --8<-- [end:find_split_predicate_highlights] -->
+
+<!-- --8<-- [start:calc_alliteration_runs] -->
+<p><code>calc_alliteration_runs(words, frequencies, threshold, stem, is_transparent)</code> - the repetitions of a consonant in neighbouring words: a run of two words or more with the consonant in the stem of each - the stem of a language leaving out the endings that repeat by agreement - whose probability under an independent spread of the consonants, the product over its words of <span class="arithmatex">\(1 - (1 - f)^n\)</span> with <span class="arithmatex">\(f\)</span> the frequency of the consonant and <span class="arithmatex">\(n\)</span> the length of the stem, is below the threshold (<code>anyts.constants.ALLITERATION_THRESHOLD</code>, 0.001). The consonants are the keys of <code>frequencies</code>; a transparent word - by default one shorter than <code>ALLITERATION_MIN_WORD_LEN</code> (3) letters, a stopword for a language - neither breaks nor continues a run; the words are taken in lower case.</p>
+<!-- --8<-- [end:calc_alliteration_runs] -->
+
+<!-- --8<-- [start:find_alliteration] -->
+<p><code>find_alliteration(words, sents, frequencies, threshold, stem, is_transparent, note)</code> - the layer <code>alliteration</code>: the runs of <code>calc_alliteration_runs</code> inside every sentence, in the whole text when the sentences are <code>None</code>, the note by the consonant.</p>
+<!-- --8<-- [end:find_alliteration] -->
+
+<!-- --8<-- [start:HighlightedText-check_params] -->
+<p><code>check_params(long_sent_word_factor, complex_syl_factor, alliteration_threshold, *, messages)</code> checks the parameters of the highlighting of a library: a number of words or syllables that is not an integer of at least one, or a threshold outside the interval (0, 1], raises <code>ParameterError</code>.</p>
+<!-- --8<-- [end:HighlightedText-check_params] -->
 
 <h2 id="usage-example">Usage example<a class="headerlink" href="#usage-example" title="Permanent link">&para;</a></h2>
 <p>A layer of the long sentences in a subclass.</p>
