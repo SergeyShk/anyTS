@@ -41,21 +41,16 @@ class SyntaxStats(Stats):
     Base of the syntactic statistics of a text
 
     Description:
-        Measures of the dependency tree (Ivanov, Solnyshkina and Solovyev 2018):
-        the dependency distances, the depth of the tree, the leaves and the
-        subtrees, the valency of the finite verbs, the coordination chains, the
-        clauses and the subordinate clauses, the modifiers of a noun, the
-        participial clauses, the passive, the infinitives, the negations, the
-        split predicates and the ratio of the nouns to the verbs. Punctuation,
-        symbols and whitespace are no nodes of the tree, and the distances are
-        counted in positions of words. The measures of a sentence (the longest
-        dependency, the depth, the nodes per leaf) are averaged over the
-        sentences, the constructions are given per sentence.
+        Measures of the dependency tree and of the syntactic constructions
+        (Ivanov, Solnyshkina and Solovyev 2018). Punctuation, symbols and
+        whitespace are no nodes of the tree, and the distances are counted in
+        positions of words. The measures of a sentence (the longest dependency,
+        the depth, the nodes per leaf) are averaged over the sentences, the
+        constructions are given per sentence.
         A language library subclasses the class and sets its hooks; the
-        defaults read Universal Dependencies and its morphological features,
-        the relations it shares with ClearNLP and, for the passive and its
-        agent, the relations of both. The statistics of the constructions of
-        a language are added by the subclass from sents.
+        defaults read Universal Dependencies and the relations it shares with
+        ClearNLP. The subclass adds the statistics of its own constructions
+        from sents.
         get_stats, to_dataframe, print_stats and describe come from Stats
 
     References:
@@ -90,7 +85,7 @@ class SyntaxStats(Stats):
         mean_dependency_distance (float): Mean dependency distance
         std_dependency_distance (float): Standard deviation of the dependency distance
         max_dependency_distance (float): Mean of the longest dependencies of the
-            sentences, over the sentences that have dependencies
+            sentences that have dependencies
         p_adjacent_dependencies (float): Share of adjacent dependencies - of length 1
         tree_depth (float): Mean depth of the dependency tree of a sentence
         leaves_per_sent (float): Leaves per sentence
@@ -246,8 +241,8 @@ class SyntaxStats(Stats):
         Getting the Doc of a source
 
         Description:
-            The source itself, which must be a Doc; a library that parses a
-            string with its model overrides the method
+            The source itself, which must be a Doc; a library that parses
+            strings overrides the method
 
         Arguments:
             source (Doc): Data source
@@ -269,11 +264,10 @@ class SyntaxStats(Stats):
         Description:
             The head of the sentence, or a word with a relation of CLAUSE_DEPS
             (ccomp, advcl, acl, csubj, parataxis and their subtypes) whose
-            predicate (predicate_form) is neither a participle, a converb nor a
-            gerund, whose clauses are counted apart, nor an infinitive under acl
-            (the wish to leave): has been built is finite. A parataxis and a
-            conjunct of the head of a clause count only as predicates
-            (is_predicate), so that a parenthetical word is no clause
+            predicate (predicate_form) is not a participle, a converb or a
+            gerund (counted apart), nor an infinitive under acl (the wish to
+            leave). A parataxis and a conjunct of a clause head count only as
+            predicates (is_predicate), so a parenthetical word is no clause
 
         Arguments:
             token (Token): Token
@@ -332,8 +326,8 @@ class SyntaxStats(Stats):
 
         Description:
             A participle (VerbForm=Part) that is not the head of the sentence,
-            has no auxiliary or copula (has been built is a predicate) and has
-            a dependent besides the coordination and the parataxis (calc_valency)
+            has no auxiliary or copula (has been built is a predicate) and has a
+            dependent besides cc, conj and parataxis (calc_valency)
 
         Arguments:
             token (Token): Token
@@ -409,9 +403,8 @@ class SyntaxStats(Stats):
         Finding the split predicates
 
         Description:
-            A split predicate is a light verb with a noun that carries its
-            meaning (to make a decision); the light verbs and the nouns depend
-            on the language, so there are none by default
+            A light verb with a noun that carries its meaning (to make a
+            decision); none by default, as they depend on the language
 
         Arguments:
             words (list[Token]): Words of the text
@@ -428,10 +421,10 @@ def get_words(tokens: Iterable[Token], join_hyphens: bool = False) -> list[Token
 
     Description:
         With join_hyphens, a word the tokenizer split at its hyphens is one
-        word, given by its part that holds its relation: the head of the
-        sentence or the part hanging outside the word, the nearest to the root,
-        as in get_children; by its first part when a hyphen holds the relation
-        or the parts form a loop
+        word, given by the part that holds its relation (the head of the
+        sentence, or the part hanging outside the word, the nearest to the
+        root), or by its first part when a hyphen holds the relation or the
+        parts form a loop
 
     Arguments:
         tokens (Doc|Span|list[Token]): Sequence of tokens
@@ -535,10 +528,10 @@ def get_children(token: Token, join_hyphens: bool = False) -> list[Token]:
     Getting the dependent words of a token
 
     Description:
-        With join_hyphens, a hyphenated word is one word with its hyphens: its
-        dependents are the words whose head (the part hanging outside the word,
-        the nearest to the root) hangs on one of its tokens, each given by that
-        part, or by its first part when it hangs by a hyphen
+        With join_hyphens, the dependents of a hyphenated word are the words
+        whose head (the part hanging outside the word, the nearest to the root)
+        hangs on one of its tokens, each given by that part, or by its first
+        part when it hangs by a hyphen
 
     Arguments:
         token (Token): Token
@@ -575,7 +568,7 @@ def _hyphenated_word(token: Token) -> list[Token] | None:
             return None
         i += 1
     elif (i == 0 or doc[i - 1].text != "-") and (i + 1 >= len(doc) or doc[i + 1].text != "-"):
-        # A word without a hyphen next to it is a word of its own, the common case
+        # The common case: no hyphen next to the word
         return [token]
     start = i
     while joins_previous(doc[start]):
@@ -605,9 +598,9 @@ def subtree_len(token: Token, join_hyphens: bool = False) -> int:
     Computing the length of the subtree of a token in words
 
     Description:
-        The token itself and all of its direct and indirect dependents; with
-        join_hyphens, the hyphenated word the token belongs to and the words that
-        hang on it (get_children), directly or through punctuation
+        The token and all of its direct and indirect dependents; with
+        join_hyphens, the hyphenated word of the token and the words that hang
+        on it (get_children), directly or through punctuation
 
     Arguments:
         token (Token): Token
@@ -657,13 +650,11 @@ def calc_dependency_distances(tokens: Iterable[Token], join_hyphens: bool = Fals
     Computing the dependency distances
 
     Description:
-        The distance of a dependency is the distance between a word and its head
-        in positions of words, punctuation left out (Liu 2008); the head of a
-        sentence has no dependency and is skipped, as is a word whose head lies
-        outside the given sequence. With join_hyphens, a hyphenated word is one
-        position with its hyphens; a word holding the head of the sentence has
-        no dependency, and the head of another one is that of its part hanging
-        outside it, the nearest to the root
+        The distance between a word and its head in positions of words,
+        punctuation left out (Liu 2008); the head of a sentence and a word whose
+        head lies outside the sequence are skipped. With join_hyphens, a
+        hyphenated word is one position, and its head is that of its part
+        hanging outside it, the nearest to the root
 
     References:
         Liu H. Dependency distance as a metric for language comprehension difficulty.
@@ -692,10 +683,9 @@ def calc_tree_depth(tokens: Iterable[Token], join_hyphens: bool = False) -> int:
 
     Description:
         The longest path from the head of the sentence to a leaf in relations;
-        for a sequence of several sentences the maximum is taken, for a sentence
-        of one word the depth is 0. With join_hyphens, a hyphenated word is one
-        word with its hyphens, hanging by its part outside it, the nearest to
-        the root, as in calc_dependency_distances
+        the maximum for several sentences, 0 for a sentence of one word. With
+        join_hyphens, a hyphenated word is one node, as in
+        calc_dependency_distances
 
     Arguments:
         tokens (Doc|Span|list[Token]): Sequence of tokens
@@ -754,17 +744,13 @@ def predicate_form(token: Token, auxiliary_form: Callable[[Token], str] | None =
     Getting the verb form of a predicate
 
     Description:
-        The form the auxiliaries and copulas of a word give (the relations of
-        AUXILIARY_DEPS), as Universal Dependencies annotates them: a finite one
-        makes the predicate finite wherever it stands (had arrived, a German
-        gekommen sein wird); otherwise the form of the first one decides (to
-        have gone is an infinitive, being chosen a gerund), and without one the
-        form of the word itself. A past participle auxiliary counts as finite:
-        it follows a finite one, which the parser may attach to another word
-        (had been chosen); a present participle (having eaten) does not. An
-        auxiliary the model leaves without a form is read by auxiliary_form, a
-        hook of the language that gives its form or an empty string to skip it;
-        without the hook it is skipped
+        The form the auxiliaries and copulas of a word give (AUXILIARY_DEPS),
+        as Universal Dependencies annotates them: Fin when one of them is
+        finite or the first one is a past participle (had been chosen),
+        otherwise the form of the first one (to have gone is an infinitive),
+        and without them the form of the word itself. An auxiliary without
+        VerbForm is read by the language hook auxiliary_form, which gives its
+        form or an empty string to skip it; without the hook it is skipped
 
     Arguments:
         token (Token): Token
@@ -822,8 +808,7 @@ def calc_valency(token: Token, join_hyphens: bool = False) -> int:
     Computing the valency of a token
 
     Description:
-        The number of dependent words, the relations cc, conj and parataxis
-        left out
+        The number of dependent words without cc, conj and parataxis
 
     Arguments:
         token (Token): Token
@@ -842,13 +827,12 @@ def calc_coordination_chains(tokens: Iterable[Token], join_hyphens: bool = False
     Computing the lengths of the coordination chains
 
     Description:
-        A chain is a group of words linked by the relation conj, whichever word
-        each conjunct hangs on: Universal Dependencies attaches every conjunct
-        to the first one, ClearNLP to the previous one; a nested coordination
-        (A and B, or C) and an enumeration the parser splits between several
-        heads give one chain. The length of a chain is the number of its words.
-        With join_hyphens, a hyphenated word is one word, linked by the conj
-        relations of all of its parts with other words
+        A chain is a group of words linked by conj, whichever word each
+        conjunct hangs on (the first one in Universal Dependencies, the
+        previous one in ClearNLP); a nested coordination (A and B, or C) and an
+        enumeration split between several heads are one chain. Its length is
+        the number of its words. With join_hyphens, a hyphenated word is one
+        word, linked by the conj of any of its parts
 
     Arguments:
         tokens (Doc|Span|list[Token]): Sequence of tokens
@@ -946,12 +930,12 @@ def calc_modifier_chains(
     Computing the lengths of the chains of nested modifiers
 
     Description:
-        A chain is two or more nested modifiers of is_modifier, such as the
-        complements of the increase of the efficiency of the use of resources
-        (length 3); it starts at a modifier whose head is none, and its length
-        is the number of modifiers in its longest branch. The words hang on
-        each other as get_children gives them: punctuation is no link, and with
-        join_hyphens a hyphenated word is one link
+        Two or more nested modifiers of is_modifier, such as the complements of
+        the increase of the efficiency of the use of resources (length 3); a
+        chain starts at a modifier whose head is none, and its length is the
+        number of modifiers in its longest branch. The links are those of
+        get_children: punctuation is no link, and with join_hyphens a
+        hyphenated word is one link
 
     Arguments:
         tokens (Doc|Span|list[Token]): Sequence of tokens

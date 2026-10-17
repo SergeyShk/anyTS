@@ -80,21 +80,10 @@ class ConnectorMatcher:
     Search of the connectors of a dictionary in the sentences of a text
 
     Description:
-        A connector is matched by the normalized forms of its words (normalize,
-        the lower case by default), the longest one at every position, without
-        overlaps; a period or a hyphen inside a connector may be split off by
-        the tokenizer (e.g.). The words are those of one sentence without
-        punctuation, the first one its start. The context rules of a language
-        are class attributes: a connector followed by a word of blocked_after,
-        preceded by one of blocked_before or followed by a part of speech of
-        blocked_after_pos is no connector, nor is one of not_at_start opening
-        the sentence or one of only_after inside it after another word than
-        those listed. With the parts of speech given, a one-word connector
-        counts only with a part of speech of pos_tags or of pos_extra for its
-        form, never after a part of speech of not_after_pos, and with one of
-        start_only_pos only at the start of the sentence; without them the
-        rules that read a part of speech are skipped. The rules are empty by
-        default
+        A connector is matched by the normalized forms of its words (normalize),
+        the longest one at every position, without overlaps; a period or a
+        hyphen inside a connector may be split off by the tokenizer (e.g.).
+        The context rules of a language are class attributes, empty by default
 
     Arguments:
         connectors (dict[str, tuple[str, str]]): Class and kind by connector
@@ -218,7 +207,8 @@ class ConnectorMatcher:
         Finding the connectors of a sentence
 
         Arguments:
-            words (list[str]): Words of the sentence without punctuation
+            words (list[str]): Words of the sentence without punctuation, the first
+                one its start
             sent_index (int): Number of the sentence, written into the occurrences
             pos (list[str]): Parts of speech of the words, None for a word without one;
                 without them the rules that read a part of speech are skipped
@@ -345,19 +335,13 @@ class CohesionStats(Stats):
     Base of the cohesion statistics of a text
 
     Description:
-        Referential cohesion in the manner of Coh-Metrix: the overlap of the
-        nouns, of the arguments (nouns and pronouns) and of the content words
-        between adjacent sentences and between all pairs of sentences, the
-        givenness (pronouns, demonstratives, lemmas used before), the temporal
-        cohesion (the repetition of the tense and of the aspect of the verbs of
-        adjacent sentences) and the connectors of a dictionary by class and
-        kind per 1000 words. The sentences are compared by lemmas.
-        A language library subclasses the class and sets its hooks: the words
-        of a source with their features (analyze, word_info), the temporal
-        features, the dictionary of the connectors and the class that finds
-        them with the context rules of the language. By default the source is
-        a Doc with the parts of speech and the lemmas, read by Universal
-        Dependencies, and there are no connectors.
+        Cohesion in the manner of Coh-Metrix: the overlap of the nouns, of the
+        arguments and of the content words between sentences, the givenness,
+        the temporal cohesion and the connectors of a dictionary per 1000
+        words. The sentences are compared by lemmas.
+        A language library subclasses the class and sets its hooks; by default
+        the source is a Doc with the parts of speech and the lemmas, read by
+        Universal Dependencies, and there are no connectors.
         get_stats, to_dataframe, print_stats and describe come from Stats
 
     References:
@@ -366,9 +350,9 @@ class CohesionStats(Stats):
 
     Arguments:
         source (Doc): Data source (a Doc object, or what analyze reads)
-        sents_extractor (SentsExtractor): Sentence extraction tool; an extractor given
-            here splits a Doc by its text whatever its boundaries, and without one a
-            Doc with no sentence boundaries is split by sents_extractor_class()
+        sents_extractor (SentsExtractor): Sentence extraction tool; given, it splits a
+            Doc by its text whatever its boundaries, and without it a Doc with no
+            boundaries is split by sents_extractor_class()
         connectors (dict[str, tuple[str, str]]): Class and kind by connector;
             load_connectors() by default
 
@@ -551,9 +535,8 @@ class CohesionStats(Stats):
 
         Description:
             The words of a Doc with the parts of speech and the lemmas, sentence
-            by sentence (doc_units), every word with its features of word_info.
-            A library that reads a string or a Doc without these annotations
-            overrides the method
+            by sentence (doc_units), with the features of word_info; a library
+            that reads a string or a Doc without these annotations overrides it
 
         Arguments:
             source (Doc): Data source
@@ -646,8 +629,7 @@ class CohesionStats(Stats):
         Getting the dictionary of the connectors of the language
 
         Description:
-            Read once for a class and shared by its instances; empty by default,
-            so a text has no connectors unless a library gives its dictionary
+            Read once for a class and shared by its instances; empty by default
 
         Returns:
             dict[str, tuple[str, str]]: Class and kind by connector
@@ -661,8 +643,7 @@ class CohesionStats(Stats):
 
         Description:
             connector_matcher_class over load_connectors, built once for a class
-            and shared by its instances, for the search of the connectors outside
-            the statistics too (a sentence, a highlighting)
+            and shared by its instances and by searches outside the statistics
 
         Returns:
             ConnectorMatcher: Matcher of the dictionary
@@ -695,7 +676,7 @@ def calc_overlap(sets: Sequence[Collection[str]], adjacent: bool = True) -> floa
         The binary overlap of Coh-Metrix (CRFNO1, CRFAO1, CRFSO1 over the
         adjacent pairs, CRFNOa, CRFAOa, CRFSOa over all): a pair of sentences is
         cohesive when they share at least one element; all the pairs are counted
-        over bit masks of the sentences, without going through them
+        without going through them
 
     Arguments:
         sets (list[set[str]]): Elements of every sentence
@@ -762,8 +743,7 @@ def calc_proportional_overlap(sets: Sequence[Collection[str]], adjacent: bool = 
     Description:
         The proportional overlap of Coh-Metrix (CRFCWO1, CRFCWOa): the Dice
         coefficient of a pair of sentences (dice) averaged over the pairs; over all
-        the pairs the sum comes from the histograms of the lengths of the sentences
-        holding every element (see calc_overlaps), without going through them
+        the pairs the sum is computed without going through them
 
     Arguments:
         sets (list[set[str]]): Elements of every sentence
@@ -838,8 +818,7 @@ def calc_overlaps(sets: Sequence[Collection[str]], proportional: bool = True) ->
     Computing the binary and the proportional overlap over adjacent and all pairs
 
     Description:
-        Gives the values of calc_overlap and calc_proportional_overlap over the
-        adjacent and all the pairs at once
+        calc_overlap and calc_proportional_overlap in one call
 
     Arguments:
         sets (list[set[str]]): Elements of every sentence
@@ -929,8 +908,8 @@ def calc_repetition(sents: Sequence[Sequence[str]]) -> float:
     Description:
         The repetition of the tense and of the aspect of Coh-Metrix (SMTEMP): a
         pair of adjacent sentences is cohesive when the dominant values of the
-        feature of their verbs are equal; a pair where one of the sentences has
-        no verb with the feature is skipped
+        feature of their verbs are equal; a pair with a sentence without such a
+        verb is skipped
 
     Arguments:
         sents (list[list[str]]): Values of the feature of the verbs of every sentence

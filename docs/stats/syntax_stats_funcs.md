@@ -14,7 +14,7 @@ Functions over the dependency tree of a spaCy `Doc`, a `Span` or a list of token
 ## Hyphenated words { #hyphenated-words }
 
 <!-- --8<-- [start:hyphenated_words] -->
-A tokenizer may split a word at its hyphens (`well-known` into `well`, `-`, `known`) and a parser then hangs every part on its own head. With `join_hyphens=True`, `get_words`, `get_children`, `count_children`, `subtree_len`, `calc_valency`, `calc_dependency_distances` and the other functions take a word whose parts `anyts.utils.joins_previous` joins for one word with its hyphens. A word that holds the head of the sentence has no head; the head of another one is that of its part hanging outside it, the nearest to the root (a word rather than a hyphen when equal). The dependents of a word are the words whose head hangs on one of its tokens, each given by that part (or by its first part when it hangs by a hyphen), and its subtree is the word and the words that hang on it, directly or through punctuation, so every word has one dependency and is the dependent of one word.
+A tokenizer may split a word at its hyphens (`well-known` into `well`, `-`, `known`), and a parser then hangs every part on its own head. With `join_hyphens=True` the functions of the tree take a word whose parts `anyts.utils.joins_previous` joins for one word with its hyphens. A word holding the head of the sentence has no head; the head of another one is that of its part hanging outside it, the nearest to the root (a word rather than a hyphen when equal). The dependents of a word are the words whose head hangs on one of its tokens, each given by that part (or by its first part when it hangs by a hyphen); its subtree is the word and the words that hang on it, directly or through punctuation. So every word has one dependency and is the dependent of one word.
 <!-- --8<-- [end:hyphenated_words] -->
 
 ## is_root
@@ -46,7 +46,7 @@ The relation of a token without its subtype, which Universal Dependencies separa
 ## calc_dependency_distances
 
 <!-- --8<-- [start:calc_dependency_distances] -->
-The dependency distances (Liu 2008): the distance between a word and its head in positions of words, punctuation left out, in the order of the words. The head of a sentence has no dependency and is skipped, as is a word whose head lies outside the given sequence.
+The dependency distances (Liu 2008): the distance between a word and its head in positions of words, punctuation left out, in the order of the words. The head of a sentence and a word whose head lies outside the sequence are skipped.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
@@ -57,7 +57,7 @@ The dependency distances (Liu 2008): the distance between a word and its head in
 ## calc_tree_depth
 
 <!-- --8<-- [start:calc_tree_depth] -->
-The depth of the dependency tree: the longest path from the head of a sentence to a leaf, in relations between words. For a sequence of several sentences the maximum is taken; a sentence of one word has depth 0. With `join_hyphens` a hyphenated word is one word, and the words that hang on any of its parts are one level below it.
+The depth of the dependency tree: the longest path from the head of a sentence to a leaf, in relations between words; the maximum for several sentences, 0 for a sentence of one word. With `join_hyphens` a hyphenated word is one word, and the words that hang on any of its parts are one level below it.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
@@ -68,7 +68,7 @@ The depth of the dependency tree: the longest path from the head of a sentence t
 ## predicate_form { #verb-forms }
 
 <!-- --8<-- [start:predicate_form] -->
-`predicate_form(token, auxiliary_form)` gives the verb form of a predicate by the forms (`VerbForm`) of its auxiliaries and copulas - the relations `aux` and `cop` with their subtypes, `anyts.constants.AUXILIARY_DEPS` - as Universal Dependencies annotates them. A finite auxiliary makes the predicate finite wherever it stands (*had arrived*, the German *gekommen sein wird*); otherwise the form of the first auxiliary decides (*to have gone* is an infinitive, *being chosen* a gerund), and without auxiliaries the form of the word itself. A past participle auxiliary counts as finite, since it follows a finite one that the parser may attach to another word (*had been chosen*); a present participle (*having eaten*) does not. A ClearNLP parse has no copula relation, its copula heading the clause with a form of its own, and its passive auxiliary `auxpass` is not read. An auxiliary the model leaves without a form is read by the hook `auxiliary_form` of a language, which gives its form, for instance by its ending, or an empty string to skip it; without the hook such an auxiliary is skipped. A word with no verb form gives an empty string, and a hook that is not callable raises `SourceTypeError`.
+`predicate_form(token, auxiliary_form)` gives the verb form of a predicate by the forms (`VerbForm`) of its auxiliaries and copulas (`aux` and `cop` with their subtypes, `anyts.constants.AUXILIARY_DEPS`), as Universal Dependencies annotates them. A finite auxiliary makes the predicate finite wherever it stands (*had arrived*, the German *gekommen sein wird*); otherwise the first auxiliary decides (*to have gone* is an infinitive, *being chosen* a gerund), and without auxiliaries the word itself. A past participle auxiliary counts as finite, since it follows a finite one the parser may attach to another word (*had been chosen*); a present participle (*having eaten*) does not. A ClearNLP parse has no copula relation: its copula heads the clause with its own form, and its passive auxiliary `auxpass` is not read. An auxiliary the model leaves without a form is read by the language hook `auxiliary_form`, which gives its form or an empty string to skip it; without the hook it is skipped. A word with no verb form gives an empty string; a hook that is not callable raises `SourceTypeError`.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
@@ -114,7 +114,7 @@ The valency of a token: the number of its dependent words, the relations `cc`, `
 ## calc_coordination_chains
 
 <!-- --8<-- [start:calc_coordination_chains] -->
-The lengths of the coordination chains, in the order of their first words. A chain is a group of words linked by the relation `conj`, whichever word each conjunct hangs on: Universal Dependencies attaches every conjunct to the first one (`pears → apples`, `plums → apples`), ClearNLP to the previous one (`pears → apples`, `plums → pears`), and both give one chain of three for `apples, pears and plums`. A nested coordination (`cats and dogs, or birds`) and an enumeration that the parser splits between several heads are one chain as well. The length of a chain is the number of its words; a conjunct whose head lies outside the sequence belongs to no chain with it. With `join_hyphens` a hyphenated word is one conjunct, linked by the `conj` of any of its parts (`member and vice-governor` is a chain of two).
+The lengths of the coordination chains, in the order of their first words. A chain is a group of words linked by `conj`, whichever word each conjunct hangs on: Universal Dependencies attaches every conjunct to the first one (`pears → apples`, `plums → apples`), ClearNLP to the previous one (`pears → apples`, `plums → pears`); both give one chain of three for `apples, pears and plums`. A nested coordination (`cats and dogs, or birds`) and an enumeration split between several heads are one chain too. The length of a chain is the number of its words; a conjunct whose head lies outside the sequence is not linked to it. With `join_hyphens` a hyphenated word is one conjunct, linked by the `conj` of any of its parts (`member and vice-governor` is a chain of two).
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
@@ -135,7 +135,7 @@ The lengths of the coordination chains, in the order of their first words. A cha
 <!-- --8<-- [end:count_noun_modifiers] -->
 
 <!-- --8<-- [start:calc_modifier_chains] -->
-The lengths of the chains of nested modifiers, in the order of the words. A chain is two or more modifiers each hanging on the previous one, such as the complements of `the increase of the efficiency of the use of resources` (length 3), and what a modifier is comes from the check `is_modifier` of a language - a complement with a preposition, a noun in the genitive. A chain starts at a modifier whose head is none, and its length is the number of modifiers in its longest branch. The words hang on each other as `get_children` gives them: punctuation is no link of a chain, and with `join_hyphens` a hyphenated word is one link. A check that is not callable raises `SourceTypeError`.
+The lengths of the chains of nested modifiers, in the order of the words. A chain is two or more modifiers each hanging on the previous one, such as the complements of `the increase of the efficiency of the use of resources` (length 3); the check `is_modifier` of a language says what a modifier is (a complement with a preposition, a noun in the genitive). A chain starts at a modifier whose head is none, and its length is the number of modifiers in its longest branch. The links are those of `get_children`: punctuation is no link, and with `join_hyphens` a hyphenated word is one link. A check that is not callable raises `SourceTypeError`.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |

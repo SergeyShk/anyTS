@@ -3,10 +3,10 @@
 !!! info ""
     **anyts.cohesion_stats**
 
-Functions that measure how the sentences of a text are tied together by shared elements, in the manner of Coh-Metrix, and the search of the [connectors](#connectors) that tie them. A sentence is given as the collection of its elements - lemmas of nouns, arguments or content words, values of a feature of its verbs - so the functions see no language: a library chooses the elements.
+Functions that measure how the sentences of a text are tied together by shared elements, in the manner of Coh-Metrix, and the search of the [connectors](#connectors) that tie them. A sentence is given as the collection of its elements (lemmas of nouns, arguments or content words, values of a feature of its verbs), which a library chooses, so the functions see no language.
 
 <!-- --8<-- [start:cohesion-checks] -->
-A list of sentences that is a string, a `Doc`, an iterator, a set or a table raises `SourceTypeError`, and so does a sentence that is not a list of strings (`check_words`): a string would be read character by character, an iterator exhausted by the first pass, and spaCy tokens never match, since a token equals only itself. The overlaps (`calc_overlap`, `calc_proportional_overlap`, `calc_overlaps`) compare sets of words and take a sentence as a set too; `count_given` and `calc_repetition` count the words in order and refuse a set.
+A list of sentences that is a string, a `Doc`, an iterator, a set or a table raises `SourceTypeError`, and so does a sentence that is not a list of strings (`check_words`), such as a list of spaCy tokens. The overlaps (`calc_overlap`, `calc_proportional_overlap`, `calc_overlaps`) take a sentence as a set too; `count_given` and `calc_repetition` count the words in order and refuse a set.
 <!-- --8<-- [end:cohesion-checks] -->
 
 ## calc_overlap
@@ -51,7 +51,7 @@ and 0 for two empty sets.
 ## calc_overlaps
 
 <!-- --8<-- [start:calc_overlaps] -->
-The values of `calc_overlap` and `calc_proportional_overlap` over the adjacent and over all the pairs at once, as an `Overlap` named tuple with the fields `adjacent`, `all`, `prop_adjacent` and `prop_all`. The values over all the pairs are computed without going through every pair: the pairs sharing an element are counted over bit masks of the sentences, and the sum of the Dice coefficients over the histograms of the lengths of the sentences holding every element. That sum is added by `math.fsum`, so it does not depend on the order of the elements. Without `proportional` the fields `prop_adjacent` and `prop_all` are `nan`.
+The values of `calc_overlap` and `calc_proportional_overlap` over the adjacent and over all the pairs at once, as an `Overlap` named tuple with the fields `adjacent`, `all`, `prop_adjacent` and `prop_all`; without `proportional` the last two are `nan`. The values over all the pairs are computed without going through every pair: the sharing pairs are counted over bit masks of the sentences, and the sum of the Dice coefficients over the histograms of the lengths of the sentences holding each element, added by `math.fsum` so that it does not depend on the order of the elements.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
@@ -105,7 +105,7 @@ The repetition of the tense and of the aspect of Coh-Metrix (SMTEMP): the share 
 ## Connectors { #connectors }
 
 <!-- --8<-- [start:ConnectorMatcher] -->
-`ConnectorMatcher(connectors)` finds the connectors (discourse markers: *because*, *however*, *on the other hand*) of a dictionary in the sentences of a text. The dictionary gives the class of every connector - causal, adversative, concessive, temporal, additive, conditional or reformulative (`CONNECTOR_CLASSES`) - and its kind, primary or secondary (`CONNECTOR_KINDS`). A connector is matched by the normalized forms of its words, the longest one at every position, without overlaps; a period or a hyphen inside a connector may be split off by the tokenizer (*e.g.* as `e`, `g`). An occurrence is a `Connector`: the number of the sentence `sent`, the positions `start` and `end` of its words in the sentence, the connector `text` as the dictionary writes it, its class `cls` and kind `kind`.
+`ConnectorMatcher(connectors)` finds the connectors (discourse markers: *because*, *however*, *on the other hand*) of a dictionary in the sentences of a text. The dictionary gives the class of every connector - causal, adversative, concessive, temporal, additive, conditional or reformulative (`CONNECTOR_CLASSES`) - and its kind, primary or secondary (`CONNECTOR_KINDS`). A connector is matched by the normalized forms of its words, the longest one at every position, without overlaps; a period or a hyphen inside a connector may be split off by the tokenizer (*e.g.* as `e`, `g`). An occurrence is a `Connector`: the number of the sentence `sent`, the positions `start` and `end` of its words, the connector `text` as the dictionary writes it, its class `cls` and kind `kind`.
 
 A dictionary that is not a mapping of a phrase to a pair of strings raises `SourceTypeError`, an unknown class or kind `ParameterError`.
 <!-- --8<-- [end:ConnectorMatcher] -->
@@ -132,7 +132,7 @@ The words of the lists and the keys of `pos_extra` are normalized forms, while t
 ### find
 
 <!-- --8<-- [start:ConnectorMatcher-find] -->
-`find(words, sent_index, pos)` returns the occurrences of the connectors in a sentence in the order of its words. The words are those of one sentence without punctuation, the first one its start. With the parts of speech of the words, a one-word connector counts only with a part of speech of `pos_tags` or of `pos_extra` for its form, never after one of `not_after_pos`, and with one of `start_only_pos` only at the start of the sentence; a word without a part of speech (`None`) passes, and without the parts of speech these rules are skipped.
+`find(words, sent_index, pos)` returns the occurrences of the connectors in a sentence in the order of its words. The words are those of one sentence without punctuation, the first one its start. With the parts of speech, a one-word connector counts only with one of `pos_tags` or of `pos_extra` for its form, never after one of `not_after_pos`, and with one of `start_only_pos` only at the start of the sentence; a word without a part of speech (`None`) passes. Without the parts of speech the rules that read them are skipped.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
