@@ -3324,7 +3324,7 @@
 <p>A logarithmic modification of TTR (Summer, 1966).</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>The value depends on the logarithm base, 10 by default. See <a href="../diversity_stats/#conventions">conventions</a>. For a text of one lexeme the numerator is undefined, and for a text of no more words than the base the denominator <span class="arithmatex">\(\log \log N\)</span> is zero or negative, so the value is <code>nan</code> there, and so is every window of <code>calc_windowed</code> that short.</p>
+<p>The value depends on the logarithm base, 10 by default. See <a href="../diversity_stats/#conventions">conventions</a>. The value is <code>nan</code> for a text of one lexeme (the numerator is undefined) and for a text no longer than the base (<span class="arithmatex">\(\log \log N \le 0\)</span>), including such windows of <code>calc_windowed</code>.</p>
 </div>
 <p>Formula:</p>
 <div class="arithmatex">\[
@@ -3408,7 +3408,7 @@
 <p>A logarithmic modification of TTR (Dugast, 1978), the reciprocal of the Maas metric.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>The value depends on the logarithm base, 10 by default. See <a href="../diversity_stats/#conventions">conventions</a>. A text without repeated words has an infinite value, like the other reciprocal measures.</p>
+<p>The value depends on the logarithm base, 10 by default. See <a href="../diversity_stats/#conventions">conventions</a>. A text without repeated words has an infinite value.</p>
 </div>
 <p>Formula:</p>
 <div class="arithmatex">\[
@@ -3538,14 +3538,14 @@
 <p>A modification of MSTTR (McCarthy, 2005). Independent of text length.</p>
 <p>Algorithm:</p>
 <ol>
-<li>The text is divided into factors - stretches on which TTR drops to the threshold 0.72 inclusive (<code>TTR &lt;= 0.72</code>, see <a href="../diversity_stats/#conventions">conventions</a>)</li>
-<li>An incomplete factor at the end of the text counts partially, in proportion to how close its TTR came to the threshold</li>
+<li>The text is divided into factors - stretches on which TTR drops to the threshold 0.72 (<code>TTR &lt;= 0.72</code>, see <a href="../diversity_stats/#conventions">conventions</a>)</li>
+<li>An incomplete last factor counts in proportion to how close its TTR came to the threshold</li>
 <li>The number of words is divided by the number of factors</li>
 </ol>
-<p>The refined version of the algorithm makes two passes over the text - forward and backward - and averages the values (McCarthy &amp; Jarvis, 2010).</p>
+<p>The value is the mean of a forward and a backward pass (McCarthy &amp; Jarvis, 2010).</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>The minimum factor length is non-standard (Kyle's lexical-diversity). If no factor completes and TTR never drops below 1, infinity is returned.</p>
+<p>The minimum factor length is non-standard (Kyle's lexical-diversity). If no factor completes and TTR never drops below 1, the value is infinity.</p>
 </div>
 <p>Parameters:</p>
 <table>
@@ -3586,7 +3586,7 @@
 </div>
 <!-- --8<-- [start:calc_mamtld] -->
 <p>Computation of the Moving Average Measure of Textual Lexical Diversity (MA-MTLD).</p>
-<p>A moving-window modification of MTLD after MTLD-MA of koRpus: a factor starts at every position of the text, the value is the mean length of completed factors over two passes, forward and backward. Factors not completed by the end of the text are ignored. The values differ from those of koRpus, which makes the forward pass only, closes a factor at TTR strictly below the threshold and drops the factors shorter than its minimum length instead of extending them to it.</p>
+<p>A moving-window modification of MTLD after MTLD-MA of koRpus: a factor starts at every position of the text, and the value is the mean length of the completed factors over a forward and a backward pass. koRpus makes the forward pass only, closes a factor at TTR strictly below the threshold and drops factors shorter than the minimum length instead of extending them.</p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>If no factor completes, the function returns <code>nan</code>. The metric is unstable on short texts.</p>
@@ -3630,7 +3630,7 @@
 </div>
 <!-- --8<-- [start:calc_mtldw] -->
 <p>Computation of MTLD-W (lexical-diversity <code>mtld_ma_wrap</code>, TAALED).</p>
-<p>A modification of MA-MTLD: a factor starts at every position of the text, and factors not completed by the end of the text continue from its beginning, so all positions get equal weight. A factor cannot be longer than the text.</p>
+<p>A modification of MA-MTLD: factors not completed by the end of the text continue from its beginning, so all positions get equal weight. A factor cannot be longer than the text.</p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>If TTR does not drop to the threshold even over the whole text, the function returns <code>nan</code>. The metric is unstable on texts shorter than 100 words.</p>
@@ -3674,7 +3674,7 @@
 </div>
 <!-- --8<-- [start:calc_hdd] -->
 <p>Computation of the Hypergeometric Distribution D (HD-D).</p>
-<p>An alternative to vocd-D (McCarthy &amp; Jarvis, 2010): instead of drawing random segments of the text, it computes the expected TTR of a random sample of <code>sample_size</code> words exactly. For every lexeme the hypergeometric distribution gives the probability that the sample holds it at least once; the sum of these probabilities is the expected number of lexemes in the sample, and HD-D is that number divided by the sample size. The value involves no randomness.</p>
+<p>An alternative to vocd-D (McCarthy &amp; Jarvis, 2010): the exact expected TTR of a random sample of <code>sample_size</code> words, without drawing samples. The hypergeometric distribution gives the probability that the sample holds each lexeme at least once; HD-D is the sum of these probabilities divided by the sample size.</p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>For texts shorter than 50 words or than the sample size the metric is undefined; the function returns <code>nan</code>.</p>
@@ -3700,7 +3700,7 @@
 <td style="text-align: center;"><code>sample_size</code></td>
 <td style="text-align: center;">int</td>
 <td style="text-align: center;"><code>42</code></td>
-<td style="text-align: center;">Sample size in words, 35 to 50 in the literature</td>
+<td style="text-align: center;">Sample size in words</td>
 </tr>
 </tbody>
 </table>
@@ -3819,7 +3819,7 @@
 <p>Computation of the <a href="https://en.wikipedia.org/wiki/Hapax_legomenon">hapax index</a>.</p>
 <div class="admonition quote">
 <p class="admonition-title">Definition</p>
-<p>A hapax (Greek ἅπαξ λεγόμενον - "said only once") is a word that occurs only once in a certain corpus of texts. For instance, <em>baciyelmo</em>, Sancho Panza's word for the barber's basin that Don Quixote takes for a helmet, is a hapax of Cervantes (it occurs once, in chapter 44 of the first part of <em>Don Quixote</em>).</p>
+<p>A hapax (Greek ἅπαξ λεγόμενον - "said only once") is a word that occurs only once in a corpus. For instance, <em>baciyelmo</em>, Sancho Panza's word for the barber's basin that Don Quixote takes for a helmet, is a hapax of Cervantes (chapter 44 of the first part of <em>Don Quixote</em>).</p>
 </div>
 <p>The metric coincides with Honoré's measure (1979), with the natural logarithm.</p>
 <p>Formula:</p>
@@ -3856,7 +3856,7 @@
 <p><strong>anyts.diversity_stats.calc_frequency_spectrum()</strong></p>
 </div>
 <!-- --8<-- [start:calc_frequency_spectrum] -->
-<p>Computation of the frequency spectrum - the number of lexemes <span class="arithmatex">\(V_i\)</span> occurring exactly <span class="arithmatex">\(i\)</span> times in the text. The measures below are computed from it; their formulas are checked against Tweedie and Baayen (1998).</p>
+<p>Computation of the frequency spectrum - the number of lexemes <span class="arithmatex">\(V_i\)</span> occurring exactly <span class="arithmatex">\(i\)</span> times in the text. The measures below are computed from it, with the formulas of Tweedie and Baayen (1998).</p>
 <p>Notation: <span class="arithmatex">\(N\)</span> - number of words, <span class="arithmatex">\(V\)</span> - number of lexemes, <span class="arithmatex">\(V_i\)</span> - number of lexemes with frequency <span class="arithmatex">\(i\)</span>, <span class="arithmatex">\(V_1\)</span> - hapaxes, <span class="arithmatex">\(V_2\)</span> - dis legomena, <span class="arithmatex">\(p_k\)</span> - relative frequency of a lexeme.</p>
 <p>Parameters:</p>
 <table>
@@ -4079,7 +4079,7 @@ W = N^{V^{-a}}, \quad a = 0.172
 <p>Computation of Dugast's measure (Dugast, 1979). Not to be confused with Dugast's U - the <a href="#dugast-type-token-ratio-dttr">DTTR</a> metric.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>The value depends on the logarithm base, 10 by default. The measure is undefined when <span class="arithmatex">\(\log N \le 1\)</span>, that is, for texts no longer than the logarithm base; in that case the function returns <code>nan</code>.</p>
+<p>The value depends on the logarithm base, 10 by default. For texts no longer than the base (<span class="arithmatex">\(\log N \le 1\)</span>) the measure is undefined; the function returns <code>nan</code>.</p>
 </div>
 <p>Formula:</p>
 <div class="arithmatex">\[
@@ -4334,10 +4334,10 @@ H = -\sum_k p_k \log_2 p_k
 <p><strong>anyts.diversity_stats.fit_zipf_mandelbrot()</strong>, <strong>anyts.diversity_stats.ZipfMandelbrot</strong></p>
 </div>
 <!-- --8<-- [start:fit_zipf_mandelbrot] -->
-<p>Fitting the <a href="https://en.wikipedia.org/wiki/Zipf–Mandelbrot_law">Zipf-Mandelbrot law</a> <span class="arithmatex">\(f(r) = C / (r + q)^s\)</span> to the rank-frequency distribution. With <span class="arithmatex">\(q = 0\)</span> the law reduces to Zipf's law with exponent <span class="arithmatex">\(s\)</span>; the shift <span class="arithmatex">\(q\)</span> describes the flattening of the curve on the most frequent words that Zipf's law does not capture. The parameters are fitted by least squares in logarithmic coordinates with the constraints <span class="arithmatex">\(q \ge 0\)</span>, <span class="arithmatex">\(s \ge 0\)</span>. Returns a <code>ZipfMandelbrot</code> named tuple with the fields <code>c</code>, <code>q</code>, <code>s</code> and <code>r2</code> - the coefficient of determination of the fit in logarithmic coordinates.</p>
+<p>Fitting the <a href="https://en.wikipedia.org/wiki/Zipf–Mandelbrot_law">Zipf-Mandelbrot law</a> <span class="arithmatex">\(f(r) = C / (r + q)^s\)</span> to the rank-frequency distribution. With <span class="arithmatex">\(q = 0\)</span> it is Zipf's law with exponent <span class="arithmatex">\(s\)</span>; the shift <span class="arithmatex">\(q\)</span> captures the flattening of the curve on the most frequent words. Fitted by least squares in logarithmic coordinates with <span class="arithmatex">\(q \ge 0\)</span>, <span class="arithmatex">\(s \ge 0\)</span>. Returns a <code>ZipfMandelbrot</code> named tuple with the fields <code>c</code>, <code>q</code>, <code>s</code> and <code>r2</code> - the coefficient of determination of the fit in logarithmic coordinates.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>For texts of fewer than three lexemes, with identical frequencies of all lexemes and when the fit diverges all fields are <code>nan</code>. On short texts the parameters are unstable: the law describes the frequency distribution of large corpora.</p>
+<p>All fields are <code>nan</code> for texts of fewer than three lexemes, with identical frequencies of all lexemes or when the fit diverges. The parameters are unstable on short texts: the law describes large corpora.</p>
 </div>
 <p>Parameters:</p>
 <table>
@@ -4376,7 +4376,7 @@ H = -\sum_k p_k \log_2 p_k
 <p><strong>anyts.diversity_stats.calc_heaps_beta()</strong>, <strong>anyts.diversity_stats.fit_heaps()</strong>, <strong>anyts.diversity_stats.vocabulary_growth()</strong></p>
 </div>
 <!-- --8<-- [start:calc_heaps_beta] -->
-<p>Computation of the exponent <span class="arithmatex">\(\beta\)</span> of <a href="https://en.wikipedia.org/wiki/Heaps'_law">Heaps' law</a> <span class="arithmatex">\(V(N) = K \cdot N^{\beta}\)</span>, which describes vocabulary growth with text length. Estimated by linear regression of log vocabulary size on log text length along the vocabulary growth curve. On corpora of millions of words <span class="arithmatex">\(\beta\)</span> lies within 0.4-0.6; over the growth curve of a single text it is higher (0.6-0.9), so the values are comparable only between texts of similar length.</p>
+<p>Computation of the exponent <span class="arithmatex">\(\beta\)</span> of <a href="https://en.wikipedia.org/wiki/Heaps'_law">Heaps' law</a> <span class="arithmatex">\(V(N) = K \cdot N^{\beta}\)</span> of vocabulary growth with text length, estimated by linear regression of log vocabulary size on log text length along the growth curve. On corpora of millions of words <span class="arithmatex">\(\beta\)</span> lies within 0.4-0.6, on a single text within 0.6-0.9, so the values are comparable only between texts of similar length.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>The value depends on word order and needs several hundred words or more. For texts shorter than two words the function returns <code>nan</code>.</p>
@@ -4415,7 +4415,7 @@ H = -\sum_k p_k \log_2 p_k
 <p><strong>anyts.diversity_stats.calc_windowed()</strong></p>
 </div>
 <!-- --8<-- [start:calc_windowed] -->
-<p>Windowed computation of any metric: its value over consecutive text windows of equal length, the mean, the sample standard deviation and the confidence interval of the mean by Student's distribution. The standard way to compare texts of different lengths; Kubát and Milička's standardized TTR (not Summer's STTR) is a windowed TTR with a 1000-word window and a 95% confidence interval. For texts shorter than the window the metric is computed over the whole text as a single window; windows with an undefined metric value (<code>nan</code>) are ignored. If the metric is infinite in at least one window (e.g. the inverse Simpson's index on a window of unique words), the mean is infinite and the standard deviation and confidence interval are undefined. Returns a <code>WindowStats</code> named tuple with the fields <code>mean</code>, <code>std</code>, <code>lower</code>, <code>upper</code> and <code>n_windows</code>.</p>
+<p>Windowed computation of any metric: the mean of its values over consecutive windows of equal length, their sample standard deviation and the confidence interval of the mean by Student's distribution. The standard way to compare texts of different lengths; Kubát and Milička's standardized TTR (not Summer's STTR) is a windowed TTR with a 1000-word window and a 95% interval. A text shorter than the window is a single window; <code>nan</code> windows are ignored. A metric infinite in any window (e.g. the inverse Simpson's index on a window of unique words) makes the mean infinite and the deviation and the interval <code>nan</code>. Returns a <code>WindowStats</code> named tuple with the fields <code>mean</code>, <code>std</code>, <code>lower</code>, <code>upper</code> and <code>n_windows</code>.</p>
 <p>Parameters:</p>
 <table>
 <thead>

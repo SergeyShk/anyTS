@@ -2530,12 +2530,13 @@
 </div>
 <h2 id="description">Description<a class="headerlink" href="#description" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:kwic] -->
-<p>A KWIC concordance (keyword in context) - every occurrence of a word or a phrase with its context on the left and on the right. The occurrences are looked for among the words of the text by the word form, ignoring case or respecting it (<code>ignore_case=False</code>), or by the lemma (<code>by_lemma=True</code>), where the words of the keyword are lemmatized as words of a string: with a lemmatizer a phrase may be written in any form, without one it is given by lemmas. The words of a string and of the keyword come from the tokenizer, those of a <code>Doc</code> from its tokens, so a tokenizer that splits a string as the pipeline does finds in a <code>Doc</code> what it finds in its text; punctuation and symbols are not words. The forms are compared in the composed form of Unicode (NFC), without soft hyphens. A phrase does not run across the end of a paragraph or of a sentence - a boundary of a <code>Doc</code> anywhere between its words, an opening mark included, or in a text without boundaries or with partial ones (<code>has_sents</code>) the start of a sentence of the sentence splitter, by default a final mark before whitespace - unless the keyword has a final mark or the start of a sentence in the same place (<code>U.S. Army</code>). The context is <code>window</code> words on each side as they are written in the text, with the punctuation between them; whitespace collapses into one space, and occurrences do not overlap.</p>
+<p>A KWIC concordance (keyword in context) - every occurrence of a word or a phrase with its context on both sides. Occurrences are found among the words of the text by the word form, ignoring case or respecting it (<code>ignore_case=False</code>), or by the lemma (<code>by_lemma=True</code>); the keyword is lemmatized as a string, so with a lemmatizer a phrase may be written in any form and without one it is given by lemmas. The words of a string and of the keyword come from the tokenizer, those of a <code>Doc</code> from its tokens: a tokenizer that splits a string as the pipeline does finds the same in both. Punctuation and symbols are not words; forms are compared in the composed form of Unicode (NFC), without soft hyphens.</p>
+<p>A phrase does not cross the end of a paragraph or a sentence unless the keyword has a final mark or a sentence start in the same place (<code>U.S. Army</code>). A sentence ends at a boundary of a <code>Doc</code> anywhere between the words, an opening mark included, or, without boundaries or with partial ones (<code>has_sents</code>), at a sentence start of the sentence splitter, by default a final mark before whitespace. The context is <code>window</code> words on each side as written, punctuation included; whitespace collapses into one space, and occurrences do not overlap.</p>
 <!-- --8<-- [end:kwic] -->
 
 <h2 id="language-hooks">Language hooks<a class="headerlink" href="#language-hooks" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:kwic-hooks] -->
-<p>The language enters through five parameters, which a language library fills in its own <code>kwic</code>:</p>
+<p>The language enters through five parameters:</p>
 <table>
 <thead>
 <tr>
@@ -2563,7 +2564,7 @@
 <tr>
 <td style="text-align: center;"><code>sentenize</code></td>
 <td style="text-align: center;">a final mark before whitespace</td>
-<td style="text-align: center;">The sentences of a string, of the keyword and of the text of a <code>Doc</code> without boundaries or with partial ones (<code>has_sents</code>) as triples of the start, the end and the text; a phrase does not run from one sentence into the next</td>
+<td style="text-align: center;">The sentences of a string, of the keyword and of the text of a <code>Doc</code> without boundaries or with partial ones (<code>has_sents</code>) as triples of the start, the end and the text</td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>join_hyphens</code></td>
@@ -2572,7 +2573,7 @@
 </tr>
 </tbody>
 </table>
-<p>The words of a <code>Doc</code> are its tokens, a byte order mark at the start of a word left out. By default the lemmas of a word are the word itself and, for a word of one token of a <code>Doc</code> with lemmas, the lemma of the model, so a word is found by its own form and a <code>Doc</code> of a pipeline with a lemmatizer is searched by its lemmas.</p>
+<p>The words of a <code>Doc</code> are its tokens without a byte order mark at the start. By default the lemmas of a word are the word itself and, for a one-token word of a <code>Doc</code> with lemmas, the lemma of the model: a word is found by its own form, and a <code>Doc</code> of a pipeline with a lemmatizer by its lemmas.</p>
 <!-- --8<-- [end:kwic-hooks] -->
 
 <h2 id="parameters">Parameters<a class="headerlink" href="#parameters" title="Permanent link">&para;</a></h2>
@@ -2623,7 +2624,7 @@
 <!-- --8<-- [end:kwic-parameters] -->
 
 <!-- --8<-- [start:format_kwic] -->
-<p><code>format_kwic(concordances, width=40)</code> aligns the lines on the keyword: the left context is cut on the left and aligned to the right, the right one is cut on the right; <code>width</code> is the width of a context in characters, at least one. The lines may come from any iterable and are taken in the composed form of Unicode (NFC), so that the widths count the characters as they are shown.</p>
+<p><code>format_kwic(concordances, width=40)</code> aligns the lines on the keyword: the left context is cut on the left and aligned to the right, the right one cut on the right; <code>width</code>, at least one, is the width of a context in characters. The lines may come from any iterable and are taken in the composed form of Unicode (NFC), so the widths count characters as shown.</p>
 <!-- --8<-- [end:format_kwic] -->
 
 <!-- --8<-- [start:print_kwic] -->

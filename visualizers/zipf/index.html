@@ -2489,7 +2489,7 @@
 <p>Plotting <a href="https://en.wikipedia.org/wiki/Zipf%27s_law">Zipf's law</a> from a counter of the frequencies of words.</p>
 <div class="admonition quote">
 <p class="admonition-title">Definition</p>
-<p>Zipf's law (the rank-frequency law) is an empirical regularity of the distribution of the frequencies of words in a natural language: if all the words of a language, or of a long enough text, are ordered by descending frequency, the frequency of the n-th word of the list is roughly inversely proportional to its number n, the rank of the word. The second most frequent word occurs about half as often as the first, the third a third as often, and so on.</p>
+<p>Zipf's law (the rank-frequency law) is an empirical regularity of the frequencies of words in a natural language: with the words of a language, or of a long enough text, ordered by descending frequency, the frequency of the n-th word is roughly inversely proportional to its rank n. The second most frequent word occurs about half as often as the first, the third a third as often, and so on.</p>
 </div>
 <!-- --8<-- [end:zipf] -->
 
@@ -2561,7 +2561,7 @@
 </tr>
 </tbody>
 </table>
-<p>The function returns the <code>Axes</code> with the plot; a <code>num_words</code> greater than the number of word types does not extend the curves beyond the data, a counter whose words are not strings raises <code>SourceTypeError</code>, an empty counter or a frequency that is not above zero <code>SourceError</code>, and a <code>num_words</code> below one or an exponent that is not a finite number above zero <code>ParameterError</code> - all before a figure is created.</p>
+<p>The function returns the <code>Axes</code> with the plot; a <code>num_words</code> greater than the number of word types does not extend the curves beyond the data. A counter whose words are not strings raises <code>SourceTypeError</code>, an empty counter or a frequency that is not above zero <code>SourceError</code>, and a <code>num_words</code> below one or an exponent that is not a finite number above zero <code>ParameterError</code>, all before a figure is created.</p>
 <!-- --8<-- [end:zipf-parameters] -->
 
 <!-- --8<-- [start:zipf_theory] -->

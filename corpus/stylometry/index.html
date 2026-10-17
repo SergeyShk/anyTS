@@ -2622,7 +2622,7 @@
 <!-- --8<-- [end:delta] -->
 
 <!-- --8<-- [start:delta_profiles] -->
-<p>For authorship attribution there is <code>delta_profiles(reference, samples, n_mfw, variant, culling, statistics)</code>: the most frequent units, the culling and the statistics of the z-scores come from the reference texts <code>reference</code> (the profiles of the authors) or from a separate set <code>statistics</code> - for instance, the training windows when the profiles are too few to estimate the spread of the frequencies; the texts under test <code>samples</code> are described by the same units and scaled by the same statistics. The result is the distances from the texts under test to the reference ones, and the nearest reference in a row is the presumed author. Unlike in <code>delta</code>, the texts under test affect neither the units nor the scaling, so the result for a text does not depend on the texts passed along with it.</p>
+<p><code>delta_profiles(reference, samples, n_mfw, variant, culling, statistics)</code> is for authorship attribution. The most frequent units, the culling and the statistics of the z-scores come from the reference texts (the profiles of the authors) or from a separate set <code>statistics</code>, such as training windows when the profiles are too few to estimate the spread of the frequencies; the texts under test <code>samples</code> get the same units and scaling. The result is the distances from the samples (rows) to the references (columns); the nearest reference is the presumed author. Unlike in <code>delta</code>, a sample affects neither the units nor the scaling, so its result does not depend on the other samples.</p>
 <!-- --8<-- [end:delta_profiles] -->
 
 <div class="admonition example">
@@ -2667,7 +2667,7 @@
 </div>
 <h2 id="zeta">Zeta<a class="headerlink" href="#zeta" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:zeta] -->
-<p>Markers of preferred and avoided words after Burrows (2007) and Craig and Kinney (2009). Every text of both corpora is split into segments of about <code>segment_size</code> words (the number of segments is the ratio of the length to the size rounded half up, at least one), and for a word the share of the segments of each corpus where it occurs (<span class="arithmatex">\(DP\)</span>) is computed. Zeta is the difference of the shares <span class="arithmatex">\(DP_{target} - DP_{comparison}\)</span> from −1 to 1 (<code>zeta.craig</code> in the notation of stylo; the classic Zeta of Craig <span class="arithmatex">\(DP_{target} + (1 - DP_{comparison})\)</span> is greater by one), the logarithmic Zeta is <span class="arithmatex">\(\log_2 \frac{DP_{target}}{DP_{comparison}}\)</span> (<a href="https://zeta-project.eu/en/keyness-measures/burrows-zeta-logarithmic-zeta/">Schöch et al. 2018</a>), a zero share replaced by half a segment. The list starts with the words the target corpus prefers and ends with the avoided ones.</p>
+<p>Markers of preferred and avoided words after Burrows (2007) and Craig and Kinney (2009). Every text of both corpora is split into segments of about <code>segment_size</code> words (the length over the size rounded half up, at least one segment); <span class="arithmatex">\(DP\)</span> is the share of the segments of a corpus with the word. Zeta is <span class="arithmatex">\(DP_{target} - DP_{comparison}\)</span>, from −1 to 1 (<code>zeta.craig</code> in stylo; the classic Zeta of Craig, <span class="arithmatex">\(DP_{target} + (1 - DP_{comparison})\)</span>, is greater by one); the logarithmic Zeta is <span class="arithmatex">\(\log_2 \frac{DP_{target}}{DP_{comparison}}\)</span> (<a href="https://zeta-project.eu/en/keyness-measures/burrows-zeta-logarithmic-zeta/">Schöch et al. 2018</a>), a zero share replaced by half a segment. The list goes from the words the target corpus prefers to those it avoids.</p>
 <table>
 <thead>
 <tr>
@@ -2721,7 +2721,7 @@
 </div>
 <h2 id="kilgarriff_chi2">Kilgarriff's chi-square<a class="headerlink" href="#kilgarriff_chi2" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:kilgarriff_chi2] -->
-<p>The distance between two corpora after <a href="https://www.sketchengine.eu/wp-content/uploads/comparing_corpora_2001.pdf">Kilgarriff (2001)</a>: for the <code>n_mfw</code> most frequent words of the joint corpus the expected frequencies in the corpora are proportional to their sizes, <span class="arithmatex">\(\chi^2 = \sum (O - E)^2 / E\)</span> over the words and both corpora. The greater the value, the more the corpora differ; the value grows with the size of the corpora, so pairs of corpora are comparable with each other at equal sizes.</p>
+<p>The distance between two corpora after <a href="https://www.sketchengine.eu/wp-content/uploads/comparing_corpora_2001.pdf">Kilgarriff (2001)</a>: for the <code>n_mfw</code> most frequent words of the joint corpus the expected frequencies in the corpora are proportional to their sizes, <span class="arithmatex">\(\chi^2 = \sum (O - E)^2 / E\)</span> over the words and both corpora. The greater the value, the more the corpora differ; it grows with the size of the corpora, so only pairs of equal sizes are comparable.</p>
 <table>
 <thead>
 <tr>

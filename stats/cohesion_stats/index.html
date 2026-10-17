@@ -2554,8 +2554,8 @@
 </div>
 <h2 id="description">Description<a class="headerlink" href="#description" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:CohesionStats] -->
-<p>The cohesion statistics of a text in the manner of Coh-Metrix: the overlap of the nouns, of the arguments (nouns and pronouns) and of the content words between adjacent sentences and between all pairs of sentences, the givenness (pronouns, demonstratives, lemmas used before), the temporal cohesion - the repetition of the tense and of the aspect of the verbs of adjacent sentences - and the connectors of a dictionary by class and kind per 1000 words. The sentences are compared by lemmas. The data source is a <code>Doc</code> object of <a href="https://github.com/explosion/spaCy">spaCy</a> with the parts of speech and the lemmas, split into sentences by its boundaries, or by the sentence extractor over its text when one is given or the <code>Doc</code> has none.</p>
-<p>An extractor of another type and a source that is not a <code>Doc</code> raise <code>SourceTypeError</code>, a source without the parts of speech, without the lemmas or without words <code>SourceError</code>; a dictionary of connectors that is not a dictionary of phrases and pairs of strings raises <code>SourceTypeError</code>, an unknown class or kind <code>ParameterError</code>.</p>
+<p>The cohesion statistics of a text in the manner of Coh-Metrix: the overlap of the nouns, the arguments (nouns and pronouns) and the content words between adjacent and between all pairs of sentences, the givenness (pronouns, demonstratives, lemmas used before), the temporal cohesion (the repetition of the tense and the aspect of the verbs of adjacent sentences) and the connectors of a dictionary by class and kind per 1000 words. The sentences are compared by lemmas. The data source is a <code>Doc</code> object of <a href="https://github.com/explosion/spaCy">spaCy</a> with the parts of speech and the lemmas, split into sentences by its boundaries, or by the sentence extractor over its text when one is given or the <code>Doc</code> has none.</p>
+<p>An extractor of another type, a source that is not a <code>Doc</code> and connectors that are not a dictionary of phrases and pairs of strings raise <code>SourceTypeError</code>; a source without parts of speech, lemmas or words raises <code>SourceError</code>, and an unknown class or kind of a connector <code>ParameterError</code>.</p>
 <!-- --8<-- [end:CohesionStats] -->
 
 <h2 id="language-hooks">Language hooks<a class="headerlink" href="#language-hooks" title="Permanent link">&para;</a></h2>
@@ -2573,7 +2573,7 @@
 <tr>
 <td style="text-align: center;"><code>analyze(source)</code></td>
 <td style="text-align: center;">method</td>
-<td style="text-align: center;">Words of the sentences of a source as <code>CohesionWord</code>: the word, its lemma, its part of speech for the rules of the connectors, whether it is a noun, a pronoun, a demonstrative, an argument and a content word, its tense, mood and aspect; by default those of a <code>Doc</code>, sentence by sentence (<code>doc_units</code>), with the features of <code>word_info</code> - a library that reads a string or a <code>Doc</code> without these annotations overrides it</td>
+<td style="text-align: center;">Words of the sentences of a source as <code>CohesionWord</code>: the word, its lemma, its part of speech, whether it is a noun, a pronoun, a demonstrative, an argument and a content word, its tense, mood and aspect; by default those of a <code>Doc</code>, sentence by sentence (<code>doc_units</code>), with the features of <code>word_info</code>; a library that reads a string or a <code>Doc</code> without these annotations overrides it</td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>doc_units(doc)</code></td>
@@ -2593,7 +2593,7 @@
 <tr>
 <td style="text-align: center;"><code>connector_matcher()</code></td>
 <td style="text-align: center;">class method</td>
-<td style="text-align: center;">Matcher of that dictionary, built once for a class and shared by its instances - and by a search of the connectors outside the statistics</td>
+<td style="text-align: center;">Matcher of that dictionary, built once for a class and shared by its instances and by searches outside the statistics</td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>connector_matcher_class</code></td>
@@ -2603,7 +2603,7 @@
 <tr>
 <td style="text-align: center;"><code>temporal_features</code></td>
 <td style="text-align: center;">class attribute</td>
-<td style="text-align: center;">Features of the verbs whose repetitions make the temporal cohesion, one or more distinct ones of <code>tense</code>, <code>mood</code> and <code>aspect</code> in a tuple, checked when the class is defined; the tense and the aspect by default, as in Coh-Metrix</td>
+<td style="text-align: center;">Features of the verbs whose repetitions make the temporal cohesion: a tuple of one or more distinct ones of <code>tense</code>, <code>mood</code> and <code>aspect</code>, checked when the class is defined; <code>tense</code> and <code>aspect</code> by default, as in Coh-Metrix</td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>sents_extractor_class</code>, <code>join_hyphens</code></td>

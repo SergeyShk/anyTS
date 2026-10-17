@@ -2530,8 +2530,8 @@
 </div>
 <h2 id="description">Description<a class="headerlink" href="#description" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:dispersion] -->
-<p>The dispersion of a word is how evenly it is spread over the parts of a text or of a corpus. Frequency does not tell a word that occurs once in every chapter from a word gathered in one of them; the measures of dispersion (<a href="https://www.stgries.info/research/2008_STG_Dispersion_IJCL.pdf">Gries 2008</a>, <a href="https://www.stgries.info/research/2020_STG_Dispersion_PHCL.pdf">2020</a>) complement frequency.</p>
-<p>The text is split into parts: <code>parts</code> is the number of parts of about equal size or the sizes of the parts in order (sentences, paragraphs, chapters, documents of a corpus), which add up to the number of words. For every word its frequencies by part and six measures are computed; Gries recommends DP as the main one.</p>
+<p>The dispersion of a word is how evenly it is spread over the parts of a text or of a corpus. Frequency does not tell a word occurring once in every chapter from one gathered in a single chapter; the measures of dispersion (<a href="https://www.stgries.info/research/2008_STG_Dispersion_IJCL.pdf">Gries 2008</a>, <a href="https://www.stgries.info/research/2020_STG_Dispersion_PHCL.pdf">2020</a>) complement it.</p>
+<p><code>parts</code> is the number of parts of about equal size or the sizes of the parts in order (sentences, paragraphs, chapters, documents of a corpus), adding up to the number of words. Six measures are computed from the frequencies of every word by part; Gries recommends DP as the main one.</p>
 <p>Words are compared as they are: case and lemmatization belong to the word extractor.</p>
 <!-- --8<-- [end:dispersion] -->
 
@@ -2586,7 +2586,7 @@
 </tr>
 </tbody>
 </table>
-<p>The measures are available as the functions <code>calc_dp</code>, <code>calc_dp_norm</code>, <code>calc_juilland_d</code>, <code>calc_carroll_d2</code>, <code>calc_rosengren_s</code> and <code>calc_kl_divergence</code> with the arguments <code>(frequencies, sizes)</code> - the frequencies of the word by part and the sizes of the parts - of the module <code>anyts.corpus.dispersion</code>; their names are in <code>anyts.constants.DISPERSION_STATS_DESC</code>. For a word of zero frequency every measure is <code>nan</code>.</p>
+<p>The module <code>anyts.corpus.dispersion</code> gives them as the functions <code>calc_dp</code>, <code>calc_dp_norm</code>, <code>calc_juilland_d</code>, <code>calc_carroll_d2</code>, <code>calc_rosengren_s</code> and <code>calc_kl_divergence</code> of <code>(frequencies, sizes)</code>, the frequencies of the word by part and the sizes of the parts; their names are in <code>anyts.constants.DISPERSION_STATS_DESC</code>. For a word of zero frequency every measure is <code>nan</code>.</p>
 <!-- --8<-- [end:dispersion-measures] -->
 
 <h2 id="parameters">Parameters<a class="headerlink" href="#parameters" title="Permanent link">&para;</a></h2>

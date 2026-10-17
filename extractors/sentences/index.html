@@ -2635,7 +2635,7 @@
 </table>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>A regular expression as the tokenizer is a separator: the text is split with <code>re.split</code>. A blank line - a line break, optional whitespace and another line break - ends a sentence of any tokenizer: the text is split at blank lines first and every part goes to the tokenizer, so a heading or a paragraph without a final mark is a sentence of its own, and so is a part without words, such as a line of asterisks between sections, which the statistics leave out as a sentence without words. The sentences of any tokenizer are stripped of whitespace at the edges, before the length bounds, and empty ones are dropped.</p>
+<p>A regular expression as the tokenizer is a separator for <code>re.split</code>. A blank line - a line break, optional whitespace and another line break - ends a sentence of any tokenizer: the text is split at blank lines first and every part goes to the tokenizer, so a heading or a paragraph without a final mark is a sentence of its own, and so is a part without words, such as a line of asterisks, which the statistics leave out. The sentences are stripped of whitespace at the edges before the length bounds, and empty ones are dropped.</p>
 </div>
 <!-- --8<-- [end:SentsExtractor-parameters] -->
 
@@ -2703,12 +2703,12 @@
 </div>
 <h2 id="iter_part_sents">Sentences of the parts of a text<a class="headerlink" href="#iter_part_sents" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:iter_part_sents] -->
-<p><code>iter_part_sents(iter_sents, text)</code> gives the sentences of a splitter with positions - <code>iter_sents</code>, the start, the end and the text of every sentence of a string - for every part of a text between blank lines (<code>BLANK_LINE</code>) one by one, at their positions in the whole text, so that a blank line ends a sentence whatever the splitter, as in <code>SentsExtractor</code>.</p>
+<p><code>iter_part_sents(iter_sents, text)</code> runs a splitter - <code>iter_sents</code>, giving the start, the end and the text of every sentence of a string - on every part of a text between blank lines (<code>BLANK_LINE</code>) and gives the sentences at their positions in the whole text, so that a blank line ends a sentence whatever the splitter, as in <code>SentsExtractor</code>.</p>
 <!-- --8<-- [end:iter_part_sents] -->
 
 <h2 id="FixedSentsExtractor">Ready sentences<a class="headerlink" href="#FixedSentsExtractor" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:FixedSentsExtractor] -->
-<p><code>FixedSentsExtractor(sents)</code> of <code>anyts.extractors</code> gives the sentences it was made with for any text: a class that takes a sentence extractor gets the sentences already known, and the text is not split twice. Sentences that are not a list of strings raise <code>SourceTypeError</code>.</p>
+<p><code>FixedSentsExtractor(sents)</code> of <code>anyts.extractors</code> gives the sentences it was made with for any text, so a class that takes a sentence extractor gets known sentences without splitting the text again. Sentences that are not a list of strings raise <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:FixedSentsExtractor] -->
 
 

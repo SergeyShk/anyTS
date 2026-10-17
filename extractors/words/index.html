@@ -2591,7 +2591,7 @@
 
 <h2 id="language-hooks">Language hooks<a class="headerlink" href="#language-hooks" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:WordsExtractor-hooks] -->
-<p>The language enters the extractor through the hooks that a language library overrides in a subclass:</p>
+<p>A language library overrides these hooks in a subclass:</p>
 <table>
 <thead>
 <tr>
@@ -2720,7 +2720,7 @@
 </table>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>A regular expression as the tokenizer is a separator: the text is split with <code>re.split</code>. The filters are applied in order: punctuation, numbers, lemmatization, lower case, stop words, word length. A lower-case stop word list also filters a capitalized word at the start of a sentence. A punctuation mark is a token consisting entirely of marks and symbols, including multi-character ones: <code>?!</code>, <code>--</code>, <code>…</code>, <code>€</code> (see <code>anyts.utils.is_punctuation</code>). Empty and whitespace tokens are dropped before the filters. N-grams join the words with <code>_</code>.</p>
+<p>A regular expression as the tokenizer is a separator for <code>re.split</code>. The filters are applied in order: punctuation, numbers, lemmatization, lower case, stop words, word length. A punctuation mark is a token of marks and symbols only, multi-character ones included: <code>?!</code>, <code>--</code>, <code>…</code>, <code>€</code> (<code>anyts.utils.is_punctuation</code>). Empty and whitespace tokens are dropped before the filters. N-grams join the words with <code>_</code>.</p>
 </div>
 <!-- --8<-- [end:WordsExtractor-parameters] -->
 
@@ -2805,7 +2805,7 @@
 </div>
 <h2 id="FixedWordsExtractor">Ready words<a class="headerlink" href="#FixedWordsExtractor" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:FixedWordsExtractor] -->
-<p><code>FixedWordsExtractor(words)</code> of <code>anyts.extractors</code> gives the words it was made with for any text: a class that takes a word extractor gets the words already known, and the text is not tokenized twice. Words that are not a list of strings raise <code>SourceTypeError</code>.</p>
+<p><code>FixedWordsExtractor(words)</code> of <code>anyts.extractors</code> gives the words it was made with for any text, so a class that takes a word extractor gets known words without tokenizing the text again. Words that are not a list of strings raise <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:FixedWordsExtractor] -->
 
 

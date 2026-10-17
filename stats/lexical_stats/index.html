@@ -2664,7 +2664,7 @@
 </div>
 <h2 id="description">Description<a class="headerlink" href="#description" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:LexicalStats] -->
-<p>Lexical sophistication in the manner of TAALES (Kyle, Crossley and Berger, 2018) - how rare the words of a text are in the language: the mean frequency, range and dispersion of the words by a frequency dictionary, the surprisal and the perplexity by its unigram model, the shares of the frequency bands of a list of the most frequent lemmas and the lexical density, the share of the content words. The statistics by the dictionary are computed when first read, so the bands and the lexical density need no dictionary data.</p>
+<p>Lexical sophistication in the manner of TAALES (Kyle, Crossley and Berger, 2018) - how rare the words of a text are: the mean frequency, range and dispersion of the words by a frequency dictionary, the surprisal and the perplexity by its unigram model, the shares of the frequency bands of a list of the most frequent lemmas and the lexical density, the share of the content words. The statistics by the dictionary are computed when first read, so the bands and the lexical density need no dictionary data.</p>
 <p>A dictionary of another class than that of the library raises <code>SourceTypeError</code>, a source without words <code>SourceError</code>.</p>
 <!-- --8<-- [end:LexicalStats] -->
 
@@ -2683,7 +2683,7 @@
 <tr>
 <td style="text-align: center;"><code>analyze(source)</code></td>
 <td style="text-align: center;">method</td>
-<td style="text-align: center;">The words of a source as <code>LexicalWord</code>: the word, its lemma and whether it is a content word; an abstract method, since the lemmas and the parts of speech depend on the language. Numbers (<code>is_number</code> of <code>anyts.utils</code>) are not words</td>
+<td style="text-align: center;">The words of a source as <code>LexicalWord</code>: the word, its lemma and whether it is a content word; an abstract method. Numbers (<code>is_number</code> of <code>anyts.utils</code>) are not words</td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>freq_dict_class</code></td>
@@ -2693,7 +2693,7 @@
 <tr>
 <td style="text-align: center;"><code>dictionary_keys()</code></td>
 <td style="text-align: center;">method</td>
-<td style="text-align: center;">Keys of the words in the dictionary; the lemmas by default, otherwise for instance a proper noun by its form</td>
+<td style="text-align: center;">Keys of the words in the dictionary; the lemmas by default, or for instance a proper noun by its form</td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>rank(lemma)</code></td>
@@ -2717,7 +2717,7 @@
 </tr>
 </tbody>
 </table>
-<p>The parameters of a library - a pipeline that parses a string, a word extractor - are those of its <code>__init__</code>, which passes the source and the dictionary on.</p>
+<p>A library takes its own parameters, such as a pipeline or a word extractor, in its <code>__init__</code> and passes the source and the dictionary on.</p>
 <!-- --8<-- [end:LexicalStats-hooks] -->
 
 <h2 id="FrequencyDictionary">Frequency dictionary<a class="headerlink" href="#FrequencyDictionary" title="Permanent link">&para;</a></h2>
@@ -2843,7 +2843,7 @@
 <h2 id="functions">Functions<a class="headerlink" href="#functions" title="Permanent link">&para;</a></h2>
 <h3 id="calc_surprisal">calc_surprisal<a class="headerlink" href="#calc_surprisal" title="Permanent link">&para;</a></h3>
 <!-- --8<-- [start:calc_surprisal] -->
-<p>The mean surprisal of the words by the unigram model of a frequency dictionary, in bits; a word out of the dictionary gets its lowest frequency <code>min_ipm</code>, so every word has a surprisal. The perplexity is 2 to its power.</p>
+<p>The mean surprisal of the words by the unigram model of a frequency dictionary, in bits; a word out of the dictionary gets its lowest frequency <code>min_ipm</code>. The perplexity is 2 to its power.</p>
 <p>Formula:</p>
 <div class="arithmatex">\[
 \frac{1}{N} \sum_{w} -\log_2 \frac{\max(\textrm{ipm}_w, \textrm{min\_ipm})}{10^6}

@@ -2674,8 +2674,8 @@
 </div>
 <h2 id="description">Description<a class="headerlink" href="#description" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:BasicStats] -->
-<p>The basic statistics of a text: the counts of its sentences, words, characters, letters, spaces, syllables and punctuation marks, the distributions of the words by letters and by syllables, and the long, complex, simple, monosyllabic and polysyllabic words. The data source can be either a text or a <code>Doc</code> object of <a href="https://github.com/explosion/spaCy">spaCy</a>. Letters are counted by <code>str.isalpha</code>, so digits, hyphens and marks inside a word are not letters.</p>
-<p>The words of a string come from the word extractor and its sentences from the sentence extractor. The words of a <code>Doc</code> come from its tokens (punctuation marks and symbols such as <code>€</code> or <code>%</code> dropped) and its sentences from its boundaries, or from the sentence extractor when it has none or only partial ones (<code>has_sents</code>); an extractor passed explicitly is used on the text of the <code>Doc</code>. A blank line ends a sentence of a string and of a <code>Doc</code> without boundaries; a <code>Doc</code> with boundaries follows the rule when its pipeline starts a sentence after a blank line (<code>start_sents_after_blank_lines</code>, registered by a language library under its own name) before the parser, <code>senter</code> or <code>sentencizer</code>. A sentence of punctuation alone holds no word and is not counted.</p>
+<p>The basic statistics of a text: the counts of its sentences, words, characters, letters, spaces, syllables and punctuation marks, the distributions of the words by letters and by syllables, and the long, complex, simple, monosyllabic and polysyllabic words. The data source is a text or a <code>Doc</code> object of <a href="https://github.com/explosion/spaCy">spaCy</a>. Letters are counted by <code>str.isalpha</code>, so digits, hyphens and marks inside a word are not letters.</p>
+<p>The words and the sentences of a string come from the extractors. A <code>Doc</code> gives its tokens as words, without punctuation marks and symbols such as <code>€</code> or <code>%</code>, and its boundaries as sentences, or those of the sentence extractor when it has none or only partial ones (<code>has_sents</code>); an extractor given is used on its text instead. A blank line ends a sentence of a string and of a <code>Doc</code> without boundaries; a <code>Doc</code> with boundaries does so when its pipeline has <code>start_sents_after_blank_lines</code> (registered by a language library under its own name) before the parser, <code>senter</code> or <code>sentencizer</code>. A sentence without words, such as punctuation alone, is not counted.</p>
 <!-- --8<-- [end:BasicStats] -->
 
 <h2 id="language-hooks">Language hooks<a class="headerlink" href="#language-hooks" title="Permanent link">&para;</a></h2>
@@ -2693,12 +2693,12 @@
 <tr>
 <td style="text-align: center;"><code>count_syllables(word)</code></td>
 <td style="text-align: center;">method</td>
-<td style="text-align: center;">The syllables of a word; an abstract method, since syllables depend on the language</td>
+<td style="text-align: center;">The syllables of a word; abstract</td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>sents_extractor_class</code>, <code>words_extractor_class</code></td>
 <td style="text-align: center;">class attributes</td>
-<td style="text-align: center;">The extractors used when none is given; <code>SentsExtractor</code> and <code>WordsExtractor</code> of the core by default</td>
+<td style="text-align: center;">The extractors used when none is given; <code>SentsExtractor</code> and <code>WordsExtractor</code> by default</td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>join_hyphens</code></td>
@@ -2717,7 +2717,7 @@
 </tr>
 </tbody>
 </table>
-<p>The other hooks - <code>stats_headers</code>, <code>level_scales</code>, <code>messages</code> - are those of the base class <code>Stats</code>. The thresholds of the complex and the long words are parameters; a library sets its own defaults in its <code>__init__</code> and passes them on.</p>
+<p>The other hooks, <code>stats_headers</code>, <code>level_scales</code> and <code>messages</code>, come from <code>Stats</code>. The thresholds of the complex and the long words are parameters; a library sets its own defaults in its <code>__init__</code> and passes them on.</p>
 <!-- --8<-- [end:BasicStats-hooks] -->
 
 <h2 id="parameters">Parameters<a class="headerlink" href="#parameters" title="Permanent link">&para;</a></h2>
@@ -2927,7 +2927,7 @@
 </tr>
 </tbody>
 </table>
-<p>The counts of the words are normalized by the number of words, those of the characters by the number of characters; the normalized statistics are computed with <code>normalize=True</code>.</p>
+<p>With <code>normalize=True</code> the counts of the words are divided by the number of words, those of the characters by the number of characters.</p>
 <!-- --8<-- [end:BasicStats-attributes] -->
 
 <h2 id="methods">Methods<a class="headerlink" href="#methods" title="Permanent link">&para;</a></h2>
@@ -2938,7 +2938,7 @@
 
 <h3 id="get_stats">get_stats<a class="headerlink" href="#get_stats" title="Permanent link">&para;</a></h3>
 <!-- --8<-- [start:BasicStats-get_stats] -->
-<p>Returns a dictionary with the distributions <code>c_letters</code> and <code>c_syllables</code>, the counts of <code>stats_desc</code>, the distribution <code>c_punctuations</code> and, with <code>normalize=True</code>, the normalized counts - a copy: editing it does not change the object. With <code>flat=True</code> the distributions give keys of their own, such as <code>c_letters_3</code> and <code>c_punctuations_comma</code>, one for every value the text has.</p>
+<p>Returns a dictionary with the distributions <code>c_letters</code> and <code>c_syllables</code>, the counts of <code>stats_desc</code>, the distribution <code>c_punctuations</code> and, with <code>normalize=True</code>, the normalized counts, as a copy: editing it does not change the object. With <code>flat=True</code> the distributions give a key for every value the text has, such as <code>c_letters_3</code> and <code>c_punctuations_comma</code>.</p>
 <!-- --8<-- [end:BasicStats-get_stats] -->
 
 <h3 id="print_stats">print_stats<a class="headerlink" href="#print_stats" title="Permanent link">&para;</a></h3>
@@ -2949,13 +2949,13 @@
 <p>The frame of the statistics (<code>to_dataframe</code>) and their reading (<code>describe</code>) are those of the <a href="../stats/">statistics interface</a>.</p>
 <h2 id="count_punctuations">Punctuation marks<a class="headerlink" href="#count_punctuations" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:count_punctuations] -->
-<p><code>count_punctuations(text, marks, dash_pattern)</code> counts punctuation marks by their types - the same distribution lives in the <code>c_punctuations</code> attribute: commas, periods, question and exclamation marks, ellipses, colons, semicolons, dashes, hyphens, guillemets, quotation marks, parentheses and the other marks. The dashes typed with hyphens (<code>dash_pattern</code>) are counted first, then the ellipses - the <code>…</code> character, three or more periods, or two periods after <code>?</code> and <code>!</code>, one mark whose periods do not count as periods (<code>Who?..</code> is a question and an ellipsis) - and then every mark by its type in <code>marks</code>; any other character of the Unicode categories P and S is another mark (<code>§</code>, <code>€</code>, <code>°</code>). <code>marks</code> maps every mark, a single character, to one of the types, otherwise <code>ParameterError</code>, and <code>dash_pattern</code> is a compiled regular expression; a text that is not a string, marks that are not a mapping and dashes that are not a compiled expression raise <code>SourceTypeError</code>.</p>
+<p><code>count_punctuations(text, marks, dash_pattern)</code> counts punctuation marks by type, the distribution of <code>c_punctuations</code>: commas, periods, question and exclamation marks, ellipses, colons, semicolons, dashes, hyphens, guillemets, quotation marks, parentheses and other marks. Dashes typed with hyphens (<code>dash_pattern</code>) are counted first, then ellipses - <code>…</code>, three or more periods, or two after <code>?</code> and <code>!</code>, one mark whose periods are not counted as periods (<code>Who?..</code> is a question and an ellipsis) - then each mark by its type in <code>marks</code>; any other character of the Unicode categories P and S is another mark (<code>§</code>, <code>€</code>, <code>°</code>). A mark of <code>marks</code> that is not a single character or has an unknown type raises <code>ParameterError</code>; a text that is not a string, <code>marks</code> that are not a mapping and a <code>dash_pattern</code> that is not a compiled regular expression raise <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:count_punctuations] -->
 
-<p>In the core the types are <code>anyts.constants.PUNCTUATION_TYPES</code>, and <code>marks</code> and <code>dash_pattern</code> are <code>PUNCTUATION_MARKS</code> and <code>DASH_PATTERN</code> of <code>anyts.basic_stats</code>. The marks count the inverted <code>¿</code> and <code>¡</code> as question and exclamation marks (<code>¿So?</code> carries two question marks), <code>—</code>, <code>–</code> and the horizontal bar <code>―</code> as dashes, a hyphen inside a word, before a digit or at the end of a line inside a word as a hyphen (<code>well-known</code>, <code>-5</code>), <code>«»</code> as guillemets and <code>"“”‘’</code> as quotation marks. A dash typed with hyphens is a run of two or more hyphens, a hyphen after whitespace, at the start of a line or after a closing mark, before a space of a line - a separator of Unicode such as the no-break space, or a tab (<code>SPACES</code>) - or the end of the text, or between a letter and an opening or a closing mark (<code>--Hello --said John</code>, <code>- They left - he said</code>).</p>
+<p>In the core the types are <code>anyts.constants.PUNCTUATION_TYPES</code>, and <code>marks</code> and <code>dash_pattern</code> are <code>PUNCTUATION_MARKS</code> and <code>DASH_PATTERN</code> of <code>anyts.basic_stats</code>. The marks count <code>¿</code> and <code>¡</code> as question and exclamation marks (<code>¿So?</code> has two), <code>—</code>, <code>–</code> and the horizontal bar <code>―</code> as dashes, <code>«»</code> as guillemets and <code>"“”‘’</code> as quotation marks; a hyphen inside a word, before a digit or at a line break inside a word is a hyphen (<code>well-known</code>, <code>-5</code>). A dash typed with hyphens is a run of two or more hyphens, or a hyphen after whitespace, a closing mark or at the start of a line, before a space of a line (a Unicode separator such as the no-break space, or a tab: <code>SPACES</code>) or the end of the text, or between a letter and an opening or a closing mark (<code>--Hello --said John</code>, <code>- They left - he said</code>).</p>
 <h2 id="dash_pattern">Dashes typed with hyphens<a class="headerlink" href="#dash_pattern" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:dash_pattern] -->
-<p><code>dash_pattern(conjunctions, hanging_before_comma)</code> builds the <code>dash_pattern</code> of <code>count_punctuations</code>. A hanging hyphen glued to a letter or a digit and carried on to a later word (<code>pre- and post-war</code>, <code>5- and 10-year</code>) stays a hyphen when one of the <code>conjunctions</code>, in any case, follows it after spaces of a line, and with <code>hanging_before_comma</code> when a comma follows it (<code>two-, three- and four-year</code>). A language whose dialogue closes a line with a hyphen before a comma (<code>-Come -he said-, and left</code>) leaves <code>hanging_before_comma</code> off. Without the parameters the pattern is <code>DASH_PATTERN</code>.</p>
+<p><code>dash_pattern(conjunctions, hanging_before_comma)</code> builds the <code>dash_pattern</code> of <code>count_punctuations</code>. A hanging hyphen glued to a letter or a digit and carried on to a later word (<code>pre- and post-war</code>, <code>5- and 10-year</code>) stays a hyphen before spaces of a line and one of the <code>conjunctions</code>, case ignored, and with <code>hanging_before_comma</code> before a comma (<code>two-, three- and four-year</code>). A language whose dialogue closes a line with a hyphen before a comma (<code>-Come -he said-, and left</code>) leaves <code>hanging_before_comma</code> off. Without the parameters the pattern is <code>DASH_PATTERN</code>.</p>
 <table>
 <thead>
 <tr>

@@ -2527,7 +2527,7 @@
 
 
 <h1 id="metric-functions">Metric functions<a class="headerlink" href="#metric-functions" title="Permanent link">&para;</a></h1>
-<p>The functions see no language: a word is given as its sounds or its letters - the characters of a string, the sounds of a transcription - and the classes of the sounds or the features to count come through the parameters, so a library chooses them.</p>
+<p>The functions know no language: a word is given as its letters (the characters of a string) or the sounds of its transcription, and the classes of the sounds or the features to count come through the parameters.</p>
 <h2 id="cv-pattern">CV pattern<a class="headerlink" href="#cv-pattern" title="Permanent link">&para;</a></h2>
 <div class="admonition info">
 <p><strong>anyts.phon_stats.cv_pattern()</strong></p>
@@ -2611,7 +2611,7 @@
 <p><strong>anyts.phon_stats.count_hiatus()</strong></p>
 </div>
 <!-- --8<-- [start:count_hiatus] -->
-<p>The number of the hiatuses of a word by its vowels in a row: a run of two vowels or more is one hiatus, and a vowel of <code>glides</code> after a vowel makes none.</p>
+<p>The number of the hiatuses of a word by its vowels in a row: a run of two vowels or more is one hiatus; a vowel of <code>glides</code> after a vowel makes none.</p>
 <p>Parameters:</p>
 <table>
 <thead>
@@ -2650,11 +2650,11 @@
 <p><strong>anyts.phon_stats.calc_repetition_index()</strong></p>
 </div>
 <!-- --8<-- [start:calc_repetition_index] -->
-<p>The repetition index: the ratio of the number of windows of <code>window_len</code> neighbouring words where a feature - a letter or a sound, as a library chooses - occurs in two words or more, summed over the features, to the number expected if the words stood in random order. A window of shuffled words is a sample of them without replacement, so for a feature found in <span class="arithmatex">\(K\)</span> of the <span class="arithmatex">\(N\)</span> words of the text, a window of <span class="arithmatex">\(w\)</span> words holds it in two words or more with the hypergeometric probability</p>
+<p>The repetition index: the number of windows of <code>window_len</code> neighbouring words where a feature (a letter or a sound) occurs in two words or more, summed over the features, divided by the number expected if the words stood in random order. A window of shuffled words is a sample without replacement, so for a feature found in <span class="arithmatex">\(K\)</span> of the <span class="arithmatex">\(N\)</span> words, a window of <span class="arithmatex">\(w\)</span> words holds it in two words or more with the hypergeometric probability</p>
 <div class="arithmatex">\[
 P = 1 - \frac{\binom{N-K}{w} + K \binom{N-K}{w-1}}{\binom{N}{w}}
 \]</div>
-<p>and the expected number is the sum of these probabilities over the features times the <span class="arithmatex">\(N - w + 1\)</span> windows. The expectation comes from the text itself, so the index tells whether the repetitions gather in neighbouring words, not how frequent a feature is: it averages to 1 over the orders of the words, and is well above 1 when the repetitions come closer than chance. A word counts a feature once, however often it holds it; <code>nan</code> for a text shorter than the window and for a text where no feature is shared by two words.</p>
+<p>and the expected number is the sum of these probabilities over the features times the <span class="arithmatex">\(N - w + 1\)</span> windows. Since the expectation comes from the text itself, the index shows whether the repetitions gather in neighbouring words, not how frequent a feature is: it averages to 1 over the orders of the words and is well above 1 when the repetitions come closer than chance. A word counts a feature once; the index is <code>nan</code> for a text shorter than the window or with no feature shared by two words.</p>
 <!-- --8<-- [end:calc_repetition_index] -->
 
 <!-- --8<-- [start:calc_repetition_index-parameters] -->

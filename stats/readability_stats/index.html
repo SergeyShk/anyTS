@@ -2742,7 +2742,7 @@
 </div>
 <h2 id="description">Description<a class="headerlink" href="#description" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:ReadabilityStats] -->
-<p>The <a href="https://en.wikipedia.org/wiki/Readability">readability</a> metrics of a text from its basic statistics: the mean sentence length in words, the mean word length in syllables or letters, the share of polysyllabic and of long words and the variability of word length. The data source can be a text, a <code>Doc</code> object of <a href="https://github.com/explosion/spaCy">spaCy</a> or ready basic statistics - then the text is not counted again; the extractors are passed on to the basic statistics of a text or a <code>Doc</code>, while ready ones are taken as they are. The letters of the formulas are those of the counted words, so a word extractor that drops words does not lengthen the mean word.</p>
+<p>The <a href="https://en.wikipedia.org/wiki/Readability">readability</a> metrics of a text from its basic statistics: the mean sentence length in words, the mean word length in syllables or letters, the share of polysyllabic and of long words and the variability of word length. The data source is a text, a <code>Doc</code> object of <a href="https://github.com/explosion/spaCy">spaCy</a> or ready basic statistics, which are reused as they are; the extractors are passed on to the basic statistics of a text or a <code>Doc</code>. The formulas count only the letters of the counted words, so a word extractor that drops words does not lengthen the mean word.</p>
 <p>The metrics are properties computed on each access, so a change of the <code>coefficients</code> of an object applies at once.</p>
 <p>A source that is neither a string, a <code>Doc</code> nor basic statistics, basic statistics of a class other than those of the library and an extractor of another type raise <code>SourceTypeError</code>, a source without words or sentences <code>SourceError</code>, an unknown preset or one that is not a string <code>ParameterError</code>.</p>
 <!-- --8<-- [end:ReadabilityStats] -->
@@ -2762,7 +2762,7 @@
 <tr>
 <td style="text-align: center;"><code>basic_stats_class</code></td>
 <td style="text-align: center;">class attribute</td>
-<td style="text-align: center;">Its subclass of <code>BasicStats</code>, which counts a string or a <code>Doc</code>; without it the source must be a <code>BasicStats</code> object</td>
+<td style="text-align: center;">Its subclass of <code>BasicStats</code> for a string or a <code>Doc</code>; without it the source must be a <code>BasicStats</code> object</td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>presets</code></td>
@@ -2802,7 +2802,7 @@
 <tr>
 <td style="text-align: center;"><code>preset_level_scales</code></td>
 <td style="text-align: center;">class attribute</td>
-<td style="text-align: center;">Interpretation scales by preset and metric, which take the place of those of <code>level_scales</code> for the objects of the preset</td>
+<td style="text-align: center;">Interpretation scales by preset and metric, in place of <code>level_scales</code> for the preset</td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>level_scale(stat)</code></td>
@@ -2812,7 +2812,7 @@
 <tr>
 <td style="text-align: center;"><code>grade_scales</code></td>
 <td style="text-align: center;">class attribute</td>
-<td style="text-align: center;">Scales that convert a metric into years of schooling for <code>describe</code>, as lower bounds and grades; a metric with a scale of bands is read by its bands, so a library that reads it by years of schooling leaves it out of <code>level_scales</code> and <code>preset_level_scales</code></td>
+<td style="text-align: center;">Scales of a metric in years of schooling for <code>describe</code>, as lower bounds and grades; a scale of bands comes first, so a metric read by years of schooling stays out of <code>level_scales</code> and <code>preset_level_scales</code></td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>reading_speed</code>, <code>reading_speed_norms</code></td>
@@ -2822,12 +2822,12 @@
 <tr>
 <td style="text-align: center;"><code>reading_ease_grades</code></td>
 <td style="text-align: center;">class attribute</td>
-<td style="text-align: center;">Scale that converts the reading ease into years of schooling for the consensus grade, as lower bounds and grades, the lowest band open below</td>
+<td style="text-align: center;">Scale of the reading ease in years of schooling for the consensus grade, as lower bounds and grades, the lowest band open below</td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>preset_reading_ease_grades</code></td>
 <td style="text-align: center;">class attribute</td>
-<td style="text-align: center;">Scales of <code>reading_ease_grades</code> by preset, which take its place for the objects of the preset</td>
+<td style="text-align: center;">Scales of <code>reading_ease_grades</code> by preset, in its place for the preset</td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>reading_ease_to_grade(flesch_reading_easy)</code></td>
@@ -2882,7 +2882,7 @@
 </tr>
 </tbody>
 </table>
-<p>The core class has no basic statistics of its own (<code>basic_stats_class</code> is <code>None</code>), so it takes only a ready <code>BasicStats</code> object of a library.</p>
+<p>In the core <code>basic_stats_class</code> is <code>None</code>, so the class takes only a ready <code>BasicStats</code> object of a library.</p>
 <h2 id="attributes">Attributes<a class="headerlink" href="#attributes" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -2968,7 +2968,7 @@
 <p>The formulas are described in the <a href="../readability_stats_funcs/">metric functions</a> section.</p>
 <h2 id="consensus_grade">Consensus grade<a class="headerlink" href="#consensus_grade" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:ReadabilityStats-consensus] -->
-<p>The formulas that give years of schooling (<code>grade_stats</code>) are summarized in the <code>consensus_grade</code> attribute: the median of their values rounded half up, together with the reading ease converted into years of schooling (<code>reading_ease_to_grade</code>) without rounding. A library aligns the bounds of <code>reading_ease_grades</code>, or of the scale of each preset in <code>preset_reading_ease_grades</code>, with its scale of the reading ease, so that the consensus grade and <code>describe</code> read the value alike.</p>
+<p>The <code>consensus_grade</code> attribute is the median of the values of the grade formulas (<code>grade_stats</code>) rounded half up, together with the reading ease in years of schooling (<code>reading_ease_to_grade</code>), not rounded. A library aligns the bounds of <code>reading_ease_grades</code>, and of each scale of <code>preset_reading_ease_grades</code>, with its scale of the reading ease, so that the consensus grade and <code>describe</code> read the value alike.</p>
 <!-- --8<-- [end:ReadabilityStats-consensus] -->
 
 <h2 id="methods">Methods<a class="headerlink" href="#methods" title="Permanent link">&para;</a></h2>
@@ -3087,7 +3087,7 @@
 </table>
 <!-- --8<-- [end:ReadabilityStats-describe] -->
 
-<p>By default RIX reads by its scale of bands; <code>grade_scales</code> keeps its grades as years of schooling (<code>anyts.constants.RIX_GRADES</code>, college as 13) for a library whose scales of bands leave RIX out.</p>
+<p>By default RIX is read by its scale of bands; <code>grade_scales</code> keeps its grades as years of schooling (<code>anyts.constants.RIX_GRADES</code>, college as 13) for a library whose scales of bands leave RIX out.</p>
 <h3 id="reading_time_by_speed">reading_time_by_speed<a class="headerlink" href="#reading_time_by_speed" title="Permanent link">&para;</a></h3>
 <!-- --8<-- [start:ReadabilityStats-reading_time_by_speed] -->
 <p>Returns the reading time of the text in minutes at the given speed; a speed that is not a positive number raises <code>ParameterError</code>.</p>
@@ -3138,12 +3138,12 @@
 
 <h3 id="get_stats">get_stats<a class="headerlink" href="#get_stats" title="Permanent link">&para;</a></h3>
 <!-- --8<-- [start:ReadabilityStats-get_stats] -->
-<p>Returns a dictionary with the computed readability metrics of <code>stats_desc</code>.</p>
+<p>Returns a dictionary of the readability metrics of <code>stats_desc</code>.</p>
 <!-- --8<-- [end:ReadabilityStats-get_stats] -->
 
 <h3 id="print_stats">print_stats<a class="headerlink" href="#print_stats" title="Permanent link">&para;</a></h3>
 <!-- --8<-- [start:ReadabilityStats-print_stats] -->
-<p>Prints a table with the computed readability metrics, their descriptions from <code>stats_desc</code> and the headers from <code>stats_headers</code>.</p>
+<p>Prints a table of the readability metrics with their descriptions from <code>stats_desc</code> under the headers of <code>stats_headers</code>.</p>
 <!-- --8<-- [end:ReadabilityStats-print_stats] -->
 
 <p>The frame of the metrics (<code>to_dataframe</code>) is that of the <a href="../stats/">statistics interface</a>.</p>

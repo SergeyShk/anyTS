@@ -2615,13 +2615,13 @@
 
 
 <h1 id="metric-functions">Metric functions<a class="headerlink" href="#metric-functions" title="Permanent link">&para;</a></h1>
-<p>The services do not publish their formulas, so the common definitions are taken. The language of a function - the stopwords, the water, the normalized form of a word, the spelling of phrases - comes through its keyword parameters; words, stopwords, keywords and phrases that are not a list of strings raise <code>SourceTypeError</code>.</p>
+<p>The services publish no formulas, so the common definitions are taken. The language - the stopwords, the water, the normalized form of a word, the spelling of phrases - comes through the keyword parameters; words, stopwords, keywords and phrases that are not a list of strings raise <code>SourceTypeError</code>.</p>
 <h2 id="classic-nausea">Classic nausea<a class="headerlink" href="#classic-nausea" title="Permanent link">&para;</a></h2>
 <div class="admonition info">
 <p><strong>anyts.style_stats.calc_classic_nausea()</strong></p>
 </div>
 <!-- --8<-- [start:calc_classic_nausea] -->
-<p>Computation of the classic nausea (Advego): how much one word is pressed. It is not corrected for text length and grows with the text; a text without words gives 0.</p>
+<p>Computation of the classic nausea (Advego): how much one word is pressed. Not corrected for text length, it grows with the text; no words give 0.</p>
 <p>Formula:</p>
 <div class="arithmatex">\[
 \sqrt{f_1}
@@ -2653,7 +2653,7 @@
 <p><strong>anyts.style_stats.find_nausea_words()</strong></p>
 </div>
 <!-- --8<-- [start:find_nausea_words] -->
-<p>The <code>top_n</code> most frequent words without the stopwords with their occurrences, the most frequent first and words of equal frequency in the order of the text. A stopword is a word of the list <code>stopwords</code> by its normalized form, or without the list one the predicate <code>is_stopword</code> of a language accepts; without both no word is a stopword.</p>
+<p>The <code>top_n</code> most frequent words without the stopwords, with their occurrences: the most frequent first, words of equal frequency in the order of the text. A stopword is a word of <code>stopwords</code> by its normalized form or, without the list, a word <code>is_stopword</code> accepts; without both there are no stopwords.</p>
 <p>Parameters:</p>
 <table>
 <thead>
@@ -2710,7 +2710,7 @@
 <p><strong>anyts.style_stats.calc_academic_nausea()</strong></p>
 </div>
 <!-- --8<-- [start:calc_academic_nausea] -->
-<p>Computation of the academic nausea (Advego): the share of the occurrences of the most frequent significant words (<code>find_nausea_words</code>) among all the words, in percent. With the stopwords counted, the most frequent words of any text would be its conjunctions and prepositions.</p>
+<p>Computation of the academic nausea (Advego): the share of the occurrences of the most frequent significant words (<code>find_nausea_words</code>) among all the words, in percent. With the stopwords, the most frequent words of any text would be its conjunctions and prepositions.</p>
 <p>Formula:</p>
 <div class="arithmatex">\[
 100 \cdot \frac{\sum_{w \in \textrm{top}_n} f_w}{\textrm{Number of words}}
@@ -2771,7 +2771,7 @@
 <p><strong>anyts.style_stats.calc_water()</strong></p>
 </div>
 <!-- --8<-- [start:calc_water] -->
-<p>Computation of the water content (Text.ru): the share of the words that carry no content, in percent - the words of the list <code>stopwords</code> by their normalized forms, or without the list those the predicate <code>is_water_word</code> of a language accepts.</p>
+<p>Computation of the water content (Text.ru): the share of the words without content, in percent - the words of <code>stopwords</code> by their normalized forms or, without the list, those <code>is_water_word</code> accepts.</p>
 <p>Parameters:</p>
 <table>
 <thead>
@@ -2847,7 +2847,7 @@
 <p><strong>anyts.style_stats.calc_zipf_naturalness()</strong></p>
 </div>
 <!-- --8<-- [start:calc_zipf_naturalness] -->
-<p>Computation of the naturalness of a text by Zipf's law: the agreement of the frequencies of the most frequent words with the ideal distribution <span class="arithmatex">\(f_r = f_1 / r\)</span>, where <span class="arithmatex">\(r\)</span> is the rank of a word. The first rank is ideal by construction, and above <span class="arithmatex">\(f_1\)</span> the ideal frequency falls below one, so the ranks run from 2 to <span class="arithmatex">\(R = \min(\textrm{top\_n}, V, f_1)\)</span>. Negative values are cut to 0; without ranks to compare - all the words hapaxes, one lexeme or <code>top_n</code> below 2 - the value is <code>nan</code>.</p>
+<p>Computation of the naturalness by Zipf's law: the agreement of the frequencies of the most frequent words with the ideal distribution <span class="arithmatex">\(f_r = f_1 / r\)</span>, where <span class="arithmatex">\(r\)</span> is the rank. The first rank is ideal by construction, and above <span class="arithmatex">\(f_1\)</span> the ideal frequency falls below one, so the ranks run from 2 to <span class="arithmatex">\(R = \min(\textrm{top\_n}, V, f_1)\)</span>. Negative values are cut to 0; without ranks to compare - all the words hapaxes, one lexeme or <code>top_n</code> below 2 - the value is <code>nan</code>.</p>
 <p>Formula:</p>
 <div class="arithmatex">\[
 100 \cdot \left(1 - \frac{1}{R - 1} \sum_{r=2}^{R} \frac{|r \cdot f_r - f_1|}{f_1}\right)
@@ -2890,7 +2890,7 @@
 <p><strong>anyts.style_stats.calc_keyword_density()</strong></p>
 </div>
 <!-- --8<-- [start:calc_keyword_density] -->
-<p>Computation of the density of keywords (Text.ru): the frequency of every keyword per 100 words of the text. A keyword of several words separated by spaces is looked for as a sequence of words, its occurrences may overlap, and the words are compared in any case; the keywords of a set come in sorted order.</p>
+<p>Computation of the keyword density (Text.ru): the occurrences of every keyword per 100 words. A keyword of several words separated by spaces is a sequence of words whose occurrences may overlap; the case is ignored, and the keywords of a set come in sorted order.</p>
 <p>Parameters:</p>
 <table>
 <thead>
@@ -2923,7 +2923,7 @@
 <p><strong>anyts.style_stats.calc_phrase_density()</strong></p>
 </div>
 <!-- --8<-- [start:calc_phrase_density] -->
-<p>Computation of the density of the phrases of a list: their occurrences (<code>find_phrases</code>) per 100 words. The hook <code>expand</code> of a language spells the phrases out in the forms of the text - the forms of a verb, contractions - giving every variant with its phrase; the style metrics count the compound prepositions and the cliches so.</p>
+<p>Computation of the density of the phrases of a list: their occurrences (<code>find_phrases</code>) per 100 words. The hook <code>expand</code> spells the phrases out in the forms of the text - the forms of a verb, contractions - every variant with its phrase; so the style metrics count the compound prepositions and the cliches.</p>
 <p>Parameters:</p>
 <table>
 <thead>

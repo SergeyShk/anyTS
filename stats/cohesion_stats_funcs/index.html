@@ -2630,9 +2630,9 @@
 <div class="admonition info">
 <p><strong>anyts.cohesion_stats</strong></p>
 </div>
-<p>Functions that measure how the sentences of a text are tied together by shared elements, in the manner of Coh-Metrix, and the search of the <a href="#connectors">connectors</a> that tie them. A sentence is given as the collection of its elements - lemmas of nouns, arguments or content words, values of a feature of its verbs - so the functions see no language: a library chooses the elements.</p>
+<p>Functions that measure how the sentences of a text are tied together by shared elements, in the manner of Coh-Metrix, and the search of the <a href="#connectors">connectors</a> that tie them. A sentence is given as the collection of its elements (lemmas of nouns, arguments or content words, values of a feature of its verbs), which a library chooses, so the functions see no language.</p>
 <!-- --8<-- [start:cohesion-checks] -->
-<p>A list of sentences that is a string, a <code>Doc</code>, an iterator, a set or a table raises <code>SourceTypeError</code>, and so does a sentence that is not a list of strings (<code>check_words</code>): a string would be read character by character, an iterator exhausted by the first pass, and spaCy tokens never match, since a token equals only itself. The overlaps (<code>calc_overlap</code>, <code>calc_proportional_overlap</code>, <code>calc_overlaps</code>) compare sets of words and take a sentence as a set too; <code>count_given</code> and <code>calc_repetition</code> count the words in order and refuse a set.</p>
+<p>A list of sentences that is a string, a <code>Doc</code>, an iterator, a set or a table raises <code>SourceTypeError</code>, and so does a sentence that is not a list of strings (<code>check_words</code>), such as a list of spaCy tokens. The overlaps (<code>calc_overlap</code>, <code>calc_proportional_overlap</code>, <code>calc_overlaps</code>) take a sentence as a set too; <code>count_given</code> and <code>calc_repetition</code> count the words in order and refuse a set.</p>
 <!-- --8<-- [end:cohesion-checks] -->
 
 <h2 id="calc_overlap">calc_overlap<a class="headerlink" href="#calc_overlap" title="Permanent link">&para;</a></h2>
@@ -2728,7 +2728,7 @@
 
 <h2 id="calc_overlaps">calc_overlaps<a class="headerlink" href="#calc_overlaps" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:calc_overlaps] -->
-<p>The values of <code>calc_overlap</code> and <code>calc_proportional_overlap</code> over the adjacent and over all the pairs at once, as an <code>Overlap</code> named tuple with the fields <code>adjacent</code>, <code>all</code>, <code>prop_adjacent</code> and <code>prop_all</code>. The values over all the pairs are computed without going through every pair: the pairs sharing an element are counted over bit masks of the sentences, and the sum of the Dice coefficients over the histograms of the lengths of the sentences holding every element. That sum is added by <code>math.fsum</code>, so it does not depend on the order of the elements. Without <code>proportional</code> the fields <code>prop_adjacent</code> and <code>prop_all</code> are <code>nan</code>.</p>
+<p>The values of <code>calc_overlap</code> and <code>calc_proportional_overlap</code> over the adjacent and over all the pairs at once, as an <code>Overlap</code> named tuple with the fields <code>adjacent</code>, <code>all</code>, <code>prop_adjacent</code> and <code>prop_all</code>; without <code>proportional</code> the last two are <code>nan</code>. The values over all the pairs are computed without going through every pair: the sharing pairs are counted over bit masks of the sentences, and the sum of the Dice coefficients over the histograms of the lengths of the sentences holding each element, added by <code>math.fsum</code> so that it does not depend on the order of the elements.</p>
 <table>
 <thead>
 <tr>
@@ -2838,12 +2838,12 @@
 </div>
 <h2 id="connectors">Connectors<a class="headerlink" href="#connectors" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:ConnectorMatcher] -->
-<p><code>ConnectorMatcher(connectors)</code> finds the connectors (discourse markers: <em>because</em>, <em>however</em>, <em>on the other hand</em>) of a dictionary in the sentences of a text. The dictionary gives the class of every connector - causal, adversative, concessive, temporal, additive, conditional or reformulative (<code>CONNECTOR_CLASSES</code>) - and its kind, primary or secondary (<code>CONNECTOR_KINDS</code>). A connector is matched by the normalized forms of its words, the longest one at every position, without overlaps; a period or a hyphen inside a connector may be split off by the tokenizer (<em>e.g.</em> as <code>e</code>, <code>g</code>). An occurrence is a <code>Connector</code>: the number of the sentence <code>sent</code>, the positions <code>start</code> and <code>end</code> of its words in the sentence, the connector <code>text</code> as the dictionary writes it, its class <code>cls</code> and kind <code>kind</code>.</p>
+<p><code>ConnectorMatcher(connectors)</code> finds the connectors (discourse markers: <em>because</em>, <em>however</em>, <em>on the other hand</em>) of a dictionary in the sentences of a text. The dictionary gives the class of every connector - causal, adversative, concessive, temporal, additive, conditional or reformulative (<code>CONNECTOR_CLASSES</code>) - and its kind, primary or secondary (<code>CONNECTOR_KINDS</code>). A connector is matched by the normalized forms of its words, the longest one at every position, without overlaps; a period or a hyphen inside a connector may be split off by the tokenizer (<em>e.g.</em> as <code>e</code>, <code>g</code>). An occurrence is a <code>Connector</code>: the number of the sentence <code>sent</code>, the positions <code>start</code> and <code>end</code> of its words, the connector <code>text</code> as the dictionary writes it, its class <code>cls</code> and kind <code>kind</code>.</p>
 <p>A dictionary that is not a mapping of a phrase to a pair of strings raises <code>SourceTypeError</code>, an unknown class or kind <code>ParameterError</code>.</p>
 <!-- --8<-- [end:ConnectorMatcher] -->
 
 <!-- --8<-- [start:ConnectorMatcher-hooks] -->
-<p>The rules of a language are class attributes of a subclass, empty by default:</p>
+<p>The rules of a language are class attributes of a subclass, empty by default apart from <code>pos_tags</code>:</p>
 <table>
 <thead>
 <tr>
@@ -2910,7 +2910,7 @@
 
 <h3 id="find">find<a class="headerlink" href="#find" title="Permanent link">&para;</a></h3>
 <!-- --8<-- [start:ConnectorMatcher-find] -->
-<p><code>find(words, sent_index, pos)</code> returns the occurrences of the connectors in a sentence in the order of its words. The words are those of one sentence without punctuation, the first one its start. With the parts of speech of the words, a one-word connector counts only with a part of speech of <code>pos_tags</code> or of <code>pos_extra</code> for its form, never after one of <code>not_after_pos</code>, and with one of <code>start_only_pos</code> only at the start of the sentence; a word without a part of speech (<code>None</code>) passes, and without the parts of speech these rules are skipped.</p>
+<p><code>find(words, sent_index, pos)</code> returns the occurrences of the connectors in a sentence in the order of its words. The words are those of one sentence without punctuation, the first one its start. With the parts of speech, a one-word connector counts only with one of <code>pos_tags</code> or of <code>pos_extra</code> for its form, never after one of <code>not_after_pos</code>, and with one of <code>start_only_pos</code> only at the start of the sentence; a word without a part of speech (<code>None</code>) passes. Without the parts of speech the rules that read them are skipped.</p>
 <table>
 <thead>
 <tr>

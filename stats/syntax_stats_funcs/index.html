@@ -2692,7 +2692,7 @@
 
 <h2 id="hyphenated-words">Hyphenated words<a class="headerlink" href="#hyphenated-words" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:hyphenated_words] -->
-<p>A tokenizer may split a word at its hyphens (<code>well-known</code> into <code>well</code>, <code>-</code>, <code>known</code>) and a parser then hangs every part on its own head. With <code>join_hyphens=True</code>, <code>get_words</code>, <code>get_children</code>, <code>count_children</code>, <code>subtree_len</code>, <code>calc_valency</code>, <code>calc_dependency_distances</code> and the other functions take a word whose parts <code>anyts.utils.joins_previous</code> joins for one word with its hyphens. A word that holds the head of the sentence has no head; the head of another one is that of its part hanging outside it, the nearest to the root (a word rather than a hyphen when equal). The dependents of a word are the words whose head hangs on one of its tokens, each given by that part (or by its first part when it hangs by a hyphen), and its subtree is the word and the words that hang on it, directly or through punctuation, so every word has one dependency and is the dependent of one word.</p>
+<p>A tokenizer may split a word at its hyphens (<code>well-known</code> into <code>well</code>, <code>-</code>, <code>known</code>), and a parser then hangs every part on its own head. With <code>join_hyphens=True</code> the functions of the tree take a word whose parts <code>anyts.utils.joins_previous</code> joins for one word with its hyphens. A word holding the head of the sentence has no head; the head of another one is that of its part hanging outside it, the nearest to the root (a word rather than a hyphen when equal). The dependents of a word are the words whose head hangs on one of its tokens, each given by that part (or by its first part when it hangs by a hyphen); its subtree is the word and the words that hang on it, directly or through punctuation. So every word has one dependency and is the dependent of one word.</p>
 <!-- --8<-- [end:hyphenated_words] -->
 
 <h2 id="is_root">is_root<a class="headerlink" href="#is_root" title="Permanent link">&para;</a></h2>
@@ -2720,7 +2720,7 @@
 
 <h2 id="calc_dependency_distances">calc_dependency_distances<a class="headerlink" href="#calc_dependency_distances" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:calc_dependency_distances] -->
-<p>The dependency distances (Liu 2008): the distance between a word and its head in positions of words, punctuation left out, in the order of the words. The head of a sentence has no dependency and is skipped, as is a word whose head lies outside the given sequence.</p>
+<p>The dependency distances (Liu 2008): the distance between a word and its head in positions of words, punctuation left out, in the order of the words. The head of a sentence and a word whose head lies outside the sequence are skipped.</p>
 <table>
 <thead>
 <tr>
@@ -2749,7 +2749,7 @@
 
 <h2 id="calc_tree_depth">calc_tree_depth<a class="headerlink" href="#calc_tree_depth" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:calc_tree_depth] -->
-<p>The depth of the dependency tree: the longest path from the head of a sentence to a leaf, in relations between words. For a sequence of several sentences the maximum is taken; a sentence of one word has depth 0. With <code>join_hyphens</code> a hyphenated word is one word, and the words that hang on any of its parts are one level below it.</p>
+<p>The depth of the dependency tree: the longest path from the head of a sentence to a leaf, in relations between words; the maximum for several sentences, 0 for a sentence of one word. With <code>join_hyphens</code> a hyphenated word is one word, and the words that hang on any of its parts are one level below it.</p>
 <table>
 <thead>
 <tr>
@@ -2778,7 +2778,7 @@
 
 <h2 id="verb-forms">predicate_form<a class="headerlink" href="#verb-forms" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:predicate_form] -->
-<p><code>predicate_form(token, auxiliary_form)</code> gives the verb form of a predicate by the forms (<code>VerbForm</code>) of its auxiliaries and copulas - the relations <code>aux</code> and <code>cop</code> with their subtypes, <code>anyts.constants.AUXILIARY_DEPS</code> - as Universal Dependencies annotates them. A finite auxiliary makes the predicate finite wherever it stands (<em>had arrived</em>, the German <em>gekommen sein wird</em>); otherwise the form of the first auxiliary decides (<em>to have gone</em> is an infinitive, <em>being chosen</em> a gerund), and without auxiliaries the form of the word itself. A past participle auxiliary counts as finite, since it follows a finite one that the parser may attach to another word (<em>had been chosen</em>); a present participle (<em>having eaten</em>) does not. A ClearNLP parse has no copula relation, its copula heading the clause with a form of its own, and its passive auxiliary <code>auxpass</code> is not read. An auxiliary the model leaves without a form is read by the hook <code>auxiliary_form</code> of a language, which gives its form, for instance by its ending, or an empty string to skip it; without the hook such an auxiliary is skipped. A word with no verb form gives an empty string, and a hook that is not callable raises <code>SourceTypeError</code>.</p>
+<p><code>predicate_form(token, auxiliary_form)</code> gives the verb form of a predicate by the forms (<code>VerbForm</code>) of its auxiliaries and copulas (<code>aux</code> and <code>cop</code> with their subtypes, <code>anyts.constants.AUXILIARY_DEPS</code>), as Universal Dependencies annotates them. A finite auxiliary makes the predicate finite wherever it stands (<em>had arrived</em>, the German <em>gekommen sein wird</em>); otherwise the first auxiliary decides (<em>to have gone</em> is an infinitive, <em>being chosen</em> a gerund), and without auxiliaries the word itself. A past participle auxiliary counts as finite, since it follows a finite one the parser may attach to another word (<em>had been chosen</em>); a present participle (<em>having eaten</em>) does not. A ClearNLP parse has no copula relation: its copula heads the clause with its own form, and its passive auxiliary <code>auxpass</code> is not read. An auxiliary the model leaves without a form is read by the language hook <code>auxiliary_form</code>, which gives its form or an empty string to skip it; without the hook it is skipped. A word with no verb form gives an empty string; a hook that is not callable raises <code>SourceTypeError</code>.</p>
 <table>
 <thead>
 <tr>
@@ -2840,7 +2840,7 @@
 
 <h2 id="calc_coordination_chains">calc_coordination_chains<a class="headerlink" href="#calc_coordination_chains" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:calc_coordination_chains] -->
-<p>The lengths of the coordination chains, in the order of their first words. A chain is a group of words linked by the relation <code>conj</code>, whichever word each conjunct hangs on: Universal Dependencies attaches every conjunct to the first one (<code>pears → apples</code>, <code>plums → apples</code>), ClearNLP to the previous one (<code>pears → apples</code>, <code>plums → pears</code>), and both give one chain of three for <code>apples, pears and plums</code>. A nested coordination (<code>cats and dogs, or birds</code>) and an enumeration that the parser splits between several heads are one chain as well. The length of a chain is the number of its words; a conjunct whose head lies outside the sequence belongs to no chain with it. With <code>join_hyphens</code> a hyphenated word is one conjunct, linked by the <code>conj</code> of any of its parts (<code>member and vice-governor</code> is a chain of two).</p>
+<p>The lengths of the coordination chains, in the order of their first words. A chain is a group of words linked by <code>conj</code>, whichever word each conjunct hangs on: Universal Dependencies attaches every conjunct to the first one (<code>pears → apples</code>, <code>plums → apples</code>), ClearNLP to the previous one (<code>pears → apples</code>, <code>plums → pears</code>); both give one chain of three for <code>apples, pears and plums</code>. A nested coordination (<code>cats and dogs, or birds</code>) and an enumeration split between several heads are one chain too. The length of a chain is the number of its words; a conjunct whose head lies outside the sequence is not linked to it. With <code>join_hyphens</code> a hyphenated word is one conjunct, linked by the <code>conj</code> of any of its parts (<code>member and vice-governor</code> is a chain of two).</p>
 <table>
 <thead>
 <tr>
@@ -2878,7 +2878,7 @@
 <!-- --8<-- [end:count_noun_modifiers] -->
 
 <!-- --8<-- [start:calc_modifier_chains] -->
-<p>The lengths of the chains of nested modifiers, in the order of the words. A chain is two or more modifiers each hanging on the previous one, such as the complements of <code>the increase of the efficiency of the use of resources</code> (length 3), and what a modifier is comes from the check <code>is_modifier</code> of a language - a complement with a preposition, a noun in the genitive. A chain starts at a modifier whose head is none, and its length is the number of modifiers in its longest branch. The words hang on each other as <code>get_children</code> gives them: punctuation is no link of a chain, and with <code>join_hyphens</code> a hyphenated word is one link. A check that is not callable raises <code>SourceTypeError</code>.</p>
+<p>The lengths of the chains of nested modifiers, in the order of the words. A chain is two or more modifiers each hanging on the previous one, such as the complements of <code>the increase of the efficiency of the use of resources</code> (length 3); the check <code>is_modifier</code> of a language says what a modifier is (a complement with a preposition, a noun in the genitive). A chain starts at a modifier whose head is none, and its length is the number of modifiers in its longest branch. The links are those of <code>get_children</code>: punctuation is no link, and with <code>join_hyphens</code> a hyphenated word is one link. A check that is not callable raises <code>SourceTypeError</code>.</p>
 <table>
 <thead>
 <tr>

@@ -2608,7 +2608,7 @@
 </div>
 <h2 id="description">Description<a class="headerlink" href="#description" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:Stats] -->
-<p>The common interface of the classes of statistics: the dictionary of the statistics, nested or flat, a one-row frame of <a href="https://pandas.pydata.org/">pandas</a>, a printed table with descriptions and the reading of a statistic by its scale. <code>BasicStats</code>, <code>ReadabilityStats</code> and <code>DiversityStats</code> are built on it, and a language library builds its own classes of statistics on it too.</p>
+<p>The common interface of the classes of statistics: the dictionary of the statistics, nested or flat, a one-row frame of <a href="https://pandas.pydata.org/">pandas</a>, a printed table with descriptions and the reading of a statistic by its scale. Every class of statistics is built on it, those of a language library too.</p>
 <!-- --8<-- [end:Stats] -->
 
 <h2 id="hooks">Hooks<a class="headerlink" href="#hooks" title="Permanent link">&para;</a></h2>
@@ -2660,7 +2660,7 @@
 <h2 id="methods">Methods<a class="headerlink" href="#methods" title="Permanent link">&para;</a></h2>
 <h3 id="get_stats">get_stats<a class="headerlink" href="#get_stats" title="Permanent link">&para;</a></h3>
 <!-- --8<-- [start:Stats-get_stats] -->
-<p>Returns a dictionary of the statistics of <code>stat_names</code> - a copy: editing it does not change the object. With <code>flat=True</code> the values of a dictionary statistic become keys of their own, joined to its name with an underscore: the distribution <code>{3: 5}</code> of <code>c_lengths</code> gives the key <code>c_lengths_3</code>.</p>
+<p>Returns a copy of the statistics of <code>stat_names</code>: editing it does not change the object. With <code>flat=True</code> the values of a dictionary statistic become keys of their own, joined to its name with an underscore: the distribution <code>{3: 5}</code> of <code>c_lengths</code> gives the key <code>c_lengths_3</code>.</p>
 <p>Parameters:</p>
 <table>
 <thead>
@@ -2684,12 +2684,12 @@
 
 <h3 id="to_dataframe">to_dataframe<a class="headerlink" href="#to_dataframe" title="Permanent link">&para;</a></h3>
 <!-- --8<-- [start:Stats-to_dataframe] -->
-<p>Returns the flat statistics, <code>get_stats(flat=True)</code>, as a <code>pandas.DataFrame</code> of one row with a column for every key. A dictionary statistic gives columns only for the keys the text has, so in the frames of several texts joined with <code>pandas.concat</code> a count a text lacks is <code>NaN</code>: fill the columns of such a statistic with 0, and only them, since <code>NaN</code> of another statistic is an undefined value.</p>
+<p>Returns the flat statistics, <code>get_stats(flat=True)</code>, as a <code>pandas.DataFrame</code> of one row with a column for every key. A dictionary statistic gives columns only for the keys the text has, so in frames of several texts joined with <code>pandas.concat</code> a count a text lacks is <code>NaN</code>. Only these columns may be filled with 0: elsewhere <code>NaN</code> is an undefined value.</p>
 <!-- --8<-- [end:Stats-to_dataframe] -->
 
 <h3 id="print_stats">print_stats<a class="headerlink" href="#print_stats" title="Permanent link">&para;</a></h3>
 <!-- --8<-- [start:Stats-print_stats] -->
-<p>Prints a table of the statistics of <code>stats_desc</code> with their descriptions under the headers of <code>stats_headers</code>, a float with two decimals; each column is as wide as its longest text.</p>
+<p>Prints a table of the statistics of <code>stats_desc</code> with their descriptions under the headers of <code>stats_headers</code>, floats with two decimals; each column is as wide as its longest text.</p>
 <!-- --8<-- [end:Stats-print_stats] -->
 
 <h3 id="describe">describe<a class="headerlink" href="#describe" title="Permanent link">&para;</a></h3>
@@ -2716,7 +2716,7 @@
 </table>
 <!-- --8<-- [end:Stats-describe] -->
 
-<p>The band is found by <a href="../readability_stats_funcs/#band-of-a-scale"><code>scale_level</code></a>; <code>ReadabilityStats</code> reads the grade formulas by school stages besides.</p>
+<p>The band is found by <a href="../readability_stats_funcs/#band-of-a-scale"><code>scale_level</code></a>; <code>ReadabilityStats</code> also reads the grade formulas by school stages.</p>
 <h2 id="usage-example">Usage example<a class="headerlink" href="#usage-example" title="Permanent link">&para;</a></h2>
 <div class="admonition example">
 <p class="admonition-title">Example</p>

@@ -2550,10 +2550,10 @@
 <div class="admonition info">
 <p><strong>anyts.utils</strong></p>
 </div>
-<p>The checks of the input that the functions and the classes of the core share; their messages are in English.</p>
+<p>Input checks shared by the functions and classes of the core; their messages are in English.</p>
 <h2 id="check_sequence">check_sequence<a class="headerlink" href="#check_sequence" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:check_sequence] -->
-<p>Checks that an argument is a sequence and not a text or an iterator: a string (of characters or bytes), a <code>Doc</code>, a <code>Span</code>, an iterator or an object that cannot be iterated or has no length raises <code>SourceTypeError</code>, since a string would be iterated character by character, an iterator would be exhausted by the first pass over it and the functions take the length of the words; so does a table - a two-dimensional array or a <code>DataFrame</code>. A set or a mapping holds every item once, in no order of the text, and raises the error too, unless <code>ordered=False</code> - for a collection whose order and repeats do not matter, such as stop words.</p>
+<p>Checks that an argument is a sequence and not a text or an iterator. A string (of characters or bytes), a <code>Doc</code>, a <code>Span</code>, an iterator, an object that cannot be iterated or has no length, and a table - a two-dimensional array or a <code>DataFrame</code> - raise <code>SourceTypeError</code>: a string would be iterated by characters, and an iterator exhausted by the first pass. A set or a mapping holds every item once, in no order of the text, and raises the error too unless <code>ordered=False</code>, for a collection such as stop words.</p>
 <table>
 <thead>
 <tr>
@@ -2588,7 +2588,7 @@
 
 <h2 id="check_words">check_words<a class="headerlink" href="#check_words" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:check_words] -->
-<p>Checks that an argument is a list of words: it passes <code>check_sequence</code> and every item is a string, so that a list of spaCy tokens, which would count every token as a lexeme of its own, raises <code>SourceTypeError</code>.</p>
+<p>Checks that an argument is a list of words: it passes <code>check_sequence</code> and every item is a string, so a list of spaCy tokens raises <code>SourceTypeError</code>.</p>
 <table>
 <thead>
 <tr>
@@ -2623,7 +2623,7 @@
 
 <h2 id="check_word">check_word<a class="headerlink" href="#check_word" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:check_word] -->
-<p>Checks that an argument is a word: a value that is not a string raises <code>SourceTypeError</code>, for the functions of a single word such as the syllables of a language.</p>
+<p>Checks that an argument of a function of a single word, such as the syllables of a language, is a word: a value that is not a string raises <code>SourceTypeError</code>.</p>
 <table>
 <thead>
 <tr>
@@ -2675,7 +2675,7 @@
 
 <h2 id="check_integer">check_integer<a class="headerlink" href="#check_integer" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:check_integer] -->
-<p>Checks that a parameter is an integer: a <code>bool</code> or a <code>float</code>, even a whole one like <code>5.0</code>, raises <code>ParameterError</code>, since it would fail only later, as an index or a count.</p>
+<p>Checks that a parameter is an integer: a <code>bool</code> or a <code>float</code>, even a whole one like <code>5.0</code>, raises <code>ParameterError</code>.</p>
 <table>
 <thead>
 <tr>
@@ -2704,7 +2704,7 @@
 
 <h2 id="check_number">check_number<a class="headerlink" href="#check_number" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:check_number] -->
-<p>Checks that a parameter is a finite real number: a <code>bool</code>, a string, <code>None</code>, <code>nan</code> or an infinity raises <code>ParameterError</code> instead of failing later in a comparison.</p>
+<p>Checks that a parameter is a finite real number: a <code>bool</code>, a string, <code>None</code>, <code>nan</code> or an infinity raises <code>ParameterError</code>.</p>
 <table>
 <thead>
 <tr>

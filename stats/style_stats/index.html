@@ -2632,14 +2632,14 @@
 </div>
 <h2 id="description">Description<a class="headerlink" href="#description" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:StyleStats] -->
-<p>The style metrics of a text: the SEO metrics of the services Advego and Text.ru - the classic and the academic nausea, the water content, the spam score, the naturalness by Zipf's law and the density of keywords - and the markers of the officialese style: the verbal nouns, the compound prepositions, the parenthetical expressions and the cliches. The services do not publish their formulas, so the common definitions are taken; they are given in the functions below. The data source can be a text or a <code>Doc</code> object of <a href="https://github.com/explosion/spaCy">spaCy</a>.</p>
-<p>The words of a string come from the word extractor, in lower case by default; the words of a <code>Doc</code> come from its tokens, and an extractor passed explicitly is used on the text of a <code>Doc</code>. The SEO metrics are counted on these words; the markers on the word forms in lower case (<code>forms</code>), whatever the extractor.</p>
+<p>The style metrics of a text: the SEO metrics of Advego and Text.ru - the classic and the academic nausea, the water content, the spam score, the naturalness by Zipf's law and the keyword density - and the markers of the officialese style: the verbal nouns, the compound prepositions, the parenthetical expressions and the cliches. The services publish no formulas, so the common definitions are taken, as the metric functions give them. The data source is a text or a <code>Doc</code> object of <a href="https://github.com/explosion/spaCy">spaCy</a>.</p>
+<p>The SEO metrics are counted on the words of the word extractor, in lower case by default, or on the tokens of a <code>Doc</code>; an extractor passed explicitly is used on the text of a <code>Doc</code>. The markers are counted on the word forms in lower case (<code>forms</code>), whatever the extractor.</p>
 <p>A source that is neither a string nor a <code>Doc</code>, an extractor of another type and a list that is not a list of strings raise <code>SourceTypeError</code>, a source without words <code>SourceError</code>, a <code>top_n</code> that is not an integer of at least one <code>ParameterError</code>.</p>
 <!-- --8<-- [end:StyleStats] -->
 
 <h2 id="language-hooks">Language hooks<a class="headerlink" href="#language-hooks" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:StyleStats-hooks] -->
-<p>A language library subclasses <code>StyleStats</code>; by default the hooks know no language, so the stopwords, the water, the markers and the verbal nouns are empty:</p>
+<p>A language library subclasses <code>StyleStats</code>; by default the hooks know no language, so there are no stopwords, water, markers or verbal nouns:</p>
 <table>
 <thead>
 <tr>
@@ -2662,7 +2662,7 @@
 <tr>
 <td style="text-align: center;"><code>compound_prepositions_list</code>, <code>parentheticals_list</code>, <code>cliches_list</code></td>
 <td style="text-align: center;">class attributes</td>
-<td style="text-align: center;">Compound prepositions, parenthetical expressions and cliches, checked as lists of strings when the class is defined; the parameter <code>cliches</code> takes the place of the last</td>
+<td style="text-align: center;">Compound prepositions, parenthetical expressions and cliches, checked as lists of strings when the class is defined; the parameter <code>cliches</code> replaces the last</td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>normalize(word)</code></td>
@@ -2697,7 +2697,7 @@
 <tr>
 <td style="text-align: center;"><code>nouns()</code></td>
 <td style="text-align: center;">method</td>
-<td style="text-align: center;">Word forms of the nouns of the text with their lemmas; none by default, so the share of the verbal nouns is <code>nan</code></td>
+<td style="text-align: center;">Word forms of the nouns with their lemmas; none by default, so the share of the verbal nouns is <code>nan</code></td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>is_verbal_noun(lemma)</code></td>
@@ -2844,7 +2844,7 @@
 </tr>
 </tbody>
 </table>
-<p>The metrics are properties computed on each access. A parenthetical expression is a phrase of <code>parentheticals_list</code> or a word of <code>is_parenthetical</code> outside those phrases; the phrases of the three lists are found with the variants of <code>expand_phrases</code>.</p>
+<p>The metrics are properties computed on each access. A parenthetical expression is a phrase of <code>parentheticals_list</code> or a word of <code>is_parenthetical</code> outside those phrases; the phrases of the three lists are found with their variants (<code>expand_phrases</code>).</p>
 <!-- --8<-- [end:StyleStats-attributes] -->
 
 <h2 id="methods">Methods<a class="headerlink" href="#methods" title="Permanent link">&para;</a></h2>
@@ -2855,7 +2855,7 @@
 
 <h3 id="markers">markers<a class="headerlink" href="#markers" title="Permanent link">&para;</a></h3>
 <!-- --8<-- [start:StyleStats-markers] -->
-<p>Returns the markers of the officialese found in the text by metric - <code>verbal_nouns</code>, <code>compound_prepositions</code>, <code>parentheticals</code>, <code>cliches</code> - as the forms write them, in the order of the text.</p>
+<p>Returns the markers of the officialese found by metric - <code>verbal_nouns</code>, <code>compound_prepositions</code>, <code>parentheticals</code>, <code>cliches</code> - as the forms write them, in the order of the text.</p>
 <!-- --8<-- [end:StyleStats-markers] -->
 
 <p>The other methods - <code>get_stats</code>, <code>to_dataframe</code>, <code>print_stats</code> and <code>describe</code> - are those of the <a href="../stats/">statistics interface</a>.</p>

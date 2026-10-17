@@ -2441,7 +2441,7 @@
 <p><strong>anyts.exceptions</strong></p>
 </div>
 <!-- --8<-- [start:exceptions] -->
-<p>All exceptions of the library inherit the base class <code>AnyTSError</code> and a built-in Python class, so they can be caught by either, and <code>except ValueError</code> keeps working.</p>
+<p>All exceptions of the library inherit the base class <code>AnyTSError</code> and a built-in Python class, and can be caught by either.</p>
 <table>
 <thead>
 <tr>
@@ -2515,7 +2515,7 @@
 </div>
 <h2 id="messages">Messages<a class="headerlink" href="#messages" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:messages] -->
-<p>The messages of the errors of the classes of statistics (<code>Stats</code> and its subclasses), of <code>StatsComponent</code>, of the extractors <code>SentsExtractor</code>, <code>WordsExtractor</code> and <code>CharNgramsExtractor</code> and of <code>ConnectorMatcher</code> come from their class attribute <code>messages</code>, a mapping of a key to a message; the messages with fields in braces are format strings. By default it is <code>anyts.constants.MESSAGES</code>, in English. A language library sets the messages of its language on its subclasses, <code>messages = {**MESSAGES, **own}</code>, and its users get them for a source without words, an extractor of another type, an unknown preset or statistic, a parameter out of range, the bounds of the lengths, the N-grams and the top of an extractor, a text that is not a string or a wrong tokenizer, and a dictionary of connectors of a wrong form or wrong parts of speech: every error such a class raises itself. The functions <code>check_params</code>, <code>calc_windowed</code> and <code>calc_reading_time</code>, which these classes call, take the messages as the keyword <code>messages</code>.</p>
+<p>The errors of the classes of statistics (<code>Stats</code> and its subclasses), of <code>StatsComponent</code>, of the extractors <code>SentsExtractor</code>, <code>WordsExtractor</code> and <code>CharNgramsExtractor</code> and of <code>ConnectorMatcher</code> take their messages from the class attribute <code>messages</code>, a mapping of a key to a message, <code>anyts.constants.MESSAGES</code> in English by default; the messages with fields in braces are format strings. A language library sets the messages of its language on its subclasses, <code>messages = {**MESSAGES, **own}</code>, and they cover every error such a class raises itself. The functions <code>check_params</code>, <code>calc_windowed</code> and <code>calc_reading_time</code>, which these classes call, take the messages as the keyword <code>messages</code>.</p>
 <p>The shared checks of <code>anyts.utils</code> (<code>check_integer</code>, <code>check_number</code>, <code>check_words</code>, <code>check_sequence</code>), which these classes call too, and the other functions of the core keep their messages in English.</p>
 <!-- --8<-- [end:messages] -->
 

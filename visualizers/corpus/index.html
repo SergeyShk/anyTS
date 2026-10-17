@@ -2529,7 +2529,7 @@
 <p><strong>anyts.visualizers.dispersion_plot()</strong>, <strong>anyts.visualizers.keyness_plot()</strong>, <strong>anyts.visualizers.collocation_network()</strong></p>
 </div>
 <h2 id="description">Description<a class="headerlink" href="#description" title="Permanent link">&para;</a></h2>
-<p>Plots for the <a href="../../corpus/keyness/">corpus measures</a>: the lexical dispersion - where in a text a word occurs, a chart of the keywords found by <code>keyness</code> and a network of the collocations found by <code>collocations</code>. The matplotlib functions take the axes <code>ax</code> and return <code>Axes</code>: without <code>ax</code> a new figure is created, with it the plot goes into a grid of one's own; the network of collocations is built by graphviz and returns a <code>Graph</code>, as the <a href="../word_tree/">word tree</a> returns a <code>Digraph</code>.</p>
+<p>Plots for the <a href="../../corpus/keyness/">corpus measures</a>: the lexical dispersion (where in a text a word occurs), a chart of the keywords of <code>keyness</code> and a network of the collocations of <code>collocations</code>. The matplotlib functions take the axes <code>ax</code>, a new figure without them, and return <code>Axes</code>; the network is a graphviz <code>Graph</code>, as the <a href="../word_tree/">word tree</a> is a <code>Digraph</code>.</p>
 <h2 id="dispersion_plot">Lexical dispersion<a class="headerlink" href="#dispersion_plot" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:dispersion_plot] -->
 <p>A row for every word of <code>targets</code> and a tick at the position of each of its occurrences in the text. Words are compared as they are: case and lemmatization belong to the extraction of the words.</p>
@@ -2573,7 +2573,7 @@
 
 <h2 id="keyness_plot">Chart of keywords<a class="headerlink" href="#keyness_plot" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:keyness_plot] -->
-<p>Diverging horizontal bars: the words of <code>positive</code> to the right, of <code>negative</code> - the result of <code>keyness</code> with <code>positive=False</code> - to the left, the length of a bar is the absolute value of the <code>field</code> (<code>score</code>, <code>g2</code>, <code>log_ratio</code>), so the side is set by the list and not by the sign of the measure; <code>top_n</code> words on each side, the words with an undefined or infinite value are skipped. For the odds ratio (<code>score</code> from 0 to infinity, one - equal odds) set <code>log=True</code>: the absolute <span class="arithmatex">\(\log_2\)</span> of the value is plotted, symmetric around one.</p>
+<p>Diverging horizontal bars: the words of <code>positive</code> to the right, of <code>negative</code> (the result of <code>keyness</code> with <code>positive=False</code>) to the left, <code>top_n</code> on each side. The length of a bar is the absolute value of the <code>field</code> (<code>score</code>, <code>g2</code>, <code>log_ratio</code>), so the side is set by the list, not by the sign of the measure; words with an undefined or infinite value are skipped. For the odds ratio (from 0 to infinity, one - equal odds) <code>log=True</code> plots the absolute <span class="arithmatex">\(\log_2\)</span> of the value, symmetric around one.</p>
 <table>
 <thead>
 <tr>
@@ -2632,7 +2632,7 @@
 
 <h2 id="collocation_network">Network of collocations<a class="headerlink" href="#collocation_network" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:collocation_network] -->
-<p>An undirected graph: the nodes are the words with the size of the font by frequency, the edges the pairs with the width and the label by the value of the measure; the <code>neato</code> layout. A pair of a word with itself - a word repeated within the window - would be a loop and is left out before <code>top_n</code> pairs are taken. Rendering needs the executables of <a href="https://graphviz.org/download/">Graphviz</a>; in Jupyter the graph displays itself, and <code>graph.render("network")</code> saves a png file.</p>
+<p>An undirected graph in the <code>neato</code> layout: the nodes are the words, the size of the font by frequency, the edges the pairs, the width and the label by the measure. A pair of a word with itself (a word repeated within the window) would be a loop and is left out before <code>top_n</code>. Rendering needs the executables of <a href="https://graphviz.org/download/">Graphviz</a>; Jupyter displays the graph, and <code>graph.render("network")</code> saves a png file.</p>
 <table>
 <thead>
 <tr>
