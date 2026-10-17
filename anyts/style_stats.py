@@ -42,326 +42,6 @@ def check_params(top_n: int, *, messages: Mapping[str, str] = MESSAGES) -> None:
         raise ParameterError(messages["top_n"])
 
 
-def _stop_flags(
-    text: Sequence[str],
-    stopwords: Collection[str] | None,
-    is_stopword: Callable[[str], bool] | None,
-    normalize: Callable[[str], str],
-) -> list[bool]:
-    """Whether every word is a stopword: of the list, by its normalized form, or of the predicate"""
-    if stopwords is not None:
-        check_words(stopwords, "stopwords", ordered=False)
-        stopwords_set = {normalize(word) for word in stopwords}
-        return [normalize(word) in stopwords_set for word in text]
-    if is_stopword is not None:
-        return [is_stopword(word) for word in text]
-    return [False] * len(text)
-
-
-def calc_classic_nausea(text: Sequence[str]) -> float:
-    """
-    Computing the classic nausea
-
-    Description:
-        The square root of the occurrences of the most frequent word (Advego).
-        It measures how much one word is pressed, whatever the length of the
-        text, so it grows with the text
-
-    References:
-        https://advego.com/text/seo/
-
-    Arguments:
-        text (list[str]): List of words
-
-    Returns:
-        float: Value of the nausea, 0 for no words
-
-    Raises:
-        SourceTypeError: If the words are not a list of strings
-    """
-    check_words(text)
-    if not text:
-        return 0.0
-    return sqrt(max(Counter(text).values()))
-
-
-def find_nausea_words(
-    text: Sequence[str],
-    top_n: int = NAUSEA_TOP_N,
-    stopwords: Collection[str] | None = None,
-    *,
-    is_stopword: Callable[[str], bool] | None = None,
-    normalize: Callable[[str], str] = str.lower,
-    messages: Mapping[str, str] = MESSAGES,
-) -> dict[str, int]:
-    """
-    Finding the most frequent significant words of the academic nausea
-
-    Description:
-        The top_n most frequent words without the stopwords with their
-        occurrences, the most frequent first and words of equal frequency in
-        the order of the text. A stopword is a word of the list stopwords, by
-        its normalized form, or without the list one the predicate is_stopword
-        of a language accepts; without both no word is a stopword
-
-    Arguments:
-        text (list[str]): List of words
-        top_n (int): Number of the most frequent words
-        stopwords (list[str]|set[str]): Stopwords
-        is_stopword (callable): Whether a word is a stopword
-        normalize (callable): Normalized form of a word, the lower case by default
-        messages (dict[str, str]): Messages of the errors by key (MESSAGES)
-
-    Returns:
-        dict[str, int]: Occurrences of every word
-
-    Raises:
-        SourceTypeError: If the words or the stopwords are not a list of strings
-        ParameterError: If top_n is not an integer or is below one
-
-    Example:
-        >>> from anyts.style_stats import find_nausea_words
-        >>> find_nausea_words(["cat", "and", "cat", "and", "dog"], top_n=1, stopwords=["and"])
-        {'cat': 2}
-    """
-    check_words(text)
-    check_params(top_n, messages=messages)
-    stops = _stop_flags(text, stopwords, is_stopword, normalize)
-    significant = [word for word, stop in zip(text, stops, strict=True) if not stop]
-    return dict(Counter(significant).most_common(top_n))
-
-
-def calc_academic_nausea(
-    text: Sequence[str],
-    top_n: int = NAUSEA_TOP_N,
-    stopwords: Collection[str] | None = None,
-    *,
-    is_stopword: Callable[[str], bool] | None = None,
-    normalize: Callable[[str], str] = str.lower,
-    messages: Mapping[str, str] = MESSAGES,
-) -> float:
-    """
-    Computing the academic nausea
-
-    Description:
-        The share of the occurrences of the most frequent significant words in
-        percent (Advego): the occurrences of the top_n words of
-        find_nausea_words divided by the number of all the words. With the
-        stopwords counted, the ten most frequent words of any text are mostly
-        conjunctions and prepositions
-
-    References:
-        https://advego.com/text/seo/
-
-    Arguments:
-        text (list[str]): List of words
-        top_n (int): Number of the most frequent words
-        stopwords (list[str]|set[str]): Stopwords
-        is_stopword (callable): Whether a word is a stopword, without the list
-        normalize (callable): Normalized form of a word, the lower case by default
-        messages (dict[str, str]): Messages of the errors by key (MESSAGES)
-
-    Returns:
-        float: Value of the nausea in percent
-
-    Raises:
-        SourceTypeError: If the words or the stopwords are not a list of strings
-        ParameterError: If top_n is not an integer or is below one
-    """
-    found = find_nausea_words(
-        text, top_n, stopwords, is_stopword=is_stopword, normalize=normalize, messages=messages
-    )
-    return safe_divide(100 * sum(found.values()), len(text))
-
-
-def calc_water(
-    text: Sequence[str],
-    stopwords: Collection[str] | None = None,
-    *,
-    is_water_word: Callable[[str], bool] | None = None,
-    normalize: Callable[[str], str] = str.lower,
-) -> float:
-    """
-    Computing the water content
-
-    Description:
-        The share of the words that carry no content in percent (Text.ru): the
-        words of the list stopwords, by their normalized forms, or without the
-        list those the predicate is_water_word of a language accepts
-
-    References:
-        https://text.ru/seo
-
-    Arguments:
-        text (list[str]): List of words
-        stopwords (list[str]|set[str]): Words of water
-        is_water_word (callable): Whether a word is water, without the list
-        normalize (callable): Normalized form of a word, the lower case by default
-
-    Returns:
-        float: Value of the water content in percent
-
-    Raises:
-        SourceTypeError: If the words or the stopwords are not a list of strings
-    """
-    check_words(text)
-    return safe_divide(
-        100 * sum(_stop_flags(text, stopwords, is_water_word, normalize)), len(text)
-    )
-
-
-def calc_spam(text: Sequence[str]) -> float:
-    """
-    Computing the spam score
-
-    Description:
-        The share of the repeated words in percent (Text.ru), every occurrence
-        of a word after the first: 100 · (1 - TTR)
-
-    References:
-        https://text.ru/seo
-
-    Arguments:
-        text (list[str]): List of words
-
-    Returns:
-        float: Value of the spam score in percent
-
-    Raises:
-        SourceTypeError: If the words are not a list of strings
-    """
-    check_words(text)
-    n_words = len(text)
-    return safe_divide(100 * (n_words - len(set(text))), n_words)
-
-
-def calc_zipf_naturalness(
-    text: Sequence[str], top_n: int = NAUSEA_TOP_N, *, messages: Mapping[str, str] = MESSAGES
-) -> float:
-    """
-    Computing the naturalness of a text by Zipf's law
-
-    Description:
-        The agreement of the frequencies of the most frequent words with the
-        ideal distribution f_r = f_1 / r, f_1 being the frequency of the most
-        frequent word and r the rank: 100 · (1 - the mean relative deviation of
-        the frequencies from the ideal ones) over the ranks from 2 to
-        min(top_n, V, f_1), since rank 1 is ideal by construction and above f_1
-        the ideal frequency is below one. Negative values are cut to 0; nan
-        without ranks to compare: all the words are hapaxes, one lexeme or
-        top_n below 2
-
-    References:
-        https://en.wikipedia.org/wiki/Zipf's_law
-
-    Arguments:
-        text (list[str]): List of words
-        top_n (int): Number of the most frequent words
-        messages (dict[str, str]): Messages of the errors by key (MESSAGES)
-
-    Returns:
-        float: Value of the naturalness in percent, nan without ranks to compare
-
-    Raises:
-        SourceTypeError: If the words are not a list of strings
-        ParameterError: If top_n is not an integer or is below one
-    """
-    check_words(text)
-    check_params(top_n, messages=messages)
-    frequencies = sorted(Counter(text).values(), reverse=True)
-    if not frequencies:
-        return nan
-    top_freq = frequencies[0]
-    n_ranks = min(top_n, len(frequencies), top_freq)
-    if n_ranks < 2:
-        return nan
-    # In integers: the relative deviations of exact halves would come out below 50
-    deviation = sum(
-        abs(freq * rank - top_freq) for rank, freq in enumerate(frequencies[1:n_ranks], start=2)
-    )
-    span = top_freq * (n_ranks - 1)
-    return max(0.0, 100 * (span - deviation) / span)
-
-
-def calc_keyword_density(text: Sequence[str], keywords: Collection[str]) -> dict[str, float]:
-    """
-    Computing the density of keywords
-
-    Description:
-        The frequency of every keyword per 100 words of the text (Text.ru). A
-        keyword of several words separated by spaces is looked for as a
-        sequence of words, and its occurrences may overlap. The words are
-        compared in any case; the keywords of a set come in sorted order
-
-    References:
-        https://text.ru/seo
-
-    Arguments:
-        text (list[str]): List of words
-        keywords (list[str]|set[str]): Keywords or phrases
-
-    Returns:
-        dict[str, float]: Density of every keyword in percent
-
-    Raises:
-        SourceTypeError: If the words or the keywords are not a list of strings
-
-    Example:
-        >>> from anyts.style_stats import calc_keyword_density
-        >>> calc_keyword_density("the cat and the dog".split(), ["the", "the cat"])
-        {'the': 40.0, 'the cat': 20.0}
-    """
-    check_words(text)
-    check_words(keywords, "keywords", ordered=False)
-    n_words = len(text)
-    lowered = [word.lower() for word in text]
-    density = {}
-    for keyword in in_order(keywords):
-        parts = keyword.lower().split()
-        size = len(parts)
-        if not size:
-            density[keyword] = 0.0
-            continue
-        count = sum(1 for i in range(n_words - size + 1) if lowered[i : i + size] == parts)
-        density[keyword] = safe_divide(100 * count, n_words)
-    return density
-
-
-def calc_phrase_density(
-    text: Sequence[str],
-    phrases: Collection[str],
-    *,
-    expand: Expander | None = None,
-    normalize: Callable[[str], str] = str.lower,
-) -> float:
-    """
-    Computing the density of the phrases of a list
-
-    Description:
-        The occurrences of the phrases (find_phrases) per 100 words; the hook
-        expand of a language spells the phrases out in the forms the text has
-        (the forms of a verb, contractions), giving every variant with its
-        phrase
-
-    Arguments:
-        text (list[str]): List of words
-        phrases (list[str]|set[str]): Phrases, words separated by spaces
-        expand (callable): Variants of the phrases in the text, by the words and
-            the phrases
-        normalize (callable): Normalized form of a word, the lower case by default
-
-    Returns:
-        float: Occurrences per 100 words
-
-    Raises:
-        SourceTypeError: If the words or the phrases are not a list of strings
-    """
-    check_words(text)
-    check_words(phrases, "phrases", ordered=False)
-    variants = expand(text, phrases) if expand is not None else phrases
-    return safe_divide(len(find_phrases(text, variants, normalize)), len(text)) * 100
-
-
 class StyleStats(Stats):
     """
     Base of the style metrics of a text
@@ -740,3 +420,323 @@ class StyleStats(Stats):
                 for name, spans in found.items()
             },
         }
+
+
+def calc_classic_nausea(text: Sequence[str]) -> float:
+    """
+    Computing the classic nausea
+
+    Description:
+        The square root of the occurrences of the most frequent word (Advego).
+        It measures how much one word is pressed, whatever the length of the
+        text, so it grows with the text
+
+    References:
+        https://advego.com/text/seo/
+
+    Arguments:
+        text (list[str]): List of words
+
+    Returns:
+        float: Value of the nausea, 0 for no words
+
+    Raises:
+        SourceTypeError: If the words are not a list of strings
+    """
+    check_words(text)
+    if not text:
+        return 0.0
+    return sqrt(max(Counter(text).values()))
+
+
+def find_nausea_words(
+    text: Sequence[str],
+    top_n: int = NAUSEA_TOP_N,
+    stopwords: Collection[str] | None = None,
+    *,
+    is_stopword: Callable[[str], bool] | None = None,
+    normalize: Callable[[str], str] = str.lower,
+    messages: Mapping[str, str] = MESSAGES,
+) -> dict[str, int]:
+    """
+    Finding the most frequent significant words of the academic nausea
+
+    Description:
+        The top_n most frequent words without the stopwords with their
+        occurrences, the most frequent first and words of equal frequency in
+        the order of the text. A stopword is a word of the list stopwords, by
+        its normalized form, or without the list one the predicate is_stopword
+        of a language accepts; without both no word is a stopword
+
+    Arguments:
+        text (list[str]): List of words
+        top_n (int): Number of the most frequent words
+        stopwords (list[str]|set[str]): Stopwords
+        is_stopword (callable): Whether a word is a stopword
+        normalize (callable): Normalized form of a word, the lower case by default
+        messages (dict[str, str]): Messages of the errors by key (MESSAGES)
+
+    Returns:
+        dict[str, int]: Occurrences of every word
+
+    Raises:
+        SourceTypeError: If the words or the stopwords are not a list of strings
+        ParameterError: If top_n is not an integer or is below one
+
+    Example:
+        >>> from anyts.style_stats import find_nausea_words
+        >>> find_nausea_words(["cat", "and", "cat", "and", "dog"], top_n=1, stopwords=["and"])
+        {'cat': 2}
+    """
+    check_words(text)
+    check_params(top_n, messages=messages)
+    stops = _stop_flags(text, stopwords, is_stopword, normalize)
+    significant = [word for word, stop in zip(text, stops, strict=True) if not stop]
+    return dict(Counter(significant).most_common(top_n))
+
+
+def _stop_flags(
+    text: Sequence[str],
+    stopwords: Collection[str] | None,
+    is_stopword: Callable[[str], bool] | None,
+    normalize: Callable[[str], str],
+) -> list[bool]:
+    """Whether every word is a stopword: of the list, by its normalized form, or of the predicate"""
+    if stopwords is not None:
+        check_words(stopwords, "stopwords", ordered=False)
+        stopwords_set = {normalize(word) for word in stopwords}
+        return [normalize(word) in stopwords_set for word in text]
+    if is_stopword is not None:
+        return [is_stopword(word) for word in text]
+    return [False] * len(text)
+
+
+def calc_academic_nausea(
+    text: Sequence[str],
+    top_n: int = NAUSEA_TOP_N,
+    stopwords: Collection[str] | None = None,
+    *,
+    is_stopword: Callable[[str], bool] | None = None,
+    normalize: Callable[[str], str] = str.lower,
+    messages: Mapping[str, str] = MESSAGES,
+) -> float:
+    """
+    Computing the academic nausea
+
+    Description:
+        The share of the occurrences of the most frequent significant words in
+        percent (Advego): the occurrences of the top_n words of
+        find_nausea_words divided by the number of all the words. With the
+        stopwords counted, the ten most frequent words of any text are mostly
+        conjunctions and prepositions
+
+    References:
+        https://advego.com/text/seo/
+
+    Arguments:
+        text (list[str]): List of words
+        top_n (int): Number of the most frequent words
+        stopwords (list[str]|set[str]): Stopwords
+        is_stopword (callable): Whether a word is a stopword, without the list
+        normalize (callable): Normalized form of a word, the lower case by default
+        messages (dict[str, str]): Messages of the errors by key (MESSAGES)
+
+    Returns:
+        float: Value of the nausea in percent
+
+    Raises:
+        SourceTypeError: If the words or the stopwords are not a list of strings
+        ParameterError: If top_n is not an integer or is below one
+    """
+    found = find_nausea_words(
+        text, top_n, stopwords, is_stopword=is_stopword, normalize=normalize, messages=messages
+    )
+    return safe_divide(100 * sum(found.values()), len(text))
+
+
+def calc_water(
+    text: Sequence[str],
+    stopwords: Collection[str] | None = None,
+    *,
+    is_water_word: Callable[[str], bool] | None = None,
+    normalize: Callable[[str], str] = str.lower,
+) -> float:
+    """
+    Computing the water content
+
+    Description:
+        The share of the words that carry no content in percent (Text.ru): the
+        words of the list stopwords, by their normalized forms, or without the
+        list those the predicate is_water_word of a language accepts
+
+    References:
+        https://text.ru/seo
+
+    Arguments:
+        text (list[str]): List of words
+        stopwords (list[str]|set[str]): Words of water
+        is_water_word (callable): Whether a word is water, without the list
+        normalize (callable): Normalized form of a word, the lower case by default
+
+    Returns:
+        float: Value of the water content in percent
+
+    Raises:
+        SourceTypeError: If the words or the stopwords are not a list of strings
+    """
+    check_words(text)
+    return safe_divide(
+        100 * sum(_stop_flags(text, stopwords, is_water_word, normalize)), len(text)
+    )
+
+
+def calc_spam(text: Sequence[str]) -> float:
+    """
+    Computing the spam score
+
+    Description:
+        The share of the repeated words in percent (Text.ru), every occurrence
+        of a word after the first: 100 · (1 - TTR)
+
+    References:
+        https://text.ru/seo
+
+    Arguments:
+        text (list[str]): List of words
+
+    Returns:
+        float: Value of the spam score in percent
+
+    Raises:
+        SourceTypeError: If the words are not a list of strings
+    """
+    check_words(text)
+    n_words = len(text)
+    return safe_divide(100 * (n_words - len(set(text))), n_words)
+
+
+def calc_zipf_naturalness(
+    text: Sequence[str], top_n: int = NAUSEA_TOP_N, *, messages: Mapping[str, str] = MESSAGES
+) -> float:
+    """
+    Computing the naturalness of a text by Zipf's law
+
+    Description:
+        The agreement of the frequencies of the most frequent words with the
+        ideal distribution f_r = f_1 / r, f_1 being the frequency of the most
+        frequent word and r the rank: 100 · (1 - the mean relative deviation of
+        the frequencies from the ideal ones) over the ranks from 2 to
+        min(top_n, V, f_1), since rank 1 is ideal by construction and above f_1
+        the ideal frequency is below one. Negative values are cut to 0; nan
+        without ranks to compare: all the words are hapaxes, one lexeme or
+        top_n below 2
+
+    References:
+        https://en.wikipedia.org/wiki/Zipf's_law
+
+    Arguments:
+        text (list[str]): List of words
+        top_n (int): Number of the most frequent words
+        messages (dict[str, str]): Messages of the errors by key (MESSAGES)
+
+    Returns:
+        float: Value of the naturalness in percent, nan without ranks to compare
+
+    Raises:
+        SourceTypeError: If the words are not a list of strings
+        ParameterError: If top_n is not an integer or is below one
+    """
+    check_words(text)
+    check_params(top_n, messages=messages)
+    frequencies = sorted(Counter(text).values(), reverse=True)
+    if not frequencies:
+        return nan
+    top_freq = frequencies[0]
+    n_ranks = min(top_n, len(frequencies), top_freq)
+    if n_ranks < 2:
+        return nan
+    # In integers: the relative deviations of exact halves would come out below 50
+    deviation = sum(
+        abs(freq * rank - top_freq) for rank, freq in enumerate(frequencies[1:n_ranks], start=2)
+    )
+    span = top_freq * (n_ranks - 1)
+    return max(0.0, 100 * (span - deviation) / span)
+
+
+def calc_keyword_density(text: Sequence[str], keywords: Collection[str]) -> dict[str, float]:
+    """
+    Computing the density of keywords
+
+    Description:
+        The frequency of every keyword per 100 words of the text (Text.ru). A
+        keyword of several words separated by spaces is looked for as a
+        sequence of words, and its occurrences may overlap. The words are
+        compared in any case; the keywords of a set come in sorted order
+
+    References:
+        https://text.ru/seo
+
+    Arguments:
+        text (list[str]): List of words
+        keywords (list[str]|set[str]): Keywords or phrases
+
+    Returns:
+        dict[str, float]: Density of every keyword in percent
+
+    Raises:
+        SourceTypeError: If the words or the keywords are not a list of strings
+
+    Example:
+        >>> from anyts.style_stats import calc_keyword_density
+        >>> calc_keyword_density("the cat and the dog".split(), ["the", "the cat"])
+        {'the': 40.0, 'the cat': 20.0}
+    """
+    check_words(text)
+    check_words(keywords, "keywords", ordered=False)
+    n_words = len(text)
+    lowered = [word.lower() for word in text]
+    density = {}
+    for keyword in in_order(keywords):
+        parts = keyword.lower().split()
+        size = len(parts)
+        if not size:
+            density[keyword] = 0.0
+            continue
+        count = sum(1 for i in range(n_words - size + 1) if lowered[i : i + size] == parts)
+        density[keyword] = safe_divide(100 * count, n_words)
+    return density
+
+
+def calc_phrase_density(
+    text: Sequence[str],
+    phrases: Collection[str],
+    *,
+    expand: Expander | None = None,
+    normalize: Callable[[str], str] = str.lower,
+) -> float:
+    """
+    Computing the density of the phrases of a list
+
+    Description:
+        The occurrences of the phrases (find_phrases) per 100 words; the hook
+        expand of a language spells the phrases out in the forms the text has
+        (the forms of a verb, contractions), giving every variant with its
+        phrase
+
+    Arguments:
+        text (list[str]): List of words
+        phrases (list[str]|set[str]): Phrases, words separated by spaces
+        expand (callable): Variants of the phrases in the text, by the words and
+            the phrases
+        normalize (callable): Normalized form of a word, the lower case by default
+
+    Returns:
+        float: Occurrences per 100 words
+
+    Raises:
+        SourceTypeError: If the words or the phrases are not a list of strings
+    """
+    check_words(text)
+    check_words(phrases, "phrases", ordered=False)
+    variants = expand(text, phrases) if expand is not None else phrases
+    return safe_divide(len(find_phrases(text, variants, normalize)), len(text)) * 100

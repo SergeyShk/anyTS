@@ -61,7 +61,7 @@ CONNECTOR_CLASSES = (
     "reformulative",
 )
 CONNECTOR_KINDS = ("primary", "secondary")
-CONNECTOR_POS = frozenset({"CCONJ", "SCONJ", "PART", "ADV", "ADP", "INTJ", "X"})
+CONNECTOR_POS = frozenset({"ADP", "ADV", "CCONJ", "INTJ", "PART", "SCONJ", "X"})
 
 # Marks at the boundary of a window of split_windows: the opening ones go with the next window;
 # a symmetric one (a straight quote, the dash of an aside) closes the previous window when it

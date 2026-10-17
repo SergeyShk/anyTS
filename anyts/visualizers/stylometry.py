@@ -15,7 +15,7 @@ from ._axes import check_axes
 
 # Methods of scipy.cluster.hierarchy.linkage
 LINKAGE_METHODS = frozenset(
-    ("single", "complete", "average", "weighted", "centroid", "median", "ward")
+    ("average", "centroid", "complete", "median", "single", "ward", "weighted")
 )
 
 
