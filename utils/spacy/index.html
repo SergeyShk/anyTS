@@ -2378,6 +2378,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#add_tokenizer_rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        add_tokenizer_rules
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -2614,6 +2625,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#add_tokenizer_rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        add_tokenizer_rules
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -2638,7 +2660,7 @@
 <div class="admonition info">
 <p><strong>anyts.utils</strong></p>
 </div>
-<p>Checks of the objects of spaCy without importing it, the words of a <code>Doc</code> and their morphology, the parts of a word the tokenizer split at its hyphens and the sentences of a <code>Doc</code>.</p>
+<p>Checks of the objects of spaCy without importing it, the words of a <code>Doc</code> and their morphology, the parts of a word the tokenizer split at its hyphens, the sentences of a <code>Doc</code> and the rules a language adds to the tokenizer of spaCy.</p>
 <h2 id="is_doc-is_span">is_doc, is_span<a class="headerlink" href="#is_doc-is_span" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:is_doc] -->
 <p><code>is_doc(value)</code> checks whether a value is a <code>Doc</code> object of spaCy without importing spaCy: such an object exists only once spaCy is loaded, so before that every value gives <code>False</code>. The core takes a <code>Doc</code> this way, and <code>import anyts</code> loads no spaCy; a language library checks its sources so too, to keep its own import light.</p>
@@ -2897,6 +2919,65 @@
 </tbody>
 </table>
 <!-- --8<-- [end:split_doc_units] -->
+
+<h2 id="add_tokenizer_rules">add_tokenizer_rules<a class="headerlink" href="#add_tokenizer_rules" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:add_tokenizer_rules] -->
+<p>Adds the rules of a language to the tokenizer of a pipeline, so that the tokens of a <code>Doc</code> match the words a library splits a string into: the prefixes, the suffixes and the infixes are regular expressions joined to those of the tokenizer - a prefix anchored at the start and a suffix at the end, every branch of it - such as the dashes of a dialogue glued to the words, and an abbreviation becomes a single token in lower case, capitalized and in upper case when the tokenizer keeps one of its forms whole. A rule the tokenizer has as an alternative of its own is not added twice; a tokenizer that is not the <code>Tokenizer</code> of spaCy, or whose rules are not regular expressions, is left as it is. Rules that are not lists of strings and abbreviations that are not a collection of strings raise <code>SourceTypeError</code>.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>nlp</code></td>
+<td style="text-align: center;">Language</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Pipeline whose tokenizer gets the rules</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>prefixes</code></td>
+<td style="text-align: center;">list[str]</td>
+<td style="text-align: center;"><code>()</code></td>
+<td style="text-align: center;">Patterns of the prefixes, without the anchor</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>suffixes</code></td>
+<td style="text-align: center;">list[str]</td>
+<td style="text-align: center;"><code>()</code></td>
+<td style="text-align: center;">Patterns of the suffixes, without the anchor</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>infixes</code></td>
+<td style="text-align: center;">list[str]</td>
+<td style="text-align: center;"><code>()</code></td>
+<td style="text-align: center;">Patterns of the infixes</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>abbreviations</code></td>
+<td style="text-align: center;">list[str]</td>
+<td style="text-align: center;"><code>()</code></td>
+<td style="text-align: center;">Abbreviations in lower case</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:add_tokenizer_rules] -->
+
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">spacy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">anyts.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">add_tokenizer_rules</span>
+
+<span class="n">nlp</span> <span class="o">=</span> <span class="n">spacy</span><span class="o">.</span><span class="n">blank</span><span class="p">(</span><span class="s2">"en"</span><span class="p">)</span>
+<span class="n">add_tokenizer_rules</span><span class="p">(</span><span class="n">nlp</span><span class="p">,</span> <span class="n">prefixes</span><span class="o">=</span><span class="p">[</span><span class="sa">r</span><span class="s2">"-{2,}(?=\w)"</span><span class="p">])</span>
+<span class="p">[</span><span class="n">token</span><span class="o">.</span><span class="n">text</span> <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">nlp</span><span class="p">(</span><span class="s2">"--No, he said."</span><span class="p">)]</span>
+<span class="c1"># ['--', 'No', ',', 'he', 'said', '.']</span>
+</code></pre></div>
+</div>
 
 
 

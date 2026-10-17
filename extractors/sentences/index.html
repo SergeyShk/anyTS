@@ -748,6 +748,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#iter_part_sents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sentences of the parts of a text
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#FixedSentsExtractor" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2528,6 +2539,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#iter_part_sents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sentences of the parts of a text
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#FixedSentsExtractor" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2560,7 +2582,7 @@
 
 <h1 id="sentence-extraction">Sentence extraction<a class="headerlink" href="#sentence-extraction" title="Permanent link">&para;</a></h1>
 <div class="admonition info">
-<p><strong>anyts.extractors.SentsExtractor</strong>, <strong>anyts.extractors.FixedSentsExtractor</strong></p>
+<p><strong>anyts.extractors.SentsExtractor</strong>, <strong>anyts.extractors.iter_part_sents()</strong>, <strong>anyts.extractors.FixedSentsExtractor</strong></p>
 </div>
 <h2 id="description">Description<a class="headerlink" href="#description" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:SentsExtractor] -->
@@ -2679,6 +2701,11 @@
 <div class="highlight"><pre><span></span><code><span class="o">(</span><span class="s1">'Rain today'</span>,<span class="w"> </span><span class="s1">'sun tomorrow'</span><span class="o">)</span>
 </code></pre></div>
 </div>
+<h2 id="iter_part_sents">Sentences of the parts of a text<a class="headerlink" href="#iter_part_sents" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:iter_part_sents] -->
+<p><code>iter_part_sents(iter_sents, text)</code> gives the sentences of a splitter with positions - <code>iter_sents</code>, the start, the end and the text of every sentence of a string - for every part of a text between blank lines (<code>BLANK_LINE</code>) one by one, at their positions in the whole text, so that a blank line ends a sentence whatever the splitter, as in <code>SentsExtractor</code>.</p>
+<!-- --8<-- [end:iter_part_sents] -->
+
 <h2 id="FixedSentsExtractor">Ready sentences<a class="headerlink" href="#FixedSentsExtractor" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:FixedSentsExtractor] -->
 <p><code>FixedSentsExtractor(sents)</code> of <code>anyts.extractors</code> gives the sentences it was made with for any text: a class that takes a sentence extractor gets the sentences already known, and the text is not split twice. Sentences that are not a list of strings raise <code>SourceTypeError</code>.</p>
