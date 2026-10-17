@@ -503,3 +503,8 @@ def test_shannon_entropy():
     )
     assert shannon_entropy({"a": 5}) == 0.0
     assert math.isnan(shannon_entropy({})) and math.isnan(shannon_entropy({"a": 0}))
+    # A zero count is left out, as 0 log 0 = 0
+    assert shannon_entropy({"a": 0, "b": 2}) == 0.0
+    counts = Counter("aab")
+    counts.subtract("aa")
+    assert shannon_entropy(counts) == 0.0

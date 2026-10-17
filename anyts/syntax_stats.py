@@ -22,6 +22,7 @@ from .exceptions import SourceError, SourceTypeError
 from .stats import Stats
 from .utils import (
     has_feature,
+    has_sents,
     is_doc,
     is_finite_verb,
     is_infinitive,
@@ -145,7 +146,7 @@ class SyntaxStats(Stats):
     def __init__(self, source: Doc):
         messages = self.messages
         doc = self.parse(source)
-        if not doc.has_annotation("DEP"):
+        if not doc.has_annotation("DEP") or not has_sents(doc):
             raise SourceError(messages["no_parse"])
         if self.requires_lemmas and not doc.has_annotation("LEMMA"):
             raise SourceError(messages["no_lemmas"])
@@ -267,11 +268,12 @@ class SyntaxStats(Stats):
 
         Description:
             The head of the sentence, or a word with a relation of CLAUSE_DEPS
-            (ccomp, advcl, acl, csubj, parataxis and their subtypes) that is
-            neither a participle, a converb nor a gerund, whose clauses are
-            counted apart, nor an infinitive under acl (the wish to leave);
-            a parataxis and a conjunct of the head of a clause count only as
-            predicates (is_predicate), so that a parenthetical word is no clause
+            (ccomp, advcl, acl, csubj, parataxis and their subtypes) whose
+            predicate (predicate_form) is neither a participle, a converb nor a
+            gerund, whose clauses are counted apart, nor an infinitive under acl
+            (the wish to leave): has been built is finite. A parataxis and a
+            conjunct of the head of a clause count only as predicates
+            (is_predicate), so that a parenthetical word is no clause
 
         Arguments:
             token (Token): Token
@@ -279,20 +281,26 @@ class SyntaxStats(Stats):
         Returns:
             bool: Result of the check
         """
-        if not is_word(token):
-            return False
-        if is_root(token):
-            return True
-        if _verb_form(token) in NONFINITE_CLAUSE_FORMS:
-            return False
-        dep = base_dep(token)
-        if dep == "conj":
-            return self.is_clause_head(token.head) and is_predicate(token, self.join_hyphens)
-        if dep not in CLAUSE_DEPS:
-            return False
-        if dep == "parataxis":
-            return is_predicate(token, self.join_hyphens)
-        return not (dep == "acl" and is_infinitive(token))
+        seen = set()
+        # Up the chain of conjuncts to the word that is none
+        while is_word(token) and token.i not in seen:
+            if is_root(token):
+                return True
+            form = predicate_form(token)
+            if form in NONFINITE_CLAUSE_FORMS:
+                return False
+            dep = base_dep(token)
+            if dep != "conj":
+                if dep not in CLAUSE_DEPS:
+                    return False
+                if dep == "parataxis":
+                    return is_predicate(token, self.join_hyphens)
+                return not (dep == "acl" and form == "Inf")
+            if not is_predicate(token, self.join_hyphens):
+                return False
+            seen.add(token.i)
+            token = token.head
+        return False
 
     def is_subordinate_clause_head(self, token: Token) -> bool:
         """
@@ -301,7 +309,8 @@ class SyntaxStats(Stats):
         Description:
             The head of a clause (is_clause_head) with a relation of
             SUBORDINATE_CLAUSE_DEPS (ccomp, advcl, acl, csubj and their
-            subtypes), or a conjunct of the head of a subordinate clause
+            subtypes), or a conjunct of one: the relation of the first word up
+            its chain of conjuncts decides
 
         Arguments:
             token (Token): Token
@@ -311,10 +320,11 @@ class SyntaxStats(Stats):
         """
         if is_root(token) or not self.is_clause_head(token):
             return False
-        dep = base_dep(token)
-        if dep in SUBORDINATE_CLAUSE_DEPS:
-            return True
-        return dep == "conj" and self.is_subordinate_clause_head(token.head)
+        seen = set()
+        while base_dep(token) == "conj" and token.i not in seen:
+            seen.add(token.i)
+            token = token.head
+        return not is_root(token) and base_dep(token) in SUBORDINATE_CLAUSE_DEPS
 
     def is_participle_clause(self, token: Token) -> bool:
         """
@@ -410,11 +420,6 @@ class SyntaxStats(Stats):
             list[tuple[Token, Token]]: Pairs of the verb and the noun in the order of the words
         """
         return []
-
-
-def _verb_form(token: Token) -> str:
-    """Verb form of a token, an empty string without one"""
-    return next(iter(token.morph.get("VerbForm", [])), "")
 
 
 def get_words(tokens: Iterable[Token], join_hyphens: bool = False) -> list[Token]:
@@ -807,6 +812,11 @@ def predicate_form(token: Token, auxiliary_form: Callable[[Token], str] | None =
     return form
 
 
+def _verb_form(token: Token) -> str:
+    """Verb form of a token, an empty string without one"""
+    return next(iter(token.morph.get("VerbForm", [])), "")
+
+
 def calc_valency(token: Token, join_hyphens: bool = False) -> int:
     """
     Computing the valency of a token
@@ -939,7 +949,9 @@ def calc_modifier_chains(
         A chain is two or more nested modifiers of is_modifier, such as the
         complements of the increase of the efficiency of the use of resources
         (length 3); it starts at a modifier whose head is none, and its length
-        is the number of modifiers in its longest branch
+        is the number of modifiers in its longest branch. The words hang on
+        each other as get_children gives them: punctuation is no link, and with
+        join_hyphens a hyphenated word is one link
 
     Arguments:
         tokens (Doc|Span|list[Token]): Sequence of tokens
@@ -958,11 +970,25 @@ def calc_modifier_chains(
         )
     chains = []
     for token in get_words(tokens, join_hyphens):
-        if is_modifier(token) and not is_modifier(token.head):
+        parent = _chain_parent(token, join_hyphens)
+        if is_modifier(token) and not (parent is not None and is_modifier(parent)):
             length = _chain_len(token, is_modifier, join_hyphens)
             if length >= 2:
                 chains.append(length)
     return chains
+
+
+def _chain_parent(token: Token, join_hyphens: bool) -> Token | None:
+    """Word a word hangs on as get_children gives it, None through punctuation or at the root"""
+    if not join_hyphens:
+        head = token.head
+        return head if not is_root(token) and is_word(head) else None
+    unit = _hyphenated_word(token) or [token]
+    part = _word_head(unit)
+    if part is None:
+        return None
+    word = _hyphenated_word(part.head)
+    return _word_part(word) if word is not None else None
 
 
 def _chain_len(token: Token, is_modifier: Callable[[Token], bool], join_hyphens: bool) -> int:

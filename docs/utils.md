@@ -273,7 +273,7 @@ The arithmetic mean of numbers, `default` for no numbers.
 ## shannon_entropy
 
 <!-- --8<-- [start:shannon_entropy] -->
-The Shannon entropy in bits of a distribution given by the count of every value, such as a `Counter`: $-\sum p_i \log_2 p_i$ with $p_i$ the share of a value; 0 for one value, `nan` for no counts.
+The Shannon entropy in bits of a distribution given by the count of every value, such as a `Counter`: $-\sum p_i \log_2 p_i$ with $p_i$ the share of a value; 0 for one value, `nan` for no counts; a zero count is left out, as $0 \log_2 0 = 0$.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |

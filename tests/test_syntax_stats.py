@@ -856,3 +856,76 @@ def test_modifier_check_must_be_callable():
         SourceTypeError, match=r"^The check of a modifier must be callable, not str$"
     ):
         calc_modifier_chains(parse(["Yes"], [0], ["ROOT"]), "nmod")
+
+
+def test_default_clause_heads_by_the_form_of_the_predicate():
+    # He said that it has been built: a participle with a finite auxiliary is finite
+    doc = parse(
+        ["He", "said", "that", "it", "has", "been", "built", "."],
+        [1, 1, 6, 6, 6, 6, 1, 1],
+        ["nsubj", "ROOT", "mark", "nsubj:pass", "aux", "aux:pass", "ccomp", "punct"],
+        ["", "VerbForm=Fin", "", "", "VerbForm=Fin", "VerbForm=Part", "VerbForm=Part", ""],
+        pos=["PRON", "VERB", "SCONJ", "PRON", "AUX", "AUX", "VERB", "PUNCT"],
+    )
+    stats = SyntaxStats(doc)
+    assert (stats.n_clauses, stats.n_subordinate_clauses, stats.n_complex_sents) == (2, 1, 1)
+    assert stats.n_participle_clauses == 0
+    # the fear to have been robbed: an infinitive auxiliary keeps the clause out
+    doc = parse(
+        ["fear", "to", "have", "been", "robbed"],
+        [0, 4, 4, 4, 0],
+        ["ROOT", "mark", "aux", "aux:pass", "acl"],
+        ["", "", "VerbForm=Inf", "VerbForm=Part", "VerbForm=Part"],
+        pos=["NOUN", "PART", "AUX", "AUX", "VERB"],
+    )
+    assert not DEFAULT.is_clause_head(doc[4])
+
+
+def listing(n, pos, dep):
+    """He listed w0, w1, ...: every conjunct hangs on the previous one, as in ClearNLP"""
+    return parse(
+        ["He", "listed"] + [f"w{i}" for i in range(n)],
+        [1, 1, 1] + [i + 2 for i in range(n - 1)],
+        ["nsubj", "ROOT", dep] + ["conj"] * (n - 1),
+        pos=["PRON", "VERB"] + [pos] * n,
+    )
+
+
+def test_long_chains_of_conjuncts():
+    nouns = SyntaxStats(listing(2000, "NOUN", "obj"))
+    assert (nouns.n_clauses, nouns.n_subordinate_clauses) == (1, 0)
+    verbs = SyntaxStats(listing(50, "VERB", "ccomp"))
+    assert (verbs.n_clauses, verbs.n_subordinate_clauses) == (51, 50)
+
+
+def test_a_loop_of_conjuncts():
+    doc = parse(["a", "b", "c"], [1, 0, 1], ["conj", "conj", "dep"], pos=["VERB"] * 3)
+    assert not any(DEFAULT.is_clause_head(token) for token in doc)
+    assert not any(DEFAULT.is_subordinate_clause_head(token) for token in doc)
+
+
+def test_a_dependency_label_without_heads():
+    doc = Doc(VOCAB, words=["a", "b"])
+    doc[0].dep_ = "nsubj"
+    with pytest.raises(SourceError, match=f"^{MESSAGES['no_parse']}$"):
+        SyntaxStats(doc)
+
+
+@pytest.mark.parametrize("mark", ["punct", "nmod"])
+def test_modifier_chains_under_punctuation(mark):
+    # use << water river: the chain below the mark is the same whatever its label
+    doc = parse(["use", "\u00ab", "water", "river"], [0, 0, 1, 2], ["ROOT", mark, "nmod", "nmod"])
+    assert calc_modifier_chains(doc, lambda token: token.dep_ == "nmod") == [2]
+
+
+def test_modifier_chains_through_an_inner_part():
+    # use vice-governor town city: town hangs on governor, an inner part of the word
+    doc = parse(
+        ["use", "vice", "-", "governor", "town", "city"],
+        [0, 0, 3, 1, 3, 4],
+        ["ROOT", "nmod", "punct", "compound", "nmod", "nmod"],
+        spaces=[True, False, False, True, True, False],
+    )
+    nmod = lambda token: token.dep_ == "nmod"  # noqa: E731
+    assert calc_modifier_chains(doc, nmod, join_hyphens=True) == [3]
+    assert calc_modifier_chains(doc, nmod) == [2]

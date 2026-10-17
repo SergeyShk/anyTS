@@ -135,7 +135,7 @@ The lengths of the coordination chains, in the order of their first words. A cha
 <!-- --8<-- [end:count_noun_modifiers] -->
 
 <!-- --8<-- [start:calc_modifier_chains] -->
-The lengths of the chains of nested modifiers, in the order of the words. A chain is two or more modifiers each hanging on the previous one, such as the complements of `the increase of the efficiency of the use of resources` (length 3), and what a modifier is comes from the check `is_modifier` of a language - a complement with a preposition, a noun in the genitive. A chain starts at a modifier whose head is none, and its length is the number of modifiers in its longest branch; punctuation is no link of a chain. A check that is not callable raises `SourceTypeError`.
+The lengths of the chains of nested modifiers, in the order of the words. A chain is two or more modifiers each hanging on the previous one, such as the complements of `the increase of the efficiency of the use of resources` (length 3), and what a modifier is comes from the check `is_modifier` of a language - a complement with a preposition, a noun in the genitive. A chain starts at a modifier whose head is none, and its length is the number of modifiers in its longest branch. The words hang on each other as `get_children` gives them: punctuation is no link of a chain, and with `join_hyphens` a hyphenated word is one link. A check that is not callable raises `SourceTypeError`.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |

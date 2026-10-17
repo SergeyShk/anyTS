@@ -8,7 +8,7 @@
 <!-- --8<-- [start:SyntaxStats] -->
 The syntactic statistics of a text by its dependency tree (Ivanov, Solnyshkina and Solovyev 2018): the dependency distances, the depth of the tree, the leaves and the subtrees, the valency of the finite verbs, the coordination chains, the clauses and the subordinate clauses, the modifiers of a noun, the participial clauses, the passive, the infinitives, the negations, the split predicates and the ratio of the nouns to the verbs. The data source is a `Doc` object of [spaCy](https://github.com/explosion/spaCy) with a dependency parse. Punctuation, symbols and whitespace are no nodes of the tree, and the distances are counted in positions of words; the measures of a sentence - the longest dependency, the depth, the nodes per leaf - are averaged over the sentences, and the constructions are given per sentence.
 
-A source that is not a `Doc` raises `SourceTypeError`; a source without a dependency parse, without lemmas when the class requires them, or without words raises `SourceError`.
+A source that is not a `Doc` raises `SourceTypeError`; a source without a dependency parse (relations and the sentences of their heads), without lemmas when the class requires them, or without words raises `SourceError`.
 <!-- --8<-- [end:SyntaxStats] -->
 
 ## Language hooks
@@ -19,8 +19,8 @@ A language library subclasses `SyntaxStats`. The defaults read Universal Depende
 | Hook | Kind | Description |
 | :--: | :--: | :---------: |
 | `parse(source)` | method | `Doc` of a source; by default the source itself, which must be a `Doc` - a library may parse a string with its model |
-| `is_clause_head(token)` | method | Whether a word heads a clause; by default the head of the sentence or a word with `ccomp`, `advcl`, `acl`, `csubj` or `parataxis` (`anyts.constants.CLAUSE_DEPS`, subtypes included) that is neither a participle, a converb or a gerund, whose clauses are counted apart, nor an infinitive under `acl`; a `parataxis` and a conjunct of the head of a clause count only as predicates (`is_predicate`) |
-| `is_subordinate_clause_head(token)` | method | Whether a word heads a subordinate clause; by default the head of a clause with `ccomp`, `advcl`, `acl` or `csubj`, or a conjunct of one |
+| `is_clause_head(token)` | method | Whether a word heads a clause; by default the head of the sentence or a word with `ccomp`, `advcl`, `acl`, `csubj` or `parataxis` (`anyts.constants.CLAUSE_DEPS`, subtypes included) whose predicate (`predicate_form`) is neither a participle, a converb or a gerund, whose clauses are counted apart, nor an infinitive under `acl`, so `has been built` is finite; a `parataxis` and a conjunct of the head of a clause count only as predicates (`is_predicate`) |
+| `is_subordinate_clause_head(token)` | method | Whether a word heads a subordinate clause; by default the head of a clause with `ccomp`, `advcl`, `acl` or `csubj`, or a conjunct of one, by the relation of the first word up its chain of conjuncts |
 | `is_participle_clause(token)` | method | Whether a word heads a participial clause; by default a participle that is not the head of the sentence, has no auxiliary or copula and has a dependent (`calc_valency`) |
 | `is_passive(token)` | method | Whether a word is a passive verb form; by default a verb with `Voice=Pass` or a dependent `nsubj:pass`, `csubj:pass`, `aux:pass`, or `nsubjpass`, `csubjpass`, `auxpass` of ClearNLP (`PASSIVE_DEPS`) |
 | `is_agentless(token)` | method | Whether a passive form has no agent; by default no dependent `obl:agent`, or `agent` of ClearNLP (`AGENT_DEPS`) |

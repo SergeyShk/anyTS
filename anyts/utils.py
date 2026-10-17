@@ -391,16 +391,22 @@ def joins_previous(token: Token) -> bool:
     Returns:
         bool: Result of the check
     """
-    doc = token.doc
     i = token.i
+    if i < 2:
+        return False
+    doc = token.doc
+    return _joins(doc[i - 2], doc[i - 1], token)
+
+
+def _joins(word: Token, hyphen: Token, token: Token) -> bool:
+    """Whether a token continues a word through a hyphen, the rule of joins_previous"""
     return (
-        i >= 2
-        and doc[i - 1].text == "-"
-        and not doc[i - 2].whitespace_
-        and not doc[i - 1].whitespace_
-        and is_word(doc[i - 2])
+        hyphen.text == "-"
+        and not word.whitespace_
+        and not hyphen.whitespace_
+        and is_word(word)
         and is_word(token)
-        and not doc[i - 1].is_sent_start
+        and not hyphen.is_sent_start
         and not token.is_sent_start
     )
 
@@ -447,7 +453,12 @@ def iter_doc_units(source: Doc | Span, join_hyphens: bool = False) -> Iterator[l
             index += 1
             continue
         last = index
-        while join_hyphens and last + 2 < len(tokens) and joins_previous(tokens[last + 2]):
+        while (
+            join_hyphens
+            and last + 2 < len(tokens)
+            and tokens[last + 1].text == "-"
+            and _joins(tokens[last], tokens[last + 1], tokens[last + 2])
+        ):
             last += 2
         yield tokens[index : last + 1]
         index = last + 1
@@ -531,7 +542,8 @@ def shannon_entropy(counts: Mapping[Any, int]) -> float:
         counts (dict[object, int]): Count of every value, such as a Counter
 
     Returns:
-        float: Entropy in bits, 0 for one value and nan for no counts
+        float: Entropy in bits, 0 for one value and nan for no counts; a zero count is
+            left out
 
     Example:
         >>> from anyts.utils import shannon_entropy
@@ -541,7 +553,9 @@ def shannon_entropy(counts: Mapping[Any, int]) -> float:
     total = sum(counts.values())
     if not total:
         return math.nan
-    return -sum(count / total * math.log2(count / total) for count in counts.values()) or 0.0
+    return (
+        -sum(count / total * math.log2(count / total) for count in counts.values() if count) or 0.0
+    )
 
 
 def check_sequence(value: object, what: str = "words", ordered: bool = True) -> None:
