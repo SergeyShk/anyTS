@@ -125,6 +125,7 @@ PARSED = Doc(VOCAB, words=["Yes"], heads=[0], deps=["ROOT"])
 
 
 class OwnReadability(ReadabilityStatsComponent):
+    stats_class = Readability
     messages = OWN
 
 
@@ -257,6 +258,18 @@ CASES = [
     ("no_lemmas", SourceError, lambda: Lemmas(PARSED)),
     ("source_type", SourceTypeError, lambda: Cohesion("Yes")),
     ("no_stats_class", ParameterError, lambda: BareComponent(spacy.blank("en"), "own_bare")),
+    (
+        "stats_param",
+        ParameterError,
+        lambda: type("Typo", (BareComponent,), {"stats_class": dict, "stats_params": ("x",)})(
+            spacy.blank("en"), "own_typo"
+        ),
+    ),
+    (
+        "no_basic_stats_class",
+        SourceTypeError,
+        lambda: type("NoBasic", (OwnReadability,), {"stats_class": Bare})(spacy.blank("en"), "r"),
+    ),
     (
         "extension_name",
         ParameterError,

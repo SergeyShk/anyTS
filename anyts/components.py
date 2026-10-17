@@ -17,7 +17,7 @@ from .constants import (
     PHON_WINDOW_LEN,
 )
 from .diversity_stats import check_params as check_diversity_params
-from .exceptions import ParameterError, SourceError
+from .exceptions import ParameterError, SourceError, SourceTypeError
 from .extractors import BLANK_LINE
 from .lexical_stats import LexicalStats
 from .phon_stats import PhonStats
@@ -26,7 +26,7 @@ from .readability_stats import ReadabilityStats
 from .style_stats import StyleStats
 from .style_stats import check_params as check_style_params
 from .syntax_stats import SyntaxStats
-from .utils import check_messages, check_words, has_words, is_number, iter_doc_tokens
+from .utils import check_messages, check_words, has_words, is_number, iter_doc_words
 
 if TYPE_CHECKING:
     from spacy.language import Language
@@ -71,7 +71,8 @@ class StatsComponent:
 
     Raises:
         ParameterError: If another package registered an extension of Doc with the name,
-            or the component has neither a concrete stats_class nor a compute of its own
+            the component has neither a concrete stats_class nor a compute of its own,
+            or it lacks an attribute of stats_params
 
     Methods:
         prepare: Preparing the pipeline
@@ -91,6 +92,11 @@ class StatsComponent:
     def __init__(self, nlp: Language, name: str):
         if type(self).compute is StatsComponent.compute:
             self._stats_class()
+        for param in self.stats_params:
+            if not hasattr(self, param):
+                raise ParameterError(
+                    self.messages["stats_param"].format(cls=type(self).__name__, param=param)
+                )
         self.name = name
         self.prepare(nlp)
 
@@ -246,7 +252,8 @@ class ReadabilityStatsComponent(StatsComponent):
     Arguments:
         nlp (Language): Pipeline the component is added to
         name (str): Name of the component in the pipeline and of the extension
-        preset (str): Preset of the coefficients of stats_class; its default if None
+        preset (str): Preset of the coefficients of stats_class; its default if None,
+            which a saved pipeline then takes when it is loaded
         basic (str): Extension of a component of the basic statistics to reuse
             instead of computing them again
 
@@ -254,8 +261,10 @@ class ReadabilityStatsComponent(StatsComponent):
         basic_factory (str|None): Factory of the component of the basic statistics
 
     Raises:
-        ParameterError: If the preset is not a string or is not one of stats_class, or
-            the extension is not named by a string
+        ParameterError: If the class of statistics is not concrete, the preset is not a
+            string or is not one of the class, or the extension is not named by a string
+        SourceTypeError: If the class has no basic_stats_class to read a document and
+            no basic statistics are reused
         SourceError: If the named extension holds no basic statistics of the class
     """
 
@@ -266,10 +275,15 @@ class ReadabilityStatsComponent(StatsComponent):
         self, nlp: Language, name: str, preset: str | None = None, basic: str | None = None
     ):
         messages = self.messages
+        stats_class = self._stats_class()
+        if basic is None and stats_class.basic_stats_class is None:
+            raise SourceTypeError(
+                messages["no_basic_stats_class"].format(cls=stats_class.__name__)
+            )
         if preset is not None:
             if not isinstance(preset, str):
                 raise ParameterError(messages["preset_type"].format(type=type(preset).__name__))
-            presets = self._stats_class().presets
+            presets = stats_class.presets
             if preset not in presets:
                 raise ParameterError(
                     messages["unknown_preset"].format(preset=preset, presets=tuple(presets))
@@ -358,15 +372,37 @@ class LexicalStatsComponent(StatsComponent):
         attribute freq_dict - None by default, for the dictionary of the class;
         a library sets the attribute in the constructor of its component, from a
         directory of its parameters for instance. A document gets the statistics
-        when it has a word other than a number (is_number)
+        when it has a word (iter_doc_words with join_hyphens) other than a number
+        of the language (is_number), so that the class finds a word in it
+
+    Class attributes:
+        join_hyphens (bool): Take a word the tokenizer split at its hyphens for one word
     """
 
     stats_class: ClassVar[type[Any] | None] = LexicalStats
     stats_params: ClassVar[tuple[str, ...]] = ("freq_dict",)
+    join_hyphens: ClassVar[bool] = False
     freq_dict: Any = None
 
     def accepts(self, doc: Doc) -> bool:
-        return any(not is_number(token.text) for token in iter_doc_tokens(doc))
+        return any(
+            not self.is_number(word) for _, _, word in iter_doc_words(doc, self.join_hyphens)
+        )
+
+    def is_number(self, word: str) -> bool:
+        """
+        Checking whether a word is a number, which the class of statistics leaves out
+
+        Description:
+            utils.is_number by default; a library gives the numbers of its class
+
+        Arguments:
+            word (str): Word
+
+        Returns:
+            bool: Result of the check
+        """
+        return is_number(word)
 
 
 class StyleStatsComponent(StatsComponent):

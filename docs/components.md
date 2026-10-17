@@ -17,7 +17,7 @@ A language library subclasses `StatsComponent` for every class of its statistics
 | Hook | Description |
 | :--: | :---------: |
 | `stats_class` | Class of statistics made of a document, a class attribute; `None` by default, and a component with neither a concrete class nor a `compute` of its own raises `ParameterError` at `add_pipe` |
-| `stats_params` | Attributes of the component passed to the class of statistics as its keyword arguments, a class attribute; none by default |
+| `stats_params` | Attributes of the component passed to the class of statistics as its keyword arguments, a class attribute; none by default, and a name the component lacks raises `ParameterError` at `add_pipe` |
 | `compute(doc)` | The statistics of a document: `stats_class(doc, **params)` by default; a component that computes otherwise, such as one that reuses the statistics of another component, overrides it |
 | `prepare(nlp)` | Preparing the pipeline when the component is added, such as the rules of the tokenizer; nothing by default |
 | `accepts(doc)` | Whether a document gets the statistics; by default whether it has a word (`has_words`) |
@@ -95,7 +95,7 @@ class PhonStatsComponent(anyts.components.PhonStatsComponent):
     stats_class = PhonStats  # the subclass of the library
 ```
 
-The class of the core is the default of `stats_class` where it reads a `Doc`; an abstract class (`PhonStats`, `LexicalStats`) or none (`DiversityStatsComponent`, the class of the core taking a list of words) needs the class of the library before the component can be added.
+The class of the core is the default of `stats_class`. Where it cannot read a `Doc` - an abstract class (`BasicStats`, `LexicalStats`, `PhonStats`), `ReadabilityStats` without the `basic_stats_class` of a library, none at all (`DiversityStatsComponent`, the class of the core taking a list of words) - the component cannot be added until the library gives its class.
 <!-- --8<-- [end:class-components] -->
 
 | Component | Class of statistics | Parameters |
@@ -121,7 +121,7 @@ The class of the core is the default of `stats_class` where it reads a `Doc`; an
 | `preset` | str | `None` | Preset of the coefficients, one of the presets of the class; the default of the class if `None` |
 | `basic` | str | `None` | Extension of a component of the basic statistics to reuse instead of computing them again |
 
-A preset that is not a string or not one of the class and an extension not named by a string raise `ParameterError`.
+With `preset` left at `None` the config of a saved pipeline holds no preset, and the pipeline takes the default of the class when it is loaded; a library that wants its default written into the config gives it in the signature of its subclass. A preset that is not a string or not one of the class and an extension not named by a string raise `ParameterError`, a class without `basic_stats_class` and no `basic` `SourceTypeError`.
 <!-- --8<-- [end:ReadabilityStatsComponent] -->
 
 <!-- --8<-- [start:DiversityStatsComponent] -->
@@ -129,7 +129,7 @@ A preset that is not a string or not one of the class and an extension not named
 <!-- --8<-- [end:DiversityStatsComponent] -->
 
 <!-- --8<-- [start:LexicalStatsComponent] -->
-`LexicalStatsComponent` puts the lexical sophistication statistics into the extension, with the frequency dictionary of its attribute `freq_dict` - `None` by default, for the dictionary of the class; a library sets the attribute in the constructor of its component, from a directory of its parameters for instance. A document gets the statistics when it has a word other than a number (`is_number`).
+`LexicalStatsComponent` puts the lexical sophistication statistics into the extension, with the frequency dictionary of its attribute `freq_dict` - `None` by default, for the dictionary of the class; a library sets the attribute in the constructor of its component, from a directory of its parameters for instance. A document gets the statistics when it has a word - of `iter_doc_words` with `join_hyphens` - other than a number of the method `is_number`, `anyts.utils.is_number` by default; a library gives the numbers its class leaves out, so that a document of numbers alone passes untouched.
 <!-- --8<-- [end:LexicalStatsComponent] -->
 
 <!-- --8<-- [start:StyleStatsComponent] -->

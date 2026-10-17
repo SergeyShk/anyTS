@@ -160,7 +160,7 @@ def test_from_extension_without_the_factory(nlp):
 
 def test_stats_class_or_compute_is_required(nlp):
     with pytest.raises(
-        ParameterError, match=r"^StatsComponent has neither a concrete stats_class"
+        ParameterError, match=r"^StatsComponent has no concrete class of statistics"
     ):
         StatsComponent(nlp, "anyts_test_base")
 
@@ -168,14 +168,35 @@ def test_stats_class_or_compute_is_required(nlp):
     class Unfinished(StatsComponent):
         pass
 
-    with pytest.raises(ParameterError, match=r"^Unfinished has neither"):
+    with pytest.raises(ParameterError, match=r"^Unfinished has no concrete class"):
         nlp.add_pipe("anyts_test_unfinished")
     assert nlp.pipe_names == []
     # An abstract class of statistics is none either, and diversity has no default
-    with pytest.raises(ParameterError, match=r"^PhonStatsComponent has neither"):
-        PhonStatsComponent(nlp, "anyts_test_phon")
-    with pytest.raises(ParameterError, match=r"^DiversityStatsComponent has neither"):
-        DiversityStatsComponent(nlp, "anyts_test_div")
+    for component in (
+        BasicStatsComponent,
+        LexicalStatsComponent,
+        PhonStatsComponent,
+        DiversityStatsComponent,
+    ):
+        with pytest.raises(ParameterError, match=rf"^{component.__name__} has no concrete class"):
+            component(nlp, "anyts_test_bare")
+    # Readability reads a Doc only through the basic statistics of a library
+    with pytest.raises(SourceTypeError, match=r"^ReadabilityStats has no basic_stats_class"):
+        ReadabilityStatsComponent(nlp, "anyts_test_bare")
+
+    class Unknown(ReadabilityStatsComponent):
+        stats_class = None
+
+    with pytest.raises(ParameterError, match=r"^Unknown has no concrete class"):
+        Unknown(nlp, "anyts_test_bare")
+
+
+def test_attributes_of_stats_params_are_required(nlp):
+    class Typo(Generic):
+        stats_params = ("sise",)
+
+    with pytest.raises(ParameterError, match=r"^Typo has no attribute sise of stats_params$"):
+        Typo(nlp, "anyts_test_typo")
 
 
 def test_pickled_component_registers_its_extension(nlp):
@@ -420,6 +441,16 @@ def test_components_pass_their_parameters(nlp):
     assert Lexical(nlp, "l").compute(doc).kwargs == {"freq_dict": None}
     lexical = Lexical(nlp, "l")
     assert not lexical.accepts(nlp("1999 2020")) and lexical.accepts(nlp("1999 cats"))
+
+    class Ordinals(Lexical):
+        join_hyphens = True
+
+        def is_number(self, word):
+            return word in {"5-th", "1st"}
+
+    # The numbers of a language, a hyphenated one taken whole
+    ordinals = Ordinals(nlp, "o")
+    assert not ordinals.accepts(nlp("5-th 1st")) and ordinals.accepts(nlp("5-th cats"))
     with pytest.raises(ParameterError):
         Diversity(nlp, "d", window_len=0)
     with pytest.raises(ParameterError):
