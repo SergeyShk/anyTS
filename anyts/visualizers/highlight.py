@@ -2,19 +2,33 @@ from __future__ import annotations
 
 import html
 import re
-from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
+from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from itertools import pairwise
 from types import MappingProxyType
-from typing import TYPE_CHECKING, ClassVar, NamedTuple
+from typing import TYPE_CHECKING, Any, ClassVar, NamedTuple
 
+from ..constants import ALLITERATION_MIN_WORD_LEN, ALLITERATION_THRESHOLD, MESSAGES
 from ..exceptions import ParameterError, SourceError, SourceTypeError
 from ..extractors import BLANK_LINE, SentsExtractor, _iter_words
 from ..syntax_stats import get_words
-from ..utils import _unit_word, has_sents, is_doc, iter_doc_tokens
+from ..utils import (
+    _unit_word,
+    check_integer,
+    check_messages,
+    check_number,
+    check_words,
+    find_phrases,
+    has_sents,
+    in_order,
+    is_doc,
+    iter_doc_tokens,
+)
 
 if TYPE_CHECKING:
     from spacy.tokens import Doc, Token
+
+    from ..cohesion_stats import Connector, ConnectorMatcher
 
 # Line breaks of Unix, Windows and old Mac texts
 LINE_BREAK = re.compile(r"\r\n?|\n")
@@ -81,6 +95,37 @@ class Highlight:
     note: str = ""
 
 
+def check_params(
+    long_sent_word_factor: int,
+    complex_syl_factor: int,
+    alliteration_threshold: float,
+    *,
+    messages: Mapping[str, str] = MESSAGES,
+) -> None:
+    """
+    Checking the parameters of the highlighting
+
+    Arguments:
+        long_sent_word_factor (int): Minimum number of words of a long sentence
+        complex_syl_factor (int): Minimum number of syllables of a complex word
+        alliteration_threshold (float): Probability threshold of the alliteration
+        messages (dict[str, str]): Messages of the errors by key (MESSAGES)
+
+    Raises:
+        ParameterError: If a number is not an integer of at least one, or the
+            threshold does not lie in the interval (0, 1]
+    """
+    check_integer(long_sent_word_factor, "number of words of a long sentence")
+    check_integer(complex_syl_factor, "number of syllables of a complex word")
+    if long_sent_word_factor < 1:
+        raise ParameterError(messages["long_sent_word_factor"])
+    if complex_syl_factor < 1:
+        raise ParameterError(messages["complex_syl_factor"])
+    check_number(alliteration_threshold, "threshold of the alliteration")
+    if not 0 < alliteration_threshold <= 1:
+        raise ParameterError(messages["alliteration_threshold"])
+
+
 class HighlightedText:
     """
     Base of the highlighting of a text by layers, in the manner of the style checkers
@@ -95,6 +140,9 @@ class HighlightedText:
                 LEMMA...); a layer without them is available for a string too
             layer_styles - the CSS declarations of the layers
             css_prefix - the prefix of the CSS classes
+            annotation_names - the names of the annotations in the message of
+                an unavailable layer
+            messages - the messages of the errors by key
             find - the fragments of a layer
             iter_words, iter_sents - the words and the sentences of a string with
                 their positions, doc_words - the words of a Doc
@@ -136,6 +184,12 @@ class HighlightedText:
     layer_annotations: ClassVar[Mapping[str, Sequence[str]]] = MappingProxyType({})
     layer_styles: ClassVar[Mapping[str, str]] = MappingProxyType({})
     css_prefix: ClassVar[str] = "anyts"
+    annotation_names: ClassVar[Mapping[str, str]] = MappingProxyType(ANNOTATION_NAMES)
+    messages: ClassVar[Mapping[str, str]] = MESSAGES
+
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        super().__init_subclass__(**kwargs)
+        check_messages(cls.messages)
 
     def __init__(self, source: str | Doc, layers: Sequence[str] | str | None = None):
         doc = None
@@ -154,9 +208,9 @@ class HighlightedText:
             words = [Word(start, end, text) for start, end, text in self.iter_words(source)]
             sents = get_text_sents(_iter_part_sents(self.iter_sents, source), words)
         else:
-            raise SourceTypeError("The data source is set incorrectly")
+            raise SourceTypeError(self.messages["source_type"])
         if not words:
-            raise SourceError("The data source has no words")
+            raise SourceError(self.messages["no_words"])
         available = [
             layer
             for layer in self.layers_desc
@@ -170,10 +224,14 @@ class HighlightedText:
         for layer in self.layers:
             for h in self.find(layer, words, sents, doc):
                 if h.layer != layer:
-                    raise ParameterError(f"A fragment of the layer {h.layer} is found for {layer}")
+                    raise ParameterError(
+                        self.messages["fragment_layer"].format(found=h.layer, layer=layer)
+                    )
                 if not 0 <= h.start < h.end <= len(self.text):
                     raise ParameterError(
-                        f"A fragment of the layer {layer} lies outside the text: {h.start}-{h.end}"
+                        self.messages["fragment_outside"].format(
+                            layer=layer, start=h.start, end=h.end
+                        )
                     )
                 highlights.append(h)
         self.highlights = tuple(sorted(highlights, key=lambda h: (h.start, -h.end)))
@@ -272,6 +330,7 @@ class HighlightedText:
             ParameterError: If a layer is unknown or not allowed by the source, or
                 the layers are not a list of names
         """
+        messages = cls.messages
         if layers is None:
             return tuple(layer for layer in cls.default_layers if layer in available)
         if isinstance(layers, str):
@@ -281,21 +340,20 @@ class HighlightedText:
         try:
             layers = list(layers)
         except TypeError as e:
-            raise ParameterError("The layers must be a list of names or a string") from e
+            raise ParameterError(messages["layers_type"]) from e
         for layer in layers:
             if not isinstance(layer, str) or layer not in cls.layers_desc:
-                raise ParameterError(f"Unknown layer of the highlighting: {layer}")
+                raise ParameterError(messages["unknown_layer"].format(layer=layer))
             if layer not in available:
                 needs = [
-                    ANNOTATION_NAMES.get(annotation, annotation)
+                    cls.annotation_names.get(annotation, annotation)
                     for annotation in cls.layer_annotations.get(layer, ())
                 ]
                 if not needs:
-                    raise ParameterError(f"The layer {layer} is not available")
-                listed = (
-                    ", ".join(needs[:-1]) + " and " + needs[-1] if len(needs) > 1 else needs[0]
+                    raise ParameterError(messages["layer_unavailable"].format(layer=layer))
+                raise ParameterError(
+                    messages["layer_annotations"].format(layer=layer, annotations=", ".join(needs))
                 )
-                raise ParameterError(f"The layer {layer} needs a Doc with {listed}")
         return tuple(layer for layer in cls.layers_desc if layer in layers)
 
     @classmethod
@@ -559,3 +617,318 @@ def split_segments(
             index += 1
         active = [h for h in active if h.end > start]
         yield start, end, list(active)
+
+
+def find_long_sents(
+    sents: Iterable[Sent],
+    long_sent_word_factor: int,
+    note: Callable[[int], str] | None = None,
+) -> list[Highlight]:
+    """
+    Finding the long sentences
+
+    Arguments:
+        sents (list[Sent]): Sentences with their positions and numbers of words
+        long_sent_word_factor (int): Minimum number of words of a long sentence
+        note (Callable[[int], str]): Note of a sentence by its number of words; in
+            English if not set
+
+    Returns:
+        list[Highlight]: Fragments of the layer long_sents
+    """
+    note = note or (lambda n: f"long sentence, {_plural(n, 'word')}")
+    return [
+        Highlight(sent.start, sent.end, "long_sents", note(sent.n_words))
+        for sent in sents
+        if sent.n_words >= long_sent_word_factor
+    ]
+
+
+def _plural(n: int, noun: str) -> str:
+    """Number with an English noun in the singular or the plural"""
+    return f"{n} {noun}" if n == 1 else f"{n} {noun}s"
+
+
+def find_complex_words(
+    words: Iterable[Word],
+    complex_syl_factor: int,
+    count_syllables: Callable[[str], int],
+    note: Callable[[int], str] | None = None,
+) -> list[Highlight]:
+    """
+    Finding the complex words
+
+    Arguments:
+        words (list[Word]): Words with their positions
+        complex_syl_factor (int): Minimum number of syllables of a complex word
+        count_syllables (Callable[[str], int]): Number of the syllables of a word
+        note (Callable[[int], str]): Note of a word by its number of syllables; in
+            English if not set
+
+    Returns:
+        list[Highlight]: Fragments of the layer complex_words
+    """
+    note = note or (lambda n: f"complex word, {_plural(n, 'syllable')}")
+    highlights = []
+    for word in words:
+        n_syllables = count_syllables(word.text)
+        if n_syllables >= complex_syl_factor:
+            highlights.append(Highlight(word.start, word.end, "complex_words", note(n_syllables)))
+    return highlights
+
+
+def find_words(
+    words: Iterable[Word], is_match: Callable[[Word], bool], layer: str, note: str = ""
+) -> list[Highlight]:
+    """
+    Finding the words of a layer one by one
+
+    Description:
+        For the layers of single words - stopwords, rare words, verbal nouns -
+        whose check of a word belongs to a language
+
+    Arguments:
+        words (list[Word]): Words with their positions, parts of speech and lemmas
+        is_match (Callable[[Word], bool]): Whether a word is a fragment of the layer
+        layer (str): Layer of the highlighting
+        note (str): Note of every fragment
+
+    Returns:
+        list[Highlight]: Fragments of the layer
+    """
+    return [Highlight(word.start, word.end, layer, note) for word in words if is_match(word)]
+
+
+def find_phrase_highlights(
+    words: Sequence[Word],
+    phrases: Mapping[str, str] | Collection[str],
+    layer: str,
+    note: Callable[[str], str] | None = None,
+    normalize: Callable[[str], str] = str.lower,
+) -> list[Highlight]:
+    """
+    Finding the phrases of a list
+
+    Description:
+        The phrases are matched by the normalized forms of their words, every
+        word normalized alone as in the text (find_phrases); a mapping gives
+        the variants of the phrases of a list - their contractions, the forms
+        of their verbs - with the phrase each stands for, the first of the
+        variants that normalize alike winning, and a set is read in order
+        (in_order). A fragment covers the words from the first to the last,
+        and the note reads the phrase of the list
+
+    Arguments:
+        words (list[Word]): Words with their positions
+        phrases (list[str]|set[str]|dict[str, str]): Phrases, words separated by spaces, or
+            their variants with the phrase of each
+        layer (str): Layer of the highlighting
+        note (Callable[[str], str]): Note of a fragment by its phrase; the phrase in
+            quotes if not set
+        normalize (Callable[[str], str]): Normalized form of a word
+
+    Returns:
+        list[Highlight]: Fragments of the layer
+
+    Raises:
+        SourceTypeError: If the phrases are not a list of strings or a mapping of strings
+    """
+    note = note or (lambda phrase: f"\u00ab{phrase}\u00bb")
+    check_words(phrases, "phrases", ordered=False)
+    if isinstance(phrases, Mapping):
+        check_words(list(phrases.values()), "phrases")
+        pairs: Iterable[tuple[str, str]] = phrases.items()
+    else:
+        pairs = ((phrase, phrase) for phrase in in_order(phrases))
+    forms: dict[str, str] = {}
+    for variant, phrase in pairs:
+        forms.setdefault(" ".join(normalize(part) for part in variant.split()), phrase)
+    normalized = [normalize(word.text) for word in words]
+    highlights = []
+    for start, end in find_phrases(normalized, forms, str):
+        phrase = forms[" ".join(normalized[start:end])]
+        highlights.append(Highlight(words[start].start, words[end - 1].end, layer, note(phrase)))
+    return highlights
+
+
+def find_connector_highlights(
+    words: Sequence[Word],
+    sents: Sequence[Sent] | None,
+    matcher: ConnectorMatcher,
+    note: Callable[[Connector], str] | None = None,
+    pos: Callable[[Word], str | None] | None = None,
+) -> list[Highlight]:
+    """
+    Finding the connectors
+
+    Description:
+        The connectors of a matcher are looked for inside every sentence, in
+        the whole text without the sentences, a one-word one checked by its
+        part of speech when a word of the sentence has one
+
+    Arguments:
+        words (list[Word]): Words with their positions and parts of speech
+        sents (list[Sent]): Sentences with their positions; None for the whole text
+        matcher (ConnectorMatcher): Matcher of the connectors of a language
+        note (Callable[[Connector], str]): Note of a connector; its class and kind if
+            not set
+        pos (Callable[[Word], str|None]): Part of speech of a word for the matcher;
+            that of the word if not set
+
+    Returns:
+        list[Highlight]: Fragments of the layer connectors
+    """
+    note = note or (lambda connector: f"{connector.text}: {connector.cls}, {connector.kind}")
+    groups = [list(words)] if sents is None else group_words_by_sents(words, sents)
+    highlights: list[Highlight] = []
+    for group in groups:
+        tags = [word.pos if pos is None else pos(word) for word in group]
+        texts = [word.text for word in group]
+        highlights.extend(
+            Highlight(
+                group[connector.start].start,
+                group[connector.end - 1].end,
+                "connectors",
+                note(connector),
+            )
+            for connector in matcher.find(texts, 0, tags if any(tags) else None)
+        )
+    return highlights
+
+
+def find_split_predicate_highlights(
+    pairs: Iterable[tuple[Token, Token]], note: Callable[[Token, Token], str] | None = None
+) -> list[Highlight]:
+    """
+    Finding the split predicates
+
+    Description:
+        The pairs of a light verb and its noun of a language; a fragment covers
+        the words from the first to the last of the pair
+
+    Arguments:
+        pairs (list[tuple[Token, Token]]): Verb and noun of every split predicate
+        note (Callable[[Token, Token], str]): Note of a pair; its lemmas if not set
+
+    Returns:
+        list[Highlight]: Fragments of the layer split_predicates
+    """
+    note = note or (
+        lambda verb, noun: f"split predicate: {verb.lemma_.lower()} {noun.lemma_.lower()}"
+    )
+    highlights = []
+    for verb, noun in pairs:
+        start, end = tokens_span([verb, noun])
+        highlights.append(Highlight(start, end, "split_predicates", note(verb, noun)))
+    return highlights
+
+
+def calc_alliteration_runs(
+    words: Sequence[str],
+    frequencies: Mapping[str, float],
+    threshold: float = ALLITERATION_THRESHOLD,
+    stem: Callable[[str], Sequence[str]] = list,
+    is_transparent: Callable[[str], bool] | None = None,
+) -> list[tuple[int, int, str]]:
+    """
+    Finding the repetitions of a consonant in neighbouring words
+
+    Description:
+        A repetition is a run of two neighbouring words or more with the same
+        consonant in the stem of each: the stem of a language leaves out the
+        endings that repeat by agreement. The transparent words - shorter than
+        ALLITERATION_MIN_WORD_LEN letters by default, such as stopwords for a
+        language - neither break nor continue a run. The probability of a run
+        under an independent spread of the consonants is the product over its
+        words of 1 - (1 - f)^n, where f is the frequency of the consonant and n
+        the length of the stem; a run is alliteration when the probability is
+        below the threshold. The words are taken in lower case
+
+    Arguments:
+        words (list[str]): Words of a sentence
+        frequencies (dict[str, float]): Consonants to look for with their frequencies
+        threshold (float): Probability threshold
+        stem (Callable[[str], list[str]]): Sounds or letters of the stem of a word;
+            the letters of the word if not set
+        is_transparent (Callable[[str], bool]): Whether a word neither breaks nor
+            continues a run
+
+    Returns:
+        list[tuple[int, int, str]]: Positions of the first word and after the last
+            word of every run and its consonant, in the order of the text
+
+    Raises:
+        SourceTypeError: If the words are not a list of strings (check_words)
+    """
+    check_words(words)
+    lowered = [word.lower() for word in words]
+    if is_transparent is None:
+        transparent = [len(word) < ALLITERATION_MIN_WORD_LEN for word in lowered]
+    else:
+        transparent = [is_transparent(word) for word in lowered]
+    stems = [stem(word) for word in lowered]
+    runs = []
+    for consonant in sorted(frequencies):
+        frequency = frequencies[consonant]
+        start = None
+        stop = 0
+        probability = 1.0
+        for i, word_stem in enumerate(stems):
+            if transparent[i]:
+                continue
+            if consonant in word_stem:
+                if start is None:
+                    start, probability = i, 1.0
+                stop = i + 1
+                probability *= 1 - (1 - frequency) ** len(word_stem)
+            elif start is not None:
+                if stop - start >= 2 and probability < threshold:
+                    runs.append((start, stop, consonant))
+                start = None
+        if start is not None and stop - start >= 2 and probability < threshold:
+            runs.append((start, stop, consonant))
+    return sorted(runs)
+
+
+def find_alliteration(
+    words: Sequence[Word],
+    sents: Sequence[Sent] | None,
+    frequencies: Mapping[str, float],
+    threshold: float = ALLITERATION_THRESHOLD,
+    stem: Callable[[str], Sequence[str]] = list,
+    is_transparent: Callable[[str], bool] | None = None,
+    note: Callable[[str], str] | None = None,
+) -> list[Highlight]:
+    """
+    Finding the alliterations
+
+    Description:
+        The repetitions of calc_alliteration_runs are looked for inside the
+        sentences, in the whole text without them
+
+    Arguments:
+        words (list[Word]): Words with their positions
+        sents (list[Sent]): Sentences with their positions; None for the whole text
+        frequencies (dict[str, float]): Consonants to look for with their frequencies
+        threshold (float): Probability threshold
+        stem (Callable[[str], list[str]]): Sounds or letters of the stem of a word
+        is_transparent (Callable[[str], bool]): Whether a word neither breaks nor
+            continues a run
+        note (Callable[[str], str]): Note of a run by its consonant; in English if
+            not set
+
+    Returns:
+        list[Highlight]: Fragments of the layer alliteration
+    """
+    note = note or (lambda consonant: f"alliteration on {consonant}")
+    groups = [list(words)] if sents is None else group_words_by_sents(words, sents)
+    highlights = []
+    for group in groups:
+        runs = calc_alliteration_runs(
+            [word.text for word in group], frequencies, threshold, stem, is_transparent
+        )
+        for start, stop, consonant in runs:
+            highlights.append(
+                Highlight(group[start].start, group[stop - 1].end, "alliteration", note(consonant))
+            )
+    return highlights

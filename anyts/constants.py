@@ -226,6 +226,14 @@ MESSAGES = {
     "foreign_extension": (
         "The extension {name} of Doc belongs to another package: give the component another name"
     ),
+    "layers_type": "The layers must be a list of names or a string",
+    "unknown_layer": "Unknown layer of the highlighting: {layer}",
+    "layer_unavailable": "The layer {layer} is not available",
+    "layer_annotations": "The layer {layer} needs a Doc with {annotations}",
+    "fragment_layer": "A fragment of the layer {found} is found for {layer}",
+    "fragment_outside": "A fragment of the layer {layer} lies outside the text: {start}-{end}",
+    "long_sent_word_factor": "The number of words of a long sentence must be greater than 0",
+    "alliteration_threshold": "The threshold of the alliteration must lie in the interval (0, 1]",
     "sent_len_bounds": "The sentence length bounds cannot be negative",
     "sent_len_order": "The minimum sentence length is greater than the maximum",
     "word_len_bounds": "The word length bounds cannot be negative",
@@ -391,6 +399,10 @@ PHON_STATS_DESC = {
 }
 # Window in words of the alliteration and the assonance
 PHON_WINDOW_LEN = 3
+# Highlighting of the alliteration: the probability below which a repetition of a consonant
+# is one, and the length of the words shorter than which the words are transparent
+ALLITERATION_THRESHOLD = 0.001
+ALLITERATION_MIN_WORD_LEN = 3
 
 # Lexical sophistication by a frequency dictionary, in the manner of TAALES
 LEXICAL_STATS_DESC = {

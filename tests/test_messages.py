@@ -28,6 +28,8 @@ from anyts.readability_stats import ReadabilityStats, calc_reading_time
 from anyts.style_stats import StyleStats
 from anyts.syntax_stats import SyntaxStats
 from anyts.utils import check_messages
+from anyts.visualizers.highlight import Highlight, HighlightedText
+from anyts.visualizers.highlight import check_params as check_highlight_params
 
 # Messages of a language library: every message differs from the default and keeps its fields
 OWN = {key: f"Own: {message}" for key, message in MESSAGES.items()}
@@ -122,6 +124,25 @@ class Lemmas(Syntax):
 
 VOCAB = spacy.blank("xx").vocab
 PARSED = Doc(VOCAB, words=["Yes"], heads=[0], deps=["ROOT"])
+
+
+class Layers(HighlightedText):
+    layers_desc: ClassVar[dict[str, str]] = {"all": "all", "parsed": "parsed", "bare": "bare"}
+    layer_annotations: ClassVar[dict[str, tuple[str, ...]]] = {"parsed": ("DEP",), "bare": ()}
+    messages = OWN
+
+    def find(self, layer, words, sents, doc):
+        if layer == "all":
+            return [Highlight(0, len(self.text) + 1, layer)]
+        return [Highlight(0, 1, "other")]
+
+
+class OtherLayer(Layers):
+    layers_desc: ClassVar[dict[str, str]] = {"bare": "bare"}
+    layer_annotations: ClassVar[dict[str, tuple[str, ...]]] = {}
+
+    def __init__(self, source):
+        super().__init__(source, ["bare"])
 
 
 class OwnReadability(ReadabilityStatsComponent):
@@ -258,6 +279,29 @@ CASES = [
     ("no_lemmas", SourceError, lambda: Lemmas(PARSED)),
     ("source_type", SourceTypeError, lambda: Cohesion("Yes")),
     ("no_stats_class", ParameterError, lambda: BareComponent(spacy.blank("en"), "own_bare")),
+    ("source_type", SourceTypeError, lambda: Layers(5)),
+    ("no_words", SourceError, lambda: Layers("?!")),
+    ("layers_type", ParameterError, lambda: Layers(TEXT, 5)),
+    ("unknown_layer", ParameterError, lambda: Layers(TEXT, ["rhymes"])),
+    ("layer_annotations", ParameterError, lambda: Layers(TEXT, ["parsed"])),
+    ("fragment_outside", ParameterError, lambda: Layers(TEXT, ["all"])),
+    ("fragment_layer", ParameterError, lambda: OtherLayer(TEXT)),
+    ("layer_unavailable", ParameterError, lambda: Layers._select_layers(["bare"], [])),
+    (
+        "long_sent_word_factor",
+        ParameterError,
+        lambda: check_highlight_params(0, 1, 0.5, messages=OWN),
+    ),
+    (
+        "complex_syl_factor",
+        ParameterError,
+        lambda: check_highlight_params(1, 0, 0.5, messages=OWN),
+    ),
+    (
+        "alliteration_threshold",
+        ParameterError,
+        lambda: check_highlight_params(1, 1, 0, messages=OWN),
+    ),
     (
         "stats_param",
         ParameterError,
@@ -370,6 +414,7 @@ def test_check_messages(messages, match):
         WordsExtractor,
         CharNgramsExtractor,
         ConnectorMatcher,
+        HighlightedText,
     ],
 )
 def test_messages_checked_when_a_class_is_defined(base):
