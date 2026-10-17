@@ -720,7 +720,7 @@ def find_phrase_highlights(
 
     Arguments:
         words (list[Word]): Words with their positions
-        phrases (list[str]|dict[str, str]): Phrases, words separated by spaces, or
+        phrases (list[str]|set[str]|dict[str, str]): Phrases, words separated by spaces, or
             their variants with the phrase of each
         layer (str): Layer of the highlighting
         note (Callable[[str], str]): Note of a fragment by its phrase; the phrase in
