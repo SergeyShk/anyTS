@@ -317,13 +317,73 @@ def has_sents(doc: Doc) -> bool:
     return doc.has_annotation("SENT_START", require_complete=True)
 
 
+def is_word(token: Token) -> bool:
+    """
+    Checking whether a token is a word - not a punctuation mark and not whitespace
+
+    Description:
+        The tokens of is_punctuation (symbols like %, €, + and invisible
+        characters) are no words either
+
+    Arguments:
+        token (Token): Token
+
+    Returns:
+        bool: Result of the check
+    """
+    return not token.is_space and not is_punctuation(token.text)
+
+
+def has_feature(token: Token, field: str, value: str) -> bool:
+    """
+    Checking whether a token carries a morphological feature with a given value
+
+    Arguments:
+        token (Token): Token
+        field (str): Name of the feature of Universal Dependencies (VerbForm, Mood)
+        value (str): Value of the feature (Part, Ger, Fin)
+
+    Returns:
+        bool: Result of the check
+    """
+    return value in token.morph.get(field, [])
+
+
+def joins_previous(token: Token) -> bool:
+    """
+    Checking whether a token continues a word the tokenizer split at its hyphens
+
+    Description:
+        The token is a word that follows a hyphen with no whitespace around it,
+        and the hyphen follows a word, with no sentence starting at the hyphen
+        or at the token: known in well-known; iter_doc_units joins such words
+
+    Arguments:
+        token (Token): Token
+
+    Returns:
+        bool: Result of the check
+    """
+    doc = token.doc
+    i = token.i
+    return (
+        i >= 2
+        and doc[i - 1].text == "-"
+        and not doc[i - 2].whitespace_
+        and not doc[i - 1].whitespace_
+        and is_word(doc[i - 2])
+        and is_word(token)
+        and not doc[i - 1].is_sent_start
+        and not token.is_sent_start
+    )
+
+
 def iter_doc_tokens(source: Doc | Span) -> Iterator[Token]:
     """
     Extracting the tokens of the words from a Doc or Span object
 
     Description:
-        Whitespace tokens and the tokens of is_punctuation (symbols like %
-        and € included) are skipped
+        The tokens that are no words (is_word) are skipped
 
     Arguments:
         source (Doc|Span): Doc or Span object
@@ -332,7 +392,7 @@ def iter_doc_tokens(source: Doc | Span) -> Iterator[Token]:
         generator[Token]: Token of each word
     """
     for token in source:
-        if not token.is_space and not is_punctuation(token.text):
+        if is_word(token):
             yield token
 
 
@@ -343,8 +403,7 @@ def iter_doc_units(source: Doc | Span, join_hyphens: bool = False) -> Iterator[l
     Description:
         The words of iter_doc_tokens, one token each; with join_hyphens, a word
         the tokenizer split at its hyphens (well-known into well, -, known) is
-        joined back when no whitespace separates its parts and no sentence
-        starts at a hyphen or a part
+        joined back by joins_previous
 
     Arguments:
         source (Doc|Span): Doc or Span object
@@ -357,21 +416,11 @@ def iter_doc_units(source: Doc | Span, join_hyphens: bool = False) -> Iterator[l
     index = 0
     while index < len(tokens):
         token = tokens[index]
-        if token.is_space or is_punctuation(token.text):
+        if not is_word(token):
             index += 1
             continue
         last = index
-        while (
-            join_hyphens
-            and last + 2 < len(tokens)
-            and tokens[last + 1].text == "-"
-            and not tokens[last].whitespace_
-            and not tokens[last + 1].whitespace_
-            and not tokens[last + 2].is_space
-            and not is_punctuation(tokens[last + 2].text)
-            and not tokens[last + 1].is_sent_start
-            and not tokens[last + 2].is_sent_start
-        ):
+        while join_hyphens and last + 2 < len(tokens) and joins_previous(tokens[last + 2]):
             last += 2
         yield tokens[index : last + 1]
         index = last + 1

@@ -1,25 +1,21 @@
-# Dependency tree helpers
+# Metric functions
 
 !!! info ""
-    **anyts.syntax**
+    **anyts.syntax_stats**
 
-Functions over the dependency tree of a spaCy `Doc`, a `Span` or a list of tokens. They use only what Universal Dependencies and the ClearNLP labels of the English models share: the head of a token, the relations `cc`, `conj`, `parataxis`, `punct` and `aux`, and the root; the copula `cop` of `predicate_form` exists in Universal Dependencies alone. Everything else is up to a language library.
+Functions over the dependency tree of a spaCy `Doc`, a `Span` or a list of tokens; its words are the tokens of `anyts.utils.is_word`. They use only what Universal Dependencies and the ClearNLP labels of the English models share: the head of a token, the relations `cc`, `conj`, `parataxis`, `punct` and `aux`, the subjects `nsubj` and `csubj`, the modifiers of a noun `amod`, `det`, `nmod`, `nummod` and `acl`, and the root; the copula `cop` of `predicate_form` exists in Universal Dependencies alone. Everything else is up to a language library.
 
-## is_word
-
-<!-- --8<-- [start:is_word] -->
-Checks whether a token is a word: not whitespace and not a token of `is_punctuation`, so symbols like `%`, `€`, `+` and invisible characters are no words either.
-<!-- --8<-- [end:is_word] -->
+## get_words
 
 <!-- --8<-- [start:get_words] -->
 `get_words(tokens, join_hyphens=False)` returns the words of a sequence of tokens in their order; with `join_hyphens=True` a word the tokenizer split at its hyphens is one word, given by its part that holds its relation, as with the dependents of `get_children` (`governor` in `He is vice-governor`), or by its first part when a hyphen holds it.
 <!-- --8<-- [end:get_words] -->
 
-## Hyphenated words { #joins_previous }
+## Hyphenated words { #hyphenated-words }
 
-<!-- --8<-- [start:joins_previous] -->
-A tokenizer may split a word at its hyphens (`well-known` into `well`, `-`, `known`) and a parser then hangs every part on its own head. `joins_previous(token)` checks whether a token continues such a word: it is a word that follows a hyphen with no whitespace around it, the hyphen follows a word, and no sentence starts at the hyphen or at the word - the rule of `iter_doc_units` with `join_hyphens=True`. With `join_hyphens=True`, `get_words`, `get_children`, `count_children`, `subtree_len`, `calc_valency` and `calc_dependency_distances` take such a word for one word with its hyphens. A word that holds the head of the sentence has no head; the head of another one is that of its part hanging outside it, the nearest to the root (a word rather than a hyphen when equal). The dependents of a word are the words whose head hangs on one of its tokens, each given by that part (or by its first part when it hangs by a hyphen), and its subtree is the word and the words that hang on it, directly or through punctuation, so every word has one dependency and is the dependent of one word.
-<!-- --8<-- [end:joins_previous] -->
+<!-- --8<-- [start:hyphenated_words] -->
+A tokenizer may split a word at its hyphens (`well-known` into `well`, `-`, `known`) and a parser then hangs every part on its own head. With `join_hyphens=True`, `get_words`, `get_children`, `count_children`, `subtree_len`, `calc_valency`, `calc_dependency_distances` and the other functions take a word whose parts `anyts.utils.joins_previous` joins for one word with its hyphens. A word that holds the head of the sentence has no head; the head of another one is that of its part hanging outside it, the nearest to the root (a word rather than a hyphen when equal). The dependents of a word are the words whose head hangs on one of its tokens, each given by that part (or by its first part when it hangs by a hyphen), and its subtree is the word and the words that hang on it, directly or through punctuation, so every word has one dependency and is the dependent of one word.
+<!-- --8<-- [end:hyphenated_words] -->
 
 ## is_root
 
@@ -69,18 +65,6 @@ The depth of the dependency tree: the longest path from the head of a sentence t
 | `join_hyphens` | bool | `False` | Take a hyphenated word for one word |
 <!-- --8<-- [end:calc_tree_depth] -->
 
-## has_feature
-
-<!-- --8<-- [start:has_feature] -->
-Checks whether a token carries a morphological feature with a given value: `has_feature(token, "VerbForm", "Fin")`.
-
-| Parameter | Type | Default | Description |
-| :-------: | :--: | :-----: | :---------: |
-| `token` | Token | `-` | Token |
-| `field` | str | `-` | Name of the feature |
-| `value` | str | `-` | Value of the feature |
-<!-- --8<-- [end:has_feature] -->
-
 ## Verb forms { #verb-forms }
 
 <!-- --8<-- [start:is_finite_verb] -->
@@ -105,7 +89,7 @@ Checks whether a token carries a morphological feature with a given value: `has_
     ``` python
     import spacy
     from spacy.tokens import Doc
-    from anyts.syntax import predicate_form
+    from anyts.syntax_stats import predicate_form
 
     vocab = spacy.blank("en").vocab
     doc = Doc(
@@ -145,3 +129,42 @@ The lengths of the coordination chains, in the order of their first words. A cha
 | `tokens` | Doc/Span/list[Token] | `-` | Sequence of tokens |
 | `join_hyphens` | bool | `False` | Take a hyphenated word for one word |
 <!-- --8<-- [end:calc_coordination_chains] -->
+
+## is_predicate
+
+<!-- --8<-- [start:is_predicate] -->
+`is_predicate(token, join_hyphens=False)` checks whether a word can be the predicate of its clause: a verb (`VERB`, `AUX`) or a word with a subject of its own (`nsubj`, `csubj` and their subtypes), so the nominal predicate of `he is tall` passes and a parenthetical word does not.
+<!-- --8<-- [end:is_predicate] -->
+
+## Noun phrases { #noun-phrases }
+
+<!-- --8<-- [start:count_noun_modifiers] -->
+`count_noun_modifiers(token, join_hyphens=False)` counts the modifiers of a noun phrase: the dependents with the relations `amod`, `det`, `nmod`, `nummod`, `acl` and their subtypes (`anyts.constants.NOUN_MODIFIER_DEPS`); `conj` and `appos` are no modifiers.
+<!-- --8<-- [end:count_noun_modifiers] -->
+
+<!-- --8<-- [start:calc_modifier_chains] -->
+The lengths of the chains of nested modifiers, in the order of the words. A chain is two or more modifiers each hanging on the previous one, such as the complements of `the increase of the efficiency of the use of resources` (length 3), and what a modifier is comes from the check `is_modifier` of a language - a complement with a preposition, a noun in the genitive. A chain starts at a modifier whose head is none, and its length is the number of modifiers in its longest branch; punctuation is no link of a chain. A check that is not callable raises `SourceTypeError`.
+
+| Parameter | Type | Default | Description |
+| :-------: | :--: | :-----: | :---------: |
+| `tokens` | Doc/Span/list[Token] | `-` | Sequence of tokens |
+| `is_modifier` | Callable[[Token], bool] | `-` | Whether a word is a modifier of the chain |
+| `join_hyphens` | bool | `False` | Take a hyphenated word for one word |
+<!-- --8<-- [end:calc_modifier_chains] -->
+
+!!! example "Example"
+
+    ``` python
+    import spacy
+    from spacy.tokens import Doc
+    from anyts.syntax_stats import calc_modifier_chains
+
+    doc = Doc(
+        spacy.blank("en").vocab,
+        words=["the", "use", "of", "the", "water", "of", "the", "river"],
+        heads=[1, 1, 4, 4, 1, 7, 7, 4],
+        deps=["det", "ROOT", "case", "det", "nmod", "case", "det", "nmod"],
+    )
+    calc_modifier_chains(doc, lambda token: token.dep_ == "nmod")
+    # [2]
+    ```

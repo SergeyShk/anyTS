@@ -20,7 +20,7 @@ from anyts import (
     readability_stats,
     stats,
     style_stats,
-    syntax,
+    syntax_stats,
     utils,
 )
 
@@ -121,7 +121,7 @@ def test_public_api_has_sections():
         *public_names(extractors),
         *public_names(diversity_stats),
         *public_names(cohesion),
-        *public_names(syntax),
+        *public_names(syntax_stats),
         *public_names(datasets),
         *public_names(components),
         *public_names(basic_stats),

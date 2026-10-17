@@ -23,6 +23,7 @@ from anyts.utils import (
     count_letters,
     count_words_by_spans,
     find_phrases,
+    has_feature,
     has_sents,
     has_words,
     in_order,
@@ -33,6 +34,7 @@ from anyts.utils import (
     iter_doc_tokens,
     iter_doc_units,
     iter_doc_words,
+    joins_previous,
     safe_divide,
 )
 
@@ -447,3 +449,27 @@ def test_numbers_of_two_patterns_are_cached_apart():
     assert not is_number("mix")
     assert is_number("mix", roman)
     assert not is_number("mix")
+
+
+def test_has_feature():
+    doc = Doc(
+        spacy.blank("xx").vocab,
+        words=["Children", "play"],
+        morphs=["Number=Plur", "Mood=Ind|VerbForm=Fin"],
+    )
+    assert has_feature(doc[1], "VerbForm", "Fin")
+    assert not has_feature(doc[1], "VerbForm", "Inf")
+    assert not has_feature(doc[0], "Mood", "Ind")
+
+
+def test_joins_previous():
+    vocab = spacy.blank("xx").vocab
+    doc = Doc(
+        vocab,
+        words=["Some", "-", "one", "came", "with", "a", "well", "-", "known", "cat", "."],
+        spaces=[False, False, True, True, True, True, False, False, True, False, False],
+    )
+    assert [token.text for token in doc if joins_previous(token)] == ["one", "known"]
+    spaced = Doc(vocab, words=["Some", "-", "one"])
+    assert not joins_previous(spaced[2])
+    assert not joins_previous(spaced[0])

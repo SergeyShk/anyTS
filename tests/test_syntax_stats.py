@@ -1,26 +1,33 @@
+from math import isnan
+from statistics import fmean, pstdev
+from typing import ClassVar
+
 import pytest
 import spacy
 from spacy.tokens import Doc
 
-from anyts.exceptions import SourceTypeError
-from anyts.syntax import (
+from anyts.constants import MESSAGES, SYNTAX_STATS_DESC
+from anyts.exceptions import SourceError, SourceTypeError
+from anyts.syntax_stats import (
+    SyntaxStats,
     base_dep,
     calc_coordination_chains,
     calc_dependency_distances,
+    calc_modifier_chains,
     calc_tree_depth,
     calc_valency,
     count_children,
+    count_noun_modifiers,
     get_children,
     get_words,
-    has_feature,
     is_finite_verb,
     is_infinitive,
+    is_predicate,
     is_root,
-    is_word,
-    joins_previous,
     predicate_form,
     subtree_len,
 )
+from anyts.utils import is_word, joins_previous
 
 VOCAB = spacy.blank("xx").vocab
 
@@ -93,18 +100,6 @@ def test_tree_depth(house):
     assert calc_tree_depth(house[4:6]) == 1
     assert calc_tree_depth(parse(["Hello"], [0], ["ROOT"])) == 0
     assert calc_tree_depth(parse(["!"], [0], ["ROOT"])) == 0
-
-
-def test_has_feature():
-    doc = parse(
-        ["Children", "play"],
-        [1, 1],
-        ["nsubj", "ROOT"],
-        morphs=["Number=Plur", "Mood=Ind|VerbForm=Fin"],
-    )
-    assert has_feature(doc[1], "VerbForm", "Fin")
-    assert not has_feature(doc[1], "VerbForm", "Inf")
-    assert not has_feature(doc[0], "Mood", "Ind")
 
 
 def test_verb_forms():
@@ -257,14 +252,6 @@ def hyphenated(one_head=3):
 
 def texts(tokens):
     return [token.text for token in tokens]
-
-
-def test_joins_previous():
-    doc = hyphenated()
-    assert [token.text for token in doc if joins_previous(token)] == ["one", "known"]
-    spaced = parse(["Some", "-", "one"], [0, 0, 0], ["ROOT", "punct", "dep"])
-    assert not joins_previous(spaced[2])
-    assert not joins_previous(spaced[0])
 
 
 def test_hyphen_at_a_sentence_start():
@@ -522,3 +509,364 @@ def test_loop_inside_a_hyphenated_word():
     assert calc_tree_depth(doc, join_hyphens=True) == 0
     assert calc_coordination_chains(doc, join_hyphens=True) == []
     assert calc_dependency_distances(doc, join_hyphens=True) == []
+
+
+# The house built by workers was sold . She said that he did not want to leave and left .
+TWO_SENTS = [
+    ("The", 1, "det", "", "DET"),
+    ("house", 6, "nsubj:pass", "", "NOUN"),
+    ("built", 1, "acl", "VerbForm=Part|Voice=Pass", "VERB"),
+    ("by", 4, "case", "", "ADP"),
+    ("workers", 2, "obl:agent", "", "NOUN"),
+    ("was", 6, "aux:pass", "VerbForm=Fin", "AUX"),
+    ("sold", 6, "ROOT", "VerbForm=Part|Voice=Pass", "VERB"),
+    (".", 6, "punct", "", "PUNCT"),
+    ("She", 9, "nsubj", "", "PRON"),
+    ("said", 9, "ROOT", "VerbForm=Fin", "VERB"),
+    ("that", 14, "mark", "", "SCONJ"),
+    ("he", 14, "nsubj", "", "PRON"),
+    ("did", 14, "aux", "VerbForm=Fin", "AUX"),
+    ("not", 14, "advmod", "Polarity=Neg", "PART"),
+    ("want", 9, "ccomp", "VerbForm=Inf", "VERB"),
+    ("to", 16, "mark", "", "PART"),
+    ("leave", 14, "xcomp", "VerbForm=Inf", "VERB"),
+    ("and", 18, "cc", "", "CCONJ"),
+    ("left", 9, "conj", "VerbForm=Fin", "VERB"),
+    (".", 9, "punct", "", "PUNCT"),
+]
+
+
+def two_sents():
+    words, heads, deps, morphs, pos = (list(column) for column in zip(*TWO_SENTS, strict=True))
+    return parse(words, heads, deps, morphs, pos=pos)
+
+
+def test_syntax_stats_counts():
+    stats = SyntaxStats(two_sents())
+    assert [[token.text for token in sent] for sent in stats.sents] == [
+        ["The", "house", "built", "by", "workers", "was", "sold"],
+        ["She", "said", "that", "he", "did", "not", "want", "to", "leave", "and", "left"],
+    ]
+    assert (stats.n_sents, stats.n_words, stats.n_leaves, stats.n_subtrees) == (2, 18, 10, 8)
+    assert stats.c_children == {0: 10, 1: 4, 2: 2, 3: 1, 5: 1}
+    assert stats.c_deps["nsubj"] == 2 and "punct" not in stats.c_deps
+    # Clauses: sold; said, want (ccomp, subordinate) and left (conj of the head)
+    assert (stats.n_clauses, stats.n_subordinate_clauses, stats.n_complex_sents) == (4, 1, 1)
+    assert stats.n_coordination_chains == 1
+    # built by workers is a participial clause, and both participles are passive
+    assert (stats.n_nouns, stats.n_verbs, stats.n_participle_clauses) == (2, 6, 1)
+    assert (stats.n_passive, stats.n_agentless_passive) == (2, 1)
+    assert (stats.n_infinitives, stats.n_negations, stats.n_split_predicates) == (2, 1, 0)
+    assert stats.split_predicates == ()
+
+
+def test_syntax_stats_metrics():
+    stats = SyntaxStats(two_sents())
+    # The distances of the first sentence, then of the second
+    distances = [1, 5, 1, 1, 2, 1, 1, 4, 3, 2, 1, 5, 1, 2, 1, 9]
+    assert stats.get_stats() == {
+        "mean_dependency_distance": fmean(distances),
+        "std_dependency_distance": pstdev(distances),
+        "max_dependency_distance": 7.0,
+        "p_adjacent_dependencies": 0.5,
+        "tree_depth": 3.5,
+        "leaves_per_sent": 5.0,
+        "subtrees_per_sent": 4.0,
+        "nodes_per_leaf": fmean([7 / 3, 11 / 7]),
+        "verb_valency": 1.0,
+        "coordination_chains_per_sent": 0.5,
+        "mean_coordination_chain_len": 2.0,
+        "clauses_per_sent": 2.0,
+        "mean_clause_len": 4.5,
+        "subordinate_clauses_per_sent": 0.5,
+        "p_complex_sents": 0.5,
+        "modifiers_per_noun": 1.0,
+        "participle_clauses_per_sent": 0.5,
+        "mean_participle_clause_len": 3.0,
+        "p_passive": 1 / 3,
+        "p_agentless_passive": 0.5,
+        "infinitives_per_sent": 1.0,
+        "negations_per_sent": 0.5,
+        "split_predicates_per_sent": 0.0,
+        "noun_verb_ratio": 1 / 3,
+    }
+    assert list(stats.get_stats()) == list(SYNTAX_STATS_DESC)
+
+
+def test_syntax_stats_without_constructions(house):
+    stats = SyntaxStats(house)
+    assert stats.n_words == 5 and stats.n_clauses == 1
+    for name in ("verb_valency", "mean_coordination_chain_len", "mean_participle_clause_len"):
+        assert isnan(getattr(stats, name))
+    assert isnan(stats.p_passive) and isnan(stats.p_agentless_passive)
+    assert isnan(stats.noun_verb_ratio)
+    one_word = SyntaxStats(parse(["Yes", "."], [0, 0], ["ROOT", "punct"]))
+    assert isnan(one_word.mean_dependency_distance) and isnan(one_word.max_dependency_distance)
+    assert isnan(one_word.std_dependency_distance) and isnan(one_word.p_adjacent_dependencies)
+    assert one_word.tree_depth == 0 and one_word.nodes_per_leaf == 1.0
+
+
+class Default(SyntaxStats):
+    pass
+
+
+DEFAULT = Default.__new__(Default)
+
+
+@pytest.mark.parametrize(
+    ("words", "heads", "deps", "pos", "morphs", "heads_of_clauses"),
+    [
+        # A parenthetical word under parataxis is no clause, a predicate is
+        (
+            ["Well", ",", "he", "came", ",", "I", "think"],
+            [3, 3, 3, 3, 6, 6, 3],
+            ["parataxis", "punct", "nsubj", "ROOT", "punct", "nsubj", "parataxis"],
+            ["INTJ", "PUNCT", "PRON", "VERB", "PUNCT", "PRON", "VERB"],
+            None,
+            ["came", "think"],
+        ),
+        # An infinitive under acl and a gerund under advcl are no clauses
+        (
+            ["the", "wish", "to", "leave", "came", "smiling"],
+            [1, 4, 3, 1, 4, 4],
+            ["det", "nsubj", "mark", "acl", "ROOT", "advcl"],
+            ["DET", "NOUN", "PART", "VERB", "VERB", "VERB"],
+            ["", "", "", "VerbForm=Inf", "VerbForm=Fin", "VerbForm=Ger"],
+            ["came"],
+        ),
+        # A subtype counts as its base relation; a conjunct must be a predicate
+        (
+            ["the", "man", "who", "came", "and", "Ann"],
+            [1, 1, 3, 1, 5, 1],
+            ["det", "ROOT", "nsubj", "acl:relcl", "cc", "conj"],
+            ["DET", "NOUN", "PRON", "VERB", "CCONJ", "PROPN"],
+            None,
+            ["man", "came"],
+        ),
+        # A nominal conjunct with a subject of its own is a predicate
+        (
+            ["He", "came", "and", "she", "glad"],
+            [1, 1, 4, 4, 1],
+            ["nsubj", "ROOT", "cc", "nsubj", "conj"],
+            ["PRON", "VERB", "CCONJ", "PRON", "ADJ"],
+            None,
+            ["came", "glad"],
+        ),
+    ],
+)
+def test_default_clause_heads(words, heads, deps, pos, morphs, heads_of_clauses):
+    doc = parse(words, heads, deps, morphs, pos=pos)
+    assert [token.text for token in doc if DEFAULT.is_clause_head(token)] == heads_of_clauses
+
+
+def test_default_subordinate_clauses():
+    # He said that she came and left: left is a conjunct of a subordinate clause
+    doc = parse(
+        ["He", "said", "that", "she", "came", "and", "left", "and", "slept"],
+        [1, 1, 4, 4, 1, 6, 4, 8, 1],
+        ["nsubj", "ROOT", "mark", "nsubj", "ccomp", "cc", "conj", "cc", "conj"],
+        pos=["PRON", "VERB", "SCONJ", "PRON", "VERB", "CCONJ", "VERB", "CCONJ", "VERB"],
+    )
+    assert [token.text for token in doc if DEFAULT.is_subordinate_clause_head(token)] == [
+        "came",
+        "left",
+    ]
+
+
+def test_default_participle_clauses():
+    doc = parse(
+        ["the", "letters", "written", "has", "written", "sent", "written", "home"],
+        [1, 5, 1, 4, 5, 5, 5, 6],
+        ["det", "nsubj", "acl", "aux", "advcl", "ROOT", "advcl", "obl"],
+        ["", "", "VerbForm=Part", "", "VerbForm=Part", "VerbForm=Part", "VerbForm=Part", ""],
+        pos=["DET", "NOUN", "VERB", "AUX", "VERB", "VERB", "VERB", "NOUN"],
+    )
+    # No dependent, an auxiliary, the head of the sentence: only written home is a clause
+    assert [token.i for token in doc if DEFAULT.is_participle_clause(token)] == [6]
+
+
+@pytest.mark.parametrize(
+    ("deps", "passive", "agentless"),
+    [
+        (["nsubj:pass", "aux:pass", "ROOT", "case", "obl:agent"], True, False),
+        (["nsubjpass", "auxpass", "ROOT", "prep", "agent"], True, False),
+        (["nsubjpass", "auxpass", "ROOT", "prep", "obl"], True, True),
+        (["nsubj", "aux", "ROOT", "case", "obl"], False, False),
+    ],
+)
+def test_default_passive_by_both_schemes(deps, passive, agentless):
+    doc = parse(
+        ["It", "was", "built", "by", "them"],
+        [2, 2, 2, 4, 2],
+        deps,
+        pos=["PRON", "AUX", "VERB", "ADP", "PRON"],
+    )
+    assert DEFAULT.is_passive(doc[2]) is passive
+    assert DEFAULT.is_agentless(doc[2]) is agentless
+    assert not DEFAULT.is_passive(doc[1])
+
+
+def test_default_passive_by_voice():
+    doc = parse(["built"], [0], ["ROOT"], ["Voice=Pass"], pos=["VERB"])
+    assert DEFAULT.is_passive(doc[0]) and DEFAULT.is_agentless(doc[0])
+
+
+def test_default_negations():
+    doc = parse(
+        ["Neither", "he", "nor", "she", "never", "came"],
+        [1, 5, 3, 1, 5, 5],
+        ["cc:preconj", "nsubj", "cc", "conj", "advmod", "ROOT"],
+        ["Polarity=Neg", "", "Polarity=Neg", "", "", ""],
+        pos=["CCONJ", "PRON", "CCONJ", "PRON", "ADV", "VERB"],
+    )
+    assert not any(DEFAULT.is_negation(token) for token in doc)
+
+    class Negations(SyntaxStats):
+        negation_words = frozenset({"never"})
+
+    assert Negations(doc).n_negations == 1
+
+
+class Hooked(SyntaxStats):
+    """A language with split predicates, its own statistic and a parser of strings"""
+
+    join_hyphens = True
+    requires_lemmas = True
+    stats_desc: ClassVar[dict[str, str]] = {
+        **SYNTAX_STATS_DESC,
+        "chains_per_sent": "Chains of nmod per sentence",
+    }
+
+    def __init__(self, source):
+        super().__init__(source)
+        chains = [
+            length
+            for sent in self.sents
+            for length in calc_modifier_chains(sent, self.is_chain, self.join_hyphens)
+        ]
+        self.chains_per_sent = len(chains) / self.n_sents
+
+    @staticmethod
+    def is_chain(token):
+        return token.dep_ == "nmod"
+
+    def parse(self, source):
+        if isinstance(source, str):
+            words = source.split()
+            return Doc(
+                VOCAB,
+                words=words,
+                heads=[1, 1, 3, 1, 5, 3],
+                deps=["det", "ROOT", "det", "nmod", "det", "nmod"],
+                lemmas=[word.lower() for word in words],
+                pos=["DET", "VERB", "DET", "NOUN", "DET", "NOUN"],
+            )
+        return super().parse(source)
+
+    def find_split_predicates(self, words):
+        return [(words[1], words[3])]
+
+
+def test_hooks():
+    stats = Hooked("The use the water the river")
+    assert stats.split_predicates == ("use water",)
+    assert stats.n_split_predicates == 1 and stats.split_predicates_per_sent == 1.0
+    assert stats.get_stats()["chains_per_sent"] == 1.0
+    assert list(stats.get_stats())[-1] == "chains_per_sent"
+
+
+def test_hyphenated_words_in_the_statistics():
+    doc = parse(
+        ["vice", "-", "governor", "came"],
+        [3, 2, 0, 3],
+        ["compound", "punct", "nsubj", "ROOT"],
+        pos=["NOUN", "PUNCT", "NOUN", "VERB"],
+        spaces=[False, False, True, False],
+    )
+
+    class Hyphens(SyntaxStats):
+        join_hyphens = True
+
+    assert SyntaxStats(doc).n_words == 3
+    assert Hyphens(doc).n_words == 2
+    assert Hyphens(doc).c_children == {0: 1, 1: 1}
+
+
+@pytest.mark.parametrize(
+    ("source", "error", "message"),
+    [
+        ("The house", SourceTypeError, MESSAGES["source_type"]),
+        (Doc(VOCAB, words=["The", "house"]), SourceError, MESSAGES["no_parse"]),
+        (parse([",", "."], [1, 1], ["punct", "ROOT"]), SourceError, MESSAGES["no_words"]),
+    ],
+)
+def test_syntax_stats_errors(source, error, message):
+    with pytest.raises(error, match=f"^{message}$"):
+        SyntaxStats(source)
+
+
+def test_lemmas_required():
+    class Lemmas(SyntaxStats):
+        requires_lemmas = True
+
+    doc = parse(["Yes"], [0], ["ROOT"])
+    assert SyntaxStats(doc).n_words == 1
+    with pytest.raises(SourceError, match=f"^{MESSAGES['no_lemmas']}$"):
+        Lemmas(doc)
+
+
+def test_is_predicate():
+    doc = parse(
+        ["She", "is", "tall", ",", "surely"],
+        [2, 2, 2, 2, 2],
+        ["nsubj", "cop", "ROOT", "punct", "parataxis"],
+        pos=["PRON", "AUX", "ADJ", "PUNCT", "ADV"],
+    )
+    assert [token.text for token in doc if is_predicate(token)] == ["is", "tall"]
+
+
+def test_count_noun_modifiers():
+    doc = parse(
+        ["the", "two", "old", "houses", "of", "Ann", "and", "flats", ",", "sold"],
+        [3, 3, 3, 3, 5, 3, 7, 3, 9, 3],
+        ["det", "nummod", "amod", "ROOT", "case", "nmod:poss", "cc", "conj", "punct", "acl"],
+    )
+    assert count_noun_modifiers(doc[3]) == 5
+    assert count_noun_modifiers(doc[5]) == 0
+
+
+def test_modifier_chains():
+    # the use of the water of the river of the town, and the color of the sky
+    doc = parse(
+        ["use", "water", "river", "town", "color", "sky", "x"],
+        [0, 0, 1, 2, 1, 4, 6],
+        ["ROOT", "nmod", "nmod", "nmod", "nmod", "nmod", "ROOT"],
+    )
+    nmod = lambda token: token.dep_ == "nmod"  # noqa: E731
+    # One chain from water: its longest branch is water - river - town
+    assert calc_modifier_chains(doc, nmod) == [3]
+    assert calc_modifier_chains(doc, lambda token: False) == []
+
+
+def test_modifier_chains_skip_punctuation():
+    doc = parse(["use", "\u00ab", "water"], [0, 0, 1], ["ROOT", "nmod", "nmod"])
+    assert calc_modifier_chains(doc, lambda token: token.dep_ == "nmod") == []
+
+
+def test_modifier_chains_of_hyphenated_words():
+    doc = parse(
+        ["use", "vice", "-", "governor", "town"],
+        [0, 0, 3, 1, 3],
+        ["ROOT", "nmod", "punct", "compound", "nmod"],
+        spaces=[True, False, False, True, False],
+    )
+    nmod = lambda token: token.dep_ == "nmod"  # noqa: E731
+    assert calc_modifier_chains(doc, nmod) == []
+    assert calc_modifier_chains(doc, nmod, join_hyphens=True) == [2]
+
+
+def test_modifier_check_must_be_callable():
+    with pytest.raises(
+        SourceTypeError, match=r"^The check of a modifier must be callable, not str$"
+    ):
+        calc_modifier_chains(parse(["Yes"], [0], ["ROOT"]), "nmod")
