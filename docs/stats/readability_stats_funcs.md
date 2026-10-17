@@ -290,7 +290,7 @@ Parameters:
     **anyts.readability_stats.calc_consensus_grade()**
 
 <!-- --8<-- [start:calc_consensus_grade] -->
-Computation of the consensus grade: the median of the values of the grade formulas rounded half up, together with the reading ease in years of schooling by `to_grade`, not rounded - so a band of 8.5 votes for 8.5. No values at all and a grade that is not a finite number raise `ParameterError`, a `to_grade` that is not callable `SourceTypeError`.
+Computation of the consensus grade: the median of the values of the grade formulas rounded half up, together with the reading ease in years of schooling by `to_grade`, not rounded - so a band of 8.5 votes for 8.5. No values at all, a grade or a reading ease that is not a finite number raise `ParameterError`, a `to_grade` that is not callable `SourceTypeError`.
 
 Parameters:
 
