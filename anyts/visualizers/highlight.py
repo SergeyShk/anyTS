@@ -17,6 +17,7 @@ from ..utils import (
     check_integer,
     check_messages,
     check_number,
+    check_words,
     find_phrases,
     has_sents,
     is_doc,
@@ -708,8 +709,8 @@ def find_phrase_highlights(
     Finding the phrases of a list
 
     Description:
-        The phrases are matched by the normalized forms of their words
-        (find_phrases); a mapping gives the variants of the phrases of a list -
+        The phrases are matched by the normalized forms of their words, every
+        word normalized alone as in the text (find_phrases); a mapping gives the variants of the phrases of a list -
         their contractions, the forms of their verbs - with the phrase each
         stands for, the first of the variants that normalize alike winning. A
         fragment covers the words from the first to the last, and the note
@@ -726,16 +727,25 @@ def find_phrase_highlights(
 
     Returns:
         list[Highlight]: Fragments of the layer
+
+    Raises:
+        SourceTypeError: If the phrases are not a list of strings or a mapping of strings
     """
     note = note or (lambda phrase: f"\u00ab{phrase}\u00bb")
-    pairs = phrases.items() if isinstance(phrases, Mapping) else ((p, p) for p in phrases)
+    check_words(phrases, "phrases", ordered=False)
+    if isinstance(phrases, Mapping):
+        check_words(list(phrases.values()), "phrases")
+        pairs: Iterable[tuple[str, str]] = phrases.items()
+    else:
+        pairs = ((phrase, phrase) for phrase in phrases)
+    # Every word is normalized once and alone, in the phrases as in the text
     forms: dict[str, str] = {}
     for variant, phrase in pairs:
-        forms.setdefault(" ".join(normalize(variant).split()), phrase)
-    texts = [word.text for word in words]
+        forms.setdefault(" ".join(normalize(part) for part in variant.split()), phrase)
+    normalized = [normalize(word.text) for word in words]
     highlights = []
-    for start, end in find_phrases(texts, forms, normalize):
-        phrase = forms[" ".join(normalize(text) for text in texts[start:end])]
+    for start, end in find_phrases(normalized, forms, str):
+        phrase = forms[" ".join(normalized[start:end])]
         highlights.append(Highlight(words[start].start, words[end - 1].end, layer, note(phrase)))
     return highlights
 
@@ -768,7 +778,7 @@ def find_connector_highlights(
         list[Highlight]: Fragments of the layer connectors
     """
     note = note or (lambda connector: f"{connector.text}: {connector.cls}, {connector.kind}")
-    groups = group_words_by_sents(words, sents) if sents else [list(words)]
+    groups = [list(words)] if sents is None else group_words_by_sents(words, sents)
     highlights: list[Highlight] = []
     for group in groups:
         tags = [word.pos if pos is None else pos(word) for word in group]
@@ -845,7 +855,11 @@ def calc_alliteration_runs(
     Returns:
         list[tuple[int, int, str]]: Positions of the first word and after the last
             word of every run and its consonant, in the order of the text
+
+    Raises:
+        SourceTypeError: If the words are not a list of strings (check_words)
     """
+    check_words(words)
     lowered = [word.lower() for word in words]
     if is_transparent is None:
         transparent = [len(word) < ALLITERATION_MIN_WORD_LEN for word in lowered]

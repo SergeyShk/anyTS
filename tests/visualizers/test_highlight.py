@@ -550,3 +550,43 @@ def test_annotation_names():
         ParameterError, match=r"^The layer nouns needs a Doc with parts of speech, lemmas$"
     ):
         Translated(text, ["nouns"])
+
+
+def test_empty_sentences_give_no_fragments():
+    matcher = Connectors({"and": ("additive", "primary")})
+    words = words_of("zoo and zebra")
+    assert len(find_connector_highlights(words, None, matcher)) == 1
+    assert find_connector_highlights(words, [], matcher) == []
+    zoo = words_of("zoo of zebra")
+    assert len(find_alliteration(zoo, None, FREQUENCIES)) == 1
+    assert find_alliteration(zoo, [], FREQUENCIES) == []
+
+
+def test_find_phrase_highlights_normalizes_every_word_alone():
+    # A normalization of words, such as a lemmatizer, reads the phrases word by word
+    lemmas = {"goes": "go", "went": "go"}
+    words = words_of("She goes to school and went to work")
+    found = find_phrase_highlights(
+        words, ["goes to"], "phrases", normalize=lambda w: lemmas.get(w.lower(), w.lower())
+    )
+    assert [(h.start, h.end, h.note) for h in found] == [
+        (4, 11, "\u00abgoes to\u00bb"),
+        (23, 30, "\u00abgoes to\u00bb"),
+    ]
+    # A normalization that is not idempotent is applied once
+    stems = find_phrase_highlights(
+        words_of("glad to"), ["glad"], "phrases", lambda p: p, lambda w: w[:3]
+    )
+    assert [h.note for h in stems] == ["glad"]
+
+
+@pytest.mark.parametrize("phrases", ["in fact", ["in fact", 1], {"in fact": 1}])
+def test_find_phrase_highlights_checks_the_phrases(phrases):
+    with pytest.raises(SourceTypeError):
+        find_phrase_highlights(words_of("in fact"), phrases, "phrases")
+
+
+@pytest.mark.parametrize("words", ["zoo zebra", [Word(0, 3, "zoo")]])
+def test_calc_alliteration_runs_checks_the_words(words):
+    with pytest.raises(SourceTypeError):
+        calc_alliteration_runs(words, FREQUENCIES)

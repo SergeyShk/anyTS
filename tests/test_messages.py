@@ -414,6 +414,7 @@ def test_check_messages(messages, match):
         WordsExtractor,
         CharNgramsExtractor,
         ConnectorMatcher,
+        HighlightedText,
     ],
 )
 def test_messages_checked_when_a_class_is_defined(base):

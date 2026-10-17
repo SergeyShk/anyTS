@@ -221,6 +221,11 @@ MESSAGES = {
         "before {component}"
     ),
     "extension_name": "The name of an extension must be a string, not {type}",
+    "no_stats_class": "{cls} has no concrete class of statistics in stats_class",
+    "stats_param": "{cls} has no attribute {param} of stats_params",
+    "foreign_extension": (
+        "The extension {name} of Doc belongs to another package: give the component another name"
+    ),
     "layers_type": "The layers must be a list of names or a string",
     "unknown_layer": "Unknown layer of the highlighting: {layer}",
     "layer_unavailable": "The layer {layer} is not available",
@@ -229,11 +234,6 @@ MESSAGES = {
     "fragment_outside": "A fragment of the layer {layer} lies outside the text: {start}-{end}",
     "long_sent_word_factor": "The number of words of a long sentence must be greater than 0",
     "alliteration_threshold": "The threshold of the alliteration must lie in the interval (0, 1]",
-    "no_stats_class": "{cls} has no concrete class of statistics in stats_class",
-    "stats_param": "{cls} has no attribute {param} of stats_params",
-    "foreign_extension": (
-        "The extension {name} of Doc belongs to another package: give the component another name"
-    ),
     "sent_len_bounds": "The sentence length bounds cannot be negative",
     "sent_len_order": "The minimum sentence length is greater than the maximum",
     "word_len_bounds": "The word length bounds cannot be negative",

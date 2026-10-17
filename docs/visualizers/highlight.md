@@ -130,11 +130,11 @@ The layers that the languages share are found by functions that take the languag
 <!-- --8<-- [end:find_words] -->
 
 <!-- --8<-- [start:find_phrase_highlights] -->
-`find_phrase_highlights(words, phrases, layer, note, normalize)` - a layer of the phrases of a list, such as compound prepositions, clichés or parentheticals: the phrases are matched by the normalized forms of their words (`find_phrases`), and a mapping gives their variants - contractions, forms of verbs - with the phrase each stands for, the first of the variants that normalize alike winning. A fragment covers the words from the first to the last, and the note reads the phrase of the list, in quotes by default.
+`find_phrase_highlights(words, phrases, layer, note, normalize)` - a layer of the phrases of a list, such as compound prepositions, clichés or parentheticals: the phrases are matched by the normalized forms of their words, every word normalized alone as in the text (`find_phrases`), and a mapping gives their variants - contractions, forms of verbs - with the phrase each stands for, the first of the variants that normalize alike winning. A fragment covers the words from the first to the last, and the note reads the phrase of the list, in quotes by default.
 <!-- --8<-- [end:find_phrase_highlights] -->
 
 <!-- --8<-- [start:find_connector_highlights] -->
-`find_connector_highlights(words, sents, matcher, note, pos)` - the layer `connectors`: the connectors of a `ConnectorMatcher` of the language inside every sentence, in the whole text without the sentences; a one-word connector is checked by its part of speech when a word of the sentence has one - its own, or that of the hook `pos`. The note gives the class and the kind of the connector by default.
+`find_connector_highlights(words, sents, matcher, note, pos)` - the layer `connectors`: the connectors of a `ConnectorMatcher` of the language inside every sentence, in the whole text when the sentences are `None`; a one-word connector is checked by its part of speech when a word of the sentence has one - its own, or that of the hook `pos`. The note gives the class and the kind of the connector by default.
 <!-- --8<-- [end:find_connector_highlights] -->
 
 <!-- --8<-- [start:find_split_predicate_highlights] -->
@@ -146,7 +146,7 @@ The layers that the languages share are found by functions that take the languag
 <!-- --8<-- [end:calc_alliteration_runs] -->
 
 <!-- --8<-- [start:find_alliteration] -->
-`find_alliteration(words, sents, frequencies, threshold, stem, is_transparent, note)` - the layer `alliteration`: the runs of `calc_alliteration_runs` inside every sentence, in the whole text without the sentences, the note by the consonant.
+`find_alliteration(words, sents, frequencies, threshold, stem, is_transparent, note)` - the layer `alliteration`: the runs of `calc_alliteration_runs` inside every sentence, in the whole text when the sentences are `None`, the note by the consonant.
 <!-- --8<-- [end:find_alliteration] -->
 
 <!-- --8<-- [start:HighlightedText-check_params] -->
