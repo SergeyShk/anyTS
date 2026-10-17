@@ -1071,15 +1071,65 @@
   
   
   
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_6" id="__nav_3_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Syntactic statistics
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Syntactic statistics
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
     <li class="md-nav__item">
-      <a href="../stats/syntax/" class="md-nav__link">
+      <a href="../stats/syntax_stats/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Dependency tree helpers
+    Metrics module
   
 
     
@@ -1088,6 +1138,42 @@
   
 
       </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../stats/syntax_stats_funcs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Metric functions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -2082,6 +2168,50 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#is_word" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        is_word
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#has_feature" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        has_feature
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verb-forms" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verb forms
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#joins_previous" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        joins_previous
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#iter_doc_tokens" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2119,6 +2249,28 @@
     <span class="md-ellipsis">
       
         safe_divide
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#safe_mean" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        safe_mean
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#shannon_entropy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        shannon_entropy
       
     </span>
   </a>
@@ -2336,6 +2488,50 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#is_word" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        is_word
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#has_feature" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        has_feature
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verb-forms" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verb forms
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#joins_previous" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        joins_previous
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#iter_doc_tokens" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2373,6 +2569,28 @@
     <span class="md-ellipsis">
       
         safe_divide
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#safe_mean" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        safe_mean
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#shannon_entropy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        shannon_entropy
       
     </span>
   </a>
@@ -2740,9 +2958,63 @@
 <span class="c1"># True</span>
 </code></pre></div>
 </div>
+<h2 id="is_word">is_word<a class="headerlink" href="#is_word" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:is_word] -->
+<p>Checks whether a token is a word: not whitespace and not a token of <code>is_punctuation</code>, so symbols like <code>%</code>, <code>€</code>, <code>+</code> and invisible characters are no words either. The words of <code>iter_doc_tokens</code> and the nodes of the dependency tree of the syntactic statistics are such tokens.</p>
+<!-- --8<-- [end:is_word] -->
+
+<h2 id="has_feature">has_feature<a class="headerlink" href="#has_feature" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:has_feature] -->
+<p>Checks whether a token carries a morphological feature with a given value: <code>has_feature(token, "VerbForm", "Fin")</code>.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>token</code></td>
+<td style="text-align: center;">Token</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Token</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>field</code></td>
+<td style="text-align: center;">str</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Name of the feature</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>value</code></td>
+<td style="text-align: center;">str</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Value of the feature</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:has_feature] -->
+
+<h2 id="verb-forms">Verb forms<a class="headerlink" href="#verb-forms" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:is_finite_verb] -->
+<p><code>is_finite_verb(token)</code> checks whether a token is a finite verb: the part of speech <code>VERB</code> with <code>VerbForm=Fin</code>, so a finite auxiliary (<code>AUX</code>) is not one.</p>
+<!-- --8<-- [end:is_finite_verb] -->
+
+<!-- --8<-- [start:is_infinitive] -->
+<p><code>is_infinitive(token)</code> checks whether a token is an infinitive, <code>VerbForm=Inf</code> whatever its part of speech.</p>
+<!-- --8<-- [end:is_infinitive] -->
+
+<h2 id="joins_previous">joins_previous<a class="headerlink" href="#joins_previous" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:joins_previous] -->
+<p>A tokenizer may split a word at its hyphens (<code>well-known</code> into <code>well</code>, <code>-</code>, <code>known</code>). <code>joins_previous(token)</code> checks whether a token continues such a word: it is a word that follows a hyphen with no whitespace around it, the hyphen follows a word, and no sentence starts at the hyphen or at the word. <code>iter_doc_units</code> and the functions of the dependency tree join the parts of a word by this rule with <code>join_hyphens=True</code>.</p>
+<!-- --8<-- [end:joins_previous] -->
+
 <h2 id="iter_doc_tokens">iter_doc_tokens<a class="headerlink" href="#iter_doc_tokens" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:iter_doc_tokens] -->
-<p>Yields the tokens of the words of a <code>Doc</code> or a <code>Span</code>: whitespace tokens and the tokens of <code>is_punctuation</code>, symbols like <code>%</code> and <code>€</code> included, are skipped.</p>
+<p>Yields the tokens of the words of a <code>Doc</code> or a <code>Span</code> (<code>is_word</code>): whitespace tokens and the tokens of <code>is_punctuation</code>, symbols like <code>%</code> and <code>€</code> included, are skipped.</p>
 <table>
 <thead>
 <tr>
@@ -2765,7 +3037,7 @@
 
 <h2 id="iter_doc_units">iter_doc_units<a class="headerlink" href="#iter_doc_units" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:iter_doc_units] -->
-<p>Yields the words of a <code>Doc</code> or a <code>Span</code> as lists of tokens: one token each, as in <code>iter_doc_tokens</code>. With <code>join_hyphens=True</code> a word that the tokenizer split at its hyphens (<code>well-known</code> into <code>well</code>, <code>-</code>, <code>known</code>) is joined back when no whitespace separates its parts and no sentence starts at a hyphen or a part; a language library whose own tokenizer keeps such words whole turns it on, so that a string and a <code>Doc</code> give the same words.</p>
+<p>Yields the words of a <code>Doc</code> or a <code>Span</code> as lists of tokens: one token each, as in <code>iter_doc_tokens</code>. With <code>join_hyphens=True</code> a word that the tokenizer split at its hyphens (<code>well-known</code> into <code>well</code>, <code>-</code>, <code>known</code>) is joined back when no whitespace separates its parts and no sentence starts at a hyphen or a part (<code>joins_previous</code>); a language library whose own tokenizer keeps such words whole turns it on, so that a string and a <code>Doc</code> give the same words.</p>
 <table>
 <thead>
 <tr>
@@ -2868,6 +3140,58 @@
 </tbody>
 </table>
 <!-- --8<-- [end:safe_divide] -->
+
+<h2 id="safe_mean">safe_mean<a class="headerlink" href="#safe_mean" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:safe_mean] -->
+<p>The arithmetic mean of numbers, <code>default</code> for no numbers.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>values</code></td>
+<td style="text-align: center;">list[float]</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Numbers</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>default</code></td>
+<td style="text-align: center;">float</td>
+<td style="text-align: center;"><code>nan</code></td>
+<td style="text-align: center;">Value returned for no numbers</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:safe_mean] -->
+
+<h2 id="shannon_entropy">shannon_entropy<a class="headerlink" href="#shannon_entropy" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:shannon_entropy] -->
+<p>The Shannon entropy in bits of a distribution given by the count of every value, such as a <code>Counter</code>: <span class="arithmatex">\(-\sum p_i \log_2 p_i\)</span> with <span class="arithmatex">\(p_i\)</span> the share of a value; 0 for one value, <code>nan</code> for no counts; a zero count is left out, as <span class="arithmatex">\(0 \log_2 0 = 0\)</span>.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>counts</code></td>
+<td style="text-align: center;">dict[object, int]</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Count of every value</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:shannon_entropy] -->
 
 <h2 id="check_sequence">check_sequence<a class="headerlink" href="#check_sequence" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:check_sequence] -->

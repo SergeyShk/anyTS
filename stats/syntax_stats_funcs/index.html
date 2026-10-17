@@ -10,10 +10,10 @@
       
       
       
-        <link rel="canonical" href="https://sergeyshk.github.io/anyTS/stats/syntax/">
+        <link rel="canonical" href="https://sergeyshk.github.io/anyTS/stats/syntax_stats_funcs/">
       
       
-        <link rel="prev" href="../cohesion/">
+        <link rel="prev" href="../syntax_stats/">
       
       
         <link rel="next" href="../lexical_stats/">
@@ -27,7 +27,7 @@
     
     
       
-        <title>Dependency tree helpers - anyTS</title>
+        <title>Metric functions - anyTS</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#dependency-tree-helpers" class="md-skip">
+        <a href="#metric-functions" class="md-skip">
           Skip to content
         </a>
       
@@ -112,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Dependency tree helpers
+              Metric functions
             
           </span>
         </div>
@@ -1080,6 +1080,86 @@
   
   
   
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3_6" id="__nav_3_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Syntactic statistics
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Syntactic statistics
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../syntax_stats/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Metrics module
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
     <li class="md-nav__item md-nav__item--active">
       
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
@@ -1095,7 +1175,7 @@
   <span class="md-ellipsis">
     
   
-    Dependency tree helpers
+    Metric functions
   
 
     
@@ -1113,7 +1193,7 @@
   <span class="md-ellipsis">
     
   
-    Dependency tree helpers
+    Metric functions
   
 
     
@@ -1139,10 +1219,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#is_word" class="md-nav__link">
+  <a href="#get_words" class="md-nav__link">
     <span class="md-ellipsis">
       
-        is_word
+        get_words
       
     </span>
   </a>
@@ -1150,7 +1230,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#joins_previous" class="md-nav__link">
+  <a href="#hyphenated-words" class="md-nav__link">
     <span class="md-ellipsis">
       
         Hyphenated words
@@ -1216,21 +1296,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#has_feature" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        has_feature
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#verb-forms" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Verb forms
+        predicate_form
       
     </span>
   </a>
@@ -1259,9 +1328,39 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#is_predicate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        is_predicate
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#noun-phrases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Noun phrases
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
       
     </li>
   
@@ -2145,10 +2244,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#is_word" class="md-nav__link">
+  <a href="#get_words" class="md-nav__link">
     <span class="md-ellipsis">
       
-        is_word
+        get_words
       
     </span>
   </a>
@@ -2156,7 +2255,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#joins_previous" class="md-nav__link">
+  <a href="#hyphenated-words" class="md-nav__link">
     <span class="md-ellipsis">
       
         Hyphenated words
@@ -2222,21 +2321,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#has_feature" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        has_feature
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#verb-forms" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Verb forms
+        predicate_form
       
     </span>
   </a>
@@ -2265,6 +2353,28 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#is_predicate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        is_predicate
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#noun-phrases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Noun phrases
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -2285,24 +2395,20 @@
   
 
 
-<h1 id="dependency-tree-helpers">Dependency tree helpers<a class="headerlink" href="#dependency-tree-helpers" title="Permanent link">&para;</a></h1>
+<h1 id="metric-functions">Metric functions<a class="headerlink" href="#metric-functions" title="Permanent link">&para;</a></h1>
 <div class="admonition info">
-<p><strong>anyts.syntax</strong></p>
+<p><strong>anyts.syntax_stats</strong></p>
 </div>
-<p>Functions over the dependency tree of a spaCy <code>Doc</code>, a <code>Span</code> or a list of tokens. They use only what Universal Dependencies and the ClearNLP labels of the English models share: the head of a token, the relations <code>cc</code>, <code>conj</code>, <code>parataxis</code>, <code>punct</code> and <code>aux</code>, and the root; the copula <code>cop</code> of <code>predicate_form</code> exists in Universal Dependencies alone. Everything else is up to a language library.</p>
-<h2 id="is_word">is_word<a class="headerlink" href="#is_word" title="Permanent link">&para;</a></h2>
-<!-- --8<-- [start:is_word] -->
-<p>Checks whether a token is a word: not whitespace and not a token of <code>is_punctuation</code>, so symbols like <code>%</code>, <code>€</code>, <code>+</code> and invisible characters are no words either.</p>
-<!-- --8<-- [end:is_word] -->
-
+<p>Functions over the dependency tree of a spaCy <code>Doc</code>, a <code>Span</code> or a list of tokens; its words are the tokens of <code>anyts.utils.is_word</code>. They use only what Universal Dependencies and the ClearNLP labels of the English models share: the head of a token, the relations <code>cc</code>, <code>conj</code>, <code>parataxis</code>, <code>punct</code> and <code>aux</code>, the subjects <code>nsubj</code> and <code>csubj</code>, the modifiers of a noun <code>amod</code>, <code>det</code>, <code>nmod</code>, <code>nummod</code> and <code>acl</code>, and the root; the copula <code>cop</code> of <code>predicate_form</code> exists in Universal Dependencies alone. Everything else is up to a language library.</p>
+<h2 id="get_words">get_words<a class="headerlink" href="#get_words" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:get_words] -->
 <p><code>get_words(tokens, join_hyphens=False)</code> returns the words of a sequence of tokens in their order; with <code>join_hyphens=True</code> a word the tokenizer split at its hyphens is one word, given by its part that holds its relation, as with the dependents of <code>get_children</code> (<code>governor</code> in <code>He is vice-governor</code>), or by its first part when a hyphen holds it.</p>
 <!-- --8<-- [end:get_words] -->
 
-<h2 id="joins_previous">Hyphenated words<a class="headerlink" href="#joins_previous" title="Permanent link">&para;</a></h2>
-<!-- --8<-- [start:joins_previous] -->
-<p>A tokenizer may split a word at its hyphens (<code>well-known</code> into <code>well</code>, <code>-</code>, <code>known</code>) and a parser then hangs every part on its own head. <code>joins_previous(token)</code> checks whether a token continues such a word: it is a word that follows a hyphen with no whitespace around it, the hyphen follows a word, and no sentence starts at the hyphen or at the word - the rule of <code>iter_doc_units</code> with <code>join_hyphens=True</code>. With <code>join_hyphens=True</code>, <code>get_words</code>, <code>get_children</code>, <code>count_children</code>, <code>subtree_len</code>, <code>calc_valency</code> and <code>calc_dependency_distances</code> take such a word for one word with its hyphens. A word that holds the head of the sentence has no head; the head of another one is that of its part hanging outside it, the nearest to the root (a word rather than a hyphen when equal). The dependents of a word are the words whose head hangs on one of its tokens, each given by that part (or by its first part when it hangs by a hyphen), and its subtree is the word and the words that hang on it, directly or through punctuation, so every word has one dependency and is the dependent of one word.</p>
-<!-- --8<-- [end:joins_previous] -->
+<h2 id="hyphenated-words">Hyphenated words<a class="headerlink" href="#hyphenated-words" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:hyphenated_words] -->
+<p>A tokenizer may split a word at its hyphens (<code>well-known</code> into <code>well</code>, <code>-</code>, <code>known</code>) and a parser then hangs every part on its own head. With <code>join_hyphens=True</code>, <code>get_words</code>, <code>get_children</code>, <code>count_children</code>, <code>subtree_len</code>, <code>calc_valency</code>, <code>calc_dependency_distances</code> and the other functions take a word whose parts <code>anyts.utils.joins_previous</code> joins for one word with its hyphens. A word that holds the head of the sentence has no head; the head of another one is that of its part hanging outside it, the nearest to the root (a word rather than a hyphen when equal). The dependents of a word are the words whose head hangs on one of its tokens, each given by that part (or by its first part when it hangs by a hyphen), and its subtree is the word and the words that hang on it, directly or through punctuation, so every word has one dependency and is the dependent of one word.</p>
+<!-- --8<-- [end:hyphenated_words] -->
 
 <h2 id="is_root">is_root<a class="headerlink" href="#is_root" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:is_root] -->
@@ -2385,50 +2491,7 @@
 </table>
 <!-- --8<-- [end:calc_tree_depth] -->
 
-<h2 id="has_feature">has_feature<a class="headerlink" href="#has_feature" title="Permanent link">&para;</a></h2>
-<!-- --8<-- [start:has_feature] -->
-<p>Checks whether a token carries a morphological feature with a given value: <code>has_feature(token, "VerbForm", "Fin")</code>.</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: center;">Parameter</th>
-<th style="text-align: center;">Type</th>
-<th style="text-align: center;">Default</th>
-<th style="text-align: center;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: center;"><code>token</code></td>
-<td style="text-align: center;">Token</td>
-<td style="text-align: center;"><code>-</code></td>
-<td style="text-align: center;">Token</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>field</code></td>
-<td style="text-align: center;">str</td>
-<td style="text-align: center;"><code>-</code></td>
-<td style="text-align: center;">Name of the feature</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>value</code></td>
-<td style="text-align: center;">str</td>
-<td style="text-align: center;"><code>-</code></td>
-<td style="text-align: center;">Value of the feature</td>
-</tr>
-</tbody>
-</table>
-<!-- --8<-- [end:has_feature] -->
-
-<h2 id="verb-forms">Verb forms<a class="headerlink" href="#verb-forms" title="Permanent link">&para;</a></h2>
-<!-- --8<-- [start:is_finite_verb] -->
-<p><code>is_finite_verb(token)</code> checks whether a token is a finite verb: the part of speech <code>VERB</code> with <code>VerbForm=Fin</code>, so a finite auxiliary (<code>AUX</code>) is not one.</p>
-<!-- --8<-- [end:is_finite_verb] -->
-
-<!-- --8<-- [start:is_infinitive] -->
-<p><code>is_infinitive(token)</code> checks whether a token is an infinitive, <code>VerbForm=Inf</code> whatever its part of speech.</p>
-<!-- --8<-- [end:is_infinitive] -->
-
+<h2 id="verb-forms">predicate_form<a class="headerlink" href="#verb-forms" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:predicate_form] -->
 <p><code>predicate_form(token, auxiliary_form)</code> gives the verb form of a predicate by the forms (<code>VerbForm</code>) of its auxiliaries and copulas - the relations <code>aux</code> and <code>cop</code> with their subtypes, <code>anyts.constants.AUXILIARY_DEPS</code> - as Universal Dependencies annotates them. A finite auxiliary makes the predicate finite wherever it stands (<em>had arrived</em>, the German <em>gekommen sein wird</em>); otherwise the form of the first auxiliary decides (<em>to have gone</em> is an infinitive, <em>being chosen</em> a gerund), and without auxiliaries the form of the word itself. A past participle auxiliary counts as finite, since it follows a finite one that the parser may attach to another word (<em>had been chosen</em>); a present participle (<em>having eaten</em>) does not. A ClearNLP parse has no copula relation, its copula heading the clause with a form of its own, and its passive auxiliary <code>auxpass</code> is not read. An auxiliary the model leaves without a form is read by the hook <code>auxiliary_form</code> of a language, which gives its form, for instance by its ending, or an empty string to skip it; without the hook such an auxiliary is skipped. A word with no verb form gives an empty string, and a hook that is not callable raises <code>SourceTypeError</code>.</p>
 <table>
@@ -2461,7 +2524,7 @@
 <p class="admonition-title">Example</p>
 <div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">spacy</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">spacy.tokens</span><span class="w"> </span><span class="kn">import</span> <span class="n">Doc</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">anyts.syntax</span><span class="w"> </span><span class="kn">import</span> <span class="n">predicate_form</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">anyts.syntax_stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">predicate_form</span>
 
 <span class="n">vocab</span> <span class="o">=</span> <span class="n">spacy</span><span class="o">.</span><span class="n">blank</span><span class="p">(</span><span class="s2">"en"</span><span class="p">)</span><span class="o">.</span><span class="n">vocab</span>
 <span class="n">doc</span> <span class="o">=</span> <span class="n">Doc</span><span class="p">(</span>
@@ -2518,6 +2581,67 @@
 </tbody>
 </table>
 <!-- --8<-- [end:calc_coordination_chains] -->
+
+<h2 id="is_predicate">is_predicate<a class="headerlink" href="#is_predicate" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:is_predicate] -->
+<p><code>is_predicate(token, join_hyphens=False)</code> checks whether a word can be the predicate of its clause: a verb (<code>VERB</code>, <code>AUX</code>) or a word with a subject of its own (<code>nsubj</code>, <code>csubj</code> and their subtypes), so the nominal predicate of <code>he is tall</code> passes and a parenthetical word does not.</p>
+<!-- --8<-- [end:is_predicate] -->
+
+<h2 id="noun-phrases">Noun phrases<a class="headerlink" href="#noun-phrases" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:count_noun_modifiers] -->
+<p><code>count_noun_modifiers(token, join_hyphens=False)</code> counts the modifiers of a noun phrase: the dependents with the relations <code>amod</code>, <code>det</code>, <code>nmod</code>, <code>nummod</code>, <code>acl</code> and their subtypes (<code>anyts.constants.NOUN_MODIFIER_DEPS</code>); <code>conj</code> and <code>appos</code> are no modifiers.</p>
+<!-- --8<-- [end:count_noun_modifiers] -->
+
+<!-- --8<-- [start:calc_modifier_chains] -->
+<p>The lengths of the chains of nested modifiers, in the order of the words. A chain is two or more modifiers each hanging on the previous one, such as the complements of <code>the increase of the efficiency of the use of resources</code> (length 3), and what a modifier is comes from the check <code>is_modifier</code> of a language - a complement with a preposition, a noun in the genitive. A chain starts at a modifier whose head is none, and its length is the number of modifiers in its longest branch. The words hang on each other as <code>get_children</code> gives them: punctuation is no link of a chain, and with <code>join_hyphens</code> a hyphenated word is one link. A check that is not callable raises <code>SourceTypeError</code>.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>tokens</code></td>
+<td style="text-align: center;">Doc/Span/list[Token]</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Sequence of tokens</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>is_modifier</code></td>
+<td style="text-align: center;">Callable[[Token], bool]</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Whether a word is a modifier of the chain</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>join_hyphens</code></td>
+<td style="text-align: center;">bool</td>
+<td style="text-align: center;"><code>False</code></td>
+<td style="text-align: center;">Take a hyphenated word for one word</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:calc_modifier_chains] -->
+
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">spacy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">spacy.tokens</span><span class="w"> </span><span class="kn">import</span> <span class="n">Doc</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">anyts.syntax_stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">calc_modifier_chains</span>
+
+<span class="n">doc</span> <span class="o">=</span> <span class="n">Doc</span><span class="p">(</span>
+    <span class="n">spacy</span><span class="o">.</span><span class="n">blank</span><span class="p">(</span><span class="s2">"en"</span><span class="p">)</span><span class="o">.</span><span class="n">vocab</span><span class="p">,</span>
+    <span class="n">words</span><span class="o">=</span><span class="p">[</span><span class="s2">"the"</span><span class="p">,</span> <span class="s2">"use"</span><span class="p">,</span> <span class="s2">"of"</span><span class="p">,</span> <span class="s2">"the"</span><span class="p">,</span> <span class="s2">"water"</span><span class="p">,</span> <span class="s2">"of"</span><span class="p">,</span> <span class="s2">"the"</span><span class="p">,</span> <span class="s2">"river"</span><span class="p">],</span>
+    <span class="n">heads</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span>
+    <span class="n">deps</span><span class="o">=</span><span class="p">[</span><span class="s2">"det"</span><span class="p">,</span> <span class="s2">"ROOT"</span><span class="p">,</span> <span class="s2">"case"</span><span class="p">,</span> <span class="s2">"det"</span><span class="p">,</span> <span class="s2">"nmod"</span><span class="p">,</span> <span class="s2">"case"</span><span class="p">,</span> <span class="s2">"det"</span><span class="p">,</span> <span class="s2">"nmod"</span><span class="p">],</span>
+<span class="p">)</span>
+<span class="n">calc_modifier_chains</span><span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">token</span><span class="p">:</span> <span class="n">token</span><span class="o">.</span><span class="n">dep_</span> <span class="o">==</span> <span class="s2">"nmod"</span><span class="p">)</span>
+<span class="c1"># [2]</span>
+</code></pre></div>
+</div>
 
 
 
