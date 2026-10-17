@@ -824,9 +824,10 @@ def calc_alliteration_runs(
         by agreement. The probability of a run under an independent spread of
         the consonants is the product over its words of 1 - (1 - f)^n, with f
         the frequency of the consonant and n the length of the stem; a run is
-        alliteration when it is below the threshold. Transparent words - by default shorter than
-        ALLITERATION_MIN_WORD_LEN letters, such as stopwords for a language -
-        neither break nor continue a run. The words are taken in lower case
+        alliteration when it is below the threshold. Transparent words - by
+        default shorter than ALLITERATION_MIN_WORD_LEN letters, such as
+        stopwords for a language - neither break nor continue a run. The words
+        are taken in lower case
 
     Arguments:
         words (list[str]): Words of a sentence
