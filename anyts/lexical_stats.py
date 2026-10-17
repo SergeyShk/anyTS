@@ -5,13 +5,12 @@ from collections.abc import Iterable, Mapping, Sequence
 from functools import cached_property
 from math import log2, log10, nan
 from numbers import Integral
-from statistics import fmean
 from typing import TYPE_CHECKING, Any, ClassVar, NamedTuple, Protocol
 
 from .constants import FREQUENCY_BANDS, LEXICAL_STATS_DESC
 from .exceptions import ParameterError, SourceError, SourceTypeError
 from .stats import Stats
-from .utils import check_words, safe_divide
+from .utils import check_words, safe_divide, safe_mean
 
 if TYPE_CHECKING:
     from spacy.tokens import Doc
@@ -233,27 +232,27 @@ class LexicalStats(Stats, metaclass=ABCMeta):
 
     @property
     def mean_ipm(self) -> float:
-        return _mean([entry.ipm for entry in self.entries if entry is not None])
+        return safe_mean([entry.ipm for entry in self.entries if entry is not None])
 
     @property
     def mean_ipm_content(self) -> float:
-        return _mean([entry.ipm for entry in self._content_entries()])
+        return safe_mean([entry.ipm for entry in self._content_entries()])
 
     @property
     def mean_log_ipm(self) -> float:
-        return _mean([log10(entry.ipm) for entry in self.entries if entry is not None])
+        return safe_mean([log10(entry.ipm) for entry in self.entries if entry is not None])
 
     @property
     def mean_log_ipm_content(self) -> float:
-        return _mean([log10(entry.ipm) for entry in self._content_entries()])
+        return safe_mean([log10(entry.ipm) for entry in self._content_entries()])
 
     @property
     def mean_range(self) -> float:
-        return _mean([entry.range for entry in self.entries if entry is not None])
+        return safe_mean([entry.range for entry in self.entries if entry is not None])
 
     @property
     def mean_dispersion(self) -> float:
-        return _mean([entry.dispersion for entry in self.entries if entry is not None])
+        return safe_mean([entry.dispersion for entry in self.entries if entry is not None])
 
     @cached_property
     def surprisal(self) -> float:
@@ -304,10 +303,6 @@ class LexicalStats(Stats, metaclass=ABCMeta):
         }
 
 
-def _mean(values: Sequence[float]) -> float:
-    return fmean(values) if values else nan
-
-
 def calc_surprisal(lemmas: Sequence[str], freq_dict: FrequencyDictionary) -> float:
     """
     Computing the mean surprisal of the words by the unigram model of a frequency dictionary
@@ -339,4 +334,4 @@ def calc_surprisal(lemmas: Sequence[str], freq_dict: FrequencyDictionary) -> flo
         raise ParameterError(
             f"The lowest frequency of the dictionary must be positive, not {floor}"
         )
-    return _mean([-log2(max(freq_dict.ipm(lemma), floor) / 1_000_000) for lemma in lemmas])
+    return safe_mean([-log2(max(freq_dict.ipm(lemma), floor) / 1_000_000) for lemma in lemmas])

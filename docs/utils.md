@@ -185,6 +185,16 @@ Checks whether a token carries a morphological feature with a given value: `has_
 | `value` | str | `-` | Value of the feature |
 <!-- --8<-- [end:has_feature] -->
 
+## Verb forms { #verb-forms }
+
+<!-- --8<-- [start:is_finite_verb] -->
+`is_finite_verb(token)` checks whether a token is a finite verb: the part of speech `VERB` with `VerbForm=Fin`, so a finite auxiliary (`AUX`) is not one.
+<!-- --8<-- [end:is_finite_verb] -->
+
+<!-- --8<-- [start:is_infinitive] -->
+`is_infinitive(token)` checks whether a token is an infinitive, `VerbForm=Inf` whatever its part of speech.
+<!-- --8<-- [end:is_infinitive] -->
+
 ## joins_previous
 
 <!-- --8<-- [start:joins_previous] -->
@@ -248,6 +258,27 @@ Divides two numbers and returns `default` for a zero denominator.
 | `den` | float/int | `-` | Denominator |
 | `default` | float/int | `0` | Value returned for a zero denominator |
 <!-- --8<-- [end:safe_divide] -->
+
+## safe_mean
+
+<!-- --8<-- [start:safe_mean] -->
+The arithmetic mean of numbers, `default` for no numbers.
+
+| Parameter | Type | Default | Description |
+| :-------: | :--: | :-----: | :---------: |
+| `values` | list[float] | `-` | Numbers |
+| `default` | float | `nan` | Value returned for no numbers |
+<!-- --8<-- [end:safe_mean] -->
+
+## shannon_entropy
+
+<!-- --8<-- [start:shannon_entropy] -->
+The Shannon entropy in bits of a distribution given by the count of every value, such as a `Counter`: $-\sum p_i \log_2 p_i$ with $p_i$ the share of a value; 0 for one value, `nan` for no counts.
+
+| Parameter | Type | Default | Description |
+| :-------: | :--: | :-----: | :---------: |
+| `counts` | dict[object, int] | `-` | Count of every value |
+<!-- --8<-- [end:shannon_entropy] -->
 
 ## check_sequence
 

@@ -65,15 +65,7 @@ The depth of the dependency tree: the longest path from the head of a sentence t
 | `join_hyphens` | bool | `False` | Take a hyphenated word for one word |
 <!-- --8<-- [end:calc_tree_depth] -->
 
-## Verb forms { #verb-forms }
-
-<!-- --8<-- [start:is_finite_verb] -->
-`is_finite_verb(token)` checks whether a token is a finite verb: the part of speech `VERB` with `VerbForm=Fin`, so a finite auxiliary (`AUX`) is not one.
-<!-- --8<-- [end:is_finite_verb] -->
-
-<!-- --8<-- [start:is_infinitive] -->
-`is_infinitive(token)` checks whether a token is an infinitive, `VerbForm=Inf` whatever its part of speech.
-<!-- --8<-- [end:is_infinitive] -->
+## predicate_form { #verb-forms }
 
 <!-- --8<-- [start:predicate_form] -->
 `predicate_form(token, auxiliary_form)` gives the verb form of a predicate by the forms (`VerbForm`) of its auxiliaries and copulas - the relations `aux` and `cop` with their subtypes, `anyts.constants.AUXILIARY_DEPS` - as Universal Dependencies annotates them. A finite auxiliary makes the predicate finite wherever it stands (*had arrived*, the German *gekommen sein wird*); otherwise the form of the first auxiliary decides (*to have gone* is an infinitive, *being chosen* a gerund), and without auxiliaries the form of the word itself. A past participle auxiliary counts as finite, since it follows a finite one that the parser may attach to another word (*had been chosen*); a present participle (*having eaten*) does not. A ClearNLP parse has no copula relation, its copula heading the clause with a form of its own, and its passive auxiliary `auxpass` is not read. An auxiliary the model leaves without a form is read by the hook `auxiliary_form` of a language, which gives its form, for instance by its ending, or an empty string to skip it; without the hook such an auxiliary is skipped. A word with no verb form gives an empty string, and a hook that is not callable raises `SourceTypeError`.

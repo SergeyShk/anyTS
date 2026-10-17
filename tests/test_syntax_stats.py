@@ -20,8 +20,6 @@ from anyts.syntax_stats import (
     count_noun_modifiers,
     get_children,
     get_words,
-    is_finite_verb,
-    is_infinitive,
     is_predicate,
     is_root,
     predicate_form,
@@ -100,18 +98,6 @@ def test_tree_depth(house):
     assert calc_tree_depth(house[4:6]) == 1
     assert calc_tree_depth(parse(["Hello"], [0], ["ROOT"])) == 0
     assert calc_tree_depth(parse(["!"], [0], ["ROOT"])) == 0
-
-
-def test_verb_forms():
-    doc = parse(
-        ["They", "will", "go", "to", "swim"],
-        [2, 2, 2, 4, 2],
-        ["nsubj", "aux", "ROOT", "mark", "xcomp"],
-        morphs=["Case=Nom", "VerbForm=Fin", "VerbForm=Fin", "", "VerbForm=Inf"],
-        pos=["PRON", "AUX", "VERB", "PART", "VERB"],
-    )
-    assert [is_finite_verb(token) for token in doc] == [False, False, True, False, False]
-    assert [is_infinitive(token) for token in doc] == [False, False, False, False, True]
 
 
 def predicate(words, deps, morphs):

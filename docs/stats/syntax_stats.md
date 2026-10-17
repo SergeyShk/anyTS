@@ -95,18 +95,18 @@ The functions of the tree are described in the [metric functions](syntax_stats_f
 
     from anyts.syntax_stats import SyntaxStats
 
+    # It was not built by them
     doc = Doc(
         spacy.blank("en").vocab,
-        words=["The", "house", "was", "built", "by", "workers", ".", "It", "is", "not", "old", "."],
-        heads=[1, 3, 3, 3, 5, 3, 3, 10, 10, 10, 10, 10],
-        deps=[
-            "det", "nsubj:pass", "aux:pass", "ROOT", "case", "obl:agent", "punct",
-            "nsubj", "cop", "advmod", "ROOT", "punct",
-        ],
-        pos=["DET", "NOUN", "AUX", "VERB", "ADP", "NOUN", "PUNCT", "PRON", "AUX", "PART", "ADJ", "PUNCT"],
-        morphs=["", "", "VerbForm=Fin", "VerbForm=Part|Voice=Pass", "", "", "", "", "VerbForm=Fin", "Polarity=Neg", "", ""],
+        words=["It", "was", "not", "built", "by", "them"],
+        heads=[3, 3, 3, 3, 5, 3],
+        deps=["nsubj:pass", "aux:pass", "advmod", "ROOT", "case", "obl:agent"],
+        pos=["PRON", "AUX", "PART", "VERB", "ADP", "PRON"],
+        morphs=["", "VerbForm=Fin", "Polarity=Neg", "VerbForm=Part|Voice=Pass", "", ""],
     )
     stats = SyntaxStats(doc)
-    stats.mean_dependency_distance, stats.p_passive, stats.p_agentless_passive, stats.negations_per_sent
-    # (1.625, 1.0, 0.0, 0.5)
+    stats.mean_dependency_distance, stats.p_passive, stats.p_agentless_passive
+    # (1.8, 1.0, 0.0)
+    stats.negations_per_sent
+    # 1.0
     ```

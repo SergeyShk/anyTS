@@ -9,8 +9,9 @@ from functools import lru_cache
 from itertools import repeat
 from numbers import Integral, Real
 from re import Pattern
+from statistics import fmean
 from string import Formatter
-from typing import TYPE_CHECKING, TypeGuard
+from typing import TYPE_CHECKING, Any, TypeGuard
 
 from .constants import MESSAGES
 from .exceptions import ParameterError, SourceError, SourceTypeError
@@ -349,6 +350,32 @@ def has_feature(token: Token, field: str, value: str) -> bool:
     return value in token.morph.get(field, [])
 
 
+def is_finite_verb(token: Token) -> bool:
+    """
+    Checking whether a token is a finite form of a verb
+
+    Arguments:
+        token (Token): Token
+
+    Returns:
+        bool: Result of the check
+    """
+    return token.pos_ == "VERB" and has_feature(token, "VerbForm", "Fin")
+
+
+def is_infinitive(token: Token) -> bool:
+    """
+    Checking whether a token is an infinitive
+
+    Arguments:
+        token (Token): Token
+
+    Returns:
+        bool: Result of the check
+    """
+    return has_feature(token, "VerbForm", "Inf")
+
+
 def joins_previous(token: Token) -> bool:
     """
     Checking whether a token continues a word the tokenizer split at its hyphens
@@ -480,6 +507,41 @@ def safe_divide(num: float | int, den: float | int, default: float | int = 0) ->
     if not den:
         return default
     return num / den
+
+
+def safe_mean(values: Sequence[float], default: float = math.nan) -> float:
+    """
+    Computing the mean of numbers safely
+
+    Arguments:
+        values (list[float]): Numbers
+        default (float): Value returned for no numbers
+
+    Returns:
+        float: Arithmetic mean
+    """
+    return fmean(values) if values else default
+
+
+def shannon_entropy(counts: Mapping[Any, int]) -> float:
+    """
+    Computing the Shannon entropy of a distribution by its counts
+
+    Arguments:
+        counts (dict[object, int]): Count of every value, such as a Counter
+
+    Returns:
+        float: Entropy in bits, 0 for one value and nan for no counts
+
+    Example:
+        >>> from anyts.utils import shannon_entropy
+        >>> shannon_entropy({"a": 2, "b": 2})
+        1.0
+    """
+    total = sum(counts.values())
+    if not total:
+        return math.nan
+    return -sum(count / total * math.log2(count / total) for count in counts.values()) or 0.0
 
 
 def check_sequence(value: object, what: str = "words", ordered: bool = True) -> None:

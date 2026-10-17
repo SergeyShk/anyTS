@@ -20,7 +20,16 @@ from .constants import (
 )
 from .exceptions import SourceError, SourceTypeError
 from .stats import Stats
-from .utils import has_feature, is_doc, is_word, joins_previous, safe_divide
+from .utils import (
+    has_feature,
+    is_doc,
+    is_finite_verb,
+    is_infinitive,
+    is_word,
+    joins_previous,
+    safe_divide,
+    safe_mean,
+)
 
 if TYPE_CHECKING:
     from spacy.tokens import Doc, Token
@@ -194,10 +203,10 @@ class SyntaxStats(Stats):
             f"{verb.text} {noun.text}" for verb, noun in split_predicates
         )
 
-        self.mean_dependency_distance = fmean(all_distances) if all_distances else nan
+        self.mean_dependency_distance = safe_mean(all_distances)
         self.std_dependency_distance = pstdev(all_distances) if all_distances else nan
         sent_maxima = [max(sent) for sent in distances if sent]
-        self.max_dependency_distance = fmean(sent_maxima) if sent_maxima else nan
+        self.max_dependency_distance = safe_mean(sent_maxima)
         self.p_adjacent_dependencies = safe_divide(
             sum(1 for distance in all_distances if distance == 1), len(all_distances), nan
         )
@@ -214,7 +223,7 @@ class SyntaxStats(Stats):
             nan,
         )
         self.coordination_chains_per_sent = self.n_coordination_chains / self.n_sents
-        self.mean_coordination_chain_len = fmean(chains) if chains else nan
+        self.mean_coordination_chain_len = safe_mean(chains)
         self.clauses_per_sent = self.n_clauses / self.n_sents
         self.mean_clause_len = safe_divide(self.n_words, self.n_clauses, nan)
         self.subordinate_clauses_per_sent = self.n_subordinate_clauses / self.n_sents
@@ -223,7 +232,7 @@ class SyntaxStats(Stats):
             sum(count_noun_modifiers(token, join_hyphens) for token in nouns), self.n_nouns, nan
         )
         self.participle_clauses_per_sent = self.n_participle_clauses / self.n_sents
-        self.mean_participle_clause_len = fmean(participle_clauses) if participle_clauses else nan
+        self.mean_participle_clause_len = safe_mean(participle_clauses)
         self.p_passive = safe_divide(self.n_passive, self.n_verbs, nan)
         self.p_agentless_passive = safe_divide(self.n_agentless_passive, self.n_passive, nan)
         self.infinitives_per_sent = self.n_infinitives / self.n_sents
@@ -733,32 +742,6 @@ def _unit_parents(units: Sequence[Sequence[Token]]) -> list[int | None]:
             token = None if is_root(token) else token.head
         parents.append(parent)
     return parents
-
-
-def is_finite_verb(token: Token) -> bool:
-    """
-    Checking whether a token is a finite form of a verb
-
-    Arguments:
-        token (Token): Token
-
-    Returns:
-        bool: Result of the check
-    """
-    return token.pos_ == "VERB" and has_feature(token, "VerbForm", "Fin")
-
-
-def is_infinitive(token: Token) -> bool:
-    """
-    Checking whether a token is an infinitive
-
-    Arguments:
-        token (Token): Token
-
-    Returns:
-        bool: Result of the check
-    """
-    return has_feature(token, "VerbForm", "Inf")
 
 
 def predicate_form(token: Token, auxiliary_form: Callable[[Token], str] | None = None) -> str:
