@@ -25,10 +25,6 @@
          <lastmod>2026-10-17</lastmod>
     </url>
     <url>
-         <loc>https://sergeyshk.github.io/anyTS/utils/</loc>
-         <lastmod>2026-10-17</lastmod>
-    </url>
-    <url>
          <loc>https://sergeyshk.github.io/anyTS/corpus/collocations/</loc>
          <lastmod>2026-10-17</lastmod>
     </url>
@@ -69,7 +65,11 @@
          <lastmod>2026-10-17</lastmod>
     </url>
     <url>
-         <loc>https://sergeyshk.github.io/anyTS/stats/cohesion/</loc>
+         <loc>https://sergeyshk.github.io/anyTS/stats/cohesion_stats/</loc>
+         <lastmod>2026-10-17</lastmod>
+    </url>
+    <url>
+         <loc>https://sergeyshk.github.io/anyTS/stats/cohesion_stats_funcs/</loc>
          <lastmod>2026-10-17</lastmod>
     </url>
     <url>
@@ -118,6 +118,30 @@
     </url>
     <url>
          <loc>https://sergeyshk.github.io/anyTS/stats/syntax_stats_funcs/</loc>
+         <lastmod>2026-10-17</lastmod>
+    </url>
+    <url>
+         <loc>https://sergeyshk.github.io/anyTS/utils/arithmetic/</loc>
+         <lastmod>2026-10-17</lastmod>
+    </url>
+    <url>
+         <loc>https://sergeyshk.github.io/anyTS/utils/checks/</loc>
+         <lastmod>2026-10-17</lastmod>
+    </url>
+    <url>
+         <loc>https://sergeyshk.github.io/anyTS/utils/collections/</loc>
+         <lastmod>2026-10-17</lastmod>
+    </url>
+    <url>
+         <loc>https://sergeyshk.github.io/anyTS/utils/messages/</loc>
+         <lastmod>2026-10-17</lastmod>
+    </url>
+    <url>
+         <loc>https://sergeyshk.github.io/anyTS/utils/spacy/</loc>
+         <lastmod>2026-10-17</lastmod>
+    </url>
+    <url>
+         <loc>https://sergeyshk.github.io/anyTS/utils/words/</loc>
          <lastmod>2026-10-17</lastmod>
     </url>
     <url>

@@ -10,29 +10,31 @@
       
       
       
-        <link rel="canonical" href="https://sergeyshk.github.io/anyTS/utils/">
+        <link rel="canonical" href="https://sergeyshk.github.io/anyTS/utils/spacy/">
       
       
-        <link rel="prev" href="../datasets/">
+        <link rel="prev" href="../collections/">
       
+      
+        <link rel="next" href="../arithmetic/">
       
       
         
       
       
-      <link rel="icon" href="../assets/images/favicon.png">
+      <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
-        <title>Utilities - anyTS</title>
+        <title>spaCy objects - anyTS</title>
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
-        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -51,9 +53,9 @@
       
     
     
-      <link rel="stylesheet" href="../css/extra.css">
+      <link rel="stylesheet" href="../../css/extra.css">
     
-    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -76,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#utilities" class="md-skip">
+        <a href="#spacy-objects" class="md-skip">
           Skip to content
         </a>
       
@@ -90,7 +92,7 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="anyTS" class="md-header__button md-logo" aria-label="anyTS" data-md-component="logo">
+    <a href="../.." title="anyTS" class="md-header__button md-logo" aria-label="anyTS" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -110,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Utilities
+              spaCy objects
             
           </span>
         </div>
@@ -197,7 +199,7 @@
     
     
       <li class="md-tabs__item">
-        <a href=".." class="md-tabs__link">
+        <a href="../.." class="md-tabs__link">
           
   
   
@@ -217,7 +219,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../extractors/sentences/" class="md-tabs__link">
+        <a href="../../extractors/sentences/" class="md-tabs__link">
           
   
   
@@ -237,7 +239,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../stats/stats/" class="md-tabs__link">
+        <a href="../../stats/stats/" class="md-tabs__link">
           
   
   
@@ -257,7 +259,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../corpus/keyness/" class="md-tabs__link">
+        <a href="../../corpus/keyness/" class="md-tabs__link">
           
   
   
@@ -277,7 +279,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../visualizers/zipf/" class="md-tabs__link">
+        <a href="../../visualizers/zipf/" class="md-tabs__link">
           
   
   
@@ -295,7 +297,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../components/" class="md-tabs__link">
+      <a href="../../components/" class="md-tabs__link">
         
   
   
@@ -314,7 +316,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../datasets/" class="md-tabs__link">
+      <a href="../../datasets/" class="md-tabs__link">
         
   
   
@@ -334,17 +336,18 @@
     
   
   
-    <li class="md-tabs__item md-tabs__item--active">
-      <a href="./" class="md-tabs__link">
-        
-  
-  
     
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../words/" class="md-tabs__link">
+          
+  
   
   Utilities
 
-      </a>
-    </li>
+        </a>
+      </li>
+    
   
 
       
@@ -370,7 +373,7 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="anyTS" class="md-nav__button md-logo" aria-label="anyTS" data-md-component="logo">
+    <a href="../.." title="anyTS" class="md-nav__button md-logo" aria-label="anyTS" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -450,7 +453,7 @@
   
   
     <li class="md-nav__item">
-      <a href=".." class="md-nav__link">
+      <a href="../.." class="md-nav__link">
         
   
   
@@ -478,7 +481,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../installation/" class="md-nav__link">
+      <a href="../../installation/" class="md-nav__link">
         
   
   
@@ -506,7 +509,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../exceptions/" class="md-nav__link">
+      <a href="../../exceptions/" class="md-nav__link">
         
   
   
@@ -534,7 +537,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../authors/" class="md-nav__link">
+      <a href="../../authors/" class="md-nav__link">
         
   
   
@@ -619,7 +622,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../extractors/sentences/" class="md-nav__link">
+      <a href="../../extractors/sentences/" class="md-nav__link">
         
   
   
@@ -647,7 +650,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../extractors/words/" class="md-nav__link">
+      <a href="../../extractors/words/" class="md-nav__link">
         
   
   
@@ -675,7 +678,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../extractors/char_ngrams/" class="md-nav__link">
+      <a href="../../extractors/char_ngrams/" class="md-nav__link">
         
   
   
@@ -760,7 +763,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../stats/stats/" class="md-nav__link">
+      <a href="../../stats/stats/" class="md-nav__link">
         
   
   
@@ -838,7 +841,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../stats/diversity_stats/" class="md-nav__link">
+      <a href="../../stats/diversity_stats/" class="md-nav__link">
         
   
   
@@ -866,7 +869,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../stats/diversity_stats_funcs/" class="md-nav__link">
+      <a href="../../stats/diversity_stats_funcs/" class="md-nav__link">
         
   
   
@@ -902,7 +905,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../stats/basic_stats/" class="md-nav__link">
+      <a href="../../stats/basic_stats/" class="md-nav__link">
         
   
   
@@ -980,7 +983,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../stats/readability_stats/" class="md-nav__link">
+      <a href="../../stats/readability_stats/" class="md-nav__link">
         
   
   
@@ -1008,7 +1011,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../stats/readability_stats_funcs/" class="md-nav__link">
+      <a href="../../stats/readability_stats_funcs/" class="md-nav__link">
         
   
   
@@ -1043,15 +1046,65 @@
   
   
   
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_5" id="__nav_3_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cohesion statistics
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Cohesion statistics
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
     <li class="md-nav__item">
-      <a href="../stats/cohesion/" class="md-nav__link">
+      <a href="../../stats/cohesion_stats/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Cohesion helpers
+    Metrics module
   
 
     
@@ -1060,6 +1113,42 @@
   
 
       </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../stats/cohesion_stats_funcs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Metric functions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -1122,7 +1211,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../stats/syntax_stats/" class="md-nav__link">
+      <a href="../../stats/syntax_stats/" class="md-nav__link">
         
   
   
@@ -1150,7 +1239,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../stats/syntax_stats_funcs/" class="md-nav__link">
+      <a href="../../stats/syntax_stats_funcs/" class="md-nav__link">
         
   
   
@@ -1186,7 +1275,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../stats/lexical_stats/" class="md-nav__link">
+      <a href="../../stats/lexical_stats/" class="md-nav__link">
         
   
   
@@ -1264,7 +1353,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../stats/style_stats/" class="md-nav__link">
+      <a href="../../stats/style_stats/" class="md-nav__link">
         
   
   
@@ -1292,7 +1381,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../stats/style_stats_funcs/" class="md-nav__link">
+      <a href="../../stats/style_stats_funcs/" class="md-nav__link">
         
   
   
@@ -1378,7 +1467,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../stats/phon_stats/" class="md-nav__link">
+      <a href="../../stats/phon_stats/" class="md-nav__link">
         
   
   
@@ -1406,7 +1495,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../stats/phon_stats_funcs/" class="md-nav__link">
+      <a href="../../stats/phon_stats_funcs/" class="md-nav__link">
         
   
   
@@ -1499,7 +1588,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../corpus/keyness/" class="md-nav__link">
+      <a href="../../corpus/keyness/" class="md-nav__link">
         
   
   
@@ -1527,7 +1616,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../corpus/collocations/" class="md-nav__link">
+      <a href="../../corpus/collocations/" class="md-nav__link">
         
   
   
@@ -1555,7 +1644,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../corpus/dispersion/" class="md-nav__link">
+      <a href="../../corpus/dispersion/" class="md-nav__link">
         
   
   
@@ -1583,7 +1672,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../corpus/stylometry/" class="md-nav__link">
+      <a href="../../corpus/stylometry/" class="md-nav__link">
         
   
   
@@ -1611,7 +1700,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../corpus/compare/" class="md-nav__link">
+      <a href="../../corpus/compare/" class="md-nav__link">
         
   
   
@@ -1639,7 +1728,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../corpus/kwic/" class="md-nav__link">
+      <a href="../../corpus/kwic/" class="md-nav__link">
         
   
   
@@ -1724,7 +1813,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../visualizers/zipf/" class="md-nav__link">
+      <a href="../../visualizers/zipf/" class="md-nav__link">
         
   
   
@@ -1752,7 +1841,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../visualizers/vocabulary/" class="md-nav__link">
+      <a href="../../visualizers/vocabulary/" class="md-nav__link">
         
   
   
@@ -1780,7 +1869,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../visualizers/sentences/" class="md-nav__link">
+      <a href="../../visualizers/sentences/" class="md-nav__link">
         
   
   
@@ -1808,7 +1897,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../visualizers/fingerprinting/" class="md-nav__link">
+      <a href="../../visualizers/fingerprinting/" class="md-nav__link">
         
   
   
@@ -1836,7 +1925,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../visualizers/word_tree/" class="md-nav__link">
+      <a href="../../visualizers/word_tree/" class="md-nav__link">
         
   
   
@@ -1864,7 +1953,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../visualizers/corpus/" class="md-nav__link">
+      <a href="../../visualizers/corpus/" class="md-nav__link">
         
   
   
@@ -1892,7 +1981,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../visualizers/stylometry/" class="md-nav__link">
+      <a href="../../visualizers/stylometry/" class="md-nav__link">
         
   
   
@@ -1920,7 +2009,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../visualizers/highlight/" class="md-nav__link">
+      <a href="../../visualizers/highlight/" class="md-nav__link">
         
   
   
@@ -1955,7 +2044,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../components/" class="md-nav__link">
+      <a href="../../components/" class="md-nav__link">
         
   
   
@@ -1982,7 +2071,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../datasets/" class="md-nav__link">
+      <a href="../../datasets/" class="md-nav__link">
         
   
   
@@ -2010,6 +2099,117 @@
   
   
   
+    
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Utilities
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Utilities
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../words/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Words and tokens
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../collections/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Collections and phrases
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
     <li class="md-nav__item md-nav__item--active">
       
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
@@ -2025,7 +2225,7 @@
   <span class="md-ellipsis">
     
   
-    Utilities
+    spaCy objects
   
 
     
@@ -2043,7 +2243,7 @@
   <span class="md-ellipsis">
     
   
-    Utilities
+    spaCy objects
   
 
     
@@ -2067,83 +2267,6 @@
       Table of contents
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#is_punctuation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        is_punctuation
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#is_number" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        is_number
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#count_letters" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        count_letters
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#has_words" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        has_words
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#in_order" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        in_order
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#find_phrases" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        find_phrases
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#count_words_by_spans" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        count_words_by_spans
-      
-    </span>
-  </a>
-  
-</li>
       
         <li class="md-nav__item">
   <a href="#is_doc-is_span" class="md-nav__link">
@@ -2245,109 +2368,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#safe_divide" class="md-nav__link">
+  <a href="#split_doc_units" class="md-nav__link">
     <span class="md-ellipsis">
       
-        safe_divide
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#safe_mean" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        safe_mean
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#shannon_entropy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        shannon_entropy
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#check_sequence" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        check_sequence
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#check_words" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        check_words
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#check_counts" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        check_counts
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#check_integer" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        check_integer
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#check_number" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        check_number
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#merge_labels" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        merge_labels
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#check_messages" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        check_messages
+        split_doc_units
       
     </span>
   </a>
@@ -2357,6 +2381,98 @@
     </ul>
   
 </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../arithmetic/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Arithmetic
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../checks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Input checks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../messages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Labels and messages
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
       
     </li>
   
@@ -2389,83 +2505,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#is_punctuation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        is_punctuation
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#is_number" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        is_number
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#count_letters" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        count_letters
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#has_words" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        has_words
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#in_order" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        in_order
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#find_phrases" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        find_phrases
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#count_words_by_spans" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        count_words_by_spans
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#is_doc-is_span" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2565,109 +2604,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#safe_divide" class="md-nav__link">
+  <a href="#split_doc_units" class="md-nav__link">
     <span class="md-ellipsis">
       
-        safe_divide
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#safe_mean" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        safe_mean
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#shannon_entropy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        shannon_entropy
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#check_sequence" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        check_sequence
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#check_words" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        check_words
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#check_counts" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        check_counts
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#check_integer" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        check_integer
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#check_number" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        check_number
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#merge_labels" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        merge_labels
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#check_messages" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        check_messages
+        split_doc_units
       
     </span>
   </a>
@@ -2694,194 +2634,11 @@
   
 
 
-<h1 id="utilities">Utilities<a class="headerlink" href="#utilities" title="Permanent link">&para;</a></h1>
+<h1 id="spacy-objects">spaCy objects<a class="headerlink" href="#spacy-objects" title="Permanent link">&para;</a></h1>
 <div class="admonition info">
 <p><strong>anyts.utils</strong></p>
 </div>
-<p>Helper functions shared by the extractors and the statistics.</p>
-<h2 id="is_punctuation">is_punctuation<a class="headerlink" href="#is_punctuation" title="Permanent link">&para;</a></h2>
-<!-- --8<-- [start:is_punctuation] -->
-<p>Checks whether a token consists only of punctuation marks and symbols: the characters of the Unicode categories P (punctuation), S (symbols), M (combining marks) and Cf (invisible format characters such as the zero-width space <code>U+200B</code>, the byte order mark <code>U+FEFF</code> and the zero-width joiner <code>U+200D</code>). Multi-character tokens like <code>?!</code> and <code>--</code>, symbols like <code>€</code> and <code>№</code> and a lone invisible character that a tokenizer splits off are punctuation too, while a token with a letter or a digit is not (<code>e</code> with a combining acute accent is a word); an empty token is punctuation as well. The results are cached by token, so the function is meant for tokens, not whole texts.</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: center;">Parameter</th>
-<th style="text-align: center;">Type</th>
-<th style="text-align: center;">Default</th>
-<th style="text-align: center;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: center;"><code>token</code></td>
-<td style="text-align: center;">str</td>
-<td style="text-align: center;"><code>-</code></td>
-<td style="text-align: center;">Token</td>
-</tr>
-</tbody>
-</table>
-<!-- --8<-- [end:is_punctuation] -->
-
-<div class="admonition example">
-<p class="admonition-title">Example</p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_punctuation</span>
-
-<span class="n">is_punctuation</span><span class="p">(</span><span class="s2">"?!"</span><span class="p">),</span> <span class="n">is_punctuation</span><span class="p">(</span><span class="s2">"€"</span><span class="p">),</span> <span class="n">is_punctuation</span><span class="p">(</span><span class="s2">"no."</span><span class="p">)</span>
-<span class="c1"># (True, True, False)</span>
-</code></pre></div>
-</div>
-<h2 id="is_number">is_number<a class="headerlink" href="#is_number" title="Permanent link">&para;</a></h2>
-<!-- --8<-- [start:is_number] -->
-<p><code>is_number(word, pattern)</code> checks whether a word is a number by a pattern matched against the whole lower-cased word, <code>NUMBER_PATTERN</code> by default, the numbers of <code>WordsExtractor</code>; a language passes its own (ordinals, Roman numerals).</p>
-<!-- --8<-- [end:is_number] -->
-
-<h2 id="count_letters">count_letters<a class="headerlink" href="#count_letters" title="Permanent link">&para;</a></h2>
-<!-- --8<-- [start:count_letters] -->
-<p>Counts the letters of a word: the characters of any alphabet (<code>str.isalpha</code>), without digits, hyphens and marks. The results are cached by word form, so the function is meant for words, not whole texts.</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: center;">Parameter</th>
-<th style="text-align: center;">Type</th>
-<th style="text-align: center;">Default</th>
-<th style="text-align: center;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: center;"><code>word</code></td>
-<td style="text-align: center;">str</td>
-<td style="text-align: center;"><code>-</code></td>
-<td style="text-align: center;">Word form</td>
-</tr>
-</tbody>
-</table>
-<!-- --8<-- [end:count_letters] -->
-
-<div class="admonition example">
-<p class="admonition-title">Example</p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">count_letters</span>
-
-<span class="n">count_letters</span><span class="p">(</span><span class="s2">"well-known"</span><span class="p">),</span> <span class="n">count_letters</span><span class="p">(</span><span class="s2">"3rd"</span><span class="p">)</span>
-<span class="c1"># (9, 2)</span>
-</code></pre></div>
-</div>
-<h2 id="has_words">has_words<a class="headerlink" href="#has_words" title="Permanent link">&para;</a></h2>
-<!-- --8<-- [start:has_words] -->
-<p>Checks whether a text, a <code>Doc</code> or a <code>Span</code> holds a word: an empty text or one of whitespace and the characters of <code>is_punctuation</code> alone holds none.</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: center;">Parameter</th>
-<th style="text-align: center;">Type</th>
-<th style="text-align: center;">Default</th>
-<th style="text-align: center;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: center;"><code>source</code></td>
-<td style="text-align: center;">str/Doc/Span</td>
-<td style="text-align: center;"><code>-</code></td>
-<td style="text-align: center;">Text, Doc or Span object</td>
-</tr>
-</tbody>
-</table>
-<!-- --8<-- [end:has_words] -->
-
-<div class="admonition example">
-<p class="admonition-title">Example</p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">has_words</span>
-
-<span class="n">has_words</span><span class="p">(</span><span class="s2">"The cat sleeps"</span><span class="p">),</span> <span class="n">has_words</span><span class="p">(</span><span class="s2">"?!"</span><span class="p">),</span> <span class="n">has_words</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span>
-<span class="c1"># (True, False, False)</span>
-</code></pre></div>
-</div>
-<h2 id="in_order">in_order<a class="headerlink" href="#in_order" title="Permanent link">&para;</a></h2>
-<!-- --8<-- [start:in_order] -->
-<p><code>in_order(words)</code> puts a collection of words in a fixed order: a list keeps its order, a set or a mapping is sorted.</p>
-<!-- --8<-- [end:in_order] -->
-
-<h2 id="find_phrases">find_phrases<a class="headerlink" href="#find_phrases" title="Permanent link">&para;</a></h2>
-<!-- --8<-- [start:find_phrases] -->
-<p>Finds phrases in a sequence of words: the bounds of every phrase found as slices of the words, in order. The words and the phrases are compared by their normalized forms, the lower case by default; at every position the longest phrase is taken, the phrases found do not overlap, and empty phrases are skipped. Words that are not a list of strings raise <code>SourceTypeError</code>.</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: center;">Parameter</th>
-<th style="text-align: center;">Type</th>
-<th style="text-align: center;">Default</th>
-<th style="text-align: center;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: center;"><code>words</code></td>
-<td style="text-align: center;">list[str]</td>
-<td style="text-align: center;"><code>-</code></td>
-<td style="text-align: center;">Words of the text</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>phrases</code></td>
-<td style="text-align: center;">list[str]</td>
-<td style="text-align: center;"><code>-</code></td>
-<td style="text-align: center;">Phrases, words separated by spaces</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>normalize</code></td>
-<td style="text-align: center;">Callable</td>
-<td style="text-align: center;"><code>str.lower</code></td>
-<td style="text-align: center;">Normalized form of a word and of a phrase</td>
-</tr>
-</tbody>
-</table>
-<!-- --8<-- [end:find_phrases] -->
-
-<div class="admonition example">
-<p class="admonition-title">Example</p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">find_phrases</span>
-
-<span class="n">find_phrases</span><span class="p">([</span><span class="s2">"In"</span><span class="p">,</span> <span class="s2">"fact"</span><span class="p">,</span> <span class="s2">"it"</span><span class="p">,</span> <span class="s2">"rains"</span><span class="p">],</span> <span class="p">[</span><span class="s2">"in fact"</span><span class="p">,</span> <span class="s2">"in"</span><span class="p">])</span>
-<span class="c1"># [(0, 2)]</span>
-</code></pre></div>
-</div>
-<h2 id="count_words_by_spans">count_words_by_spans<a class="headerlink" href="#count_words_by_spans" title="Permanent link">&para;</a></h2>
-<!-- --8<-- [start:count_words_by_spans] -->
-<p>Counts the words in every span of a text - a sentence, say - by the positions of the first characters of the words and the bounds of the spans, both in order. A word belongs to the span of its first character, and a span without words is skipped. Positions or spans that are not a sequence raise <code>SourceTypeError</code>.</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: center;">Parameter</th>
-<th style="text-align: center;">Type</th>
-<th style="text-align: center;">Default</th>
-<th style="text-align: center;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: center;"><code>starts</code></td>
-<td style="text-align: center;">list[int]</td>
-<td style="text-align: center;"><code>-</code></td>
-<td style="text-align: center;">Positions of the first characters of the words</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>spans</code></td>
-<td style="text-align: center;">list[tuple[int, int]]</td>
-<td style="text-align: center;"><code>-</code></td>
-<td style="text-align: center;">Spans: the start and the position after the end</td>
-</tr>
-</tbody>
-</table>
-<!-- --8<-- [end:count_words_by_spans] -->
-
-<div class="admonition example">
-<p class="admonition-title">Example</p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">count_words_by_spans</span>
-
-<span class="n">count_words_by_spans</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">14</span><span class="p">,</span> <span class="mi">20</span><span class="p">],</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">9</span><span class="p">),</span> <span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span> <span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">19</span><span class="p">),</span> <span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">24</span><span class="p">)])</span>
-<span class="c1"># [2, 2, 1]</span>
-</code></pre></div>
-</div>
+<p>Checks of the objects of spaCy without importing it, the words of a <code>Doc</code> and their morphology, the parts of a word the tokenizer split at its hyphens and the sentences of a <code>Doc</code>.</p>
 <h2 id="is_doc-is_span">is_doc, is_span<a class="headerlink" href="#is_doc-is_span" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:is_doc] -->
 <p><code>is_doc(value)</code> checks whether a value is a <code>Doc</code> object of spaCy without importing spaCy: such an object exists only once spaCy is loaded, so before that every value gives <code>False</code>. The core takes a <code>Doc</code> this way, and <code>import anyts</code> loads no spaCy; a language library checks its sources so too, to keep its own import light.</p>
@@ -3106,9 +2863,9 @@
 <span class="c1"># [(0, 1, 'A'), (2, 12, 'well-known'), (13, 16, 'cat')]</span>
 </code></pre></div>
 </div>
-<h2 id="safe_divide">safe_divide<a class="headerlink" href="#safe_divide" title="Permanent link">&para;</a></h2>
-<!-- --8<-- [start:safe_divide] -->
-<p>Divides two numbers and returns <code>default</code> for a zero denominator.</p>
+<h2 id="split_doc_units">split_doc_units<a class="headerlink" href="#split_doc_units" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:split_doc_units] -->
+<p>Splits the words of a <code>Doc</code> into the sentences of a sentence extractor, for a <code>Doc</code> without sentence boundaries or one to split otherwise: the sentences are found in its text in their order, and a word of <code>iter_doc_units</code> belongs to the sentence its first token lies in. The words outside the sentences found - those the extractor drops - are left out, so with no sentence found there are no words.</p>
 <table>
 <thead>
 <tr>
@@ -3120,302 +2877,26 @@
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;"><code>num</code></td>
-<td style="text-align: center;">float/int</td>
+<td style="text-align: center;"><code>source</code></td>
+<td style="text-align: center;">Doc</td>
 <td style="text-align: center;"><code>-</code></td>
-<td style="text-align: center;">Numerator</td>
+<td style="text-align: center;">Doc object</td>
 </tr>
 <tr>
-<td style="text-align: center;"><code>den</code></td>
-<td style="text-align: center;">float/int</td>
+<td style="text-align: center;"><code>sents_extractor</code></td>
+<td style="text-align: center;">SentsExtractor</td>
 <td style="text-align: center;"><code>-</code></td>
-<td style="text-align: center;">Denominator</td>
+<td style="text-align: center;">Sentence extraction tool</td>
 </tr>
 <tr>
-<td style="text-align: center;"><code>default</code></td>
-<td style="text-align: center;">float/int</td>
-<td style="text-align: center;"><code>0</code></td>
-<td style="text-align: center;">Value returned for a zero denominator</td>
-</tr>
-</tbody>
-</table>
-<!-- --8<-- [end:safe_divide] -->
-
-<h2 id="safe_mean">safe_mean<a class="headerlink" href="#safe_mean" title="Permanent link">&para;</a></h2>
-<!-- --8<-- [start:safe_mean] -->
-<p>The arithmetic mean of numbers, <code>default</code> for no numbers.</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: center;">Parameter</th>
-<th style="text-align: center;">Type</th>
-<th style="text-align: center;">Default</th>
-<th style="text-align: center;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: center;"><code>values</code></td>
-<td style="text-align: center;">list[float]</td>
-<td style="text-align: center;"><code>-</code></td>
-<td style="text-align: center;">Numbers</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>default</code></td>
-<td style="text-align: center;">float</td>
-<td style="text-align: center;"><code>nan</code></td>
-<td style="text-align: center;">Value returned for no numbers</td>
-</tr>
-</tbody>
-</table>
-<!-- --8<-- [end:safe_mean] -->
-
-<h2 id="shannon_entropy">shannon_entropy<a class="headerlink" href="#shannon_entropy" title="Permanent link">&para;</a></h2>
-<!-- --8<-- [start:shannon_entropy] -->
-<p>The Shannon entropy in bits of a distribution given by the count of every value, such as a <code>Counter</code>: <span class="arithmatex">\(-\sum p_i \log_2 p_i\)</span> with <span class="arithmatex">\(p_i\)</span> the share of a value; 0 for one value, <code>nan</code> for no counts; a zero count is left out, as <span class="arithmatex">\(0 \log_2 0 = 0\)</span>.</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: center;">Parameter</th>
-<th style="text-align: center;">Type</th>
-<th style="text-align: center;">Default</th>
-<th style="text-align: center;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: center;"><code>counts</code></td>
-<td style="text-align: center;">dict[object, int]</td>
-<td style="text-align: center;"><code>-</code></td>
-<td style="text-align: center;">Count of every value</td>
-</tr>
-</tbody>
-</table>
-<!-- --8<-- [end:shannon_entropy] -->
-
-<h2 id="check_sequence">check_sequence<a class="headerlink" href="#check_sequence" title="Permanent link">&para;</a></h2>
-<!-- --8<-- [start:check_sequence] -->
-<p>Checks that an argument is a sequence and not a text or an iterator: a string (of characters or bytes), a <code>Doc</code>, a <code>Span</code>, an iterator or an object that cannot be iterated raises <code>SourceTypeError</code>, since a string would be iterated character by character and an iterator would be exhausted by the first pass over it; so does a table - a two-dimensional array or a <code>DataFrame</code>. A set or a mapping holds every item once, in no order of the text, and raises the error too, unless <code>ordered=False</code> - for a collection whose order and repeats do not matter, such as stop words.</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: center;">Parameter</th>
-<th style="text-align: center;">Type</th>
-<th style="text-align: center;">Default</th>
-<th style="text-align: center;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: center;"><code>value</code></td>
-<td style="text-align: center;">object</td>
-<td style="text-align: center;"><code>-</code></td>
-<td style="text-align: center;">Value to check</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>what</code></td>
-<td style="text-align: center;">str</td>
-<td style="text-align: center;"><code>"words"</code></td>
-<td style="text-align: center;">What is expected, for the message of the error</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>ordered</code></td>
+<td style="text-align: center;"><code>join_hyphens</code></td>
 <td style="text-align: center;">bool</td>
-<td style="text-align: center;"><code>True</code></td>
-<td style="text-align: center;">Whether the order and the repeats of the items matter</td>
+<td style="text-align: center;"><code>False</code></td>
+<td style="text-align: center;">Join the parts of hyphenated words</td>
 </tr>
 </tbody>
 </table>
-<!-- --8<-- [end:check_sequence] -->
-
-<h2 id="check_words">check_words<a class="headerlink" href="#check_words" title="Permanent link">&para;</a></h2>
-<!-- --8<-- [start:check_words] -->
-<p>Checks that an argument is a list of words: it passes <code>check_sequence</code> and every item is a string, so that a list of spaCy tokens, which would count every token as a lexeme of its own, raises <code>SourceTypeError</code>.</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: center;">Parameter</th>
-<th style="text-align: center;">Type</th>
-<th style="text-align: center;">Default</th>
-<th style="text-align: center;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: center;"><code>value</code></td>
-<td style="text-align: center;">Iterable</td>
-<td style="text-align: center;"><code>-</code></td>
-<td style="text-align: center;">Value to check</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>what</code></td>
-<td style="text-align: center;">str</td>
-<td style="text-align: center;"><code>"words"</code></td>
-<td style="text-align: center;">What is expected, for the message of the error</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>ordered</code></td>
-<td style="text-align: center;">bool</td>
-<td style="text-align: center;"><code>True</code></td>
-<td style="text-align: center;">Whether the order and the repeats of the words matter</td>
-</tr>
-</tbody>
-</table>
-<!-- --8<-- [end:check_words] -->
-
-<h2 id="check_counts">check_counts<a class="headerlink" href="#check_counts" title="Permanent link">&para;</a></h2>
-<!-- --8<-- [start:check_counts] -->
-<p>Checks that an argument is a counter - a mapping of words to their frequencies, such as a <code>Counter</code>: a value that is not a mapping, a word that is not a string or a frequency that is not a number raises <code>SourceTypeError</code>, and a negative, <code>nan</code> or infinite frequency <code>SourceError</code>.</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: center;">Parameter</th>
-<th style="text-align: center;">Type</th>
-<th style="text-align: center;">Default</th>
-<th style="text-align: center;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: center;"><code>value</code></td>
-<td style="text-align: center;">object</td>
-<td style="text-align: center;"><code>-</code></td>
-<td style="text-align: center;">Value to check</td>
-</tr>
-</tbody>
-</table>
-<!-- --8<-- [end:check_counts] -->
-
-<h2 id="check_integer">check_integer<a class="headerlink" href="#check_integer" title="Permanent link">&para;</a></h2>
-<!-- --8<-- [start:check_integer] -->
-<p>Checks that a parameter is an integer: a <code>bool</code> or a <code>float</code>, even a whole one like <code>5.0</code>, raises <code>ParameterError</code>, since it would fail only later, as an index or a count.</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: center;">Parameter</th>
-<th style="text-align: center;">Type</th>
-<th style="text-align: center;">Default</th>
-<th style="text-align: center;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: center;"><code>value</code></td>
-<td style="text-align: center;">object</td>
-<td style="text-align: center;"><code>-</code></td>
-<td style="text-align: center;">Value to check</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>what</code></td>
-<td style="text-align: center;">str</td>
-<td style="text-align: center;"><code>-</code></td>
-<td style="text-align: center;">Name of the parameter, for the message of the error</td>
-</tr>
-</tbody>
-</table>
-<!-- --8<-- [end:check_integer] -->
-
-<h2 id="check_number">check_number<a class="headerlink" href="#check_number" title="Permanent link">&para;</a></h2>
-<!-- --8<-- [start:check_number] -->
-<p>Checks that a parameter is a finite real number: a <code>bool</code>, a string, <code>None</code>, <code>nan</code> or an infinity raises <code>ParameterError</code> instead of failing later in a comparison.</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: center;">Parameter</th>
-<th style="text-align: center;">Type</th>
-<th style="text-align: center;">Default</th>
-<th style="text-align: center;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: center;"><code>value</code></td>
-<td style="text-align: center;">object</td>
-<td style="text-align: center;"><code>-</code></td>
-<td style="text-align: center;">Value to check</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>what</code></td>
-<td style="text-align: center;">str</td>
-<td style="text-align: center;"><code>-</code></td>
-<td style="text-align: center;">Name of the parameter, for the message of the error</td>
-</tr>
-</tbody>
-</table>
-<!-- --8<-- [end:check_number] -->
-
-<h2 id="merge_labels">merge_labels<a class="headerlink" href="#merge_labels" title="Permanent link">&para;</a></h2>
-<!-- --8<-- [start:merge_labels] -->
-<p>Merges the labels given for a plot over its default ones: a label that is not given keeps its default, so a single label can be changed alone. A default with fields in braces, such as <code>"Moving average ({window})"</code>, is a format string: a label given for it may use only those fields, and a literal brace in it is doubled (<code>{{</code>); the other labels are taken as they are. A format label is tried on sample values of its fields, of the types the plot gives them, so that a format spec the values do not take (<code>{window:s}</code> for a number) fails before a figure is created. Labels that are not a mapping of strings, have a key the plot does not know, a field their default does not have or a format spec their values do not take raise <code>ParameterError</code>.</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: center;">Parameter</th>
-<th style="text-align: center;">Type</th>
-<th style="text-align: center;">Default</th>
-<th style="text-align: center;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: center;"><code>defaults</code></td>
-<td style="text-align: center;">dict[str, str]</td>
-<td style="text-align: center;"><code>-</code></td>
-<td style="text-align: center;">Default labels by key</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>labels</code></td>
-<td style="text-align: center;">dict[str, str]</td>
-<td style="text-align: center;"><code>-</code></td>
-<td style="text-align: center;">Labels given; <code>None</code> - the default ones</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>**samples</code></td>
-<td style="text-align: center;">object</td>
-<td style="text-align: center;"><code>-</code></td>
-<td style="text-align: center;">Values of the fields of the format labels, for trying the labels given</td>
-</tr>
-</tbody>
-</table>
-<!-- --8<-- [end:merge_labels] -->
-
-<p>The defaults of the visualizers of the core are <code>anyts.constants.VISUALIZER_LABELS</code>, by the name of the function.</p>
-<div class="admonition example">
-<p class="admonition-title">Example</p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">merge_labels</span>
-
-<span class="n">merge_labels</span><span class="p">({</span><span class="s2">"title"</span><span class="p">:</span> <span class="s2">"Plot"</span><span class="p">,</span> <span class="s2">"xlabel"</span><span class="p">:</span> <span class="s2">"x"</span><span class="p">},</span> <span class="p">{</span><span class="s2">"title"</span><span class="p">:</span> <span class="s2">"My plot"</span><span class="p">})</span>
-<span class="c1"># {'title': 'My plot', 'xlabel': 'x'}</span>
-</code></pre></div>
-</div>
-<h2 id="check_messages">check_messages<a class="headerlink" href="#check_messages" title="Permanent link">&para;</a></h2>
-<!-- --8<-- [start:check_messages] -->
-<p>Checks the messages of the errors a class of statistics raises: they must be complete, a string for every key of the defaults, so that an error never turns into a <code>KeyError</code>, and a message whose default has fields in braces may use only those fields, with a literal brace doubled (<code>{{</code>). The classes of statistics check the <code>messages</code> of a subclass when it is defined. Messages that are not a mapping of strings, lack a key or have another, or have a field their default lacks raise <code>ParameterError</code>.</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: center;">Parameter</th>
-<th style="text-align: center;">Type</th>
-<th style="text-align: center;">Default</th>
-<th style="text-align: center;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: center;"><code>messages</code></td>
-<td style="text-align: center;">dict[str, str]</td>
-<td style="text-align: center;"><code>-</code></td>
-<td style="text-align: center;">Messages by key</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>defaults</code></td>
-<td style="text-align: center;">dict[str, str]</td>
-<td style="text-align: center;"><code>MESSAGES</code></td>
-<td style="text-align: center;">Default messages by key</td>
-</tr>
-</tbody>
-</table>
-<!-- --8<-- [end:check_messages] -->
+<!-- --8<-- [end:split_doc_units] -->
 
 
 
@@ -3492,12 +2973,12 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
-        <script src="../js/config.js"></script>
+        <script src="../../js/config.js"></script>
       
         <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
       
