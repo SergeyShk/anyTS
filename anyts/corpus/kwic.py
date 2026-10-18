@@ -93,8 +93,8 @@ def kwic(
 
     Raises:
         SourceTypeError: If the source is neither a string nor a Doc object, the keyword
-            is not a string, a hook is not callable or tokenize does not give the words
-            of a string in order (_check_spans)
+            is not a string, a hook is not callable, tokenize does not give the words
+            of a string in order or sentenize its sentences inside it
         ParameterError: If the keyword has no words or the window is not an integer
             or is negative
 
@@ -210,7 +210,8 @@ def _sent_starts(text: str, sentenize: Sentenizer | None) -> list[int] | None:
     """Starts of the sentences of a text by sentenize in ascending order; None without it"""
     if sentenize is None:
         return None
-    return sorted(start for start, _, _ in sentenize(text))
+    spans = _check_spans(sentenize(text), text, "sentence splitter", ordered=False)
+    return sorted(start for start, _, _ in spans)
 
 
 def _boundary(

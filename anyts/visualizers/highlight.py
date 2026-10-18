@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, NamedTuple
 
 from ..constants import ALLITERATION_MIN_WORD_LEN, ALLITERATION_THRESHOLD, MESSAGES
 from ..exceptions import ParameterError, SourceError, SourceTypeError
-from ..extractors import SentsExtractor, _iter_words, iter_part_sents
+from ..extractors import SentsExtractor, _check_spans, _iter_words, iter_part_sents
 from ..syntax_stats import get_words
 from ..utils import (
     _unit_word,
@@ -217,7 +217,10 @@ class HighlightedText:
             sents = get_text_sents(spans, words)
         elif isinstance(source, str):
             self.text = source
-            words = [Word(start, end, text) for start, end, text in self.iter_words(source)]
+            words = [
+                Word(start, end, text)
+                for start, end, text in _check_spans(self.iter_words(source), source, "tokenizer")
+            ]
             sents = get_text_sents(iter_part_sents(self.iter_sents, source), words)
         else:
             raise SourceTypeError(self.messages["source_type"])
@@ -921,6 +924,17 @@ def calc_alliteration_runs(
     _check_frequencies(frequencies)
     _check_threshold(threshold)
     _check_hooks((stem, "stem"), (is_transparent, "check of a transparent word"))
+    return _alliteration_runs(words, frequencies, threshold, stem, is_transparent)
+
+
+def _alliteration_runs(
+    words: Sequence[str],
+    frequencies: Mapping[str, float],
+    threshold: float,
+    stem: Callable[[str], Sequence[str]],
+    is_transparent: Callable[[str], bool] | None,
+) -> list[tuple[int, int, str]]:
+    """calc_alliteration_runs of checked arguments"""
     lowered = [word.lower() for word in words]
     if is_transparent is None:
         transparent = [len(word) < ALLITERATION_MIN_WORD_LEN for word in lowered]
@@ -1011,7 +1025,7 @@ def find_alliteration(
     groups = [list(words)] if sents is None else group_words_by_sents(words, sents)
     highlights = []
     for group in groups:
-        runs = calc_alliteration_runs(
+        runs = _alliteration_runs(
             [word.text for word in group], frequencies, threshold, stem, is_transparent
         )
         for start, stop, consonant in runs:

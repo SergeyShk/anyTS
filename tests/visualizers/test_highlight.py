@@ -646,3 +646,14 @@ def test_phrase_highlights_of_a_part_normalized_to_nothing():
         words, ["in fact ,", ","], "x", normalize=lambda w: w.strip(",").lower()
     )
     assert found == [Highlight(0, 7, "x", "\u00abin fact ,\u00bb")]
+
+
+def test_words_of_iter_words_checked():
+    class Bad(Marks):
+        def iter_words(self, text):
+            return [(5, 2, "cat")]
+
+    with pytest.raises(
+        SourceTypeError, match=r"^The tokenizer must give ascending integer bounds"
+    ):
+        Bad("The cat")

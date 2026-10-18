@@ -576,8 +576,8 @@ def split_windows(
 
     Raises:
         SourceTypeError: If the text is not a string, the tokenizer is not callable or
-            does not give the words in order (_check_spans), or the marks are not a
-            collection of strings
+            does not give the words in order, or the marks are not a collection of
+            strings
         ParameterError: If the size of a window or min_words is not an integer or is
             below one, min_words is greater than the window, or a mark is not one
             character

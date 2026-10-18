@@ -329,7 +329,8 @@ def iter_part_sents(
 
     Raises:
         SourceTypeError: If iter_sents is not callable, the text is not a string,
-            or iter_sents does not give the sentences of a part in order (_check_spans)
+            or iter_sents does not give the sentences of a part in order, as ascending
+            integer bounds inside the part with the text of each
 
     Example:
         >>> import re
@@ -356,32 +357,36 @@ def _iter_part_sents(
             yield start + first, start + last, sent
 
 
-def _check_spans(spans: object, text: str, what: str) -> list[tuple[int, int, str]]:
+def _check_spans(
+    spans: object, text: str, what: str, ordered: bool = True
+) -> list[tuple[int, int, str]]:
     """
     Checking the spans a hook gives for a string: triples of the start, the end and
-    the text of every item, in order and inside the string
+    the text of every item inside the string, in order unless not ordered
     """
     if not isinstance(spans, Iterable):
         raise SourceTypeError(f"The {what} must return an iterable object")
     checked = []
     previous = 0
+    size = len(text)
     for span in spans:
         if not (isinstance(span, tuple | list) and len(span) == 3):
             raise SourceTypeError(
                 f"The {what} must give triples of the start, the end and the text, not {span!r}"
             )
         start, end, item = span
-        if not (
-            all(isinstance(bound, Integral) and not isinstance(bound, bool) for bound in span[:2])
-            and isinstance(item, str)
-            and previous <= start < end <= len(text)
-        ):
+        integers = (type(start) is int and type(end) is int) or all(
+            isinstance(bound, Integral) and not isinstance(bound, bool) for bound in (start, end)
+        )
+        if not (integers and isinstance(item, str) and previous <= start < end <= size):
+            order = "ascending " if ordered else ""
             raise SourceTypeError(
-                f"The {what} must give ascending integer bounds inside the string and the text "
+                f"The {what} must give {order}integer bounds inside the string and the text "
                 f"of every item, not {tuple(span)!r}"
             )
         checked.append((start, end, item))
-        previous = end
+        if ordered:
+            previous = end
     return checked
 
 
