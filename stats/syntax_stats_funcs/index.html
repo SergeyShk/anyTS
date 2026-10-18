@@ -1427,6 +1427,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#clauses" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Clauses and passive
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#noun-phrases" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2650,6 +2661,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#clauses" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Clauses and passive
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#noun-phrases" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2871,6 +2893,30 @@
 <!-- --8<-- [start:is_predicate] -->
 <p><code>is_predicate(token, join_hyphens=False)</code> checks whether a word can be the predicate of its clause: a verb (<code>VERB</code>, <code>AUX</code>) or a word with a subject of its own (<code>nsubj</code>, <code>csubj</code> and their subtypes, <code>anyts.constants.SUBJECT_DEPS</code>), so the nominal predicate of <code>he is tall</code> passes and a parenthetical word does not.</p>
 <!-- --8<-- [end:is_predicate] -->
+
+<h2 id="clauses">Clauses and passive<a class="headerlink" href="#clauses" title="Permanent link">&para;</a></h2>
+<div class="admonition info">
+<p><strong>anyts.syntax_stats.is_clause_head()</strong>, <strong>anyts.syntax_stats.is_subordinate_clause_head()</strong>, <strong>anyts.syntax_stats.is_passive()</strong>, <strong>anyts.syntax_stats.has_agent()</strong>, <strong>anyts.syntax_stats.is_agentless()</strong></p>
+</div>
+<!-- --8<-- [start:is_clause_head] -->
+<p><code>is_clause_head(token, join_hyphens=False)</code> checks whether a word heads a clause: the head of the sentence or a word with <code>ccomp</code>, <code>advcl</code>, <code>acl</code>, <code>csubj</code> or <code>parataxis</code> (<code>anyts.constants.CLAUSE_DEPS</code>, subtypes included) whose predicate (<code>predicate_form</code>, so <code>has been built</code> is finite) is not a participle, a converb or a gerund (<code>NONFINITE_CLAUSE_FORMS</code>, counted apart), nor an infinitive under <code>acl</code>. A <code>parataxis</code> and a conjunct of a clause head count only as predicates (<code>is_predicate</code>); a loop of conjuncts is no clause.</p>
+<!-- --8<-- [end:is_clause_head] -->
+
+<!-- --8<-- [start:is_subordinate_clause_head] -->
+<p><code>is_subordinate_clause_head(token, is_clause_head=is_clause_head)</code> checks whether a word heads a subordinate clause: a clause head by the check <code>is_clause_head</code> with <code>ccomp</code>, <code>advcl</code>, <code>acl</code> or <code>csubj</code> (<code>SUBORDINATE_CLAUSE_DEPS</code>), or a conjunct of one, by the relation of the first word up its chain of conjuncts. A check that is not callable raises <code>SourceTypeError</code>.</p>
+<!-- --8<-- [end:is_subordinate_clause_head] -->
+
+<!-- --8<-- [start:is_passive] -->
+<p><code>is_passive(token, join_hyphens=False)</code> checks whether a word is a passive verb form: a verb with <code>Voice=Pass</code> or a dependent <code>nsubj:pass</code>, <code>csubj:pass</code>, <code>aux:pass</code>, or <code>nsubjpass</code>, <code>csubjpass</code>, <code>auxpass</code> of ClearNLP (<code>PASSIVE_DEPS</code>).</p>
+<!-- --8<-- [end:is_passive] -->
+
+<!-- --8<-- [start:has_agent] -->
+<p><code>has_agent(token, join_hyphens=False)</code> checks whether a word has an agent: a dependent <code>obl:agent</code>, or <code>agent</code> of ClearNLP (<code>AGENT_DEPS</code>).</p>
+<!-- --8<-- [end:has_agent] -->
+
+<!-- --8<-- [start:is_agentless] -->
+<p><code>is_agentless(token, join_hyphens=False)</code> checks whether a word is a passive form (<code>is_passive</code>) without an agent (<code>has_agent</code>).</p>
+<!-- --8<-- [end:is_agentless] -->
 
 <h2 id="noun-phrases">Noun phrases<a class="headerlink" href="#noun-phrases" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:count_noun_modifiers] -->

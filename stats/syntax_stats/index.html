@@ -2578,12 +2578,12 @@
 <tr>
 <td style="text-align: center;"><code>is_clause_head(token)</code></td>
 <td style="text-align: center;">method</td>
-<td style="text-align: center;">Whether a word heads a clause; by default the head of the sentence or a word with <code>ccomp</code>, <code>advcl</code>, <code>acl</code>, <code>csubj</code> or <code>parataxis</code> (<code>anyts.constants.CLAUSE_DEPS</code>, subtypes included) whose predicate (<code>predicate_form</code>, so <code>has been built</code> is finite) is not a participle, a converb or a gerund (<code>NONFINITE_CLAUSE_FORMS</code>, counted apart), nor an infinitive under <code>acl</code>; a <code>parataxis</code> and a conjunct of a clause head count only as predicates (<code>is_predicate</code>)</td>
+<td style="text-align: center;">Whether a word heads a clause; by default <code>is_clause_head</code> of the module with <code>join_hyphens</code> of the class</td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>is_subordinate_clause_head(token)</code></td>
 <td style="text-align: center;">method</td>
-<td style="text-align: center;">Whether a clause head heads a subordinate clause, asked only of the words of <code>is_clause_head</code>; by default a clause head with <code>ccomp</code>, <code>advcl</code>, <code>acl</code> or <code>csubj</code> (<code>SUBORDINATE_CLAUSE_DEPS</code>), or a conjunct of one, by the relation of the first word up its chain of conjuncts</td>
+<td style="text-align: center;">Whether a clause head heads a subordinate clause, asked only of the words of <code>is_clause_head</code>; by default <code>is_subordinate_clause_head</code> of the module over the hook <code>is_clause_head</code></td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>is_participle_clause(token)</code></td>
@@ -2593,12 +2593,12 @@
 <tr>
 <td style="text-align: center;"><code>is_passive(token)</code></td>
 <td style="text-align: center;">method</td>
-<td style="text-align: center;">Whether a word is a passive verb form; by default a verb with <code>Voice=Pass</code> or a dependent <code>nsubj:pass</code>, <code>csubj:pass</code>, <code>aux:pass</code>, or <code>nsubjpass</code>, <code>csubjpass</code>, <code>auxpass</code> of ClearNLP (<code>PASSIVE_DEPS</code>)</td>
+<td style="text-align: center;">Whether a word is a passive verb form; by default <code>is_passive</code> of the module with <code>join_hyphens</code> of the class</td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>is_agentless(token)</code></td>
 <td style="text-align: center;">method</td>
-<td style="text-align: center;">Whether a passive form has no agent; by default no dependent <code>obl:agent</code>, or <code>agent</code> of ClearNLP (<code>AGENT_DEPS</code>)</td>
+<td style="text-align: center;">Whether a passive form has no agent; by default the hook <code>is_passive</code> without an agent (<code>has_agent</code> of the module)</td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>is_negation(token)</code></td>

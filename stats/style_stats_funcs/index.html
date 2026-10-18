@@ -1536,6 +1536,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#parentheticals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parenthetical expressions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#check_params" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2584,6 +2595,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#parentheticals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parenthetical expressions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#check_params" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2893,7 +2915,7 @@
 <p><strong>anyts.style_stats.calc_keyword_density()</strong></p>
 </div>
 <!-- --8<-- [start:calc_keyword_density] -->
-<p>Computation of the keyword density (Text.ru): the occurrences of every keyword per 100 words. A keyword of several words separated by spaces is a sequence of words whose occurrences may overlap; the case is ignored, and the keywords of a set come in sorted order.</p>
+<p>Computation of the keyword density (Text.ru): the occurrences of every keyword per 100 words. A keyword of several words separated by spaces is a sequence of words whose occurrences may overlap; the words and the keywords are compared by their normalized forms, and the keywords of a set come in sorted order.</p>
 <p>Parameters:</p>
 <table>
 <thead>
@@ -2916,6 +2938,12 @@
 <td style="text-align: center;">list[str]</td>
 <td style="text-align: center;"><code>-</code></td>
 <td style="text-align: center;">Keywords or phrases</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>normalize</code></td>
+<td style="text-align: center;">Callable[[str], str]</td>
+<td style="text-align: center;"><code>str.lower</code></td>
+<td style="text-align: center;">Normalized form of a word and of a keyword</td>
 </tr>
 </tbody>
 </table>
@@ -2965,6 +2993,60 @@
 </tbody>
 </table>
 <!-- --8<-- [end:calc_phrase_density] -->
+
+<h2 id="parentheticals">Parenthetical expressions<a class="headerlink" href="#parentheticals" title="Permanent link">&para;</a></h2>
+<div class="admonition info">
+<p><strong>anyts.style_stats.find_parentheticals()</strong>, <strong>anyts.style_stats.calc_parentheticals()</strong></p>
+</div>
+<!-- --8<-- [start:find_parentheticals] -->
+<p><code>find_parentheticals(text, phrases=(), *, is_parenthetical=None, expand=None, normalize=str.lower)</code> finds the parenthetical expressions of a text: the phrases of the list, spelled out by <code>expand</code> as in <code>calc_phrase_density</code>, and the single words accepted by <code>is_parenthetical</code> outside the phrases found. It returns their bounds as slices of the words, in order. <code>StyleStats</code> counts its <code>parentheticals</code> and finds their markers this way, with its hooks. Hooks that are not callable raise <code>SourceTypeError</code>.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>text</code></td>
+<td style="text-align: center;">list[str]</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">List of words</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>phrases</code></td>
+<td style="text-align: center;">list[str]</td>
+<td style="text-align: center;"><code>()</code></td>
+<td style="text-align: center;">Parenthetical phrases, words separated by spaces</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>is_parenthetical</code></td>
+<td style="text-align: center;">Callable[[str], bool]</td>
+<td style="text-align: center;"><code>None</code></td>
+<td style="text-align: center;">Whether a word is a parenthetical expression by itself; none by default</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>expand</code></td>
+<td style="text-align: center;">Callable</td>
+<td style="text-align: center;"><code>None</code></td>
+<td style="text-align: center;">Variants of the phrases in the forms of the text with the phrase of each; the phrases as they are by default</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>normalize</code></td>
+<td style="text-align: center;">Callable[[str], str]</td>
+<td style="text-align: center;"><code>str.lower</code></td>
+<td style="text-align: center;">Normalized form of a word and of a phrase</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:find_parentheticals] -->
+
+<!-- --8<-- [start:calc_parentheticals] -->
+<p><code>calc_parentheticals(text, phrases=(), *, is_parenthetical=None, expand=None, normalize=str.lower)</code> gives the expressions of <code>find_parentheticals</code> with the same arguments per 100 words.</p>
+<!-- --8<-- [end:calc_parentheticals] -->
 
 <h2 id="check_params">Parameters of the metrics<a class="headerlink" href="#check_params" title="Permanent link">&para;</a></h2>
 <div class="admonition info">
