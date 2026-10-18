@@ -15,7 +15,7 @@ A class for computing the main [lexical diversity](https://en.wikipedia.org/wiki
 ## Language hooks
 
 <!-- --8<-- [start:DiversityStats-hooks] -->
-The class takes the words as given: a language library extracts them from its sources (a string, a [spaCy](https://github.com/explosion/spaCy) `Doc`) and lower-cases them, since every metric counts lexemes. A library overrides two class attributes in a subclass: `stats_desc`, the metrics of `get_stats` with their descriptions for `print_stats`, and `stats_headers`, the two column headers of `print_stats`. Error messages come from the class attribute `messages`.
+The class takes the words as given: a language library extracts them from its sources (a string, a [spaCy](https://github.com/explosion/spaCy) `Doc`) and lower-cases them, since every metric counts lexemes. A library overrides two class attributes in a subclass: `stats_desc`, the metrics of `get_stats` with their descriptions for `print_stats` (`anyts.constants.DIVERSITY_STATS_DESC` by default), and `stats_headers`, the two column headers of `print_stats`. Error messages come from the class attribute `messages`, `MESSAGES` by default.
 <!-- --8<-- [end:DiversityStats-hooks] -->
 
 ## Parameters
@@ -24,11 +24,13 @@ The class takes the words as given: a language library extracts them from its so
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
 | `words` | Iterable[str] | `-` | Words of the text: a sequence or an iterator of strings |
-| `window_len` | int | `50` | Window size for MATTR and segment size for MSTTR |
-| `mtld_threshold` | float | `0.72` | TTR threshold for MTLD, MA-MTLD and MTLD-W |
-| `mtld_min_len` | int | `10` | Minimum factor length for MTLD, MA-MTLD and MTLD-W |
-| `hdd_sample_size` | int | `42` | Sample size for HD-D |
-| `log_base` | float | `10` | Logarithm base for the Summer, Maas and Dugast metrics |
+| `window_len` | int | `50` | Window size for MATTR and segment size for MSTTR (`MATTR_WINDOW_LEN`) |
+| `mtld_threshold` | float | `0.72` | TTR threshold for MTLD, MA-MTLD and MTLD-W (`MTLD_TTR_THRESHOLD`) |
+| `mtld_min_len` | int | `10` | Minimum factor length for MTLD, MA-MTLD and MTLD-W (`MTLD_MIN_LEN`) |
+| `hdd_sample_size` | int | `42` | Sample size for HD-D (`HDD_SAMPLE_SIZE`) |
+| `log_base` | float | `10` | Logarithm base for the Summer, Maas and Dugast metrics (`DIVERSITY_LOG_BASE`) |
+
+Words that are not a sequence or an iterator of strings raise `SourceTypeError`, and so do a string, a `Doc`, a set and a table; no words raise `SourceError`.
 <!-- --8<-- [end:DiversityStats-parameters] -->
 
 <!-- --8<-- [start:check_params] -->
@@ -114,7 +116,7 @@ Parameters:
 | `step` | int | `None` | Window step, by default the window size (windows do not overlap) |
 | `confidence` | float | `0.95` | Confidence level |
 
-Returns a `WindowStats` named tuple with the fields `mean`, `std`, `lower`, `upper` and `n_windows`. An unknown metric name raises `UnknownStatError`.
+Returns a `WindowStats` named tuple with the fields `mean`, `std`, `lower`, `upper` and `n_windows`. An unknown metric name raises `UnknownStatError`; a window size or a step that is not an integer of at least one and a confidence level that is not a number in (0, 1) raise `ParameterError`.
 <!-- --8<-- [end:DiversityStats-windowed] -->
 
 !!! example "Example"

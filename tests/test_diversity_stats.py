@@ -1,7 +1,7 @@
 import inspect
 import random
 import warnings
-from collections import Counter
+from collections import Counter, deque
 from dataclasses import dataclass
 from functools import partial
 from math import e, inf, isnan, log, log2, log10, nan, nextafter, sqrt
@@ -388,7 +388,7 @@ def mtld_factor_lengths_by_sets(text, threshold, min_len, wrap):
 )
 def test_mtld_factor_lengths_match_sets(wrap, threshold, min_len, monkeypatch):
     # small blocks, so the texts span several of them
-    monkeypatch.setattr(diversity_stats, "MTLD_BLOCK_SIZE", 16)
+    monkeypatch.setattr(diversity_stats, "_MTLD_BLOCK_SIZE", 16)
     rng = random.Random(0)
     for _ in range(60):
         n_words = rng.randint(0, 200)
@@ -404,7 +404,7 @@ def test_mtld_factor_lengths_match_sets(wrap, threshold, min_len, monkeypatch):
 
 def test_mtld_factor_lengths_blocks():
     rng = random.Random(1)
-    words = [f"w{rng.randint(0, 40)}" for _ in range(2 * diversity_stats.MTLD_BLOCK_SIZE + 100)]
+    words = [f"w{rng.randint(0, 40)}" for _ in range(2 * diversity_stats._MTLD_BLOCK_SIZE + 100)]
     for wrap in (False, True):
         assert _mtld_factor_lengths(words, 0.72, 10, wrap) == (
             mtld_factor_lengths_by_sets(words, 0.72, 10, wrap)
@@ -708,7 +708,7 @@ def test_windowed_errors(ds):
         calc_windowed(riddle, calc_ttr, step=2.0)
     with pytest.raises(ParameterError, match=r"^The confidence level must be a number, not str$"):
         calc_windowed(riddle, calc_ttr, 3, confidence="0.95")
-    with pytest.raises(ParameterError, match=r"^The metric must be a function, not str$"):
+    with pytest.raises(SourceTypeError, match=r"^The metric must be a function, not str$"):
         calc_windowed(riddle, "ttr")
 
 
@@ -869,3 +869,29 @@ def test_calc_mattr_by_position():
     series = pd.Series(words)
     kept = [word for word in words if word != "a"]
     assert calc_mattr(series[series != "a"], 10) == calc_mattr(kept, 10)
+
+
+@pytest.mark.parametrize("container", [deque, lambda words: dict(enumerate(words)).values()])
+def test_words_without_slices(container):
+    words = [
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "b",
+        "c",
+        "f",
+        "g",
+        "h",
+        "g",
+        "i",
+        "g",
+        "j",
+        "k",
+        "a",
+        "b",
+    ] * 5
+    for calc in (calc_mtld, calc_mamtld, partial(calc_msttr, segment_len=5)):
+        assert calc(container(words)) == calc(words)
+    assert calc_windowed(container(words), calc_ttr, 10) == calc_windowed(words, calc_ttr, 10)

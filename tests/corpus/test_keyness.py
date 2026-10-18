@@ -1,6 +1,6 @@
 from collections import Counter
 from collections.abc import Mapping
-from math import copysign, inf, isnan, log
+from math import copysign, inf, isnan, log, nan
 
 import numpy as np
 import pytest
@@ -9,7 +9,7 @@ import spacy
 from anyts.constants import G2_CRITICAL_VALUES, KEYNESS_MEASURES
 from anyts.corpus import FrequencyReference, Keyword, check_keyness_params, keyness
 from anyts.corpus.keyness import (
-    MEASURES,
+    _MEASURES,
     calc_bic,
     calc_chi2,
     calc_diff,
@@ -26,7 +26,7 @@ reference = ["pal", "yawned", "in", "rug", "with", "basked", "pal", "ate"]
 
 
 def test_measures():
-    assert set(MEASURES) == set(KEYNESS_MEASURES)
+    assert set(_MEASURES) == set(KEYNESS_MEASURES)
     assert calc_log_likelihood(10, 5, 1000, 2000) == pytest.approx(
         2 * (10 * log(2) + 5 * log(0.5))
     )
@@ -232,7 +232,7 @@ def test_frequency_reference_of_no_size():
 def test_keyness_measures(measure):
     keywords = keyness(target, reference, measure=measure)
     kitty = next(keyword for keyword in keywords if keyword.word == "kitty")
-    assert kitty.score == MEASURES[measure](2, 0, 10, 8) or isnan(kitty.score)
+    assert kitty.score == _MEASURES[measure](2, 0, 10, 8) or isnan(kitty.score)
     if measure != "ell":
         assert keywords[0].word == "kitty"
 
@@ -349,3 +349,32 @@ def test_check_keyness_params_valid():
     assert check_keyness_params() is None
     assert check_keyness_params("log_ratio", 2, 10) is None
     assert check_keyness_params(target={"cat": 2.0}) is None
+
+
+@pytest.mark.parametrize(
+    ("fields", "error", "message"),
+    [
+        (
+            {"counts": {"cat": -5.0}},
+            SourceError,
+            r"^The frequencies must be finite and not negative",
+        ),
+        (
+            {"counts": {"cat": nan}},
+            SourceError,
+            r"^The frequencies must be finite and not negative",
+        ),
+        ({"counts": {"cat": "5"}}, SourceTypeError, r"^The frequencies must be numbers, not str$"),
+        ({"size": nan}, ParameterError, r"^The size of the reference must be a finite number"),
+        ({"size": -14}, ParameterError, r"^The size of the reference cannot be negative$"),
+        ({"size": "x"}, ParameterError, r"^The size of the reference must be a number, not str$"),
+        ({"missing": nan}, ParameterError, r"^The frequency of a missing key must be a finite"),
+        ({"missing": -1}, ParameterError, r"^The frequency of a missing key cannot be negative$"),
+        ({"key": 1}, SourceTypeError, r"^The key of a word must be callable, not int$"),
+        ({"keep": "x"}, SourceTypeError, r"^The filter of the words must be callable, not str$"),
+    ],
+)
+def test_frequency_reference_checks_its_fields(fields, error, message):
+    reference = FrequencyReference(**{"counts": {"cat": 5.0}, "size": 100, **fields})
+    with pytest.raises(error, match=message):
+        keyness(["cat", "dog", "cat"], reference)

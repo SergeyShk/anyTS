@@ -5,6 +5,7 @@ from abc import ABCMeta, abstractmethod
 from collections import Counter
 from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, Sequence
 from functools import cache
+from numbers import Integral
 from re import Pattern
 from typing import Any, ClassVar
 
@@ -12,6 +13,7 @@ from .constants import MESSAGES
 from .exceptions import ParameterError, SourceTypeError
 from .utils import NUMBER_PATTERN as NUMBER_PATTERN
 from .utils import (
+    check_callable,
     check_integer,
     check_messages,
     check_words,
@@ -21,7 +23,7 @@ from .utils import (
 )
 
 Tokenizer = Pattern[str] | Callable[[str], Iterable[str]]
-SENTENCE_BOUNDARY = re.compile(r"(?<=[.!?…])\s+|(?<=[.!?…][\"'»”’)\]])\s+")
+_SENTENCE_BOUNDARY = re.compile(r"(?<=[.!?…])\s+|(?<=[.!?…][\"'»”’)\]])\s+")
 BLANK_LINE = re.compile(r"\n\s*\n")
 
 
@@ -243,9 +245,9 @@ class SentsExtractor(Extractor):
         Returns:
             iterable[str]: Sentences
         """
-        pieces = SENTENCE_BOUNDARY.split(text)
+        pieces = _SENTENCE_BOUNDARY.split(text)
         sents = pieces[:1]
-        for separator, piece in zip(SENTENCE_BOUNDARY.findall(text), pieces[1:], strict=True):
+        for separator, piece in zip(_SENTENCE_BOUNDARY.findall(text), pieces[1:], strict=True):
             if has_words(piece) and has_words(sents[-1]):
                 sents.append(piece)
             else:
@@ -325,6 +327,11 @@ def iter_part_sents(
         iterator[tuple[int, int, str]]: Position of the first character, position
             after the last character and text of each sentence
 
+    Raises:
+        SourceTypeError: If iter_sents is not callable, the text is not a string,
+            or iter_sents does not give the sentences of a part in order, as ascending
+            integer bounds inside the part with the text of each
+
     Example:
         >>> import re
         >>> from anyts.extractors import iter_part_sents
@@ -333,10 +340,65 @@ def iter_part_sents(
         >>> list(iter_part_sents(periods, "One. Two\\n\\nThree."))
         [(0, 4, 'One.'), (5, 8, 'Two'), (10, 16, 'Three.')]
     """
+    check_callable(iter_sents, "sentence splitter")
+    if not isinstance(text, str):
+        raise SourceTypeError(MESSAGES["text_type"].format(type=type(text).__name__))
+    return _iter_part_sents(iter_sents, text)
+
+
+def _iter_part_sents(
+    iter_sents: Callable[[str], Iterable[tuple[int, int, str]]], text: str
+) -> Iterator[tuple[int, int, str]]:
+    """iter_part_sents of checked arguments"""
     bounds = [0, *(bound for match in BLANK_LINE.finditer(text) for bound in match.span())]
     for start, end in zip(bounds[::2], [*bounds[1::2], len(text)], strict=True):
-        for first, last, sent in iter_sents(text[start:end]):
+        part = text[start:end]
+        for first, last, sent in _check_spans(iter_sents(part), part, "sentence splitter"):
             yield start + first, start + last, sent
+
+
+def _check_spans(
+    spans: object,
+    text: str,
+    what: str,
+    ordered: bool = True,
+    error: Callable[[object], str] | None = None,
+) -> list[tuple[int, int, str]]:
+    """
+    Checking the spans a hook gives for a string: triples of the start, the end and
+    the text of every item inside the string, in order unless not ordered; error
+    gives the message of a wrong value in place of the English ones
+    """
+    if not isinstance(spans, Iterable):
+        raise SourceTypeError(
+            error(spans) if error else f"The {what} must return an iterable object"
+        )
+    checked = []
+    previous = 0
+    size = len(text)
+    for span in spans:
+        if not (isinstance(span, tuple | list) and len(span) == 3):
+            raise SourceTypeError(
+                error(span)
+                if error
+                else f"The {what} must give triples of the start, the end and the text, not {span!r}"
+            )
+        start, end, item = span
+        integers = (type(start) is int and type(end) is int) or all(
+            isinstance(bound, Integral) and not isinstance(bound, bool) for bound in (start, end)
+        )
+        if not (integers and isinstance(item, str) and previous <= start < end <= size):
+            order = "ascending " if ordered else ""
+            raise SourceTypeError(
+                error(span)
+                if error
+                else f"The {what} must give {order}integer bounds inside the string and the "
+                f"text of every item, not {tuple(span)!r}"
+            )
+        checked.append((start, end, item))
+        if ordered:
+            previous = end
+    return checked
 
 
 class WordsExtractor(Extractor):

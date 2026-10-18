@@ -149,3 +149,12 @@ def test_zipf_ax(tokens):
 def test_zipf_labels_of_equal_frequencies():
     ax = zipf(Counter({"a": 2, "b": 2, "c": 2, "d": 2, "e": 1}), num_labels=5)
     assert [text.get_text() for text in ax.texts] == [" a", " b", " c", " e"]
+
+
+def test_zipf_checks_its_numbers():
+    with pytest.raises(ParameterError, match=r"^The number of labels cannot be negative$"):
+        zipf(Counter(a=3, b=1), num_labels=-1)
+    for size in (0, -100):
+        with pytest.raises(ParameterError, match=r"^The frequency of the first rank must be"):
+            zipf_theory(size, 10)
+    assert plt.get_fignums() == []

@@ -116,7 +116,8 @@ class LexicalStats(Stats, metaclass=ABCMeta):
 
     Raises:
         SourceTypeError: If the dictionary is not of freq_dict_class (without it, has no
-            lookup and ipm), or the class has none and no dictionary is given
+            lookup and ipm), the class has none and no dictionary is given, or analyze
+            does not give LexicalWord objects
         SourceError: If the source has no words
     """
 
@@ -134,7 +135,18 @@ class LexicalStats(Stats, metaclass=ABCMeta):
         ):
             name = expected.__name__ if expected is not None else "FrequencyDictionary"
             raise SourceTypeError(messages["freq_dict_type"].format(expected=name))
-        words = tuple(self.analyze(source))
+        found = self.analyze(source)
+        words = tuple(found) if isinstance(found, Iterable) else (found,)
+        for word in words:
+            if not isinstance(word, LexicalWord):
+                raise SourceTypeError(
+                    messages["hook_result"].format(
+                        hook="analyze",
+                        cls=type(self).__name__,
+                        expected="LexicalWord objects",
+                        type=type(word).__name__,
+                    )
+                )
         if not words:
             raise SourceError(messages["no_words"])
         if freq_dict is None:

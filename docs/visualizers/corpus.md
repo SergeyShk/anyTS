@@ -18,6 +18,8 @@ A row for every word of `targets` and a tick at the position of each of its occu
 | `targets` | list[str] | `-` | Words whose occurrences are shown |
 | `ax` | Axes | `None` | Axes for the plot |
 | `labels` | dict[str, str] | `None` | Labels over the defaults: `title`, `xlabel` |
+
+Words or targets that are not a list of strings raise `SourceTypeError`, no words or no targets `SourceError`; labels that `merge_labels` refuses and an `ax` that is not a matplotlib `Axes` raise `ParameterError`.
 <!-- --8<-- [end:dispersion_plot] -->
 
 ## Chart of keywords { #keyness_plot }
@@ -34,6 +36,8 @@ Diverging horizontal bars: the words of `positive` to the right, of `negative` (
 | `field` | str | `score` | Field of `Keyword` whose values are plotted |
 | `log` | bool | `False` | Plot $\log_2$ of the value - for the odds ratio |
 | `ax` | Axes | `None` | Axes for the plot |
+
+Keywords that are not a list raise `SourceTypeError`, and no keyword with a finite value `SourceError`. An unknown `field`, a `top_n` that is not an integer of at least one, labels that `merge_labels` refuses or a legend that is not a pair, and an `ax` that is not a matplotlib `Axes` raise `ParameterError`.
 <!-- --8<-- [end:keyness_plot] -->
 
 ## Network of collocations { #collocation_network }
@@ -45,6 +49,8 @@ An undirected graph in the `neato` layout: the nodes are the words, the size of 
 | :-------: | :--: | :-----: | :---------: |
 | `collocations` | list[Collocation] | `-` | Collocations |
 | `top_n` | int | `None` | Number of pairs from the start of the list; `None` - all of them |
+
+Collocations that are not a list raise `SourceTypeError`, no pair of two different words `SourceError`, and a `top_n` that is not an integer of at least one `ParameterError`.
 <!-- --8<-- [end:collocation_network] -->
 
 ## Usage example

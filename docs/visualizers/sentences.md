@@ -10,7 +10,7 @@ The curve of the lengths of the sentences - the rhythm of a text: the length of 
 <!-- --8<-- [end:sentence_lengths_plot] -->
 
 <!-- --8<-- [start:sentence_lengths] -->
-`sentence_lengths(source)` extracts the lengths: a string is split by the sentence and the word extractors, a `Doc` by its boundaries and `iter_doc_words` with `join_hyphens`, and a `Doc` without boundaries or with partial ones (`has_sents`) is counted as its text. Sentences without words are skipped. Ready lengths (non-negative integers in a sequence or an iterator) are used as they are; a table, a set, a mapping, bytes or a length that is not an integer raise `SourceTypeError`, a negative length `SourceError`.
+`sentence_lengths(source)` extracts the lengths: a string is split by the sentence and the word extractors, a `Doc` by its boundaries and `iter_doc_words` with `join_hyphens`, and a `Doc` without boundaries or with partial ones (`has_sents`) is counted as its text. Sentences without words are skipped. Ready lengths (non-negative integers in a sequence or an iterator) are used as they are; a table, a set, a mapping, bytes, a length that is not an integer and an extractor of another type raise `SourceTypeError`, a negative length `SourceError`.
 <!-- --8<-- [end:sentence_lengths] -->
 
 ## Parameters
@@ -25,6 +25,8 @@ The curve of the lengths of the sentences - the rhythm of a text: the length of 
 | `labels` | dict[str, str] | `None` | Labels over the defaults: `title`, `xlabel`, `ylabel`, `length` (the curve), `average` (a format string with `window`), `distribution` (the inset) |
 | `sents_extractor` | SentsExtractor | `None` | Extractor of the sentences of a string; the sentence extractor of the library by default |
 | `words_extractor` | WordsExtractor | `None` | Extractor of the words of a sentence of a string; the word extractor of the library by default |
+
+The source and the extractors raise the errors of `sentence_lengths`, and no sentences raise `SourceError`; a `window` that is not an integer of at least one, labels that `merge_labels` refuses and an `ax` that is not a matplotlib `Axes` raise `ParameterError`.
 <!-- --8<-- [end:sentence_lengths_plot-parameters] -->
 
 The core functions also take `join_hyphens`, `False` by default, which joins the parts of hyphenated words of a `Doc` with sentence boundaries (`iter_doc_words`). The extractors of the core are `SentsExtractor()` and `WordsExtractor()`.

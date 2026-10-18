@@ -117,7 +117,8 @@ class ConnectorMatcher:
 
     Raises:
         SourceTypeError: If the connectors are not a dictionary of a phrase and a pair
-            of strings
+            of strings; when a class is defined, if its rules are not collections of
+            strings or mappings of strings to them
         ParameterError: If a connector has an unknown class or kind
 
     Example:
@@ -151,6 +152,25 @@ class ConnectorMatcher:
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
         check_messages(cls.messages)
+        for name in ("classes", "kinds"):
+            check_words(getattr(cls, name), name)
+        for name in ("pos_tags", "not_after_pos", "start_only_pos", "not_at_start"):
+            check_words(getattr(cls, name), name, ordered=False)
+        for name in (
+            "pos_extra",
+            "blocked_after",
+            "blocked_before",
+            "blocked_after_pos",
+            "only_after",
+        ):
+            rules = getattr(cls, name)
+            if not isinstance(rules, Mapping):
+                raise SourceTypeError(
+                    f"The {name} of {cls.__name__} must be a mapping, not {type(rules).__name__}"
+                )
+            check_words(list(rules), f"connectors of {name}")
+            for words in rules.values():
+                check_words(words, name, ordered=False)
 
     def __init__(self, connectors: Mapping[str, tuple[str, str]]):
         if not isinstance(connectors, Mapping):
@@ -413,7 +433,8 @@ class CohesionStats(Stats):
 
     Raises:
         SourceTypeError: If the extractor is of another type, the source is not a Doc
-            (analyze) or the connectors are not a dictionary of phrases and pairs of strings
+            (analyze), analyze does not give sentences of CohesionWord objects, or the
+            connectors are not a dictionary of phrases and pairs of strings
         SourceError: If the source has no parts of speech or no lemmas (analyze), or no
             words
         ParameterError: If a connector has an unknown class or kind; when a class is
@@ -467,7 +488,22 @@ class CohesionStats(Stats):
             if connectors is None
             else self.connector_matcher_class(connectors)
         )
-        sents = [sent for sent in map(tuple, self.analyze(source)) if sent]
+        found = self.analyze(source)
+        found_sents = [
+            tuple(sent) if isinstance(sent, Iterable) else (sent,)
+            for sent in (found if isinstance(found, Iterable) else [found])
+        ]
+        for item in (word for sent in found_sents for word in sent):
+            if not isinstance(item, CohesionWord):
+                raise SourceTypeError(
+                    messages["hook_result"].format(
+                        hook="analyze",
+                        cls=type(self).__name__,
+                        expected="sentences of CohesionWord objects",
+                        type=type(item).__name__,
+                    )
+                )
+        sents = [sent for sent in found_sents if sent]
         if not sents:
             raise SourceError(messages["no_words"])
         self.words = tuple(tuple(word.word for word in sent) for sent in sents)

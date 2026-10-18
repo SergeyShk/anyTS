@@ -561,3 +561,19 @@ def test_iter_part_sents():
         (17, 21, "Four"),
     ]
     assert list(iter_part_sents(by_periods, "")) == []
+
+
+@pytest.mark.parametrize(
+    ("iter_sents", "text", "message"),
+    [
+        (None, "A b", r"^The sentence splitter must be callable, not NoneType$"),
+        (lambda text: [], 5, r"^A text string is expected, not int$"),
+        (lambda text: 5, "A b", r"^The sentence splitter must return an iterable object$"),
+        (lambda text: [1], "A b", r"^The sentence splitter must give triples"),
+        (lambda text: [(0, 9, "x")], "A b", r"ascending integer bounds inside the string"),
+        (lambda text: [(2, 3, "b"), (0, 1, "A")], "A b", r"ascending integer bounds"),
+    ],
+)
+def test_iter_part_sents_checks_its_arguments(iter_sents, text, message):
+    with pytest.raises(SourceTypeError, match=message):
+        list(iter_part_sents(iter_sents, text))

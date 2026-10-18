@@ -15,14 +15,13 @@ from .constants import (
     HDD_SAMPLE_SIZE,
     MATTR_WINDOW_LEN,
     MESSAGES,
-    MTLD_BLOCK_SIZE,
     MTLD_MIN_LEN,
     MTLD_TTR_THRESHOLD,
-    MTLD_WINDOW_LEN,
 )
-from .exceptions import ParameterError, SourceError, UnknownStatError
+from .exceptions import ParameterError, SourceError, SourceTypeError, UnknownStatError
 from .stats import Stats
 from .utils import (
+    _sliceable,
     check_counts,
     check_integer,
     check_number,
@@ -31,6 +30,10 @@ from .utils import (
     safe_divide,
     shannon_entropy,
 )
+
+# Block of factor starts and window of offsets in the MA-MTLD and MTLD-W computation
+_MTLD_BLOCK_SIZE = 4096
+_MTLD_WINDOW_LEN = 32
 
 Calculator = Callable[[Sequence[str]], float]
 Function = TypeVar("Function", bound=Callable[..., Any])
@@ -42,7 +45,7 @@ def _checks_words(func: Function) -> Function:
     @wraps(func)
     def checked(text: Any, *args: Any, **kwargs: Any) -> Any:
         check_words(text)
-        return func(text, *args, **kwargs)
+        return func(_sliceable(text), *args, **kwargs)
 
     checked.__unchecked__ = func  # type: ignore[attr-defined]
     return cast(Function, checked)
@@ -141,7 +144,7 @@ class DiversityStats(Stats):
         >>> ds.yule_k
         444.44444444444446
         >>> ds.windowed("ttr", window_len=5)
-        WindowStats(mean=0.9333333333333332, std=0.11547005383792512, lower=0.6464898180167025, upper=1.220176848649964, n_windows=3)
+        WindowStats(mean=0.9333333333333332, std=0.11547005383792512, lower=0.646489818..., upper=1.220176848..., n_windows=3)
 
     Arguments:
         words (iterable[str]): Words of the text, used as given (a language library
@@ -204,7 +207,8 @@ class DiversityStats(Stats):
         stats_headers (tuple[str, str]): Headers of the columns for print_stats
 
     Raises:
-        SourceTypeError: If the words are a string, a Doc, not iterable or not strings
+        SourceTypeError: If the words are a string, a Doc, a set, an object without a length
+            other than an iterator, or not strings
         SourceError: If there are no words
         ParameterError: If the parameters of the metrics are set incorrectly
     """
@@ -834,7 +838,7 @@ def _mtld_factor_lengths(
     Description:
         The number of lexemes on the stretch [start, pos] is the number of its
         positions whose previous occurrence of the word lies before start; the
-        starts go in blocks over windows of MTLD_WINDOW_LEN offsets, the threshold
+        starts go in blocks over windows of _MTLD_WINDOW_LEN offsets, the threshold
         is compared in integers through _max_types. A factor of length L closes
         only with at least L − max_types[L] repeated words, so the repeats after
         a start bound its factor: those of the rest of the text, or of the whole
@@ -844,9 +848,9 @@ def _mtld_factor_lengths(
     if not n_words:
         return []
     previous = _previous_positions(text, wrap)
-    padded = np.concatenate([previous, np.full(MTLD_WINDOW_LEN, previous.size)])
-    windows = sliding_window_view(padded, MTLD_WINDOW_LEN)
-    max_types = _max_types(threshold, n_words + MTLD_WINDOW_LEN)
+    padded = np.concatenate([previous, np.full(_MTLD_WINDOW_LEN, previous.size)])
+    windows = sliding_window_view(padded, _MTLD_WINDOW_LEN)
+    max_types = _max_types(threshold, n_words + _MTLD_WINDOW_LEN)
     # Number of the factor lengths that need at most so many repeats
     fits = np.cumsum(np.bincount(np.arange(1, max_types.size) - max_types[1:]))
     if wrap:
@@ -856,8 +860,8 @@ def _mtld_factor_lengths(
         repeats = np.cumsum(repeated[::-1])[::-1]
     reach = fits[np.minimum(repeats, fits.size - 1)]
     lengths = np.zeros(n_words, dtype=np.int64)
-    for block_start in range(0, n_words, MTLD_BLOCK_SIZE):
-        pending = np.arange(block_start, min(block_start + MTLD_BLOCK_SIZE, n_words))
+    for block_start in range(0, n_words, _MTLD_BLOCK_SIZE):
+        pending = np.arange(block_start, min(block_start + _MTLD_BLOCK_SIZE, n_words))
         limits = np.minimum(reach[pending], n_words if wrap else n_words - pending)
         reachable = limits >= max(min_len, 1)
         pending = pending[reachable]
@@ -867,19 +871,19 @@ def _mtld_factor_lengths(
         while pending.size:
             types = np.cumsum(windows[pending + offset] < pending[:, None], axis=1, dtype=np.int32)
             types += counts[:, None]
-            factor_lens = offset + np.arange(1, MTLD_WINDOW_LEN + 1)
+            factor_lens = offset + np.arange(1, _MTLD_WINDOW_LEN + 1)
             closed = types <= max_types[factor_lens]
             if min_len > offset + 1:
                 closed[:, : min_len - offset - 1] = False
-            if offset + MTLD_WINDOW_LEN > limits.min():
+            if offset + _MTLD_WINDOW_LEN > limits.min():
                 closed &= factor_lens[None, :] <= limits[:, None]
             hit = closed.any(axis=1)
             lengths[pending[hit]] = factor_lens[closed[hit].argmax(axis=1)]
-            remaining = ~hit & (offset + MTLD_WINDOW_LEN < limits)
+            remaining = ~hit & (offset + _MTLD_WINDOW_LEN < limits)
             pending = pending[remaining]
             limits = limits[remaining]
             counts = types[remaining, -1]
-            offset += MTLD_WINDOW_LEN
+            offset += _MTLD_WINDOW_LEN
     return [int(length) for length in lengths[lengths > 0]]
 
 
@@ -1656,9 +1660,10 @@ def calc_windowed(
         WindowStats: Mean, standard deviation, bounds of the interval and number of windows
 
     Raises:
-        ParameterError: If the metric is not a function or the window size, the
-            step or the confidence level are set incorrectly
-        SourceTypeError: If the words are not a list of strings (check_words)
+        ParameterError: If the window size, the step or the confidence level are
+            set incorrectly
+        SourceTypeError: If the words are not a list of strings (check_words) or the
+            metric is not a function
     """
     check_integer(window_len, "window size")
     if window_len < 1:
@@ -1669,7 +1674,7 @@ def calc_windowed(
     if step < 1:
         raise ParameterError(messages["window_step"])
     if not callable(func):
-        raise ParameterError(messages["window_metric"].format(type=type(func).__name__))
+        raise SourceTypeError(messages["window_metric"].format(type=type(func).__name__))
     check_number(confidence, "confidence level")
     if not 0 < confidence < 1:
         raise ParameterError(messages["confidence"])

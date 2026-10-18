@@ -1,5 +1,6 @@
 """The named sections of the documentation that the language libraries include"""
 
+import ast
 import importlib
 import inspect
 import re
@@ -11,6 +12,7 @@ from anyts import (
     basic_stats,
     cohesion_stats,
     components,
+    constants,
     datasets,
     diversity_stats,
     exceptions,
@@ -140,3 +142,51 @@ def test_public_api_has_sections():
     }
     assert public_names(exceptions) == []
     assert required <= documented, sorted(required - documented)
+
+
+def public_constants(module) -> list[str]:
+    """Names in upper case a module assigns itself"""
+    names = []
+    for node in ast.parse(inspect.getsource(module)).body:
+        targets = node.targets if isinstance(node, ast.Assign) else []
+        if isinstance(node, ast.AnnAssign):
+            targets = [node.target]
+        names += [
+            target.id
+            for target in targets
+            if isinstance(target, ast.Name)
+            and target.id.isupper()
+            and not target.id.startswith("_")
+        ]
+    return names
+
+
+def test_public_constants_are_named():
+    text = "\n".join(page.read_text(encoding="utf-8") for page in PAGES)
+    modules = [
+        constants,
+        basic_stats,
+        cohesion_stats,
+        components,
+        datasets,
+        diversity_stats,
+        extractors,
+        lexical_stats,
+        phon_stats,
+        readability_stats,
+        stats,
+        style_stats,
+        syntax_stats,
+        utils,
+        *CORPUS_MODULES,
+        *VISUALIZER_MODULES,
+    ]
+    unnamed = sorted(
+        {
+            name
+            for module in modules
+            for name in public_constants(module)
+            if not re.search(rf"\b{name}\b", text)
+        }
+    )
+    assert not unnamed, f"constants not named in the docs: {unnamed}"

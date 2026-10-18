@@ -23,10 +23,10 @@ A language library subclasses `LexicalStats`:
 | `dictionary_keys()` | method | Keys of the words in the dictionary; the lemmas by default, or for instance a proper noun by its form |
 | `rank(lemma)` | method | Rank of a lemma in the list of the most frequent lemmas, `None` out of it; no list by default |
 | `top_size()` | method | Size of the list, the upper bound of `band_coverage`; 10000 by default |
-| `stats_desc`, `stats_headers` | class attributes | Statistics of `get_stats` with their descriptions, headers of the columns for `print_stats` |
+| `stats_desc`, `stats_headers` | class attributes | Statistics of `get_stats` with their descriptions (`anyts.constants.LEXICAL_STATS_DESC` by default), headers of the columns for `print_stats` |
 | `messages` | class attribute | Messages of the errors by key; `MESSAGES` by default |
 
-A library takes its own parameters, such as a pipeline or a word extractor, in its `__init__` and passes the source and the dictionary on.
+A library takes its own parameters, such as a pipeline or a word extractor, in its `__init__` and passes the source and the dictionary on. An `analyze` that does not give `LexicalWord` objects raises `SourceTypeError`.
 <!-- --8<-- [end:LexicalStats-hooks] -->
 
 ## Frequency dictionary { #FrequencyDictionary }

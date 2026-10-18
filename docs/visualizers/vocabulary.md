@@ -17,6 +17,8 @@ The size of the vocabulary $V$ after every word of the text and the fitted curve
 | `words` | list[str] | `-` | Words of the text in order |
 | `ax` | Axes | `None` | Axes for the plot |
 | `labels` | dict[str, str] | `None` | Labels over the defaults: `title`, `xlabel`, `ylabel`, `growth` (the curve), `fit` (a format string with `k` and `beta`) |
+
+Words that are not a list of strings raise `SourceTypeError`, fewer than two words `SourceError`; labels that `merge_labels` refuses and an `ax` that is not a matplotlib `Axes` raise `ParameterError`.
 <!-- --8<-- [end:heaps_plot] -->
 
 ## Frequency spectrum { #frequency_spectrum_plot }
@@ -29,6 +31,8 @@ The number of word types $V(m)$ that occur exactly $m$ times (`calc_frequency_sp
 | `words` | list[str] | `-` | Words of the text |
 | `ax` | Axes | `None` | Axes for the plot |
 | `labels` | dict[str, str] | `None` | Labels over the defaults: `title`, `xlabel`, `ylabel` |
+
+Words that are not a list of strings raise `SourceTypeError`, no words `SourceError`; labels that `merge_labels` refuses and an `ax` that is not a matplotlib `Axes` raise `ParameterError`.
 <!-- --8<-- [end:frequency_spectrum_plot] -->
 
 ## Usage example

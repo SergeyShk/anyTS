@@ -263,6 +263,8 @@ Parameters:
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
 | `c_letters` | dict[int, int] | `-` | Distribution of words by number of letters |
+
+A `c_letters` that is not a mapping raises `SourceTypeError`.
 <!-- --8<-- [end:calc_mu_index] -->
 
 ## Reading ease as a grade
@@ -271,7 +273,7 @@ Parameters:
     **anyts.readability_stats.flesch_reading_easy_to_grade()**
 
 <!-- --8<-- [start:flesch_reading_easy_to_grade] -->
-Conversion of the Flesch reading ease into years of schooling for the consensus grade: the grade of the first band whose lower bound the value reaches, or `below` under the last bound; values above 100 belong to the first band.
+Conversion of the Flesch reading ease into years of schooling for the consensus grade: the grade of the first band whose lower bound the value reaches, or `below` under the last bound; values above 100 belong to the first band. A reading ease or a `below` that is not a finite number raises `ParameterError`, and so do `grades` that are empty or not pairs of finite numbers with descending bounds.
 <!-- --8<-- [end:flesch_reading_easy_to_grade] -->
 
 The default bands are those of `text_standard` of [textstat](https://github.com/textstat/textstat), which follow the table of Flesch (1948) down to 60 and split his lower bands, with 8.5 for its grades 8 and 9: 90-100 - 5, 80-90 - 6, 70-80 - 7, 60-70 - 8.5, 50-60 - 10, 40-50 - 11, 30-40 - 12, below 30 - 13 (`anyts.constants.READING_EASE_GRADES`).
@@ -350,7 +352,7 @@ Parameters:
     **anyts.readability_stats.calc_reading_time()**
 
 <!-- --8<-- [start:calc_reading_time] -->
-Computation of the reading time of a text in minutes: the number of words divided by the reading speed; a speed that is not a positive number raises `ParameterError`.
+Computation of the reading time of a text in minutes: the number of words divided by the reading speed; a number of words that is not a non-negative integer and a speed that is not a positive number raise `ParameterError`.
 <!-- --8<-- [end:calc_reading_time] -->
 
 The default speed is the silent reading speed of adults in English, 238 words per minute (Brysbaert, 2019).
@@ -360,5 +362,5 @@ Parameters:
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
 | `n_words` | int | `-` | Number of words |
-| `wpm` | float | `238` | Reading speed, words per minute |
+| `wpm` | float | `238` | Reading speed, words per minute (`READING_SPEED_WPM`) |
 | `messages` | dict[str, str] | `MESSAGES` | Messages of the errors by key, a keyword |

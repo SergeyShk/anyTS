@@ -74,6 +74,8 @@ and the expected number is the sum of these probabilities over the features time
 | `words` | list[str]/list[list[str]] | `-` | Features of every word: a string of its letters or a collection of its sounds |
 | `window_len` | int | `-` | Window in words, at least 2 |
 | `features` | Collection[str] | `None` | Features to count, all of them by default |
+
+Words that are not a list of strings or of collections of strings and features that are not a collection of strings raise `SourceTypeError`, and a `window_len` that is not an integer of at least 2 `ParameterError`.
 <!-- --8<-- [end:calc_repetition_index-parameters] -->
 
 ## Parameters of the metrics { #check_params }

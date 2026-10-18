@@ -7,7 +7,7 @@ from collections.abc import Callable, Iterable, Sequence
 from typing import TYPE_CHECKING, NamedTuple
 
 from ..exceptions import ParameterError, SourceTypeError
-from ..extractors import BLANK_LINE, _iter_words
+from ..extractors import BLANK_LINE, _check_spans, _iter_words
 from ..utils import _unit_word, check_integer, has_sents, is_doc, iter_doc_units
 
 if TYPE_CHECKING:
@@ -18,7 +18,7 @@ Sentenizer = Callable[[str], Iterable[tuple[int, int, str]]]
 Lemmatizer = Callable[[str, Sequence["Token"]], Iterable[str] | str]
 
 # The end of a sentence: a final mark, closing marks and whitespace, or a blank line
-BOUNDARY = re.compile(rf"[.!?…][\"'»”’)\]]*\s|{BLANK_LINE.pattern}")
+_BOUNDARY = re.compile(rf"[.!?…][\"'»”’)\]]*\s|{BLANK_LINE.pattern}")
 
 
 class Concordance(NamedTuple):
@@ -93,7 +93,8 @@ def kwic(
 
     Raises:
         SourceTypeError: If the source is neither a string nor a Doc object, the keyword
-            is not a string or a hook is not callable
+            is not a string, a hook is not callable, tokenize does not give the words
+            of a string in order or sentenize its sentences inside it
         ParameterError: If the keyword has no words or the window is not an integer
             or is negative
 
@@ -116,7 +117,11 @@ def kwic(
             raise SourceTypeError(f"The {name} must be callable, not {type(hook).__name__}")
     if not callable(fold):
         raise SourceTypeError(f"The folding must be callable, not {type(fold).__name__}")
-    split = tokenize or (_iter_hyphenated_words if join_hyphens else _iter_words)
+    split = (
+        _checked_tokenizer(tokenize)
+        if tokenize is not None
+        else (_iter_hyphenated_words if join_hyphens else _iter_words)
+    )
     key_words = list(split(keyword))
     if not key_words:
         raise ParameterError("The keyword is not set")
@@ -183,6 +188,11 @@ def kwic(
     return found
 
 
+def _checked_tokenizer(tokenize: Tokenizer) -> Tokenizer:
+    """The tokenizer of a library with its words checked"""
+    return lambda text: _check_spans(tokenize(text), text, "tokenizer")
+
+
 def _source_words(
     source: str | Doc, split: Tokenizer, join_hyphens: bool
 ) -> tuple[str, list[tuple[int, int, str]], list[Sequence[Token]]]:
@@ -200,7 +210,8 @@ def _sent_starts(text: str, sentenize: Sentenizer | None) -> list[int] | None:
     """Starts of the sentences of a text by sentenize in ascending order; None without it"""
     if sentenize is None:
         return None
-    return sorted(start for start, _, _ in sentenize(text))
+    spans = _check_spans(sentenize(text), text, "sentence splitter", ordered=False)
+    return sorted(start for start, _, _ in spans)
 
 
 def _boundary(
@@ -228,7 +239,7 @@ def _boundary(
             doc[position].is_sent_start for position in range(first, last + 1)
         )
     if starts is None:
-        return bool(BOUNDARY.search(gap))
+        return bool(_BOUNDARY.search(gap))
     position = bisect_left(starts, end)
     return bool(BLANK_LINE.search(gap)) or (position < len(starts) and starts[position] <= start)
 

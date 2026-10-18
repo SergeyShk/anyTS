@@ -528,7 +528,7 @@ def test_extract_archive_empty(tmp_path):
 
 def test_extract_archive_without_the_data_filter(tar_archive, tmp_path, monkeypatch):
     # Python 3.11 before 3.11.4 has no filter: the members are checked by hand
-    monkeypatch.setattr(datasets, "TAR_DATA_FILTER", False)
+    monkeypatch.setattr(datasets, "_TAR_DATA_FILTER", False)
     extracted = extract_archive(tar_archive, tmp_path / "out")
     assert (Path(extracted) / "prose" / "a.txt").read_text(encoding="utf-8") == "text"
     payload = tmp_path / "payload.txt"
@@ -578,9 +578,9 @@ def _tar_member(archive: tarfile.TarFile, name: str, data: bytes = b"text") -> N
 
 @pytest.mark.parametrize("data_filter", [True, False])
 def test_extract_archive_absolute_member(tmp_path, monkeypatch, data_filter):
-    if data_filter and not datasets.TAR_DATA_FILTER:
+    if data_filter and not datasets._TAR_DATA_FILTER:
         pytest.skip("tarfile has no data filter")
-    monkeypatch.setattr(datasets, "TAR_DATA_FILTER", data_filter)
+    monkeypatch.setattr(datasets, "_TAR_DATA_FILTER", data_filter)
     victim = tmp_path / "victim"
     victim.mkdir()
     (victim / "mine.txt").write_text("mine", encoding="utf-8")
@@ -604,9 +604,9 @@ def test_extract_archive_absolute_zip_member(tmp_path, name):
 
 @pytest.mark.parametrize("data_filter", [True, False])
 def test_extract_archive_refuses_inner_links(tmp_path, monkeypatch, data_filter):
-    if data_filter and not datasets.TAR_DATA_FILTER:
+    if data_filter and not datasets._TAR_DATA_FILTER:
         pytest.skip("tarfile has no data filter")
-    monkeypatch.setattr(datasets, "TAR_DATA_FILTER", data_filter)
+    monkeypatch.setattr(datasets, "_TAR_DATA_FILTER", data_filter)
     for kind in (tarfile.SYMTYPE, tarfile.LNKTYPE):
         archive = tmp_path / f"corpus{kind!r}.tar"
         with tarfile.open(archive, mode="w") as tar_file:
@@ -873,3 +873,8 @@ def test_fetch_archive_interrupted_extraction(remote, monkeypatch):
     _fetch(filepath, checksum)
     assert (root / "a.txt").read_text(encoding="utf-8") == "first"
     assert (root / "b" / "c.txt").is_file()
+
+
+def test_substring_filter_checks_the_folding():
+    with pytest.raises(SourceTypeError, match=r"^The folding must be callable, not str$"):
+        substring_filter("author", "galdos", "lower")

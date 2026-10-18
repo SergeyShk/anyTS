@@ -2,9 +2,6 @@
 MATTR_WINDOW_LEN = 50
 MTLD_TTR_THRESHOLD = 0.72
 MTLD_MIN_LEN = 10
-# Block of factor starts and window of offsets in the MA-MTLD and MTLD-W computation
-MTLD_BLOCK_SIZE = 4096
-MTLD_WINDOW_LEN = 32
 HDD_SAMPLE_SIZE = 42
 DIVERSITY_LOG_BASE = 10
 BRUNET_W_EXPONENT = 0.172
@@ -230,7 +227,9 @@ MESSAGES = {
     "layer_unavailable": "The layer {layer} is not available",
     "layer_annotations": "The layer {layer} needs a Doc with {annotations}",
     "fragment_layer": "A fragment of the layer {found} is found for {layer}",
-    "fragment_outside": "A fragment of the layer {layer} lies outside the text: {start}-{end}",
+    "fragment_outside": (
+        "A fragment of the layer {layer} is empty or lies outside the text: {start}-{end}"
+    ),
     "long_sent_word_factor": "The number of words of a long sentence must be greater than 0",
     "alliteration_threshold": "The threshold of the alliteration must lie in the interval (0, 1]",
     "sent_len_bounds": "The sentence length bounds cannot be negative",
@@ -265,6 +264,11 @@ MESSAGES = {
     "tokenizer": "The tokenizer is set incorrectly",
     "tokenizer_iterable": "The tokenizer must return an iterable object",
     "tokenizer_strings": "The tokenizer must return strings, not {type}",
+    "hook_result": "The {hook} of {cls} must return {expected}, not {type}",
+    "hook_spans": (
+        "The {hook} of {cls} must give ascending triples of integer bounds inside the text "
+        "and a string, not {span}"
+    ),
     "connector_dict": "The connectors must be a dictionary of a phrase and its class and kind",
     "connector_entry": "A connector must be a phrase with a pair of its class and kind: {connector}",
     "connector_class": "Unknown class or kind of a connector: {cls}, {kind}",

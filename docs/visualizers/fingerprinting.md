@@ -27,7 +27,7 @@ A text is a block of squares, its segments row by row, 8 rows high, or one colum
 | `ax` | Axes | `None` | Axes of matplotlib for the plot; if not given, a 15×10 figure is created |
 | `labels` | dict[str, str] | `None` | Labels over the defaults: `title` |
 
-The function returns the `Axes` with the visualization, set to an equal aspect so the squares stay square; the figure is `ax.figure`.
+The function returns the `Axes` with the visualization, set to an equal aspect so the squares stay square; the figure is `ax.figure`. Texts that are not a list of lists of strings and a `metric` that cannot be called raise `SourceTypeError`. A `segment_len` or a `y_size` that is not an integer above zero, an `x_size` that is not an integer above 25, an unknown `cmap`, labels that `merge_labels` refuses and an `ax` that is not a matplotlib `Axes` raise `ParameterError`.
 <!-- --8<-- [end:fingerprinting-parameters] -->
 
 ## Usage example

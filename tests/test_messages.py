@@ -193,9 +193,14 @@ def foreign_extension_on_unpickling():
     Doc.remove_extension("own_unpickled")
     Doc.set_extension("own_unpickled", getter=lambda doc: 0)
     try:
-        pickle.loads(data)
+        pickle.loads(data)(spacy.blank("en")(TEXT))
     finally:
         Doc.remove_extension("own_unpickled")
+
+
+def hooked(cls, **hooks):
+    """A subclass with hooks that return what the core cannot use"""
+    return type(f"Hooked{cls.__name__}", (cls,), hooks)
 
 
 WORDS = TEXT.split()
@@ -227,7 +232,7 @@ CASES = [
     ("window_len", ParameterError, lambda: Diversity(WORDS, window_len=0)),
     ("window_len", ParameterError, lambda: Diversity(WORDS).windowed("ttr", 0)),
     ("window_step", ParameterError, lambda: Diversity(WORDS).windowed("ttr", 2, 0)),
-    ("window_metric", ParameterError, lambda: calc_windowed(WORDS, 5, messages=OWN)),
+    ("window_metric", SourceTypeError, lambda: calc_windowed(WORDS, 5, messages=OWN)),
     ("confidence", ParameterError, lambda: Diversity(WORDS).windowed("ttr", 2, 1, 2.0)),
     ("mtld_threshold", ParameterError, lambda: Diversity(WORDS, mtld_threshold=2.0)),
     ("mtld_min_len", ParameterError, lambda: Diversity(WORDS, mtld_min_len=-1)),
@@ -279,6 +284,54 @@ CASES = [
     ("no_lemmas", SourceError, lambda: Lemmas(PARSED)),
     ("source_type", SourceTypeError, lambda: Cohesion("Yes")),
     ("no_stats_class", ParameterError, lambda: BareComponent(spacy.blank("en"), "own_bare")),
+    (
+        "hook_result",
+        SourceTypeError,
+        lambda: hooked(Syntax, parse=lambda self, source: "Yes")(PARSED),
+    ),
+    (
+        "hook_result",
+        SourceTypeError,
+        lambda: hooked(Lexical, analyze=lambda self, source: ["a"])(TEXT, Frequencies()),
+    ),
+    (
+        "hook_result",
+        SourceTypeError,
+        lambda: hooked(Cohesion, analyze=lambda self, s: [["a"]])(PARSED),
+    ),
+    ("hook_result", SourceTypeError, lambda: hooked(Lexical, analyze=lambda self, s: None)(TEXT)),
+    (
+        "hook_result",
+        SourceTypeError,
+        lambda: hooked(Cohesion, analyze=lambda self, s: None)(PARSED),
+    ),
+    (
+        "hook_result",
+        SourceTypeError,
+        lambda: hooked(Cohesion, analyze=lambda self, s: [5])(PARSED),
+    ),
+    (
+        "hook_result",
+        SourceTypeError,
+        lambda: hooked(Phon, syllabify=lambda self, word: None)(TEXT),
+    ),
+    (
+        "fragment_outside",
+        ParameterError,
+        lambda: hooked(Layers, find=lambda self, *args: [Highlight("0", "1", "all")])(
+            TEXT, ["all"]
+        ),
+    ),
+    (
+        "hook_result",
+        SourceTypeError,
+        lambda: hooked(Layers, find=lambda self, *args: None)(TEXT, ["all"]),
+    ),
+    (
+        "hook_result",
+        SourceTypeError,
+        lambda: hooked(Layers, find=lambda self, *args: [5])(TEXT, ["all"]),
+    ),
     ("source_type", SourceTypeError, lambda: Layers(5)),
     ("no_words", SourceError, lambda: Layers("?!")),
     ("layers_type", ParameterError, lambda: Layers(TEXT, 5)),
@@ -286,6 +339,8 @@ CASES = [
     ("layer_annotations", ParameterError, lambda: Layers(TEXT, ["parsed"])),
     ("fragment_outside", ParameterError, lambda: Layers(TEXT, ["all"])),
     ("fragment_layer", ParameterError, lambda: OtherLayer(TEXT)),
+    ("hook_spans", SourceTypeError, lambda: hooked(Layers, iter_words=lambda self, t: [1])(TEXT)),
+    ("hook_spans", SourceTypeError, lambda: hooked(Layers, iter_sents=lambda self, t: 5)(TEXT)),
     ("layer_unavailable", ParameterError, lambda: Layers._select_layers(["bare"], [])),
     (
         "long_sent_word_factor",

@@ -42,6 +42,8 @@ A zero frequency in one of the corpora is replaced with 0.5 for %DIFF, Log Ratio
 | `min_freq` | int | `1` | Minimum frequency of a keyword in its own corpus |
 | `positive` | bool | `True` | Positive keywords (more frequent in the target corpus) or negative ones (more frequent in the reference) |
 | `top_n` | int | `None` | Number of keywords; `None` - all of them |
+
+The parameters and the target corpus are checked by `check_keyness_params`. A reference that is not a list of strings, a counter or a `FrequencyReference` raises `SourceTypeError`, and a negative, `nan` or infinite frequency of a counter and an empty corpus raise `SourceError`.
 <!-- --8<-- [end:keyness-parameters] -->
 
 <!-- --8<-- [start:check_keyness_params] -->
@@ -61,7 +63,7 @@ A zero frequency in one of the corpora is replaced with 0.5 for %DIFF, Log Ratio
 | `key` | callable | `None` | Key of a word of the target corpus in `counts`, such as its lemma; `None` - the word itself |
 | `keep` | callable | `None` | Whether a word of the target corpus is counted; `None` - every word |
 
-Only the words of the target that `keep` passes are counted, under their `key`, in the frequencies and in the size alike. A key missing from `counts` has the frequency `missing`, such as the least frequency of a dictionary: an upper bound, so its word may be a positive keyword but never a negative one. Negative keywords come only from the keys of `counts` that `keep` passes.
+Only the words of the target that `keep` passes are counted, under their `key`, in the frequencies and in the size alike. A key missing from `counts` has the frequency `missing`, such as the least frequency of a dictionary: an upper bound, so its word may be a positive keyword but never a negative one. Negative keywords come only from the keys of `counts` that `keep` passes. A frequency is checked as it is read, so a large dictionary is not gone through for positive keywords: one that is not a number raises `SourceTypeError`, and a negative, `nan` or infinite one `SourceError`. A `size` or a `missing` that is not a finite number or is negative raises `ParameterError`, and a `key` or a `keep` that cannot be called `SourceTypeError`.
 <!-- --8<-- [end:FrequencyReference] -->
 
 ## Result

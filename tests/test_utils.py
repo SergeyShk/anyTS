@@ -14,8 +14,9 @@ from spacy.tokens import Doc
 from anyts.components import start_sents_after_blank_lines
 from anyts.exceptions import ParameterError, SourceError, SourceTypeError
 from anyts.utils import (
-    PUNCTUATION_CATEGORIES,
+    _PUNCTUATION_CATEGORIES,
     add_tokenizer_rules,
+    check_callable,
     check_counts,
     check_integer,
     check_number,
@@ -95,7 +96,7 @@ def test_is_punctuation(token, expected):
 def test_punctuation_categories():
     categories = {unicodedata.category(chr(code)) for code in range(sys.maxunicode + 1)}
     assert {category for category in categories if category[0] in "PSM"} | {"Cf"} == (
-        PUNCTUATION_CATEGORIES
+        _PUNCTUATION_CATEGORIES
     )
 
 
@@ -301,6 +302,12 @@ def test_check_number_not_finite(value):
         check_number(value, "confidence level")
 
 
+def test_check_callable():
+    assert check_callable(str.lower, "normalization") is None
+    with pytest.raises(SourceTypeError, match=r"^The normalization must be callable, not int$"):
+        check_callable(42, "normalization")
+
+
 def test_check_words_errors(nlp):
     with pytest.raises(SourceTypeError, match=r"^The words must be strings, not Token$"):
         check_words(list(nlp("the cat")))
@@ -497,6 +504,8 @@ def test_safe_mean():
     assert safe_mean([1, 2, 4]) == 7 / 3
     assert math.isnan(safe_mean([]))
     assert safe_mean([], 0) == 0
+    assert safe_mean(iter([1, 2])) == safe_mean(np.array([1.0, 2.0])) == 1.5
+    assert safe_mean(iter([]), 0) == safe_mean(np.array([]), 0) == 0
 
 
 def test_shannon_entropy():
@@ -511,6 +520,12 @@ def test_shannon_entropy():
     counts = Counter("aab")
     counts.subtract("aa")
     assert shannon_entropy(counts) == 0.0
+
+
+@pytest.mark.parametrize("count", [-1, math.nan, math.inf])
+def test_shannon_entropy_of_bad_counts(count):
+    with pytest.raises(SourceError, match=r"^The counts must be finite and not negative, not "):
+        shannon_entropy({"a": count, "b": 2})
 
 
 def test_split_doc_units():
@@ -637,6 +652,16 @@ def test_add_tokenizer_rules_inside_a_rule_of_the_tokenizer():
     assert [token.text for token in nlp("+5 1/2")] == ["+", "5", "1", "/", "2"]
 
 
+def test_add_tokenizer_rules_inside_a_group_of_the_tokenizer():
+    # -- is an alternative inside a group of the infixes of spaCy
+    nlp = spacy.blank("en")
+    add_tokenizer_rules(nlp, infixes=["--"])
+    infixes = nlp.tokenizer.infix_finditer
+    add_tokenizer_rules(nlp, infixes=["--"])
+    assert nlp.tokenizer.infix_finditer is infixes
+    assert [token.text for token in nlp("no--5")] == ["no", "--", "5"]
+
+
 def test_add_tokenizer_rules_without_infixes():
     nlp = spacy.blank("en")
     nlp.tokenizer.infix_finditer = None
@@ -656,3 +681,36 @@ def test_add_tokenizer_rules_without_infixes():
 def test_add_tokenizer_rules_checks_the_rules(kwargs, message):
     with pytest.raises(SourceTypeError, match=message):
         add_tokenizer_rules(spacy.blank("en"), **kwargs)
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "message"),
+    [
+        (
+            {"prefixes": ["("]},
+            r"^The rule '\(' of the prefixes is not a regular expression: missing",
+        ),
+        ({"suffixes": ["(?i)ab"]}, r"^The rule '\(\?i\)ab' of the suffixes .*: global flags"),
+        ({"infixes": ["a)|(b"]}, r"^The rule 'a\)\|\(b' of the infixes .*: unbalanced"),
+    ],
+)
+def test_add_tokenizer_rules_checks_the_expressions(kwargs, message):
+    nlp = spacy.blank("en")
+    prefixes = nlp.tokenizer.prefix_search
+    with pytest.raises(ParameterError, match=message):
+        add_tokenizer_rules(nlp, **kwargs)
+    assert nlp.tokenizer.prefix_search == prefixes
+
+
+def test_find_phrases_checks_the_normalization():
+    with pytest.raises(SourceTypeError, match=r"^The normalization must be callable, not int$"):
+        find_phrases(["in", "fact"], ["in fact"], 42)
+
+
+def test_add_tokenizer_rules_of_alternatives_once():
+    nlp = spacy.blank("en")
+    add_tokenizer_rules(nlp, infixes=["~~|\\^\\^"], prefixes=["#|@"])
+    infixes, prefixes = nlp.tokenizer.infix_finditer, nlp.tokenizer.prefix_search
+    add_tokenizer_rules(nlp, infixes=["~~|\\^\\^"], prefixes=["#|@"])
+    assert nlp.tokenizer.infix_finditer is infixes
+    assert nlp.tokenizer.prefix_search is prefixes

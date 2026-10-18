@@ -24,12 +24,12 @@ A language library subclasses `CohesionStats`. By default the words and their fe
 | `load_connectors()` | class method | Dictionary of the connectors of the language, class and kind by connector; empty by default |
 | `connector_matcher()` | class method | Matcher of that dictionary, built once for a class and shared by its instances and by searches outside the statistics |
 | `connector_matcher_class` | class attribute | Class that finds the connectors with the context rules of the language; `ConnectorMatcher` by default. A matcher with other classes or kinds gives other `connectors_*` attributes, so the subclass sets its own `stats_desc` too |
-| `temporal_features` | class attribute | Features of the verbs whose repetitions make the temporal cohesion: a tuple of one or more distinct ones of `tense`, `mood` and `aspect`, checked when the class is defined; `tense` and `aspect` by default, as in Coh-Metrix |
+| `temporal_features` | class attribute | Features of the verbs whose repetitions make the temporal cohesion: a tuple of one or more distinct ones of `tense`, `mood` and `aspect` (`TEMPORAL_FEATURES`), checked when the class is defined; `tense` and `aspect` by default, as in Coh-Metrix |
 | `sents_extractor_class`, `join_hyphens` | class attributes | Sentence extractor of a `Doc` without boundaries, joining of the hyphenated words of a `Doc` |
-| `stats_desc`, `stats_headers` | class attributes | Statistics of `get_stats` with their descriptions, headers of the columns for `print_stats` |
+| `stats_desc`, `stats_headers` | class attributes | Statistics of `get_stats` with their descriptions (`COHESION_STATS_DESC` by default), headers of the columns for `print_stats` |
 | `messages` | class attribute | Messages of the errors by key; `MESSAGES` by default |
 
-The parameters of a library - its model of a string, its word extractor - go to the constructor of its subclass, which keeps them for its `analyze`.
+The parameters of a library - its model of a string, its word extractor - go to the constructor of its subclass, which keeps them for its `analyze`. An `analyze` that does not give sentences of `CohesionWord` objects raises `SourceTypeError`.
 <!-- --8<-- [end:CohesionStats-hooks] -->
 
 ## Parameters

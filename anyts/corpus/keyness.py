@@ -1,6 +1,7 @@
 from collections import Counter
 from collections.abc import Callable, Iterable, Mapping, Sequence
-from math import inf, isnan, log, log2, nan
+from math import inf, isfinite, isnan, log, log2, nan
+from numbers import Real
 from typing import Any, NamedTuple
 
 import numpy as np
@@ -8,9 +9,9 @@ from scipy.stats import chi2 as chi2_distribution
 
 from ..constants import KEYNESS_MEASURES
 from ..exceptions import ParameterError, SourceError, SourceTypeError
-from ..utils import check_counts, check_integer, check_words
+from ..utils import check_callable, check_counts, check_integer, check_number, check_words
 
-ZERO_ADJUSTMENT = 0.5
+_ZERO_ADJUSTMENT = 0.5
 
 
 class FrequencyReference(NamedTuple):
@@ -111,11 +112,14 @@ def keyness(
 
     Raises:
         SourceTypeError: If the words are not a list of strings (check_words)
-            or a counter (check_counts), or a frequency of the target corpus is
-            not a whole number
-        ParameterError: If the measure is unknown, top_n is below one or
-            min_freq is not an integer
-        SourceError: If one of the corpora is empty
+            or a counter (check_counts), a frequency of the target corpus is
+            not a whole number, or key or keep of a FrequencyReference is not
+            callable
+        ParameterError: If the measure is unknown, top_n is below one,
+            min_freq is not an integer, or the size or the frequency of a missing
+            key of a FrequencyReference is not a finite number or is negative
+        SourceError: If one of the corpora is empty or a frequency of the
+            reference is negative, nan or infinite
 
     Example:
         >>> from anyts.corpus import keyness
@@ -129,11 +133,7 @@ def keyness(
     counts_reference: Mapping[str, float]
     keep = None
     if isinstance(reference, FrequencyReference):
-        if not isinstance(reference.counts, Mapping):
-            raise SourceTypeError(
-                "The frequencies of the reference must be a mapping, "
-                f"not {type(reference.counts).__name__}"
-            )
+        _check_reference(reference)
         counts_target = _count(target, key=reference.key, keep=reference.keep)
         size_reference = float(reference.size)
         counts_reference = reference.counts
@@ -148,7 +148,7 @@ def keyness(
     size_target = float(sum(counts_target.values()))
     if not size_target or not size_reference:
         raise SourceError("The data source has no words")
-    calc = MEASURES[measure]
+    calc = _MEASURES[measure]
     rows = []
     # A negative keyword needs a frequency of its own in the reference: that of a missing key
     # is only an upper bound
@@ -157,7 +157,7 @@ def keyness(
         candidates = counts_reference if keep is None else filter(keep, counts_reference)
     for word in candidates:
         a = counts_target.get(word, 0)
-        b = float(counts_reference.get(word, missing))
+        b = _reference_frequency(counts_reference, word, missing)
         ipm_target = a / size_target * 1e6
         ipm_reference = b / size_reference * 1e6
         if ipm_target == ipm_reference or (ipm_target > ipm_reference) != positive:
@@ -193,12 +193,41 @@ def keyness(
     return keywords[:top_n] if top_n else keywords
 
 
+def _reference_frequency(counts: Mapping[str, float], word: str, missing: float) -> float:
+    """Frequency of a word in the reference, checked as it is read and not the whole dictionary"""
+    frequency: object = counts.get(word, missing)
+    if isinstance(frequency, bool) or not isinstance(frequency, Real):
+        raise SourceTypeError(f"The frequencies must be numbers, not {type(frequency).__name__}")
+    if not isfinite(frequency) or frequency < 0:
+        raise SourceError(f"The frequencies must be finite and not negative, not {frequency}")
+    return float(frequency)
+
+
 def _check_words_or_counts(words: Iterable[object]) -> None:
     """Checking the words of a corpus given as a list (check_words) or a counter (check_counts)"""
     if isinstance(words, Mapping):
         check_counts(words)
     else:
         check_words(words)
+
+
+def _check_reference(reference: FrequencyReference) -> None:
+    """Checking the fields of a reference corpus given by its frequencies"""
+    if not isinstance(reference.counts, Mapping):
+        raise SourceTypeError(
+            "The frequencies of the reference must be a mapping, "
+            f"not {type(reference.counts).__name__}"
+        )
+    for value, what in (
+        (reference.size, "size of the reference"),
+        (reference.missing, "frequency of a missing key"),
+    ):
+        check_number(value, what)
+        if value < 0:
+            raise ParameterError(f"The {what} cannot be negative")
+    for hook, what in ((reference.key, "key of a word"), (reference.keep, "filter of the words")):
+        if hook is not None:
+            check_callable(hook, what)
 
 
 def _check_target(target: Iterable[object]) -> None:
@@ -383,7 +412,7 @@ def calc_diff(a: float, b: float, c: float, d: float) -> float:
 
 
 def _adjust(a: float, b: float) -> tuple[float, float]:
-    return a or ZERO_ADJUSTMENT, b or ZERO_ADJUSTMENT
+    return a or _ZERO_ADJUSTMENT, b or _ZERO_ADJUSTMENT
 
 
 def calc_log_ratio(a: float, b: float, c: float, d: float) -> float:
@@ -488,7 +517,7 @@ def calc_odds_ratio(a: float, b: float, c: float, d: float) -> float:
     return (a / (c - a)) / (b / (d - b))
 
 
-MEASURES = {
+_MEASURES = {
     "log_likelihood": calc_log_likelihood,
     "chi2": calc_chi2,
     "diff": calc_diff,

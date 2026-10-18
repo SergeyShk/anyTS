@@ -108,7 +108,7 @@ The depth of the dependency tree: the longest path from the head of a sentence t
 ## calc_valency
 
 <!-- --8<-- [start:calc_valency] -->
-The valency of a token: the number of its dependent words, the relations `cc`, `conj` and `parataxis` left out; `calc_valency(token, join_hyphens=True)` counts a hyphenated dependent once, so `came` in `Some-one came` has one dependent and not two.
+The valency of a token: the number of its dependent words, the relations `cc`, `conj`, `parataxis` and `punct` left out (`anyts.constants.VALENCY_IGNORED_DEPS`); `calc_valency(token, join_hyphens=True)` counts a hyphenated dependent once, so `came` in `Some-one came` has one dependent and not two.
 <!-- --8<-- [end:calc_valency] -->
 
 ## calc_coordination_chains
@@ -125,7 +125,7 @@ The lengths of the coordination chains, in the order of their first words. A cha
 ## is_predicate
 
 <!-- --8<-- [start:is_predicate] -->
-`is_predicate(token, join_hyphens=False)` checks whether a word can be the predicate of its clause: a verb (`VERB`, `AUX`) or a word with a subject of its own (`nsubj`, `csubj` and their subtypes), so the nominal predicate of `he is tall` passes and a parenthetical word does not.
+`is_predicate(token, join_hyphens=False)` checks whether a word can be the predicate of its clause: a verb (`VERB`, `AUX`) or a word with a subject of its own (`nsubj`, `csubj` and their subtypes, `anyts.constants.SUBJECT_DEPS`), so the nominal predicate of `he is tall` passes and a parenthetical word does not.
 <!-- --8<-- [end:is_predicate] -->
 
 ## Noun phrases { #noun-phrases }

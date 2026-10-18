@@ -9,7 +9,7 @@ from functools import lru_cache
 from itertools import repeat
 from numbers import Integral, Real
 from re import Pattern
-from statistics import fmean
+from statistics import StatisticsError, fmean
 from string import Formatter
 from typing import TYPE_CHECKING, Any, TypeGuard
 
@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     from .extractors import SentsExtractor
 
 # Punctuation, symbols, combining marks and invisible format characters
-PUNCTUATION_CATEGORIES = frozenset(
+_PUNCTUATION_CATEGORIES = frozenset(
     ("Pc", "Pd", "Ps", "Pe", "Pi", "Pf", "Po", "Sm", "Sc", "Sk", "So", "Mn", "Mc", "Me", "Cf")
 )
 
@@ -54,10 +54,9 @@ def is_punctuation(token: str) -> bool:
         >>> is_punctuation("?!"), is_punctuation("€"), is_punctuation("no.")
         (True, True, False)
     """
-    return all(unicodedata.category(char) in PUNCTUATION_CATEGORIES for char in token)
+    return all(unicodedata.category(char) in _PUNCTUATION_CATEGORIES for char in token)
 
 
-@lru_cache(maxsize=1 << 16)
 def is_number(word: str, pattern: Pattern[str] = NUMBER_PATTERN) -> bool:
     """
     Checking whether a word is a number
@@ -75,7 +74,13 @@ def is_number(word: str, pattern: Pattern[str] = NUMBER_PATTERN) -> bool:
         >>> is_number("2020"), is_number("10%"), is_number("cat")
         (True, True, False)
     """
-    return pattern.fullmatch(word.lower()) is not None
+    return _is_number(word, pattern.pattern, pattern.flags)
+
+
+@lru_cache(maxsize=1 << 16)
+def _is_number(word: str, pattern: str, flags: int) -> bool:
+    """is_number by the text of the pattern: a compiled pattern hashes its code on every call"""
+    return re.fullmatch(pattern, word.lower(), flags) is not None
 
 
 @lru_cache(maxsize=1 << 16)
@@ -165,7 +170,8 @@ def find_phrases(
             phrases are skipped
 
     Raises:
-        SourceTypeError: If the words or the phrases are not a list of strings
+        SourceTypeError: If the words or the phrases are not a list of strings, or
+            normalize is not callable
 
     Example:
         >>> from anyts.utils import find_phrases
@@ -174,6 +180,7 @@ def find_phrases(
     """
     check_words(words)
     check_words(phrases, "phrases", ordered=False)
+    check_callable(normalize, "normalization")
     patterns = sorted(
         {pattern for phrase in phrases if (pattern := tuple(normalize(phrase).split()))},
         key=lambda pattern: (-len(pattern), pattern),
@@ -392,14 +399,12 @@ def joins_previous(token: Token) -> bool:
     if i < 2:
         return False
     doc = token.doc
-    return _joins(doc[i - 2], doc[i - 1], token)
-
-
-def _joins(word: Token, hyphen: Token, token: Token) -> bool:
-    """Whether a token continues a word through a hyphen, the rule of joins_previous"""
+    hyphen = doc[i - 1]
+    if hyphen.text != "-":
+        return False
+    word = doc[i - 2]
     return (
-        hyphen.text == "-"
-        and not word.whitespace_
+        not word.whitespace_
         and not hyphen.whitespace_
         and is_word(word)
         and is_word(token)
@@ -422,7 +427,7 @@ def iter_doc_tokens(source: Doc | Span) -> Iterator[Token]:
         generator[Token]: Token of each word
     """
     for token in source:
-        if is_word(token):
+        if not token.is_space and not is_punctuation(token.text):
             yield token
 
 
@@ -446,7 +451,7 @@ def iter_doc_units(source: Doc | Span, join_hyphens: bool = False) -> Iterator[l
     index = 0
     while index < len(tokens):
         token = tokens[index]
-        if not is_word(token):
+        if token.is_space or is_punctuation(token.text):
             index += 1
             continue
         last = index
@@ -454,7 +459,12 @@ def iter_doc_units(source: Doc | Span, join_hyphens: bool = False) -> Iterator[l
             join_hyphens
             and last + 2 < len(tokens)
             and tokens[last + 1].text == "-"
-            and _joins(tokens[last], tokens[last + 1], tokens[last + 2])
+            and not tokens[last].whitespace_
+            and not tokens[last + 1].whitespace_
+            and not tokens[last + 2].is_space
+            and not is_punctuation(tokens[last + 2].text)
+            and not tokens[last + 1].is_sent_start
+            and not tokens[last + 2].is_sent_start
         ):
             last += 2
         yield tokens[index : last + 1]
@@ -559,9 +569,10 @@ def add_tokenizer_rules(
         the tokenizer, every branch of a prefix anchored at the start and of a
         suffix at the end. An abbreviation becomes one token in
         lower case, capitalized and in upper case when the tokenizer keeps one
-        of its forms whole. A rule the tokenizer already has as an alternative
-        is not added twice; a tokenizer that is not the Tokenizer of spaCy, or
-        whose rules are not regular expressions, is left as it is
+        of its forms whole. A rule the tokenizer already has as a top-level
+        alternative is not added twice; a tokenizer that is not the Tokenizer of
+        spaCy, or whose rules are not regular expressions, is left as it is. A
+        rule sets its flags in a group, (?i:...), since it is joined to others
 
     Arguments:
         nlp (Language): Pipeline whose tokenizer gets the rules
@@ -573,6 +584,8 @@ def add_tokenizer_rules(
     Raises:
         SourceTypeError: If the rules are not lists of strings or the abbreviations
             not a collection of strings
+        ParameterError: If a rule is not a regular expression that can be joined
+            to others
 
     Example:
         >>> import spacy
@@ -589,6 +602,14 @@ def add_tokenizer_rules(
 
     for rules, what in ((prefixes, "prefixes"), (suffixes, "suffixes"), (infixes, "infixes")):
         check_words(rules, what)
+        for rule in rules:
+            try:
+                re.compile(rule)
+                re.compile(f"x|(?:{rule})")
+            except re.error as error:
+                raise ParameterError(
+                    f"The rule {rule!r} of the {what} is not a regular expression: {error}"
+                ) from None
     check_words(abbreviations, "abbreviations", ordered=False)
     tokenizer = nlp.tokenizer
     if not isinstance(tokenizer, Tokenizer):
@@ -635,10 +656,40 @@ def _extend_rules(method: object, rules: list[str]) -> Pattern[str] | None:
     pattern = getattr(getattr(method, "__self__", None), "pattern", None)
     if not isinstance(pattern, str):
         return None
-    missing = [rule for rule in rules if f"|{rule}|" not in f"|{pattern}|"]
+    branches = _branches(pattern)
+    missing = [rule for rule in rules if not _branches(rule) <= branches]
     if not missing:
         return None
     return re.compile("|".join([pattern, *missing]))
+
+
+def _branches(pattern: str) -> set[str]:
+    """Top-level alternatives of a regular expression, outside groups and classes"""
+    branches = set()
+    depth = start = 0
+    in_class = False
+    position = 0
+    while position < len(pattern):
+        char = pattern[position]
+        if char == "\\":
+            position += 1
+        elif in_class:
+            in_class = char != "]"
+        elif char == "[":
+            in_class = True
+            # A ] right after [ or [^ is a character of the class
+            position += pattern.startswith("^", position + 1)
+            position += pattern.startswith("]", position + 1)
+        elif char == "(":
+            depth += 1
+        elif char == ")":
+            depth -= 1
+        elif char == "|" and not depth:
+            branches.add(pattern[start:position])
+            start = position + 1
+        position += 1
+    branches.add(pattern[start:])
+    return branches
 
 
 def safe_divide(num: float | int, den: float | int, default: float | int = 0) -> float:
@@ -658,18 +709,21 @@ def safe_divide(num: float | int, den: float | int, default: float | int = 0) ->
     return num / den
 
 
-def safe_mean(values: Sequence[float], default: float = math.nan) -> float:
+def safe_mean(values: Iterable[float], default: float = math.nan) -> float:
     """
     Computing the mean of numbers safely
 
     Arguments:
-        values (list[float]): Numbers
+        values (iterable[float]): Numbers
         default (float): Value returned for no numbers
 
     Returns:
         float: Arithmetic mean
     """
-    return fmean(values) if values else default
+    try:
+        return fmean(values)
+    except StatisticsError:
+        return default
 
 
 def shannon_entropy(counts: Mapping[Any, int]) -> float:
@@ -683,11 +737,17 @@ def shannon_entropy(counts: Mapping[Any, int]) -> float:
         float: Entropy in bits, 0 for one value and nan for no counts; a zero count is
             left out
 
+    Raises:
+        SourceError: If a count is negative, nan or infinite
+
     Example:
         >>> from anyts.utils import shannon_entropy
         >>> shannon_entropy({"a": 2, "b": 2})
         1.0
     """
+    for count in counts.values():
+        if not math.isfinite(count) or count < 0:
+            raise SourceError(f"The counts must be finite and not negative, not {count}")
     total = sum(counts.values())
     if not total:
         return math.nan
@@ -743,6 +803,15 @@ def check_sequence(value: object, what: str = "words", ordered: bool = True) -> 
         )
     if ordered and isinstance(value, Set | Mapping):
         raise SourceTypeError(f"A list of {what} is expected, not {type(value).__name__}")
+
+
+def _sliceable(values: Any) -> Any:
+    """The values if they can be sliced, else a list of them (a deque, the values of a dict)"""
+    try:
+        values[:0]
+    except (TypeError, KeyError, IndexError):
+        return list(values)
+    return values
 
 
 def check_words(value: Iterable[object], what: str = "words", ordered: bool = True) -> None:
@@ -880,6 +949,29 @@ def check_number(value: object, what: str) -> None:
         raise ParameterError(f"The {what} must be a number, not {type(value).__name__}")
     if not math.isfinite(value):
         raise ParameterError(f"The {what} must be a finite number, not {value}")
+
+
+def check_callable(value: object, what: str) -> None:
+    """
+    Checking that an argument is a function, such as a hook passed as a parameter
+
+    Arguments:
+        value (object): Value to check
+        what (str): Name of the argument, for the message of the error
+
+    Raises:
+        SourceTypeError: If the value cannot be called
+
+    Example:
+        >>> from anyts.utils import check_callable
+        >>> check_callable(str.lower, "normalization")
+        >>> check_callable("lower", "normalization")
+        Traceback (most recent call last):
+        ...
+        anyts.exceptions.SourceTypeError: The normalization must be callable, not str
+    """
+    if not callable(value):
+        raise SourceTypeError(f"The {what} must be callable, not {type(value).__name__}")
 
 
 def merge_labels(

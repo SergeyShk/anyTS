@@ -4,7 +4,7 @@ from collections import Counter
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from math import nan
 from statistics import fmean, pstdev
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from .constants import (
     AGENT_DEPS,
@@ -21,6 +21,7 @@ from .constants import (
 from .exceptions import SourceError, SourceTypeError
 from .stats import Stats
 from .utils import (
+    check_words,
     has_feature,
     has_sents,
     is_doc,
@@ -111,7 +112,7 @@ class SyntaxStats(Stats):
     Methods:
         parse: Doc of a source
         is_clause_head: Whether a word heads a clause
-        is_subordinate_clause_head: Whether a word heads a subordinate clause
+        is_subordinate_clause_head: Whether a clause head heads a subordinate clause
         is_participle_clause: Whether a word heads a participial clause
         is_passive: Whether a word is a passive verb form
         is_agentless: Whether a passive form has no agent
@@ -128,7 +129,9 @@ class SyntaxStats(Stats):
             print_stats
 
     Raises:
-        SourceTypeError: If the source is not a Doc object (parse)
+        SourceTypeError: If the source is not a Doc object or parse does not return
+            one; when a class is defined, if its negation_words are not a collection
+            of strings
         SourceError: If the source has no dependency parse, no lemmas when
             requires_lemmas, or no words
     """
@@ -136,11 +139,25 @@ class SyntaxStats(Stats):
     join_hyphens: ClassVar[bool] = False
     requires_lemmas: ClassVar[bool] = False
     negation_words: ClassVar[frozenset[str]] = frozenset()
+
     stats_desc: ClassVar[Mapping[str, str]] = SYNTAX_STATS_DESC
+
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        super().__init_subclass__(**kwargs)
+        check_words(cls.negation_words, "negation_words", ordered=False)
 
     def __init__(self, source: Doc):
         messages = self.messages
         doc = self.parse(source)
+        if not is_doc(doc):
+            raise SourceTypeError(
+                messages["hook_result"].format(
+                    hook="parse",
+                    cls=type(self).__name__,
+                    expected="a Doc",
+                    type=type(doc).__name__,
+                )
+            )
         if not doc.has_annotation("DEP") or not has_sents(doc):
             raise SourceError(messages["no_parse"])
         if self.requires_lemmas and not doc.has_annotation("LEMMA"):
@@ -175,9 +192,10 @@ class SyntaxStats(Stats):
             length for span in spans for length in calc_coordination_chains(span, join_hyphens)
         ]
         self.n_coordination_chains = len(chains)
-        self.n_clauses = sum(1 for token in words if self.is_clause_head(token))
+        heads = [[token for token in sent if self.is_clause_head(token)] for sent in sents]
+        self.n_clauses = sum(map(len, heads))
         subordinate = [
-            sum(1 for token in sent if self.is_subordinate_clause_head(token)) for sent in sents
+            sum(1 for token in sent if self.is_subordinate_clause_head(token)) for sent in heads
         ]
         self.n_subordinate_clauses = sum(subordinate)
         self.n_complex_sents = sum(1 for count in subordinate if count)
@@ -694,27 +712,20 @@ def calc_tree_depth(tokens: Iterable[Token], join_hyphens: bool = False) -> int:
     Returns:
         int: Depth of the tree
     """
-    if join_hyphens:
-        parents = _unit_parents(_word_units(tokens, True))
-        depths: dict[int, int] = {}
-        for start in range(len(parents)):
-            chain: list[int] = []
-            node: int | None = start
-            # A broken parse can link the parts of two words in a loop
-            while node is not None and node not in depths and node not in chain:
-                chain.append(node)
-                node = parents[node]
-            depth = depths[node] if node is not None and node in depths else -1
-            for member in reversed(chain):
-                depth += 1
-                depths[member] = depth
-        return max(depths.values(), default=0)
-    words = get_words(tokens)
-    ids = {token.i for token in words}
-    return max(
-        (sum(1 for ancestor in token.ancestors if ancestor.i in ids) for token in words),
-        default=0,
-    )
+    parents = _unit_parents(_word_units(tokens, join_hyphens))
+    depths: dict[int, int] = {}
+    for start in range(len(parents)):
+        chain: list[int] = []
+        node: int | None = start
+        # A broken parse can link words in a loop
+        while node is not None and node not in depths and node not in chain:
+            chain.append(node)
+            node = parents[node]
+        depth = depths[node] if node is not None and node in depths else -1
+        for member in reversed(chain):
+            depth += 1
+            depths[member] = depth
+    return max(depths.values(), default=0)
 
 
 def _unit_parents(units: Sequence[Sequence[Token]]) -> list[int | None]:
@@ -954,8 +965,10 @@ def calc_modifier_chains(
         )
     chains = []
     for token in get_words(tokens, join_hyphens):
+        if not is_modifier(token):
+            continue
         parent = _chain_parent(token, join_hyphens)
-        if is_modifier(token) and not (parent is not None and is_modifier(parent)):
+        if not (parent is not None and is_modifier(parent)):
             length = _chain_len(token, is_modifier, join_hyphens)
             if length >= 2:
                 chains.append(length)

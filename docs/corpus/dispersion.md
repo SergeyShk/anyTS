@@ -39,12 +39,14 @@ The module `anyts.corpus.dispersion` gives them as the functions `calc_dp`, `cal
 | `parts` | int/list[int] | `10` | Number of parts (from 2 to the number of words) or sizes of the parts |
 | `word` | str | `None` | Word whose dispersion is needed; `None` - every word |
 | `min_freq` | int | `1` | Minimum frequency of a word |
+
+Words that are not a list of strings raise `SourceTypeError`, and no words `SourceError`. A `parts` that is neither an integer from 2 to the number of words nor two or more positive integers adding up to it, a `word` that is not a string and a `min_freq` that is not an integer raise `ParameterError`.
 <!-- --8<-- [end:dispersion-parameters] -->
 
 ## Result
 
 <!-- --8<-- [start:Dispersion] -->
-A list of `Dispersion` named tuples by descending frequency: `word`, `freq` and the six measures of the table; `pd.DataFrame(result)` gives a table.
+A list of `Dispersion` named tuples by descending frequency: `word`, `freq`, `dp`, `dp_norm`, `juilland_d`, `carroll_d2`, `rosengren_s` and `kl_divergence`; `pd.DataFrame(result)` gives a table.
 <!-- --8<-- [end:Dispersion] -->
 
 ## Example

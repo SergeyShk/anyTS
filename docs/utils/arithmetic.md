@@ -20,18 +20,18 @@ Divides two numbers and returns `default` for a zero denominator.
 ## safe_mean
 
 <!-- --8<-- [start:safe_mean] -->
-The arithmetic mean of numbers, `default` for no numbers.
+The arithmetic mean of numbers, `default` for no numbers; the numbers may come from an iterator or an array.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
-| `values` | list[float] | `-` | Numbers |
+| `values` | Iterable[float] | `-` | Numbers |
 | `default` | float | `nan` | Value returned for no numbers |
 <!-- --8<-- [end:safe_mean] -->
 
 ## shannon_entropy
 
 <!-- --8<-- [start:shannon_entropy] -->
-The Shannon entropy in bits of a distribution given by the count of every value, such as a `Counter`: $-\sum p_i \log_2 p_i$ with $p_i$ the share of a value; 0 for one value, `nan` for no counts; a zero count is left out, as $0 \log_2 0 = 0$.
+The Shannon entropy in bits of a distribution given by the count of every value, such as a `Counter`: $-\sum p_i \log_2 p_i$ with $p_i$ the share of a value; 0 for one value, `nan` for no counts; a zero count is left out, as $0 \log_2 0 = 0$, and a negative, `nan` or infinite one raises `SourceError`.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |

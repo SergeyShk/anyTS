@@ -1,6 +1,8 @@
 from math import isnan, sqrt
 from typing import ClassVar
 
+import numpy as np
+import pandas as pd
 import pytest
 import spacy
 
@@ -306,3 +308,23 @@ def test_phrase_density_normalize():
     assert calc_phrase_density(words, ["best endeavor"]) == 0.0
     fold = Folded("x").normalize
     assert calc_phrase_density(words, ["best endeavor"], normalize=fold) == 50.0
+
+
+def test_functions_check_their_hooks():
+    words = ["the", "cat", "and", "the", "dog"]
+    calls = [
+        lambda: calc_water(words, is_water_word=42),
+        lambda: calc_water(words, ["the"], normalize=42),
+        lambda: find_nausea_words(words, is_stopword=42),
+        lambda: calc_academic_nausea(words, is_stopword=42),
+        lambda: calc_phrase_density(words, ["the cat"], expand=42),
+        lambda: calc_phrase_density(words, ["the cat"], normalize=42),
+    ]
+    for call in calls:
+        with pytest.raises(SourceTypeError, match=r" must be callable, not int$"):
+            call()
+
+
+def test_classic_nausea_of_an_array():
+    assert calc_classic_nausea(np.array(["a", "b", "a"])) == calc_classic_nausea(["a", "b", "a"])
+    assert calc_classic_nausea(pd.Series([], dtype=object)) == 0.0

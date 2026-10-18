@@ -10,6 +10,7 @@ from .exceptions import ParameterError, SourceError, SourceTypeError
 from .extractors import WordsExtractor
 from .stats import Stats
 from .utils import (
+    check_callable,
     check_integer,
     check_words,
     find_phrases,
@@ -437,7 +438,7 @@ def calc_classic_nausea(text: Sequence[str]) -> float:
         SourceTypeError: If the words are not a list of strings
     """
     check_words(text)
-    if not text:
+    if not len(text):
         return 0.0
     return sqrt(max(Counter(text).values()))
 
@@ -472,7 +473,8 @@ def find_nausea_words(
         dict[str, int]: Occurrences of every word
 
     Raises:
-        SourceTypeError: If the words or the stopwords are not a list of strings
+        SourceTypeError: If the words or the stopwords are not a list of strings, or
+            is_stopword or normalize is not callable
         ParameterError: If top_n is not an integer or is below one
 
     Example:
@@ -482,7 +484,7 @@ def find_nausea_words(
     """
     check_words(text)
     check_params(top_n, messages=messages)
-    stops = _stop_flags(text, stopwords, is_stopword, normalize)
+    stops = _stop_flags(text, stopwords, is_stopword, normalize, "check of a stopword")
     significant = [word for word, stop in zip(text, stops, strict=True) if not stop]
     return dict(Counter(significant).most_common(top_n))
 
@@ -492,8 +494,12 @@ def _stop_flags(
     stopwords: Collection[str] | None,
     is_stopword: Callable[[str], bool] | None,
     normalize: Callable[[str], str],
+    what: str,
 ) -> list[bool]:
     """Whether every word is a stopword: of the list, by its normalized form, or of the predicate"""
+    check_callable(normalize, "normalization")
+    if is_stopword is not None:
+        check_callable(is_stopword, what)
     if stopwords is not None:
         check_words(stopwords, "stopwords", ordered=False)
         stopwords_set = {normalize(word) for word in stopwords}
@@ -534,7 +540,8 @@ def calc_academic_nausea(
         float: Value of the nausea in percent
 
     Raises:
-        SourceTypeError: If the words or the stopwords are not a list of strings
+        SourceTypeError: If the words or the stopwords are not a list of strings, or
+            is_stopword or normalize is not callable
         ParameterError: If top_n is not an integer or is below one
     """
     found = find_nausea_words(
@@ -571,11 +578,13 @@ def calc_water(
         float: Value of the water content in percent
 
     Raises:
-        SourceTypeError: If the words or the stopwords are not a list of strings
+        SourceTypeError: If the words or the stopwords are not a list of strings, or
+            is_water_word or normalize is not callable
     """
     check_words(text)
     return safe_divide(
-        100 * sum(_stop_flags(text, stopwords, is_water_word, normalize)), len(text)
+        100 * sum(_stop_flags(text, stopwords, is_water_word, normalize, "check of a water word")),
+        len(text),
     )
 
 
@@ -719,9 +728,12 @@ def calc_phrase_density(
         float: Occurrences per 100 words
 
     Raises:
-        SourceTypeError: If the words or the phrases are not a list of strings
+        SourceTypeError: If the words or the phrases are not a list of strings, or
+            expand or normalize is not callable
     """
     check_words(text)
     check_words(phrases, "phrases", ordered=False)
+    if expand is not None:
+        check_callable(expand, "expansion of the phrases")
     variants = expand(text, phrases) if expand is not None else phrases
     return safe_divide(len(find_phrases(text, variants, normalize)), len(text)) * 100

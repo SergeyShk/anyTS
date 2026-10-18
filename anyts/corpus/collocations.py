@@ -5,7 +5,7 @@ from typing import NamedTuple
 
 from ..constants import COLLOCATION_MEASURES
 from ..exceptions import ParameterError, SourceError
-from ..utils import check_integer, check_words
+from ..utils import _sliceable, check_integer, check_words
 
 
 class Collocation(NamedTuple):
@@ -92,7 +92,8 @@ def collocations(
     check_words(words)
     if not len(words):
         raise SourceError("The data source has no words")
-    calc = MEASURES[measure]
+    words = _sliceable(words)
+    calc = _MEASURES[measure]
     n_words = len(words)
     frequencies = Counter(words)
     pairs: Counter[tuple[str, str]] = Counter()
@@ -305,7 +306,7 @@ def calc_min_sensitivity(freq_a: int, freq_b: int, freq_ab: float, n: int) -> fl
     return min(freq_ab / freq_a, freq_ab / freq_b)
 
 
-MEASURES = {
+_MEASURES = {
     "mi": calc_mi,
     "mi3": calc_mi3,
     "t_score": calc_t_score,

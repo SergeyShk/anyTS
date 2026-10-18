@@ -22,22 +22,22 @@ A language library subclasses `ReadabilityStats`:
 | :--: | :--: | :---------: |
 | `basic_stats_class` | class attribute | Its subclass of `BasicStats` for a string or a `Doc`; without it the source must be a `BasicStats` object |
 | `presets` | class attribute | Coefficients of the formulas by preset; a formula missing from a preset takes the defaults of its function |
-| `grade_stats` | class attribute | Grade formulas of the consensus grade |
-| `stats_desc`, `stats_headers` | class attributes | Metrics of `get_stats` with their descriptions, headers of the columns for `print_stats` |
-| `smog_complex_syl_factor` | class attribute | Minimum number of syllables in a polysyllabic word of SMOG and Gunning fog |
-| `lix_long_word_letter_factor` | class attribute | Minimum number of letters in a long word of LIX and RIX |
+| `grade_stats` | class attribute | Grade formulas of the consensus grade; `anyts.constants.READABILITY_GRADE_STATS` by default |
+| `stats_desc`, `stats_headers` | class attributes | Metrics of `get_stats` with their descriptions (`READABILITY_STATS_DESC` by default), headers of the columns for `print_stats` |
+| `smog_complex_syl_factor` | class attribute | Minimum number of syllables in a polysyllabic word of SMOG and Gunning fog; `SMOG_COMPLEX_SYL_FACTOR` by default |
+| `lix_long_word_letter_factor` | class attribute | Minimum number of letters in a long word of LIX and RIX; `LIX_LONG_WORD_LETTER_FACTOR` by default |
 | `grade_age_levels`, `postgraduate_level` | class attributes | School stages and ages of `describe_grade` |
 | `level_scales` | class attribute | Interpretation scales by metric, as lower bounds and their bands |
 | `preset_level_scales` | class attribute | Interpretation scales by preset and metric, in place of `level_scales` for the preset |
 | `level_scale(stat)` | method | Interpretation scale of a metric for `describe_level` and `describe`; that of `preset_level_scales`, else of `level_scales` by default |
 | `grade_scales` | class attribute | Scales of a metric in years of schooling for `describe`, as lower bounds and grades; a scale of bands comes first, so a metric read by years of schooling stays out of `level_scales` and `preset_level_scales` |
-| `reading_speed`, `reading_speed_norms` | class attributes | Reading speed of `reading_time` and the speeds of the norms, words per minute |
+| `reading_speed`, `reading_speed_norms` | class attributes | Reading speed of `reading_time` and the speeds of the norms, words per minute; `READING_SPEED_WPM` and `READING_SPEED_NORMS` by default |
 | `reading_ease_grades` | class attribute | Scale of the reading ease in years of schooling for the consensus grade, as lower bounds and grades, the lowest band open below |
 | `preset_reading_ease_grades` | class attribute | Scales of `reading_ease_grades` by preset, in its place for the preset |
 | `reading_ease_to_grade(flesch_reading_easy)` | method | Years of schooling for the reading ease in the consensus grade; the band of the scale of the preset in `preset_reading_ease_grades`, else of `reading_ease_grades` by default |
 | `messages` | class attribute | Messages of the errors by key; `MESSAGES` by default |
 
-A formula of the library is a property of the subclass named in `stats_desc`, and in `grade_stats` when it gives years of schooling; its coefficients may live in the presets under its name. The preset is a parameter: a library sets its own default in its `__init__` and passes it on. A preset unknown to `presets` among the keys of `preset_level_scales` or `preset_reading_ease_grades` raises `ParameterError` when the class is defined.
+A formula of the library is a property of the subclass named in `stats_desc`, and in `grade_stats` when it gives years of schooling; its coefficients may live in the presets under its name. The preset is a parameter: a library sets its own default in its `__init__` and passes it on. When the class is defined, `ParameterError` is raised by a preset unknown to `presets` among the keys of `preset_level_scales` or `preset_reading_ease_grades`, by a scale of them, of `grade_scales` or of `reading_ease_grades` that is not one of `scale_level` with finite grades, by `grade_age_levels` that are not quadruples of the first and the last year, the stage and the age in ascending order of the years, and by a `postgraduate_level` that is not a pair of strings.
 <!-- --8<-- [end:ReadabilityStats-hooks] -->
 
 The core defaults are the original English formulas: the preset `original` of `anyts.constants.READABILITY_PRESETS`, the grade formulas Flesch-Kincaid, Coleman-Liau, ARI, SMOG and Gunning fog, polysyllabic words of three syllables and long words of seven letters, the school stages of the United States, the scales of the reading ease, LIX and RIX, the years of schooling of the reading ease of `text_standard` of textstat (`READING_EASE_GRADES`, 13 below 30), and the reading speed of 238 words per minute with the norm `adult` - 183 words per minute aloud and 238 silently (Brysbaert, 2019).

@@ -22,6 +22,8 @@ A class of statistics subclasses `Stats`:
 | `level_scales` | class attribute | Interpretation scales of `describe` by statistic, as lower bounds and their bands in descending order; none by default |
 | `level_scale(stat)` | method | Interpretation scale of a statistic; `level_scales` by default, overridden when the scale depends on the parameters of the object |
 | `messages` | class attribute | Messages of the errors by key; `MESSAGES` by default, checked when the class is defined |
+
+A scale of `level_scales` that is not pairs of a finite lower bound and a band with the bounds descending raises `ParameterError` when the class is defined.
 <!-- --8<-- [end:Stats-hooks] -->
 
 ## Methods

@@ -26,6 +26,8 @@ The default word tokenizer for `within_words` is the method `tokenize(text)`, wh
 | `lowercase` | bool | `False` | Convert the text to lower case |
 | `within_words` | bool | `False` | Take N-grams only inside words |
 | `tokenizer` | Pattern/Callable | `None` | Word tokenizer for `within_words` or a regular expression; by default the `tokenize` method |
+
+An `n` that is not an integer of at least one raises `ParameterError`.
 <!-- --8<-- [end:CharNgramsExtractor-parameters] -->
 
 ## Methods
@@ -38,6 +40,8 @@ Extracts N-grams from a text.
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
 | `text` | str | `-` | Text string |
+
+A text that is not a string raises `SourceTypeError`, and so does, with `within_words`, a tokenizer that cannot be called or does not return strings.
 <!-- --8<-- [end:CharNgramsExtractor-extract] -->
 
 !!! example "Example"
@@ -77,7 +81,7 @@ N-grams inside words only:
 ### get_most_common
 
 <!-- --8<-- [start:CharNgramsExtractor-get_most_common] -->
-Returns the top N-grams of the text as a list of (N-gram, frequency) pairs, the most frequent first.
+Returns the top N-grams of the text as a list of (N-gram, frequency) pairs, the most frequent first; a number that is not an integer of at least one raises `ParameterError`.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |

@@ -480,6 +480,10 @@ def test_sentence_rhythm():
     assert sentence_rhythm(np.array([4, 8, 2, 7])) == rhythm
 
 
+def test_sentence_rhythm_of_the_values_of_a_dict():
+    assert sentence_rhythm({"a": 4, "b": 8, "c": 2}.values()) == sentence_rhythm([4, 8, 2])
+
+
 @pytest.mark.parametrize("lengths", [[4, 2.5], ["4"], "48"])
 def test_sentence_rhythm_errors(lengths):
     with pytest.raises(SourceTypeError):
@@ -525,3 +529,11 @@ def test_sentence_rhythm_of_bools_and_negative_lengths():
         sentence_rhythm([True, False, True])
     with pytest.raises(ParameterError, match="cannot be negative"):
         sentence_rhythm([-3, 5, -2])
+
+
+@pytest.mark.parametrize(
+    "tokenize", [str.split, lambda text: [(3, 1, "a")], lambda text: [(0, 99, "a")]]
+)
+def test_split_windows_checks_the_words_of_its_tokenizer(tokenize):
+    with pytest.raises(SourceTypeError, match=r"^The tokenizer must "):
+        split_windows("one two three", 2, tokenize=tokenize)

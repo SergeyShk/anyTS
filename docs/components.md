@@ -28,7 +28,7 @@ A language library subclasses `StatsComponent` for every class of its statistics
 ## Names { #names }
 
 <!-- --8<-- [start:StatsComponent-names] -->
-The name of the pipe is the name of the extension: `nlp.add_pipe(factory, name="basic")` puts the statistics into `doc._.basic`. Without `name` both take the name of the factory. The extension follows the pipe when the pipeline renames it (`nlp.rename_pipe`), and a name taken by an extension of another package raises `ParameterError` instead of replacing it. A component taken from another pipeline (`add_pipe(name, source=other)`) is the same object in both, so under a new name it writes to that extension in the other pipeline too; a separate component comes from the factory, `add_pipe(factory, name=...)`. The same component can be added twice under different names, with different parameters. A document with no words - an empty string, whitespace, punctuation alone - passes through a component untouched, its extension left at `None`.
+The name of the pipe is the name of the extension: `nlp.add_pipe(factory, name="basic")` puts the statistics into `doc._.basic`. Without `name` both take the name of the factory. The extension follows the pipe when the pipeline renames it (`nlp.rename_pipe`). A name taken by an extension of another package raises `ParameterError` instead of replacing it: at `add_pipe`, or at the first document after `rename_pipe`, which renames the pipe before the component learns its name. A component taken from another pipeline (`add_pipe(name, source=other)`) is the same object in both, so under a new name it writes to that extension in the other pipeline too; a separate component comes from the factory, `add_pipe(factory, name=...)`. The same component can be added twice under different names, with different parameters. A document with no words - an empty string, whitespace, punctuation alone - passes through a component untouched, its extension left at `None`.
 <!-- --8<-- [end:StatsComponent-names] -->
 
 <!-- --8<-- [start:StatsComponent-serialization] -->
@@ -138,14 +138,14 @@ With `preset` left at `None` the config of a saved pipeline holds no preset, and
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
 | `stopwords` | list[str] | `None` | Stopwords of the water content; those of the class if `None` |
-| `top_n` | int | `10` | Number of the most frequent words of the academic nausea and of the naturalness by Zipf's law |
+| `top_n` | int | `10` | Number of the most frequent words of the academic nausea and of the naturalness by Zipf's law (`NAUSEA_TOP_N`) |
 | `nausea_stopwords` | list[str] | `None` | Words left out of the most frequent words of the academic nausea; those of the class if `None` |
 
 Stopwords that are not a list of strings raise `SourceTypeError`, a `top_n` that is not an integer of at least one `ParameterError`.
 <!-- --8<-- [end:StyleStatsComponent] -->
 
 <!-- --8<-- [start:PhonStatsComponent] -->
-`PhonStatsComponent` puts the phonetic statistics into the extension; `window_len` (3 by default) is the window in words of the alliteration and the assonance, and one that is not an integer of at least 2 raises `ParameterError`.
+`PhonStatsComponent` puts the phonetic statistics into the extension; `window_len` (by default `PHON_WINDOW_LEN`, 3) is the window in words of the alliteration and the assonance, and one that is not an integer of at least 2 raises `ParameterError`.
 <!-- --8<-- [end:PhonStatsComponent] -->
 
 <!-- --8<-- [start:SyntaxStatsComponent] -->

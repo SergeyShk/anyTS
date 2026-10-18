@@ -27,7 +27,7 @@ The core has no layers of its own: a language library subclasses `HighlightedTex
 | `annotation_names` | class attribute | Names of the annotations in the message of a layer a source does not allow, `dict[str, str]`; English by default |
 | `messages` | class attribute | Messages of the errors by key; `MESSAGES` by default |
 
-The sentences of a `Doc` come from its boundaries, or from `iter_sents` over its text when it has none or partial ones (`has_sents`). `iter_sents` gets the parts of a text between blank lines one by one, so a blank line always ends a sentence; a sentence holds the words of `doc_words` or `iter_words` that start in it. `find` runs in `__init__`: a subclass stores its own parameters, checked by `check_params`, before calling the `__init__` of the base, and may find its layers with the finders of the layers. A fragment of another layer or one outside the text raises `ParameterError`.
+The sentences of a `Doc` come from its boundaries, or from `iter_sents` over its text when it has none or partial ones (`has_sents`). `iter_sents` gets the parts of a text between blank lines one by one, so a blank line always ends a sentence; a sentence holds the words of `doc_words` or `iter_words` that start in it. `find` runs in `__init__`: a subclass stores its own parameters, checked by `check_params`, before calling the `__init__` of the base, and may find its layers with the finders of the layers. A fragment of another layer, an empty one or one outside the text raises `ParameterError`; a `find` that does not return `Highlight` objects, and an `iter_words` or an `iter_sents` whose triples are not ascending integer bounds inside the text with the text of each, `SourceTypeError`.
 <!-- --8<-- [end:HighlightedText-hooks] -->
 
 In the core the layers are empty and `css_prefix` is `anyts`.
@@ -114,15 +114,15 @@ The class method `css()` returns the styles `to_html` adds: the container, the l
 ## Finders of the layers { #finders }
 
 <!-- --8<-- [start:highlight-finders] -->
-The layers the languages share are found by functions that take the language as parameters: the notes of the fragments (callables where they read a number, so a language writes its plural forms; English by default), the counts of syllables, the normalized forms of the words, the stems, the matcher of the connectors. A subclass calls them from its `find`.
+The layers the languages share are found by functions that take the language as parameters: the notes of the fragments (callables where they read a number, so a language writes its plural forms; English by default), the counts of syllables, the normalized forms of the words, the stems, the matcher of the connectors. A subclass calls them from its `find`. A value that cannot be called for a parameter that takes a function, such as `count_syllables`, `normalize` or `stem`, raises `SourceTypeError`.
 <!-- --8<-- [end:highlight-finders] -->
 
 <!-- --8<-- [start:find_long_sents] -->
-`find_long_sents(sents, long_sent_word_factor, note)` - the layer `long_sents`: the sentences of that number of words or more, the note by their number of words.
+`find_long_sents(sents, long_sent_word_factor, note)` - the layer `long_sents`: the sentences of that number of words or more, the note by their number of words. A `long_sent_word_factor` that is not an integer of at least one raises `ParameterError`.
 <!-- --8<-- [end:find_long_sents] -->
 
 <!-- --8<-- [start:find_complex_words] -->
-`find_complex_words(words, complex_syl_factor, count_syllables, note)` - the layer `complex_words`: the words of that number of syllables of `count_syllables` or more, the note by their number of syllables.
+`find_complex_words(words, complex_syl_factor, count_syllables, note)` - the layer `complex_words`: the words of that number of syllables of `count_syllables` or more, the note by their number of syllables. A `complex_syl_factor` that is not an integer of at least one raises `ParameterError`.
 <!-- --8<-- [end:find_complex_words] -->
 
 <!-- --8<-- [start:find_words] -->
@@ -130,7 +130,7 @@ The layers the languages share are found by functions that take the language as 
 <!-- --8<-- [end:find_words] -->
 
 <!-- --8<-- [start:find_phrase_highlights] -->
-`find_phrase_highlights(words, phrases, layer, note, normalize)` - a layer of the phrases of a list, such as compound prepositions, clichés or parentheticals. The phrases are matched by the normalized forms of their words, each normalized alone as in the text (`find_phrases`). A mapping gives their variants - contractions, forms of verbs - with the phrase each stands for; of the variants that normalize alike the first wins. A set of phrases is read in order (`in_order`). A fragment spans the phrase in the text; its note reads the phrase of the list, in quotes by default.
+`find_phrase_highlights(words, phrases, layer, note, normalize)` - a layer of the phrases of a list, such as compound prepositions, clichés or parentheticals. The phrases are matched by the normalized forms of their words, each normalized alone as in the text (`find_phrases`). A mapping gives their variants - contractions, forms of verbs - with the phrase each stands for; of the variants that normalize alike the first wins. A set of phrases is read in order (`in_order`). A fragment spans the phrase in the text; its note reads the phrase of the list, in quotes by default. Phrases that are not a collection of strings or a mapping of strings raise `SourceTypeError`.
 <!-- --8<-- [end:find_phrase_highlights] -->
 
 <!-- --8<-- [start:find_connector_highlights] -->
@@ -142,11 +142,11 @@ The layers the languages share are found by functions that take the language as 
 <!-- --8<-- [end:find_split_predicate_highlights] -->
 
 <!-- --8<-- [start:calc_alliteration_runs] -->
-`calc_alliteration_runs(words, frequencies, threshold, stem, is_transparent)` - the runs of two or more neighbouring words with a consonant of `frequencies` in the stem of each (the stem of a language leaves out the endings that repeat by agreement) and a probability below the threshold (`anyts.constants.ALLITERATION_THRESHOLD`, 0.001). The probability under an independent spread of the consonants is the product over the words of $1 - (1 - f)^n$, $f$ the frequency of the consonant and $n$ the length of the stem. A transparent word - by default one shorter than `ALLITERATION_MIN_WORD_LEN` (3) letters, a stopword for a language - neither breaks nor continues a run; the words are taken in lower case.
+`calc_alliteration_runs(words, frequencies, threshold, stem, is_transparent)` - the runs of two or more neighbouring words with a consonant of `frequencies` in the stem of each (the stem of a language leaves out the endings that repeat by agreement) and a probability below the threshold (`anyts.constants.ALLITERATION_THRESHOLD`, 0.001). The probability under an independent spread of the consonants is the product over the words of $1 - (1 - f)^n$, $f$ the frequency of the consonant and $n$ the length of the stem. A transparent word - by default one shorter than `ALLITERATION_MIN_WORD_LEN` (3) letters, a stopword for a language - neither breaks nor continues a run; the words are taken in lower case. Words that are not a list of strings and frequencies that are not a mapping of strings to numbers raise `SourceTypeError`, and a frequency outside [0, 1] or a threshold outside (0, 1] `ParameterError`.
 <!-- --8<-- [end:calc_alliteration_runs] -->
 
 <!-- --8<-- [start:find_alliteration] -->
-`find_alliteration(words, sents, frequencies, threshold, stem, is_transparent, note)` - the layer `alliteration`: the runs of `calc_alliteration_runs` inside every sentence, in the whole text when the sentences are `None`, the note by the consonant.
+`find_alliteration(words, sents, frequencies, threshold, stem, is_transparent, note)` - the layer `alliteration`: the runs of `calc_alliteration_runs` inside every sentence, in the whole text when the sentences are `None`, the note by the consonant. The frequencies and the threshold raise the errors of `calc_alliteration_runs`.
 <!-- --8<-- [end:find_alliteration] -->
 
 <!-- --8<-- [start:HighlightedText-check_params] -->

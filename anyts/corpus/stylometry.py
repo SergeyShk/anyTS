@@ -9,9 +9,9 @@ from scipy.spatial.distance import cdist, jensenshannon, pdist, squareform
 
 from ..constants import DELTA_VARIANTS
 from ..exceptions import ParameterError, SourceError, SourceTypeError
-from ..utils import check_integer, check_number, check_sequence, check_words
+from ..utils import _sliceable, check_integer, check_number, check_sequence, check_words
 
-ZERO_SEGMENTS = 0.5
+_ZERO_SEGMENTS = 0.5
 
 
 class ZetaScore(NamedTuple):
@@ -397,8 +397,8 @@ def zeta(
         dp_target = presence_target.get(word, 0) / n_target
         dp_comparison = presence_comparison.get(word, 0) / n_comparison
         log_zeta = log2(
-            (dp_target or ZERO_SEGMENTS / n_target)
-            / (dp_comparison or ZERO_SEGMENTS / n_comparison)
+            (dp_target or _ZERO_SEGMENTS / n_target)
+            / (dp_comparison or _ZERO_SEGMENTS / n_comparison)
         )
         scores.append(
             ZetaScore(word, dp_target, dp_comparison, dp_target - dp_comparison, log_zeta)
@@ -420,7 +420,8 @@ def _segment_presence(
         if not len(text):
             continue
         for segment in np.array_split(
-            np.asarray(text, dtype=object), max(1, floor(len(text) / segment_size + 0.5))
+            np.asarray(_sliceable(text), dtype=object),
+            max(1, floor(len(text) / segment_size + 0.5)),
         ):
             presence.update(set(segment.tolist()))
             n_segments += 1

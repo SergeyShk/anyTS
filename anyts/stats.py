@@ -1,4 +1,5 @@
 from collections.abc import Iterable, Mapping
+from itertools import pairwise
 from math import isfinite
 from numbers import Real
 from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
@@ -37,6 +38,11 @@ class Stats:
             of describe by statistic, as lower bounds and their bands
         messages (dict[str, str]): Messages of the errors by key (MESSAGES)
 
+    Raises:
+        ParameterError: When a class is defined, if its messages are incomplete or
+            its scales are not pairs of a finite lower bound and a band with the
+            bounds descending
+
     Example:
         >>> from anyts.stats import Stats
         >>> class TextSize(Stats):
@@ -61,6 +67,7 @@ class Stats:
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
         check_messages(cls.messages)
+        _check_scales(cls.level_scales, f"level_scales of {cls.__name__}")
 
     def stat_names(self) -> tuple[str, ...]:
         """
@@ -192,6 +199,34 @@ def _format(value: Any) -> str:
     return f"{value:.2f}" if isinstance(value, float) else str(value)
 
 
+def _check_scales(scales: object, what: str) -> None:
+    """Checking the scales of the statistics of a class by their names"""
+    if not isinstance(scales, Mapping):
+        raise ParameterError(f"The {what} must be a mapping of a statistic to its scale")
+    for stat, scale in scales.items():
+        _check_scale(scale, f"scale of {stat} in the {what}")
+
+
+def _check_scale(
+    scale: Iterable[tuple[float, Band]], what: str = "scale"
+) -> list[tuple[float, Band]]:
+    """Bands of a scale, checked to be pairs of a finite lower bound and a band, bounds descending"""
+    try:
+        bands = [(threshold, band) for threshold, band in scale]
+    except (TypeError, ValueError):
+        raise ParameterError(
+            f"The {what} must be a list of pairs of a lower bound and a band"
+        ) from None
+    if not bands:
+        raise ParameterError(f"The {what} is empty")
+    for threshold, _ in bands:
+        check_number(threshold, "lower bound of a band")
+    bounds = [threshold for threshold, _ in bands]
+    if any(lower >= upper for upper, lower in pairwise(bounds)):
+        raise ParameterError(f"The lower bounds of the {what} must descend, not {bounds}")
+    return bands
+
+
 def scale_level(value: float, scale: Iterable[tuple[float, Band]]) -> Band:
     """
     Getting the band of a scale for a value
@@ -208,8 +243,9 @@ def scale_level(value: float, scale: Iterable[tuple[float, Band]]) -> Band:
         Any: Band of the scale
 
     Raises:
-        ParameterError: If the value is not a finite number, or the scale is empty or
-            not a list of pairs of a finite lower bound and a band
+        ParameterError: If the value is not a finite number, or the scale is empty,
+            not a list of pairs of a finite lower bound and a band, or its bounds do
+            not descend
 
     Example:
         >>> from anyts.constants import READING_EASE_LEVELS
@@ -218,16 +254,7 @@ def scale_level(value: float, scale: Iterable[tuple[float, Band]]) -> Band:
         ('college', 'professional')
     """
     check_number(value, "value")
-    try:
-        bands = [(threshold, band) for threshold, band in scale]
-    except (TypeError, ValueError):
-        raise ParameterError(
-            "The scale must be a list of pairs of a lower bound and a band"
-        ) from None
-    if not bands:
-        raise ParameterError("The scale is empty")
-    for threshold, _ in bands:
-        check_number(threshold, "lower bound of a band")
+    bands = _check_scale(scale)
     for threshold, band in bands:
         if value >= threshold:
             return band

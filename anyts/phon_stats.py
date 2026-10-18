@@ -100,8 +100,10 @@ class PhonStats(Stats, metaclass=ABCMeta):
             print_stats
 
     Raises:
-        SourceTypeError: If the source is neither a string nor a Doc object or the
-            extractor is of another type
+        SourceTypeError: If the source is neither a string nor a Doc object, the
+            extractor is of another type, or syllabify or transcribe does not return
+            strings; when a class is defined, if its classes of sounds are not
+            collections of strings
         SourceError: If the source has no words
         ParameterError: If the window is not an integer or is below 2; when a class is
             defined, if its classes of sounds or skipped overlap
@@ -120,9 +122,11 @@ class PhonStats(Stats, metaclass=ABCMeta):
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
         classes = ("vowels", "sonorants", "voiced", "voiceless", "skipped")
+        for name in (*classes, "glides"):
+            check_words(getattr(cls, name), name, ordered=False)
         for index, first in enumerate(classes):
             for second in classes[index + 1 :]:
-                if shared := getattr(cls, first) & getattr(cls, second):
+                if shared := set(getattr(cls, first)) & set(getattr(cls, second)):
                     raise ParameterError(
                         cls.messages["phon_classes"].format(
                             first=first, second=second, cls=cls.__name__, sounds=sorted(shared)
@@ -152,25 +156,35 @@ class PhonStats(Stats, metaclass=ABCMeta):
             raise SourceError(messages["no_words"])
         self.words = words
         self.window_len = window_len
-        self.syllables = tuple(tuple(self.syllabify(word)) for word in words)
-        self.sounds = tuple(self.transcribe(word) for word in words)
-        consonants = self.sonorants | self.voiced | self.voiceless
         counts = Counter(words)
+        word_syllables = {
+            word: self._checked("syllabify", self.syllabify(word)) for word in counts
+        }
+        word_sounds = {word: self._checked("transcribe", self.transcribe(word)) for word in counts}
+        self.syllables = tuple(word_syllables[word] for word in words)
+        self.sounds = tuple(word_sounds[word] for word in words)
+        consonants = self.sonorants | self.voiced | self.voiceless
         sounds: Counter[str] = Counter()
-        syllables: Counter[tuple[str, ...]] = Counter()
+        all_syllables: Counter[tuple[str, ...]] = Counter()
         clusters: Counter[int] = Counter()
         patterns: Counter[str] = Counter()
         for word, count in counts.items():
-            word_sounds = self.transcribe(word)
-            for sound, number in Counter(word_sounds).items():
+            for sound, number in Counter(word_sounds[word]).items():
                 sounds[sound] += number * count
             for syllable in self.syllable_sounds(word):
-                if cv_pattern(syllable, self.vowels, consonants):
-                    syllables[tuple(syllable)] += count
-            for size in consonant_clusters(word_sounds, consonants, self.skipped):
+                all_syllables[tuple(syllable)] += count
+            for size in consonant_clusters(word_sounds[word], consonants, self.skipped):
                 clusters[size] += count
-            if pattern := cv_pattern(word_sounds, self.vowels, consonants):
+            if pattern := cv_pattern(word_sounds[word], self.vowels, consonants):
                 patterns[pattern] += count
+        syllable_patterns = {
+            syllable: cv_pattern(syllable, self.vowels, consonants) for syllable in all_syllables
+        }
+        syllables = {
+            syllable: count
+            for syllable, count in all_syllables.items()
+            if syllable_patterns[syllable]
+        }
         self.n_vowels = sum(sounds[sound] for sound in self.vowels)
         self.n_sonorants = sum(sounds[sound] for sound in self.sonorants)
         self.n_voiced = sum(sounds[sound] for sound in self.voiced)
@@ -178,10 +192,10 @@ class PhonStats(Stats, metaclass=ABCMeta):
         self.n_consonants = self.n_sonorants + self.n_voiced + self.n_voiceless
         n_sounds = self.n_vowels + self.n_consonants
         self.c_clusters = dict(sorted(clusters.items()))
-        syllable_patterns: Counter[str] = Counter()
+        pattern_counts: Counter[str] = Counter()
         for syllable, count in syllables.items():
-            syllable_patterns[cv_pattern(syllable, self.vowels, consonants)] += count
-        self.c_syllable_patterns = dict(sorted(syllable_patterns.items()))
+            pattern_counts[syllable_patterns[syllable]] += count
+        self.c_syllable_patterns = dict(sorted(pattern_counts.items()))
         self.p_vowels = safe_divide(self.n_vowels, n_sounds, nan)
         self.p_sonorants = safe_divide(self.n_sonorants, n_sounds, nan)
         self.p_voiced = safe_divide(self.n_voiced, n_sounds, nan)
@@ -201,7 +215,7 @@ class PhonStats(Stats, metaclass=ABCMeta):
         open_syllables = sum(
             count
             for syllable, count in syllables.items()
-            if cv_pattern(syllable, self.vowels, consonants).endswith("V")
+            if syllable_patterns[syllable].endswith("V")
         )
         self.p_open_syllables = safe_divide(open_syllables, n_syllables, nan)
         self.mean_syllable_len = safe_divide(
@@ -209,6 +223,24 @@ class PhonStats(Stats, metaclass=ABCMeta):
             n_syllables,
             nan,
         )
+
+    def _checked(self, hook: str, result: object) -> Any:
+        """The syllables or the sounds a hook gives for a word, checked to be strings"""
+        if not (
+            isinstance(result, Sequence)
+            and (hook == "transcribe" or not isinstance(result, str))
+            and all(isinstance(item, str) for item in result)
+        ):
+            expected = "a sequence of strings" if hook == "syllabify" else "a string or strings"
+            raise SourceTypeError(
+                self.messages["hook_result"].format(
+                    hook=hook,
+                    cls=type(self).__name__,
+                    expected=expected,
+                    type=type(result).__name__,
+                )
+            )
+        return tuple(result) if hook == "syllabify" else result
 
     def doc_words(self, doc: Doc) -> tuple[str, ...]:
         """

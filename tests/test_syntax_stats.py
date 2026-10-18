@@ -490,6 +490,12 @@ def test_subtree_of_a_loop():
     assert subtree_len(doc[0]) == subtree_len(doc[0], join_hyphens=True) == 3
 
 
+def test_tree_depth_of_a_loop():
+    # a, b and c hang on each other in a Doc of ten tokens
+    doc = parse(list("abcdefghij"), [1, 2, 0] + [3] * 7, ["dep"] * 10)
+    assert calc_tree_depth(doc[:3]) == calc_tree_depth(doc[:3], join_hyphens=True) == 2
+
+
 def test_loop_inside_a_hyphenated_word():
     doc = parse(["a", "-", "b"], [2, 0, 1], ["dep", "punct", "dep"], spaces=[False, False, False])
     assert calc_tree_depth(doc, join_hyphens=True) == 0
@@ -849,6 +855,8 @@ def test_modifier_chains_of_hyphenated_words():
     nmod = lambda token: token.dep_ == "nmod"  # noqa: E731
     assert calc_modifier_chains(doc, nmod) == []
     assert calc_modifier_chains(doc, nmod, join_hyphens=True) == [2]
+    # Every word a modifier: the head of the sentence starts the only chain
+    assert calc_modifier_chains(doc, lambda token: True, join_hyphens=True) == [3]
 
 
 def test_modifier_check_must_be_callable():
@@ -929,3 +937,10 @@ def test_modifier_chains_through_an_inner_part():
     nmod = lambda token: token.dep_ == "nmod"  # noqa: E731
     assert calc_modifier_chains(doc, nmod, join_hyphens=True) == [3]
     assert calc_modifier_chains(doc, nmod) == [2]
+
+
+def test_negation_words_checked_at_class_definition():
+    with pytest.raises(
+        SourceTypeError, match=r"^A list of negation_words is expected, not a string$"
+    ):
+        type("Negated", (SyntaxStats,), {"negation_words": "not"})
