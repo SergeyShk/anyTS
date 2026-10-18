@@ -1014,8 +1014,7 @@ def test_pickle_and_copy():
     )
     stats = SyntaxStats(doc)
     data = pickle.dumps(stats)
-    # The Doc goes without its vocabulary
-    assert len(data) < 10_000
+    assert len(data) < len(pickle.dumps(doc.vocab))
     for clone in (pickle.loads(data), copy.deepcopy(stats), copy.copy(stats)):
         assert repr(clone.get_stats()) == repr(stats.get_stats())
         assert [[token.text for token in sent] for sent in clone.sents] == [
