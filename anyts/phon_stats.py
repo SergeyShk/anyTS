@@ -152,25 +152,33 @@ class PhonStats(Stats, metaclass=ABCMeta):
             raise SourceError(messages["no_words"])
         self.words = words
         self.window_len = window_len
-        self.syllables = tuple(tuple(self.syllabify(word)) for word in words)
-        self.sounds = tuple(self.transcribe(word) for word in words)
-        consonants = self.sonorants | self.voiced | self.voiceless
         counts = Counter(words)
+        word_syllables = {word: tuple(self.syllabify(word)) for word in counts}
+        word_sounds = {word: self.transcribe(word) for word in counts}
+        self.syllables = tuple(word_syllables[word] for word in words)
+        self.sounds = tuple(word_sounds[word] for word in words)
+        consonants = self.sonorants | self.voiced | self.voiceless
         sounds: Counter[str] = Counter()
-        syllables: Counter[tuple[str, ...]] = Counter()
+        all_syllables: Counter[tuple[str, ...]] = Counter()
         clusters: Counter[int] = Counter()
         patterns: Counter[str] = Counter()
         for word, count in counts.items():
-            word_sounds = self.transcribe(word)
-            for sound, number in Counter(word_sounds).items():
+            for sound, number in Counter(word_sounds[word]).items():
                 sounds[sound] += number * count
             for syllable in self.syllable_sounds(word):
-                if cv_pattern(syllable, self.vowels, consonants):
-                    syllables[tuple(syllable)] += count
-            for size in consonant_clusters(word_sounds, consonants, self.skipped):
+                all_syllables[tuple(syllable)] += count
+            for size in consonant_clusters(word_sounds[word], consonants, self.skipped):
                 clusters[size] += count
-            if pattern := cv_pattern(word_sounds, self.vowels, consonants):
+            if pattern := cv_pattern(word_sounds[word], self.vowels, consonants):
                 patterns[pattern] += count
+        syllable_patterns = {
+            syllable: cv_pattern(syllable, self.vowels, consonants) for syllable in all_syllables
+        }
+        syllables = {
+            syllable: count
+            for syllable, count in all_syllables.items()
+            if syllable_patterns[syllable]
+        }
         self.n_vowels = sum(sounds[sound] for sound in self.vowels)
         self.n_sonorants = sum(sounds[sound] for sound in self.sonorants)
         self.n_voiced = sum(sounds[sound] for sound in self.voiced)
@@ -178,10 +186,10 @@ class PhonStats(Stats, metaclass=ABCMeta):
         self.n_consonants = self.n_sonorants + self.n_voiced + self.n_voiceless
         n_sounds = self.n_vowels + self.n_consonants
         self.c_clusters = dict(sorted(clusters.items()))
-        syllable_patterns: Counter[str] = Counter()
+        pattern_counts: Counter[str] = Counter()
         for syllable, count in syllables.items():
-            syllable_patterns[cv_pattern(syllable, self.vowels, consonants)] += count
-        self.c_syllable_patterns = dict(sorted(syllable_patterns.items()))
+            pattern_counts[syllable_patterns[syllable]] += count
+        self.c_syllable_patterns = dict(sorted(pattern_counts.items()))
         self.p_vowels = safe_divide(self.n_vowels, n_sounds, nan)
         self.p_sonorants = safe_divide(self.n_sonorants, n_sounds, nan)
         self.p_voiced = safe_divide(self.n_voiced, n_sounds, nan)
@@ -201,7 +209,7 @@ class PhonStats(Stats, metaclass=ABCMeta):
         open_syllables = sum(
             count
             for syllable, count in syllables.items()
-            if cv_pattern(syllable, self.vowels, consonants).endswith("V")
+            if syllable_patterns[syllable].endswith("V")
         )
         self.p_open_syllables = safe_divide(open_syllables, n_syllables, nan)
         self.mean_syllable_len = safe_divide(
