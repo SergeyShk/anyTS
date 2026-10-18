@@ -100,8 +100,10 @@ class PhonStats(Stats, metaclass=ABCMeta):
             print_stats
 
     Raises:
-        SourceTypeError: If the source is neither a string nor a Doc object or the
-            extractor is of another type
+        SourceTypeError: If the source is neither a string nor a Doc object, the
+            extractor is of another type, or syllabify or transcribe does not return
+            strings; when a class is defined, if its classes of sounds are not
+            collections of strings
         SourceError: If the source has no words
         ParameterError: If the window is not an integer or is below 2; when a class is
             defined, if its classes of sounds or skipped overlap

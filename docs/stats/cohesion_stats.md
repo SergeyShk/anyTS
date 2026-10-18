@@ -29,7 +29,7 @@ A language library subclasses `CohesionStats`. By default the words and their fe
 | `stats_desc`, `stats_headers` | class attributes | Statistics of `get_stats` with their descriptions (`COHESION_STATS_DESC` by default), headers of the columns for `print_stats` |
 | `messages` | class attribute | Messages of the errors by key; `MESSAGES` by default |
 
-The parameters of a library - its model of a string, its word extractor - go to the constructor of its subclass, which keeps them for its `analyze`.
+The parameters of a library - its model of a string, its word extractor - go to the constructor of its subclass, which keeps them for its `analyze`. An `analyze` that does not give sentences of `CohesionWord` objects raises `SourceTypeError`.
 <!-- --8<-- [end:CohesionStats-hooks] -->
 
 ## Parameters

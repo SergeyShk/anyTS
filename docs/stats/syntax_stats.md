@@ -32,7 +32,7 @@ A language library subclasses `SyntaxStats`. The defaults read Universal Depende
 | `stats_desc`, `stats_headers` | class attributes | Statistics of `get_stats` with their descriptions (`SYNTAX_STATS_DESC` by default), headers of the columns for `print_stats` |
 | `messages` | class attribute | Messages of the errors by key; `MESSAGES` by default |
 
-The subclass adds the statistics of the constructions of its language (chains of complements by `calc_modifier_chains`, its own clauses) in its constructor from `sents`, with its own `stats_desc`.
+The subclass adds the statistics of the constructions of its language (chains of complements by `calc_modifier_chains`, its own clauses) in its constructor from `sents`, with its own `stats_desc`. A `negation_words` that is not a collection of strings raises `SourceTypeError` when the class is defined, and so does a `parse` that does not return a `Doc` when the statistics are computed.
 <!-- --8<-- [end:SyntaxStats-hooks] -->
 
 ## Parameters

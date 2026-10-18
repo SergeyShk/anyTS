@@ -122,7 +122,9 @@ class ReadabilityStats(Stats):
             or a class without basic_stats_class is given a string or a Doc
         SourceError: If the source has no words or no sentences
         ParameterError: If the coefficient preset is not a string or is unknown; when
-            a class is defined, if its scales of a preset name an unknown preset
+            a class is defined, if its scales of a preset name an unknown preset, a
+            scale or a scale of grades is not one of scale_level with finite grades, or
+            its school stages are not ascending quadruples of two years and two strings
     """
 
     basic_stats_class: ClassVar[type[BasicStats] | None] = None

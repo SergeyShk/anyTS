@@ -26,7 +26,7 @@ A language library subclasses `LexicalStats`:
 | `stats_desc`, `stats_headers` | class attributes | Statistics of `get_stats` with their descriptions (`anyts.constants.LEXICAL_STATS_DESC` by default), headers of the columns for `print_stats` |
 | `messages` | class attribute | Messages of the errors by key; `MESSAGES` by default |
 
-A library takes its own parameters, such as a pipeline or a word extractor, in its `__init__` and passes the source and the dictionary on.
+A library takes its own parameters, such as a pipeline or a word extractor, in its `__init__` and passes the source and the dictionary on. An `analyze` that does not give `LexicalWord` objects raises `SourceTypeError`.
 <!-- --8<-- [end:LexicalStats-hooks] -->
 
 ## Frequency dictionary { #FrequencyDictionary }

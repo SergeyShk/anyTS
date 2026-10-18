@@ -29,6 +29,8 @@ A language library subclasses `PhonStats`:
 | `words_extractor_class`, `join_hyphens` | class attributes | Word extractor of a string, joining of the hyphenated words of a `Doc` |
 | `stats_desc`, `stats_headers` | class attributes | Statistics of `get_stats` with their descriptions (`anyts.constants.PHON_STATS_DESC` by default), headers of the columns for `print_stats` |
 | `messages` | class attribute | Messages of the errors by key; `MESSAGES` by default |
+
+Classes of sounds that are not collections of strings raise `SourceTypeError` when the class is defined, and a `syllabify` or a `transcribe` that does not return strings raises it when the statistics are computed.
 <!-- --8<-- [end:PhonStats-hooks] -->
 
 ## Parameters

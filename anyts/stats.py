@@ -38,6 +38,11 @@ class Stats:
             of describe by statistic, as lower bounds and their bands
         messages (dict[str, str]): Messages of the errors by key (MESSAGES)
 
+    Raises:
+        ParameterError: When a class is defined, if its messages are incomplete or
+            its scales are not pairs of a finite lower bound and a band with the
+            bounds descending
+
     Example:
         >>> from anyts.stats import Stats
         >>> class TextSize(Stats):

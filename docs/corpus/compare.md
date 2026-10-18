@@ -117,7 +117,7 @@ A table that is not a `DataFrame`, repeats the name of a column or has a column 
 | `closing_marks` | Collection[str] | `CLOSING_MARKS` | Marks that close a phrase |
 | `messages` | dict[str, str] | `MESSAGES` | Messages of the errors by key |
 
-A text that is not a string, a tokenizer that is not callable and marks that are not a collection of strings raise `SourceTypeError`, a window or `min_words` that is not an integer of at least one, `min_words` above the window and a mark of more than one character `ParameterError`. A text without words or shorter than `min_words` gives an empty list.
+A text that is not a string, a tokenizer that is not callable or does not give the words in order as triples of integer bounds within the text and a string, and marks that are not a collection of strings raise `SourceTypeError`, a window or `min_words` that is not an integer of at least one, `min_words` above the window and a mark of more than one character `ParameterError`. A text without words or shorter than `min_words` gives an empty list.
 <!-- --8<-- [end:split_windows] -->
 
 The marks of the core are those of `anyts.constants`: quotes, brackets and dashes open a phrase, the straight quotes and the dashes are symmetric, and the final marks, the comma, the semicolon, the closing brackets, guillemet and quotes close one.

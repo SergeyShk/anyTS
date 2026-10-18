@@ -129,7 +129,9 @@ class SyntaxStats(Stats):
             print_stats
 
     Raises:
-        SourceTypeError: If the source is not a Doc object (parse)
+        SourceTypeError: If the source is not a Doc object or parse does not return
+            one; when a class is defined, if its negation_words are not a collection
+            of strings
         SourceError: If the source has no dependency parse, no lemmas when
             requires_lemmas, or no words
     """

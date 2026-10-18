@@ -116,7 +116,8 @@ class LexicalStats(Stats, metaclass=ABCMeta):
 
     Raises:
         SourceTypeError: If the dictionary is not of freq_dict_class (without it, has no
-            lookup and ipm), or the class has none and no dictionary is given
+            lookup and ipm), the class has none and no dictionary is given, or analyze
+            does not give LexicalWord objects
         SourceError: If the source has no words
     """
 
