@@ -176,7 +176,8 @@ class StyleStats(Stats):
 
         Description:
             The lower case by default; a library overrides it for letters
-            written in two ways. The stopwords and the phrases are compared by it
+            written in two ways. The stopwords, the phrases and the keywords are
+            compared by it
 
         Arguments:
             word (str): Word or phrase
@@ -357,6 +358,9 @@ class StyleStats(Stats):
     def keyword_density(self, *keywords: str) -> dict[str, float]:
         """
         Computing the density of keywords and phrases
+
+        Description:
+            calc_keyword_density with normalize of the class
 
         Arguments:
             keywords (tuple[str]): Keywords or phrases of several words separated by spaces

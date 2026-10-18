@@ -23,7 +23,7 @@ A language library subclasses `StyleStats`; by default the hooks know no languag
 | `words_extractor_class` | class attribute | Word extractor of a string and of the forms; `WordsExtractor` by default |
 | `join_hyphens` | class attribute | Join the parts of the hyphenated words of a `Doc` |
 | `compound_prepositions_list`, `parentheticals_list`, `cliches_list` | class attributes | Compound prepositions, parenthetical expressions and cliches, checked as lists of strings when the class is defined; the parameter `cliches` replaces the last |
-| `normalize(word)` | method | Normalized form of a word or a phrase, by which the lists are compared; the lower case by default |
+| `normalize(word)` | method | Normalized form of a word or a phrase, by which the lists and the keywords are compared; the lower case by default |
 | `doc_words(doc)` | method | Words of a `Doc`; the words of `iter_doc_words` in lower case by default |
 | `is_stopword(word)` | method | Whether a word is a stopword of the academic nausea, when `nausea_stopwords` is not given |
 | `is_water_word(word)` | method | Whether a word is water, when `stopwords` is not given; `is_stopword` by default |
@@ -76,7 +76,7 @@ The metrics are properties computed on each access. A parenthetical expression i
 ### keyword_density, nausea_words
 
 <!-- --8<-- [start:StyleStats-keyword_density] -->
-`keyword_density(*keywords)` gives the density of keywords and phrases in percent (`calc_keyword_density`), `nausea_words()` the most frequent significant words of the academic nausea with their occurrences (`find_nausea_words`).
+`keyword_density(*keywords)` gives the density of keywords and phrases in percent (`calc_keyword_density` with `normalize` of the class), `nausea_words()` the most frequent significant words of the academic nausea with their occurrences (`find_nausea_words`).
 <!-- --8<-- [end:StyleStats-keyword_density] -->
 
 ### markers

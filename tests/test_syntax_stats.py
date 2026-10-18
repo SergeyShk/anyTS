@@ -1013,9 +1013,40 @@ def test_pickle_and_copy():
         pos=["PRON", "VERB", "CCONJ", "VERB", "PUNCT", "PRON", "VERB"],
     )
     stats = SyntaxStats(doc)
-    for clone in (pickle.loads(pickle.dumps(stats)), copy.deepcopy(stats), copy.copy(stats)):
+    data = pickle.dumps(stats)
+    # The Doc goes without its vocabulary
+    assert len(data) < 10_000
+    for clone in (pickle.loads(data), copy.deepcopy(stats), copy.copy(stats)):
         assert repr(clone.get_stats()) == repr(stats.get_stats())
         assert [[token.text for token in sent] for sent in clone.sents] == [
             ["He", "came", "and", "left"],
             ["She", "slept"],
         ]
+        assert clone.sents[0][1].dep_ == "ROOT"
+
+
+def test_pickle_without_a_language_and_without_sents():
+    import copy
+    import pickle
+
+    from spacy.vocab import Vocab
+
+    doc = Doc(
+        Vocab(), words=["He", "came"], heads=[1, 1], deps=["nsubj", "ROOT"], pos=["PRON", "VERB"]
+    )
+    clone = pickle.loads(pickle.dumps(SyntaxStats(doc)))
+    assert [token.text for token in clone.sents[0]] == ["He", "came"]
+    bare = copy.deepcopy(SyntaxStats.__new__(SyntaxStats))
+    assert not hasattr(bare, "sents")
+
+
+def test_pickle_of_the_object_of_a_component():
+    import pickle
+
+    from anyts.components import SyntaxStatsComponent
+
+    nlp = spacy.blank("xx")
+    component = SyntaxStatsComponent(nlp, "syntax_pickle")
+    doc = component(parse(["He", "came"], [1, 1], ["nsubj", "ROOT"], pos=["PRON", "VERB"]))
+    clone = pickle.loads(pickle.dumps(doc._.syntax_pickle))
+    assert clone.n_words == 2

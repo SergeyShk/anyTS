@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections import Counter
 from collections.abc import Callable, Iterable, Mapping, Sequence
+from functools import cache
 from math import nan
 from statistics import fmean, pstdev
 from typing import TYPE_CHECKING, Any, ClassVar
@@ -36,6 +37,7 @@ from .utils import (
 
 if TYPE_CHECKING:
     from spacy.tokens import Doc, Token
+    from spacy.vocab import Vocab
 
 
 class SyntaxStats(Stats):
@@ -256,20 +258,28 @@ class SyntaxStats(Stats):
         self.noun_verb_ratio = safe_divide(self.n_nouns, self.n_verbs, nan)
 
     def __getstate__(self) -> dict[str, Any]:
-        """State for pickle and copy: spaCy does not pickle a token, so sents goes as positions"""
+        """State for pickle and copy: spaCy pickles no token, so sents goes as the bytes of
+        its Doc and the positions of the words"""
         state = self.__dict__.copy()
-        sents = state.pop("sents")
-        state["_sents_doc"] = sents[0][0].doc
-        state["_sents_positions"] = tuple(tuple(token.i for token in sent) for sent in sents)
+        sents = state.pop("sents", None)
+        if sents:
+            doc = sents[0][0].doc
+            state["_sents_doc"] = (doc.lang_, doc.to_bytes(exclude=["tensor", "user_data"]))
+            state["_sents_positions"] = tuple(tuple(token.i for token in sent) for sent in sents)
         return state
 
     def __setstate__(self, state: dict[str, Any]) -> None:
-        """Restoring the tokens of sents from the Doc and the positions of the state"""
+        """Restoring the tokens of sents on a blank vocabulary of the language of the Doc"""
         state = dict(state)
-        doc = state.pop("_sents_doc")
-        positions = state.pop("_sents_positions")
+        saved = state.pop("_sents_doc", None)
+        positions = state.pop("_sents_positions", ())
         self.__dict__.update(state)
-        self.sents = tuple(tuple(doc[i] for i in sent) for sent in positions)
+        if saved is not None:
+            from spacy.tokens import Doc
+
+            lang, data = saved
+            doc = Doc(_blank_vocab(lang)).from_bytes(data)
+            self.sents = tuple(tuple(doc[i] for i in sent) for sent in positions)
 
     def parse(self, source: Doc) -> Doc:
         """
@@ -406,6 +416,15 @@ class SyntaxStats(Stats):
             list[tuple[Token, Token]]: Pairs of the verb and the noun in the order of the words
         """
         return []
+
+
+@cache
+def _blank_vocab(lang: str) -> Vocab:
+    """Blank vocabulary of a language, one per process, for the Doc of a restored SyntaxStats"""
+    import spacy
+    from spacy.vocab import Vocab
+
+    return spacy.blank(lang).vocab if lang else Vocab()
 
 
 def get_words(tokens: Iterable[Token], join_hyphens: bool = False) -> list[Token]:

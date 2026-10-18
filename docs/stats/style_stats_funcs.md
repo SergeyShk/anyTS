@@ -180,7 +180,7 @@ Parameters:
     **anyts.style_stats.find_parentheticals()**, **anyts.style_stats.calc_parentheticals()**
 
 <!-- --8<-- [start:find_parentheticals] -->
-`find_parentheticals(text, phrases=(), is_parenthetical=None, expand=None, normalize=str.lower)` finds the parenthetical expressions of a text: the phrases of the list, spelled out by `expand` as in `calc_phrase_density`, and the single words accepted by `is_parenthetical` outside the phrases found. It returns their bounds as slices of the words, in order. `StyleStats` counts its `parentheticals` and finds their markers this way, with its hooks. Hooks that are not callable raise `SourceTypeError`.
+`find_parentheticals(text, phrases=(), *, is_parenthetical=None, expand=None, normalize=str.lower)` finds the parenthetical expressions of a text: the phrases of the list, spelled out by `expand` as in `calc_phrase_density`, and the single words accepted by `is_parenthetical` outside the phrases found. It returns their bounds as slices of the words, in order. `StyleStats` counts its `parentheticals` and finds their markers this way, with its hooks. Hooks that are not callable raise `SourceTypeError`.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
@@ -192,7 +192,7 @@ Parameters:
 <!-- --8<-- [end:find_parentheticals] -->
 
 <!-- --8<-- [start:calc_parentheticals] -->
-`calc_parentheticals(text, phrases=(), is_parenthetical=None, expand=None, normalize=str.lower)` gives the expressions of `find_parentheticals` with the same arguments per 100 words.
+`calc_parentheticals(text, phrases=(), *, is_parenthetical=None, expand=None, normalize=str.lower)` gives the expressions of `find_parentheticals` with the same arguments per 100 words.
 <!-- --8<-- [end:calc_parentheticals] -->
 
 ## Parameters of the metrics { #check_params }
