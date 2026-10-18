@@ -138,14 +138,14 @@ With `preset` left at `None` the config of a saved pipeline holds no preset, and
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
 | `stopwords` | list[str] | `None` | Stopwords of the water content; those of the class if `None` |
-| `top_n` | int | `10` | Number of the most frequent words of the academic nausea and of the naturalness by Zipf's law |
+| `top_n` | int | `10` | Number of the most frequent words of the academic nausea and of the naturalness by Zipf's law (`NAUSEA_TOP_N`) |
 | `nausea_stopwords` | list[str] | `None` | Words left out of the most frequent words of the academic nausea; those of the class if `None` |
 
 Stopwords that are not a list of strings raise `SourceTypeError`, a `top_n` that is not an integer of at least one `ParameterError`.
 <!-- --8<-- [end:StyleStatsComponent] -->
 
 <!-- --8<-- [start:PhonStatsComponent] -->
-`PhonStatsComponent` puts the phonetic statistics into the extension; `window_len` (3 by default) is the window in words of the alliteration and the assonance, and one that is not an integer of at least 2 raises `ParameterError`.
+`PhonStatsComponent` puts the phonetic statistics into the extension; `window_len` (by default `PHON_WINDOW_LEN`, 3) is the window in words of the alliteration and the assonance, and one that is not an integer of at least 2 raises `ParameterError`.
 <!-- --8<-- [end:PhonStatsComponent] -->
 
 <!-- --8<-- [start:SyntaxStatsComponent] -->

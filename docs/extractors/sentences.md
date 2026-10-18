@@ -31,6 +31,8 @@ The default tokenizer is the method `sentenize(text)`, which a language library 
 
 !!! note "Note"
     A regular expression as the tokenizer is a separator for `re.split`. A blank line - a line break, optional whitespace and another line break - ends a sentence of any tokenizer: the text is split at blank lines first and every part goes to the tokenizer, so a heading or a paragraph without a final mark is a sentence of its own, and so is a part without words, such as a line of asterisks, which the statistics leave out. The sentences are stripped of whitespace at the edges before the length bounds, and empty ones are dropped.
+
+A length bound that is not an integer, a negative bound and a minimum above the maximum raise `ParameterError`.
 <!-- --8<-- [end:SentsExtractor-parameters] -->
 
 ## Methods
@@ -43,6 +45,8 @@ Extracts sentences from a text.
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
 | `text` | str | `-` | Text string |
+
+A text that is not a string and a tokenizer that cannot be called or does not return strings raise `SourceTypeError`.
 <!-- --8<-- [end:SentsExtractor-extract] -->
 
 An example of sentence extraction with the default tokenizer:
@@ -104,7 +108,7 @@ An example of sentence extraction with a regular expression as the tokenizer:
 ## Sentences of the parts of a text { #iter_part_sents }
 
 <!-- --8<-- [start:iter_part_sents] -->
-`iter_part_sents(iter_sents, text)` runs a splitter - `iter_sents`, giving the start, the end and the text of every sentence of a string - on every part of a text between blank lines (`BLANK_LINE`) and gives the sentences at their positions in the whole text, so that a blank line ends a sentence whatever the splitter, as in `SentsExtractor`.
+`iter_part_sents(iter_sents, text)` runs a splitter - `iter_sents`, giving the start, the end and the text of every sentence of a string - on every part of a text between blank lines (`BLANK_LINE`) and gives the sentences at their positions in the whole text, so that a blank line ends a sentence whatever the splitter, as in `SentsExtractor`. A text that is not a string raises `SourceTypeError`, and so does an `iter_sents` that cannot be called or does not give the sentences of a part in order, as triples of integer bounds within it and a string.
 <!-- --8<-- [end:iter_part_sents] -->
 
 ## Ready sentences { #FixedSentsExtractor }

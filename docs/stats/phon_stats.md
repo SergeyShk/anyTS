@@ -27,7 +27,7 @@ A language library subclasses `PhonStats`:
 | `word_hiatus(word)` | method | Number of the hiatuses of a word; its runs of vowels by `count_hiatus` with `glides` by default, or for instance the vowels at the boundaries of its syllables |
 | `doc_words(doc)` | method | Words of a `Doc`; those of `iter_doc_words` in lower case by default |
 | `words_extractor_class`, `join_hyphens` | class attributes | Word extractor of a string, joining of the hyphenated words of a `Doc` |
-| `stats_desc`, `stats_headers` | class attributes | Statistics of `get_stats` with their descriptions, headers of the columns for `print_stats` |
+| `stats_desc`, `stats_headers` | class attributes | Statistics of `get_stats` with their descriptions (`anyts.constants.PHON_STATS_DESC` by default), headers of the columns for `print_stats` |
 | `messages` | class attribute | Messages of the errors by key; `MESSAGES` by default |
 <!-- --8<-- [end:PhonStats-hooks] -->
 
@@ -38,7 +38,7 @@ A language library subclasses `PhonStats`:
 | :-------: | :--: | :-----: | :---------: |
 | `source` | str/Doc | `-` | Data source |
 | `words_extractor` | WordsExtractor | `None` | Word extraction tool; used for a `Doc` too, on its text |
-| `window_len` | int | `3` | Window in words of the alliteration and the assonance |
+| `window_len` | int | `3` | Window in words of the alliteration and the assonance (`PHON_WINDOW_LEN`) |
 <!-- --8<-- [end:PhonStats-parameters] -->
 
 ## Attributes

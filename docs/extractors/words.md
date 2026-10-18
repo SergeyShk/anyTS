@@ -63,6 +63,8 @@ A language library overrides these hooks in a subclass:
 
 !!! note "Note"
     A regular expression as the tokenizer is a separator for `re.split`. The filters are applied in order: punctuation, numbers, lemmatization, lower case, stop words, word length. A punctuation mark is a token of marks and symbols only, multi-character ones included: `?!`, `--`, `…`, `€` (`anyts.utils.is_punctuation`). Empty and whitespace tokens are dropped before the filters. N-grams join the words with `_`.
+
+An `ngram_range` that is not a pair of integers, or whose lower bound is below one or above the upper one, raises `ParameterError`, and so do a length bound that is not an integer, a negative bound and a minimum above the maximum. Stop words that are not a collection of strings raise `SourceTypeError`.
 <!-- --8<-- [end:WordsExtractor-parameters] -->
 
 ## Methods
@@ -75,6 +77,8 @@ Extracts words from a text.
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
 | `text` | str | `-` | Text string |
+
+A text that is not a string and a tokenizer that cannot be called or does not return strings raise `SourceTypeError`.
 <!-- --8<-- [end:WordsExtractor-extract] -->
 
 An example of word extraction with bigrams as tokens, after filtering numbers and stop words:
@@ -101,7 +105,7 @@ An example of word extraction with bigrams as tokens, after filtering numbers an
 ### get_most_common
 
 <!-- --8<-- [start:WordsExtractor-get_most_common] -->
-Returns the top words of the text as a list of (word, frequency) pairs, the most frequent first.
+Returns the top words of the text as a list of (word, frequency) pairs, the most frequent first; a number that is not an integer of at least one raises `ParameterError`.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |

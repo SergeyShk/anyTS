@@ -56,7 +56,7 @@ In the core `USER_AGENT` is `"anyTS"`; a language library passes its own name.
 ## extract_archive
 
 <!-- --8<-- [start:extract_archive] -->
-Extracts a ZIP or TAR archive and returns the directory with the files. Paths leading outside the directory (absolute, with a drive or a network share, or with `..`) and links are refused before anything is written, on any version of Python. The archive is extracted aside and put in place once complete: a single root directory takes the name of the archive without its extensions (`corpus_v1.tar.xz` - `corpus_v1`), replacing an earlier extraction; otherwise the files go into the directory, replacing those of the same names and keeping the others. A file in the place of a directory or the other way round is refused before anything is replaced. A missing file, a file that is not an archive, a corrupted or empty archive, a directory that cannot be created and files that cannot be replaced raise `DataFileError`.
+Extracts a ZIP or TAR archive and returns the directory with the files. Paths leading outside the directory (absolute, with a drive or a network share, or with `..`) and links are refused before anything is written, on any version of Python. The archive is extracted aside and put in place once complete: a single root directory takes the name of the archive without its extensions (`corpus_v1.tar.xz` - `corpus_v1`), replacing an earlier extraction; otherwise the files go into the directory, replacing those of the same names and keeping the others. A file in the place of a directory or the other way round is refused before anything is replaced. A missing file, a file that is not an archive, a corrupted or empty archive, a directory that cannot be created and files that cannot be replaced raise `DataFileError`, and a path that is neither a string nor a `Path` `SourceTypeError`.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
@@ -67,7 +67,7 @@ Extracts a ZIP or TAR archive and returns the directory with the files. Paths le
 ## sha256
 
 <!-- --8<-- [start:sha256] -->
-Computes the SHA-256 checksum of a file as a hexadecimal string in lower case; a missing file gives an empty string.
+Computes the SHA-256 checksum of a file as a hexadecimal string in lower case; a missing file gives an empty string, and a path that is neither a string nor a `Path` raises `SourceTypeError`.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
@@ -95,7 +95,7 @@ Converts a string or a `Path` into a `Path`, expanding a leading `~` into the ho
 <!-- --8<-- [end:length_filters] -->
 
 <!-- --8<-- [start:substring_filter] -->
-`substring_filter(field, value, fold)` returns the predicate that keeps the records whose field holds the substring `value`. Both are folded by `fold`, so the differences of case and diacritics a language ignores do not count. The substring is plain text, not a regular expression; a field that is not a string does not match, and a value that is not a string raises `ParameterError`.
+`substring_filter(field, value, fold)` returns the predicate that keeps the records whose field holds the substring `value`. Both are folded by `fold`, so the differences of case and diacritics a language ignores do not count. The substring is plain text, not a regular expression; a field that is not a string does not match. A value that is not a string raises `ParameterError`, and a `fold` that cannot be called `SourceTypeError`.
 <!-- --8<-- [end:substring_filter] -->
 
 In the core `fold` is `fold_diacritics`.

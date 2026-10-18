@@ -32,7 +32,7 @@ A language library subclasses `StyleStats`; by default the hooks know no languag
 | `nouns()` | method | Word forms of the nouns with their lemmas; none by default, so the share of the verbal nouns is `nan` |
 | `is_verbal_noun(lemma)` | method | Whether the lemma of a noun is a verbal noun |
 | `level_scales` | class attribute | Norms of the services by metric for `describe` |
-| `stats_desc`, `stats_headers` | class attributes | Metrics of `get_stats` with their descriptions, headers of the columns for `print_stats` |
+| `stats_desc`, `stats_headers` | class attributes | Metrics of `get_stats` with their descriptions (`anyts.constants.STYLE_STATS_DESC` by default), headers of the columns for `print_stats` |
 | `messages` | class attribute | Messages of the errors by key; `MESSAGES` by default |
 <!-- --8<-- [end:StyleStats-hooks] -->
 
@@ -44,7 +44,7 @@ A language library subclasses `StyleStats`; by default the hooks know no languag
 | `source` | str/Doc | `-` | Data source |
 | `words_extractor` | WordsExtractor | `None` | Word extraction tool; used for a `Doc` too, on its text |
 | `stopwords` | list[str] | `None` | Words of water; without them `is_water_word` decides |
-| `top_n` | int | `10` | Number of the most frequent words of the academic nausea and the naturalness by Zipf's law |
+| `top_n` | int | `10` | Number of the most frequent words of the academic nausea and the naturalness by Zipf's law (`NAUSEA_TOP_N`) |
 | `cliches` | list[str] | `None` | Cliches; `cliches_list` of the class by default |
 | `nausea_stopwords` | list[str] | `None` | Stopwords of the academic nausea; without them `is_stopword` decides |
 

@@ -42,6 +42,8 @@ The columns are `anyts.corpus.COMPARISON_COLUMNS` with `A` and `B` replaced by t
 | `labels` | tuple[str, str] | `("A", "B")` | Names of the corpora for the columns, two strings that give distinct columns |
 | `n_bootstrap` | int | `1000` | Number of bootstrap samples |
 | `seed` | int/Generator | `0` | Seed of the random number generator, a non-negative integer, or a numpy `Generator`; `None` - a random one |
+
+A table that is not a `DataFrame`, repeats the name of a column or has a column that is not numeric raises `SourceTypeError`; the other parameters are checked by `check_comparison_params`.
 <!-- --8<-- [end:compare_features-parameters] -->
 
 <!-- --8<-- [start:check_comparison_params] -->
@@ -67,23 +69,23 @@ The columns are `anyts.corpus.COMPARISON_COLUMNS` with `A` and `B` replaced by t
 ## Functions of the statistics
 
 <!-- --8<-- [start:compare_values] -->
-`compare_values(values_a, values_b, n_bootstrap=1000, rng=None, texts_a=None, texts_b=None)` compares two sets of values of one feature and returns one row in the order of `anyts.corpus.COMPARISON_COLUMNS`, `p_holm` left `nan`. Undefined and infinite values, missing ones (`None`, `NA`) included, are dropped with their texts; `texts_a` and `texts_b` give the text of every value for the bootstrap.
+`compare_values(values_a, values_b, n_bootstrap=1000, rng=None, texts_a=None, texts_b=None)` compares two sets of values of one feature and returns one row in the order of `anyts.corpus.COMPARISON_COLUMNS`, `p_holm` left `nan`. Undefined and infinite values, missing ones (`None`, `NA`) included, are dropped with their texts; `texts_a` and `texts_b` give the text of every value for the bootstrap. A value that is not a number or a missing one, values that are not a flat list and texts that are not labels of one type raise `SourceTypeError`; an `n_bootstrap` that is not an integer of at least one, texts not as many as the values and an `rng` that is not a numpy `Generator` raise `ParameterError`.
 <!-- --8<-- [end:compare_values] -->
 
 <!-- --8<-- [start:calc_cohen_d] -->
-`calc_cohen_d(values_a, values_b)` - Cohen's d with the pooled sample variances (ddof=1); `nan` with fewer than two values on a side or without spread.
+`calc_cohen_d(values_a, values_b)` - Cohen's d with the pooled sample variances (ddof=1); `nan` with fewer than two values on a side or without spread. A value that is not a number or a missing one (`None`, `NA`) and values that are not a flat list raise `SourceTypeError`.
 <!-- --8<-- [end:calc_cohen_d] -->
 
 <!-- --8<-- [start:calc_cliff_delta] -->
-`calc_cliff_delta(values_a, values_b)` - Cliff's delta, the share of the pairs where the first value is greater minus the share where it is smaller; `nan` for an empty set or an undefined value. Computed by sorting, in $O((n_A + n_B) \log n_B)$ time and linear memory.
+`calc_cliff_delta(values_a, values_b)` - Cliff's delta, the share of the pairs where the first value is greater minus the share where it is smaller; `nan` for an empty set or an undefined value. Computed by sorting, in $O((n_A + n_B) \log n_B)$ time and linear memory. A value that is not a number or a missing one (`None`, `NA`) and values that are not a flat list raise `SourceTypeError`.
 <!-- --8<-- [end:calc_cliff_delta] -->
 
 <!-- --8<-- [start:bootstrap_median_diff] -->
-`bootstrap_median_diff(values_a, values_b, n_bootstrap=1000, rng=None, confidence=0.95, texts_a=None, texts_b=None)` - the percentile bootstrap interval of the difference of the medians. With `texts_a` and `texts_b` whole texts are resampled, the median of a draw taken over the values of its texts; with fewer than two texts on a side the interval is `nan`.
+`bootstrap_median_diff(values_a, values_b, n_bootstrap=1000, rng=None, confidence=0.95, texts_a=None, texts_b=None)` - the percentile bootstrap interval of the difference of the medians. With `texts_a` and `texts_b` whole texts are resampled, the median of a draw taken over the values of its texts; with fewer than two texts on a side the interval is `nan`. A value that is not a number or a missing one, values that are not a flat list and texts that are not labels of one type raise `SourceTypeError`; an `n_bootstrap` that is not an integer of at least one, a `confidence` that is not a number in (0, 1), texts not as many as the values and an `rng` that is not a numpy `Generator` raise `ParameterError`.
 <!-- --8<-- [end:bootstrap_median_diff] -->
 
 <!-- --8<-- [start:holm_correction] -->
-`holm_correction(p_values)` - Holm's correction for multiple comparisons: the p-values are sorted in ascending order, the i-th is multiplied by (m − i + 1), where m is the number of defined values, then the running maximum is taken and capped at one; `nan` stays `nan`, and a p-value outside [0, 1] raises `ParameterError`.
+`holm_correction(p_values)` - Holm's correction for multiple comparisons: the p-values are sorted in ascending order, the i-th is multiplied by (m − i + 1), where m is the number of defined values, then the running maximum is taken and capped at one; `nan` stays `nan`. A p-value that is not a number or a missing one and p-values that are not a flat list raise `SourceTypeError`, and a p-value outside [0, 1] `ParameterError`.
 <!-- --8<-- [end:holm_correction] -->
 
 !!! example "Example"

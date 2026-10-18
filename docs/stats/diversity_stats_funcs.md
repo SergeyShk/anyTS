@@ -1,5 +1,9 @@
 # Metric functions
 
+<!-- --8<-- [start:diversity-checks] -->
+Every function checks its words with `check_words`: a `text` that is a string, a `Doc`, an iterator, a set or a table, or whose words are not strings, raises `SourceTypeError`; `fit_zipf_mandelbrot` takes a counter too.
+<!-- --8<-- [end:diversity-checks] -->
+
 ## Type-Token Ratio (TTR)
 
 !!! info ""
@@ -116,7 +120,9 @@ Parameters:
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
 | `text` | list[str] | `-` | List of words |
-| `base` | float | `10` | Logarithm base |
+| `base` | float | `10` | Logarithm base (`DIVERSITY_LOG_BASE`) |
+
+A `base` that is not a finite number above 1 raises `ParameterError`.
 <!-- --8<-- [end:calc_sttr] -->
 
 ## Maas Type-Token Ratio (MTTR)
@@ -143,7 +149,9 @@ Parameters:
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
 | `text` | list[str] | `-` | List of words |
-| `base` | float | `10` | Logarithm base |
+| `base` | float | `10` | Logarithm base (`DIVERSITY_LOG_BASE`) |
+
+A `base` that is not a finite number above 1 raises `ParameterError`.
 <!-- --8<-- [end:calc_mttr] -->
 
 ## Dugast Type-Token Ratio (DTTR)
@@ -170,7 +178,9 @@ Parameters:
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
 | `text` | list[str] | `-` | List of words |
-| `base` | float | `10` | Logarithm base |
+| `base` | float | `10` | Logarithm base (`DIVERSITY_LOG_BASE`) |
+
+A `base` that is not a finite number above 1 raises `ParameterError`.
 <!-- --8<-- [end:calc_dttr] -->
 
 ## Moving Average Type-Token Ratio (MATTR)
@@ -197,7 +207,9 @@ Parameters:
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
 | `text` | list[str] | `-` | List of words |
-| `window_len` | int | `50` | Window size |
+| `window_len` | int | `50` | Window size (`MATTR_WINDOW_LEN`) |
+
+A `window_len` that is not an integer of at least one raises `ParameterError`.
 <!-- --8<-- [end:calc_mattr] -->
 
 ## Mean Segmental Type-Token Ratio (MSTTR)
@@ -224,7 +236,9 @@ Parameters:
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
 | `text` | list[str] | `-` | List of words |
-| `segment_len` | int | `50` | Segment size |
+| `segment_len` | int | `50` | Segment size (`MATTR_WINDOW_LEN`) |
+
+A `segment_len` that is not an integer of at least one raises `ParameterError`.
 <!-- --8<-- [end:calc_msttr] -->
 
 ## Measure of Textual Lexical Diversity (MTLD)
@@ -253,8 +267,10 @@ Parameters:
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
 | `text` | list[str] | `-` | List of words |
-| `min_len` | int | `10` | Minimum factor length |
-| `threshold` | float | `0.72` | TTR threshold for completing a factor |
+| `min_len` | int | `10` | Minimum factor length (`MTLD_MIN_LEN`) |
+| `threshold` | float | `0.72` | TTR threshold for completing a factor (`MTLD_TTR_THRESHOLD`) |
+
+A `min_len` that is not a non-negative integer and a `threshold` that is not a number in (0, 1) raise `ParameterError`.
 <!-- --8<-- [end:calc_mtld] -->
 
 ## Moving Average Measure of Textual Lexical Diversity (MA-MTLD)
@@ -275,8 +291,10 @@ Parameters:
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
 | `text` | list[str] | `-` | List of words |
-| `min_len` | int | `10` | Minimum factor length |
-| `threshold` | float | `0.72` | TTR threshold for completing a factor |
+| `min_len` | int | `10` | Minimum factor length (`MTLD_MIN_LEN`) |
+| `threshold` | float | `0.72` | TTR threshold for completing a factor (`MTLD_TTR_THRESHOLD`) |
+
+A `min_len` that is not a non-negative integer and a `threshold` that is not a number in (0, 1) raise `ParameterError`.
 <!-- --8<-- [end:calc_mamtld] -->
 
 ## MTLD with a moving window and text wrap (MTLD-W)
@@ -297,8 +315,10 @@ Parameters:
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
 | `text` | list[str] | `-` | List of words |
-| `min_len` | int | `10` | Minimum factor length |
-| `threshold` | float | `0.72` | TTR threshold for completing a factor |
+| `min_len` | int | `10` | Minimum factor length (`MTLD_MIN_LEN`) |
+| `threshold` | float | `0.72` | TTR threshold for completing a factor (`MTLD_TTR_THRESHOLD`) |
+
+A `min_len` that is not a non-negative integer and a `threshold` that is not a number in (0, 1) raise `ParameterError`.
 <!-- --8<-- [end:calc_mtldw] -->
 
 ## Hypergeometric Distribution D (HD-D)
@@ -319,7 +339,9 @@ Parameters:
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
 | `text` | list[str] | `-` | List of words |
-| `sample_size` | int | `42` | Sample size in words |
+| `sample_size` | int | `42` | Sample size in words (`HDD_SAMPLE_SIZE`) |
+
+A `sample_size` that is not an integer of at least one raises `ParameterError`.
 <!-- --8<-- [end:calc_hdd] -->
 
 ## Simpson's index (D)
@@ -570,7 +592,9 @@ Parameters:
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
 | `text` | list[str] | `-` | List of words |
-| `a` | float | `0.172` | Exponent |
+| `a` | float | `0.172` | Exponent (`BRUNET_W_EXPONENT`) |
+
+An `a` that is not a finite number raises `ParameterError`.
 <!-- --8<-- [end:calc_brunet_w] -->
 
 ## Dugast's k
@@ -595,7 +619,9 @@ Parameters:
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
 | `text` | list[str] | `-` | List of words |
-| `base` | float | `10` | Logarithm base |
+| `base` | float | `10` | Logarithm base (`DIVERSITY_LOG_BASE`) |
+
+A `base` that is not a finite number above 1 raises `ParameterError`.
 <!-- --8<-- [end:calc_dugast_k] -->
 
 ## Baayen's P
@@ -758,6 +784,8 @@ Parameters:
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
 | `text` | list[str]/Counter | `-` | List of words or a counter of their frequencies |
+
+A counter whose words are not strings or whose frequencies are not numbers raises `SourceTypeError`, and a negative, `nan` or infinite frequency `SourceError` (`check_counts`).
 <!-- --8<-- [end:fit_zipf_mandelbrot] -->
 
 !!! example "Example"
@@ -816,4 +844,6 @@ Parameters:
 | `step` | int | `None` | Window step, by default equal to the window size |
 | `confidence` | float | `0.95` | Confidence level |
 | `messages` | dict[str, str] | `MESSAGES` | Messages of the errors by key, a keyword |
+
+A `func` that cannot be called raises `SourceTypeError`; a `window_len` or a `step` that is not an integer of at least one and a `confidence` that is not a number in (0, 1) raise `ParameterError`.
 <!-- --8<-- [end:calc_windowed] -->

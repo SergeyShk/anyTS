@@ -19,8 +19,8 @@ A language library subclasses `SyntaxStats`. The defaults read Universal Depende
 | Hook | Kind | Description |
 | :--: | :--: | :---------: |
 | `parse(source)` | method | `Doc` of a source; by default the source itself, which must be a `Doc`; a library may parse a string |
-| `is_clause_head(token)` | method | Whether a word heads a clause; by default the head of the sentence or a word with `ccomp`, `advcl`, `acl`, `csubj` or `parataxis` (`anyts.constants.CLAUSE_DEPS`, subtypes included) whose predicate (`predicate_form`, so `has been built` is finite) is not a participle, a converb or a gerund (counted apart), nor an infinitive under `acl`; a `parataxis` and a conjunct of a clause head count only as predicates (`is_predicate`) |
-| `is_subordinate_clause_head(token)` | method | Whether a clause head heads a subordinate clause, asked only of the words of `is_clause_head`; by default a clause head with `ccomp`, `advcl`, `acl` or `csubj`, or a conjunct of one, by the relation of the first word up its chain of conjuncts |
+| `is_clause_head(token)` | method | Whether a word heads a clause; by default the head of the sentence or a word with `ccomp`, `advcl`, `acl`, `csubj` or `parataxis` (`anyts.constants.CLAUSE_DEPS`, subtypes included) whose predicate (`predicate_form`, so `has been built` is finite) is not a participle, a converb or a gerund (`NONFINITE_CLAUSE_FORMS`, counted apart), nor an infinitive under `acl`; a `parataxis` and a conjunct of a clause head count only as predicates (`is_predicate`) |
+| `is_subordinate_clause_head(token)` | method | Whether a clause head heads a subordinate clause, asked only of the words of `is_clause_head`; by default a clause head with `ccomp`, `advcl`, `acl` or `csubj` (`SUBORDINATE_CLAUSE_DEPS`), or a conjunct of one, by the relation of the first word up its chain of conjuncts |
 | `is_participle_clause(token)` | method | Whether a word heads a participial clause; by default a participle that is not the head of the sentence, has no auxiliary or copula and has a dependent (`calc_valency`) |
 | `is_passive(token)` | method | Whether a word is a passive verb form; by default a verb with `Voice=Pass` or a dependent `nsubj:pass`, `csubj:pass`, `aux:pass`, or `nsubjpass`, `csubjpass`, `auxpass` of ClearNLP (`PASSIVE_DEPS`) |
 | `is_agentless(token)` | method | Whether a passive form has no agent; by default no dependent `obl:agent`, or `agent` of ClearNLP (`AGENT_DEPS`) |
@@ -29,7 +29,7 @@ A language library subclasses `SyntaxStats`. The defaults read Universal Depende
 | `negation_words` | class attribute | Words of negation besides `Polarity=Neg`, in lower case; none by default |
 | `join_hyphens` | class attribute | Take a word the tokenizer split at its hyphens for one word, in the tree and in the default hooks |
 | `requires_lemmas` | class attribute | Whether the source must carry lemmas, for hooks that read them |
-| `stats_desc`, `stats_headers` | class attributes | Statistics of `get_stats` with their descriptions, headers of the columns for `print_stats` |
+| `stats_desc`, `stats_headers` | class attributes | Statistics of `get_stats` with their descriptions (`SYNTAX_STATS_DESC` by default), headers of the columns for `print_stats` |
 | `messages` | class attribute | Messages of the errors by key; `MESSAGES` by default |
 
 The subclass adds the statistics of the constructions of its language (chains of complements by `calc_modifier_chains`, its own clauses) in its constructor from `sents`, with its own `stats_desc`.

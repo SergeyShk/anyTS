@@ -12,7 +12,7 @@ Measures of stylometry and authorship attribution: distances between texts by th
 ## Burrows's Delta { #delta }
 
 <!-- --8<-- [start:frequency_table] -->
-A corpus is a dictionary "name of a text → units". `frequency_table(corpus, n_mfw=100, culling=0.0)` builds the table of relative frequencies: rows are the texts, columns the `n_mfw` most frequent units by descending mean relative frequency (alphabetically when equal); `culling` keeps the units that occur in at least the given share of the texts, as in stylo.
+A corpus is a dictionary "name of a text → units". `frequency_table(corpus, n_mfw=100, culling=0.0)` builds the table of relative frequencies: rows are the texts, columns the `n_mfw` most frequent units by descending mean relative frequency (alphabetically when equal); `culling` keeps the units that occur in at least the given share of the texts, as in stylo. A corpus that is not a mapping of lists of strings raises `SourceTypeError`; an empty corpus, a text without units and no unit left after culling raise `SourceError`, and an `n_mfw` that is not an integer of at least one and a `culling` that is not a number within [0, 1] `ParameterError`.
 <!-- --8<-- [end:frequency_table] -->
 
 <!-- --8<-- [start:z_scores] -->
@@ -41,10 +41,12 @@ Parameters of `delta`:
 | `n_mfw` | int | `100` | Number of the most frequent units; `None` - all of them |
 | `variant` | str | `burrows` | Variant of Delta of `anyts.constants.DELTA_VARIANTS` |
 | `culling` | float | `0.0` | Smallest share of the texts a unit occurs in |
+
+The corpus, `n_mfw` and `culling` raise the errors of `frequency_table`; fewer than three texts raise `SourceError`, and an unknown variant `ParameterError`.
 <!-- --8<-- [end:delta] -->
 
 <!-- --8<-- [start:delta_profiles] -->
-`delta_profiles(reference, samples, n_mfw, variant, culling, statistics)` is for authorship attribution. The most frequent units, the culling and the statistics of the z-scores come from the reference texts (the profiles of the authors) or from a separate set `statistics`, such as training windows when the profiles are too few to estimate the spread of the frequencies; the texts under test `samples` get the same units and scaling. The result is the distances from the samples (rows) to the references (columns); the nearest reference is the presumed author. Unlike in `delta`, a sample affects neither the units nor the scaling, so its result does not depend on the other samples.
+`delta_profiles(reference, samples, n_mfw, variant, culling, statistics)` is for authorship attribution. The most frequent units, the culling and the statistics of the z-scores come from the reference texts (the profiles of the authors) or from a separate set `statistics`, such as training windows when the profiles are too few to estimate the spread of the frequencies; the texts under test `samples` get the same units and scaling. The result is the distances from the samples (rows) to the references (columns); the nearest reference is the presumed author. Unlike in `delta`, a sample affects neither the units nor the scaling, so its result does not depend on the other samples. The corpora, `n_mfw` and `culling` raise the errors of `frequency_table`; fewer than three texts for the statistics raise `SourceError`, and an unknown variant `ParameterError`.
 <!-- --8<-- [end:delta_profiles] -->
 
 !!! example "Example"
@@ -100,7 +102,7 @@ Markers of preferred and avoided words after Burrows (2007) and Craig and Kinney
 | `segment_size` | int | `2000` | Size of a segment in words |
 | `top_n` | int | `None` | Number of words from the start of the list; `None` - all of them |
 
-The result is a list of `ZetaScore(word, dp_target, dp_comparison, zeta, log_zeta)` named tuples by descending Zeta, by descending logarithmic Zeta and alphabetically when equal.
+The result is a list of `ZetaScore(word, dp_target, dp_comparison, zeta, log_zeta)` named tuples by descending Zeta, by descending logarithmic Zeta and alphabetically when equal. A corpus that is neither a list of strings nor a list of such lists raises `SourceTypeError`, and a corpus without words `SourceError`; a `segment_size` or a `top_n` that is not an integer of at least one raises `ParameterError`.
 <!-- --8<-- [end:zeta] -->
 
 !!! example "Example"
@@ -126,6 +128,8 @@ The distance between two corpora after [Kilgarriff (2001)](https://www.sketcheng
 | `words_a` | list[str] | `-` | Words of the first corpus |
 | `words_b` | list[str] | `-` | Words of the second corpus |
 | `n_mfw` | int | `500` | Number of the most frequent words of the joint corpus |
+
+Words that are not a list of strings raise `SourceTypeError`, a corpus without words `SourceError`, and an `n_mfw` that is not an integer of at least one `ParameterError`.
 <!-- --8<-- [end:kilgarriff_chi2] -->
 
 !!! example "Example"
@@ -140,11 +144,11 @@ The distance between two corpora after [Kilgarriff (2001)](https://www.sketcheng
 ## Mendenhall curve { #mendenhall }
 
 <!-- --8<-- [start:mendenhall_curve] -->
-`mendenhall_curve(words)` - the shares of the words of every length in characters (Mendenhall 1887), a profile of the author comparable between texts whatever their size.
+`mendenhall_curve(words)` - the shares of the words of every length in characters (Mendenhall 1887), a profile of the author comparable between texts whatever their size. Words that are not a list of strings raise `SourceTypeError`, and no words `SourceError`.
 <!-- --8<-- [end:mendenhall_curve] -->
 
 <!-- --8<-- [start:mendenhall_distance] -->
-`mendenhall_distance(words_a, words_b)` - the Jensen-Shannon distance with base 2 between the curves, from 0 (the distributions coincide) to 1.
+`mendenhall_distance(words_a, words_b)` - the Jensen-Shannon distance with base 2 between the curves, from 0 (the distributions coincide) to 1. Words that are not a list of strings raise `SourceTypeError`, and a text without words `SourceError`.
 <!-- --8<-- [end:mendenhall_distance] -->
 
 !!! example "Example"

@@ -42,6 +42,8 @@ A zero frequency in one of the corpora is replaced with 0.5 for %DIFF, Log Ratio
 | `min_freq` | int | `1` | Minimum frequency of a keyword in its own corpus |
 | `positive` | bool | `True` | Positive keywords (more frequent in the target corpus) or negative ones (more frequent in the reference) |
 | `top_n` | int | `None` | Number of keywords; `None` - all of them |
+
+The parameters and the target corpus are checked by `check_keyness_params`. A reference that is not a list of strings, a counter or a `FrequencyReference` raises `SourceTypeError`, and a negative, `nan` or infinite frequency of a counter and an empty corpus raise `SourceError`.
 <!-- --8<-- [end:keyness-parameters] -->
 
 <!-- --8<-- [start:check_keyness_params] -->

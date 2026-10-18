@@ -1,6 +1,6 @@
 # Metric functions
 
-The services publish no formulas, so the common definitions are taken. The language - the stopwords, the water, the normalized form of a word, the spelling of phrases - comes through the keyword parameters; words, stopwords, keywords and phrases that are not a list of strings raise `SourceTypeError`.
+The services publish no formulas, so the common definitions are taken. The language - the stopwords, the water, the normalized form of a word, the spelling of phrases - comes through the keyword parameters; words, stopwords, keywords and phrases that are not a list of strings and hooks that cannot be called raise `SourceTypeError`.
 
 ## Classic nausea
 
@@ -38,11 +38,13 @@ Parameters:
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
 | `text` | list[str] | `-` | List of words |
-| `top_n` | int | `10` | Number of the most frequent words |
+| `top_n` | int | `10` | Number of the most frequent words (`NAUSEA_TOP_N`) |
 | `stopwords` | list[str] | `None` | Stopwords |
 | `is_stopword` | Callable | `None` | Whether a word is a stopword, without the list |
 | `normalize` | Callable | `str.lower` | Normalized form of a word |
 | `messages` | dict[str, str] | `MESSAGES` | Messages of the errors by key |
+
+A `top_n` that is not an integer of at least one raises `ParameterError`.
 <!-- --8<-- [end:find_nausea_words] -->
 
 ## Academic nausea
@@ -64,11 +66,13 @@ Parameters:
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
 | `text` | list[str] | `-` | List of words |
-| `top_n` | int | `10` | Number of the most frequent words |
+| `top_n` | int | `10` | Number of the most frequent words (`NAUSEA_TOP_N`) |
 | `stopwords` | list[str] | `None` | Stopwords |
 | `is_stopword` | Callable | `None` | Whether a word is a stopword, without the list |
 | `normalize` | Callable | `str.lower` | Normalized form of a word |
 | `messages` | dict[str, str] | `MESSAGES` | Messages of the errors by key |
+
+A `top_n` that is not an integer of at least one raises `ParameterError`.
 <!-- --8<-- [end:calc_academic_nausea] -->
 
 ## Water content
@@ -129,8 +133,10 @@ Parameters:
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
 | `text` | list[str] | `-` | List of words |
-| `top_n` | int | `10` | Number of the most frequent words |
+| `top_n` | int | `10` | Number of the most frequent words (`NAUSEA_TOP_N`) |
 | `messages` | dict[str, str] | `MESSAGES` | Messages of the errors by key |
+
+A `top_n` that is not an integer of at least one raises `ParameterError`.
 <!-- --8<-- [end:calc_zipf_naturalness] -->
 
 ## Keyword density

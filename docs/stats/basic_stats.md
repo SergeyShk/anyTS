@@ -22,7 +22,7 @@ A language library subclasses `BasicStats`:
 | `sents_extractor_class`, `words_extractor_class` | class attributes | The extractors used when none is given; `SentsExtractor` and `WordsExtractor` by default |
 | `join_hyphens` | class attribute | Join the parts of the hyphenated words of a `Doc` (`iter_doc_words`); `False` by default |
 | `count_punctuations(text)` | method | The punctuation marks by type; `count_punctuations` of the module by default |
-| `stats_desc` | class attribute | The counts of `get_stats` with their descriptions for `print_stats` |
+| `stats_desc` | class attribute | The counts of `get_stats` with their descriptions for `print_stats`; `anyts.constants.BASIC_STATS_DESC` by default |
 
 The other hooks, `stats_headers`, `level_scales` and `messages`, come from `Stats`. The thresholds of the complex and the long words are parameters; a library sets its own defaults in its `__init__` and passes them on.
 <!-- --8<-- [end:BasicStats-hooks] -->
@@ -114,7 +114,7 @@ In the core the types are `anyts.constants.PUNCTUATION_TYPES`, and `marks` and `
 ## Dashes typed with hyphens { #dash_pattern }
 
 <!-- --8<-- [start:dash_pattern] -->
-`dash_pattern(conjunctions, hanging_before_comma)` builds the `dash_pattern` of `count_punctuations`. A hanging hyphen glued to a letter or a digit and carried on to a later word (`pre- and post-war`, `5- and 10-year`) stays a hyphen before spaces of a line and one of the `conjunctions`, case ignored, and with `hanging_before_comma` before a comma (`two-, three- and four-year`). A language whose dialogue closes a line with a hyphen before a comma (`-Come -he said-, and left`) leaves `hanging_before_comma` off. Without the parameters the pattern is `DASH_PATTERN`.
+`dash_pattern(conjunctions, hanging_before_comma)` builds the `dash_pattern` of `count_punctuations`. A hanging hyphen glued to a letter or a digit and carried on to a later word (`pre- and post-war`, `5- and 10-year`) stays a hyphen before spaces of a line and one of the `conjunctions`, case ignored, and with `hanging_before_comma` before a comma (`two-, three- and four-year`). A language whose dialogue closes a line with a hyphen before a comma (`-Come -he said-, and left`) leaves `hanging_before_comma` off. Without the parameters the pattern is `DASH_PATTERN`. Conjunctions that are not a collection of strings raise `SourceTypeError`, and an empty conjunction `ParameterError`.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |

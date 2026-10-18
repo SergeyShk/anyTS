@@ -42,7 +42,7 @@ A keyword without words and a negative window raise `ParameterError`; a source t
 <!-- --8<-- [end:kwic-parameters] -->
 
 <!-- --8<-- [start:format_kwic] -->
-`format_kwic(concordances, width=40)` aligns the lines on the keyword: the left context is cut on the left and aligned to the right, the right one cut on the right; `width`, at least one, is the width of a context in characters. The lines may come from any iterable and are taken in the composed form of Unicode (NFC), so the widths count characters as shown.
+`format_kwic(concordances, width=40)` aligns the lines on the keyword: the left context is cut on the left and aligned to the right, the right one cut on the right; `width` is the width of a context in characters. The lines may come from any iterable and are taken in the composed form of Unicode (NFC), so the widths count characters as shown. Lines that are a string or cannot be iterated raise `SourceTypeError`, and a `width` that is not an integer of at least one `ParameterError`.
 <!-- --8<-- [end:format_kwic] -->
 
 <!-- --8<-- [start:print_kwic] -->
