@@ -11,7 +11,7 @@ from ..constants import KEYNESS_MEASURES
 from ..exceptions import ParameterError, SourceError, SourceTypeError
 from ..utils import check_callable, check_counts, check_integer, check_number, check_words
 
-ZERO_ADJUSTMENT = 0.5
+_ZERO_ADJUSTMENT = 0.5
 
 
 class FrequencyReference(NamedTuple):
@@ -148,7 +148,7 @@ def keyness(
     size_target = float(sum(counts_target.values()))
     if not size_target or not size_reference:
         raise SourceError("The data source has no words")
-    calc = MEASURES[measure]
+    calc = _MEASURES[measure]
     rows = []
     # A negative keyword needs a frequency of its own in the reference: that of a missing key
     # is only an upper bound
@@ -412,7 +412,7 @@ def calc_diff(a: float, b: float, c: float, d: float) -> float:
 
 
 def _adjust(a: float, b: float) -> tuple[float, float]:
-    return a or ZERO_ADJUSTMENT, b or ZERO_ADJUSTMENT
+    return a or _ZERO_ADJUSTMENT, b or _ZERO_ADJUSTMENT
 
 
 def calc_log_ratio(a: float, b: float, c: float, d: float) -> float:
@@ -517,7 +517,7 @@ def calc_odds_ratio(a: float, b: float, c: float, d: float) -> float:
     return (a / (c - a)) / (b / (d - b))
 
 
-MEASURES = {
+_MEASURES = {
     "log_likelihood": calc_log_likelihood,
     "chi2": calc_chi2,
     "diff": calc_diff,

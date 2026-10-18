@@ -29,7 +29,7 @@ DOWNLOAD_TIMEOUT = 60
 USER_AGENT = "anyTS"
 
 # Whether tarfile has the data filter (Python 3.11.4+)
-TAR_DATA_FILTER = hasattr(tarfile, "data_filter")
+_TAR_DATA_FILTER = hasattr(tarfile, "data_filter")
 
 # The starts of a path that expanduser turns into the home directory
 _HOME = tuple(f"~{sep}" for sep in (os.sep, os.altsep) if sep)
@@ -540,13 +540,13 @@ def _extract(archive_path: Path, is_tar: bool, extract_path: Path) -> list[str]:
     def check(member: tarfile.TarInfo, path: str) -> tarfile.TarInfo:
         if _is_outside(member.name) or not (member.isfile() or member.isdir()):
             raise DataFileError(refused)
-        return tarfile.data_filter(member, path) if TAR_DATA_FILTER else member
+        return tarfile.data_filter(member, path) if _TAR_DATA_FILTER else member
 
     logger.info("Extracting the archive %s", archive_path)
     try:
         if is_tar:
             with tarfile.open(archive_path, mode="r") as tar_file:
-                if TAR_DATA_FILTER:
+                if _TAR_DATA_FILTER:
                     tar_file.extractall(extract_path, filter=check)
                 else:
                     for member in tar_file:

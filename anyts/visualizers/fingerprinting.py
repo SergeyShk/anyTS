@@ -15,10 +15,10 @@ from ..utils import check_integer, check_sequence, check_words, merge_labels
 from ._axes import check_axes
 
 # Size of a square and the margin between blocks, in the units of the drawing area
-SQUARE = 15
-MARGIN = 25
+_SQUARE = 15
+_MARGIN = 25
 # Colour of the empty cells of a block and of the undefined measure
-MISSING_COLOR = "lightgray"
+_MISSING_COLOR = "lightgray"
 
 
 def fingerprinting(
@@ -51,7 +51,7 @@ def fingerprinting(
         texts (list[list[str]]): List of lists of words
         segment_len (int): Size of a segment
         metric (callable): Function of a measure of lexical diversity; calc_ttr by default
-        x_size (int): Half the width of the drawing area, greater than MARGIN (25)
+        x_size (int): Half the width of the drawing area, greater than 25
         y_size (int): Half the height of the drawing area, which grows when the blocks need more
         cmap (str): Colour map
         ax (Axes): Axes for the plot; if not given, a 15×10 figure is created
@@ -65,7 +65,7 @@ def fingerprinting(
             measure is not callable
         SourceError: If there are no texts or a text has no words
         ParameterError: If the size of a segment is not an integer or is below one, the half width
-            is not an integer above MARGIN, the half height not an integer above zero, the colour
+            is not an integer above 25, the half height not an integer above zero, the colour
             map is unknown, the labels are set incorrectly (merge_labels) or ax is not a
             matplotlib Axes (check_axes)
     """
@@ -84,9 +84,9 @@ def fingerprinting(
         raise ParameterError("The size of a segment must be greater than 0")
     check_integer(x_size, "half width of the drawing area")
     check_integer(y_size, "half height of the drawing area")
-    if x_size <= MARGIN or y_size < 1:
+    if x_size <= _MARGIN or y_size < 1:
         raise ParameterError(
-            f"The half width of the drawing area must be greater than {MARGIN} "
+            f"The half width of the drawing area must be greater than {_MARGIN} "
             "and the half height greater than 0"
         )
     measure = metric if metric is not None else calc_ttr
@@ -94,32 +94,32 @@ def fingerprinting(
     finite = [value for segments in values for value in segments if np.isfinite(value)]
     norm = Normalize(min(finite), max(finite)) if finite else Normalize(0, 1)
     try:
-        colormap = plt.get_cmap(cmap).with_extremes(bad=MISSING_COLOR)
+        colormap = plt.get_cmap(cmap).with_extremes(bad=_MISSING_COLOR)
     except (TypeError, ValueError):
         raise ParameterError(f"Unknown colour map: {cmap!r}") from None
     check_axes(ax)
     if ax is None:
         _, ax = plt.subplots(figsize=(15, 10))
-    left = -x_size + MARGIN
-    width = 2 * x_size - 2 * MARGIN
-    max_cols = max(1, width // SQUARE)
-    x, top, row_height = left, y_size - MARGIN, 0
+    left = -x_size + _MARGIN
+    width = 2 * x_size - 2 * _MARGIN
+    max_cols = max(1, width // _SQUARE)
+    x, top, row_height = left, y_size - _MARGIN, 0
     for segments in values:
         grid = _block(segments, max_cols)
         n_rows, n_cols = grid.shape
-        if x > left and x + n_cols * SQUARE > left + width:
-            x, top, row_height = left, top - row_height - MARGIN, 0
+        if x > left and x + n_cols * _SQUARE > left + width:
+            x, top, row_height = left, top - row_height - _MARGIN, 0
         ax.pcolormesh(
-            x + SQUARE * np.arange(n_cols + 1),
-            top - SQUARE * np.arange(n_rows + 1),
+            x + _SQUARE * np.arange(n_cols + 1),
+            top - _SQUARE * np.arange(n_rows + 1),
             np.ma.masked_invalid(grid),
             cmap=colormap,
             norm=norm,
         )
-        x += n_cols * SQUARE + MARGIN
-        row_height = max(row_height, n_rows * SQUARE)
+        x += n_cols * _SQUARE + _MARGIN
+        row_height = max(row_height, n_rows * _SQUARE)
     ax.set_xlim(-x_size, x_size)
-    ax.set_ylim(min(-y_size, top - row_height - MARGIN), y_size)
+    ax.set_ylim(min(-y_size, top - row_height - _MARGIN), y_size)
     ax.set_aspect("equal")
     # The colorbar follows the box of the axes that the equal aspect shrinks
     colorbar_ax = make_axes_locatable(ax).append_axes("right", size="3%", pad=0.1)

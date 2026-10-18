@@ -9,7 +9,7 @@ import spacy
 from anyts.constants import G2_CRITICAL_VALUES, KEYNESS_MEASURES
 from anyts.corpus import FrequencyReference, Keyword, check_keyness_params, keyness
 from anyts.corpus.keyness import (
-    MEASURES,
+    _MEASURES,
     calc_bic,
     calc_chi2,
     calc_diff,
@@ -26,7 +26,7 @@ reference = ["pal", "yawned", "in", "rug", "with", "basked", "pal", "ate"]
 
 
 def test_measures():
-    assert set(MEASURES) == set(KEYNESS_MEASURES)
+    assert set(_MEASURES) == set(KEYNESS_MEASURES)
     assert calc_log_likelihood(10, 5, 1000, 2000) == pytest.approx(
         2 * (10 * log(2) + 5 * log(0.5))
     )
@@ -232,7 +232,7 @@ def test_frequency_reference_of_no_size():
 def test_keyness_measures(measure):
     keywords = keyness(target, reference, measure=measure)
     kitty = next(keyword for keyword in keywords if keyword.word == "kitty")
-    assert kitty.score == MEASURES[measure](2, 0, 10, 8) or isnan(kitty.score)
+    assert kitty.score == _MEASURES[measure](2, 0, 10, 8) or isnan(kitty.score)
     if measure != "ell":
         assert keywords[0].word == "kitty"
 

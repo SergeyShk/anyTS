@@ -14,7 +14,7 @@ from spacy.tokens import Doc
 from anyts.components import start_sents_after_blank_lines
 from anyts.exceptions import ParameterError, SourceError, SourceTypeError
 from anyts.utils import (
-    PUNCTUATION_CATEGORIES,
+    _PUNCTUATION_CATEGORIES,
     add_tokenizer_rules,
     check_callable,
     check_counts,
@@ -96,7 +96,7 @@ def test_is_punctuation(token, expected):
 def test_punctuation_categories():
     categories = {unicodedata.category(chr(code)) for code in range(sys.maxunicode + 1)}
     assert {category for category in categories if category[0] in "PSM"} | {"Cf"} == (
-        PUNCTUATION_CATEGORIES
+        _PUNCTUATION_CATEGORIES
     )
 
 

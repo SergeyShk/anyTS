@@ -34,9 +34,9 @@ if TYPE_CHECKING:
     from ..cohesion_stats import Connector, ConnectorMatcher
 
 # Line breaks of Unix, Windows and old Mac texts
-LINE_BREAK = re.compile(r"\r\n?|\n")
+_LINE_BREAK = re.compile(r"\r\n?|\n")
 # What an annotation of a Doc gives a layer, for the message of an unavailable layer
-ANNOTATION_NAMES = {
+_ANNOTATION_NAMES = {
     "DEP": "a dependency parse",
     "LEMMA": "the lemmas",
     "POS": "the parts of speech",
@@ -196,7 +196,7 @@ class HighlightedText:
     layer_annotations: ClassVar[Mapping[str, Sequence[str]]] = MappingProxyType({})
     layer_styles: ClassVar[Mapping[str, str]] = MappingProxyType({})
     css_prefix: ClassVar[str] = "anyts"
-    annotation_names: ClassVar[Mapping[str, str]] = MappingProxyType(ANNOTATION_NAMES)
+    annotation_names: ClassVar[Mapping[str, str]] = MappingProxyType(_ANNOTATION_NAMES)
     messages: ClassVar[Mapping[str, str]] = MESSAGES
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
@@ -459,7 +459,7 @@ class HighlightedText:
         p = self.css_prefix
         chunks = []
         for start, end, active in split_segments(len(self.text), self.highlights):
-            chunk = LINE_BREAK.sub("&#10;", html.escape(self.text[start:end]))
+            chunk = _LINE_BREAK.sub("&#10;", html.escape(self.text[start:end]))
             if active:
                 active.sort(key=lambda h: self.layers.index(h.layer))
                 classes = " ".join(f"{p}-hl-{h.layer}" for h in active)

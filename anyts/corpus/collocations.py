@@ -93,7 +93,7 @@ def collocations(
     if not len(words):
         raise SourceError("The data source has no words")
     words = _sliceable(words)
-    calc = MEASURES[measure]
+    calc = _MEASURES[measure]
     n_words = len(words)
     frequencies = Counter(words)
     pairs: Counter[tuple[str, str]] = Counter()
@@ -306,7 +306,7 @@ def calc_min_sensitivity(freq_a: int, freq_b: int, freq_ab: float, n: int) -> fl
     return min(freq_ab / freq_a, freq_ab / freq_b)
 
 
-MEASURES = {
+_MEASURES = {
     "mi": calc_mi,
     "mi3": calc_mi3,
     "t_score": calc_t_score,

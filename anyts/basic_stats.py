@@ -43,7 +43,7 @@ _NORMALIZED_STATS = (
     "p_spaces",
     "p_punctuations",
 )
-ELLIPSIS_PATTERN = re.compile(r"…|\.{3,}|(?<=[?!])\.{2}")
+_ELLIPSIS_PATTERN = re.compile(r"…|\.{3,}|(?<=[?!])\.{2}")
 _SPACE = f"[{re.escape(''.join(SPACES))}]"
 # The dashes of dash_pattern; the underscore of italics counts as an opening or a closing mark
 _DASHES = (
@@ -451,7 +451,7 @@ def count_punctuations(
     counts = dict.fromkeys(PUNCTUATION_TYPES, 0)
     # Dashes first, so that one after an ellipsis still sees it (so...-he said)
     rest, counts["dash"] = dash_pattern.subn("", text)
-    rest, counts["ellipsis"] = ELLIPSIS_PATTERN.subn("", rest)
+    rest, counts["ellipsis"] = _ELLIPSIS_PATTERN.subn("", rest)
     chars = Counter(rest)
     for char, kind in marks.items():
         counts[kind] += chars[char]

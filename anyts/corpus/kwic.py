@@ -18,7 +18,7 @@ Sentenizer = Callable[[str], Iterable[tuple[int, int, str]]]
 Lemmatizer = Callable[[str, Sequence["Token"]], Iterable[str] | str]
 
 # The end of a sentence: a final mark, closing marks and whitespace, or a blank line
-BOUNDARY = re.compile(rf"[.!?…][\"'»”’)\]]*\s|{BLANK_LINE.pattern}")
+_BOUNDARY = re.compile(rf"[.!?…][\"'»”’)\]]*\s|{BLANK_LINE.pattern}")
 
 
 class Concordance(NamedTuple):
@@ -238,7 +238,7 @@ def _boundary(
             doc[position].is_sent_start for position in range(first, last + 1)
         )
     if starts is None:
-        return bool(BOUNDARY.search(gap))
+        return bool(_BOUNDARY.search(gap))
     position = bisect_left(starts, end)
     return bool(BLANK_LINE.search(gap)) or (position < len(starts) and starts[position] <= start)
 

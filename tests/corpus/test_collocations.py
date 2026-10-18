@@ -8,7 +8,7 @@ from nltk.collocations import BigramAssocMeasures, BigramCollocationFinder
 from anyts.constants import COLLOCATION_MEASURES
 from anyts.corpus import Collocation, collocations
 from anyts.corpus.collocations import (
-    MEASURES,
+    _MEASURES,
     calc_dice,
     calc_log_likelihood,
     calc_logdice,
@@ -33,7 +33,7 @@ tokens = [word.strip(".,") for word in text.split()]
 
 
 def test_measures():
-    assert set(MEASURES) == set(COLLOCATION_MEASURES)
+    assert set(_MEASURES) == set(COLLOCATION_MEASURES)
     assert calc_mi(3, 3, 3, 12) == log2(4)
     assert calc_mi3(3, 3, 3, 12) == log2(27 * 12 / 9)
     assert calc_t_score(3, 3, 3, 12) == pytest.approx((3 - 9 / 12) / sqrt(3))
@@ -130,7 +130,7 @@ def test_collocations_against_nltk(window):
 @pytest.mark.parametrize("measure", list(COLLOCATION_MEASURES))
 def test_collocations_measures(measure):
     found = collocations(words, window=2, measure=measure)
-    assert found[0].score == MEASURES[measure](3, 3, 1.5, 12)
+    assert found[0].score == _MEASURES[measure](3, 3, 1.5, 12)
     scores = [c.score for c in found]
     assert scores == sorted(scores, reverse=True)
 

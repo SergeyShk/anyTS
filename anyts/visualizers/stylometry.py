@@ -14,7 +14,7 @@ from ..utils import merge_labels
 from ._axes import check_axes
 
 # Methods of scipy.cluster.hierarchy.linkage
-LINKAGE_METHODS = frozenset(
+_LINKAGE_METHODS = frozenset(
     ("average", "centroid", "complete", "median", "single", "ward", "weighted")
 )
 
@@ -51,7 +51,7 @@ def dendrogram_plot(
             or ax is not a matplotlib Axes (check_axes)
     """
     captions = merge_labels(VISUALIZER_LABELS["dendrogram_plot"], labels)
-    if not isinstance(method, str) or method not in LINKAGE_METHODS:
+    if not isinstance(method, str) or method not in _LINKAGE_METHODS:
         raise ParameterError(f"Unknown method of linkage: {method}")
     values = _distance_matrix(distances, "a dendrogram")
     check_axes(ax)

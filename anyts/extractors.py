@@ -23,7 +23,7 @@ from .utils import (
 )
 
 Tokenizer = Pattern[str] | Callable[[str], Iterable[str]]
-SENTENCE_BOUNDARY = re.compile(r"(?<=[.!?…])\s+|(?<=[.!?…][\"'»”’)\]])\s+")
+_SENTENCE_BOUNDARY = re.compile(r"(?<=[.!?…])\s+|(?<=[.!?…][\"'»”’)\]])\s+")
 BLANK_LINE = re.compile(r"\n\s*\n")
 
 
@@ -245,9 +245,9 @@ class SentsExtractor(Extractor):
         Returns:
             iterable[str]: Sentences
         """
-        pieces = SENTENCE_BOUNDARY.split(text)
+        pieces = _SENTENCE_BOUNDARY.split(text)
         sents = pieces[:1]
-        for separator, piece in zip(SENTENCE_BOUNDARY.findall(text), pieces[1:], strict=True):
+        for separator, piece in zip(_SENTENCE_BOUNDARY.findall(text), pieces[1:], strict=True):
             if has_words(piece) and has_words(sents[-1]):
                 sents.append(piece)
             else:

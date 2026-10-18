@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     from .extractors import SentsExtractor
 
 # Punctuation, symbols, combining marks and invisible format characters
-PUNCTUATION_CATEGORIES = frozenset(
+_PUNCTUATION_CATEGORIES = frozenset(
     ("Pc", "Pd", "Ps", "Pe", "Pi", "Pf", "Po", "Sm", "Sc", "Sk", "So", "Mn", "Mc", "Me", "Cf")
 )
 
@@ -54,7 +54,7 @@ def is_punctuation(token: str) -> bool:
         >>> is_punctuation("?!"), is_punctuation("€"), is_punctuation("no.")
         (True, True, False)
     """
-    return all(unicodedata.category(char) in PUNCTUATION_CATEGORIES for char in token)
+    return all(unicodedata.category(char) in _PUNCTUATION_CATEGORIES for char in token)
 
 
 def is_number(word: str, pattern: Pattern[str] = NUMBER_PATTERN) -> bool:
