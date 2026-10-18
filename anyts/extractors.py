@@ -358,21 +358,30 @@ def _iter_part_sents(
 
 
 def _check_spans(
-    spans: object, text: str, what: str, ordered: bool = True
+    spans: object,
+    text: str,
+    what: str,
+    ordered: bool = True,
+    error: Callable[[object], str] | None = None,
 ) -> list[tuple[int, int, str]]:
     """
     Checking the spans a hook gives for a string: triples of the start, the end and
-    the text of every item inside the string, in order unless not ordered
+    the text of every item inside the string, in order unless not ordered; error
+    gives the message of a wrong value in place of the English ones
     """
     if not isinstance(spans, Iterable):
-        raise SourceTypeError(f"The {what} must return an iterable object")
+        raise SourceTypeError(
+            error(spans) if error else f"The {what} must return an iterable object"
+        )
     checked = []
     previous = 0
     size = len(text)
     for span in spans:
         if not (isinstance(span, tuple | list) and len(span) == 3):
             raise SourceTypeError(
-                f"The {what} must give triples of the start, the end and the text, not {span!r}"
+                error(span)
+                if error
+                else f"The {what} must give triples of the start, the end and the text, not {span!r}"
             )
         start, end, item = span
         integers = (type(start) is int and type(end) is int) or all(
@@ -381,8 +390,10 @@ def _check_spans(
         if not (integers and isinstance(item, str) and previous <= start < end <= size):
             order = "ascending " if ordered else ""
             raise SourceTypeError(
-                f"The {what} must give {order}integer bounds inside the string and the text "
-                f"of every item, not {tuple(span)!r}"
+                error(span)
+                if error
+                else f"The {what} must give {order}integer bounds inside the string and the "
+                f"text of every item, not {tuple(span)!r}"
             )
         checked.append((start, end, item))
         if ordered:

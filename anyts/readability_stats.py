@@ -123,8 +123,9 @@ class ReadabilityStats(Stats):
         SourceError: If the source has no words or no sentences
         ParameterError: If the coefficient preset is not a string or is unknown; when
             a class is defined, if its scales of a preset name an unknown preset, a
-            scale or a scale of grades is not one of scale_level with finite grades, or
-            its school stages are not ascending quadruples of two years and two strings
+            scale or a scale of grades is not one of scale_level with finite grades, its
+            school stages are not ascending quadruples of two years and two strings, or
+            the stage above them is not a pair of strings
     """
 
     basic_stats_class: ClassVar[type[BasicStats] | None] = None

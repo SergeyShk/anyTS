@@ -654,6 +654,7 @@ def test_words_of_iter_words_checked():
             return [(5, 2, "cat")]
 
     with pytest.raises(
-        SourceTypeError, match=r"^The tokenizer must give ascending integer bounds"
+        SourceTypeError,
+        match=r"^The iter_words of Bad must give ascending triples of integer bounds",
     ):
         Bad("The cat")

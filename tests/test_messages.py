@@ -339,6 +339,8 @@ CASES = [
     ("layer_annotations", ParameterError, lambda: Layers(TEXT, ["parsed"])),
     ("fragment_outside", ParameterError, lambda: Layers(TEXT, ["all"])),
     ("fragment_layer", ParameterError, lambda: OtherLayer(TEXT)),
+    ("hook_spans", SourceTypeError, lambda: hooked(Layers, iter_words=lambda self, t: [1])(TEXT)),
+    ("hook_spans", SourceTypeError, lambda: hooked(Layers, iter_sents=lambda self, t: 5)(TEXT)),
     ("layer_unavailable", ParameterError, lambda: Layers._select_layers(["bare"], [])),
     (
         "long_sent_word_factor",

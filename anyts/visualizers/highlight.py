@@ -4,6 +4,7 @@ import html
 import re
 from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass
+from functools import partial
 from itertools import pairwise
 from numbers import Integral, Real
 from types import MappingProxyType
@@ -183,8 +184,9 @@ class HighlightedText:
         css: Getting the styles of the layers
 
     Raises:
-        SourceTypeError: If the source is neither a string nor a Doc, or find does
-            not return fragments of Highlight
+        SourceTypeError: If the source is neither a string nor a Doc, find does not
+            return fragments of Highlight, or iter_words or iter_sents does not give
+            ascending triples of integer bounds inside the text and a string
         SourceError: If the source has no words
         ParameterError: If a layer is unknown or not allowed by the source, the
             layers are not a list of names, or find gives a fragment of another
@@ -212,16 +214,18 @@ class HighlightedText:
             spans = (
                 iter_doc_sents(source)
                 if has_sents(source)
-                else iter_part_sents(self.iter_sents, self.text)
+                else iter_part_sents(partial(self._hook_spans, "iter_sents"), self.text)
             )
             sents = get_text_sents(spans, words)
         elif isinstance(source, str):
             self.text = source
             words = [
                 Word(start, end, text)
-                for start, end, text in _check_spans(self.iter_words(source), source, "tokenizer")
+                for start, end, text in self._hook_spans("iter_words", source)
             ]
-            sents = get_text_sents(iter_part_sents(self.iter_sents, source), words)
+            sents = get_text_sents(
+                iter_part_sents(partial(self._hook_spans, "iter_sents"), source), words
+            )
         else:
             raise SourceTypeError(self.messages["source_type"])
         if not words:
@@ -333,6 +337,17 @@ class HighlightedText:
             list[Highlight]: Fragments of the layer, of this layer only
         """
         raise NotImplementedError
+
+    def _hook_spans(self, hook: str, text: str) -> list[tuple[int, int, str]]:
+        """The words or the sentences iter_words or iter_sents gives for a text, checked"""
+        return _check_spans(
+            getattr(self, hook)(text),
+            text,
+            hook,
+            error=lambda value: self.messages["hook_spans"].format(
+                hook=hook, cls=type(self).__name__, span=repr(value)
+            ),
+        )
 
     def _find_error(self, value: object) -> str:
         """Message of a result of find that is not fragments of the highlighting"""
