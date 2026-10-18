@@ -15,10 +15,8 @@ from .constants import (
     HDD_SAMPLE_SIZE,
     MATTR_WINDOW_LEN,
     MESSAGES,
-    MTLD_BLOCK_SIZE,
     MTLD_MIN_LEN,
     MTLD_TTR_THRESHOLD,
-    MTLD_WINDOW_LEN,
 )
 from .exceptions import ParameterError, SourceError, SourceTypeError, UnknownStatError
 from .stats import Stats
@@ -32,6 +30,10 @@ from .utils import (
     safe_divide,
     shannon_entropy,
 )
+
+# Block of factor starts and window of offsets in the MA-MTLD and MTLD-W computation
+_MTLD_BLOCK_SIZE = 4096
+_MTLD_WINDOW_LEN = 32
 
 Calculator = Callable[[Sequence[str]], float]
 Function = TypeVar("Function", bound=Callable[..., Any])
@@ -836,7 +838,7 @@ def _mtld_factor_lengths(
     Description:
         The number of lexemes on the stretch [start, pos] is the number of its
         positions whose previous occurrence of the word lies before start; the
-        starts go in blocks over windows of MTLD_WINDOW_LEN offsets, the threshold
+        starts go in blocks over windows of _MTLD_WINDOW_LEN offsets, the threshold
         is compared in integers through _max_types. A factor of length L closes
         only with at least L − max_types[L] repeated words, so the repeats after
         a start bound its factor: those of the rest of the text, or of the whole
@@ -846,9 +848,9 @@ def _mtld_factor_lengths(
     if not n_words:
         return []
     previous = _previous_positions(text, wrap)
-    padded = np.concatenate([previous, np.full(MTLD_WINDOW_LEN, previous.size)])
-    windows = sliding_window_view(padded, MTLD_WINDOW_LEN)
-    max_types = _max_types(threshold, n_words + MTLD_WINDOW_LEN)
+    padded = np.concatenate([previous, np.full(_MTLD_WINDOW_LEN, previous.size)])
+    windows = sliding_window_view(padded, _MTLD_WINDOW_LEN)
+    max_types = _max_types(threshold, n_words + _MTLD_WINDOW_LEN)
     # Number of the factor lengths that need at most so many repeats
     fits = np.cumsum(np.bincount(np.arange(1, max_types.size) - max_types[1:]))
     if wrap:
@@ -858,8 +860,8 @@ def _mtld_factor_lengths(
         repeats = np.cumsum(repeated[::-1])[::-1]
     reach = fits[np.minimum(repeats, fits.size - 1)]
     lengths = np.zeros(n_words, dtype=np.int64)
-    for block_start in range(0, n_words, MTLD_BLOCK_SIZE):
-        pending = np.arange(block_start, min(block_start + MTLD_BLOCK_SIZE, n_words))
+    for block_start in range(0, n_words, _MTLD_BLOCK_SIZE):
+        pending = np.arange(block_start, min(block_start + _MTLD_BLOCK_SIZE, n_words))
         limits = np.minimum(reach[pending], n_words if wrap else n_words - pending)
         reachable = limits >= max(min_len, 1)
         pending = pending[reachable]
@@ -869,19 +871,19 @@ def _mtld_factor_lengths(
         while pending.size:
             types = np.cumsum(windows[pending + offset] < pending[:, None], axis=1, dtype=np.int32)
             types += counts[:, None]
-            factor_lens = offset + np.arange(1, MTLD_WINDOW_LEN + 1)
+            factor_lens = offset + np.arange(1, _MTLD_WINDOW_LEN + 1)
             closed = types <= max_types[factor_lens]
             if min_len > offset + 1:
                 closed[:, : min_len - offset - 1] = False
-            if offset + MTLD_WINDOW_LEN > limits.min():
+            if offset + _MTLD_WINDOW_LEN > limits.min():
                 closed &= factor_lens[None, :] <= limits[:, None]
             hit = closed.any(axis=1)
             lengths[pending[hit]] = factor_lens[closed[hit].argmax(axis=1)]
-            remaining = ~hit & (offset + MTLD_WINDOW_LEN < limits)
+            remaining = ~hit & (offset + _MTLD_WINDOW_LEN < limits)
             pending = pending[remaining]
             limits = limits[remaining]
             counts = types[remaining, -1]
-            offset += MTLD_WINDOW_LEN
+            offset += _MTLD_WINDOW_LEN
     return [int(length) for length in lengths[lengths > 0]]
 
 

@@ -388,7 +388,7 @@ def mtld_factor_lengths_by_sets(text, threshold, min_len, wrap):
 )
 def test_mtld_factor_lengths_match_sets(wrap, threshold, min_len, monkeypatch):
     # small blocks, so the texts span several of them
-    monkeypatch.setattr(diversity_stats, "MTLD_BLOCK_SIZE", 16)
+    monkeypatch.setattr(diversity_stats, "_MTLD_BLOCK_SIZE", 16)
     rng = random.Random(0)
     for _ in range(60):
         n_words = rng.randint(0, 200)
@@ -404,7 +404,7 @@ def test_mtld_factor_lengths_match_sets(wrap, threshold, min_len, monkeypatch):
 
 def test_mtld_factor_lengths_blocks():
     rng = random.Random(1)
-    words = [f"w{rng.randint(0, 40)}" for _ in range(2 * diversity_stats.MTLD_BLOCK_SIZE + 100)]
+    words = [f"w{rng.randint(0, 40)}" for _ in range(2 * diversity_stats._MTLD_BLOCK_SIZE + 100)]
     for wrap in (False, True):
         assert _mtld_factor_lengths(words, 0.72, 10, wrap) == (
             mtld_factor_lengths_by_sets(words, 0.72, 10, wrap)
