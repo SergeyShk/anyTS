@@ -33,6 +33,9 @@ if TYPE_CHECKING:
     from spacy.tokens import Doc
     from thinc.types import Ints2d
 
+# Extensions of Doc registered by the components; any other one belongs to another package
+_EXTENSIONS: set[str] = set()
+
 Stats = TypeVar("Stats")
 
 
@@ -91,6 +94,7 @@ class StatsComponent:
                     self.messages["stats_param"].format(cls=type(self).__name__, param=param)
                 )
         self.name = name
+        self._check_extension()
         self.prepare(nlp)
 
     @property
@@ -100,14 +104,20 @@ class StatsComponent:
 
     @name.setter
     def name(self, name: str) -> None:
-        # The pipeline renames its components by this attribute
-        _register(name, self.messages)
+        # The pipeline renames its components by this attribute after it renames the pipe,
+        # so a name of another package fails at the next document
+        _register(name)
         self._name = name
 
     def __setstate__(self, state: dict[str, Any]) -> None:
         # An unpickled component, in another process, registers its extension again
         self.__dict__.update(state)
-        _register(self._name, self.messages)
+        _register(self._name)
+
+    def _check_extension(self) -> None:
+        """Checking that the extension of the name is not one of another package"""
+        if self._name not in _EXTENSIONS:
+            raise ParameterError(self.messages["foreign_extension"].format(name=self._name))
 
     def prepare(self, nlp: Language) -> None:
         """
@@ -203,19 +213,25 @@ class StatsComponent:
 
         Returns:
             Doc: The document; untouched if it is not accepted
+
+        Raises:
+            ParameterError: If the pipeline renamed the component to the name of an
+                extension of another package
         """
+        self._check_extension()
         if self.accepts(doc):
             doc._.set(self.name, self.compute(doc))
         return doc
 
 
-def _register(name: str, messages: Mapping[str, str] = MESSAGES) -> None:
-    """Registering the extension of a component, never over one of another package"""
+def _register(name: str) -> None:
+    """Registering the extension of a component, unless another package has one of the name"""
     from spacy.tokens import Doc
 
-    if Doc.has_extension(name) and Doc.get_extension(name) != (None, None, None, None):
-        raise ParameterError(messages["foreign_extension"].format(name=name))
+    if Doc.has_extension(name) and name not in _EXTENSIONS:
+        return
     Doc.set_extension(name, default=None, force=True)
+    _EXTENSIONS.add(name)
 
 
 class BasicStatsComponent(StatsComponent):

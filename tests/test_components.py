@@ -229,6 +229,13 @@ def test_extension_of_another_package_is_kept(nlp):
         assert nlp.pipe_names == []
     finally:
         Doc.remove_extension("anyts_test_foreign")
+    # An extension without a getter, setter, method or default is another package's too
+    Doc.set_extension("anyts_test_plain", default=None)
+    try:
+        with pytest.raises(ParameterError, match=r"^The extension anyts_test_plain of Doc"):
+            nlp.add_pipe("anyts_test_diversity", name="anyts_test_plain")
+    finally:
+        Doc.remove_extension("anyts_test_plain")
     # A component added again takes its own extension back
     nlp.add_pipe("anyts_test_diversity", name="anyts_test_again")
     spacy.blank("xx").add_pipe("anyts_test_diversity", name="anyts_test_again")
@@ -461,3 +468,18 @@ def test_components_pass_their_parameters(nlp):
         Style(nlp, "s", nausea_stopwords=[1])
     with pytest.raises(ParameterError):
         Phon(nlp, "p", window_len=1)
+
+
+def test_component_renamed_to_an_extension_of_another_package(nlp):
+    nlp.add_pipe("anyts_test_diversity", name="anyts_test_own")
+    Doc.set_extension("anyts_test_taken", getter=lambda doc: 0.5)
+    try:
+        nlp.rename_pipe("anyts_test_own", "anyts_test_taken")
+        with pytest.raises(ParameterError, match=r"^The extension anyts_test_taken of Doc"):
+            nlp("The cat")
+        nlp.add_pipe("sentencizer")
+        nlp.rename_pipe("anyts_test_taken", "anyts_test_own")
+        assert nlp("The cat")._.anyts_test_own.ttr == 1.0
+        assert Doc(nlp.vocab, words=["a"])._.anyts_test_taken == 0.5
+    finally:
+        Doc.remove_extension("anyts_test_taken")
