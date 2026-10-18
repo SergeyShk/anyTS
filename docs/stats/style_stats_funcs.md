@@ -145,7 +145,7 @@ A `top_n` that is not an integer of at least one raises `ParameterError`.
     **anyts.style_stats.calc_keyword_density()**
 
 <!-- --8<-- [start:calc_keyword_density] -->
-Computation of the keyword density (Text.ru): the occurrences of every keyword per 100 words. A keyword of several words separated by spaces is a sequence of words whose occurrences may overlap; the case is ignored, and the keywords of a set come in sorted order.
+Computation of the keyword density (Text.ru): the occurrences of every keyword per 100 words. A keyword of several words separated by spaces is a sequence of words whose occurrences may overlap; the words and the keywords are compared by their normalized forms, and the keywords of a set come in sorted order.
 
 Parameters:
 
@@ -153,6 +153,7 @@ Parameters:
 | :-------: | :--: | :-----: | :---------: |
 | `text` | list[str] | `-` | List of words |
 | `keywords` | list[str] | `-` | Keywords or phrases |
+| `normalize` | Callable[[str], str] | `str.lower` | Normalized form of a word and of a keyword |
 <!-- --8<-- [end:calc_keyword_density] -->
 
 ## Density of phrases
@@ -172,6 +173,27 @@ Parameters:
 | `expand` | Callable | `None` | Variants of the phrases in the text, by the words and the phrases |
 | `normalize` | Callable | `str.lower` | Normalized form of a word |
 <!-- --8<-- [end:calc_phrase_density] -->
+
+## Parenthetical expressions { #parentheticals }
+
+!!! info ""
+    **anyts.style_stats.find_parentheticals()**, **anyts.style_stats.calc_parentheticals()**
+
+<!-- --8<-- [start:find_parentheticals] -->
+`find_parentheticals(text, phrases=(), is_parenthetical=None, expand=None, normalize=str.lower)` finds the parenthetical expressions of a text: the phrases of the list, spelled out by `expand` as in `calc_phrase_density`, and the single words accepted by `is_parenthetical` outside the phrases found. It returns their bounds as slices of the words, in order. `StyleStats` counts its `parentheticals` and finds their markers this way, with its hooks. Hooks that are not callable raise `SourceTypeError`.
+
+| Parameter | Type | Default | Description |
+| :-------: | :--: | :-----: | :---------: |
+| `text` | list[str] | `-` | List of words |
+| `phrases` | list[str] | `()` | Parenthetical phrases, words separated by spaces |
+| `is_parenthetical` | Callable[[str], bool] | `None` | Whether a word is a parenthetical expression by itself; none by default |
+| `expand` | Callable | `None` | Variants of the phrases in the forms of the text with the phrase of each; the phrases as they are by default |
+| `normalize` | Callable[[str], str] | `str.lower` | Normalized form of a word and of a phrase |
+<!-- --8<-- [end:find_parentheticals] -->
+
+<!-- --8<-- [start:calc_parentheticals] -->
+`calc_parentheticals(text, phrases=(), is_parenthetical=None, expand=None, normalize=str.lower)` gives the expressions of `find_parentheticals` with the same arguments per 100 words.
+<!-- --8<-- [end:calc_parentheticals] -->
 
 ## Parameters of the metrics { #check_params }
 

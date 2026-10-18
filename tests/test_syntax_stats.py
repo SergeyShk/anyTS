@@ -20,8 +20,13 @@ from anyts.syntax_stats import (
     count_noun_modifiers,
     get_children,
     get_words,
+    has_agent,
+    is_agentless,
+    is_clause_head,
+    is_passive,
     is_predicate,
     is_root,
+    is_subordinate_clause_head,
     predicate_form,
     subtree_len,
 )
@@ -944,3 +949,73 @@ def test_negation_words_checked_at_class_definition():
         SourceTypeError, match=r"^A list of negation_words is expected, not a string$"
     ):
         type("Negated", (SyntaxStats,), {"negation_words": "not"})
+
+
+def test_predicates_of_the_module_match_the_hooks():
+    doc = parse(
+        ["He", "said", "that", "it", "was", "built", "and", "left", "by", "them"],
+        [1, 1, 5, 5, 5, 1, 7, 5, 9, 7],
+        [
+            "nsubj",
+            "ROOT",
+            "mark",
+            "nsubj:pass",
+            "aux:pass",
+            "ccomp",
+            "cc",
+            "conj",
+            "case",
+            "obl:agent",
+        ],
+        pos=["PRON", "VERB", "SCONJ", "PRON", "AUX", "VERB", "CCONJ", "VERB", "ADP", "PRON"],
+    )
+    for token in doc:
+        assert is_clause_head(token) is DEFAULT.is_clause_head(token)
+        assert is_subordinate_clause_head(token) is DEFAULT.is_subordinate_clause_head(token)
+        assert is_passive(token) is DEFAULT.is_passive(token)
+        assert is_agentless(token) is DEFAULT.is_agentless(token)
+    assert [token.text for token in doc if is_subordinate_clause_head(token)] == ["built", "left"]
+    assert has_agent(doc[7]) and not has_agent(doc[5])
+    assert is_agentless(doc[5]) and not is_agentless(doc[7])
+
+
+def test_subordinate_clause_head_by_a_hook():
+    doc = parse(
+        ["He", "said", "that", "she", "came"],
+        [1, 1, 4, 4, 1],
+        ["nsubj", "ROOT", "mark", "nsubj", "ccomp"],
+        pos=["PRON", "VERB", "SCONJ", "PRON", "VERB"],
+    )
+    assert is_subordinate_clause_head(doc[4])
+    assert not is_subordinate_clause_head(doc[4], lambda token: False)
+    with pytest.raises(SourceTypeError):
+        is_subordinate_clause_head(doc[4], "clause")
+
+
+def test_clause_head_of_a_loop_of_conjuncts():
+    doc = parse(
+        ["He", "came", "left", "slept"],
+        [1, 1, 3, 2],
+        ["nsubj", "ROOT", "conj", "conj"],
+        pos=["PRON", "VERB", "VERB", "VERB"],
+    )
+    assert not is_clause_head(doc[2]) and not is_subordinate_clause_head(doc[2])
+
+
+def test_pickle_and_copy():
+    import copy
+    import pickle
+
+    doc = parse(
+        ["He", "came", "and", "left", ".", "She", "slept"],
+        [1, 1, 3, 1, 1, 6, 6],
+        ["nsubj", "ROOT", "cc", "conj", "punct", "nsubj", "ROOT"],
+        pos=["PRON", "VERB", "CCONJ", "VERB", "PUNCT", "PRON", "VERB"],
+    )
+    stats = SyntaxStats(doc)
+    for clone in (pickle.loads(pickle.dumps(stats)), copy.deepcopy(stats), copy.copy(stats)):
+        assert repr(clone.get_stats()) == repr(stats.get_stats())
+        assert [[token.text for token in sent] for sent in clone.sents] == [
+            ["He", "came", "and", "left"],
+            ["She", "slept"],
+        ]

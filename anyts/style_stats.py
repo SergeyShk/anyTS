@@ -332,7 +332,13 @@ class StyleStats(Stats):
 
     @property
     def parentheticals(self) -> float:
-        return safe_divide(len(self._parenthetical_spans()), len(self.forms)) * 100
+        return calc_parentheticals(
+            self.forms,
+            self.parentheticals_list,
+            is_parenthetical=self.is_parenthetical,
+            expand=self.expand_phrases,
+            normalize=self.normalize,
+        )
 
     @property
     def cliches(self) -> float:
@@ -348,17 +354,6 @@ class StyleStats(Stats):
         """Bounds of the phrases in the forms, with their variants"""
         return find_phrases(self.forms, self.expand_phrases(self.forms, phrases), self.normalize)
 
-    def _parenthetical_spans(self) -> list[tuple[int, int]]:
-        """Bounds of the parenthetical phrases and of the single words outside them"""
-        spans = self._phrase_spans(self.parentheticals_list)
-        covered = {position for start, end in spans for position in range(start, end)}
-        singles = [
-            (position, position + 1)
-            for position, word in enumerate(self.forms)
-            if position not in covered and self.is_parenthetical(word)
-        ]
-        return sorted(spans + singles)
-
     def keyword_density(self, *keywords: str) -> dict[str, float]:
         """
         Computing the density of keywords and phrases
@@ -369,7 +364,7 @@ class StyleStats(Stats):
         Returns:
             dict[str, float]: Density of every keyword in percent
         """
-        return calc_keyword_density(self.words, keywords)
+        return calc_keyword_density(self.words, keywords, self.normalize)
 
     def nausea_words(self) -> dict[str, int]:
         """
@@ -403,7 +398,13 @@ class StyleStats(Stats):
         forms = self.forms
         found = {
             "compound_prepositions": self._phrase_spans(self.compound_prepositions_list),
-            "parentheticals": self._parenthetical_spans(),
+            "parentheticals": find_parentheticals(
+                forms,
+                self.parentheticals_list,
+                is_parenthetical=self.is_parenthetical,
+                expand=self.expand_phrases,
+                normalize=self.normalize,
+            ),
             "cliches": self._phrase_spans(self.cliches_list),
         }
         verbal = tuple(form for form, lemma in self.nouns() if self.is_verbal_noun(lemma))
@@ -658,15 +659,17 @@ def calc_zipf_naturalness(
     return max(0.0, 100 * (span - deviation) / span)
 
 
-def calc_keyword_density(text: Sequence[str], keywords: Collection[str]) -> dict[str, float]:
+def calc_keyword_density(
+    text: Sequence[str], keywords: Collection[str], normalize: Callable[[str], str] = str.lower
+) -> dict[str, float]:
     """
     Computing the density of keywords
 
     Description:
         The occurrences of every keyword per 100 words (Text.ru). A keyword of
         several words separated by spaces is a sequence of words, and its
-        occurrences may overlap. The case is ignored; the keywords of a set come
-        in sorted order
+        occurrences may overlap. The words and the keywords are compared by
+        their normalized forms; the keywords of a set come in sorted order
 
     References:
         https://text.ru/seo
@@ -674,12 +677,15 @@ def calc_keyword_density(text: Sequence[str], keywords: Collection[str]) -> dict
     Arguments:
         text (list[str]): List of words
         keywords (list[str]|set[str]): Keywords or phrases
+        normalize (callable): Normalized form of a word and of a keyword, the lower
+            case by default
 
     Returns:
         dict[str, float]: Density of every keyword in percent
 
     Raises:
-        SourceTypeError: If the words or the keywords are not a list of strings
+        SourceTypeError: If the words or the keywords are not a list of strings, or
+            normalize is not callable
 
     Example:
         >>> from anyts.style_stats import calc_keyword_density
@@ -688,16 +694,17 @@ def calc_keyword_density(text: Sequence[str], keywords: Collection[str]) -> dict
     """
     check_words(text)
     check_words(keywords, "keywords", ordered=False)
+    check_callable(normalize, "normalization")
     n_words = len(text)
-    lowered = [word.lower() for word in text]
+    normalized = [normalize(word) for word in text]
     density = {}
     for keyword in in_order(keywords):
-        parts = keyword.lower().split()
+        parts = normalize(keyword).split()
         size = len(parts)
         if not size:
             density[keyword] = 0.0
             continue
-        count = sum(1 for i in range(n_words - size + 1) if lowered[i : i + size] == parts)
+        count = sum(1 for i in range(n_words - size + 1) if normalized[i : i + size] == parts)
         density[keyword] = safe_divide(100 * count, n_words)
     return density
 
@@ -737,3 +744,101 @@ def calc_phrase_density(
         check_callable(expand, "expansion of the phrases")
     variants = expand(text, phrases) if expand is not None else phrases
     return safe_divide(len(find_phrases(text, variants, normalize)), len(text)) * 100
+
+
+def find_parentheticals(
+    text: Sequence[str],
+    phrases: Collection[str] = (),
+    *,
+    is_parenthetical: Callable[[str], bool] | None = None,
+    expand: Expander | None = None,
+    normalize: Callable[[str], str] = str.lower,
+) -> list[tuple[int, int]]:
+    """
+    Finding the parenthetical expressions of a text
+
+    Description:
+        The phrases of the list (spelled out by expand, as in
+        calc_phrase_density) and the single words accepted by is_parenthetical
+        outside the phrases found
+
+    Arguments:
+        text (list[str]): List of words
+        phrases (list[str]|set[str]): Parenthetical phrases, words separated by spaces
+        is_parenthetical (callable): Whether a word is a parenthetical expression by
+            itself; none by default
+        expand (callable): Variants of the phrases in the forms of the text with the
+            phrase of each; the phrases as they are by default
+        normalize (callable): Normalized form of a word and of a phrase, the lower
+            case by default
+
+    Returns:
+        list[tuple[int, int]]: Bounds of the expressions as slices of the words, in order
+
+    Raises:
+        SourceTypeError: If the words or the phrases are not a list of strings, or
+            is_parenthetical, expand or normalize is not callable
+
+    Example:
+        >>> from anyts.style_stats import find_parentheticals
+        >>> find_parentheticals(
+        ...     "in fact it is surely true".split(), ["in fact"], is_parenthetical={"surely"}.__contains__
+        ... )
+        [(0, 2), (4, 5)]
+    """
+    check_words(text)
+    check_words(phrases, "phrases", ordered=False)
+    for hook, what in (
+        (is_parenthetical, "check of a parenthetical word"),
+        (expand, "expansion of the phrases"),
+    ):
+        if hook is not None:
+            check_callable(hook, what)
+    variants = expand(text, phrases) if expand is not None else phrases
+    spans = find_phrases(text, variants, normalize)
+    if is_parenthetical is None:
+        return spans
+    covered = {position for start, end in spans for position in range(start, end)}
+    singles = [
+        (position, position + 1)
+        for position, word in enumerate(text)
+        if position not in covered and is_parenthetical(word)
+    ]
+    return sorted(spans + singles)
+
+
+def calc_parentheticals(
+    text: Sequence[str],
+    phrases: Collection[str] = (),
+    *,
+    is_parenthetical: Callable[[str], bool] | None = None,
+    expand: Expander | None = None,
+    normalize: Callable[[str], str] = str.lower,
+) -> float:
+    """
+    Computing the density of the parenthetical expressions
+
+    Description:
+        The expressions of find_parentheticals per 100 words
+
+    Arguments:
+        text (list[str]): List of words
+        phrases (list[str]|set[str]): Parenthetical phrases, words separated by spaces
+        is_parenthetical (callable): Whether a word is a parenthetical expression by
+            itself; none by default
+        expand (callable): Variants of the phrases in the forms of the text with the
+            phrase of each; the phrases as they are by default
+        normalize (callable): Normalized form of a word and of a phrase, the lower
+            case by default
+
+    Returns:
+        float: Parenthetical expressions per 100 words
+
+    Raises:
+        SourceTypeError: If the words or the phrases are not a list of strings, or
+            is_parenthetical, expand or normalize is not callable
+    """
+    spans = find_parentheticals(
+        text, phrases, is_parenthetical=is_parenthetical, expand=expand, normalize=normalize
+    )
+    return safe_divide(len(spans), len(text)) * 100

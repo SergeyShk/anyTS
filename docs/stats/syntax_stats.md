@@ -19,11 +19,11 @@ A language library subclasses `SyntaxStats`. The defaults read Universal Depende
 | Hook | Kind | Description |
 | :--: | :--: | :---------: |
 | `parse(source)` | method | `Doc` of a source; by default the source itself, which must be a `Doc`; a library may parse a string |
-| `is_clause_head(token)` | method | Whether a word heads a clause; by default the head of the sentence or a word with `ccomp`, `advcl`, `acl`, `csubj` or `parataxis` (`anyts.constants.CLAUSE_DEPS`, subtypes included) whose predicate (`predicate_form`, so `has been built` is finite) is not a participle, a converb or a gerund (`NONFINITE_CLAUSE_FORMS`, counted apart), nor an infinitive under `acl`; a `parataxis` and a conjunct of a clause head count only as predicates (`is_predicate`) |
-| `is_subordinate_clause_head(token)` | method | Whether a clause head heads a subordinate clause, asked only of the words of `is_clause_head`; by default a clause head with `ccomp`, `advcl`, `acl` or `csubj` (`SUBORDINATE_CLAUSE_DEPS`), or a conjunct of one, by the relation of the first word up its chain of conjuncts |
+| `is_clause_head(token)` | method | Whether a word heads a clause; by default `is_clause_head` of the module with `join_hyphens` of the class |
+| `is_subordinate_clause_head(token)` | method | Whether a clause head heads a subordinate clause, asked only of the words of `is_clause_head`; by default `is_subordinate_clause_head` of the module over the hook `is_clause_head` |
 | `is_participle_clause(token)` | method | Whether a word heads a participial clause; by default a participle that is not the head of the sentence, has no auxiliary or copula and has a dependent (`calc_valency`) |
-| `is_passive(token)` | method | Whether a word is a passive verb form; by default a verb with `Voice=Pass` or a dependent `nsubj:pass`, `csubj:pass`, `aux:pass`, or `nsubjpass`, `csubjpass`, `auxpass` of ClearNLP (`PASSIVE_DEPS`) |
-| `is_agentless(token)` | method | Whether a passive form has no agent; by default no dependent `obl:agent`, or `agent` of ClearNLP (`AGENT_DEPS`) |
+| `is_passive(token)` | method | Whether a word is a passive verb form; by default `is_passive` of the module with `join_hyphens` of the class |
+| `is_agentless(token)` | method | Whether a passive form has no agent; by default the hook `is_passive` without an agent (`has_agent` of the module) |
 | `is_negation(token)` | method | Whether a word is a word of negation; by default `Polarity=Neg` or a word of `negation_words`, a conjunction excluded |
 | `find_split_predicates(words)` | method | Pairs of a light verb and the noun that carries its meaning (`to make a decision`); none by default |
 | `negation_words` | class attribute | Words of negation besides `Polarity=Neg`, in lower case; none by default |

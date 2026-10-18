@@ -14,12 +14,14 @@ from anyts.style_stats import (
     calc_academic_nausea,
     calc_classic_nausea,
     calc_keyword_density,
+    calc_parentheticals,
     calc_phrase_density,
     calc_spam,
     calc_water,
     calc_zipf_naturalness,
     check_params,
     find_nausea_words,
+    find_parentheticals,
 )
 
 STOPWORDS = frozenset({"the", "and", "a", "of", "in", "it", "is", "to"})
@@ -328,3 +330,40 @@ def test_functions_check_their_hooks():
 def test_classic_nausea_of_an_array():
     assert calc_classic_nausea(np.array(["a", "b", "a"])) == calc_classic_nausea(["a", "b", "a"])
     assert calc_classic_nausea(pd.Series([], dtype=object)) == 0.0
+
+
+def test_keyword_density_by_a_normalization():
+    words = ["Café", "and", "cafe", "café"]
+    assert calc_keyword_density(words, ["café"]) == {"café": 50.0}
+    plain = lambda word: word.lower().replace("é", "e")  # noqa: E731
+    assert calc_keyword_density(words, ["café"], plain) == {"café": 75.0}
+    with pytest.raises(SourceTypeError):
+        calc_keyword_density(words, ["café"], "lower")
+
+
+def test_keyword_density_of_a_class_by_its_normalization():
+    class PlainStyle(StyleStats):
+        def normalize(self, word):
+            return word.lower().replace("é", "e")
+
+    assert PlainStyle("Café and cafe").keyword_density("café") == {"café": pytest.approx(200 / 3)}
+
+
+def test_parentheticals_of_the_module(style):
+    forms = list(style.forms)
+    hooks = {"is_parenthetical": style.is_parenthetical, "expand": style.expand_phrases}
+    spans = find_parentheticals(forms, EnglishStyle.parentheticals_list, **hooks)
+    assert [" ".join(forms[start:end]) for start, end in spans] == list(
+        style.markers()["parentheticals"]
+    )
+    assert calc_parentheticals(forms, EnglishStyle.parentheticals_list, **hooks) == pytest.approx(
+        style.parentheticals
+    )
+    assert find_parentheticals(forms, ["of course"]) == [
+        (forms.index("of"), forms.index("of") + 2)
+    ]
+    assert find_parentheticals(["In", "fact"], ["in fact"], normalize=str) == []
+    assert calc_parentheticals(forms) == 0.0
+    for hook in ("is_parenthetical", "expand"):
+        with pytest.raises(SourceTypeError):
+            find_parentheticals(forms, **{hook: "no"})

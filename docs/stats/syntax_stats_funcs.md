@@ -128,6 +128,31 @@ The lengths of the coordination chains, in the order of their first words. A cha
 `is_predicate(token, join_hyphens=False)` checks whether a word can be the predicate of its clause: a verb (`VERB`, `AUX`) or a word with a subject of its own (`nsubj`, `csubj` and their subtypes, `anyts.constants.SUBJECT_DEPS`), so the nominal predicate of `he is tall` passes and a parenthetical word does not.
 <!-- --8<-- [end:is_predicate] -->
 
+## Clauses and passive { #clauses }
+
+!!! info ""
+    **anyts.syntax_stats.is_clause_head()**, **anyts.syntax_stats.is_subordinate_clause_head()**, **anyts.syntax_stats.is_passive()**, **anyts.syntax_stats.has_agent()**, **anyts.syntax_stats.is_agentless()**
+
+<!-- --8<-- [start:is_clause_head] -->
+`is_clause_head(token, join_hyphens=False)` checks whether a word heads a clause: the head of the sentence or a word with `ccomp`, `advcl`, `acl`, `csubj` or `parataxis` (`anyts.constants.CLAUSE_DEPS`, subtypes included) whose predicate (`predicate_form`, so `has been built` is finite) is not a participle, a converb or a gerund (`NONFINITE_CLAUSE_FORMS`, counted apart), nor an infinitive under `acl`. A `parataxis` and a conjunct of a clause head count only as predicates (`is_predicate`); a loop of conjuncts is no clause.
+<!-- --8<-- [end:is_clause_head] -->
+
+<!-- --8<-- [start:is_subordinate_clause_head] -->
+`is_subordinate_clause_head(token, is_clause_head=is_clause_head)` checks whether a word heads a subordinate clause: a clause head by the check `is_clause_head` with `ccomp`, `advcl`, `acl` or `csubj` (`SUBORDINATE_CLAUSE_DEPS`), or a conjunct of one, by the relation of the first word up its chain of conjuncts. A check that is not callable raises `SourceTypeError`.
+<!-- --8<-- [end:is_subordinate_clause_head] -->
+
+<!-- --8<-- [start:is_passive] -->
+`is_passive(token, join_hyphens=False)` checks whether a word is a passive verb form: a verb with `Voice=Pass` or a dependent `nsubj:pass`, `csubj:pass`, `aux:pass`, or `nsubjpass`, `csubjpass`, `auxpass` of ClearNLP (`PASSIVE_DEPS`).
+<!-- --8<-- [end:is_passive] -->
+
+<!-- --8<-- [start:has_agent] -->
+`has_agent(token, join_hyphens=False)` checks whether a word has an agent: a dependent `obl:agent`, or `agent` of ClearNLP (`AGENT_DEPS`).
+<!-- --8<-- [end:has_agent] -->
+
+<!-- --8<-- [start:is_agentless] -->
+`is_agentless(token, join_hyphens=False)` checks whether a word is a passive form (`is_passive`) without an agent (`has_agent`).
+<!-- --8<-- [end:is_agentless] -->
+
 ## Noun phrases { #noun-phrases }
 
 <!-- --8<-- [start:count_noun_modifiers] -->
