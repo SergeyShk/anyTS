@@ -2722,6 +2722,7 @@
 <p class="admonition-title">Note</p>
 <p>A regular expression as the tokenizer is a separator for <code>re.split</code>. The filters are applied in order: punctuation, numbers, lemmatization, lower case, stop words, word length. A punctuation mark is a token of marks and symbols only, multi-character ones included: <code>?!</code>, <code>--</code>, <code>…</code>, <code>€</code> (<code>anyts.utils.is_punctuation</code>). Empty and whitespace tokens are dropped before the filters. N-grams join the words with <code>_</code>.</p>
 </div>
+<p>An <code>ngram_range</code> that is not a pair of integers, or whose lower bound is below one or above the upper one, raises <code>ParameterError</code>, and so do a length bound that is not an integer, a negative bound and a minimum above the maximum. Stop words that are not a collection of strings raise <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:WordsExtractor-parameters] -->
 
 <h2 id="methods">Methods<a class="headerlink" href="#methods" title="Permanent link">&para;</a></h2>
@@ -2746,6 +2747,7 @@
 </tr>
 </tbody>
 </table>
+<p>A text that is not a string and a tokenizer that cannot be called or does not return strings raise <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:WordsExtractor-extract] -->
 
 <p>An example of word extraction with bigrams as tokens, after filtering numbers and stop words:</p>
@@ -2765,7 +2767,7 @@
 </div>
 <h3 id="get_most_common">get_most_common<a class="headerlink" href="#get_most_common" title="Permanent link">&para;</a></h3>
 <!-- --8<-- [start:WordsExtractor-get_most_common] -->
-<p>Returns the top words of the text as a list of (word, frequency) pairs, the most frequent first.</p>
+<p>Returns the top words of the text as a list of (word, frequency) pairs, the most frequent first; a number that is not an integer of at least one raises <code>ParameterError</code>.</p>
 <table>
 <thead>
 <tr>

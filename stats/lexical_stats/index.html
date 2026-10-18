@@ -2708,7 +2708,7 @@
 <tr>
 <td style="text-align: center;"><code>stats_desc</code>, <code>stats_headers</code></td>
 <td style="text-align: center;">class attributes</td>
-<td style="text-align: center;">Statistics of <code>get_stats</code> with their descriptions, headers of the columns for <code>print_stats</code></td>
+<td style="text-align: center;">Statistics of <code>get_stats</code> with their descriptions (<code>anyts.constants.LEXICAL_STATS_DESC</code> by default), headers of the columns for <code>print_stats</code></td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>messages</code></td>
@@ -2717,7 +2717,7 @@
 </tr>
 </tbody>
 </table>
-<p>A library takes its own parameters, such as a pipeline or a word extractor, in its <code>__init__</code> and passes the source and the dictionary on.</p>
+<p>A library takes its own parameters, such as a pipeline or a word extractor, in its <code>__init__</code> and passes the source and the dictionary on. An <code>analyze</code> that does not give <code>LexicalWord</code> objects raises <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:LexicalStats-hooks] -->
 
 <h2 id="FrequencyDictionary">Frequency dictionary<a class="headerlink" href="#FrequencyDictionary" title="Permanent link">&para;</a></h2>

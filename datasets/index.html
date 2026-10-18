@@ -2705,7 +2705,7 @@
 <p>In the core <code>USER_AGENT</code> is <code>"anyTS"</code>; a language library passes its own name.</p>
 <h2 id="extract_archive">extract_archive<a class="headerlink" href="#extract_archive" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:extract_archive] -->
-<p>Extracts a ZIP or TAR archive and returns the directory with the files. Paths leading outside the directory (absolute, with a drive or a network share, or with <code>..</code>) and links are refused before anything is written, on any version of Python. The archive is extracted aside and put in place once complete: a single root directory takes the name of the archive without its extensions (<code>corpus_v1.tar.xz</code> - <code>corpus_v1</code>), replacing an earlier extraction; otherwise the files go into the directory, replacing those of the same names and keeping the others. A file in the place of a directory or the other way round is refused before anything is replaced. A missing file, a file that is not an archive, a corrupted or empty archive, a directory that cannot be created and files that cannot be replaced raise <code>DataFileError</code>.</p>
+<p>Extracts a ZIP or TAR archive and returns the directory with the files. Paths leading outside the directory (absolute, with a drive or a network share, or with <code>..</code>) and links are refused before anything is written, on any version of Python. The archive is extracted aside and put in place once complete: a single root directory takes the name of the archive without its extensions (<code>corpus_v1.tar.xz</code> - <code>corpus_v1</code>), replacing an earlier extraction; otherwise the files go into the directory, replacing those of the same names and keeping the others. A file in the place of a directory or the other way round is refused before anything is replaced. A missing file, a file that is not an archive, a corrupted or empty archive, a directory that cannot be created and files that cannot be replaced raise <code>DataFileError</code>, and a path that is neither a string nor a <code>Path</code> <code>SourceTypeError</code>.</p>
 <table>
 <thead>
 <tr>
@@ -2734,7 +2734,7 @@
 
 <h2 id="sha256">sha256<a class="headerlink" href="#sha256" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:sha256] -->
-<p>Computes the SHA-256 checksum of a file as a hexadecimal string in lower case; a missing file gives an empty string.</p>
+<p>Computes the SHA-256 checksum of a file as a hexadecimal string in lower case; a missing file gives an empty string, and a path that is neither a string nor a <code>Path</code> raises <code>SourceTypeError</code>.</p>
 <table>
 <thead>
 <tr>
@@ -2788,7 +2788,7 @@
 <!-- --8<-- [end:length_filters] -->
 
 <!-- --8<-- [start:substring_filter] -->
-<p><code>substring_filter(field, value, fold)</code> returns the predicate that keeps the records whose field holds the substring <code>value</code>. Both are folded by <code>fold</code>, so the differences of case and diacritics a language ignores do not count. The substring is plain text, not a regular expression; a field that is not a string does not match, and a value that is not a string raises <code>ParameterError</code>.</p>
+<p><code>substring_filter(field, value, fold)</code> returns the predicate that keeps the records whose field holds the substring <code>value</code>. Both are folded by <code>fold</code>, so the differences of case and diacritics a language ignores do not count. The substring is plain text, not a regular expression; a field that is not a string does not match. A value that is not a string raises <code>ParameterError</code>, and a <code>fold</code> that cannot be called <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:substring_filter] -->
 
 <p>In the core <code>fold</code> is <code>fold_diacritics</code>.</p>

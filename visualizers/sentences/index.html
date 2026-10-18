@@ -2490,7 +2490,7 @@
 <!-- --8<-- [end:sentence_lengths_plot] -->
 
 <!-- --8<-- [start:sentence_lengths] -->
-<p><code>sentence_lengths(source)</code> extracts the lengths: a string is split by the sentence and the word extractors, a <code>Doc</code> by its boundaries and <code>iter_doc_words</code> with <code>join_hyphens</code>, and a <code>Doc</code> without boundaries or with partial ones (<code>has_sents</code>) is counted as its text. Sentences without words are skipped. Ready lengths (non-negative integers in a sequence or an iterator) are used as they are; a table, a set, a mapping, bytes or a length that is not an integer raise <code>SourceTypeError</code>, a negative length <code>SourceError</code>.</p>
+<p><code>sentence_lengths(source)</code> extracts the lengths: a string is split by the sentence and the word extractors, a <code>Doc</code> by its boundaries and <code>iter_doc_words</code> with <code>join_hyphens</code>, and a <code>Doc</code> without boundaries or with partial ones (<code>has_sents</code>) is counted as its text. Sentences without words are skipped. Ready lengths (non-negative integers in a sequence or an iterator) are used as they are; a table, a set, a mapping, bytes, a length that is not an integer and an extractor of another type raise <code>SourceTypeError</code>, a negative length <code>SourceError</code>.</p>
 <!-- --8<-- [end:sentence_lengths] -->
 
 <h2 id="parameters">Parameters<a class="headerlink" href="#parameters" title="Permanent link">&para;</a></h2>
@@ -2549,6 +2549,7 @@
 </tr>
 </tbody>
 </table>
+<p>The source and the extractors raise the errors of <code>sentence_lengths</code>, and no sentences raise <code>SourceError</code>; a <code>window</code> that is not an integer of at least one, labels that <code>merge_labels</code> refuses and an <code>ax</code> that is not a matplotlib <code>Axes</code> raise <code>ParameterError</code>.</p>
 <!-- --8<-- [end:sentence_lengths_plot-parameters] -->
 
 <p>The core functions also take <code>join_hyphens</code>, <code>False</code> by default, which joins the parts of hyphenated words of a <code>Doc</code> with sentence boundaries (<code>iter_doc_words</code>). The extractors of the core are <code>SentsExtractor()</code> and <code>WordsExtractor()</code>.</p>

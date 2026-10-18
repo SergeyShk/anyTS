@@ -2887,7 +2887,7 @@
 </div>
 <h2 id="split_doc_units">split_doc_units<a class="headerlink" href="#split_doc_units" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:split_doc_units] -->
-<p>Splits the words of a <code>Doc</code> into the sentences of a sentence extractor, for a <code>Doc</code> without sentence boundaries or one to split otherwise: the sentences are found in its text in their order, and a word of <code>iter_doc_units</code> belongs to the sentence its first token lies in. The words outside the sentences found, those the extractor drops, are left out, so no sentence found gives no words.</p>
+<p>Splits the words of a <code>Doc</code> or a <code>Span</code> into the sentences of a sentence extractor, for a <code>Doc</code> without sentence boundaries or one to split otherwise: the sentences are found in its text in their order, and a word of <code>iter_doc_units</code> belongs to the sentence its first token lies in. The words outside the sentences found, those the extractor drops, are left out, so no sentence found gives no words.</p>
 <table>
 <thead>
 <tr>
@@ -2900,9 +2900,9 @@
 <tbody>
 <tr>
 <td style="text-align: center;"><code>source</code></td>
-<td style="text-align: center;">Doc</td>
+<td style="text-align: center;">Doc/Span</td>
 <td style="text-align: center;"><code>-</code></td>
-<td style="text-align: center;">Doc object</td>
+<td style="text-align: center;">Doc or Span object</td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>sents_extractor</code></td>
@@ -2922,7 +2922,7 @@
 
 <h2 id="add_tokenizer_rules">add_tokenizer_rules<a class="headerlink" href="#add_tokenizer_rules" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:add_tokenizer_rules] -->
-<p>Adds the rules of a language to the tokenizer of a pipeline, so that the tokens of a <code>Doc</code> match the words a library splits a string into. The prefixes (such as the dashes of a dialogue glued to a word), suffixes and infixes are regular expressions joined to those of the tokenizer, every branch of a prefix anchored at the start and of a suffix at the end. An abbreviation becomes a single token in lower case, capitalized and in upper case when the tokenizer keeps one of its forms whole. A rule the tokenizer already has as an alternative is not added twice; a tokenizer that is not the <code>Tokenizer</code> of spaCy, or whose rules are not regular expressions, is left as it is. Rules that are not lists of strings and abbreviations that are not a collection of strings raise <code>SourceTypeError</code>.</p>
+<p>Adds the rules of a language to the tokenizer of a pipeline, so that the tokens of a <code>Doc</code> match the words a library splits a string into. The prefixes (such as the dashes of a dialogue glued to a word), suffixes and infixes are regular expressions joined to those of the tokenizer, every branch of a prefix anchored at the start and of a suffix at the end. An abbreviation becomes a single token in lower case, capitalized and in upper case when the tokenizer keeps one of its forms whole. A rule the tokenizer already has as a top-level alternative is not added twice; a tokenizer that is not the <code>Tokenizer</code> of spaCy, or whose rules are not regular expressions, is left as it is. A rule is joined to others, so it sets its flags in a group, <code>(?i:...)</code>. Rules that are not lists of strings and abbreviations that are not a collection of strings raise <code>SourceTypeError</code>, a rule that is not such a regular expression <code>ParameterError</code>.</p>
 <table>
 <thead>
 <tr>
@@ -2959,7 +2959,7 @@
 </tr>
 <tr>
 <td style="text-align: center;"><code>abbreviations</code></td>
-<td style="text-align: center;">list[str]</td>
+<td style="text-align: center;">list[str]/set[str]</td>
 <td style="text-align: center;"><code>()</code></td>
 <td style="text-align: center;">Abbreviations in lower case</td>
 </tr>

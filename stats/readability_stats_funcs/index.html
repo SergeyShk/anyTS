@@ -3285,6 +3285,7 @@ a \cdot \left(\frac{\textrm{Number of words}}{\textrm{Number of sentences}} + \f
 </tr>
 </tbody>
 </table>
+<p>A <code>c_letters</code> that is not a mapping raises <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:calc_mu_index] -->
 
 <h2 id="reading-ease-as-a-grade">Reading ease as a grade<a class="headerlink" href="#reading-ease-as-a-grade" title="Permanent link">&para;</a></h2>
@@ -3292,7 +3293,7 @@ a \cdot \left(\frac{\textrm{Number of words}}{\textrm{Number of sentences}} + \f
 <p><strong>anyts.readability_stats.flesch_reading_easy_to_grade()</strong></p>
 </div>
 <!-- --8<-- [start:flesch_reading_easy_to_grade] -->
-<p>Conversion of the Flesch reading ease into years of schooling for the consensus grade: the grade of the first band whose lower bound the value reaches, or <code>below</code> under the last bound; values above 100 belong to the first band.</p>
+<p>Conversion of the Flesch reading ease into years of schooling for the consensus grade: the grade of the first band whose lower bound the value reaches, or <code>below</code> under the last bound; values above 100 belong to the first band. A reading ease or a <code>below</code> that is not a finite number raises <code>ParameterError</code>, and so do <code>grades</code> that are empty or not pairs of finite numbers with descending bounds.</p>
 <!-- --8<-- [end:flesch_reading_easy_to_grade] -->
 
 <p>The default bands are those of <code>text_standard</code> of <a href="https://github.com/textstat/textstat">textstat</a>, which follow the table of Flesch (1948) down to 60 and split his lower bands, with 8.5 for its grades 8 and 9: 90-100 - 5, 80-90 - 6, 70-80 - 7, 60-70 - 8.5, 50-60 - 10, 40-50 - 11, 30-40 - 12, below 30 - 13 (<code>anyts.constants.READING_EASE_GRADES</code>).</p>
@@ -3480,7 +3481,7 @@ a \cdot \left(\frac{\textrm{Number of words}}{\textrm{Number of sentences}} + \f
 <p><strong>anyts.readability_stats.calc_reading_time()</strong></p>
 </div>
 <!-- --8<-- [start:calc_reading_time] -->
-<p>Computation of the reading time of a text in minutes: the number of words divided by the reading speed; a speed that is not a positive number raises <code>ParameterError</code>.</p>
+<p>Computation of the reading time of a text in minutes: the number of words divided by the reading speed; a number of words that is not a non-negative integer and a speed that is not a positive number raise <code>ParameterError</code>.</p>
 <!-- --8<-- [end:calc_reading_time] -->
 
 <p>The default speed is the silent reading speed of adults in English, 238 words per minute (Brysbaert, 2019).</p>
@@ -3505,7 +3506,7 @@ a \cdot \left(\frac{\textrm{Number of words}}{\textrm{Number of sentences}} + \f
 <td style="text-align: center;"><code>wpm</code></td>
 <td style="text-align: center;">float</td>
 <td style="text-align: center;"><code>238</code></td>
-<td style="text-align: center;">Reading speed, words per minute</td>
+<td style="text-align: center;">Reading speed, words per minute (<code>READING_SPEED_WPM</code>)</td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>messages</code></td>

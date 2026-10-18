@@ -2554,7 +2554,7 @@
 <p>Plots for <a href="../../corpus/stylometry/">stylometry</a>: a dendrogram and the multidimensional scaling of the matrix of distances of <code>delta</code>, the principal components of the frequencies of the most frequent words and the Mendenhall curves of several texts. The functions take the axes <code>ax</code> and return <code>Axes</code>.</p>
 <h2 id="dendrogram_plot">Dendrogram<a class="headerlink" href="#dendrogram_plot" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:dendrogram_plot] -->
-<p>Hierarchical clustering by <code>scipy.cluster.hierarchy</code> over the matrix of distances between texts, Ward's method by default as in <a href="https://aclanthology.org/W15-0709.pdf">Evert et al. (2015)</a>; the leaves are labelled by the index of the matrix. The columns are taken in the order of the rows; other texts in the columns than in the rows, fewer than two texts, an infinite or negative distance, asymmetry or a distance on the diagonal raise <code>SourceError</code> before a figure is created.</p>
+<p>Hierarchical clustering by <code>scipy.cluster.hierarchy</code> over the matrix of distances between texts, Ward's method by default as in <a href="https://aclanthology.org/W15-0709.pdf">Evert et al. (2015)</a>; the leaves are labelled by the index of the matrix. The columns are taken in the order of the rows; other texts in the columns than in the rows, fewer than two texts, an infinite or negative distance, asymmetry or a distance on the diagonal raise <code>SourceError</code> before a figure is created. Distances that are not a <code>DataFrame</code> of numbers raise <code>SourceTypeError</code>; an unknown <code>method</code>, labels that <code>merge_labels</code> refuses and an <code>ax</code> that is not a matplotlib <code>Axes</code> raise <code>ParameterError</code>.</p>
 <table>
 <thead>
 <tr>
@@ -2638,11 +2638,12 @@
 </tr>
 </tbody>
 </table>
+<p>The corpus, <code>n_mfw</code> and <code>culling</code> raise the errors of <code>frequency_table</code>, and fewer than three texts raise <code>SourceError</code>; labels that <code>merge_labels</code> refuses and an <code>ax</code> that is not a matplotlib <code>Axes</code> raise <code>ParameterError</code>.</p>
 <!-- --8<-- [end:pca_plot] -->
 
 <h2 id="mds_plot">Multidimensional scaling<a class="headerlink" href="#mds_plot" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:mds_plot] -->
-<p>Classical multidimensional scaling (Torgerson 1952) of any matrix of distances: the two leading eigenvectors of the double-centred squared distances, so the distances between the points approximate those of the matrix. The columns are taken in the order of the rows; other texts in the columns than in the rows, fewer than two texts, an infinite or negative distance, asymmetry or a distance on the diagonal raise <code>SourceError</code> before a figure is created.</p>
+<p>Classical multidimensional scaling (Torgerson 1952) of any matrix of distances: the two leading eigenvectors of the double-centred squared distances, so the distances between the points approximate those of the matrix. The columns are taken in the order of the rows; other texts in the columns than in the rows, fewer than two texts, an infinite or negative distance, asymmetry or a distance on the diagonal raise <code>SourceError</code> before a figure is created. Distances that are not a <code>DataFrame</code> of numbers raise <code>SourceTypeError</code>; labels that <code>merge_labels</code> refuses and an <code>ax</code> that is not a matplotlib <code>Axes</code> raise <code>ParameterError</code>.</p>
 <table>
 <thead>
 <tr>
@@ -2708,6 +2709,7 @@
 </tr>
 </tbody>
 </table>
+<p>A corpus that is not a mapping of lists of strings raises <code>SourceTypeError</code>, no texts or a text without words <code>SourceError</code>; labels that <code>merge_labels</code> refuses and an <code>ax</code> that is not a matplotlib <code>Axes</code> raise <code>ParameterError</code>.</p>
 <!-- --8<-- [end:mendenhall_plot] -->
 
 <h2 id="usage-example">Usage example<a class="headerlink" href="#usage-example" title="Permanent link">&para;</a></h2>

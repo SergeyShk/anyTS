@@ -2713,7 +2713,7 @@
 <tr>
 <td style="text-align: center;"><code>stats_desc</code></td>
 <td style="text-align: center;">class attribute</td>
-<td style="text-align: center;">The counts of <code>get_stats</code> with their descriptions for <code>print_stats</code></td>
+<td style="text-align: center;">The counts of <code>get_stats</code> with their descriptions for <code>print_stats</code>; <code>anyts.constants.BASIC_STATS_DESC</code> by default</td>
 </tr>
 </tbody>
 </table>
@@ -2955,7 +2955,7 @@
 <p>In the core the types are <code>anyts.constants.PUNCTUATION_TYPES</code>, and <code>marks</code> and <code>dash_pattern</code> are <code>PUNCTUATION_MARKS</code> and <code>DASH_PATTERN</code> of <code>anyts.basic_stats</code>. The marks count <code>¿</code> and <code>¡</code> as question and exclamation marks (<code>¿So?</code> has two), <code>—</code>, <code>–</code> and the horizontal bar <code>―</code> as dashes, <code>«»</code> as guillemets and <code>"“”‘’</code> as quotation marks; a hyphen inside a word, before a digit or at a line break inside a word is a hyphen (<code>well-known</code>, <code>-5</code>). A dash typed with hyphens is a run of two or more hyphens, or a hyphen after whitespace, a closing mark or at the start of a line, before a space of a line (a Unicode separator such as the no-break space, or a tab: <code>SPACES</code>) or the end of the text, or between a letter and an opening or a closing mark (<code>--Hello --said John</code>, <code>- They left - he said</code>).</p>
 <h2 id="dash_pattern">Dashes typed with hyphens<a class="headerlink" href="#dash_pattern" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:dash_pattern] -->
-<p><code>dash_pattern(conjunctions, hanging_before_comma)</code> builds the <code>dash_pattern</code> of <code>count_punctuations</code>. A hanging hyphen glued to a letter or a digit and carried on to a later word (<code>pre- and post-war</code>, <code>5- and 10-year</code>) stays a hyphen before spaces of a line and one of the <code>conjunctions</code>, case ignored, and with <code>hanging_before_comma</code> before a comma (<code>two-, three- and four-year</code>). A language whose dialogue closes a line with a hyphen before a comma (<code>-Come -he said-, and left</code>) leaves <code>hanging_before_comma</code> off. Without the parameters the pattern is <code>DASH_PATTERN</code>.</p>
+<p><code>dash_pattern(conjunctions, hanging_before_comma)</code> builds the <code>dash_pattern</code> of <code>count_punctuations</code>. A hanging hyphen glued to a letter or a digit and carried on to a later word (<code>pre- and post-war</code>, <code>5- and 10-year</code>) stays a hyphen before spaces of a line and one of the <code>conjunctions</code>, case ignored, and with <code>hanging_before_comma</code> before a comma (<code>two-, three- and four-year</code>). A language whose dialogue closes a line with a hyphen before a comma (<code>-Come -he said-, and left</code>) leaves <code>hanging_before_comma</code> off. Without the parameters the pattern is <code>DASH_PATTERN</code>. Conjunctions that are not a collection of strings raise <code>SourceTypeError</code>, and an empty conjunction <code>ParameterError</code>.</p>
 <table>
 <thead>
 <tr>

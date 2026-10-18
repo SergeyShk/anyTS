@@ -2637,6 +2637,7 @@
 <p class="admonition-title">Note</p>
 <p>A regular expression as the tokenizer is a separator for <code>re.split</code>. A blank line - a line break, optional whitespace and another line break - ends a sentence of any tokenizer: the text is split at blank lines first and every part goes to the tokenizer, so a heading or a paragraph without a final mark is a sentence of its own, and so is a part without words, such as a line of asterisks, which the statistics leave out. The sentences are stripped of whitespace at the edges before the length bounds, and empty ones are dropped.</p>
 </div>
+<p>A length bound that is not an integer, a negative bound and a minimum above the maximum raise <code>ParameterError</code>.</p>
 <!-- --8<-- [end:SentsExtractor-parameters] -->
 
 <h2 id="methods">Methods<a class="headerlink" href="#methods" title="Permanent link">&para;</a></h2>
@@ -2661,6 +2662,7 @@
 </tr>
 </tbody>
 </table>
+<p>A text that is not a string and a tokenizer that cannot be called or does not return strings raise <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:SentsExtractor-extract] -->
 
 <p>An example of sentence extraction with the default tokenizer:</p>
@@ -2703,7 +2705,7 @@
 </div>
 <h2 id="iter_part_sents">Sentences of the parts of a text<a class="headerlink" href="#iter_part_sents" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:iter_part_sents] -->
-<p><code>iter_part_sents(iter_sents, text)</code> runs a splitter - <code>iter_sents</code>, giving the start, the end and the text of every sentence of a string - on every part of a text between blank lines (<code>BLANK_LINE</code>) and gives the sentences at their positions in the whole text, so that a blank line ends a sentence whatever the splitter, as in <code>SentsExtractor</code>.</p>
+<p><code>iter_part_sents(iter_sents, text)</code> runs a splitter - <code>iter_sents</code>, giving the start, the end and the text of every sentence of a string - on every part of a text between blank lines (<code>BLANK_LINE</code>) and gives the sentences at their positions in the whole text, so that a blank line ends a sentence whatever the splitter, as in <code>SentsExtractor</code>. A text that is not a string raises <code>SourceTypeError</code>, and so does an <code>iter_sents</code> that cannot be called or does not give the sentences of a part in order, as triples of integer bounds within it and a string.</p>
 <!-- --8<-- [end:iter_part_sents] -->
 
 <h2 id="FixedSentsExtractor">Ready sentences<a class="headerlink" href="#FixedSentsExtractor" title="Permanent link">&para;</a></h2>

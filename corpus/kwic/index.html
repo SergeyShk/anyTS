@@ -2562,18 +2562,18 @@
 <td style="text-align: center;">The folding of a word form (with <code>ignore_case</code>) or a lemma before the comparison, such as the letters a language takes for the same</td>
 </tr>
 <tr>
-<td style="text-align: center;"><code>sentenize</code></td>
-<td style="text-align: center;">a final mark before whitespace</td>
-<td style="text-align: center;">The sentences of a string, of the keyword and of the text of a <code>Doc</code> without boundaries or with partial ones (<code>has_sents</code>) as triples of the start, the end and the text</td>
-</tr>
-<tr>
 <td style="text-align: center;"><code>join_hyphens</code></td>
 <td style="text-align: center;"><code>False</code></td>
 <td style="text-align: center;">Join the parts of the hyphenated words of a <code>Doc</code> the tokenizer split (<code>iter_doc_units</code>); the default tokenizer then keeps them whole in a string and in the keyword too</td>
 </tr>
+<tr>
+<td style="text-align: center;"><code>sentenize</code></td>
+<td style="text-align: center;">a final mark before whitespace</td>
+<td style="text-align: center;">The sentences of a string, of the keyword and of the text of a <code>Doc</code> without boundaries or with partial ones (<code>has_sents</code>) as triples of the start, the end and the text</td>
+</tr>
 </tbody>
 </table>
-<p>The words of a <code>Doc</code> are its tokens without a byte order mark at the start. By default the lemmas of a word are the word itself and, for a one-token word of a <code>Doc</code> with lemmas, the lemma of the model: a word is found by its own form, and a <code>Doc</code> of a pipeline with a lemmatizer by its lemmas.</p>
+<p>A <code>tokenize</code> that does not give the words in order as triples of integer bounds within the string and a string raises <code>SourceTypeError</code>, and so does a <code>sentenize</code> whose triples do not lie within it; the sentences may come in any order. The words of a <code>Doc</code> are its tokens without a byte order mark at the start. By default the lemmas of a word are the word itself and, for a one-token word of a <code>Doc</code> with lemmas, the lemma of the model: a word is found by its own form, and a <code>Doc</code> of a pipeline with a lemmatizer by its lemmas.</p>
 <!-- --8<-- [end:kwic-hooks] -->
 
 <h2 id="parameters">Parameters<a class="headerlink" href="#parameters" title="Permanent link">&para;</a></h2>
@@ -2624,7 +2624,7 @@
 <!-- --8<-- [end:kwic-parameters] -->
 
 <!-- --8<-- [start:format_kwic] -->
-<p><code>format_kwic(concordances, width=40)</code> aligns the lines on the keyword: the left context is cut on the left and aligned to the right, the right one cut on the right; <code>width</code>, at least one, is the width of a context in characters. The lines may come from any iterable and are taken in the composed form of Unicode (NFC), so the widths count characters as shown.</p>
+<p><code>format_kwic(concordances, width=40)</code> aligns the lines on the keyword: the left context is cut on the left and aligned to the right, the right one cut on the right; <code>width</code> is the width of a context in characters. The lines may come from any iterable and are taken in the composed form of Unicode (NFC), so the widths count characters as shown. Lines that are a string or cannot be iterated raise <code>SourceTypeError</code>, and a <code>width</code> that is not an integer of at least one <code>ParameterError</code>.</p>
 <!-- --8<-- [end:format_kwic] -->
 
 <!-- --8<-- [start:print_kwic] -->

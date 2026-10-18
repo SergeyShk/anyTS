@@ -2835,7 +2835,7 @@
 </div>
 <h2 id="calc_valency">calc_valency<a class="headerlink" href="#calc_valency" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:calc_valency] -->
-<p>The valency of a token: the number of its dependent words, the relations <code>cc</code>, <code>conj</code> and <code>parataxis</code> left out; <code>calc_valency(token, join_hyphens=True)</code> counts a hyphenated dependent once, so <code>came</code> in <code>Some-one came</code> has one dependent and not two.</p>
+<p>The valency of a token: the number of its dependent words, the relations <code>cc</code>, <code>conj</code>, <code>parataxis</code> and <code>punct</code> left out (<code>anyts.constants.VALENCY_IGNORED_DEPS</code>); <code>calc_valency(token, join_hyphens=True)</code> counts a hyphenated dependent once, so <code>came</code> in <code>Some-one came</code> has one dependent and not two.</p>
 <!-- --8<-- [end:calc_valency] -->
 
 <h2 id="calc_coordination_chains">calc_coordination_chains<a class="headerlink" href="#calc_coordination_chains" title="Permanent link">&para;</a></h2>
@@ -2869,7 +2869,7 @@
 
 <h2 id="is_predicate">is_predicate<a class="headerlink" href="#is_predicate" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:is_predicate] -->
-<p><code>is_predicate(token, join_hyphens=False)</code> checks whether a word can be the predicate of its clause: a verb (<code>VERB</code>, <code>AUX</code>) or a word with a subject of its own (<code>nsubj</code>, <code>csubj</code> and their subtypes), so the nominal predicate of <code>he is tall</code> passes and a parenthetical word does not.</p>
+<p><code>is_predicate(token, join_hyphens=False)</code> checks whether a word can be the predicate of its clause: a verb (<code>VERB</code>, <code>AUX</code>) or a word with a subject of its own (<code>nsubj</code>, <code>csubj</code> and their subtypes, <code>anyts.constants.SUBJECT_DEPS</code>), so the nominal predicate of <code>he is tall</code> passes and a parenthetical word does not.</p>
 <!-- --8<-- [end:is_predicate] -->
 
 <h2 id="noun-phrases">Noun phrases<a class="headerlink" href="#noun-phrases" title="Permanent link">&para;</a></h2>

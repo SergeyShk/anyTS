@@ -2641,7 +2641,7 @@
 
 <h2 id="language-hooks">Language hooks<a class="headerlink" href="#language-hooks" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:DiversityStats-hooks] -->
-<p>The class takes the words as given: a language library extracts them from its sources (a string, a <a href="https://github.com/explosion/spaCy">spaCy</a> <code>Doc</code>) and lower-cases them, since every metric counts lexemes. A library overrides two class attributes in a subclass: <code>stats_desc</code>, the metrics of <code>get_stats</code> with their descriptions for <code>print_stats</code>, and <code>stats_headers</code>, the two column headers of <code>print_stats</code>. Error messages come from the class attribute <code>messages</code>.</p>
+<p>The class takes the words as given: a language library extracts them from its sources (a string, a <a href="https://github.com/explosion/spaCy">spaCy</a> <code>Doc</code>) and lower-cases them, since every metric counts lexemes. A library overrides two class attributes in a subclass: <code>stats_desc</code>, the metrics of <code>get_stats</code> with their descriptions for <code>print_stats</code> (<code>anyts.constants.DIVERSITY_STATS_DESC</code> by default), and <code>stats_headers</code>, the two column headers of <code>print_stats</code>. Error messages come from the class attribute <code>messages</code>, <code>MESSAGES</code> by default.</p>
 <!-- --8<-- [end:DiversityStats-hooks] -->
 
 <h2 id="parameters">Parameters<a class="headerlink" href="#parameters" title="Permanent link">&para;</a></h2>
@@ -2666,34 +2666,35 @@
 <td style="text-align: center;"><code>window_len</code></td>
 <td style="text-align: center;">int</td>
 <td style="text-align: center;"><code>50</code></td>
-<td style="text-align: center;">Window size for MATTR and segment size for MSTTR</td>
+<td style="text-align: center;">Window size for MATTR and segment size for MSTTR (<code>MATTR_WINDOW_LEN</code>)</td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>mtld_threshold</code></td>
 <td style="text-align: center;">float</td>
 <td style="text-align: center;"><code>0.72</code></td>
-<td style="text-align: center;">TTR threshold for MTLD, MA-MTLD and MTLD-W</td>
+<td style="text-align: center;">TTR threshold for MTLD, MA-MTLD and MTLD-W (<code>MTLD_TTR_THRESHOLD</code>)</td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>mtld_min_len</code></td>
 <td style="text-align: center;">int</td>
 <td style="text-align: center;"><code>10</code></td>
-<td style="text-align: center;">Minimum factor length for MTLD, MA-MTLD and MTLD-W</td>
+<td style="text-align: center;">Minimum factor length for MTLD, MA-MTLD and MTLD-W (<code>MTLD_MIN_LEN</code>)</td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>hdd_sample_size</code></td>
 <td style="text-align: center;">int</td>
 <td style="text-align: center;"><code>42</code></td>
-<td style="text-align: center;">Sample size for HD-D</td>
+<td style="text-align: center;">Sample size for HD-D (<code>HDD_SAMPLE_SIZE</code>)</td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>log_base</code></td>
 <td style="text-align: center;">float</td>
 <td style="text-align: center;"><code>10</code></td>
-<td style="text-align: center;">Logarithm base for the Summer, Maas and Dugast metrics</td>
+<td style="text-align: center;">Logarithm base for the Summer, Maas and Dugast metrics (<code>DIVERSITY_LOG_BASE</code>)</td>
 </tr>
 </tbody>
 </table>
+<p>Words that are not a sequence or an iterator of strings raise <code>SourceTypeError</code>, and so do a string, a <code>Doc</code>, a set and a table; no words raise <code>SourceError</code>.</p>
 <!-- --8<-- [end:DiversityStats-parameters] -->
 
 <!-- --8<-- [start:check_params] -->
@@ -2987,7 +2988,7 @@
 </tr>
 </tbody>
 </table>
-<p>Returns a <code>WindowStats</code> named tuple with the fields <code>mean</code>, <code>std</code>, <code>lower</code>, <code>upper</code> and <code>n_windows</code>. An unknown metric name raises <code>UnknownStatError</code>.</p>
+<p>Returns a <code>WindowStats</code> named tuple with the fields <code>mean</code>, <code>std</code>, <code>lower</code>, <code>upper</code> and <code>n_windows</code>. An unknown metric name raises <code>UnknownStatError</code>; a window size or a step that is not an integer of at least one and a confidence level that is not a number in (0, 1) raise <code>ParameterError</code>.</p>
 <!-- --8<-- [end:DiversityStats-windowed] -->
 
 <div class="admonition example">

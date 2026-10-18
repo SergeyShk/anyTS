@@ -2603,7 +2603,7 @@
 <tr>
 <td style="text-align: center;"><code>temporal_features</code></td>
 <td style="text-align: center;">class attribute</td>
-<td style="text-align: center;">Features of the verbs whose repetitions make the temporal cohesion: a tuple of one or more distinct ones of <code>tense</code>, <code>mood</code> and <code>aspect</code>, checked when the class is defined; <code>tense</code> and <code>aspect</code> by default, as in Coh-Metrix</td>
+<td style="text-align: center;">Features of the verbs whose repetitions make the temporal cohesion: a tuple of one or more distinct ones of <code>tense</code>, <code>mood</code> and <code>aspect</code> (<code>TEMPORAL_FEATURES</code>), checked when the class is defined; <code>tense</code> and <code>aspect</code> by default, as in Coh-Metrix</td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>sents_extractor_class</code>, <code>join_hyphens</code></td>
@@ -2613,7 +2613,7 @@
 <tr>
 <td style="text-align: center;"><code>stats_desc</code>, <code>stats_headers</code></td>
 <td style="text-align: center;">class attributes</td>
-<td style="text-align: center;">Statistics of <code>get_stats</code> with their descriptions, headers of the columns for <code>print_stats</code></td>
+<td style="text-align: center;">Statistics of <code>get_stats</code> with their descriptions (<code>COHESION_STATS_DESC</code> by default), headers of the columns for <code>print_stats</code></td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>messages</code></td>
@@ -2622,7 +2622,7 @@
 </tr>
 </tbody>
 </table>
-<p>The parameters of a library - its model of a string, its word extractor - go to the constructor of its subclass, which keeps them for its <code>analyze</code>.</p>
+<p>The parameters of a library - its model of a string, its word extractor - go to the constructor of its subclass, which keeps them for its <code>analyze</code>. An <code>analyze</code> that does not give sentences of <code>CohesionWord</code> objects raises <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:CohesionStats-hooks] -->
 
 <h2 id="parameters">Parameters<a class="headerlink" href="#parameters" title="Permanent link">&para;</a></h2>

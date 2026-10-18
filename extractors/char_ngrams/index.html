@@ -2611,6 +2611,7 @@
 </tr>
 </tbody>
 </table>
+<p>An <code>n</code> that is not an integer of at least one raises <code>ParameterError</code>.</p>
 <!-- --8<-- [end:CharNgramsExtractor-parameters] -->
 
 <h2 id="methods">Methods<a class="headerlink" href="#methods" title="Permanent link">&para;</a></h2>
@@ -2635,6 +2636,7 @@
 </tr>
 </tbody>
 </table>
+<p>A text that is not a string raises <code>SourceTypeError</code>, and so does, with <code>within_words</code>, a tokenizer that cannot be called or does not return strings.</p>
 <!-- --8<-- [end:CharNgramsExtractor-extract] -->
 
 <div class="admonition example">
@@ -2662,7 +2664,7 @@
 </div>
 <h3 id="get_most_common">get_most_common<a class="headerlink" href="#get_most_common" title="Permanent link">&para;</a></h3>
 <!-- --8<-- [start:CharNgramsExtractor-get_most_common] -->
-<p>Returns the top N-grams of the text as a list of (N-gram, frequency) pairs, the most frequent first.</p>
+<p>Returns the top N-grams of the text as a list of (N-gram, frequency) pairs, the most frequent first; a number that is not an integer of at least one raises <code>ParameterError</code>.</p>
 <table>
 <thead>
 <tr>

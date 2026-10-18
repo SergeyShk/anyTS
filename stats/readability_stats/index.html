@@ -2772,22 +2772,22 @@
 <tr>
 <td style="text-align: center;"><code>grade_stats</code></td>
 <td style="text-align: center;">class attribute</td>
-<td style="text-align: center;">Grade formulas of the consensus grade</td>
+<td style="text-align: center;">Grade formulas of the consensus grade; <code>anyts.constants.READABILITY_GRADE_STATS</code> by default</td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>stats_desc</code>, <code>stats_headers</code></td>
 <td style="text-align: center;">class attributes</td>
-<td style="text-align: center;">Metrics of <code>get_stats</code> with their descriptions, headers of the columns for <code>print_stats</code></td>
+<td style="text-align: center;">Metrics of <code>get_stats</code> with their descriptions (<code>READABILITY_STATS_DESC</code> by default), headers of the columns for <code>print_stats</code></td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>smog_complex_syl_factor</code></td>
 <td style="text-align: center;">class attribute</td>
-<td style="text-align: center;">Minimum number of syllables in a polysyllabic word of SMOG and Gunning fog</td>
+<td style="text-align: center;">Minimum number of syllables in a polysyllabic word of SMOG and Gunning fog; <code>SMOG_COMPLEX_SYL_FACTOR</code> by default</td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>lix_long_word_letter_factor</code></td>
 <td style="text-align: center;">class attribute</td>
-<td style="text-align: center;">Minimum number of letters in a long word of LIX and RIX</td>
+<td style="text-align: center;">Minimum number of letters in a long word of LIX and RIX; <code>LIX_LONG_WORD_LETTER_FACTOR</code> by default</td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>grade_age_levels</code>, <code>postgraduate_level</code></td>
@@ -2817,7 +2817,7 @@
 <tr>
 <td style="text-align: center;"><code>reading_speed</code>, <code>reading_speed_norms</code></td>
 <td style="text-align: center;">class attributes</td>
-<td style="text-align: center;">Reading speed of <code>reading_time</code> and the speeds of the norms, words per minute</td>
+<td style="text-align: center;">Reading speed of <code>reading_time</code> and the speeds of the norms, words per minute; <code>READING_SPEED_WPM</code> and <code>READING_SPEED_NORMS</code> by default</td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>reading_ease_grades</code></td>
@@ -2841,7 +2841,7 @@
 </tr>
 </tbody>
 </table>
-<p>A formula of the library is a property of the subclass named in <code>stats_desc</code>, and in <code>grade_stats</code> when it gives years of schooling; its coefficients may live in the presets under its name. The preset is a parameter: a library sets its own default in its <code>__init__</code> and passes it on. A preset unknown to <code>presets</code> among the keys of <code>preset_level_scales</code> or <code>preset_reading_ease_grades</code> raises <code>ParameterError</code> when the class is defined.</p>
+<p>A formula of the library is a property of the subclass named in <code>stats_desc</code>, and in <code>grade_stats</code> when it gives years of schooling; its coefficients may live in the presets under its name. The preset is a parameter: a library sets its own default in its <code>__init__</code> and passes it on. When the class is defined, <code>ParameterError</code> is raised by a preset unknown to <code>presets</code> among the keys of <code>preset_level_scales</code> or <code>preset_reading_ease_grades</code>, by a scale of them, of <code>grade_scales</code> or of <code>reading_ease_grades</code> that is not one of <code>scale_level</code> with finite grades, by <code>grade_age_levels</code> that are not quadruples of the first and the last year, the stage and the age in ascending order of the years, and by a <code>postgraduate_level</code> that is not a pair of strings.</p>
 <!-- --8<-- [end:ReadabilityStats-hooks] -->
 
 <p>The core defaults are the original English formulas: the preset <code>original</code> of <code>anyts.constants.READABILITY_PRESETS</code>, the grade formulas Flesch-Kincaid, Coleman-Liau, ARI, SMOG and Gunning fog, polysyllabic words of three syllables and long words of seven letters, the school stages of the United States, the scales of the reading ease, LIX and RIX, the years of schooling of the reading ease of <code>text_standard</code> of textstat (<code>READING_EASE_GRADES</code>, 13 below 30), and the reading speed of 238 words per minute with the norm <code>adult</code> - 183 words per minute aloud and 238 silently (Brysbaert, 2019).</p>

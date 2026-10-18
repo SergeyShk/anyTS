@@ -2627,11 +2627,12 @@
 </tr>
 </tbody>
 </table>
+<p>Words that are not a list of strings raise <code>SourceTypeError</code>, and no words <code>SourceError</code>. A <code>parts</code> that is neither an integer from 2 to the number of words nor two or more positive integers adding up to it, a <code>word</code> that is not a string and a <code>min_freq</code> that is not an integer raise <code>ParameterError</code>.</p>
 <!-- --8<-- [end:dispersion-parameters] -->
 
 <h2 id="result">Result<a class="headerlink" href="#result" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:Dispersion] -->
-<p>A list of <code>Dispersion</code> named tuples by descending frequency: <code>word</code>, <code>freq</code> and the six measures of the table; <code>pd.DataFrame(result)</code> gives a table.</p>
+<p>A list of <code>Dispersion</code> named tuples by descending frequency: <code>word</code>, <code>freq</code>, <code>dp</code>, <code>dp_norm</code>, <code>juilland_d</code>, <code>carroll_d2</code>, <code>rosengren_s</code> and <code>kl_divergence</code>; <code>pd.DataFrame(result)</code> gives a table.</p>
 <!-- --8<-- [end:Dispersion] -->
 
 <h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h2>

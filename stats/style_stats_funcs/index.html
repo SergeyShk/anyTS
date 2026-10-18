@@ -2615,7 +2615,7 @@
 
 
 <h1 id="metric-functions">Metric functions<a class="headerlink" href="#metric-functions" title="Permanent link">&para;</a></h1>
-<p>The services publish no formulas, so the common definitions are taken. The language - the stopwords, the water, the normalized form of a word, the spelling of phrases - comes through the keyword parameters; words, stopwords, keywords and phrases that are not a list of strings raise <code>SourceTypeError</code>.</p>
+<p>The services publish no formulas, so the common definitions are taken. The language - the stopwords, the water, the normalized form of a word, the spelling of phrases - comes through the keyword parameters; words, stopwords, keywords and phrases that are not a list of strings and hooks that cannot be called raise <code>SourceTypeError</code>.</p>
 <h2 id="classic-nausea">Classic nausea<a class="headerlink" href="#classic-nausea" title="Permanent link">&para;</a></h2>
 <div class="admonition info">
 <p><strong>anyts.style_stats.calc_classic_nausea()</strong></p>
@@ -2675,7 +2675,7 @@
 <td style="text-align: center;"><code>top_n</code></td>
 <td style="text-align: center;">int</td>
 <td style="text-align: center;"><code>10</code></td>
-<td style="text-align: center;">Number of the most frequent words</td>
+<td style="text-align: center;">Number of the most frequent words (<code>NAUSEA_TOP_N</code>)</td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>stopwords</code></td>
@@ -2703,6 +2703,7 @@
 </tr>
 </tbody>
 </table>
+<p>A <code>top_n</code> that is not an integer of at least one raises <code>ParameterError</code>.</p>
 <!-- --8<-- [end:find_nausea_words] -->
 
 <h2 id="academic-nausea">Academic nausea<a class="headerlink" href="#academic-nausea" title="Permanent link">&para;</a></h2>
@@ -2736,7 +2737,7 @@
 <td style="text-align: center;"><code>top_n</code></td>
 <td style="text-align: center;">int</td>
 <td style="text-align: center;"><code>10</code></td>
-<td style="text-align: center;">Number of the most frequent words</td>
+<td style="text-align: center;">Number of the most frequent words (<code>NAUSEA_TOP_N</code>)</td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>stopwords</code></td>
@@ -2764,6 +2765,7 @@
 </tr>
 </tbody>
 </table>
+<p>A <code>top_n</code> that is not an integer of at least one raises <code>ParameterError</code>.</p>
 <!-- --8<-- [end:calc_academic_nausea] -->
 
 <h2 id="water-content">Water content<a class="headerlink" href="#water-content" title="Permanent link">&para;</a></h2>
@@ -2873,7 +2875,7 @@
 <td style="text-align: center;"><code>top_n</code></td>
 <td style="text-align: center;">int</td>
 <td style="text-align: center;"><code>10</code></td>
-<td style="text-align: center;">Number of the most frequent words</td>
+<td style="text-align: center;">Number of the most frequent words (<code>NAUSEA_TOP_N</code>)</td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>messages</code></td>
@@ -2883,6 +2885,7 @@
 </tr>
 </tbody>
 </table>
+<p>A <code>top_n</code> that is not an integer of at least one raises <code>ParameterError</code>.</p>
 <!-- --8<-- [end:calc_zipf_naturalness] -->
 
 <h2 id="keyword-density">Keyword density<a class="headerlink" href="#keyword-density" title="Permanent link">&para;</a></h2>

@@ -2535,7 +2535,7 @@
 
 <h2 id="delta">Burrows's Delta<a class="headerlink" href="#delta" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:frequency_table] -->
-<p>A corpus is a dictionary "name of a text → units". <code>frequency_table(corpus, n_mfw=100, culling=0.0)</code> builds the table of relative frequencies: rows are the texts, columns the <code>n_mfw</code> most frequent units by descending mean relative frequency (alphabetically when equal); <code>culling</code> keeps the units that occur in at least the given share of the texts, as in stylo.</p>
+<p>A corpus is a dictionary "name of a text → units". <code>frequency_table(corpus, n_mfw=100, culling=0.0)</code> builds the table of relative frequencies: rows are the texts, columns the <code>n_mfw</code> most frequent units by descending mean relative frequency (alphabetically when equal); <code>culling</code> keeps the units that occur in at least the given share of the texts, as in stylo. A corpus that is not a mapping of lists of strings raises <code>SourceTypeError</code>; an empty corpus, a text without units and no unit left after culling raise <code>SourceError</code>, and an <code>n_mfw</code> that is not an integer of at least one and a <code>culling</code> that is not a number within [0, 1] <code>ParameterError</code>.</p>
 <!-- --8<-- [end:frequency_table] -->
 
 <!-- --8<-- [start:z_scores] -->
@@ -2619,10 +2619,11 @@
 </tr>
 </tbody>
 </table>
+<p>The corpus, <code>n_mfw</code> and <code>culling</code> raise the errors of <code>frequency_table</code>; fewer than three texts raise <code>SourceError</code>, and an unknown variant <code>ParameterError</code>.</p>
 <!-- --8<-- [end:delta] -->
 
 <!-- --8<-- [start:delta_profiles] -->
-<p><code>delta_profiles(reference, samples, n_mfw, variant, culling, statistics)</code> is for authorship attribution. The most frequent units, the culling and the statistics of the z-scores come from the reference texts (the profiles of the authors) or from a separate set <code>statistics</code>, such as training windows when the profiles are too few to estimate the spread of the frequencies; the texts under test <code>samples</code> get the same units and scaling. The result is the distances from the samples (rows) to the references (columns); the nearest reference is the presumed author. Unlike in <code>delta</code>, a sample affects neither the units nor the scaling, so its result does not depend on the other samples.</p>
+<p><code>delta_profiles(reference, samples, n_mfw, variant, culling, statistics)</code> is for authorship attribution. The most frequent units, the culling and the statistics of the z-scores come from the reference texts (the profiles of the authors) or from a separate set <code>statistics</code>, such as training windows when the profiles are too few to estimate the spread of the frequencies; the texts under test <code>samples</code> get the same units and scaling. The result is the distances from the samples (rows) to the references (columns); the nearest reference is the presumed author. Unlike in <code>delta</code>, a sample affects neither the units nor the scaling, so its result does not depend on the other samples. The corpora, <code>n_mfw</code> and <code>culling</code> raise the errors of <code>frequency_table</code>; fewer than three texts for the statistics raise <code>SourceError</code>, and an unknown variant <code>ParameterError</code>.</p>
 <!-- --8<-- [end:delta_profiles] -->
 
 <div class="admonition example">
@@ -2704,7 +2705,7 @@
 </tr>
 </tbody>
 </table>
-<p>The result is a list of <code>ZetaScore(word, dp_target, dp_comparison, zeta, log_zeta)</code> named tuples by descending Zeta, by descending logarithmic Zeta and alphabetically when equal.</p>
+<p>The result is a list of <code>ZetaScore(word, dp_target, dp_comparison, zeta, log_zeta)</code> named tuples by descending Zeta, by descending logarithmic Zeta and alphabetically when equal. A corpus that is neither a list of strings nor a list of such lists raises <code>SourceTypeError</code>, and a corpus without words <code>SourceError</code>; a <code>segment_size</code> or a <code>top_n</code> that is not an integer of at least one raises <code>ParameterError</code>.</p>
 <!-- --8<-- [end:zeta] -->
 
 <div class="admonition example">
@@ -2752,6 +2753,7 @@
 </tr>
 </tbody>
 </table>
+<p>Words that are not a list of strings raise <code>SourceTypeError</code>, a corpus without words <code>SourceError</code>, and an <code>n_mfw</code> that is not an integer of at least one <code>ParameterError</code>.</p>
 <!-- --8<-- [end:kilgarriff_chi2] -->
 
 <div class="admonition example">
@@ -2764,11 +2766,11 @@
 </div>
 <h2 id="mendenhall">Mendenhall curve<a class="headerlink" href="#mendenhall" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:mendenhall_curve] -->
-<p><code>mendenhall_curve(words)</code> - the shares of the words of every length in characters (Mendenhall 1887), a profile of the author comparable between texts whatever their size.</p>
+<p><code>mendenhall_curve(words)</code> - the shares of the words of every length in characters (Mendenhall 1887), a profile of the author comparable between texts whatever their size. Words that are not a list of strings raise <code>SourceTypeError</code>, and no words <code>SourceError</code>.</p>
 <!-- --8<-- [end:mendenhall_curve] -->
 
 <!-- --8<-- [start:mendenhall_distance] -->
-<p><code>mendenhall_distance(words_a, words_b)</code> - the Jensen-Shannon distance with base 2 between the curves, from 0 (the distributions coincide) to 1.</p>
+<p><code>mendenhall_distance(words_a, words_b)</code> - the Jensen-Shannon distance with base 2 between the curves, from 0 (the distributions coincide) to 1. Words that are not a list of strings raise <code>SourceTypeError</code>, and a text without words <code>SourceError</code>.</p>
 <!-- --8<-- [end:mendenhall_distance] -->
 
 <div class="admonition example">

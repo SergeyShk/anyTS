@@ -2667,6 +2667,7 @@
 </tr>
 </tbody>
 </table>
+<p>The parameters and the target corpus are checked by <code>check_keyness_params</code>. A reference that is not a list of strings, a counter or a <code>FrequencyReference</code> raises <code>SourceTypeError</code>, and a negative, <code>nan</code> or infinite frequency of a counter and an empty corpus raise <code>SourceError</code>.</p>
 <!-- --8<-- [end:keyness-parameters] -->
 
 <!-- --8<-- [start:check_keyness_params] -->
@@ -2718,7 +2719,7 @@
 </tr>
 </tbody>
 </table>
-<p>Only the words of the target that <code>keep</code> passes are counted, under their <code>key</code>, in the frequencies and in the size alike. A key missing from <code>counts</code> has the frequency <code>missing</code>, such as the least frequency of a dictionary: an upper bound, so its word may be a positive keyword but never a negative one. Negative keywords come only from the keys of <code>counts</code> that <code>keep</code> passes.</p>
+<p>Only the words of the target that <code>keep</code> passes are counted, under their <code>key</code>, in the frequencies and in the size alike. A key missing from <code>counts</code> has the frequency <code>missing</code>, such as the least frequency of a dictionary: an upper bound, so its word may be a positive keyword but never a negative one. Negative keywords come only from the keys of <code>counts</code> that <code>keep</code> passes. A frequency is checked as it is read, so a large dictionary is not gone through for positive keywords: one that is not a number raises <code>SourceTypeError</code>, and a negative, <code>nan</code> or infinite one <code>SourceError</code>. A <code>size</code> or a <code>missing</code> that is not a finite number or is negative raises <code>ParameterError</code>, and a <code>key</code> or a <code>keep</code> that cannot be called <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:FrequencyReference] -->
 
 <h2 id="result">Result<a class="headerlink" href="#result" title="Permanent link">&para;</a></h2>

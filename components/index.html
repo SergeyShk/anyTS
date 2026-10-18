@@ -2617,7 +2617,7 @@
 
 <h2 id="names">Names<a class="headerlink" href="#names" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:StatsComponent-names] -->
-<p>The name of the pipe is the name of the extension: <code>nlp.add_pipe(factory, name="basic")</code> puts the statistics into <code>doc._.basic</code>. Without <code>name</code> both take the name of the factory. The extension follows the pipe when the pipeline renames it (<code>nlp.rename_pipe</code>), and a name taken by an extension of another package raises <code>ParameterError</code> instead of replacing it. A component taken from another pipeline (<code>add_pipe(name, source=other)</code>) is the same object in both, so under a new name it writes to that extension in the other pipeline too; a separate component comes from the factory, <code>add_pipe(factory, name=...)</code>. The same component can be added twice under different names, with different parameters. A document with no words - an empty string, whitespace, punctuation alone - passes through a component untouched, its extension left at <code>None</code>.</p>
+<p>The name of the pipe is the name of the extension: <code>nlp.add_pipe(factory, name="basic")</code> puts the statistics into <code>doc._.basic</code>. Without <code>name</code> both take the name of the factory. The extension follows the pipe when the pipeline renames it (<code>nlp.rename_pipe</code>). A name taken by an extension of another package raises <code>ParameterError</code> instead of replacing it: at <code>add_pipe</code>, or at the first document after <code>rename_pipe</code>, which renames the pipe before the component learns its name. A component taken from another pipeline (<code>add_pipe(name, source=other)</code>) is the same object in both, so under a new name it writes to that extension in the other pipeline too; a separate component comes from the factory, <code>add_pipe(factory, name=...)</code>. The same component can be added twice under different names, with different parameters. A document with no words - an empty string, whitespace, punctuation alone - passes through a component untouched, its extension left at <code>None</code>.</p>
 <!-- --8<-- [end:StatsComponent-names] -->
 
 <!-- --8<-- [start:StatsComponent-serialization] -->
@@ -2814,7 +2814,7 @@
 <td style="text-align: center;"><code>top_n</code></td>
 <td style="text-align: center;">int</td>
 <td style="text-align: center;"><code>10</code></td>
-<td style="text-align: center;">Number of the most frequent words of the academic nausea and of the naturalness by Zipf's law</td>
+<td style="text-align: center;">Number of the most frequent words of the academic nausea and of the naturalness by Zipf's law (<code>NAUSEA_TOP_N</code>)</td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>nausea_stopwords</code></td>
@@ -2828,7 +2828,7 @@
 <!-- --8<-- [end:StyleStatsComponent] -->
 
 <!-- --8<-- [start:PhonStatsComponent] -->
-<p><code>PhonStatsComponent</code> puts the phonetic statistics into the extension; <code>window_len</code> (3 by default) is the window in words of the alliteration and the assonance, and one that is not an integer of at least 2 raises <code>ParameterError</code>.</p>
+<p><code>PhonStatsComponent</code> puts the phonetic statistics into the extension; <code>window_len</code> (by default <code>PHON_WINDOW_LEN</code>, 3) is the window in words of the alliteration and the assonance, and one that is not an integer of at least 2 raises <code>ParameterError</code>.</p>
 <!-- --8<-- [end:PhonStatsComponent] -->
 
 <!-- --8<-- [start:SyntaxStatsComponent] -->

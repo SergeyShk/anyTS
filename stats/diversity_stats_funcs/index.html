@@ -3187,6 +3187,10 @@
 
 
 <h1 id="metric-functions">Metric functions<a class="headerlink" href="#metric-functions" title="Permanent link">&para;</a></h1>
+<!-- --8<-- [start:diversity-checks] -->
+<p>Every function checks its words with <code>check_words</code>: a <code>text</code> that is a string, a <code>Doc</code>, an iterator, a set or a table, or whose words are not strings, raises <code>SourceTypeError</code>; <code>fit_zipf_mandelbrot</code> takes a counter too.</p>
+<!-- --8<-- [end:diversity-checks] -->
+
 <h2 id="type-token-ratio-ttr">Type-Token Ratio (TTR)<a class="headerlink" href="#type-token-ratio-ttr" title="Permanent link">&para;</a></h2>
 <div class="admonition info">
 <p><strong>anyts.diversity_stats.calc_ttr()</strong></p>
@@ -3351,10 +3355,11 @@
 <td style="text-align: center;"><code>base</code></td>
 <td style="text-align: center;">float</td>
 <td style="text-align: center;"><code>10</code></td>
-<td style="text-align: center;">Logarithm base</td>
+<td style="text-align: center;">Logarithm base (<code>DIVERSITY_LOG_BASE</code>)</td>
 </tr>
 </tbody>
 </table>
+<p>A <code>base</code> that is not a finite number above 1 raises <code>ParameterError</code>.</p>
 <!-- --8<-- [end:calc_sttr] -->
 
 <h2 id="maas-type-token-ratio-mttr">Maas Type-Token Ratio (MTTR)<a class="headerlink" href="#maas-type-token-ratio-mttr" title="Permanent link">&para;</a></h2>
@@ -3393,10 +3398,11 @@
 <td style="text-align: center;"><code>base</code></td>
 <td style="text-align: center;">float</td>
 <td style="text-align: center;"><code>10</code></td>
-<td style="text-align: center;">Logarithm base</td>
+<td style="text-align: center;">Logarithm base (<code>DIVERSITY_LOG_BASE</code>)</td>
 </tr>
 </tbody>
 </table>
+<p>A <code>base</code> that is not a finite number above 1 raises <code>ParameterError</code>.</p>
 <!-- --8<-- [end:calc_mttr] -->
 
 <h2 id="dugast-type-token-ratio-dttr">Dugast Type-Token Ratio (DTTR)<a class="headerlink" href="#dugast-type-token-ratio-dttr" title="Permanent link">&para;</a></h2>
@@ -3435,10 +3441,11 @@
 <td style="text-align: center;"><code>base</code></td>
 <td style="text-align: center;">float</td>
 <td style="text-align: center;"><code>10</code></td>
-<td style="text-align: center;">Logarithm base</td>
+<td style="text-align: center;">Logarithm base (<code>DIVERSITY_LOG_BASE</code>)</td>
 </tr>
 </tbody>
 </table>
+<p>A <code>base</code> that is not a finite number above 1 raises <code>ParameterError</code>.</p>
 <!-- --8<-- [end:calc_dttr] -->
 
 <h2 id="moving-average-type-token-ratio-mattr">Moving Average Type-Token Ratio (MATTR)<a class="headerlink" href="#moving-average-type-token-ratio-mattr" title="Permanent link">&para;</a></h2>
@@ -3479,10 +3486,11 @@
 <td style="text-align: center;"><code>window_len</code></td>
 <td style="text-align: center;">int</td>
 <td style="text-align: center;"><code>50</code></td>
-<td style="text-align: center;">Window size</td>
+<td style="text-align: center;">Window size (<code>MATTR_WINDOW_LEN</code>)</td>
 </tr>
 </tbody>
 </table>
+<p>A <code>window_len</code> that is not an integer of at least one raises <code>ParameterError</code>.</p>
 <!-- --8<-- [end:calc_mattr] -->
 
 <h2 id="mean-segmental-type-token-ratio-msttr">Mean Segmental Type-Token Ratio (MSTTR)<a class="headerlink" href="#mean-segmental-type-token-ratio-msttr" title="Permanent link">&para;</a></h2>
@@ -3523,10 +3531,11 @@
 <td style="text-align: center;"><code>segment_len</code></td>
 <td style="text-align: center;">int</td>
 <td style="text-align: center;"><code>50</code></td>
-<td style="text-align: center;">Segment size</td>
+<td style="text-align: center;">Segment size (<code>MATTR_WINDOW_LEN</code>)</td>
 </tr>
 </tbody>
 </table>
+<p>A <code>segment_len</code> that is not an integer of at least one raises <code>ParameterError</code>.</p>
 <!-- --8<-- [end:calc_msttr] -->
 
 <h2 id="measure-of-textual-lexical-diversity-mtld">Measure of Textual Lexical Diversity (MTLD)<a class="headerlink" href="#measure-of-textual-lexical-diversity-mtld" title="Permanent link">&para;</a></h2>
@@ -3568,16 +3577,17 @@
 <td style="text-align: center;"><code>min_len</code></td>
 <td style="text-align: center;">int</td>
 <td style="text-align: center;"><code>10</code></td>
-<td style="text-align: center;">Minimum factor length</td>
+<td style="text-align: center;">Minimum factor length (<code>MTLD_MIN_LEN</code>)</td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>threshold</code></td>
 <td style="text-align: center;">float</td>
 <td style="text-align: center;"><code>0.72</code></td>
-<td style="text-align: center;">TTR threshold for completing a factor</td>
+<td style="text-align: center;">TTR threshold for completing a factor (<code>MTLD_TTR_THRESHOLD</code>)</td>
 </tr>
 </tbody>
 </table>
+<p>A <code>min_len</code> that is not a non-negative integer and a <code>threshold</code> that is not a number in (0, 1) raise <code>ParameterError</code>.</p>
 <!-- --8<-- [end:calc_mtld] -->
 
 <h2 id="moving-average-measure-of-textual-lexical-diversity-ma-mtld">Moving Average Measure of Textual Lexical Diversity (MA-MTLD)<a class="headerlink" href="#moving-average-measure-of-textual-lexical-diversity-ma-mtld" title="Permanent link">&para;</a></h2>
@@ -3612,16 +3622,17 @@
 <td style="text-align: center;"><code>min_len</code></td>
 <td style="text-align: center;">int</td>
 <td style="text-align: center;"><code>10</code></td>
-<td style="text-align: center;">Minimum factor length</td>
+<td style="text-align: center;">Minimum factor length (<code>MTLD_MIN_LEN</code>)</td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>threshold</code></td>
 <td style="text-align: center;">float</td>
 <td style="text-align: center;"><code>0.72</code></td>
-<td style="text-align: center;">TTR threshold for completing a factor</td>
+<td style="text-align: center;">TTR threshold for completing a factor (<code>MTLD_TTR_THRESHOLD</code>)</td>
 </tr>
 </tbody>
 </table>
+<p>A <code>min_len</code> that is not a non-negative integer and a <code>threshold</code> that is not a number in (0, 1) raise <code>ParameterError</code>.</p>
 <!-- --8<-- [end:calc_mamtld] -->
 
 <h2 id="mtld-with-a-moving-window-and-text-wrap-mtld-w">MTLD with a moving window and text wrap (MTLD-W)<a class="headerlink" href="#mtld-with-a-moving-window-and-text-wrap-mtld-w" title="Permanent link">&para;</a></h2>
@@ -3656,16 +3667,17 @@
 <td style="text-align: center;"><code>min_len</code></td>
 <td style="text-align: center;">int</td>
 <td style="text-align: center;"><code>10</code></td>
-<td style="text-align: center;">Minimum factor length</td>
+<td style="text-align: center;">Minimum factor length (<code>MTLD_MIN_LEN</code>)</td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>threshold</code></td>
 <td style="text-align: center;">float</td>
 <td style="text-align: center;"><code>0.72</code></td>
-<td style="text-align: center;">TTR threshold for completing a factor</td>
+<td style="text-align: center;">TTR threshold for completing a factor (<code>MTLD_TTR_THRESHOLD</code>)</td>
 </tr>
 </tbody>
 </table>
+<p>A <code>min_len</code> that is not a non-negative integer and a <code>threshold</code> that is not a number in (0, 1) raise <code>ParameterError</code>.</p>
 <!-- --8<-- [end:calc_mtldw] -->
 
 <h2 id="hypergeometric-distribution-d-hd-d">Hypergeometric Distribution D (HD-D)<a class="headerlink" href="#hypergeometric-distribution-d-hd-d" title="Permanent link">&para;</a></h2>
@@ -3700,10 +3712,11 @@
 <td style="text-align: center;"><code>sample_size</code></td>
 <td style="text-align: center;">int</td>
 <td style="text-align: center;"><code>42</code></td>
-<td style="text-align: center;">Sample size in words</td>
+<td style="text-align: center;">Sample size in words (<code>HDD_SAMPLE_SIZE</code>)</td>
 </tr>
 </tbody>
 </table>
+<p>A <code>sample_size</code> that is not an integer of at least one raises <code>ParameterError</code>.</p>
 <!-- --8<-- [end:calc_hdd] -->
 
 <h2 id="simpsons-index-d">Simpson's index (D)<a class="headerlink" href="#simpsons-index-d" title="Permanent link">&para;</a></h2>
@@ -3856,7 +3869,7 @@
 <p><strong>anyts.diversity_stats.calc_frequency_spectrum()</strong></p>
 </div>
 <!-- --8<-- [start:calc_frequency_spectrum] -->
-<p>Computation of the frequency spectrum - the number of lexemes <span class="arithmatex">\(V_i\)</span> occurring exactly <span class="arithmatex">\(i\)</span> times in the text. The measures below are computed from it, with the formulas of Tweedie and Baayen (1998).</p>
+<p>Computation of the frequency spectrum - the number of lexemes <span class="arithmatex">\(V_i\)</span> occurring exactly <span class="arithmatex">\(i\)</span> times in the text. The hapax index, Yule's K and I, Herdan's Vm, Sichel's S, Michéa's M, Baayen's P, the hapax ratio and the α₂ exponent are computed from it, with the formulas of Tweedie and Baayen (1998).</p>
 <p>Notation: <span class="arithmatex">\(N\)</span> - number of words, <span class="arithmatex">\(V\)</span> - number of lexemes, <span class="arithmatex">\(V_i\)</span> - number of lexemes with frequency <span class="arithmatex">\(i\)</span>, <span class="arithmatex">\(V_1\)</span> - hapaxes, <span class="arithmatex">\(V_2\)</span> - dis legomena, <span class="arithmatex">\(p_k\)</span> - relative frequency of a lexeme.</p>
 <p>Parameters:</p>
 <table>
@@ -4065,10 +4078,11 @@ W = N^{V^{-a}}, \quad a = 0.172
 <td style="text-align: center;"><code>a</code></td>
 <td style="text-align: center;">float</td>
 <td style="text-align: center;"><code>0.172</code></td>
-<td style="text-align: center;">Exponent</td>
+<td style="text-align: center;">Exponent (<code>BRUNET_W_EXPONENT</code>)</td>
 </tr>
 </tbody>
 </table>
+<p>An <code>a</code> that is not a finite number raises <code>ParameterError</code>.</p>
 <!-- --8<-- [end:calc_brunet_w] -->
 
 <h2 id="dugasts-k">Dugast's k<a class="headerlink" href="#dugasts-k" title="Permanent link">&para;</a></h2>
@@ -4106,10 +4120,11 @@ k = \frac{\log V}{\log \log N}
 <td style="text-align: center;"><code>base</code></td>
 <td style="text-align: center;">float</td>
 <td style="text-align: center;"><code>10</code></td>
-<td style="text-align: center;">Logarithm base</td>
+<td style="text-align: center;">Logarithm base (<code>DIVERSITY_LOG_BASE</code>)</td>
 </tr>
 </tbody>
 </table>
+<p>A <code>base</code> that is not a finite number above 1 raises <code>ParameterError</code>.</p>
 <!-- --8<-- [end:calc_dugast_k] -->
 
 <h2 id="baayens-p">Baayen's P<a class="headerlink" href="#baayens-p" title="Permanent link">&para;</a></h2>
@@ -4358,6 +4373,7 @@ H = -\sum_k p_k \log_2 p_k
 </tr>
 </tbody>
 </table>
+<p>A counter whose words are not strings or whose frequencies are not numbers raises <code>SourceTypeError</code>, and a negative, <code>nan</code> or infinite frequency <code>SourceError</code> (<code>check_counts</code>).</p>
 <!-- --8<-- [end:fit_zipf_mandelbrot] -->
 
 <div class="admonition example">
@@ -4465,6 +4481,7 @@ H = -\sum_k p_k \log_2 p_k
 </tr>
 </tbody>
 </table>
+<p>A <code>func</code> that cannot be called raises <code>SourceTypeError</code>; a <code>window_len</code> or a <code>step</code> that is not an integer of at least one and a <code>confidence</code> that is not a number in (0, 1) raise <code>ParameterError</code>.</p>
 <!-- --8<-- [end:calc_windowed] -->
 
 
