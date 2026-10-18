@@ -120,9 +120,11 @@ class PhonStats(Stats, metaclass=ABCMeta):
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
         classes = ("vowels", "sonorants", "voiced", "voiceless", "skipped")
+        for name in (*classes, "glides"):
+            check_words(getattr(cls, name), name, ordered=False)
         for index, first in enumerate(classes):
             for second in classes[index + 1 :]:
-                if shared := getattr(cls, first) & getattr(cls, second):
+                if shared := set(getattr(cls, first)) & set(getattr(cls, second)):
                     raise ParameterError(
                         cls.messages["phon_classes"].format(
                             first=first, second=second, cls=cls.__name__, sounds=sorted(shared)

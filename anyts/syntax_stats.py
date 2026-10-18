@@ -4,7 +4,7 @@ from collections import Counter
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from math import nan
 from statistics import fmean, pstdev
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from .constants import (
     AGENT_DEPS,
@@ -21,6 +21,7 @@ from .constants import (
 from .exceptions import SourceError, SourceTypeError
 from .stats import Stats
 from .utils import (
+    check_words,
     has_feature,
     has_sents,
     is_doc,
@@ -136,6 +137,11 @@ class SyntaxStats(Stats):
     join_hyphens: ClassVar[bool] = False
     requires_lemmas: ClassVar[bool] = False
     negation_words: ClassVar[frozenset[str]] = frozenset()
+
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        super().__init_subclass__(**kwargs)
+        check_words(cls.negation_words, "negation_words", ordered=False)
+
     stats_desc: ClassVar[Mapping[str, str]] = SYNTAX_STATS_DESC
 
     def __init__(self, source: Doc):

@@ -935,3 +935,10 @@ def test_modifier_chains_through_an_inner_part():
     nmod = lambda token: token.dep_ == "nmod"  # noqa: E731
     assert calc_modifier_chains(doc, nmod, join_hyphens=True) == [3]
     assert calc_modifier_chains(doc, nmod) == [2]
+
+
+def test_negation_words_checked_at_class_definition():
+    with pytest.raises(
+        SourceTypeError, match=r"^A list of negation_words is expected, not a string$"
+    ):
+        type("Negated", (SyntaxStats,), {"negation_words": "not"})

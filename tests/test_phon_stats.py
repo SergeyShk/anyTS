@@ -337,3 +337,8 @@ def test_calc_repetition_index_tokens():
 def test_calc_repetition_index_window(window_len, message):
     with pytest.raises(ParameterError, match=message):
         calc_repetition_index(WORDS, window_len)
+
+
+def test_sound_classes_checked_at_class_definition():
+    with pytest.raises(SourceTypeError, match=r"^A list of vowels is expected, not a string$"):
+        type("Sounded", (English,), {"vowels": "aeiou"})

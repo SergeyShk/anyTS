@@ -151,6 +151,25 @@ class ConnectorMatcher:
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
         check_messages(cls.messages)
+        for name in ("classes", "kinds"):
+            check_words(getattr(cls, name), name)
+        for name in ("pos_tags", "not_after_pos", "start_only_pos", "not_at_start"):
+            check_words(getattr(cls, name), name, ordered=False)
+        for name in (
+            "pos_extra",
+            "blocked_after",
+            "blocked_before",
+            "blocked_after_pos",
+            "only_after",
+        ):
+            rules = getattr(cls, name)
+            if not isinstance(rules, Mapping):
+                raise SourceTypeError(
+                    f"The {name} of {cls.__name__} must be a mapping, not {type(rules).__name__}"
+                )
+            check_words(list(rules), f"connectors of {name}")
+            for words in rules.values():
+                check_words(words, name, ordered=False)
 
     def __init__(self, connectors: Mapping[str, tuple[str, str]]):
         if not isinstance(connectors, Mapping):

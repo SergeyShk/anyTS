@@ -195,7 +195,7 @@ def keyness(
 
 def _reference_frequency(counts: Mapping[str, float], word: str, missing: float) -> float:
     """Frequency of a word in the reference, checked as it is read and not the whole dictionary"""
-    frequency = counts.get(word, missing)
+    frequency: object = counts.get(word, missing)
     if isinstance(frequency, bool) or not isinstance(frequency, Real):
         raise SourceTypeError(f"The frequencies must be numbers, not {type(frequency).__name__}")
     if not isfinite(frequency) or frequency < 0:

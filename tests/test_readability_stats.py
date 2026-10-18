@@ -639,3 +639,40 @@ def test_calc_mu_index_of_no_mapping():
         SourceTypeError, match=r"^A mapping of word lengths to counts is expected, not NoneType$"
     ):
         calc_mu_index(None)
+
+
+@pytest.mark.parametrize(
+    ("attributes", "message"),
+    [
+        ({"preset_level_scales": {"original": ((60, "easy"), (0, "hard"))}}, r"must be a mapping"),
+        (
+            {"reading_ease_grades": ((90, "five"),)},
+            r"^The grade of a band must be a number, not str$",
+        ),
+        ({"preset_reading_ease_grades": {"original": ((0, 5), (90, 6))}}, r"must descend"),
+        ({"grade_scales": {"rix": ((1, 2, 3),)}}, r"must be a list of pairs"),
+        ({"grade_age_levels": ((1, 5),)}, r"^The grade_age_levels of Graded must be a list"),
+        ({"grade_age_levels": ((6, 8, "b", "c"), (1, 5, "a", "b"))}, r"must ascend$"),
+        ({"postgraduate_level": "graduate"}, r"^The stage above the last one must be a pair"),
+    ],
+)
+def test_scales_of_readability_checked_at_class_definition(attributes, message):
+    with pytest.raises(ParameterError, match=message):
+        type("Graded", (ReadabilityStats,), attributes)
+
+
+@pytest.mark.parametrize(
+    ("call", "error", "message"),
+    [
+        (lambda: flesch_reading_easy_to_grade(65.0, grades=[1, 2]), ParameterError, r"pairs"),
+        (lambda: flesch_reading_easy_to_grade(65.0, grades="abc"), ParameterError, r"pairs"),
+        (lambda: flesch_reading_easy_to_grade(10.0, below="x"), ParameterError, r"grade below"),
+        (lambda: grade_to_age(5.0, levels=[(1, 5)]), ParameterError, r"^The school stages must"),
+        (lambda: calc_consensus_grade(42), SourceTypeError, r"^The grades must be a list"),
+        (lambda: calc_reading_time(-100), ParameterError, r"cannot be negative$"),
+        (lambda: calc_reading_time("300"), ParameterError, r"must be an integer, not str$"),
+    ],
+)
+def test_grade_functions_check_their_scales(call, error, message):
+    with pytest.raises(error, match=message):
+        call()

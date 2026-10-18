@@ -160,3 +160,29 @@ def test_messages():
 
 def test_scale_level_is_reexported():
     assert readability_stats.scale_level is scale_level
+
+
+@pytest.mark.parametrize(
+    ("scales", "message"),
+    [
+        (
+            {"n": ((0, "short"), (100, "long"))},
+            r"^The lower bounds of the scale of n in the level_",
+        ),
+        ({"n": ((100, "long"), (100, "short"))}, r"must descend, not \[100, 100\]$"),
+        ({"n": ()}, r"^The scale of n in the level_scales of Scaled is empty$"),
+        (
+            {"n": (100, 0)},
+            r"^The scale of n in the level_scales of Scaled must be a list of pairs",
+        ),
+        (((100, "long"),), r"^The level_scales of Scaled must be a mapping of a statistic"),
+    ],
+)
+def test_level_scales_checked_at_class_definition(scales, message):
+    with pytest.raises(ParameterError, match=message):
+        type("Scaled", (Stats,), {"level_scales": scales})
+
+
+def test_scale_level_of_an_ascending_scale():
+    with pytest.raises(ParameterError, match=r"^The lower bounds of the scale must descend"):
+        scale_level(50, [(0, "short"), (100, "long")])

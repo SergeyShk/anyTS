@@ -26,9 +26,9 @@ from .constants import (
 )
 from .exceptions import ParameterError, SourceError, SourceTypeError
 from .extractors import SentsExtractor, WordsExtractor
-from .stats import Stats
+from .stats import Stats, _check_scale, _check_scales
 from .stats import scale_level as scale_level
-from .utils import check_number, safe_divide
+from .utils import check_integer, check_number, safe_divide
 
 if TYPE_CHECKING:
     from spacy.tokens import Doc
@@ -158,6 +158,15 @@ class ReadabilityStats(Stats):
                     f"The {attribute} of {cls.__name__} name unknown presets: {unknown}. "
                     f"Available presets: {tuple(cls.presets)}"
                 )
+        name = cls.__name__
+        for preset, scales in cls.preset_level_scales.items():
+            _check_scales(scales, f"preset_level_scales of {name} for {preset}")
+        for stat, grades in cls.grade_scales.items():
+            _check_grades(grades, f"scale of {stat} in the grade_scales of {name}")
+        _check_grades(cls.reading_ease_grades, f"reading_ease_grades of {name}")
+        for preset, grades in cls.preset_reading_ease_grades.items():
+            _check_grades(grades, f"preset_reading_ease_grades of {name} for {preset}")
+        _check_levels(cls.grade_age_levels, cls.postgraduate_level, f"grade_age_levels of {name}")
 
     def __init__(
         self,
@@ -435,6 +444,41 @@ class ReadabilityStats(Stats):
 def _word_letters(bs: BasicStats) -> int:
     """Letters of the counted words, so that the mean word length matches the number of words"""
     return sum(letters * count for letters, count in bs.c_letters.items())
+
+
+def _check_grades(grades: Iterable[tuple[float, float]], what: str) -> list[tuple[float, float]]:
+    """Bands of a scale of grades, checked as a scale of scale_level with finite grades"""
+    bands = _check_scale(grades, what)
+    for _, grade in bands:
+        check_number(grade, "grade of a band")
+    return bands
+
+
+def _check_levels(levels: object, above: object, what: str) -> list[tuple[int, int, str, str]]:
+    """School stages checked as the first and the last year, the stage and the age in
+    ascending order of the years, and the stage above them as a pair of strings"""
+    try:
+        stages = [(first, last, stage, age) for first, last, stage, age in levels]  # type: ignore[attr-defined]
+    except (TypeError, ValueError):
+        raise ParameterError(
+            f"The {what} must be a list of the first and the last year, the stage and the age"
+        ) from None
+    previous = None
+    for first, last, stage, age in stages:
+        check_integer(first, "first year of a stage")
+        check_integer(last, "last year of a stage")
+        if not isinstance(stage, str) or not isinstance(age, str):
+            raise ParameterError(f"The stage and the age of the {what} must be strings")
+        if last < first or (previous is not None and first <= previous):
+            raise ParameterError(f"The years of the {what} must ascend")
+        previous = last
+    if not (
+        isinstance(above, tuple | list)
+        and len(above) == 2
+        and all(isinstance(x, str) for x in above)
+    ):
+        raise ParameterError("The stage above the last one must be a pair of strings")
+    return stages
 
 
 def calc_flesch_reading_easy(
@@ -750,10 +794,12 @@ def flesch_reading_easy_to_grade(
         float: Years of schooling
 
     Raises:
-        ParameterError: If the reading ease is not a finite number
+        ParameterError: If the reading ease or the grade below is not a finite number,
+            or the grades are not a scale of finite grades (scale_level)
     """
     check_number(flesch_reading_easy, "reading ease")
-    for threshold, grade in grades:
+    check_number(below, "grade below the last bound")
+    for threshold, grade in _check_grades(grades, "scale of the grades"):
         if flesch_reading_easy >= threshold:
             return grade
     return below
@@ -781,12 +827,15 @@ def calc_consensus_grade(
         float: Consensus grade
 
     Raises:
-        SourceTypeError: If to_grade is not callable
+        SourceTypeError: If to_grade is not callable or the grades are not a list
         ParameterError: If there are no values, or a grade or the reading ease is not a
             finite number
     """
     if not callable(to_grade):
         raise SourceTypeError(f"to_grade must be callable, not {type(to_grade).__name__}")
+    source: object = grades
+    if not isinstance(source, Iterable) or isinstance(source, str):
+        raise SourceTypeError(f"The grades must be a list of numbers, not {type(grades).__name__}")
     values = []
     for grade in grades:
         check_number(grade, "grade")
@@ -827,11 +876,13 @@ def grade_to_age(
         str: School stage and reader age
 
     Raises:
-        ParameterError: If the grade is not a finite number
+        ParameterError: If the grade is not a finite number, or the stages are not
+            quadruples of two whole years and two strings in ascending order of the
+            years, or the stage above is not a pair of strings
     """
     check_number(grade, "grade")
     rounded = floor(grade + 0.5)
-    for _, high, education, age in levels:
+    for _, high, education, age in _check_levels(levels, above, "school stages"):
         if rounded <= high:
             return f"{education} ({age})"
     education, age = above
@@ -861,8 +912,12 @@ def calc_reading_time(
         float: Reading time in minutes
 
     Raises:
-        ParameterError: If the reading speed is not a positive number
+        ParameterError: If the number of words is not an integer or is negative, or
+            the reading speed is not a positive number
     """
+    check_integer(n_words, "number of words")
+    if n_words < 0:
+        raise ParameterError("The number of words cannot be negative")
     check_number(wpm, "reading speed")
     if not wpm > 0:
         raise ParameterError(messages["reading_speed"])

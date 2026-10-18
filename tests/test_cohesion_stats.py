@@ -646,3 +646,20 @@ def test_own_analysis():
 def test_cohesion_stats_errors(source, kwargs, error, message):
     with pytest.raises(error, match=f"^{re.escape(message)}$"):
         CohesionStats(text_doc() if source is None else source, **kwargs)
+
+
+@pytest.mark.parametrize(
+    ("attributes", "message"),
+    [
+        ({"blocked_after": {"on": "top"}}, r"^A list of blocked_after is expected, not a string$"),
+        ({"pos_tags": "ADV"}, r"^A list of pos_tags is expected, not a string$"),
+        (
+            {"only_after": [("so", {"and"})]},
+            r"^The only_after of Ruled must be a mapping, not list$",
+        ),
+        ({"classes": {"causal"}}, r"^A list of classes is expected, not set$"),
+    ],
+)
+def test_rules_of_a_matcher_checked_at_class_definition(attributes, message):
+    with pytest.raises(SourceTypeError, match=message):
+        type("Ruled", (ConnectorMatcher,), attributes)
