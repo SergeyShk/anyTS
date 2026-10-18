@@ -686,7 +686,10 @@ def test_add_tokenizer_rules_checks_the_rules(kwargs, message):
 @pytest.mark.parametrize(
     ("kwargs", "message"),
     [
-        ({"prefixes": ["("]}, r"^The rule '\(' of the prefixes is not a regular expression: missing"),
+        (
+            {"prefixes": ["("]},
+            r"^The rule '\(' of the prefixes is not a regular expression: missing",
+        ),
         ({"suffixes": ["(?i)ab"]}, r"^The rule '\(\?i\)ab' of the suffixes .*: global flags"),
         ({"infixes": ["a)|(b"]}, r"^The rule 'a\)\|\(b' of the infixes .*: unbalanced"),
     ],
@@ -697,3 +700,8 @@ def test_add_tokenizer_rules_checks_the_expressions(kwargs, message):
     with pytest.raises(ParameterError, match=message):
         add_tokenizer_rules(nlp, **kwargs)
     assert nlp.tokenizer.prefix_search == prefixes
+
+
+def test_find_phrases_checks_the_normalization():
+    with pytest.raises(SourceTypeError, match=r"^The normalization must be callable, not int$"):
+        find_phrases(["in", "fact"], ["in fact"], 42)

@@ -182,5 +182,5 @@ def test_refuses_a_doc(span):
 
 
 def test_collocations_of_a_deque():
-    words = "the cat sat on the mat and the cat ate".split()
+    words = ["the", "cat", "sat", "on", "the", "mat", "and", "the", "cat", "ate"]
     assert collocations(deque(words)) == collocations(words)

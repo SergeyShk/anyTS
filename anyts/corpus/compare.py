@@ -10,7 +10,7 @@ from scipy.stats import mannwhitneyu
 
 from ..constants import CLOSING_MARKS, MESSAGES, OPENING_MARKS, SYMMETRIC_MARKS
 from ..exceptions import ParameterError, SourceTypeError
-from ..extractors import _iter_words
+from ..extractors import _check_spans, _iter_words
 from ..utils import _sliceable, check_integer, check_number, check_sequence, check_words
 from .kwic import Tokenizer
 
@@ -576,7 +576,8 @@ def split_windows(
 
     Raises:
         SourceTypeError: If the text is not a string, the tokenizer is not callable or
-            the marks are not a collection of strings
+            does not give the words in order (_check_spans), or the marks are not a
+            collection of strings
         ParameterError: If the size of a window or min_words is not an integer or is
             below one, min_words is greater than the window, or a mark is not one
             character
@@ -601,7 +602,10 @@ def split_windows(
         _check_marks(marks, what)
     if min_words is None:
         min_words = 1 if window is None else window
-    words = [(start, end) for start, end, _ in (tokenize or _iter_words)(text)]
+    found = (
+        _iter_words(text) if tokenize is None else _check_spans(tokenize(text), text, "tokenizer")
+    )
+    words = [(start, end) for start, end, _ in found]
     if not words:
         return []
     size = len(words) if window is None else window

@@ -529,3 +529,11 @@ def test_sentence_rhythm_of_bools_and_negative_lengths():
         sentence_rhythm([True, False, True])
     with pytest.raises(ParameterError, match="cannot be negative"):
         sentence_rhythm([-3, 5, -2])
+
+
+@pytest.mark.parametrize(
+    "tokenize", [str.split, lambda text: [(3, 1, "a")], lambda text: [(0, 99, "a")]]
+)
+def test_split_windows_checks_the_words_of_its_tokenizer(tokenize):
+    with pytest.raises(SourceTypeError, match=r"^The tokenizer must "):
+        split_windows("one two three", 2, tokenize=tokenize)

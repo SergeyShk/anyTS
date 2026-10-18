@@ -5,6 +5,7 @@ import re
 from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from itertools import pairwise
+from numbers import Real
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Any, ClassVar, NamedTuple
 
@@ -14,9 +15,11 @@ from ..extractors import SentsExtractor, _iter_words, iter_part_sents
 from ..syntax_stats import get_words
 from ..utils import (
     _unit_word,
+    check_callable,
     check_integer,
     check_messages,
     check_number,
+    check_word,
     check_words,
     find_phrases,
     has_sents,
@@ -115,14 +118,26 @@ def check_params(
         ParameterError: If a number is not an integer of at least one, or the
             threshold does not lie in the interval (0, 1]
     """
-    check_integer(long_sent_word_factor, "number of words of a long sentence")
-    check_integer(complex_syl_factor, "number of syllables of a complex word")
-    if long_sent_word_factor < 1:
-        raise ParameterError(messages["long_sent_word_factor"])
-    if complex_syl_factor < 1:
-        raise ParameterError(messages["complex_syl_factor"])
-    check_number(alliteration_threshold, "threshold of the alliteration")
-    if not 0 < alliteration_threshold <= 1:
+    _check_factor(long_sent_word_factor, "long_sent_word_factor", messages)
+    _check_factor(complex_syl_factor, "complex_syl_factor", messages)
+    _check_threshold(alliteration_threshold, messages)
+
+
+def _check_factor(value: int, key: str, messages: Mapping[str, str] = MESSAGES) -> None:
+    """Checking the least number of words or syllables of a layer, its message by key"""
+    what = {
+        "long_sent_word_factor": "number of words of a long sentence",
+        "complex_syl_factor": "number of syllables of a complex word",
+    }[key]
+    check_integer(value, what)
+    if value < 1:
+        raise ParameterError(messages[key])
+
+
+def _check_threshold(value: float, messages: Mapping[str, str] = MESSAGES) -> None:
+    """Checking the probability threshold of the alliteration"""
+    check_number(value, "threshold of the alliteration")
+    if not 0 < value <= 1:
         raise ParameterError(messages["alliteration_threshold"])
 
 
@@ -621,13 +636,26 @@ def find_long_sents(
 
     Returns:
         list[Highlight]: Fragments of the layer long_sents
+
+    Raises:
+        ParameterError: If the number of words is not an integer of at least one
+        SourceTypeError: If note is not callable
     """
+    _check_factor(long_sent_word_factor, "long_sent_word_factor")
+    _check_hooks((note, "note"))
     note = note or (lambda n: f"long sentence, {_plural(n, 'word')}")
     return [
         Highlight(sent.start, sent.end, "long_sents", note(sent.n_words))
         for sent in sents
         if sent.n_words >= long_sent_word_factor
     ]
+
+
+def _check_hooks(*hooks: tuple[object, str]) -> None:
+    """Checking that every hook of a finder that is set can be called"""
+    for hook, what in hooks:
+        if hook is not None:
+            check_callable(hook, what)
 
 
 def _plural(n: int, noun: str) -> str:
@@ -653,7 +681,13 @@ def find_complex_words(
 
     Returns:
         list[Highlight]: Fragments of the layer complex_words
+
+    Raises:
+        ParameterError: If the number of syllables is not an integer of at least one
+        SourceTypeError: If count_syllables or note is not callable
     """
+    _check_factor(complex_syl_factor, "complex_syl_factor")
+    _check_hooks((count_syllables, "count of the syllables"), (note, "note"))
     note = note or (lambda n: f"complex word, {_plural(n, 'syllable')}")
     highlights = []
     for word in words:
@@ -681,7 +715,11 @@ def find_words(
 
     Returns:
         list[Highlight]: Fragments of the layer
+
+    Raises:
+        SourceTypeError: If is_match is not callable
     """
+    _check_hooks((is_match, "check of a word"))
     return [Highlight(word.start, word.end, layer, note) for word in words if is_match(word)]
 
 
@@ -716,8 +754,10 @@ def find_phrase_highlights(
         list[Highlight]: Fragments of the layer
 
     Raises:
-        SourceTypeError: If the phrases are not a list of strings or a mapping of strings
+        SourceTypeError: If the phrases are not a list of strings or a mapping of
+            strings, or note or normalize is not callable
     """
+    _check_hooks((note, "note"), (normalize, "normalization"))
     note = note or (lambda phrase: f"\u00ab{phrase}\u00bb")
     check_words(phrases, "phrases", ordered=False)
     if isinstance(phrases, Mapping):
@@ -727,7 +767,9 @@ def find_phrase_highlights(
         pairs = ((phrase, phrase) for phrase in in_order(phrases))
     forms: dict[str, str] = {}
     for variant, phrase in pairs:
-        forms.setdefault(" ".join(normalize(part) for part in variant.split()), phrase)
+        # A part may normalize to nothing or to several words, as find_phrases splits it
+        if form := " ".join(" ".join(normalize(part) for part in variant.split()).split()):
+            forms.setdefault(form, phrase)
     normalized = [normalize(word.text) for word in words]
     highlights = []
     for start, end in find_phrases(normalized, forms, str):
@@ -762,7 +804,11 @@ def find_connector_highlights(
 
     Returns:
         list[Highlight]: Fragments of the layer connectors
+
+    Raises:
+        SourceTypeError: If note or pos is not callable
     """
+    _check_hooks((note, "note"), (pos, "part of speech"))
     note = note or (lambda connector: f"{connector.text}: {connector.cls}, {connector.kind}")
     groups = [list(words)] if sents is None else group_words_by_sents(words, sents)
     highlights: list[Highlight] = []
@@ -797,7 +843,11 @@ def find_split_predicate_highlights(
 
     Returns:
         list[Highlight]: Fragments of the layer split_predicates
+
+    Raises:
+        SourceTypeError: If note is not callable
     """
+    _check_hooks((note, "note"))
     note = note or (
         lambda verb, noun: f"split predicate: {verb.lemma_.lower()} {noun.lemma_.lower()}"
     )
@@ -843,9 +893,16 @@ def calc_alliteration_runs(
             word of every run and its consonant, in the order of the text
 
     Raises:
-        SourceTypeError: If the words are not a list of strings (check_words)
+        SourceTypeError: If the words are not a list of strings (check_words), the
+            frequencies not a mapping of consonants to numbers, or stem or
+            is_transparent is not callable
+        ParameterError: If a frequency does not lie in the interval [0, 1] or the
+            threshold in (0, 1]
     """
     check_words(words)
+    _check_frequencies(frequencies)
+    _check_threshold(threshold)
+    _check_hooks((stem, "stem"), (is_transparent, "check of a transparent word"))
     lowered = [word.lower() for word in words]
     if is_transparent is None:
         transparent = [len(word) < ALLITERATION_MIN_WORD_LEN for word in lowered]
@@ -873,6 +930,24 @@ def calc_alliteration_runs(
         if start is not None and stop - start >= 2 and probability < threshold:
             runs.append((start, stop, consonant))
     return sorted(runs)
+
+
+def _check_frequencies(frequencies: object) -> None:
+    """Checking the frequencies of the consonants of the alliteration"""
+    if not isinstance(frequencies, Mapping):
+        raise SourceTypeError(
+            f"The frequencies must be a mapping of consonants, not {type(frequencies).__name__}"
+        )
+    for consonant, frequency in frequencies.items():
+        check_word(consonant, "consonant")
+        if isinstance(frequency, bool) or not isinstance(frequency, Real):
+            raise SourceTypeError(
+                f"The frequencies must be numbers, not {type(frequency).__name__}"
+            )
+        if not 0 <= float(frequency) <= 1:
+            raise ParameterError(
+                f"The frequency of a consonant must lie in the interval [0, 1], not {frequency}"
+            )
 
 
 def find_alliteration(
@@ -904,7 +979,16 @@ def find_alliteration(
 
     Returns:
         list[Highlight]: Fragments of the layer alliteration
+
+    Raises:
+        SourceTypeError: If the frequencies are not a mapping of consonants to
+            numbers, or a hook is not callable
+        ParameterError: If a frequency does not lie in the interval [0, 1] or the
+            threshold in (0, 1]
     """
+    _check_frequencies(frequencies)
+    _check_threshold(threshold)
+    _check_hooks((stem, "stem"), (is_transparent, "check of a transparent word"), (note, "note"))
     note = note or (lambda consonant: f"alliteration on {consonant}")
     groups = [list(words)] if sents is None else group_words_by_sents(words, sents)
     highlights = []

@@ -5,6 +5,7 @@ from abc import ABCMeta, abstractmethod
 from collections import Counter
 from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, Sequence
 from functools import cache
+from numbers import Integral
 from re import Pattern
 from typing import Any, ClassVar
 
@@ -12,6 +13,7 @@ from .constants import MESSAGES
 from .exceptions import ParameterError, SourceTypeError
 from .utils import NUMBER_PATTERN as NUMBER_PATTERN
 from .utils import (
+    check_callable,
     check_integer,
     check_messages,
     check_words,
@@ -325,6 +327,10 @@ def iter_part_sents(
         iterator[tuple[int, int, str]]: Position of the first character, position
             after the last character and text of each sentence
 
+    Raises:
+        SourceTypeError: If iter_sents is not callable, the text is not a string,
+            or iter_sents does not give the sentences of a part in order (_check_spans)
+
     Example:
         >>> import re
         >>> from anyts.extractors import iter_part_sents
@@ -333,10 +339,50 @@ def iter_part_sents(
         >>> list(iter_part_sents(periods, "One. Two\\n\\nThree."))
         [(0, 4, 'One.'), (5, 8, 'Two'), (10, 16, 'Three.')]
     """
+    check_callable(iter_sents, "sentence splitter")
+    if not isinstance(text, str):
+        raise SourceTypeError(MESSAGES["text_type"].format(type=type(text).__name__))
+    return _iter_part_sents(iter_sents, text)
+
+
+def _iter_part_sents(
+    iter_sents: Callable[[str], Iterable[tuple[int, int, str]]], text: str
+) -> Iterator[tuple[int, int, str]]:
+    """iter_part_sents of checked arguments"""
     bounds = [0, *(bound for match in BLANK_LINE.finditer(text) for bound in match.span())]
     for start, end in zip(bounds[::2], [*bounds[1::2], len(text)], strict=True):
-        for first, last, sent in iter_sents(text[start:end]):
+        part = text[start:end]
+        for first, last, sent in _check_spans(iter_sents(part), part, "sentence splitter"):
             yield start + first, start + last, sent
+
+
+def _check_spans(spans: object, text: str, what: str) -> list[tuple[int, int, str]]:
+    """
+    Checking the spans a hook gives for a string: triples of the start, the end and
+    the text of every item, in order and inside the string
+    """
+    if not isinstance(spans, Iterable):
+        raise SourceTypeError(f"The {what} must return an iterable object")
+    checked = []
+    previous = 0
+    for span in spans:
+        if not (isinstance(span, tuple | list) and len(span) == 3):
+            raise SourceTypeError(
+                f"The {what} must give triples of the start, the end and the text, not {span!r}"
+            )
+        start, end, item = span
+        if not (
+            all(isinstance(bound, Integral) and not isinstance(bound, bool) for bound in span[:2])
+            and isinstance(item, str)
+            and previous <= start < end <= len(text)
+        ):
+            raise SourceTypeError(
+                f"The {what} must give ascending integer bounds inside the string and the text "
+                f"of every item, not {tuple(span)!r}"
+            )
+        checked.append((start, end, item))
+        previous = end
+    return checked
 
 
 class WordsExtractor(Extractor):

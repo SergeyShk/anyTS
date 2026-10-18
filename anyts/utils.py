@@ -170,7 +170,8 @@ def find_phrases(
             phrases are skipped
 
     Raises:
-        SourceTypeError: If the words or the phrases are not a list of strings
+        SourceTypeError: If the words or the phrases are not a list of strings, or
+            normalize is not callable
 
     Example:
         >>> from anyts.utils import find_phrases
@@ -179,6 +180,7 @@ def find_phrases(
     """
     check_words(words)
     check_words(phrases, "phrases", ordered=False)
+    check_callable(normalize, "normalization")
     patterns = sorted(
         {pattern for phrase in phrases if (pattern := tuple(normalize(phrase).split()))},
         key=lambda pattern: (-len(pattern), pattern),

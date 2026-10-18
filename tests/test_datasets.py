@@ -873,3 +873,8 @@ def test_fetch_archive_interrupted_extraction(remote, monkeypatch):
     _fetch(filepath, checksum)
     assert (root / "a.txt").read_text(encoding="utf-8") == "first"
     assert (root / "b" / "c.txt").is_file()
+
+
+def test_substring_filter_checks_the_folding():
+    with pytest.raises(SourceTypeError, match=r"^The folding must be callable, not str$"):
+        substring_filter("author", "galdos", "lower")

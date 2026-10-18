@@ -595,3 +595,54 @@ def test_find_phrase_highlights_checks_the_phrases(phrases):
 def test_calc_alliteration_runs_checks_the_words(words):
     with pytest.raises(SourceTypeError):
         calc_alliteration_runs(words, FREQUENCIES)
+
+
+def test_finders_check_their_hooks():
+    words = [Word(0, 3, "The"), Word(4, 7, "cat")]
+    calls = [
+        lambda: find_long_sents([], 5, note=42),
+        lambda: find_complex_words(words, 3, 42),
+        lambda: find_words(words, 42, "stopwords"),
+        lambda: find_phrase_highlights(words, ["the cat"], "x", normalize=42),
+        lambda: find_connector_highlights(words, None, ConnectorMatcher({}), pos=42),
+        lambda: find_split_predicate_highlights([], note=42),
+        lambda: calc_alliteration_runs(["cat", "cot"], {"c": 0.1}, stem=42),
+        lambda: find_alliteration(words, None, {"c": 0.1}, is_transparent=42),
+    ]
+    for call in calls:
+        with pytest.raises(SourceTypeError, match=r" must be callable, not int$"):
+            call()
+
+
+@pytest.mark.parametrize(
+    ("call", "error", "message"),
+    [
+        (lambda: find_long_sents([], 0), ParameterError, r"^The number of words of a long"),
+        (lambda: find_long_sents([], None), ParameterError, r"^The number of words of a long"),
+        (lambda: find_complex_words([], 0, len), ParameterError, r"^The minimum number of syll"),
+        (lambda: calc_alliteration_runs(["a"], {"c": 0.1}, 5), ParameterError, r"^The threshold"),
+        (
+            lambda: calc_alliteration_runs(["a"], {"c": "0.1"}),
+            SourceTypeError,
+            r"be numbers, not s",
+        ),
+        (
+            lambda: calc_alliteration_runs(["a"], {"c": -0.1}),
+            ParameterError,
+            r"\[0, 1\], not -0.1",
+        ),
+        (lambda: calc_alliteration_runs(["a"], {1: 0.1}), SourceTypeError, r"^The consonant must"),
+        (lambda: find_alliteration([], None, ["c"]), SourceTypeError, r"a mapping of consonants"),
+    ],
+)
+def test_finders_check_their_numbers(call, error, message):
+    with pytest.raises(error, match=message):
+        call()
+
+
+def test_phrase_highlights_of_a_part_normalized_to_nothing():
+    words = [Word(0, 2, "in"), Word(3, 7, "fact"), Word(8, 9, ","), Word(10, 12, "it")]
+    found = find_phrase_highlights(
+        words, ["in fact ,"], "x", normalize=lambda w: w.strip(",").lower()
+    )
+    assert found == [Highlight(0, 7, "x", "\u00abin fact ,\u00bb")]

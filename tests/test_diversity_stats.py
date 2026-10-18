@@ -873,7 +873,25 @@ def test_calc_mattr_by_position():
 
 @pytest.mark.parametrize("container", [deque, lambda words: dict(enumerate(words)).values()])
 def test_words_without_slices(container):
-    words = "a b c d e b c f g h g i g j k a b".split() * 5
+    words = [
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "b",
+        "c",
+        "f",
+        "g",
+        "h",
+        "g",
+        "i",
+        "g",
+        "j",
+        "k",
+        "a",
+        "b",
+    ] * 5
     for calc in (calc_mtld, calc_mamtld, partial(calc_msttr, segment_len=5)):
         assert calc(container(words)) == calc(words)
     assert calc_windowed(container(words), calc_ttr, 10) == calc_windowed(words, calc_ttr, 10)

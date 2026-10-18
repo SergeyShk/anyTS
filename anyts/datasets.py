@@ -15,7 +15,7 @@ from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import Any, ClassVar
 
 from .exceptions import DataFileError, DownloadError, ParameterError, SourceTypeError
-from .utils import check_integer
+from .utils import check_callable, check_integer
 
 logger = logging.getLogger(__name__)
 
@@ -285,6 +285,7 @@ def substring_filter(
 
     Raises:
         ParameterError: If the value is not a string
+        SourceTypeError: If fold is not callable
 
     Example:
         >>> from anyts.datasets import substring_filter
@@ -293,6 +294,7 @@ def substring_filter(
     """
     if not isinstance(value, str):
         raise ParameterError(f"The {field} must be a string, not {type(value).__name__}")
+    check_callable(fold, "folding")
     needle = fold(value)
     return lambda record: isinstance(text := record[field], str) and needle in fold(text)
 
