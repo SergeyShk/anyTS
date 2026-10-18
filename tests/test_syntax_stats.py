@@ -855,6 +855,8 @@ def test_modifier_chains_of_hyphenated_words():
     nmod = lambda token: token.dep_ == "nmod"  # noqa: E731
     assert calc_modifier_chains(doc, nmod) == []
     assert calc_modifier_chains(doc, nmod, join_hyphens=True) == [2]
+    # Every word a modifier: the head of the sentence starts the only chain
+    assert calc_modifier_chains(doc, lambda token: True, join_hyphens=True) == [3]
 
 
 def test_modifier_check_must_be_callable():

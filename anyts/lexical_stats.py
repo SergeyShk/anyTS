@@ -134,7 +134,8 @@ class LexicalStats(Stats, metaclass=ABCMeta):
         ):
             name = expected.__name__ if expected is not None else "FrequencyDictionary"
             raise SourceTypeError(messages["freq_dict_type"].format(expected=name))
-        words = tuple(self.analyze(source))
+        found = self.analyze(source)
+        words = tuple(found) if isinstance(found, Iterable) else (found,)
         for word in words:
             if not isinstance(word, LexicalWord):
                 raise SourceTypeError(

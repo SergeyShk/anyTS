@@ -5,7 +5,7 @@ import re
 from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from itertools import pairwise
-from numbers import Real
+from numbers import Integral, Real
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Any, ClassVar, NamedTuple
 
@@ -244,7 +244,10 @@ class HighlightedText:
                     raise ParameterError(
                         self.messages["fragment_layer"].format(found=h.layer, layer=layer)
                     )
-                if not 0 <= h.start < h.end <= len(self.text):
+                if not (
+                    all(isinstance(bound, Integral) for bound in (h.start, h.end))
+                    and 0 <= h.start < h.end <= len(self.text)
+                ):
                     raise ParameterError(
                         self.messages["fragment_outside"].format(
                             layer=layer, start=h.start, end=h.end

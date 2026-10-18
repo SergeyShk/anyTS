@@ -653,6 +653,10 @@ def test_calc_mu_index_of_no_mapping():
         ({"grade_scales": {"rix": ((1, 2, 3),)}}, r"must be a list of pairs"),
         ({"grade_age_levels": ((1, 5),)}, r"^The grade_age_levels of Graded must be a list"),
         ({"grade_age_levels": ((6, 8, "b", "c"), (1, 5, "a", "b"))}, r"must ascend$"),
+        (
+            {"grade_age_levels": ((1, 5, 1, "a"),)},
+            r"^The stage and the age of the grade_age_levels",
+        ),
         ({"postgraduate_level": "graduate"}, r"^The stage above the last one must be a pair"),
     ],
 )

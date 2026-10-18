@@ -643,6 +643,6 @@ def test_finders_check_their_numbers(call, error, message):
 def test_phrase_highlights_of_a_part_normalized_to_nothing():
     words = [Word(0, 2, "in"), Word(3, 7, "fact"), Word(8, 9, ","), Word(10, 12, "it")]
     found = find_phrase_highlights(
-        words, ["in fact ,"], "x", normalize=lambda w: w.strip(",").lower()
+        words, ["in fact ,", ","], "x", normalize=lambda w: w.strip(",").lower()
     )
     assert found == [Highlight(0, 7, "x", "\u00abin fact ,\u00bb")]

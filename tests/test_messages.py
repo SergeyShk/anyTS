@@ -299,10 +299,28 @@ CASES = [
         SourceTypeError,
         lambda: hooked(Cohesion, analyze=lambda self, s: [["a"]])(PARSED),
     ),
+    ("hook_result", SourceTypeError, lambda: hooked(Lexical, analyze=lambda self, s: None)(TEXT)),
+    (
+        "hook_result",
+        SourceTypeError,
+        lambda: hooked(Cohesion, analyze=lambda self, s: None)(PARSED),
+    ),
+    (
+        "hook_result",
+        SourceTypeError,
+        lambda: hooked(Cohesion, analyze=lambda self, s: [5])(PARSED),
+    ),
     (
         "hook_result",
         SourceTypeError,
         lambda: hooked(Phon, syllabify=lambda self, word: None)(TEXT),
+    ),
+    (
+        "fragment_outside",
+        ParameterError,
+        lambda: hooked(Layers, find=lambda self, *args: [Highlight("0", "1", "all")])(
+            TEXT, ["all"]
+        ),
     ),
     (
         "hook_result",
