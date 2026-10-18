@@ -93,7 +93,7 @@ cd anyTS
 
 make deps                   # create the environment and install all dependencies
 uv run pre-commit install   # hooks: linters on commit, tests on push
-make lint                   # ruff check, ruff format --check, mypy
+make lint                   # ruff check --fix, ruff format, mypy
 make test-cov               # pytest with doctests and full coverage
 make docs-build             # mkdocs build --strict
 ```

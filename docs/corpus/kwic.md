@@ -21,8 +21,8 @@ The language enters through five parameters:
 | `tokenize` | a run of word characters | The words of a string and of the keyword as triples of the start, the end and the text |
 | `lemmatize` | the word and the lemma of the model | The lemmas of a word, given its text and its tokens in a `Doc` (none for a string and the keyword), or one lemma as a string; a word matches when one of its lemmas is one of those of the keyword |
 | `fold` | `str.lower` | The folding of a word form (with `ignore_case`) or a lemma before the comparison, such as the letters a language takes for the same |
-| `sentenize` | a final mark before whitespace | The sentences of a string, of the keyword and of the text of a `Doc` without boundaries or with partial ones (`has_sents`) as triples of the start, the end and the text |
 | `join_hyphens` | `False` | Join the parts of the hyphenated words of a `Doc` the tokenizer split (`iter_doc_units`); the default tokenizer then keeps them whole in a string and in the keyword too |
+| `sentenize` | a final mark before whitespace | The sentences of a string, of the keyword and of the text of a `Doc` without boundaries or with partial ones (`has_sents`) as triples of the start, the end and the text |
 
 The words of a `Doc` are its tokens without a byte order mark at the start. By default the lemmas of a word are the word itself and, for a one-token word of a `Doc` with lemmas, the lemma of the model: a word is found by its own form, and a `Doc` of a pipeline with a lemmatizer by its lemmas.
 <!-- --8<-- [end:kwic-hooks] -->

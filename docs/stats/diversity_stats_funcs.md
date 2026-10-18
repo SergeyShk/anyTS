@@ -435,7 +435,7 @@ Parameters:
     **anyts.diversity_stats.calc_frequency_spectrum()**
 
 <!-- --8<-- [start:calc_frequency_spectrum] -->
-Computation of the frequency spectrum - the number of lexemes $V_i$ occurring exactly $i$ times in the text. The measures below are computed from it, with the formulas of Tweedie and Baayen (1998).
+Computation of the frequency spectrum - the number of lexemes $V_i$ occurring exactly $i$ times in the text. The hapax index, Yule's K and I, Herdan's Vm, Sichel's S, Michéa's M, Baayen's P, the hapax ratio and the α₂ exponent are computed from it, with the formulas of Tweedie and Baayen (1998).
 
 Notation: $N$ - number of words, $V$ - number of lexemes, $V_i$ - number of lexemes with frequency $i$, $V_1$ - hapaxes, $V_2$ - dis legomena, $p_k$ - relative frequency of a lexeme.
 

@@ -128,8 +128,8 @@ def sentence_lengths(
 
     Raises:
         SourceTypeError: If the data source or an extractor is set incorrectly (a
-            table, a set, a mapping or bytes for the lengths, a length that is not
-            an integer)
+            table, a set, a mapping, bytes or an object without a length other than
+            an iterator for the lengths, a length that is not an integer)
         SourceError: If a length is negative
 
     Example:

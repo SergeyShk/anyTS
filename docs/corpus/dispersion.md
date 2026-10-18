@@ -44,7 +44,7 @@ The module `anyts.corpus.dispersion` gives them as the functions `calc_dp`, `cal
 ## Result
 
 <!-- --8<-- [start:Dispersion] -->
-A list of `Dispersion` named tuples by descending frequency: `word`, `freq` and the six measures of the table; `pd.DataFrame(result)` gives a table.
+A list of `Dispersion` named tuples by descending frequency: `word`, `freq`, `dp`, `dp_norm`, `juilland_d`, `carroll_d2`, `rosengren_s` and `kl_divergence`; `pd.DataFrame(result)` gives a table.
 <!-- --8<-- [end:Dispersion] -->
 
 ## Example

@@ -183,11 +183,12 @@ class HighlightedText:
         css: Getting the styles of the layers
 
     Raises:
-        SourceTypeError: If the source is neither a string nor a Doc
+        SourceTypeError: If the source is neither a string nor a Doc, or find does
+            not return fragments of Highlight
         SourceError: If the source has no words
         ParameterError: If a layer is unknown or not allowed by the source, the
             layers are not a list of names, or find gives a fragment of another
-            layer or one outside the text
+            layer, an empty one or one outside the text
     """
 
     layers_desc: ClassVar[Mapping[str, str]] = MappingProxyType({})

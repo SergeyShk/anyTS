@@ -230,7 +230,9 @@ MESSAGES = {
     "layer_unavailable": "The layer {layer} is not available",
     "layer_annotations": "The layer {layer} needs a Doc with {annotations}",
     "fragment_layer": "A fragment of the layer {found} is found for {layer}",
-    "fragment_outside": "A fragment of the layer {layer} lies outside the text: {start}-{end}",
+    "fragment_outside": (
+        "A fragment of the layer {layer} is empty or lies outside the text: {start}-{end}"
+    ),
     "long_sent_word_factor": "The number of words of a long sentence must be greater than 0",
     "alliteration_threshold": "The threshold of the alliteration must lie in the interval (0, 1]",
     "sent_len_bounds": "The sentence length bounds cannot be negative",
