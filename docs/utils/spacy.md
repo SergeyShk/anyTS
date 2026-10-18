@@ -140,11 +140,11 @@ Yields the words of `iter_doc_units` as tuples: the position of the first charac
 ## split_doc_units
 
 <!-- --8<-- [start:split_doc_units] -->
-Splits the words of a `Doc` into the sentences of a sentence extractor, for a `Doc` without sentence boundaries or one to split otherwise: the sentences are found in its text in their order, and a word of `iter_doc_units` belongs to the sentence its first token lies in. The words outside the sentences found, those the extractor drops, are left out, so no sentence found gives no words.
+Splits the words of a `Doc` or a `Span` into the sentences of a sentence extractor, for a `Doc` without sentence boundaries or one to split otherwise: the sentences are found in its text in their order, and a word of `iter_doc_units` belongs to the sentence its first token lies in. The words outside the sentences found, those the extractor drops, are left out, so no sentence found gives no words.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
-| `source` | Doc | `-` | Doc object |
+| `source` | Doc/Span | `-` | Doc or Span object |
 | `sents_extractor` | SentsExtractor | `-` | Sentence extraction tool |
 | `join_hyphens` | bool | `False` | Join the parts of hyphenated words |
 <!-- --8<-- [end:split_doc_units] -->
@@ -152,7 +152,7 @@ Splits the words of a `Doc` into the sentences of a sentence extractor, for a `D
 ## add_tokenizer_rules
 
 <!-- --8<-- [start:add_tokenizer_rules] -->
-Adds the rules of a language to the tokenizer of a pipeline, so that the tokens of a `Doc` match the words a library splits a string into. The prefixes (such as the dashes of a dialogue glued to a word), suffixes and infixes are regular expressions joined to those of the tokenizer, every branch of a prefix anchored at the start and of a suffix at the end. An abbreviation becomes a single token in lower case, capitalized and in upper case when the tokenizer keeps one of its forms whole. A rule the tokenizer already has as an alternative is not added twice; a tokenizer that is not the `Tokenizer` of spaCy, or whose rules are not regular expressions, is left as it is. Rules that are not lists of strings and abbreviations that are not a collection of strings raise `SourceTypeError`.
+Adds the rules of a language to the tokenizer of a pipeline, so that the tokens of a `Doc` match the words a library splits a string into. The prefixes (such as the dashes of a dialogue glued to a word), suffixes and infixes are regular expressions joined to those of the tokenizer, every branch of a prefix anchored at the start and of a suffix at the end. An abbreviation becomes a single token in lower case, capitalized and in upper case when the tokenizer keeps one of its forms whole. A rule the tokenizer already has as a top-level alternative is not added twice; a tokenizer that is not the `Tokenizer` of spaCy, or whose rules are not regular expressions, is left as it is. A rule is joined to others, so it sets its flags in a group, `(?i:...)`. Rules that are not lists of strings and abbreviations that are not a collection of strings raise `SourceTypeError`, a rule that is not such a regular expression `ParameterError`.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
@@ -160,7 +160,7 @@ Adds the rules of a language to the tokenizer of a pipeline, so that the tokens 
 | `prefixes` | list[str] | `()` | Patterns of the prefixes, without the anchor |
 | `suffixes` | list[str] | `()` | Patterns of the suffixes, without the anchor |
 | `infixes` | list[str] | `()` | Patterns of the infixes |
-| `abbreviations` | list[str] | `()` | Abbreviations in lower case |
+| `abbreviations` | list[str]/set[str] | `()` | Abbreviations in lower case |
 <!-- --8<-- [end:add_tokenizer_rules] -->
 
 !!! example "Example"

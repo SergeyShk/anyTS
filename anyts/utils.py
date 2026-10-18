@@ -559,9 +559,10 @@ def add_tokenizer_rules(
         the tokenizer, every branch of a prefix anchored at the start and of a
         suffix at the end. An abbreviation becomes one token in
         lower case, capitalized and in upper case when the tokenizer keeps one
-        of its forms whole. A rule the tokenizer already has as an alternative
-        is not added twice; a tokenizer that is not the Tokenizer of spaCy, or
-        whose rules are not regular expressions, is left as it is
+        of its forms whole. A rule the tokenizer already has as a top-level
+        alternative is not added twice; a tokenizer that is not the Tokenizer of
+        spaCy, or whose rules are not regular expressions, is left as it is. A
+        rule sets its flags in a group, (?i:...), since it is joined to others
 
     Arguments:
         nlp (Language): Pipeline whose tokenizer gets the rules
@@ -573,6 +574,8 @@ def add_tokenizer_rules(
     Raises:
         SourceTypeError: If the rules are not lists of strings or the abbreviations
             not a collection of strings
+        ParameterError: If a rule is not a regular expression that can be joined
+            to others
 
     Example:
         >>> import spacy
@@ -589,6 +592,14 @@ def add_tokenizer_rules(
 
     for rules, what in ((prefixes, "prefixes"), (suffixes, "suffixes"), (infixes, "infixes")):
         check_words(rules, what)
+        for rule in rules:
+            try:
+                re.compile(rule)
+                re.compile(f"x|(?:{rule})")
+            except re.error as error:
+                raise ParameterError(
+                    f"The rule {rule!r} of the {what} is not a regular expression: {error}"
+                ) from None
     check_words(abbreviations, "abbreviations", ordered=False)
     tokenizer = nlp.tokenizer
     if not isinstance(tokenizer, Tokenizer):
@@ -635,10 +646,40 @@ def _extend_rules(method: object, rules: list[str]) -> Pattern[str] | None:
     pattern = getattr(getattr(method, "__self__", None), "pattern", None)
     if not isinstance(pattern, str):
         return None
-    missing = [rule for rule in rules if f"|{rule}|" not in f"|{pattern}|"]
+    branches = _branches(pattern)
+    missing = [rule for rule in rules if rule not in branches]
     if not missing:
         return None
     return re.compile("|".join([pattern, *missing]))
+
+
+def _branches(pattern: str) -> set[str]:
+    """Top-level alternatives of a regular expression, outside groups and classes"""
+    branches = set()
+    depth = start = 0
+    in_class = False
+    position = 0
+    while position < len(pattern):
+        char = pattern[position]
+        if char == "\\":
+            position += 1
+        elif in_class:
+            in_class = char != "]"
+        elif char == "[":
+            in_class = True
+            # A ] right after [ or [^ is a character of the class
+            position += pattern.startswith("^", position + 1)
+            position += pattern.startswith("]", position + 1)
+        elif char == "(":
+            depth += 1
+        elif char == ")":
+            depth -= 1
+        elif char == "|" and not depth:
+            branches.add(pattern[start:position])
+            start = position + 1
+        position += 1
+    branches.add(pattern[start:])
+    return branches
 
 
 def safe_divide(num: float | int, den: float | int, default: float | int = 0) -> float:

@@ -637,6 +637,16 @@ def test_add_tokenizer_rules_inside_a_rule_of_the_tokenizer():
     assert [token.text for token in nlp("+5 1/2")] == ["+", "5", "1", "/", "2"]
 
 
+def test_add_tokenizer_rules_inside_a_group_of_the_tokenizer():
+    # -- is an alternative inside a group of the infixes of spaCy
+    nlp = spacy.blank("en")
+    add_tokenizer_rules(nlp, infixes=["--"])
+    infixes = nlp.tokenizer.infix_finditer
+    add_tokenizer_rules(nlp, infixes=["--"])
+    assert nlp.tokenizer.infix_finditer is infixes
+    assert [token.text for token in nlp("no--5")] == ["no", "--", "5"]
+
+
 def test_add_tokenizer_rules_without_infixes():
     nlp = spacy.blank("en")
     nlp.tokenizer.infix_finditer = None
@@ -656,3 +666,19 @@ def test_add_tokenizer_rules_without_infixes():
 def test_add_tokenizer_rules_checks_the_rules(kwargs, message):
     with pytest.raises(SourceTypeError, match=message):
         add_tokenizer_rules(spacy.blank("en"), **kwargs)
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "message"),
+    [
+        ({"prefixes": ["("]}, r"^The rule '\(' of the prefixes is not a regular expression: missing"),
+        ({"suffixes": ["(?i)ab"]}, r"^The rule '\(\?i\)ab' of the suffixes .*: global flags"),
+        ({"infixes": ["a)|(b"]}, r"^The rule 'a\)\|\(b' of the infixes .*: unbalanced"),
+    ],
+)
+def test_add_tokenizer_rules_checks_the_expressions(kwargs, message):
+    nlp = spacy.blank("en")
+    prefixes = nlp.tokenizer.prefix_search
+    with pytest.raises(ParameterError, match=message):
+        add_tokenizer_rules(nlp, **kwargs)
+    assert nlp.tokenizer.prefix_search == prefixes
