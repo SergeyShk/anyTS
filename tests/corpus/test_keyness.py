@@ -1,6 +1,6 @@
 from collections import Counter
 from collections.abc import Mapping
-from math import copysign, inf, isnan, log
+from math import copysign, inf, isnan, log, nan
 
 import numpy as np
 import pytest
@@ -349,3 +349,32 @@ def test_check_keyness_params_valid():
     assert check_keyness_params() is None
     assert check_keyness_params("log_ratio", 2, 10) is None
     assert check_keyness_params(target={"cat": 2.0}) is None
+
+
+@pytest.mark.parametrize(
+    ("fields", "error", "message"),
+    [
+        (
+            {"counts": {"cat": -5.0}},
+            SourceError,
+            r"^The frequencies must be finite and not negative",
+        ),
+        (
+            {"counts": {"cat": nan}},
+            SourceError,
+            r"^The frequencies must be finite and not negative",
+        ),
+        ({"counts": {"cat": "5"}}, SourceTypeError, r"^The frequencies must be numbers, not str$"),
+        ({"size": nan}, ParameterError, r"^The size of the reference must be a finite number"),
+        ({"size": -14}, ParameterError, r"^The size of the reference cannot be negative$"),
+        ({"size": "x"}, ParameterError, r"^The size of the reference must be a number, not str$"),
+        ({"missing": nan}, ParameterError, r"^The frequency of a missing key must be a finite"),
+        ({"missing": -1}, ParameterError, r"^The frequency of a missing key cannot be negative$"),
+        ({"key": 1}, SourceTypeError, r"^The key of a word must be callable, not int$"),
+        ({"keep": "x"}, SourceTypeError, r"^The filter of the words must be callable, not str$"),
+    ],
+)
+def test_frequency_reference_checks_its_fields(fields, error, message):
+    reference = FrequencyReference(**{"counts": {"cat": 5.0}, "size": 100, **fields})
+    with pytest.raises(error, match=message):
+        keyness(["cat", "dog", "cat"], reference)

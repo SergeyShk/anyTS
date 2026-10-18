@@ -61,7 +61,7 @@ A zero frequency in one of the corpora is replaced with 0.5 for %DIFF, Log Ratio
 | `key` | callable | `None` | Key of a word of the target corpus in `counts`, such as its lemma; `None` - the word itself |
 | `keep` | callable | `None` | Whether a word of the target corpus is counted; `None` - every word |
 
-Only the words of the target that `keep` passes are counted, under their `key`, in the frequencies and in the size alike. A key missing from `counts` has the frequency `missing`, such as the least frequency of a dictionary: an upper bound, so its word may be a positive keyword but never a negative one. Negative keywords come only from the keys of `counts` that `keep` passes.
+Only the words of the target that `keep` passes are counted, under their `key`, in the frequencies and in the size alike. A key missing from `counts` has the frequency `missing`, such as the least frequency of a dictionary: an upper bound, so its word may be a positive keyword but never a negative one. Negative keywords come only from the keys of `counts` that `keep` passes. A frequency is checked as it is read, so a large dictionary is not gone through for positive keywords: one that is not a number raises `SourceTypeError`, and a negative, `nan` or infinite one `SourceError`. A `size` or a `missing` that is not a finite number or is negative raises `ParameterError`, and a `key` or a `keep` that cannot be called `SourceTypeError`.
 <!-- --8<-- [end:FrequencyReference] -->
 
 ## Result
