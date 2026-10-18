@@ -3,7 +3,7 @@
 ## Requirements
 
 *   `python` 3.11 or newer
-*   `spaCy` 3.7 or newer
+*   `spaCy` 3.8.13 or newer
 *   `numpy`, `scipy`, `pandas`
 *   `matplotlib`, `graphviz` - for the visualizers
 

@@ -141,7 +141,7 @@ class DiversityStats(Stats):
         >>> ds.yule_k
         444.44444444444446
         >>> ds.windowed("ttr", window_len=5)
-        WindowStats(mean=0.9333333333333332, std=0.11547005383792512, lower=0.6464898180167025, upper=1.220176848649964, n_windows=3)
+        WindowStats(mean=0.9333333333333332, std=0.11547005383792512, lower=0.646489818..., upper=1.220176848..., n_windows=3)
 
     Arguments:
         words (iterable[str]): Words of the text, used as given (a language library

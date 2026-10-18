@@ -58,6 +58,22 @@ jobs:
       - name: Run tests
         run: uv run --no-sync pytest --cov anyts
 
+  test-lowest:
+    name: test (lowest)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v10.2.0
+        with:
+          enable-cache: true
+          python-version: "3.11"
+      - name: Install dependencies
+        run: uv sync --resolution lowest-direct --no-default-groups --group test
+      - name: Run tests
+        run: uv run --no-sync pytest
+
   docs:
     runs-on: ubuntu-latest
     steps:
