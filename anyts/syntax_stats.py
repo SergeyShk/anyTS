@@ -111,7 +111,7 @@ class SyntaxStats(Stats):
     Methods:
         parse: Doc of a source
         is_clause_head: Whether a word heads a clause
-        is_subordinate_clause_head: Whether a word heads a subordinate clause
+        is_subordinate_clause_head: Whether a clause head heads a subordinate clause
         is_participle_clause: Whether a word heads a participial clause
         is_passive: Whether a word is a passive verb form
         is_agentless: Whether a passive form has no agent
@@ -175,9 +175,10 @@ class SyntaxStats(Stats):
             length for span in spans for length in calc_coordination_chains(span, join_hyphens)
         ]
         self.n_coordination_chains = len(chains)
-        self.n_clauses = sum(1 for token in words if self.is_clause_head(token))
+        heads = [[token for token in sent if self.is_clause_head(token)] for sent in sents]
+        self.n_clauses = sum(map(len, heads))
         subordinate = [
-            sum(1 for token in sent if self.is_subordinate_clause_head(token)) for sent in sents
+            sum(1 for token in sent if self.is_subordinate_clause_head(token)) for sent in heads
         ]
         self.n_subordinate_clauses = sum(subordinate)
         self.n_complex_sents = sum(1 for count in subordinate if count)
@@ -947,8 +948,10 @@ def calc_modifier_chains(
         )
     chains = []
     for token in get_words(tokens, join_hyphens):
+        if not is_modifier(token):
+            continue
         parent = _chain_parent(token, join_hyphens)
-        if is_modifier(token) and not (parent is not None and is_modifier(parent)):
+        if not (parent is not None and is_modifier(parent)):
             length = _chain_len(token, is_modifier, join_hyphens)
             if length >= 2:
                 chains.append(length)
