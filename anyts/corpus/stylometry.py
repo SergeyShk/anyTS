@@ -9,7 +9,7 @@ from scipy.spatial.distance import cdist, jensenshannon, pdist, squareform
 
 from ..constants import DELTA_VARIANTS
 from ..exceptions import ParameterError, SourceError, SourceTypeError
-from ..utils import check_integer, check_number, check_sequence, check_words
+from ..utils import _sliceable, check_integer, check_number, check_sequence, check_words
 
 ZERO_SEGMENTS = 0.5
 
@@ -420,7 +420,8 @@ def _segment_presence(
         if not len(text):
             continue
         for segment in np.array_split(
-            np.asarray(text, dtype=object), max(1, floor(len(text) / segment_size + 0.5))
+            np.asarray(_sliceable(text), dtype=object),
+            max(1, floor(len(text) / segment_size + 0.5)),
         ):
             presence.update(set(segment.tolist()))
             n_segments += 1

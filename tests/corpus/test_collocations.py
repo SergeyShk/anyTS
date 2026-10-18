@@ -1,3 +1,4 @@
+from collections import deque
 from math import isnan, log2, sqrt
 
 import pytest
@@ -178,3 +179,8 @@ def test_refuses_a_doc(span):
     source = doc[0:3] if span else doc
     with pytest.raises(SourceTypeError, match="WordsExtractor"):
         collocations(source)
+
+
+def test_collocations_of_a_deque():
+    words = "the cat sat on the mat and the cat ate".split()
+    assert collocations(deque(words)) == collocations(words)

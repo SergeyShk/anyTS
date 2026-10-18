@@ -23,6 +23,7 @@ from .constants import (
 from .exceptions import ParameterError, SourceError, UnknownStatError
 from .stats import Stats
 from .utils import (
+    _sliceable,
     check_counts,
     check_integer,
     check_number,
@@ -42,7 +43,7 @@ def _checks_words(func: Function) -> Function:
     @wraps(func)
     def checked(text: Any, *args: Any, **kwargs: Any) -> Any:
         check_words(text)
-        return func(text, *args, **kwargs)
+        return func(_sliceable(text), *args, **kwargs)
 
     checked.__unchecked__ = func  # type: ignore[attr-defined]
     return cast(Function, checked)
@@ -204,7 +205,8 @@ class DiversityStats(Stats):
         stats_headers (tuple[str, str]): Headers of the columns for print_stats
 
     Raises:
-        SourceTypeError: If the words are a string, a Doc, not iterable or not strings
+        SourceTypeError: If the words are a string, a Doc, a set, an object without a length
+            other than an iterator, or not strings
         SourceError: If there are no words
         ParameterError: If the parameters of the metrics are set incorrectly
     """

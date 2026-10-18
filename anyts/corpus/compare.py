@@ -11,7 +11,7 @@ from scipy.stats import mannwhitneyu
 from ..constants import CLOSING_MARKS, MESSAGES, OPENING_MARKS, SYMMETRIC_MARKS
 from ..exceptions import ParameterError, SourceTypeError
 from ..extractors import _iter_words
-from ..utils import check_integer, check_number, check_sequence, check_words
+from ..utils import _sliceable, check_integer, check_number, check_sequence, check_words
 from .kwic import Tokenizer
 
 Values = Sequence[float] | np.ndarray[Any, Any]
@@ -693,7 +693,7 @@ def sentence_rhythm(
         raise SourceTypeError(messages["sentence_lengths"])
     if any(length < 0 for length in lengths):
         raise ParameterError(messages["negative_lengths"])
-    values = np.asarray(lengths, dtype=float)
+    values = np.asarray(_sliceable(lengths), dtype=float)
     if not len(values):
         return dict.fromkeys(("sents_mean", "sents_std", "sents_cv", "sents_autocorr"), nan)
     mean = float(values.mean())

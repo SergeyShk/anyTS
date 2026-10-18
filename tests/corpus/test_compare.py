@@ -480,6 +480,10 @@ def test_sentence_rhythm():
     assert sentence_rhythm(np.array([4, 8, 2, 7])) == rhythm
 
 
+def test_sentence_rhythm_of_the_values_of_a_dict():
+    assert sentence_rhythm({"a": 4, "b": 8, "c": 2}.values()) == sentence_rhythm([4, 8, 2])
+
+
 @pytest.mark.parametrize("lengths", [[4, 2.5], ["4"], "48"])
 def test_sentence_rhythm_errors(lengths):
     with pytest.raises(SourceTypeError):

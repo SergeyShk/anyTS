@@ -306,6 +306,7 @@ def test_mendenhall():
 def test_arrays_of_words(container):
     words = ["a", "b", "a", "c", "a", "b"]
     assert zeta(container(words), ["d"]) == zeta(words, ["d"])
+    assert zeta(dict(enumerate(words)).values(), ["d"]) == zeta(words, ["d"])
     assert mendenhall_curve(container(words)) == mendenhall_curve(words)
     assert mendenhall_distance(container(words), container(["dd", "e"])) == pytest.approx(
         mendenhall_distance(words, ["dd", "e"])

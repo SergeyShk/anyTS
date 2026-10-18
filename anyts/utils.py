@@ -9,7 +9,7 @@ from functools import lru_cache
 from itertools import repeat
 from numbers import Integral, Real
 from re import Pattern
-from statistics import fmean
+from statistics import StatisticsError, fmean
 from string import Formatter
 from typing import TYPE_CHECKING, Any, TypeGuard
 
@@ -707,18 +707,21 @@ def safe_divide(num: float | int, den: float | int, default: float | int = 0) ->
     return num / den
 
 
-def safe_mean(values: Sequence[float], default: float = math.nan) -> float:
+def safe_mean(values: Iterable[float], default: float = math.nan) -> float:
     """
     Computing the mean of numbers safely
 
     Arguments:
-        values (list[float]): Numbers
+        values (iterable[float]): Numbers
         default (float): Value returned for no numbers
 
     Returns:
         float: Arithmetic mean
     """
-    return fmean(values) if values else default
+    try:
+        return fmean(values)
+    except StatisticsError:
+        return default
 
 
 def shannon_entropy(counts: Mapping[Any, int]) -> float:
@@ -732,11 +735,17 @@ def shannon_entropy(counts: Mapping[Any, int]) -> float:
         float: Entropy in bits, 0 for one value and nan for no counts; a zero count is
             left out
 
+    Raises:
+        SourceError: If a count is negative, nan or infinite
+
     Example:
         >>> from anyts.utils import shannon_entropy
         >>> shannon_entropy({"a": 2, "b": 2})
         1.0
     """
+    for count in counts.values():
+        if not math.isfinite(count) or count < 0:
+            raise SourceError(f"The counts must be finite and not negative, not {count}")
     total = sum(counts.values())
     if not total:
         return math.nan
@@ -792,6 +801,15 @@ def check_sequence(value: object, what: str = "words", ordered: bool = True) -> 
         )
     if ordered and isinstance(value, Set | Mapping):
         raise SourceTypeError(f"A list of {what} is expected, not {type(value).__name__}")
+
+
+def _sliceable(values: Any) -> Any:
+    """The values if they can be sliced, else a list of them (a deque, the values of a dict)"""
+    try:
+        values[:0]
+    except (TypeError, KeyError, IndexError):
+        return list(values)
+    return values
 
 
 def check_words(value: Iterable[object], what: str = "words", ordered: bool = True) -> None:
@@ -929,6 +947,29 @@ def check_number(value: object, what: str) -> None:
         raise ParameterError(f"The {what} must be a number, not {type(value).__name__}")
     if not math.isfinite(value):
         raise ParameterError(f"The {what} must be a finite number, not {value}")
+
+
+def check_callable(value: object, what: str) -> None:
+    """
+    Checking that an argument is a function, such as a hook passed as a parameter
+
+    Arguments:
+        value (object): Value to check
+        what (str): Name of the argument, for the message of the error
+
+    Raises:
+        SourceTypeError: If the value cannot be called
+
+    Example:
+        >>> from anyts.utils import check_callable
+        >>> check_callable(str.lower, "normalization")
+        >>> check_callable("lower", "normalization")
+        Traceback (most recent call last):
+        ...
+        anyts.exceptions.SourceTypeError: The normalization must be callable, not str
+    """
+    if not callable(value):
+        raise SourceTypeError(f"The {what} must be callable, not {type(value).__name__}")
 
 
 def merge_labels(

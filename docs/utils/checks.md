@@ -71,3 +71,14 @@ Checks that a parameter is a finite real number: a `bool`, a string, `None`, `na
 | `value` | object | `-` | Value to check |
 | `what` | str | `-` | Name of the parameter, for the message of the error |
 <!-- --8<-- [end:check_number] -->
+
+## check_callable
+
+<!-- --8<-- [start:check_callable] -->
+Checks that an argument is a function, such as a hook a function of the core takes as a parameter: a value that cannot be called raises `SourceTypeError`.
+
+| Parameter | Type | Default | Description |
+| :-------: | :--: | :-----: | :---------: |
+| `value` | object | `-` | Value to check |
+| `what` | str | `-` | Name of the argument, for the message of the error |
+<!-- --8<-- [end:check_callable] -->

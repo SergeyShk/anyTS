@@ -16,6 +16,7 @@ from anyts.exceptions import ParameterError, SourceError, SourceTypeError
 from anyts.utils import (
     PUNCTUATION_CATEGORIES,
     add_tokenizer_rules,
+    check_callable,
     check_counts,
     check_integer,
     check_number,
@@ -301,6 +302,12 @@ def test_check_number_not_finite(value):
         check_number(value, "confidence level")
 
 
+def test_check_callable():
+    assert check_callable(str.lower, "normalization") is None
+    with pytest.raises(SourceTypeError, match=r"^The normalization must be callable, not int$"):
+        check_callable(42, "normalization")
+
+
 def test_check_words_errors(nlp):
     with pytest.raises(SourceTypeError, match=r"^The words must be strings, not Token$"):
         check_words(list(nlp("the cat")))
@@ -497,6 +504,8 @@ def test_safe_mean():
     assert safe_mean([1, 2, 4]) == 7 / 3
     assert math.isnan(safe_mean([]))
     assert safe_mean([], 0) == 0
+    assert safe_mean(iter([1, 2])) == safe_mean(np.array([1.0, 2.0])) == 1.5
+    assert safe_mean(iter([]), 0) == safe_mean(np.array([]), 0) == 0
 
 
 def test_shannon_entropy():
@@ -511,6 +520,12 @@ def test_shannon_entropy():
     counts = Counter("aab")
     counts.subtract("aa")
     assert shannon_entropy(counts) == 0.0
+
+
+@pytest.mark.parametrize("count", [-1, math.nan, math.inf])
+def test_shannon_entropy_of_bad_counts(count):
+    with pytest.raises(SourceError, match=r"^The counts must be finite and not negative, not "):
+        shannon_entropy({"a": count, "b": 2})
 
 
 def test_split_doc_units():
