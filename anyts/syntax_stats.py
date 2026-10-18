@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections import Counter
 from collections.abc import Callable, Iterable, Mapping, Sequence
+from functools import cache
 from math import nan
 from statistics import fmean, pstdev
 from typing import TYPE_CHECKING, Any, ClassVar
@@ -21,6 +22,7 @@ from .constants import (
 from .exceptions import SourceError, SourceTypeError
 from .stats import Stats
 from .utils import (
+    check_callable,
     check_words,
     has_feature,
     has_sents,
@@ -35,6 +37,7 @@ from .utils import (
 
 if TYPE_CHECKING:
     from spacy.tokens import Doc, Token
+    from spacy.vocab import Vocab
 
 
 class SyntaxStats(Stats):
@@ -254,6 +257,30 @@ class SyntaxStats(Stats):
         self.split_predicates_per_sent = self.n_split_predicates / self.n_sents
         self.noun_verb_ratio = safe_divide(self.n_nouns, self.n_verbs, nan)
 
+    def __getstate__(self) -> dict[str, Any]:
+        """State for pickle and copy: spaCy pickles no token, so sents goes as the bytes of
+        its Doc and the positions of the words"""
+        state = self.__dict__.copy()
+        sents = state.pop("sents", None)
+        if sents:
+            doc = sents[0][0].doc
+            state["_sents_doc"] = (doc.lang_, doc.to_bytes(exclude=["tensor", "user_data"]))
+            state["_sents_positions"] = tuple(tuple(token.i for token in sent) for sent in sents)
+        return state
+
+    def __setstate__(self, state: dict[str, Any]) -> None:
+        """Restoring the tokens of sents on a blank vocabulary of the language of the Doc"""
+        state = dict(state)
+        saved = state.pop("_sents_doc", None)
+        positions = state.pop("_sents_positions", ())
+        self.__dict__.update(state)
+        if saved is not None:
+            from spacy.tokens import Doc
+
+            lang, data = saved
+            doc = Doc(_blank_vocab(lang)).from_bytes(data)
+            self.sents = tuple(tuple(doc[i] for i in sent) for sent in positions)
+
     def parse(self, source: Doc) -> Doc:
         """
         Getting the Doc of a source
@@ -280,12 +307,7 @@ class SyntaxStats(Stats):
         Checking whether a word heads a clause
 
         Description:
-            The head of the sentence, or a word with a relation of CLAUSE_DEPS
-            (ccomp, advcl, acl, csubj, parataxis and their subtypes) whose
-            predicate (predicate_form) is not a participle, a converb or a
-            gerund (counted apart), nor an infinitive under acl (the wish to
-            leave). A parataxis and a conjunct of a clause head count only as
-            predicates (is_predicate), so a parenthetical word is no clause
+            is_clause_head of the module with join_hyphens of the class
 
         Arguments:
             token (Token): Token
@@ -293,36 +315,14 @@ class SyntaxStats(Stats):
         Returns:
             bool: Result of the check
         """
-        seen = set()
-        # Up the chain of conjuncts to the word that is none
-        while is_word(token) and token.i not in seen:
-            if is_root(token):
-                return True
-            form = predicate_form(token)
-            if form in NONFINITE_CLAUSE_FORMS:
-                return False
-            dep = base_dep(token)
-            if dep != "conj":
-                if dep not in CLAUSE_DEPS:
-                    return False
-                if dep == "parataxis":
-                    return is_predicate(token, self.join_hyphens)
-                return not (dep == "acl" and form == "Inf")
-            if not is_predicate(token, self.join_hyphens):
-                return False
-            seen.add(token.i)
-            token = token.head
-        return False
+        return is_clause_head(token, self.join_hyphens)
 
     def is_subordinate_clause_head(self, token: Token) -> bool:
         """
         Checking whether a word heads a subordinate clause
 
         Description:
-            The head of a clause (is_clause_head) with a relation of
-            SUBORDINATE_CLAUSE_DEPS (ccomp, advcl, acl, csubj and their
-            subtypes), or a conjunct of one: the relation of the first word up
-            its chain of conjuncts decides
+            is_subordinate_clause_head of the module over the hook is_clause_head
 
         Arguments:
             token (Token): Token
@@ -330,13 +330,7 @@ class SyntaxStats(Stats):
         Returns:
             bool: Result of the check
         """
-        if is_root(token) or not self.is_clause_head(token):
-            return False
-        seen = set()
-        while base_dep(token) == "conj" and token.i not in seen:
-            seen.add(token.i)
-            token = token.head
-        return not is_root(token) and base_dep(token) in SUBORDINATE_CLAUSE_DEPS
+        return is_subordinate_clause_head(token, self.is_clause_head)
 
     def is_participle_clause(self, token: Token) -> bool:
         """
@@ -364,9 +358,7 @@ class SyntaxStats(Stats):
         Checking whether a word is a passive verb form
 
         Description:
-            A verb with Voice=Pass or with a dependent of PASSIVE_DEPS: nsubj:pass,
-            csubj:pass, aux:pass of Universal Dependencies and nsubjpass,
-            csubjpass, auxpass of ClearNLP
+            is_passive of the module with join_hyphens of the class
 
         Arguments:
             token (Token): Token
@@ -374,19 +366,14 @@ class SyntaxStats(Stats):
         Returns:
             bool: Result of the check
         """
-        if token.pos_ != "VERB":
-            return False
-        return has_feature(token, "Voice", "Pass") or any(
-            child.dep_ in PASSIVE_DEPS for child in get_children(token, self.join_hyphens)
-        )
+        return is_passive(token, self.join_hyphens)
 
     def is_agentless(self, token: Token) -> bool:
         """
         Checking whether a word is a passive form with no agent
 
         Description:
-            A passive form (is_passive) with no dependent of AGENT_DEPS:
-            obl:agent of Universal Dependencies and agent of ClearNLP
+            A passive form by the hook is_passive with no agent (has_agent)
 
         Arguments:
             token (Token): Token
@@ -394,9 +381,7 @@ class SyntaxStats(Stats):
         Returns:
             bool: Result of the check
         """
-        return self.is_passive(token) and not any(
-            child.dep_ in AGENT_DEPS for child in get_children(token, self.join_hyphens)
-        )
+        return self.is_passive(token) and not has_agent(token, self.join_hyphens)
 
     def is_negation(self, token: Token) -> bool:
         """
@@ -431,6 +416,15 @@ class SyntaxStats(Stats):
             list[tuple[Token, Token]]: Pairs of the verb and the noun in the order of the words
         """
         return []
+
+
+@cache
+def _blank_vocab(lang: str) -> Vocab:
+    """Blank vocabulary of a language, one per process, for the Doc of a restored SyntaxStats"""
+    import spacy
+    from spacy.vocab import Vocab
+
+    return spacy.blank(lang).vocab if lang else Vocab()
 
 
 def get_words(tokens: Iterable[Token], join_hyphens: bool = False) -> list[Token]:
@@ -912,6 +906,139 @@ def is_predicate(token: Token, join_hyphens: bool = False) -> bool:
     return token.pos_ in ("VERB", "AUX") or any(
         base_dep(child) in SUBJECT_DEPS for child in get_children(token, join_hyphens)
     )
+
+
+def is_clause_head(token: Token, join_hyphens: bool = False) -> bool:
+    """
+    Checking whether a word heads a clause
+
+    Description:
+        The head of the sentence, or a word with a relation of CLAUSE_DEPS
+        (ccomp, advcl, acl, csubj, parataxis and their subtypes) whose
+        predicate (predicate_form) is not a participle, a converb or a gerund
+        (counted apart), nor an infinitive under acl (the wish to leave). A
+        parataxis and a conjunct of a clause head count only as predicates
+        (is_predicate), so a parenthetical word is no clause; a loop of
+        conjuncts is none
+
+    Arguments:
+        token (Token): Token
+        join_hyphens (bool): Join the parts of hyphenated words (is_predicate)
+
+    Returns:
+        bool: Result of the check
+    """
+    seen = set()
+    # Up the chain of conjuncts to the word that is none
+    while is_word(token) and token.i not in seen:
+        if is_root(token):
+            return True
+        form = predicate_form(token)
+        if form in NONFINITE_CLAUSE_FORMS:
+            return False
+        dep = base_dep(token)
+        if dep != "conj":
+            if dep not in CLAUSE_DEPS:
+                return False
+            if dep == "parataxis":
+                return is_predicate(token, join_hyphens)
+            return not (dep == "acl" and form == "Inf")
+        if not is_predicate(token, join_hyphens):
+            return False
+        seen.add(token.i)
+        token = token.head
+    return False
+
+
+def is_subordinate_clause_head(
+    token: Token, is_clause_head: Callable[[Token], bool] = is_clause_head
+) -> bool:
+    """
+    Checking whether a word heads a subordinate clause
+
+    Description:
+        The head of a clause by is_clause_head with a relation of
+        SUBORDINATE_CLAUSE_DEPS (ccomp, advcl, acl, csubj and their subtypes),
+        or a conjunct of one: the relation of the first word up its chain of
+        conjuncts decides
+
+    Arguments:
+        token (Token): Token
+        is_clause_head (callable): Whether a word heads a clause, is_clause_head
+            by default
+
+    Returns:
+        bool: Result of the check
+
+    Raises:
+        SourceTypeError: If is_clause_head is not callable
+    """
+    check_callable(is_clause_head, "check of a clause head")
+    if is_root(token) or not is_clause_head(token):
+        return False
+    seen = set()
+    while base_dep(token) == "conj" and token.i not in seen:
+        seen.add(token.i)
+        token = token.head
+    return not is_root(token) and base_dep(token) in SUBORDINATE_CLAUSE_DEPS
+
+
+def is_passive(token: Token, join_hyphens: bool = False) -> bool:
+    """
+    Checking whether a word is a passive verb form
+
+    Description:
+        A verb with Voice=Pass or with a dependent of PASSIVE_DEPS: nsubj:pass,
+        csubj:pass, aux:pass of Universal Dependencies and nsubjpass,
+        csubjpass, auxpass of ClearNLP
+
+    Arguments:
+        token (Token): Token
+        join_hyphens (bool): Join the parts of hyphenated words (get_children)
+
+    Returns:
+        bool: Result of the check
+    """
+    if token.pos_ != "VERB":
+        return False
+    return has_feature(token, "Voice", "Pass") or any(
+        child.dep_ in PASSIVE_DEPS for child in get_children(token, join_hyphens)
+    )
+
+
+def has_agent(token: Token, join_hyphens: bool = False) -> bool:
+    """
+    Checking whether a word has an agent
+
+    Description:
+        A dependent of AGENT_DEPS: obl:agent of Universal Dependencies and
+        agent of ClearNLP
+
+    Arguments:
+        token (Token): Token
+        join_hyphens (bool): Join the parts of hyphenated words (get_children)
+
+    Returns:
+        bool: Result of the check
+    """
+    return any(child.dep_ in AGENT_DEPS for child in get_children(token, join_hyphens))
+
+
+def is_agentless(token: Token, join_hyphens: bool = False) -> bool:
+    """
+    Checking whether a word is a passive form with no agent
+
+    Description:
+        A passive form (is_passive) with no agent (has_agent)
+
+    Arguments:
+        token (Token): Token
+        join_hyphens (bool): Join the parts of hyphenated words (get_children)
+
+    Returns:
+        bool: Result of the check
+    """
+    return is_passive(token, join_hyphens) and not has_agent(token, join_hyphens)
 
 
 def count_noun_modifiers(token: Token, join_hyphens: bool = False) -> int:
