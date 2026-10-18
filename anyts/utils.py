@@ -397,14 +397,12 @@ def joins_previous(token: Token) -> bool:
     if i < 2:
         return False
     doc = token.doc
-    return _joins(doc[i - 2], doc[i - 1], token)
-
-
-def _joins(word: Token, hyphen: Token, token: Token) -> bool:
-    """Whether a token continues a word through a hyphen, the rule of joins_previous"""
+    hyphen = doc[i - 1]
+    if hyphen.text != "-":
+        return False
+    word = doc[i - 2]
     return (
-        hyphen.text == "-"
-        and not word.whitespace_
+        not word.whitespace_
         and not hyphen.whitespace_
         and is_word(word)
         and is_word(token)
@@ -427,7 +425,7 @@ def iter_doc_tokens(source: Doc | Span) -> Iterator[Token]:
         generator[Token]: Token of each word
     """
     for token in source:
-        if is_word(token):
+        if not token.is_space and not is_punctuation(token.text):
             yield token
 
 
@@ -451,7 +449,7 @@ def iter_doc_units(source: Doc | Span, join_hyphens: bool = False) -> Iterator[l
     index = 0
     while index < len(tokens):
         token = tokens[index]
-        if not is_word(token):
+        if token.is_space or is_punctuation(token.text):
             index += 1
             continue
         last = index
@@ -459,7 +457,12 @@ def iter_doc_units(source: Doc | Span, join_hyphens: bool = False) -> Iterator[l
             join_hyphens
             and last + 2 < len(tokens)
             and tokens[last + 1].text == "-"
-            and _joins(tokens[last], tokens[last + 1], tokens[last + 2])
+            and not tokens[last].whitespace_
+            and not tokens[last + 1].whitespace_
+            and not tokens[last + 2].is_space
+            and not is_punctuation(tokens[last + 2].text)
+            and not tokens[last + 1].is_sent_start
+            and not tokens[last + 2].is_sent_start
         ):
             last += 2
         yield tokens[index : last + 1]
