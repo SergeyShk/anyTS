@@ -694,27 +694,20 @@ def calc_tree_depth(tokens: Iterable[Token], join_hyphens: bool = False) -> int:
     Returns:
         int: Depth of the tree
     """
-    if join_hyphens:
-        parents = _unit_parents(_word_units(tokens, True))
-        depths: dict[int, int] = {}
-        for start in range(len(parents)):
-            chain: list[int] = []
-            node: int | None = start
-            # A broken parse can link the parts of two words in a loop
-            while node is not None and node not in depths and node not in chain:
-                chain.append(node)
-                node = parents[node]
-            depth = depths[node] if node is not None and node in depths else -1
-            for member in reversed(chain):
-                depth += 1
-                depths[member] = depth
-        return max(depths.values(), default=0)
-    words = get_words(tokens)
-    ids = {token.i for token in words}
-    return max(
-        (sum(1 for ancestor in token.ancestors if ancestor.i in ids) for token in words),
-        default=0,
-    )
+    parents = _unit_parents(_word_units(tokens, join_hyphens))
+    depths: dict[int, int] = {}
+    for start in range(len(parents)):
+        chain: list[int] = []
+        node: int | None = start
+        # A broken parse can link words in a loop
+        while node is not None and node not in depths and node not in chain:
+            chain.append(node)
+            node = parents[node]
+        depth = depths[node] if node is not None and node in depths else -1
+        for member in reversed(chain):
+            depth += 1
+            depths[member] = depth
+    return max(depths.values(), default=0)
 
 
 def _unit_parents(units: Sequence[Sequence[Token]]) -> list[int | None]:

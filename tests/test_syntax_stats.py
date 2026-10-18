@@ -490,6 +490,12 @@ def test_subtree_of_a_loop():
     assert subtree_len(doc[0]) == subtree_len(doc[0], join_hyphens=True) == 3
 
 
+def test_tree_depth_of_a_loop():
+    # a, b and c hang on each other in a Doc of ten tokens
+    doc = parse(list("abcdefghij"), [1, 2, 0] + [3] * 7, ["dep"] * 10)
+    assert calc_tree_depth(doc[:3]) == calc_tree_depth(doc[:3], join_hyphens=True) == 2
+
+
 def test_loop_inside_a_hyphenated_word():
     doc = parse(["a", "-", "b"], [2, 0, 1], ["dep", "punct", "dep"], spaces=[False, False, False])
     assert calc_tree_depth(doc, join_hyphens=True) == 0
