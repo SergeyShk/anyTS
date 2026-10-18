@@ -708,7 +708,7 @@ def test_windowed_errors(ds):
         calc_windowed(riddle, calc_ttr, step=2.0)
     with pytest.raises(ParameterError, match=r"^The confidence level must be a number, not str$"):
         calc_windowed(riddle, calc_ttr, 3, confidence="0.95")
-    with pytest.raises(ParameterError, match=r"^The metric must be a function, not str$"):
+    with pytest.raises(SourceTypeError, match=r"^The metric must be a function, not str$"):
         calc_windowed(riddle, "ttr")
 
 

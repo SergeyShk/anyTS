@@ -155,8 +155,10 @@ class PhonStats(Stats, metaclass=ABCMeta):
         self.words = words
         self.window_len = window_len
         counts = Counter(words)
-        word_syllables = {word: tuple(self.syllabify(word)) for word in counts}
-        word_sounds = {word: self.transcribe(word) for word in counts}
+        word_syllables = {
+            word: self._checked("syllabify", self.syllabify(word)) for word in counts
+        }
+        word_sounds = {word: self._checked("transcribe", self.transcribe(word)) for word in counts}
         self.syllables = tuple(word_syllables[word] for word in words)
         self.sounds = tuple(word_sounds[word] for word in words)
         consonants = self.sonorants | self.voiced | self.voiceless
@@ -219,6 +221,24 @@ class PhonStats(Stats, metaclass=ABCMeta):
             n_syllables,
             nan,
         )
+
+    def _checked(self, hook: str, result: object) -> Any:
+        """The syllables or the sounds a hook gives for a word, checked to be strings"""
+        if not (
+            isinstance(result, Sequence)
+            and (hook == "transcribe" or not isinstance(result, str))
+            and all(isinstance(item, str) for item in result)
+        ):
+            expected = "a sequence of strings" if hook == "syllabify" else "a string or strings"
+            raise SourceTypeError(
+                self.messages["hook_result"].format(
+                    hook=hook,
+                    cls=type(self).__name__,
+                    expected=expected,
+                    type=type(result).__name__,
+                )
+            )
+        return tuple(result) if hook == "syllabify" else result
 
     def doc_words(self, doc: Doc) -> tuple[str, ...]:
         """

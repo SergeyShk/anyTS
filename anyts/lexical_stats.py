@@ -135,6 +135,16 @@ class LexicalStats(Stats, metaclass=ABCMeta):
             name = expected.__name__ if expected is not None else "FrequencyDictionary"
             raise SourceTypeError(messages["freq_dict_type"].format(expected=name))
         words = tuple(self.analyze(source))
+        for word in words:
+            if not isinstance(word, LexicalWord):
+                raise SourceTypeError(
+                    messages["hook_result"].format(
+                        hook="analyze",
+                        cls=type(self).__name__,
+                        expected="LexicalWord objects",
+                        type=type(word).__name__,
+                    )
+                )
         if not words:
             raise SourceError(messages["no_words"])
         if freq_dict is None:

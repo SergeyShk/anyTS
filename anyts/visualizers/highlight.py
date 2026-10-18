@@ -233,7 +233,12 @@ class HighlightedText:
         self.layers = self._select_layers(layers, available)
         highlights = []
         for layer in self.layers:
-            for h in self.find(layer, words, sents, doc):
+            found = self.find(layer, words, sents, doc)
+            if not isinstance(found, Iterable):
+                raise SourceTypeError(self._find_error(found))
+            for h in found:
+                if not isinstance(h, Highlight):
+                    raise SourceTypeError(self._find_error(h))
                 if h.layer != layer:
                     raise ParameterError(
                         self.messages["fragment_layer"].format(found=h.layer, layer=layer)
@@ -321,6 +326,15 @@ class HighlightedText:
             list[Highlight]: Fragments of the layer, of this layer only
         """
         raise NotImplementedError
+
+    def _find_error(self, value: object) -> str:
+        """Message of a result of find that is not fragments of the highlighting"""
+        return self.messages["hook_result"].format(
+            hook="find",
+            cls=type(self).__name__,
+            expected="Highlight objects",
+            type=type(value).__name__,
+        )
 
     @classmethod
     def _select_layers(

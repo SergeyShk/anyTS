@@ -9,7 +9,7 @@ All exceptions of the library inherit the base class `AnyTSError` and a built-in
 | Exception | Built-in class | When raised |
 | :-------- | :------------- | :---------- |
 | `AnyTSError` | `Exception` | Base class, never raised itself |
-| `SourceTypeError` | `TypeError` | An argument is of an unsupported type: the source or the text, a text where a list is expected, an extractor, basic statistics of another class, a path, a hook that is not callable (a tokenizer, a lemmatizer, a measure) or returns what the core cannot use |
+| `SourceTypeError` | `TypeError` | An argument is of an unsupported type: the source or the text, a text where a list is expected, an extractor, basic statistics of another class, a path, a hook that is not callable (a tokenizer, a lemmatizer, a measure), or a tokenizer, a sentence splitter or the `parse`, `analyze`, `syllabify`, `transcribe` or `find` of a class that returns what the core cannot use |
 | `SourceError` | `ValueError` | The source has no words, sentences or texts to compute a statistic on, lacks an annotation the statistic needs, or holds values it cannot take: a negative or infinite frequency, a matrix of distances that is not one |
 | `ParameterError` | `ValueError` | A parameter is out of range or not a finite number, a name (of a measure, a variant, a preset, a layer, a norm) is unknown, the labels or the axes of a plot are set incorrectly, or a layer of the highlighting asks for an annotation the source lacks |
 | `UnknownStatError` | `ParameterError`, `KeyError` | An unknown statistic is requested by name |

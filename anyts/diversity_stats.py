@@ -20,7 +20,7 @@ from .constants import (
     MTLD_TTR_THRESHOLD,
     MTLD_WINDOW_LEN,
 )
-from .exceptions import ParameterError, SourceError, UnknownStatError
+from .exceptions import ParameterError, SourceError, SourceTypeError, UnknownStatError
 from .stats import Stats
 from .utils import (
     _sliceable,
@@ -1658,9 +1658,10 @@ def calc_windowed(
         WindowStats: Mean, standard deviation, bounds of the interval and number of windows
 
     Raises:
-        ParameterError: If the metric is not a function or the window size, the
-            step or the confidence level are set incorrectly
-        SourceTypeError: If the words are not a list of strings (check_words)
+        ParameterError: If the window size, the step or the confidence level are
+            set incorrectly
+        SourceTypeError: If the words are not a list of strings (check_words) or the
+            metric is not a function
     """
     check_integer(window_len, "window size")
     if window_len < 1:
@@ -1671,7 +1672,7 @@ def calc_windowed(
     if step < 1:
         raise ParameterError(messages["window_step"])
     if not callable(func):
-        raise ParameterError(messages["window_metric"].format(type=type(func).__name__))
+        raise SourceTypeError(messages["window_metric"].format(type=type(func).__name__))
     check_number(confidence, "confidence level")
     if not 0 < confidence < 1:
         raise ParameterError(messages["confidence"])

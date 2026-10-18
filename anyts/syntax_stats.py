@@ -138,15 +138,24 @@ class SyntaxStats(Stats):
     requires_lemmas: ClassVar[bool] = False
     negation_words: ClassVar[frozenset[str]] = frozenset()
 
+    stats_desc: ClassVar[Mapping[str, str]] = SYNTAX_STATS_DESC
+
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
         check_words(cls.negation_words, "negation_words", ordered=False)
 
-    stats_desc: ClassVar[Mapping[str, str]] = SYNTAX_STATS_DESC
-
     def __init__(self, source: Doc):
         messages = self.messages
         doc = self.parse(source)
+        if not is_doc(doc):
+            raise SourceTypeError(
+                messages["hook_result"].format(
+                    hook="parse",
+                    cls=type(self).__name__,
+                    expected="a Doc",
+                    type=type(doc).__name__,
+                )
+            )
         if not doc.has_annotation("DEP") or not has_sents(doc):
             raise SourceError(messages["no_parse"])
         if self.requires_lemmas and not doc.has_annotation("LEMMA"):

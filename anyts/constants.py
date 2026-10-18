@@ -265,6 +265,7 @@ MESSAGES = {
     "tokenizer": "The tokenizer is set incorrectly",
     "tokenizer_iterable": "The tokenizer must return an iterable object",
     "tokenizer_strings": "The tokenizer must return strings, not {type}",
+    "hook_result": "The {hook} of {cls} must return {expected}, not {type}",
     "connector_dict": "The connectors must be a dictionary of a phrase and its class and kind",
     "connector_entry": "A connector must be a phrase with a pair of its class and kind: {connector}",
     "connector_class": "Unknown class or kind of a connector: {cls}, {kind}",

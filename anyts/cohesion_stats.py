@@ -487,6 +487,16 @@ class CohesionStats(Stats):
             else self.connector_matcher_class(connectors)
         )
         sents = [sent for sent in map(tuple, self.analyze(source)) if sent]
+        for word in (word for sent in sents for word in sent):
+            if not isinstance(word, CohesionWord):
+                raise SourceTypeError(
+                    messages["hook_result"].format(
+                        hook="analyze",
+                        cls=type(self).__name__,
+                        expected="sentences of CohesionWord objects",
+                        type=type(word).__name__,
+                    )
+                )
         if not sents:
             raise SourceError(messages["no_words"])
         self.words = tuple(tuple(word.word for word in sent) for sent in sents)
