@@ -57,7 +57,6 @@ def is_punctuation(token: str) -> bool:
     return all(unicodedata.category(char) in PUNCTUATION_CATEGORIES for char in token)
 
 
-@lru_cache(maxsize=1 << 16)
 def is_number(word: str, pattern: Pattern[str] = NUMBER_PATTERN) -> bool:
     """
     Checking whether a word is a number
@@ -75,7 +74,13 @@ def is_number(word: str, pattern: Pattern[str] = NUMBER_PATTERN) -> bool:
         >>> is_number("2020"), is_number("10%"), is_number("cat")
         (True, True, False)
     """
-    return pattern.fullmatch(word.lower()) is not None
+    return _is_number(word, pattern.pattern, pattern.flags)
+
+
+@lru_cache(maxsize=1 << 16)
+def _is_number(word: str, pattern: str, flags: int) -> bool:
+    """is_number by the text of the pattern: a compiled pattern hashes its code on every call"""
+    return re.fullmatch(pattern, word.lower(), flags) is not None
 
 
 @lru_cache(maxsize=1 << 16)
