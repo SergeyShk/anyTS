@@ -705,3 +705,12 @@ def test_add_tokenizer_rules_checks_the_expressions(kwargs, message):
 def test_find_phrases_checks_the_normalization():
     with pytest.raises(SourceTypeError, match=r"^The normalization must be callable, not int$"):
         find_phrases(["in", "fact"], ["in fact"], 42)
+
+
+def test_add_tokenizer_rules_of_alternatives_once():
+    nlp = spacy.blank("en")
+    add_tokenizer_rules(nlp, infixes=["~~|\\^\\^"], prefixes=["#|@"])
+    infixes, prefixes = nlp.tokenizer.infix_finditer, nlp.tokenizer.prefix_search
+    add_tokenizer_rules(nlp, infixes=["~~|\\^\\^"], prefixes=["#|@"])
+    assert nlp.tokenizer.infix_finditer is infixes
+    assert nlp.tokenizer.prefix_search is prefixes

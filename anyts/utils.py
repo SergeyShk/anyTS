@@ -657,7 +657,7 @@ def _extend_rules(method: object, rules: list[str]) -> Pattern[str] | None:
     if not isinstance(pattern, str):
         return None
     branches = _branches(pattern)
-    missing = [rule for rule in rules if rule not in branches]
+    missing = [rule for rule in rules if not _branches(rule) <= branches]
     if not missing:
         return None
     return re.compile("|".join([pattern, *missing]))

@@ -663,3 +663,11 @@ def test_cohesion_stats_errors(source, kwargs, error, message):
 def test_rules_of_a_matcher_checked_at_class_definition(attributes, message):
     with pytest.raises(SourceTypeError, match=message):
         type("Ruled", (ConnectorMatcher,), attributes)
+
+
+def test_sentences_of_analyze_as_iterators():
+    class Lazy(CohesionStats):
+        def analyze(self, source):
+            return ((word for word in sent) for sent in super().analyze(source))
+
+    assert Lazy(text_doc()).get_stats() == CohesionStats(text_doc()).get_stats()

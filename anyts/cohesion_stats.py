@@ -117,7 +117,8 @@ class ConnectorMatcher:
 
     Raises:
         SourceTypeError: If the connectors are not a dictionary of a phrase and a pair
-            of strings
+            of strings; when a class is defined, if its rules are not collections of
+            strings or mappings of strings to them
         ParameterError: If a connector has an unknown class or kind
 
     Example:
@@ -432,7 +433,8 @@ class CohesionStats(Stats):
 
     Raises:
         SourceTypeError: If the extractor is of another type, the source is not a Doc
-            (analyze) or the connectors are not a dictionary of phrases and pairs of strings
+            (analyze), analyze does not give sentences of CohesionWord objects, or the
+            connectors are not a dictionary of phrases and pairs of strings
         SourceError: If the source has no parts of speech or no lemmas (analyze), or no
             words
         ParameterError: If a connector has an unknown class or kind; when a class is
@@ -487,12 +489,11 @@ class CohesionStats(Stats):
             else self.connector_matcher_class(connectors)
         )
         found = self.analyze(source)
-        found_sents = list(found) if isinstance(found, Iterable) else [found]
-        for item in (
-            word
-            for sent in found_sents
-            for word in (sent if isinstance(sent, Iterable) else [sent])
-        ):
+        found_sents = [
+            tuple(sent) if isinstance(sent, Iterable) else (sent,)
+            for sent in (found if isinstance(found, Iterable) else [found])
+        ]
+        for item in (word for sent in found_sents for word in sent):
             if not isinstance(item, CohesionWord):
                 raise SourceTypeError(
                     messages["hook_result"].format(
@@ -502,7 +503,7 @@ class CohesionStats(Stats):
                         type=type(item).__name__,
                     )
                 )
-        sents = [sent for sent in map(tuple, found_sents) if sent]
+        sents = [sent for sent in found_sents if sent]
         if not sents:
             raise SourceError(messages["no_words"])
         self.words = tuple(tuple(word.word for word in sent) for sent in sents)
