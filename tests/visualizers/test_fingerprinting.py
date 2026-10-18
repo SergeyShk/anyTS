@@ -183,3 +183,10 @@ def test_fingerprinting_colorbar_height():
     assert colorbar.get_position().height == pytest.approx(ax.get_position().height)
     assert ax.get_position().height < 0.5
     plt.close("all")
+
+
+def test_unknown_colour_map():
+    plt.close("all")
+    with pytest.raises(ParameterError, match=r"^Unknown colour map: 'zzz'$"):
+        fingerprinting([["a", "b", "c"]], cmap="zzz")
+    assert plt.get_fignums() == []

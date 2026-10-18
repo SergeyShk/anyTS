@@ -49,9 +49,9 @@ def zipf(
         SourceTypeError: If the value is not a Counter object of strings (check_counts)
         SourceError: If the counter is empty or has a frequency that is not above zero
         ParameterError: If the number of words or of labels is not an integer, the number of words
-            is below one, the exponent α of the shown theoretical law is not a number above zero,
-            the labels are set incorrectly (merge_labels) or ax is not a matplotlib Axes
-            (check_axes)
+            is below one or of labels negative, the exponent α of the shown theoretical law is not
+            a number above zero, the labels are set incorrectly (merge_labels) or ax is not a
+            matplotlib Axes (check_axes)
     """
     captions = merge_labels(VISUALIZER_LABELS["zipf"], labels, q=0.0, s=0.0)
     if not isinstance(counter, Counter):
@@ -66,6 +66,8 @@ def zipf(
         if num_words < 1:
             raise ParameterError("The number of words must be greater than 0")
     check_integer(num_labels, "number of labels")
+    if num_labels < 0:
+        raise ParameterError("The number of labels cannot be negative")
     if show_theory:
         _check_alpha(alpha)
     check_axes(ax)
@@ -149,14 +151,16 @@ def zipf_theory(
 
     Raises:
         ParameterError: If the number of ranks is not an integer or is below one, the frequency is
-            not a number, the exponent is not a number above zero, the labels are set incorrectly
-            or ax is not a matplotlib Axes (check_axes)
+            not a number above zero, the exponent is not a number above zero, the labels are set
+            incorrectly or ax is not a matplotlib Axes (check_axes)
     """
     captions = merge_labels(VISUALIZER_LABELS["zipf_theory"], labels)
     check_integer(num_ranks, "number of ranks")
     if num_ranks < 1:
         raise ParameterError("The number of ranks must be greater than 0")
     check_number(size, "frequency of the first rank")
+    if size <= 0:
+        raise ParameterError("The frequency of the first rank must be greater than 0")
     _check_alpha(alpha)
     check_axes(ax)
     if ax is None:

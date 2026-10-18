@@ -28,11 +28,11 @@ Plotting [Zipf's law](https://en.wikipedia.org/wiki/Zipf%27s_law) from a counter
 | `ax` | Axes | `None` | Axes of matplotlib for the plot; if not given, a new figure is created |
 | `labels` | dict[str, str] | `None` | Labels of the plot over the defaults: `title`, `xlabel`, `ylabel`, `experimental` and `theoretical` (the curves), `fit` (a format string with `q` and `s`) |
 
-The function returns the `Axes` with the plot; a `num_words` greater than the number of word types does not extend the curves beyond the data. A counter whose words are not strings raises `SourceTypeError`, an empty counter or a frequency that is not above zero `SourceError`, and a `num_words` below one or an exponent that is not a finite number above zero `ParameterError`, all before a figure is created.
+The function returns the `Axes` with the plot; a `num_words` greater than the number of word types does not extend the curves beyond the data. A counter whose words are not strings raises `SourceTypeError`, an empty counter or a frequency that is not above zero `SourceError`, and a `num_words` below one, a negative `num_labels` or, with `show_theory`, an exponent that is not a finite number above zero `ParameterError`, all before a figure is created.
 <!-- --8<-- [end:zipf-parameters] -->
 
 <!-- --8<-- [start:zipf_theory] -->
-`zipf_theory(size, num_ranks, alpha=1.5, ax=None, labels=None)` plots the theoretical curve alone, $f(r) = size \cdot r^{-\alpha}$ for the ranks from 1 to `num_ranks`; its label is the key `theoretical`.
+`zipf_theory(size, num_ranks, alpha=1.5, ax=None, labels=None)` plots the theoretical curve alone, $f(r) = size \cdot r^{-\alpha}$ for the ranks from 1 to `num_ranks`; its label is the key `theoretical`; a `size` that is not a number above zero raises `ParameterError`.
 <!-- --8<-- [end:zipf_theory] -->
 
 ## Usage example

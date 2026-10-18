@@ -65,8 +65,9 @@ def fingerprinting(
             measure is not callable
         SourceError: If there are no texts or a text has no words
         ParameterError: If the size of a segment is not an integer or is below one, the half width
-            is not an integer above MARGIN, the half height not an integer above zero, the labels
-            are set incorrectly (merge_labels) or ax is not a matplotlib Axes (check_axes)
+            is not an integer above MARGIN, the half height not an integer above zero, the colour
+            map is unknown, the labels are set incorrectly (merge_labels) or ax is not a
+            matplotlib Axes (check_axes)
     """
     title = merge_labels(VISUALIZER_LABELS["fingerprinting"], labels)["title"]
     check_sequence(texts, "lists of words")
@@ -92,7 +93,10 @@ def fingerprinting(
     values = [_segment_values(text, segment_len, measure) for text in texts]
     finite = [value for segments in values for value in segments if np.isfinite(value)]
     norm = Normalize(min(finite), max(finite)) if finite else Normalize(0, 1)
-    colormap = plt.get_cmap(cmap).with_extremes(bad=MISSING_COLOR)
+    try:
+        colormap = plt.get_cmap(cmap).with_extremes(bad=MISSING_COLOR)
+    except (TypeError, ValueError):
+        raise ParameterError(f"Unknown colour map: {cmap!r}") from None
     check_axes(ax)
     if ax is None:
         _, ax = plt.subplots(figsize=(15, 10))
