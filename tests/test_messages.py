@@ -193,7 +193,7 @@ def foreign_extension_on_unpickling():
     Doc.remove_extension("own_unpickled")
     Doc.set_extension("own_unpickled", getter=lambda doc: 0)
     try:
-        pickle.loads(data)
+        pickle.loads(data)(spacy.blank("en")(TEXT))
     finally:
         Doc.remove_extension("own_unpickled")
 

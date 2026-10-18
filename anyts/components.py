@@ -116,7 +116,9 @@ class StatsComponent:
 
     def _check_extension(self) -> None:
         """Checking that the extension of the name is not one of another package"""
-        if self._name not in _EXTENSIONS:
+        from spacy.tokens import Doc
+
+        if self._name not in _EXTENSIONS or Doc.get_extension(self._name) != (None,) * 4:
             raise ParameterError(self.messages["foreign_extension"].format(name=self._name))
 
     def prepare(self, nlp: Language) -> None:
@@ -228,7 +230,9 @@ def _register(name: str) -> None:
     """Registering the extension of a component, unless another package has one of the name"""
     from spacy.tokens import Doc
 
-    if Doc.has_extension(name) and name not in _EXTENSIONS:
+    if Doc.has_extension(name) and (
+        name not in _EXTENSIONS or Doc.get_extension(name) != (None,) * 4
+    ):
         return
     Doc.set_extension(name, default=None, force=True)
     _EXTENSIONS.add(name)
