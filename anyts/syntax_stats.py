@@ -115,6 +115,7 @@ class SyntaxStats(Stats):
     Methods:
         parse: Doc of a source
         is_clause_head: Whether a word heads a clause
+        is_infinitive_periphrasis: Whether an infinitive makes one predicate with its head
         is_subordinate_clause_head: Whether a clause head heads a subordinate clause
         is_participle_clause: Whether a word heads a participial clause
         is_passive: Whether a word is a passive verb form
@@ -307,7 +308,8 @@ class SyntaxStats(Stats):
         Checking whether a word heads a clause
 
         Description:
-            is_clause_head of the module with join_hyphens of the class
+            is_clause_head of the module with join_hyphens of the class and the
+            hook is_infinitive_periphrasis
 
         Arguments:
             token (Token): Token
@@ -315,7 +317,25 @@ class SyntaxStats(Stats):
         Returns:
             bool: Result of the check
         """
-        return is_clause_head(token, self.join_hyphens)
+        return is_clause_head(token, self.join_hyphens, self.is_infinitive_periphrasis)
+
+    def is_infinitive_periphrasis(self, token: Token) -> bool:
+        """
+        Checking whether an infinitive makes one predicate with its head
+
+        Description:
+            A periphrasis of a modal or phasal verb with an infinitive (can
+            leave, begins to leave) is one clause; the check gets an infinitive
+            under xcomp and an infinitive conjunct (is_clause_head); none by
+            default
+
+        Arguments:
+            token (Token): Token
+
+        Returns:
+            bool: Result of the check
+        """
+        return False
 
     def is_subordinate_clause_head(self, token: Token) -> bool:
         """
@@ -908,7 +928,11 @@ def is_predicate(token: Token, join_hyphens: bool = False) -> bool:
     )
 
 
-def is_clause_head(token: Token, join_hyphens: bool = False) -> bool:
+def is_clause_head(
+    token: Token,
+    join_hyphens: bool = False,
+    is_infinitive_periphrasis: Callable[[Token], bool] | None = None,
+) -> bool:
     """
     Checking whether a word heads a clause
 
@@ -916,20 +940,37 @@ def is_clause_head(token: Token, join_hyphens: bool = False) -> bool:
         The head of the sentence, or a word with a relation of CLAUSE_DEPS
         (ccomp, advcl, acl, csubj, parataxis and their subtypes) whose
         predicate (predicate_form) is not a participle, a converb or a gerund
-        (counted apart), nor an infinitive under acl (the wish to leave). A
-        parataxis and a conjunct of a clause head count only as predicates
-        (is_predicate), so a parenthetical word is no clause; a loop of
-        conjuncts is none
+        (counted apart), nor an infinitive under acl (the wish to leave); under
+        xcomp, a finite predicate or an infinitive clause (is_infinitive_clause:
+        wants to leave). A parataxis and a conjunct of a clause head count only
+        as predicates (is_predicate), so a parenthetical word is no clause, nor
+        is an infinitive conjunct by the check is_infinitive_periphrasis, since
+        a model may attach the infinitive of a periphrasis to its verb as conj;
+        a loop of conjuncts is none
 
     Arguments:
         token (Token): Token
         join_hyphens (bool): Join the parts of hyphenated words (is_predicate)
+        is_infinitive_periphrasis (callable): Whether an infinitive makes one
+            predicate with its head (is_infinitive_clause); none by default
 
     Returns:
         bool: Result of the check
+
+    Raises:
+        SourceTypeError: If is_infinitive_periphrasis is not callable
     """
+    if is_infinitive_periphrasis is not None:
+        check_callable(is_infinitive_periphrasis, "check of an infinitive periphrasis")
+    return _is_clause_head(token, join_hyphens, is_infinitive_periphrasis)
+
+
+def _is_clause_head(
+    token: Token, join_hyphens: bool, is_infinitive_periphrasis: Callable[[Token], bool] | None
+) -> bool:
+    """is_clause_head with a checked hook"""
     seen = set()
-    # Up the chain of conjuncts to the word that is none
+    # Up the chains of conjuncts and infinitive complements to the word that is none
     while is_word(token) and token.i not in seen:
         if is_root(token):
             return True
@@ -938,16 +979,106 @@ def is_clause_head(token: Token, join_hyphens: bool = False) -> bool:
             return False
         dep = base_dep(token)
         if dep != "conj":
+            if dep == "xcomp":
+                if form == "Fin":
+                    return True
+                completed = (
+                    _completed_word(token)
+                    if _is_infinitive_complement(token, is_infinitive_periphrasis)
+                    else None
+                )
+                if completed is None:
+                    return False
+                seen.add(token.i)
+                token = completed
+                continue
             if dep not in CLAUSE_DEPS:
                 return False
             if dep == "parataxis":
                 return is_predicate(token, join_hyphens)
             return not (dep == "acl" and form == "Inf")
+        if form == "Inf" and is_infinitive_periphrasis and is_infinitive_periphrasis(token):
+            return False
         if not is_predicate(token, join_hyphens):
             return False
         seen.add(token.i)
         token = token.head
     return False
+
+
+def is_infinitive_clause(
+    token: Token,
+    is_infinitive_periphrasis: Callable[[Token], bool] | None = None,
+    is_clause_head: Callable[[Token], bool] = is_clause_head,
+) -> bool:
+    """
+    Checking whether an infinitive complement heads a clause of its own
+
+    Description:
+        A predicate in the form of an infinitive (predicate_form) under xcomp
+        (wants to leave, asked him to leave, wants to be chosen), unless it
+        makes one predicate with its head by the language check
+        is_infinitive_periphrasis (can leave, begins to leave) or the word it
+        completes, the first one up its chain of non-finite complements under
+        xcomp (kept trying to leave), heads no clause by the check
+        is_clause_head: an infinitive in a participial phrase or under an
+        infinitive under acl (trying to leave, the wish to try to leave)
+        belongs to that phrase
+
+    Arguments:
+        token (Token): Token
+        is_infinitive_periphrasis (callable): Whether an infinitive makes one
+            predicate with its head; none by default
+        is_clause_head (callable): Whether a word heads a clause, is_clause_head
+            by default
+
+    Returns:
+        bool: Result of the check
+
+    Raises:
+        SourceTypeError: If is_infinitive_periphrasis or is_clause_head is not
+            callable
+    """
+    if is_infinitive_periphrasis is not None:
+        check_callable(is_infinitive_periphrasis, "check of an infinitive periphrasis")
+    check_callable(is_clause_head, "check of a clause head")
+    return _is_infinitive_clause(token, is_infinitive_periphrasis, is_clause_head)
+
+
+def _is_infinitive_clause(
+    token: Token,
+    is_infinitive_periphrasis: Callable[[Token], bool] | None,
+    is_clause_head: Callable[[Token], bool],
+) -> bool:
+    """is_infinitive_clause with checked hooks"""
+    if not _is_infinitive_complement(token, is_infinitive_periphrasis):
+        return False
+    completed = _completed_word(token)
+    return completed is not None and is_clause_head(completed)
+
+
+def _is_infinitive_complement(
+    token: Token, is_infinitive_periphrasis: Callable[[Token], bool] | None
+) -> bool:
+    """Infinitive under xcomp that makes no periphrasis with its head"""
+    if base_dep(token) != "xcomp" or predicate_form(token) != "Inf":
+        return False
+    return not (is_infinitive_periphrasis is not None and is_infinitive_periphrasis(token))
+
+
+def _completed_word(token: Token) -> Token | None:
+    """Word an infinitive complement completes, up its non-finite complements; None in a loop"""
+    seen = {token.i}
+    word = token.head
+    while base_dep(word) == "xcomp" and predicate_form(word) != "Fin" and word.i not in seen:
+        seen.add(word.i)
+        word = word.head
+    # A loop through the words above would bring the checks back to the infinitive
+    above = word
+    while not is_root(above) and above.i not in seen:
+        seen.add(above.i)
+        above = above.head
+    return None if above.i == token.i else word
 
 
 def is_subordinate_clause_head(
@@ -958,9 +1089,9 @@ def is_subordinate_clause_head(
 
     Description:
         The head of a clause by is_clause_head with a relation of
-        SUBORDINATE_CLAUSE_DEPS (ccomp, advcl, acl, csubj and their subtypes),
-        or a conjunct of one: the relation of the first word up its chain of
-        conjuncts decides
+        SUBORDINATE_CLAUSE_DEPS (ccomp, advcl, acl, csubj and their subtypes)
+        or xcomp, or a conjunct of one: the relation of the first word up its
+        chain of conjuncts decides
 
     Arguments:
         token (Token): Token
@@ -980,7 +1111,8 @@ def is_subordinate_clause_head(
     while base_dep(token) == "conj" and token.i not in seen:
         seen.add(token.i)
         token = token.head
-    return not is_root(token) and base_dep(token) in SUBORDINATE_CLAUSE_DEPS
+    dep = base_dep(token)
+    return not is_root(token) and (dep in SUBORDINATE_CLAUSE_DEPS or dep == "xcomp")
 
 
 def is_passive(token: Token, join_hyphens: bool = False) -> bool:
