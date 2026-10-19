@@ -100,6 +100,8 @@ CONNECTOR_CLASSES = (
     "reformulative",
 )
 CONNECTOR_KINDS = ("primary", "secondary")
+# Densities of the connectors by place in CohesionStats, names no class or kind may take
+CONNECTOR_PLACES = ("inter", "intra")
 CONNECTOR_POS = frozenset({"ADP", "ADV", "CCONJ", "INTJ", "PART", "SCONJ", "X"})
 # Parts of speech of Universal Dependencies of a content word, and the features of a verb
 # whose repetition in adjacent sentences the temporal cohesion reads
@@ -124,6 +126,8 @@ COHESION_STATS_DESC = {
     "aspect_repetition": "Repetition of the aspect in adjacent sentences",
     "temporal_cohesion": "Temporal cohesion",
     "connectors": "Connectors per 1000 words",
+    "connectors_inter": "Connectors linking a sentence to the ones before per 1000 words",
+    "connectors_intra": "Connectors linking the parts of a sentence per 1000 words",
     "connectors_causal": "Causal connectors per 1000 words",
     "connectors_adversative": "Adversative connectors per 1000 words",
     "connectors_concessive": "Concessive connectors per 1000 words",

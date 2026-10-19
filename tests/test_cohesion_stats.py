@@ -475,6 +475,7 @@ def test_cohesion_stats_counts():
     # cat, sit, mat | see, bird | however, bird, cat, sleep: bird and cat are given
     assert (stats.n_content_words, stats.n_given) == (9, 2)
     assert stats.n_connectors == 0 and stats.connector_spans == () and stats.c_connectors == {}
+    assert stats.n_inter_connectors == 0
 
 
 def test_cohesion_stats_metrics():
@@ -505,6 +506,9 @@ def test_connectors():
     assert stats.c_connectors == {"and": 1, "however": 1}
     per_1000 = 1000 / 17
     assert stats.connectors == 2 * per_1000
+    # However opens its sentence and links it to the ones before; and is inside
+    assert stats.n_inter_connectors == 1
+    assert stats.connectors_inter == stats.connectors_intra == per_1000
     assert stats.connectors_adversative == stats.connectors_additive == per_1000
     assert stats.connectors_primary == stats.connectors_secondary == per_1000
     assert stats.connectors_causal == 0
@@ -538,6 +542,71 @@ def test_connectors_read_once_for_a_class():
     assert type(Child.connector_matcher()) is Own
     assert type(Counted.connector_matcher()) is ConnectorMatcher
     assert calls == [Counted, Child]
+
+
+class Subordinating(ConnectorMatcher):
+    subordinators = frozenset({"as soon as"})
+
+
+@pytest.mark.parametrize(
+    ("words", "pos", "inter"),
+    [
+        # A subordinator opening a sentence starts a clause of that sentence
+        (["When", "it", "came"], ["SCONJ", "PRON", "VERB"], 0),
+        (["As", "soon", "as", "it", "came"], ["ADV", "ADV", "SCONJ", "PRON", "VERB"], 0),
+        # A connector of several words is not a subordinator by the tag of its first word
+        (["That", "is", "it", "came"], ["SCONJ", "AUX", "PRON", "VERB"], 1),
+        # Without a part of speech the place alone decides
+        (["When", "it", "came"], [None, None, None], 1),
+        (["However", "it", "came"], ["ADV", "PRON", "VERB"], 1),
+    ],
+)
+def test_connectors_by_place(words, pos, inter):
+    class Places(CohesionStats):
+        connector_matcher_class = Subordinating
+
+        @classmethod
+        def load_connectors(cls):
+            return {
+                "when": ("temporal", "primary"),
+                "as soon as": ("temporal", "secondary"),
+                "that is": ("reformulative", "secondary"),
+                "however": ("adversative", "secondary"),
+            }
+
+        def analyze(self, source):
+            return [
+                [
+                    CohesionWord(word, word.lower(), tag, False, False, False, False, True)
+                    for word, tag in zip(words, pos, strict=True)
+                ]
+            ]
+
+    stats = Places(text_doc())
+    assert stats.n_connectors == 1 and stats.n_inter_connectors == inter
+    assert stats.connectors_inter == inter * 1000 / len(words)
+    assert stats.connectors_intra == (1 - inter) * 1000 / len(words)
+
+
+def test_is_subordinator():
+    matcher = Subordinating(
+        {"as soon as": ("temporal", "secondary"), "when": ("temporal", "primary")}
+    )
+    when, as_soon_as = matcher.find(["when", "as", "soon", "as"])
+    assert matcher.is_subordinator(when, "SCONJ") and not matcher.is_subordinator(when, "ADV")
+    assert not matcher.is_subordinator(when)
+    assert matcher.is_subordinator(as_soon_as) and matcher.is_subordinator(as_soon_as, "ADV")
+
+
+@pytest.mark.parametrize("name", ["classes", "kinds"])
+def test_names_of_the_densities_by_place_are_reserved(name):
+    with pytest.raises(ParameterError, match=r"cannot be named inter, intra"):
+        type("Taken", (ConnectorMatcher,), {name: ("intra", "first", "inter")})
+
+
+def test_subordinators_must_be_strings():
+    with pytest.raises(SourceTypeError):
+        type("Wrong", (ConnectorMatcher,), {"subordinators": "as soon as"})
 
 
 def test_densities_by_the_classes_of_the_matcher():

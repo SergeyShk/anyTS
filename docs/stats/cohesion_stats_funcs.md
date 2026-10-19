@@ -123,7 +123,8 @@ The rules of a language are class attributes of a subclass, empty by default apa
 | `pos_tags`, `pos_extra` | class attributes | Parts of speech of a one-word connector, `CONNECTOR_POS` of Universal Dependencies by default, and those allowed for a word on top of them |
 | `not_after_pos` | class attribute | Parts of speech of the previous word that make a one-word connector no connector (a determiner: *the before and the after*) |
 | `start_only_pos` | class attribute | Parts of speech of a one-word connector that counts only at the start of a sentence (a capitalized connector tagged as a proper noun) |
-| `classes`, `kinds` | class attributes | Classes and kinds of the dictionary; `CONNECTOR_CLASSES` and `CONNECTOR_KINDS` by default |
+| `subordinators` | class attribute | Connectors that are subordinating conjunctions besides the one-word ones tagged `SCONJ` (*as soon as*), for `is_subordinator` |
+| `classes`, `kinds` | class attributes | Classes and kinds of the dictionary; `CONNECTOR_CLASSES` and `CONNECTOR_KINDS` by default. The names `inter` and `intra` (`CONNECTOR_PLACES`) belong to the densities by place of `CohesionStats` and raise `ParameterError` when the class is defined |
 | `messages` | class attribute | Messages of the errors by key; `MESSAGES` by default |
 
 The words of the lists and the keys of `pos_extra` are normalized forms, while the other lists are keyed by the connector as the dictionary writes it. A rule that is not a collection of strings, or a mapping of strings to them, raises `SourceTypeError` when the class is defined.
@@ -167,3 +168,9 @@ Words that are not a list of strings and parts of speech that are not a list of 
     matcher.find(["The", "before", "and", "after"], pos=["DET", "ADV", "CCONJ", "ADV"])
     # [Connector(sent=0, start=2, end=3, text='and', cls='additive', kind='primary')]
     ```
+
+### is_subordinator
+
+<!-- --8<-- [start:ConnectorMatcher-is_subordinator] -->
+`is_subordinator(connector, pos=None)` checks whether an occurrence of a connector is a subordinating conjunction: a connector of `subordinators`, or a one-word connector whose part of speech `pos` is `SCONJ`. Its clause belongs to the sentence of the connector wherever the connector stands, so a subordinator opening a sentence (*when he came, ...*) does not link it to the ones before.
+<!-- --8<-- [end:ConnectorMatcher-is_subordinator] -->
