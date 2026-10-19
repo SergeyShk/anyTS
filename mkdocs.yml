@@ -15,24 +15,14 @@ nav:
       - Character N-gram extraction: extractors/char_ngrams.md
     - Statistics:
       - Statistics interface: stats/stats.md
-      - Lexical diversity metrics:
-        - Metrics module: stats/diversity_stats.md
-        - Metric functions: stats/diversity_stats_funcs.md
+      - Lexical diversity metrics: stats/diversity_stats.md
       - Basic statistics: stats/basic_stats.md
-      - Readability metrics:
-        - Metrics module: stats/readability_stats.md
-        - Metric functions: stats/readability_stats_funcs.md
-      - Cohesion statistics:
-        - Metrics module: stats/cohesion_stats.md
-        - Metric functions: stats/cohesion_stats_funcs.md
-      - Syntactic statistics:
-        - Metrics module: stats/syntax_stats.md
-        - Metric functions: stats/syntax_stats_funcs.md
+      - Readability metrics: stats/readability_stats.md
+      - Cohesion statistics: stats/cohesion_stats.md
+      - Syntactic statistics: stats/syntax_stats.md
       - Lexical sophistication: stats/lexical_stats.md
       - Style metrics: stats/style_stats.md
-      - Phonetic statistics:
-        - Metrics module: stats/phon_stats.md
-        - Metric functions: stats/phon_stats_funcs.md
+      - Phonetic statistics: stats/phon_stats.md
     - Corpus measures:
       - Keywords: corpus/keyness.md
       - Collocations: corpus/collocations.md
@@ -88,6 +78,9 @@ theme:
     - content.tabs.link
     - search.highlight
     - search.suggest
+
+validation:
+  anchors: warn
 
 plugins:
   - search
