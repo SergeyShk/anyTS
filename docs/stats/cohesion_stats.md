@@ -63,7 +63,7 @@ The parameters of a library - its model of a string, its word extractor - go to 
 | `tense_repetition`, `mood_repetition`, `aspect_repetition` | float | Shares of the adjacent pairs of sentences with the same dominant tense, mood and aspect |
 | `temporal_cohesion` | float | Mean of the repetitions of `temporal_features` |
 | `connectors` | float | Connectors per 1000 words |
-| `connectors_inter`, `connectors_intra` | float | Inter-sentential connectors per 1000 words, which link a sentence to the ones before: those opening a sentence, unless their first word is a subordinating conjunction (`SCONJ`, *when he came, ...*), whose clause belongs to the same sentence; and intra-sentential ones, the others |
+| `connectors_inter`, `connectors_intra` | float | Inter-sentential connectors per 1000 words, which link a sentence to the ones before: those opening a sentence, unless the matcher takes them for a subordinating conjunction (`is_subordinator`: one of its `subordinators` or a one-word connector tagged `SCONJ`, *when he came, ...*), whose clause belongs to the same sentence; and intra-sentential ones, the others |
 | `connectors_<class>`, `connectors_<kind>` | float | Connectors of every class and kind of the matcher per 1000 words: `connectors_causal`, `connectors_adversative`, `connectors_concessive`, `connectors_temporal`, `connectors_additive`, `connectors_conditional`, `connectors_reformulative`, `connectors_primary` and `connectors_secondary` by default |
 
 An overlap of a text of one sentence, a repetition without two adjacent sentences with the feature, and a share without anything to divide by are `nan`.

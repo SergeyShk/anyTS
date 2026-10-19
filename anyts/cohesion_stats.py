@@ -13,6 +13,7 @@ from .constants import (
     COHESION_STATS_DESC,
     CONNECTOR_CLASSES,
     CONNECTOR_KINDS,
+    CONNECTOR_PLACES,
     CONNECTOR_POS,
     CONTENT_UD_POS,
     MESSAGES,
@@ -92,6 +93,7 @@ class ConnectorMatcher:
     Methods:
         normalize: Normalized form of a word or a connector
         find: Finding the connectors of a sentence
+        is_subordinator: Whether a connector is a subordinating conjunction
 
     Class attributes:
         classes (tuple[str, ...]): Classes of the connectors (CONNECTOR_CLASSES)
@@ -113,13 +115,17 @@ class ConnectorMatcher:
             start of a sentence
         only_after (dict[str, frozenset[str]]): Connectors, by their text, that count
             inside a sentence only after these words
+        subordinators (frozenset[str]): Connectors, by their text, that are
+            subordinating conjunctions besides the one-word ones tagged SCONJ
         messages (dict[str, str]): Messages of the errors by key (MESSAGES)
 
     Raises:
         SourceTypeError: If the connectors are not a dictionary of a phrase and a pair
             of strings; when a class is defined, if its rules are not collections of
             strings or mappings of strings to them
-        ParameterError: If a connector has an unknown class or kind
+        ParameterError: If a connector has an unknown class or kind; when a class is
+            defined, if a class or a kind takes the name inter or intra of the
+            densities by place (CohesionStats)
 
     Example:
         >>> from anyts.cohesion_stats import ConnectorMatcher
@@ -147,6 +153,7 @@ class ConnectorMatcher:
     blocked_after_pos: ClassVar[Mapping[str, frozenset[str]]] = {}
     not_at_start: ClassVar[frozenset[str]] = frozenset()
     only_after: ClassVar[Mapping[str, frozenset[str]]] = {}
+    subordinators: ClassVar[frozenset[str]] = frozenset()
     messages: ClassVar[Mapping[str, str]] = MESSAGES
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
@@ -154,7 +161,18 @@ class ConnectorMatcher:
         check_messages(cls.messages)
         for name in ("classes", "kinds"):
             check_words(getattr(cls, name), name)
-        for name in ("pos_tags", "not_after_pos", "start_only_pos", "not_at_start"):
+            if reserved := [place for place in CONNECTOR_PLACES if place in getattr(cls, name)]:
+                raise ParameterError(
+                    f"The {name} of {cls.__name__} cannot be named {', '.join(reserved)}, "
+                    "the names of the connectors by place"
+                )
+        for name in (
+            "pos_tags",
+            "not_after_pos",
+            "start_only_pos",
+            "not_at_start",
+            "subordinators",
+        ):
             check_words(getattr(cls, name), name, ordered=False)
         for name in (
             "pos_extra",
@@ -255,6 +273,26 @@ class ConnectorMatcher:
             if len(pos) != len(words):
                 raise ParameterError(self.messages["connector_pos"])
         return self._find(words, sent_index, pos)
+
+    def is_subordinator(self, connector: Connector, pos: str | None = None) -> bool:
+        """
+        Checking whether a connector is a subordinating conjunction
+
+        Description:
+            A connector of subordinators, or a one-word connector whose part of
+            speech is SCONJ; its clause belongs to the sentence of the connector,
+            wherever it stands
+
+        Arguments:
+            connector (Connector): Occurrence of a connector
+            pos (str): Part of speech of its first word, None when unknown
+
+        Returns:
+            bool: Result of the check
+        """
+        return connector.text in self.subordinators or (
+            connector.end - connector.start == 1 and pos == "SCONJ"
+        )
 
     def _find(
         self, words: Sequence[str], sent_index: int, pos: Sequence[str | None] | None
@@ -413,8 +451,8 @@ class CohesionStats(Stats):
         temporal_cohesion (float): Mean of the repetitions of temporal_features
         connectors (float): Connectors per 1000 words
         connectors_inter (float): Inter-sentential connectors per 1000 words: those
-            opening a sentence, unless a subordinating conjunction (SCONJ), whose
-            clause belongs to the same sentence
+            opening a sentence, unless a subordinating conjunction by is_subordinator
+            of the matcher, whose clause belongs to the same sentence
         connectors_intra (float): Intra-sentential connectors per 1000 words, the
             others
         connectors_<class>, connectors_<kind> (float): Connectors of every class and
@@ -564,7 +602,8 @@ class CohesionStats(Stats):
         self.n_inter_connectors = sum(
             1
             for connector in self.connector_spans
-            if connector.start == 0 and sents[connector.sent][0].pos != "SCONJ"
+            if connector.start == 0
+            and not matcher.is_subordinator(connector, sents[connector.sent][0].pos)
         )
         self.c_connectors = dict(
             sorted(Counter(connector.text for connector in self.connector_spans).items())
