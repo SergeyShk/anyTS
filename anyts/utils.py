@@ -183,8 +183,7 @@ def _stands_apart(text: str, start: int, end: int, cursor: int, following: str) 
     after = (
         end == len(text)
         or not text[end].isalnum()
-        or (bool(following)
-        and text.startswith(following, end))
+        or (bool(following) and text.startswith(following, end))
     )
     return before and after
 
@@ -642,7 +641,9 @@ def find_unit_marks(units: Sequence[Sequence[Token]]) -> frozenset[int]:
     marks = set()
     for position in range(1, len(units)):
         last, first = units[position - 1][-1], units[position][0]
-        if _is_mark_gap(first.doc.text[last.idx + len(last.text) : first.idx]):
+        # Doc.text is built anew on every read, so the gap is taken from its tokens
+        between = last.doc[last.i + 1 : first.i]
+        if _is_mark_gap(last.whitespace_ + "".join(token.text_with_ws for token in between)):
             marks.add(position)
     return frozenset(marks)
 
