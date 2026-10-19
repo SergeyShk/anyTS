@@ -62,13 +62,24 @@ Raises:
 | `cliches` | `list[str]` | `None` | Cliches; `cliches_list` of the class by default |
 | `nausea_stopwords` | `list[str]` | `None` | Stopwords of the academic nausea; without them `is_stopword` decides |
 
-A set of words is taken in sorted order. The object keeps the words of the SEO metrics in `words` and the word forms of the markers in `forms`.
+A set of words is taken in sorted order.
 <!-- --8<-- [end:StyleStats-parameters] -->
+
+## Attributes
+
+<!-- --8<-- [start:StyleStats-attributes] -->
+| Attribute | Type | Description |
+| :-------- | :--- | :---------- |
+| `words` | `tuple[str]` | Words of the SEO metrics |
+| `forms` | `tuple[str]` | Word forms in lower case, of the markers |
+
+The metrics are properties computed on each access.
+<!-- --8<-- [end:StyleStats-attributes] -->
 
 ## Metrics
 
 <!-- --8<-- [start:StyleStats-metrics] -->
-Every metric is a property of the object, computed on each access, and `get_stats` gives them all. A metric is computed by the function of its card on `words` or `forms` with the hooks of the class.
+`get_stats` gives all the metrics. A metric is computed by the function of its card on `words` or `forms` with the hooks of the class.
 
 | Metric | Measures | Range | Higher means |
 | :----- | :------- | :---- | :----------- |
