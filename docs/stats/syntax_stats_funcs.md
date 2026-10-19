@@ -131,14 +131,18 @@ The lengths of the coordination chains, in the order of their first words. A cha
 ## Clauses and passive { #clauses }
 
 !!! info ""
-    **anyts.syntax_stats.is_clause_head()**, **anyts.syntax_stats.is_subordinate_clause_head()**, **anyts.syntax_stats.is_passive()**, **anyts.syntax_stats.has_agent()**, **anyts.syntax_stats.is_agentless()**
+    **anyts.syntax_stats.is_clause_head()**, **anyts.syntax_stats.is_infinitive_clause()**, **anyts.syntax_stats.is_subordinate_clause_head()**, **anyts.syntax_stats.is_passive()**, **anyts.syntax_stats.has_agent()**, **anyts.syntax_stats.is_agentless()**
 
 <!-- --8<-- [start:is_clause_head] -->
-`is_clause_head(token, join_hyphens=False)` checks whether a word heads a clause: the head of the sentence or a word with `ccomp`, `advcl`, `acl`, `csubj` or `parataxis` (`anyts.constants.CLAUSE_DEPS`, subtypes included) whose predicate (`predicate_form`, so `has been built` is finite) is not a participle, a converb or a gerund (`NONFINITE_CLAUSE_FORMS`, counted apart), nor an infinitive under `acl`. A `parataxis` and a conjunct of a clause head count only as predicates (`is_predicate`); a loop of conjuncts is no clause.
+`is_clause_head(token, join_hyphens=False, is_infinitive_periphrasis=None)` checks whether a word heads a clause: the head of the sentence or a word with `ccomp`, `advcl`, `acl`, `csubj` or `parataxis` (`anyts.constants.CLAUSE_DEPS`, subtypes included) whose predicate (`predicate_form`, so `has been built` is finite) is not a participle, a converb or a gerund (`NONFINITE_CLAUSE_FORMS`, counted apart), nor an infinitive under `acl`; under `xcomp`, a finite predicate or an infinitive clause (`is_infinitive_clause`). A `parataxis` and a conjunct of a clause head count only as predicates (`is_predicate`); a loop of conjuncts is no clause. A check of a periphrasis that is not callable raises `SourceTypeError`.
 <!-- --8<-- [end:is_clause_head] -->
 
+<!-- --8<-- [start:is_infinitive_clause] -->
+`is_infinitive_clause(token, is_infinitive_periphrasis=None)` checks whether an infinitive complement heads a clause of its own: an infinitive (`predicate_form`) under `xcomp` (*wants to leave*), unless the language check `is_infinitive_periphrasis` says it makes one predicate with its head (*can leave*, *begins to leave*). Without the check every infinitive complement is a clause; a check that is not callable raises `SourceTypeError`.
+<!-- --8<-- [end:is_infinitive_clause] -->
+
 <!-- --8<-- [start:is_subordinate_clause_head] -->
-`is_subordinate_clause_head(token, is_clause_head=is_clause_head)` checks whether a word heads a subordinate clause: a clause head by the check `is_clause_head` with `ccomp`, `advcl`, `acl` or `csubj` (`SUBORDINATE_CLAUSE_DEPS`), or a conjunct of one, by the relation of the first word up its chain of conjuncts. A check that is not callable raises `SourceTypeError`.
+`is_subordinate_clause_head(token, is_clause_head=is_clause_head)` checks whether a word heads a subordinate clause: a clause head by the check `is_clause_head` with `ccomp`, `advcl`, `acl` or `csubj` (`SUBORDINATE_CLAUSE_DEPS`) or `xcomp`, or a conjunct of one, by the relation of the first word up its chain of conjuncts. A check that is not callable raises `SourceTypeError`.
 <!-- --8<-- [end:is_subordinate_clause_head] -->
 
 <!-- --8<-- [start:is_passive] -->
