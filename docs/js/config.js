@@ -11,8 +11,11 @@ window.MathJax = {
   }
 };
 
+// Instant navigation swaps the page without loading MathJax again
 document$.subscribe(() => {
-  MathJax.startup.output.clearCache();
+  if (typeof MathJax.typesetPromise !== "function") {
+    return;
+  }
   MathJax.typesetClear();
   MathJax.texReset();
   MathJax.typesetPromise();
