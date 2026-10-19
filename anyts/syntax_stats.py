@@ -969,12 +969,8 @@ def _is_clause_head(
     token: Token, join_hyphens: bool, is_infinitive_periphrasis: Callable[[Token], bool] | None
 ) -> bool:
     """is_clause_head with a checked hook"""
-
-    def is_head(word: Token) -> bool:
-        return _is_clause_head(word, join_hyphens, is_infinitive_periphrasis)
-
     seen = set()
-    # Up the chain of conjuncts to the word that is none
+    # Up the chains of conjuncts and infinitive complements to the word that is none
     while is_word(token) and token.i not in seen:
         if is_root(token):
             return True
@@ -984,9 +980,18 @@ def _is_clause_head(
         dep = base_dep(token)
         if dep != "conj":
             if dep == "xcomp":
-                return form == "Fin" or _is_infinitive_clause(
-                    token, is_infinitive_periphrasis, is_head
+                if form == "Fin":
+                    return True
+                completed = (
+                    _completed_word(token)
+                    if _is_infinitive_complement(token, is_infinitive_periphrasis)
+                    else None
                 )
+                if completed is None:
+                    return False
+                seen.add(token.i)
+                token = completed
+                continue
             if dep not in CLAUSE_DEPS:
                 return False
             if dep == "parataxis":
@@ -1014,10 +1019,11 @@ def is_infinitive_clause(
         (wants to leave, asked him to leave, wants to be chosen), unless it
         makes one predicate with its head by the language check
         is_infinitive_periphrasis (can leave, begins to leave) or the word it
-        completes, the first one up its chain of infinitive complements, heads
-        no clause by the check is_clause_head: an infinitive in a participial
-        phrase or under an infinitive under acl (trying to leave, the wish to
-        try to leave) belongs to that phrase
+        completes, the first one up its chain of non-finite complements under
+        xcomp (kept trying to leave), heads no clause by the check
+        is_clause_head: an infinitive in a participial phrase or under an
+        infinitive under acl (trying to leave, the wish to try to leave)
+        belongs to that phrase
 
     Arguments:
         token (Token): Token
@@ -1045,19 +1051,26 @@ def _is_infinitive_clause(
     is_clause_head: Callable[[Token], bool],
 ) -> bool:
     """is_infinitive_clause with checked hooks"""
-    if base_dep(token) != "xcomp" or predicate_form(token) != "Inf":
-        return False
-    if is_infinitive_periphrasis is not None and is_infinitive_periphrasis(token):
+    if not _is_infinitive_complement(token, is_infinitive_periphrasis):
         return False
     completed = _completed_word(token)
     return completed is not None and is_clause_head(completed)
 
 
+def _is_infinitive_complement(
+    token: Token, is_infinitive_periphrasis: Callable[[Token], bool] | None
+) -> bool:
+    """Infinitive under xcomp that makes no periphrasis with its head"""
+    if base_dep(token) != "xcomp" or predicate_form(token) != "Inf":
+        return False
+    return not (is_infinitive_periphrasis is not None and is_infinitive_periphrasis(token))
+
+
 def _completed_word(token: Token) -> Token | None:
-    """Word an infinitive complement completes, up its chain of them; None in a loop"""
+    """Word an infinitive complement completes, up its non-finite complements; None in a loop"""
     seen = {token.i}
     word = token.head
-    while base_dep(word) == "xcomp" and predicate_form(word) == "Inf" and word.i not in seen:
+    while base_dep(word) == "xcomp" and predicate_form(word) != "Fin" and word.i not in seen:
         seen.add(word.i)
         word = word.head
     # A loop through the words above would bring the checks back to the infinitive

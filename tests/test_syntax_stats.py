@@ -1091,6 +1091,25 @@ def is_has(token):
             ["can", "leave"],
             ["leave"],
         ),
+        # An infinitive completes the word above its non-finite complements
+        (
+            ["He", "kept", "trying", "to", "leave"],
+            [1, 1, 1, 4, 2],
+            ["nsubj", "ROOT", "xcomp", "mark", "xcomp"],
+            ["", "VerbForm=Fin", "VerbForm=Ger", "", "VerbForm=Inf"],
+            None,
+            ["kept", "leave"],
+            ["leave"],
+        ),
+        (
+            ["He", "seemed", "able", "to", "leave"],
+            [1, 1, 1, 4, 2],
+            ["nsubj", "ROOT", "xcomp", "mark", "xcomp"],
+            ["", "VerbForm=Fin", "", "", "VerbForm=Inf"],
+            None,
+            ["seemed", "leave"],
+            ["leave"],
+        ),
         # The form comes from the auxiliaries: to be chosen is an infinitive
         (
             ["She", "wants", "to", "be", "chosen"],
@@ -1160,6 +1179,19 @@ def test_infinitive_clause_in_a_loop():
     )
     assert not is_infinitive_clause(doc[2]) and not is_clause_head(doc[2])
     assert not is_clause_head(doc[1])
+
+
+def test_long_chain_of_infinitives_and_conjuncts():
+    # Each infinitive completes a conjunct of the infinitive before it
+    n = 1001
+    doc = parse(
+        ["go"] * n,
+        [0, *range(n - 1)],
+        ["ROOT", *("xcomp" if i % 2 else "conj" for i in range(1, n))],
+        ["VerbForm=Fin", *["VerbForm=Inf"] * (n - 1)],
+        pos=["VERB"] * n,
+    )
+    assert is_clause_head(doc[n - 1]) and is_clause_head(doc[n - 2])
 
 
 def test_infinitive_periphrasis_hook():
