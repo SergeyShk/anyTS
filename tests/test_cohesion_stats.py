@@ -475,6 +475,7 @@ def test_cohesion_stats_counts():
     # cat, sit, mat | see, bird | however, bird, cat, sleep: bird and cat are given
     assert (stats.n_content_words, stats.n_given) == (9, 2)
     assert stats.n_connectors == 0 and stats.connector_spans == () and stats.c_connectors == {}
+    assert stats.n_inter_connectors == 0
 
 
 def test_cohesion_stats_metrics():
@@ -505,6 +506,9 @@ def test_connectors():
     assert stats.c_connectors == {"and": 1, "however": 1}
     per_1000 = 1000 / 17
     assert stats.connectors == 2 * per_1000
+    # However opens its sentence and links it to the ones before; and is inside
+    assert stats.n_inter_connectors == 1
+    assert stats.connectors_inter == stats.connectors_intra == per_1000
     assert stats.connectors_adversative == stats.connectors_additive == per_1000
     assert stats.connectors_primary == stats.connectors_secondary == per_1000
     assert stats.connectors_causal == 0
@@ -538,6 +542,26 @@ def test_connectors_read_once_for_a_class():
     assert type(Child.connector_matcher()) is Own
     assert type(Counted.connector_matcher()) is ConnectorMatcher
     assert calls == [Counted, Child]
+
+
+def test_a_subordinating_conjunction_opening_a_sentence_is_intra_sentential():
+    class Subordinating(CohesionStats):
+        @classmethod
+        def load_connectors(cls):
+            return {"when": ("temporal", "primary"), "however": ("adversative", "secondary")}
+
+    # When it saw this bird however : the clause of when belongs to its sentence
+    doc = Doc(
+        VOCAB,
+        words=["When", "it", "saw", "this", "bird", "However", "it", "slept"],
+        pos=["SCONJ", "PRON", "VERB", "DET", "NOUN", "ADV", "PRON", "VERB"],
+        lemmas=["when", "it", "see", "this", "bird", "however", "it", "sleep"],
+        sent_starts=[True, False, False, False, False, True, False, False],
+    )
+    stats = Subordinating(doc)
+    assert [connector.start for connector in stats.connector_spans] == [0, 0]
+    assert stats.n_inter_connectors == 1
+    assert stats.connectors_inter == stats.connectors_intra == 1000 / 8
 
 
 def test_densities_by_the_classes_of_the_matcher():

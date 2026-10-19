@@ -52,6 +52,7 @@ The parameters of a library - its model of a string, its word extractor - go to 
 | `n_nouns`, `n_pronouns`, `n_demonstratives`, `n_content_words` | int | Numbers of the words by kind |
 | `n_given` | int | Number of the content words whose lemma was used before |
 | `n_connectors`, `connector_spans`, `c_connectors` | int, tuple[Connector], dict[str, int] | Number of the connectors, their occurrences and their number by connector |
+| `n_inter_connectors` | int | Number of the inter-sentential connectors |
 | `noun_overlap_adjacent`, `noun_overlap_all` | float | Shares of the adjacent and of all pairs of sentences sharing a noun |
 | `argument_overlap_adjacent`, `argument_overlap_all` | float | The same for a noun or a pronoun |
 | `content_overlap_adjacent`, `content_overlap_all` | float | The same for a content word |
@@ -62,6 +63,7 @@ The parameters of a library - its model of a string, its word extractor - go to 
 | `tense_repetition`, `mood_repetition`, `aspect_repetition` | float | Shares of the adjacent pairs of sentences with the same dominant tense, mood and aspect |
 | `temporal_cohesion` | float | Mean of the repetitions of `temporal_features` |
 | `connectors` | float | Connectors per 1000 words |
+| `connectors_inter`, `connectors_intra` | float | Inter-sentential connectors per 1000 words, which link a sentence to the ones before: those opening a sentence, unless their first word is a subordinating conjunction (`SCONJ`, *when he came, ...*), whose clause belongs to the same sentence; and intra-sentential ones, the others |
 | `connectors_<class>`, `connectors_<kind>` | float | Connectors of every class and kind of the matcher per 1000 words: `connectors_causal`, `connectors_adversative`, `connectors_concessive`, `connectors_temporal`, `connectors_additive`, `connectors_conditional`, `connectors_reformulative`, `connectors_primary` and `connectors_secondary` by default |
 
 An overlap of a text of one sentence, a repetition without two adjacent sentences with the feature, and a share without anything to divide by are `nan`.

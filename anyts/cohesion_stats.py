@@ -389,6 +389,8 @@ class CohesionStats(Stats):
         n_content_words (int): Number of content words
         n_given (int): Number of content words whose lemma was used before
         n_connectors (int): Number of connectors
+        n_inter_connectors (int): Number of the connectors linking a sentence to the
+            ones before
         connector_spans (tuple[Connector]): Occurrences of the connectors
         c_connectors (dict[str, int]): Number of the occurrences by connector
         noun_overlap_adjacent (float): Share of adjacent pairs of sentences sharing a noun
@@ -410,6 +412,11 @@ class CohesionStats(Stats):
         aspect_repetition (float): The same for the aspect
         temporal_cohesion (float): Mean of the repetitions of temporal_features
         connectors (float): Connectors per 1000 words
+        connectors_inter (float): Inter-sentential connectors per 1000 words: those
+            opening a sentence, unless a subordinating conjunction (SCONJ), whose
+            clause belongs to the same sentence
+        connectors_intra (float): Intra-sentential connectors per 1000 words, the
+            others
         connectors_<class>, connectors_<kind> (float): Connectors of every class and
             kind of the matcher per 1000 words: connectors_causal, ...,
             connectors_primary, connectors_secondary by default; a matcher with
@@ -554,6 +561,11 @@ class CohesionStats(Stats):
             for connector in matcher._find(words, index, [word.pos for word in sent])
         )
         self.n_connectors = len(self.connector_spans)
+        self.n_inter_connectors = sum(
+            1
+            for connector in self.connector_spans
+            if connector.start == 0 and sents[connector.sent][0].pos != "SCONJ"
+        )
         self.c_connectors = dict(
             sorted(Counter(connector.text for connector in self.connector_spans).items())
         )
@@ -561,6 +573,8 @@ class CohesionStats(Stats):
         classes = Counter(connector.cls for connector in self.connector_spans)
         kinds = Counter(connector.kind for connector in self.connector_spans)
         self.connectors = self.n_connectors * per_1000
+        self.connectors_inter = self.n_inter_connectors * per_1000
+        self.connectors_intra = (self.n_connectors - self.n_inter_connectors) * per_1000
         for name in matcher.classes:
             setattr(self, f"connectors_{name}", classes[name] * per_1000)
         for name in matcher.kinds:
