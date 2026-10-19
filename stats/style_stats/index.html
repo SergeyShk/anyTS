@@ -16,7 +16,7 @@
         <link rel="prev" href="../lexical_stats/">
       
       
-        <link rel="next" href="../style_stats_funcs/">
+        <link rel="next" href="../phon_stats/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Metrics module - anyTS</title>
+        <title>Style metrics - anyTS</title>
       
     
     
@@ -48,8 +48,8 @@
         
         
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
-        <style>:root{--md-text-font:"Source Sans Pro";--md-code-font:"Roboto Mono"}</style>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,300i,400,400i,700,700i%7CSource+Code+Pro:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Source Sans Pro";--md-code-font:"Source Code Pro"}</style>
       
     
     
@@ -65,6 +65,8 @@
   
   
     
+    
+      
     
     
     
@@ -112,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Metrics module
+              Style metrics
             
           </span>
         </div>
@@ -120,7 +122,33 @@
     </div>
     
       
+        <form class="md-header__option" data-md-component="palette">
+  
     
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal"  aria-label="Dark theme"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Dark theme" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="teal"  aria-label="Light theme"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Light theme" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
     
     
     
@@ -148,6 +176,8 @@
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
         </button>
       </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
       
     </form>
     <div class="md-search__output">
@@ -795,56 +825,6 @@
   
   
   
-    
-    
-    
-    
-      
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" >
-        
-          
-          <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Lexical diversity metrics
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_2">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Lexical diversity metrics
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
     <li class="md-nav__item">
       <a href="../diversity_stats/" class="md-nav__link">
         
@@ -853,7 +833,7 @@
   <span class="md-ellipsis">
     
   
-    Metrics module
+    Lexical diversity metrics
   
 
     
@@ -862,42 +842,6 @@
   
 
       </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../diversity_stats_funcs/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Metric functions
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
     </li>
   
 
@@ -937,56 +881,6 @@
   
   
   
-    
-    
-    
-    
-      
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4" >
-        
-          
-          <label class="md-nav__link" for="__nav_3_4" id="__nav_3_4_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Readability metrics
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_4">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Readability metrics
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
     <li class="md-nav__item">
       <a href="../readability_stats/" class="md-nav__link">
         
@@ -995,7 +889,7 @@
   <span class="md-ellipsis">
     
   
-    Metrics module
+    Readability metrics
   
 
     
@@ -1008,92 +902,6 @@
   
 
               
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../readability_stats_funcs/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Metric functions
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-    
-    
-      
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_5" >
-        
-          
-          <label class="md-nav__link" for="__nav_3_5" id="__nav_3_5_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Cohesion statistics
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_5_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_5">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Cohesion statistics
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
             
               
                 
@@ -1109,7 +917,7 @@
   <span class="md-ellipsis">
     
   
-    Metrics module
+    Cohesion statistics
   
 
     
@@ -1122,92 +930,6 @@
   
 
               
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../cohesion_stats_funcs/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Metric functions
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-    
-    
-      
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_6" >
-        
-          
-          <label class="md-nav__link" for="__nav_3_6" id="__nav_3_6_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Syntactic statistics
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_6_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_6">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Syntactic statistics
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
             
               
                 
@@ -1223,7 +945,7 @@
   <span class="md-ellipsis">
     
   
-    Metrics module
+    Syntactic statistics
   
 
     
@@ -1232,42 +954,6 @@
   
 
       </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../syntax_stats_funcs/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Metric functions
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
     </li>
   
 
@@ -1309,58 +995,6 @@
   
   
   
-    
-    
-    
-    
-      
-      
-    
-    
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_8" checked>
-        
-          
-          <label class="md-nav__link" for="__nav_3_8" id="__nav_3_8_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Style metrics
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_8_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_3_8">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Style metrics
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-    
-  
-  
-  
     <li class="md-nav__item md-nav__item--active">
       
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
@@ -1376,7 +1010,7 @@
   <span class="md-ellipsis">
     
   
-    Metrics module
+    Style metrics
   
 
     
@@ -1394,7 +1028,7 @@
   <span class="md-ellipsis">
     
   
-    Metrics module
+    Style metrics
   
 
     
@@ -1420,28 +1054,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#description" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Description
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#language-hooks" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Language hooks
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#parameters" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1464,22 +1076,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#methods" class="md-nav__link">
+  <a href="#metrics" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Methods
+        Metrics
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Methods">
+    <nav class="md-nav" aria-label="Metrics">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#keyword_density-nausea_words" class="md-nav__link">
+  <a href="#classic_nausea" class="md-nav__link">
     <span class="md-ellipsis">
       
-        keyword_density, nausea_words
+        Classic nausea
       
     </span>
   </a>
@@ -1487,10 +1099,87 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#markers" class="md-nav__link">
+  <a href="#academic_nausea" class="md-nav__link">
     <span class="md-ellipsis">
       
-        markers
+        Academic nausea
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#water" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Water content
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#spam" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Spam score
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#zipf_naturalness" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Naturalness by Zipf's law
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verbal_nouns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verbal nouns
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phrase_density" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Compound prepositions and cliches
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#parentheticals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parenthetical expressions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#keyword_density" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Keyword density
       
     </span>
   </a>
@@ -1503,10 +1192,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#metric-functions" class="md-nav__link">
+  <a href="#methods" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Metric functions
+        Methods
       
     </span>
   </a>
@@ -1514,10 +1203,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#usage-example" class="md-nav__link">
+  <a href="#hooks" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Usage example
+        For library developers
       
     </span>
   </a>
@@ -1540,92 +1229,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../style_stats_funcs/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Metric functions
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-    
-    
-      
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_9" >
-        
-          
-          <label class="md-nav__link" for="__nav_3_9" id="__nav_3_9_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phonetic statistics
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_9_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_9">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Phonetic statistics
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../phon_stats/" class="md-nav__link">
         
   
@@ -1633,7 +1236,7 @@
   <span class="md-ellipsis">
     
   
-    Metrics module
+    Phonetic statistics
   
 
     
@@ -1642,42 +1245,6 @@
   
 
       </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../phon_stats_funcs/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Metric functions
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
     </li>
   
 
@@ -2530,28 +2097,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#description" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Description
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#language-hooks" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Language hooks
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#parameters" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2574,22 +2119,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#methods" class="md-nav__link">
+  <a href="#metrics" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Methods
+        Metrics
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Methods">
+    <nav class="md-nav" aria-label="Metrics">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#keyword_density-nausea_words" class="md-nav__link">
+  <a href="#classic_nausea" class="md-nav__link">
     <span class="md-ellipsis">
       
-        keyword_density, nausea_words
+        Classic nausea
       
     </span>
   </a>
@@ -2597,10 +2142,87 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#markers" class="md-nav__link">
+  <a href="#academic_nausea" class="md-nav__link">
     <span class="md-ellipsis">
       
-        markers
+        Academic nausea
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#water" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Water content
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#spam" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Spam score
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#zipf_naturalness" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Naturalness by Zipf's law
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verbal_nouns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verbal nouns
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phrase_density" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Compound prepositions and cliches
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#parentheticals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parenthetical expressions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#keyword_density" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Keyword density
       
     </span>
   </a>
@@ -2613,10 +2235,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#metric-functions" class="md-nav__link">
+  <a href="#methods" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Metric functions
+        Methods
       
     </span>
   </a>
@@ -2624,10 +2246,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#usage-example" class="md-nav__link">
+  <a href="#hooks" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Usage example
+        For library developers
       
     </span>
   </a>
@@ -2655,149 +2277,100 @@
 
 
 <h1 id="style-metrics">Style metrics<a class="headerlink" href="#style-metrics" title="Permanent link">&para;</a></h1>
-<div class="admonition info">
-<p><strong>anyts.style_stats.StyleStats</strong></p>
-</div>
-<h2 id="description">Description<a class="headerlink" href="#description" title="Permanent link">&para;</a></h2>
+<div class="signature highlight"><pre><span></span><code><span class="n">StyleStats</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">words_extractor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">stopwords</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">top_n</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">cliches</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">nausea_stopwords</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+</code></pre></div>
 <!-- --8<-- [start:StyleStats] -->
-<p>The style metrics of a text: the SEO metrics of Advego and Text.ru - the classic and the academic nausea, the water content, the spam score, the naturalness by Zipf's law and the keyword density - and the markers of the officialese style: the verbal nouns, the compound prepositions, the parenthetical expressions and the cliches. The services publish no formulas, so the common definitions are taken, as the metric functions give them. The data source is a text or a <code>Doc</code> object of <a href="https://github.com/explosion/spaCy">spaCy</a>.</p>
+<p>The style metrics of a text: the SEO metrics of Advego and Text.ru and the markers of the officialese style. The services publish no formulas, so the common definitions are taken. The data source is a text or a <code>Doc</code> object of <a href="https://github.com/explosion/spaCy">spaCy</a>.</p>
 <p>The SEO metrics are counted on the words of the word extractor, in lower case by default, or on the tokens of a <code>Doc</code>; an extractor passed explicitly is used on the text of a <code>Doc</code>. The markers are counted on the word forms in lower case (<code>forms</code>), whatever the extractor.</p>
-<p>A source that is neither a string nor a <code>Doc</code>, an extractor of another type and a list that is not a list of strings raise <code>SourceTypeError</code>, a source without words <code>SourceError</code>, a <code>top_n</code> that is not an integer of at least one <code>ParameterError</code>.</p>
+<p>Raises:</p>
+<ul>
+<li><code>SourceTypeError</code> - a source that is neither a string nor a <code>Doc</code>, an extractor of another type, a list that is not a list of strings;</li>
+<li><code>SourceError</code> - a source without words;</li>
+<li><code>ParameterError</code> - a <code>top_n</code> that is not an integer of at least one.</li>
+</ul>
 <!-- --8<-- [end:StyleStats] -->
 
-<h2 id="language-hooks">Language hooks<a class="headerlink" href="#language-hooks" title="Permanent link">&para;</a></h2>
-<!-- --8<-- [start:StyleStats-hooks] -->
-<p>A language library subclasses <code>StyleStats</code>; by default the hooks know no language, so there are no stopwords, water, markers or verbal nouns:</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: center;">Hook</th>
-<th style="text-align: center;">Kind</th>
-<th style="text-align: center;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: center;"><code>words_extractor_class</code></td>
-<td style="text-align: center;">class attribute</td>
-<td style="text-align: center;">Word extractor of a string and of the forms; <code>WordsExtractor</code> by default</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>join_hyphens</code></td>
-<td style="text-align: center;">class attribute</td>
-<td style="text-align: center;">Join the parts of the hyphenated words of a <code>Doc</code></td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>compound_prepositions_list</code>, <code>parentheticals_list</code>, <code>cliches_list</code></td>
-<td style="text-align: center;">class attributes</td>
-<td style="text-align: center;">Compound prepositions, parenthetical expressions and cliches, checked as lists of strings when the class is defined; the parameter <code>cliches</code> replaces the last</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>normalize(word)</code></td>
-<td style="text-align: center;">method</td>
-<td style="text-align: center;">Normalized form of a word or a phrase, by which the lists and the keywords are compared; the lower case by default</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>doc_words(doc)</code></td>
-<td style="text-align: center;">method</td>
-<td style="text-align: center;">Words of a <code>Doc</code>; the words of <code>iter_doc_words</code> in lower case by default</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>is_stopword(word)</code></td>
-<td style="text-align: center;">method</td>
-<td style="text-align: center;">Whether a word is a stopword of the academic nausea, when <code>nausea_stopwords</code> is not given</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>is_water_word(word)</code></td>
-<td style="text-align: center;">method</td>
-<td style="text-align: center;">Whether a word is water, when <code>stopwords</code> is not given; <code>is_stopword</code> by default</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>is_parenthetical(word)</code></td>
-<td style="text-align: center;">method</td>
-<td style="text-align: center;">Whether a word is a parenthetical expression by itself, outside the phrases of <code>parentheticals_list</code></td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>expand_phrases(text, phrases)</code></td>
-<td style="text-align: center;">method</td>
-<td style="text-align: center;">Variants of the phrases in the forms of a text (the forms of a verb, contractions), each with its phrase</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>nouns()</code></td>
-<td style="text-align: center;">method</td>
-<td style="text-align: center;">Word forms of the nouns with their lemmas; none by default, so the share of the verbal nouns is <code>nan</code></td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>is_verbal_noun(lemma)</code></td>
-<td style="text-align: center;">method</td>
-<td style="text-align: center;">Whether the lemma of a noun is a verbal noun</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>level_scales</code></td>
-<td style="text-align: center;">class attribute</td>
-<td style="text-align: center;">Norms of the services by metric for <code>describe</code></td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>stats_desc</code>, <code>stats_headers</code></td>
-<td style="text-align: center;">class attributes</td>
-<td style="text-align: center;">Metrics of <code>get_stats</code> with their descriptions (<code>anyts.constants.STYLE_STATS_DESC</code> by default), headers of the columns for <code>print_stats</code></td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>messages</code></td>
-<td style="text-align: center;">class attribute</td>
-<td style="text-align: center;">Messages of the errors by key; <code>MESSAGES</code> by default</td>
-</tr>
-</tbody>
-</table>
-<!-- --8<-- [end:StyleStats-hooks] -->
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Code</label><label for="__tabbed_1_2">Result</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts.style_stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">StyleStats</span>
 
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Style</span><span class="p">(</span><span class="n">StyleStats</span><span class="p">):</span>
+    <span class="n">cliches_list</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"make a decision"</span><span class="p">,)</span>
+    <span class="n">parentheticals_list</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"of course"</span><span class="p">,)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_stopword</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">word</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">word</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">"the"</span><span class="p">,</span> <span class="s2">"and"</span><span class="p">,</span> <span class="s2">"a"</span><span class="p">,</span> <span class="s2">"to"</span><span class="p">,</span> <span class="s2">"will"</span><span class="p">,</span> <span class="s2">"of"</span><span class="p">}</span>
+
+
+<span class="n">style</span> <span class="o">=</span> <span class="n">Style</span><span class="p">(</span><span class="s2">"Of course the board will make a decision and the board will vote"</span><span class="p">)</span>
+<span class="n">style</span><span class="o">.</span><span class="n">print_stats</span><span class="p">()</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>                  Metric                  |  Value
+-----------------------------------------------------
+Classic nausea                            |   1.41
+Academic nausea (%)                       |  46.15
+Water content (%)                         |  53.85
+Spam score (%)                            |  23.08
+Naturalness by Zipf's law (%)             |   0.00
+Verbal nouns (% of nouns)                 |   nan
+Compound prepositions (per 100 words)     |   0.00
+Parenthetical expressions (per 100 words) |   7.69
+Officialese cliches (per 100 words)       |   7.69
+</code></pre></div>
+</div>
+</div>
+</div>
 <h2 id="parameters">Parameters<a class="headerlink" href="#parameters" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:StyleStats-parameters] -->
 <table>
 <thead>
 <tr>
-<th style="text-align: center;">Parameter</th>
-<th style="text-align: center;">Type</th>
-<th style="text-align: center;">Default</th>
-<th style="text-align: center;">Description</th>
+<th style="text-align: left;">Parameter</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Default</th>
+<th style="text-align: left;">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;"><code>source</code></td>
-<td style="text-align: center;">str/Doc</td>
-<td style="text-align: center;"><code>-</code></td>
-<td style="text-align: center;">Data source</td>
+<td style="text-align: left;"><code>source</code></td>
+<td style="text-align: left;"><code>str</code> / <code>Doc</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Data source</td>
 </tr>
 <tr>
-<td style="text-align: center;"><code>words_extractor</code></td>
-<td style="text-align: center;">WordsExtractor</td>
-<td style="text-align: center;"><code>None</code></td>
-<td style="text-align: center;">Word extraction tool; used for a <code>Doc</code> too, on its text</td>
+<td style="text-align: left;"><code>words_extractor</code></td>
+<td style="text-align: left;"><code>WordsExtractor</code></td>
+<td style="text-align: left;"><code>None</code></td>
+<td style="text-align: left;">Word extraction tool; used for a <code>Doc</code> too, on its text</td>
 </tr>
 <tr>
-<td style="text-align: center;"><code>stopwords</code></td>
-<td style="text-align: center;">list[str]</td>
-<td style="text-align: center;"><code>None</code></td>
-<td style="text-align: center;">Words of water; without them <code>is_water_word</code> decides</td>
+<td style="text-align: left;"><code>stopwords</code></td>
+<td style="text-align: left;"><code>list[str]</code></td>
+<td style="text-align: left;"><code>None</code></td>
+<td style="text-align: left;">Words of water; without them <code>is_water_word</code> decides</td>
 </tr>
 <tr>
-<td style="text-align: center;"><code>top_n</code></td>
-<td style="text-align: center;">int</td>
-<td style="text-align: center;"><code>10</code></td>
-<td style="text-align: center;">Number of the most frequent words of the academic nausea and the naturalness by Zipf's law (<code>NAUSEA_TOP_N</code>)</td>
+<td style="text-align: left;"><code>top_n</code></td>
+<td style="text-align: left;"><code>int</code></td>
+<td style="text-align: left;"><code>10</code></td>
+<td style="text-align: left;">Number of the most frequent words of the academic nausea and the naturalness by Zipf's law (<code>NAUSEA_TOP_N</code>)</td>
 </tr>
 <tr>
-<td style="text-align: center;"><code>cliches</code></td>
-<td style="text-align: center;">list[str]</td>
-<td style="text-align: center;"><code>None</code></td>
-<td style="text-align: center;">Cliches; <code>cliches_list</code> of the class by default</td>
+<td style="text-align: left;"><code>cliches</code></td>
+<td style="text-align: left;"><code>list[str]</code></td>
+<td style="text-align: left;"><code>None</code></td>
+<td style="text-align: left;">Cliches; <code>cliches_list</code> of the class by default</td>
 </tr>
 <tr>
-<td style="text-align: center;"><code>nausea_stopwords</code></td>
-<td style="text-align: center;">list[str]</td>
-<td style="text-align: center;"><code>None</code></td>
-<td style="text-align: center;">Stopwords of the academic nausea; without them <code>is_stopword</code> decides</td>
+<td style="text-align: left;"><code>nausea_stopwords</code></td>
+<td style="text-align: left;"><code>list[str]</code></td>
+<td style="text-align: left;"><code>None</code></td>
+<td style="text-align: left;">Stopwords of the academic nausea; without them <code>is_stopword</code> decides</td>
 </tr>
 </tbody>
 </table>
@@ -2809,106 +2382,633 @@
 <table>
 <thead>
 <tr>
-<th style="text-align: center;">Attribute</th>
-<th style="text-align: center;">Type</th>
-<th style="text-align: center;">Description</th>
+<th style="text-align: left;">Attribute</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;"><code>words</code></td>
-<td style="text-align: center;">tuple[str]</td>
-<td style="text-align: center;">Words of the SEO metrics</td>
+<td style="text-align: left;"><code>words</code></td>
+<td style="text-align: left;"><code>tuple[str]</code></td>
+<td style="text-align: left;">Words of the SEO metrics</td>
 </tr>
 <tr>
-<td style="text-align: center;"><code>forms</code></td>
-<td style="text-align: center;">tuple[str]</td>
-<td style="text-align: center;">Word forms in lower case, of the markers</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>classic_nausea</code></td>
-<td style="text-align: center;">float</td>
-<td style="text-align: center;">Classic nausea</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>academic_nausea</code></td>
-<td style="text-align: center;">float</td>
-<td style="text-align: center;">Academic nausea in percent</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>water</code></td>
-<td style="text-align: center;">float</td>
-<td style="text-align: center;">Water content in percent</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>spam</code></td>
-<td style="text-align: center;">float</td>
-<td style="text-align: center;">Spam score in percent</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>zipf_naturalness</code></td>
-<td style="text-align: center;">float</td>
-<td style="text-align: center;">Naturalness by Zipf's law in percent</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>verbal_nouns</code></td>
-<td style="text-align: center;">float</td>
-<td style="text-align: center;">Share of the verbal nouns among the nouns in percent</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>compound_prepositions</code></td>
-<td style="text-align: center;">float</td>
-<td style="text-align: center;">Compound prepositions per 100 words</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>parentheticals</code></td>
-<td style="text-align: center;">float</td>
-<td style="text-align: center;">Parenthetical expressions per 100 words</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>cliches</code></td>
-<td style="text-align: center;">float</td>
-<td style="text-align: center;">Cliches per 100 words</td>
+<td style="text-align: left;"><code>forms</code></td>
+<td style="text-align: left;"><code>tuple[str]</code></td>
+<td style="text-align: left;">Word forms in lower case, of the markers</td>
 </tr>
 </tbody>
 </table>
-<p>The metrics are properties computed on each access. A parenthetical expression is a phrase of <code>parentheticals_list</code> or a word of <code>is_parenthetical</code> outside those phrases; the phrases of the three lists are found with their variants (<code>expand_phrases</code>).</p>
+<p>The metrics are properties computed on each access.</p>
 <!-- --8<-- [end:StyleStats-attributes] -->
 
+<h2 id="metrics">Metrics<a class="headerlink" href="#metrics" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:StyleStats-metrics] -->
+<p><code>get_stats</code> gives all the metrics. A metric is computed by the function of its card on <code>words</code> or <code>forms</code> with the hooks of the class.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Metric</th>
+<th style="text-align: left;">Measures</th>
+<th style="text-align: left;">Range</th>
+<th style="text-align: left;">Higher means</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><a href="#classic_nausea"><code>classic_nausea</code></a></td>
+<td style="text-align: left;">Repetition of the most frequent word</td>
+<td style="text-align: left;">0 and above, grows with the text</td>
+<td style="text-align: left;">One word pressed harder</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a href="#academic_nausea"><code>academic_nausea</code></a></td>
+<td style="text-align: left;">Share of the most frequent significant words</td>
+<td style="text-align: left;">0-100 %</td>
+<td style="text-align: left;">A narrower vocabulary</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a href="#water"><code>water</code></a></td>
+<td style="text-align: left;">Share of the words without content</td>
+<td style="text-align: left;">0-100 %</td>
+<td style="text-align: left;">Less content per word</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a href="#spam"><code>spam</code></a></td>
+<td style="text-align: left;">Share of the repeated words</td>
+<td style="text-align: left;">0-100 %</td>
+<td style="text-align: left;">More repetition</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a href="#zipf_naturalness"><code>zipf_naturalness</code></a></td>
+<td style="text-align: left;">Agreement of the top frequencies with Zipf's law</td>
+<td style="text-align: left;">0-100 %, <code>nan</code> without ranks to compare</td>
+<td style="text-align: left;">Closer to a natural text</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a href="#verbal_nouns"><code>verbal_nouns</code></a></td>
+<td style="text-align: left;">Share of the verbal nouns among the nouns</td>
+<td style="text-align: left;">0-100 %, <code>nan</code> without nouns</td>
+<td style="text-align: left;">A more nominal style</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a href="#phrase_density"><code>compound_prepositions</code></a></td>
+<td style="text-align: left;">Compound prepositions per 100 words</td>
+<td style="text-align: left;">0-100</td>
+<td style="text-align: left;">More officialese</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a href="#parentheticals"><code>parentheticals</code></a></td>
+<td style="text-align: left;">Parenthetical expressions per 100 words</td>
+<td style="text-align: left;">0-100</td>
+<td style="text-align: left;">More insertions</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a href="#phrase_density"><code>cliches</code></a></td>
+<td style="text-align: left;">Cliches per 100 words</td>
+<td style="text-align: left;">0-100</td>
+<td style="text-align: left;">More cliches</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:StyleStats-metrics] -->
+
+<div class="metric-card">
+<h3 id="classic_nausea">Classic nausea<a class="headerlink" href="#classic_nausea" title="Permanent link">&para;</a></h3>
+<p class="metric-meta"><code>classic_nausea</code> · <a href="https://advego.com/text/seo/">Advego</a></p>
+<!-- --8<-- [start:calc_classic_nausea] -->
+<div class="signature highlight"><pre><span></span><code><span class="n">calc_classic_nausea</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+</code></pre></div>
+<p>How much one word is pressed: the square root of the occurrences <span class="arithmatex">\(f_1\)</span> of the most frequent word. The value is not corrected for the length of the text, so it grows with the text; no words give 0.</p>
+<div class="arithmatex">\[
+\sqrt{f_1}
+\]</div>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Parameter</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Default</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>text</code></td>
+<td style="text-align: left;"><code>list[str]</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">List of words</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:calc_classic_nausea] -->
+</div>
+<div class="metric-card">
+<h3 id="academic_nausea">Academic nausea<a class="headerlink" href="#academic_nausea" title="Permanent link">&para;</a></h3>
+<p class="metric-meta"><code>academic_nausea</code> · <code>nausea_words()</code> · <a href="https://advego.com/text/seo/">Advego</a></p>
+<!-- --8<-- [start:calc_academic_nausea] -->
+<div class="signature highlight"><pre><span></span><code><span class="n">calc_academic_nausea</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">top_n</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">stopwords</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">is_stopword</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="nb">str</span><span class="o">.</span><span class="n">lower</span><span class="p">,</span> <span class="n">messages</span><span class="o">=</span><span class="n">MESSAGES</span><span class="p">)</span>
+</code></pre></div>
+<p>The share of the occurrences of the <code>top_n</code> most frequent significant words among all the words, in percent. Without the stopwords the most frequent words of any text would be its conjunctions and prepositions.</p>
+<div class="arithmatex">\[
+100 \cdot \frac{\sum_{w \in \textrm{top}_n} f_w}{\textrm{Number of words}}
+\]</div>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Parameter</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Default</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>text</code></td>
+<td style="text-align: left;"><code>list[str]</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">List of words</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>top_n</code></td>
+<td style="text-align: left;"><code>int</code></td>
+<td style="text-align: left;"><code>10</code></td>
+<td style="text-align: left;">Number of the most frequent words (<code>NAUSEA_TOP_N</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>stopwords</code></td>
+<td style="text-align: left;"><code>list[str]</code></td>
+<td style="text-align: left;"><code>None</code></td>
+<td style="text-align: left;">Stopwords</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>is_stopword</code></td>
+<td style="text-align: left;"><code>Callable</code></td>
+<td style="text-align: left;"><code>None</code></td>
+<td style="text-align: left;">Whether a word is a stopword, without the list</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>normalize</code></td>
+<td style="text-align: left;"><code>Callable</code></td>
+<td style="text-align: left;"><code>str.lower</code></td>
+<td style="text-align: left;">Normalized form of a word</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>messages</code></td>
+<td style="text-align: left;"><code>dict[str, str]</code></td>
+<td style="text-align: left;"><code>MESSAGES</code></td>
+<td style="text-align: left;">Messages of the errors by key</td>
+</tr>
+</tbody>
+</table>
+<p>A <code>top_n</code> that is not an integer of at least one raises <code>ParameterError</code>.</p>
+<!-- --8<-- [end:calc_academic_nausea] -->
+<!-- --8<-- [start:find_nausea_words] -->
+<div class="signature highlight"><pre><span></span><code><span class="n">find_nausea_words</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">top_n</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">stopwords</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">is_stopword</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="nb">str</span><span class="o">.</span><span class="n">lower</span><span class="p">,</span> <span class="n">messages</span><span class="o">=</span><span class="n">MESSAGES</span><span class="p">)</span>
+</code></pre></div>
+<p>The <code>top_n</code> most frequent words without the stopwords, those the academic nausea counts, with their occurrences: the most frequent first, words of equal frequency in the order of the text. A stopword is a word of <code>stopwords</code> by its normalized form or, without the list, a word <code>is_stopword</code> accepts; without both there are no stopwords.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Parameter</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Default</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>text</code></td>
+<td style="text-align: left;"><code>list[str]</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">List of words</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>top_n</code></td>
+<td style="text-align: left;"><code>int</code></td>
+<td style="text-align: left;"><code>10</code></td>
+<td style="text-align: left;">Number of the most frequent words (<code>NAUSEA_TOP_N</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>stopwords</code></td>
+<td style="text-align: left;"><code>list[str]</code></td>
+<td style="text-align: left;"><code>None</code></td>
+<td style="text-align: left;">Stopwords</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>is_stopword</code></td>
+<td style="text-align: left;"><code>Callable</code></td>
+<td style="text-align: left;"><code>None</code></td>
+<td style="text-align: left;">Whether a word is a stopword, without the list</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>normalize</code></td>
+<td style="text-align: left;"><code>Callable</code></td>
+<td style="text-align: left;"><code>str.lower</code></td>
+<td style="text-align: left;">Normalized form of a word</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>messages</code></td>
+<td style="text-align: left;"><code>dict[str, str]</code></td>
+<td style="text-align: left;"><code>MESSAGES</code></td>
+<td style="text-align: left;">Messages of the errors by key</td>
+</tr>
+</tbody>
+</table>
+<p>A <code>top_n</code> that is not an integer of at least one raises <code>ParameterError</code>.</p>
+<!-- --8<-- [end:find_nausea_words] -->
+</div>
+<div class="metric-card">
+<h3 id="water">Water content<a class="headerlink" href="#water" title="Permanent link">&para;</a></h3>
+<p class="metric-meta"><code>water</code> · <a href="https://text.ru/seo">Text.ru</a></p>
+<!-- --8<-- [start:calc_water] -->
+<div class="signature highlight"><pre><span></span><code><span class="n">calc_water</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">stopwords</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">is_water_word</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="nb">str</span><span class="o">.</span><span class="n">lower</span><span class="p">)</span>
+</code></pre></div>
+<p>The share of the words without content, in percent: the words of <code>stopwords</code> by their normalized forms or, without the list, those <code>is_water_word</code> accepts.</p>
+<div class="arithmatex">\[
+100 \cdot \frac{\textrm{Number of water words}}{\textrm{Number of words}}
+\]</div>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Parameter</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Default</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>text</code></td>
+<td style="text-align: left;"><code>list[str]</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">List of words</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>stopwords</code></td>
+<td style="text-align: left;"><code>list[str]</code></td>
+<td style="text-align: left;"><code>None</code></td>
+<td style="text-align: left;">Words of water</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>is_water_word</code></td>
+<td style="text-align: left;"><code>Callable</code></td>
+<td style="text-align: left;"><code>None</code></td>
+<td style="text-align: left;">Whether a word is water, without the list</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>normalize</code></td>
+<td style="text-align: left;"><code>Callable</code></td>
+<td style="text-align: left;"><code>str.lower</code></td>
+<td style="text-align: left;">Normalized form of a word</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:calc_water] -->
+</div>
+<div class="metric-card">
+<h3 id="spam">Spam score<a class="headerlink" href="#spam" title="Permanent link">&para;</a></h3>
+<p class="metric-meta"><code>spam</code> · <a href="https://text.ru/seo">Text.ru</a></p>
+<!-- --8<-- [start:calc_spam] -->
+<div class="signature highlight"><pre><span></span><code><span class="n">calc_spam</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+</code></pre></div>
+<p>The share of the repeated words in percent: every occurrence of a word after the first.</p>
+<div class="arithmatex">\[
+100 \cdot \left(1 - \frac{\textrm{Number of lexemes}}{\textrm{Number of words}}\right)
+\]</div>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Parameter</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Default</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>text</code></td>
+<td style="text-align: left;"><code>list[str]</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">List of words</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:calc_spam] -->
+</div>
+<div class="metric-card">
+<h3 id="zipf_naturalness">Naturalness by Zipf's law<a class="headerlink" href="#zipf_naturalness" title="Permanent link">&para;</a></h3>
+<p class="metric-meta"><code>zipf_naturalness</code></p>
+<!-- --8<-- [start:calc_zipf_naturalness] -->
+<div class="signature highlight"><pre><span></span><code><span class="n">calc_zipf_naturalness</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">top_n</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">messages</span><span class="o">=</span><span class="n">MESSAGES</span><span class="p">)</span>
+</code></pre></div>
+<p>The agreement of the frequencies of the most frequent words with the ideal distribution <span class="arithmatex">\(f_r = f_1 / r\)</span>, where <span class="arithmatex">\(r\)</span> is the rank. The first rank is ideal by construction, and above <span class="arithmatex">\(f_1\)</span> the ideal frequency falls below one, so the ranks run from 2 to <span class="arithmatex">\(R = \min(\textrm{top\_n}, V, f_1)\)</span>. Negative values are cut to 0. Without ranks to compare - all the words hapaxes, one lexeme or <code>top_n</code> below 2 - the value is <code>nan</code>.</p>
+<div class="arithmatex">\[
+100 \cdot \left(1 - \frac{1}{R - 1} \sum_{r=2}^{R} \frac{|r \cdot f_r - f_1|}{f_1}\right)
+\]</div>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Parameter</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Default</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>text</code></td>
+<td style="text-align: left;"><code>list[str]</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">List of words</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>top_n</code></td>
+<td style="text-align: left;"><code>int</code></td>
+<td style="text-align: left;"><code>10</code></td>
+<td style="text-align: left;">Number of the most frequent words (<code>NAUSEA_TOP_N</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>messages</code></td>
+<td style="text-align: left;"><code>dict[str, str]</code></td>
+<td style="text-align: left;"><code>MESSAGES</code></td>
+<td style="text-align: left;">Messages of the errors by key</td>
+</tr>
+</tbody>
+</table>
+<p>A <code>top_n</code> that is not an integer of at least one raises <code>ParameterError</code>.</p>
+<!-- --8<-- [end:calc_zipf_naturalness] -->
+</div>
+<div class="metric-card">
+<h3 id="verbal_nouns">Verbal nouns<a class="headerlink" href="#verbal_nouns" title="Permanent link">&para;</a></h3>
+<p class="metric-meta"><code>verbal_nouns</code></p>
+<!-- --8<-- [start:StyleStats-verbal_nouns] -->
+<p>The share of the nouns whose lemma is a verbal noun (<code>is_verbal_noun</code>) among the nouns of the hook <code>nouns</code>, in percent. Without the hooks of a language there are no nouns, and the value is <code>nan</code>.</p>
+<!-- --8<-- [end:StyleStats-verbal_nouns] -->
+</div>
+<div class="metric-card">
+<h3 id="phrase_density">Compound prepositions and cliches<a class="headerlink" href="#phrase_density" title="Permanent link">&para;</a></h3>
+<p class="metric-meta"><code>compound_prepositions</code> · <code>cliches</code></p>
+<!-- --8<-- [start:calc_phrase_density] -->
+<div class="signature highlight"><pre><span></span><code><span class="n">calc_phrase_density</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">phrases</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">expand</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="nb">str</span><span class="o">.</span><span class="n">lower</span><span class="p">)</span>
+</code></pre></div>
+<p>The occurrences of the phrases of a list (<code>find_phrases</code>) per 100 words. The hook <code>expand</code> spells the phrases out in the forms of the text - the forms of a verb, contractions - every variant with its phrase. <code>StyleStats</code> counts its compound prepositions and cliches this way, on <code>forms</code> with <code>expand_phrases</code>.</p>
+<div class="arithmatex">\[
+100 \cdot \frac{\textrm{Number of phrases found}}{\textrm{Number of words}}
+\]</div>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Parameter</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Default</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>text</code></td>
+<td style="text-align: left;"><code>list[str]</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">List of words</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>phrases</code></td>
+<td style="text-align: left;"><code>list[str]</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Phrases, words separated by spaces</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>expand</code></td>
+<td style="text-align: left;"><code>Callable</code></td>
+<td style="text-align: left;"><code>None</code></td>
+<td style="text-align: left;">Variants of the phrases in the text, by the words and the phrases</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>normalize</code></td>
+<td style="text-align: left;"><code>Callable</code></td>
+<td style="text-align: left;"><code>str.lower</code></td>
+<td style="text-align: left;">Normalized form of a word</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:calc_phrase_density] -->
+</div>
+<div class="metric-card">
+<h3 id="parentheticals">Parenthetical expressions<a class="headerlink" href="#parentheticals" title="Permanent link">&para;</a></h3>
+<p class="metric-meta"><code>parentheticals</code></p>
+<!-- --8<-- [start:find_parentheticals] -->
+<div class="signature highlight"><pre><span></span><code><span class="n">find_parentheticals</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">phrases</span><span class="o">=</span><span class="p">(),</span> <span class="o">*</span><span class="p">,</span> <span class="n">is_parenthetical</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">expand</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="nb">str</span><span class="o">.</span><span class="n">lower</span><span class="p">)</span>
+</code></pre></div>
+<p>The parenthetical expressions of a text: the phrases of the list, spelled out by <code>expand</code> as in <code>calc_phrase_density</code>, and the single words accepted by <code>is_parenthetical</code> outside the phrases found. The result is their bounds as slices of the words, in order. <code>StyleStats</code> counts its <code>parentheticals</code> and finds their markers this way, with its hooks.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Parameter</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Default</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>text</code></td>
+<td style="text-align: left;"><code>list[str]</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">List of words</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>phrases</code></td>
+<td style="text-align: left;"><code>list[str]</code></td>
+<td style="text-align: left;"><code>()</code></td>
+<td style="text-align: left;">Parenthetical phrases, words separated by spaces</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>is_parenthetical</code></td>
+<td style="text-align: left;"><code>Callable[[str], bool]</code></td>
+<td style="text-align: left;"><code>None</code></td>
+<td style="text-align: left;">Whether a word is a parenthetical expression by itself; none by default</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>expand</code></td>
+<td style="text-align: left;"><code>Callable</code></td>
+<td style="text-align: left;"><code>None</code></td>
+<td style="text-align: left;">Variants of the phrases in the forms of the text with the phrase of each; the phrases as they are by default</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>normalize</code></td>
+<td style="text-align: left;"><code>Callable[[str], str]</code></td>
+<td style="text-align: left;"><code>str.lower</code></td>
+<td style="text-align: left;">Normalized form of a word and of a phrase</td>
+</tr>
+</tbody>
+</table>
+<p>Words or phrases that are not a list of strings and hooks that cannot be called raise <code>SourceTypeError</code>.</p>
+<!-- --8<-- [end:find_parentheticals] -->
+<!-- --8<-- [start:calc_parentheticals] -->
+<div class="signature highlight"><pre><span></span><code><span class="n">calc_parentheticals</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">phrases</span><span class="o">=</span><span class="p">(),</span> <span class="o">*</span><span class="p">,</span> <span class="n">is_parenthetical</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">expand</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="nb">str</span><span class="o">.</span><span class="n">lower</span><span class="p">)</span>
+</code></pre></div>
+<p>The expressions of <code>find_parentheticals</code> with the same arguments per 100 words.</p>
+<!-- --8<-- [end:calc_parentheticals] -->
+</div>
+<div class="metric-card">
+<h3 id="keyword_density">Keyword density<a class="headerlink" href="#keyword_density" title="Permanent link">&para;</a></h3>
+<p class="metric-meta"><code>keyword_density(*keywords)</code> · <a href="https://text.ru/seo">Text.ru</a></p>
+<!-- --8<-- [start:calc_keyword_density] -->
+<div class="signature highlight"><pre><span></span><code><span class="n">calc_keyword_density</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">keywords</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="nb">str</span><span class="o">.</span><span class="n">lower</span><span class="p">)</span>
+</code></pre></div>
+<p>The occurrences of every keyword per 100 words. A keyword of several words separated by spaces is a sequence of words whose occurrences may overlap. The words and the keywords are compared by their normalized forms, and the keywords of a set come in sorted order.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Parameter</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Default</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>text</code></td>
+<td style="text-align: left;"><code>list[str]</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">List of words</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>keywords</code></td>
+<td style="text-align: left;"><code>list[str]</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Keywords or phrases</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>normalize</code></td>
+<td style="text-align: left;"><code>Callable[[str], str]</code></td>
+<td style="text-align: left;"><code>str.lower</code></td>
+<td style="text-align: left;">Normalized form of a word and of a keyword</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:calc_keyword_density] -->
+</div>
+<p>The functions check their words: words, stopwords, keywords and phrases that are not a list of strings, and hooks that cannot be called, raise <code>SourceTypeError</code>.</p>
 <h2 id="methods">Methods<a class="headerlink" href="#methods" title="Permanent link">&para;</a></h2>
-<h3 id="keyword_density-nausea_words">keyword_density, nausea_words<a class="headerlink" href="#keyword_density-nausea_words" title="Permanent link">&para;</a></h3>
 <!-- --8<-- [start:StyleStats-keyword_density] -->
 <p><code>keyword_density(*keywords)</code> gives the density of keywords and phrases in percent (<code>calc_keyword_density</code> with <code>normalize</code> of the class), <code>nausea_words()</code> the most frequent significant words of the academic nausea with their occurrences (<code>find_nausea_words</code>).</p>
 <!-- --8<-- [end:StyleStats-keyword_density] -->
 
-<h3 id="markers">markers<a class="headerlink" href="#markers" title="Permanent link">&para;</a></h3>
 <!-- --8<-- [start:StyleStats-markers] -->
-<p>Returns the markers of the officialese found by metric - <code>verbal_nouns</code>, <code>compound_prepositions</code>, <code>parentheticals</code>, <code>cliches</code> - as the forms write them, in the order of the text.</p>
+<p><code>markers()</code> returns the markers of the officialese found by metric - <code>verbal_nouns</code>, <code>compound_prepositions</code>, <code>parentheticals</code>, <code>cliches</code> - as the forms write them, in the order of the text.</p>
 <!-- --8<-- [end:StyleStats-markers] -->
 
-<p>The other methods - <code>get_stats</code>, <code>to_dataframe</code>, <code>print_stats</code> and <code>describe</code> - are those of the <a href="../stats/">statistics interface</a>.</p>
-<h2 id="metric-functions">Metric functions<a class="headerlink" href="#metric-functions" title="Permanent link">&para;</a></h2>
-<p>The metrics and their functions are described in the <a href="../style_stats_funcs/">metric functions</a> section.</p>
-<h2 id="usage-example">Usage example<a class="headerlink" href="#usage-example" title="Permanent link">&para;</a></h2>
-<div class="admonition example">
-<p class="admonition-title">Example</p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts.style_stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">StyleStats</span>
-
-
-<span class="k">class</span><span class="w"> </span><span class="nc">Style</span><span class="p">(</span><span class="n">StyleStats</span><span class="p">):</span>
-    <span class="n">cliches_list</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"make a decision"</span><span class="p">,)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">is_stopword</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">word</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">word</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">"the"</span><span class="p">,</span> <span class="s2">"and"</span><span class="p">,</span> <span class="s2">"a"</span><span class="p">,</span> <span class="s2">"to"</span><span class="p">}</span>
-
-
-<span class="n">style</span> <span class="o">=</span> <span class="n">Style</span><span class="p">(</span><span class="s2">"The board will make a decision and the board will vote"</span><span class="p">)</span>
-<span class="n">style</span><span class="o">.</span><span class="n">academic_nausea</span><span class="p">,</span> <span class="n">style</span><span class="o">.</span><span class="n">water</span><span class="p">,</span> <span class="n">style</span><span class="o">.</span><span class="n">cliches</span>
-<span class="c1"># (63.63636363636363, 36.36363636363637, 9.090909090909092)</span>
-<span class="n">style</span><span class="o">.</span><span class="n">markers</span><span class="p">()[</span><span class="s2">"cliches"</span><span class="p">]</span>
-<span class="c1"># ('make a decision',)</span>
+<div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Code</label><label for="__tabbed_2_2">Result</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="n">style</span><span class="o">.</span><span class="n">markers</span><span class="p">()</span>
+<span class="n">style</span><span class="o">.</span><span class="n">keyword_density</span><span class="p">(</span><span class="s2">"board"</span><span class="p">)</span>
 </code></pre></div>
 </div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>{'verbal_nouns': (), 'compound_prepositions': (), 'parentheticals': ('of course',), 'cliches': ('make a decision',)}
+{'board': 15.384615384615385}
+</code></pre></div>
+</div>
+</div>
+</div>
+<p>The other methods - <code>get_stats</code>, <code>to_dataframe</code>, <code>print_stats</code> and <code>describe</code> - are those of the <a href="../stats/">statistics interface</a>.</p>
+<h2 id="hooks">For library developers<a class="headerlink" href="#hooks" title="Permanent link">&para;</a></h2>
+<details class="library-hooks">
+<summary>Language hooks of a subclass</summary>
+<!-- --8<-- [start:StyleStats-hooks] -->
+<p>A language library subclasses <code>StyleStats</code>; by default the hooks know no language, so there are no stopwords, water, markers or verbal nouns:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Hook</th>
+<th style="text-align: left;">Kind</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>words_extractor_class</code></td>
+<td style="text-align: left;">class attribute</td>
+<td style="text-align: left;">Word extractor of a string and of the forms; <code>WordsExtractor</code> by default</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>join_hyphens</code></td>
+<td style="text-align: left;">class attribute</td>
+<td style="text-align: left;">Join the parts of the hyphenated words of a <code>Doc</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>compound_prepositions_list</code>, <code>parentheticals_list</code>, <code>cliches_list</code></td>
+<td style="text-align: left;">class attributes</td>
+<td style="text-align: left;">Compound prepositions, parenthetical expressions and cliches, checked as lists of strings when the class is defined; the parameter <code>cliches</code> replaces the last</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>normalize(word)</code></td>
+<td style="text-align: left;">method</td>
+<td style="text-align: left;">Normalized form of a word or a phrase, by which the lists and the keywords are compared; the lower case by default</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>doc_words(doc)</code></td>
+<td style="text-align: left;">method</td>
+<td style="text-align: left;">Words of a <code>Doc</code>; the words of <code>iter_doc_words</code> in lower case by default</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>is_stopword(word)</code></td>
+<td style="text-align: left;">method</td>
+<td style="text-align: left;">Whether a word is a stopword of the academic nausea, when <code>nausea_stopwords</code> is not given</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>is_water_word(word)</code></td>
+<td style="text-align: left;">method</td>
+<td style="text-align: left;">Whether a word is water, when <code>stopwords</code> is not given; <code>is_stopword</code> by default</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>is_parenthetical(word)</code></td>
+<td style="text-align: left;">method</td>
+<td style="text-align: left;">Whether a word is a parenthetical expression by itself, outside the phrases of <code>parentheticals_list</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>expand_phrases(text, phrases)</code></td>
+<td style="text-align: left;">method</td>
+<td style="text-align: left;">Variants of the phrases in the forms of a text (the forms of a verb, contractions), each with its phrase</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>nouns()</code></td>
+<td style="text-align: left;">method</td>
+<td style="text-align: left;">Word forms of the nouns with their lemmas; none by default, so the share of the verbal nouns is <code>nan</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>is_verbal_noun(lemma)</code></td>
+<td style="text-align: left;">method</td>
+<td style="text-align: left;">Whether the lemma of a noun is a verbal noun</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>level_scales</code></td>
+<td style="text-align: left;">class attribute</td>
+<td style="text-align: left;">Norms of the services by metric for <code>describe</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>stats_desc</code>, <code>stats_headers</code></td>
+<td style="text-align: left;">class attributes</td>
+<td style="text-align: left;">Metrics of <code>get_stats</code> with their descriptions (<code>anyts.constants.STYLE_STATS_DESC</code> by default), headers of the columns for <code>print_stats</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>messages</code></td>
+<td style="text-align: left;">class attribute</td>
+<td style="text-align: left;">Messages of the errors by key; <code>MESSAGES</code> by default</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:StyleStats-hooks] -->
+<!-- --8<-- [start:StyleStats-check_params] -->
+<div class="signature highlight"><pre><span></span><code><span class="n">check_params</span><span class="p">(</span><span class="n">top_n</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">messages</span><span class="o">=</span><span class="n">MESSAGES</span><span class="p">)</span>
+</code></pre></div>
+<p>Checks the number of the most frequent words: one that is not an integer of at least one raises <code>ParameterError</code>.</p>
+<!-- --8<-- [end:StyleStats-check_params] -->
+</details>
 
 
 
@@ -2928,6 +3028,12 @@
           
 <script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
         </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
         
       </main>
       
@@ -2985,7 +3091,7 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.top", "content.code.copy", "search.highlight", "search.suggest"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
       <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>

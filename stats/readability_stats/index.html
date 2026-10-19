@@ -16,7 +16,7 @@
         <link rel="prev" href="../basic_stats/">
       
       
-        <link rel="next" href="../readability_stats_funcs/">
+        <link rel="next" href="../cohesion_stats/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Metrics module - anyTS</title>
+        <title>Readability metrics - anyTS</title>
       
     
     
@@ -48,8 +48,8 @@
         
         
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
-        <style>:root{--md-text-font:"Source Sans Pro";--md-code-font:"Roboto Mono"}</style>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,300i,400,400i,700,700i%7CSource+Code+Pro:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Source Sans Pro";--md-code-font:"Source Code Pro"}</style>
       
     
     
@@ -65,6 +65,8 @@
   
   
     
+    
+      
     
     
     
@@ -112,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Metrics module
+              Readability metrics
             
           </span>
         </div>
@@ -120,7 +122,33 @@
     </div>
     
       
+        <form class="md-header__option" data-md-component="palette">
+  
     
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal"  aria-label="Dark theme"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Dark theme" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="teal"  aria-label="Light theme"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Light theme" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
     
     
     
@@ -148,6 +176,8 @@
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
         </button>
       </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
       
     </form>
     <div class="md-search__output">
@@ -795,56 +825,6 @@
   
   
   
-    
-    
-    
-    
-      
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" >
-        
-          
-          <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Lexical diversity metrics
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_2">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Lexical diversity metrics
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
     <li class="md-nav__item">
       <a href="../diversity_stats/" class="md-nav__link">
         
@@ -853,7 +833,7 @@
   <span class="md-ellipsis">
     
   
-    Metrics module
+    Lexical diversity metrics
   
 
     
@@ -862,42 +842,6 @@
   
 
       </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../diversity_stats_funcs/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Metric functions
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
     </li>
   
 
@@ -939,58 +883,6 @@
   
   
   
-    
-    
-    
-    
-      
-      
-    
-    
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4" checked>
-        
-          
-          <label class="md-nav__link" for="__nav_3_4" id="__nav_3_4_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Readability metrics
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_3_4">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Readability metrics
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-    
-  
-  
-  
     <li class="md-nav__item md-nav__item--active">
       
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
@@ -1006,7 +898,7 @@
   <span class="md-ellipsis">
     
   
-    Metrics module
+    Readability metrics
   
 
     
@@ -1024,7 +916,7 @@
   <span class="md-ellipsis">
     
   
-    Metrics module
+    Readability metrics
   
 
     
@@ -1050,28 +942,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#description" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Description
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#language-hooks" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Language hooks
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#parameters" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1083,10 +953,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#attributes" class="md-nav__link">
+  <a href="#presets" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Attributes
+        Presets
       
     </span>
   </a>
@@ -1094,6 +964,117 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Metrics
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Metrics">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#flesch_reading_easy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Flesch reading ease
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#flesch_kincaid_grade" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Flesch-Kincaid grade
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#coleman_liau_index" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Coleman-Liau index
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#automated_readability_index" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Automated readability index (ARI)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#smog_index" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SMOG index
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gunning_fog_index" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gunning fog index
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LIX readability index
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RIX readability index
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mu_index" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Legibilidad µ
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#consensus_grade" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1103,90 +1084,12 @@
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#methods" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Methods
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Methods">
-      <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#describe_grade" class="md-nav__link">
+  <a href="#reading_time" class="md-nav__link">
     <span class="md-ellipsis">
       
-        describe_grade
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#describe_level" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        describe_level
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#describe" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        describe
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#reading_time_by_speed" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        reading_time_by_speed
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#reading_time_by_norm" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        reading_time_by_norm
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#get_stats" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        get_stats
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#print_stats" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        print_stats
+        Reading time
       
     </span>
   </a>
@@ -1199,10 +1102,60 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#usage-example" class="md-nav__link">
+  <a href="#methods" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Usage example
+        Methods
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scales" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scales
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Scales">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#grade_to_age" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        School stage and age
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#scale_level" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Band of a scale
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        For library developers
       
     </span>
   </a>
@@ -1225,92 +1178,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../readability_stats_funcs/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Metric functions
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-    
-    
-      
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_5" >
-        
-          
-          <label class="md-nav__link" for="__nav_3_5" id="__nav_3_5_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Cohesion statistics
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_5_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_5">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Cohesion statistics
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../cohesion_stats/" class="md-nav__link">
         
   
@@ -1318,7 +1185,7 @@
   <span class="md-ellipsis">
     
   
-    Metrics module
+    Cohesion statistics
   
 
     
@@ -1331,92 +1198,6 @@
   
 
               
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../cohesion_stats_funcs/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Metric functions
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-    
-    
-      
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_6" >
-        
-          
-          <label class="md-nav__link" for="__nav_3_6" id="__nav_3_6_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Syntactic statistics
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_6_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_6">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Syntactic statistics
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
             
               
                 
@@ -1432,7 +1213,7 @@
   <span class="md-ellipsis">
     
   
-    Metrics module
+    Syntactic statistics
   
 
     
@@ -1441,42 +1222,6 @@
   
 
       </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../syntax_stats_funcs/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Metric functions
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
     </li>
   
 
@@ -1516,56 +1261,6 @@
   
   
   
-    
-    
-    
-    
-      
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_8" >
-        
-          
-          <label class="md-nav__link" for="__nav_3_8" id="__nav_3_8_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Style metrics
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_8_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_8">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Style metrics
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
     <li class="md-nav__item">
       <a href="../style_stats/" class="md-nav__link">
         
@@ -1574,7 +1269,7 @@
   <span class="md-ellipsis">
     
   
-    Metrics module
+    Style metrics
   
 
     
@@ -1587,92 +1282,6 @@
   
 
               
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../style_stats_funcs/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Metric functions
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-    
-    
-      
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_9" >
-        
-          
-          <label class="md-nav__link" for="__nav_3_9" id="__nav_3_9_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phonetic statistics
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_9_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_9">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Phonetic statistics
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
             
               
                 
@@ -1688,7 +1297,7 @@
   <span class="md-ellipsis">
     
   
-    Metrics module
+    Phonetic statistics
   
 
     
@@ -1697,42 +1306,6 @@
   
 
       </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../phon_stats_funcs/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Metric functions
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
     </li>
   
 
@@ -2585,28 +2158,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#description" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Description
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#language-hooks" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Language hooks
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#parameters" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2618,10 +2169,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#attributes" class="md-nav__link">
+  <a href="#presets" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Attributes
+        Presets
       
     </span>
   </a>
@@ -2629,6 +2180,117 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Metrics
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Metrics">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#flesch_reading_easy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Flesch reading ease
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#flesch_kincaid_grade" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Flesch-Kincaid grade
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#coleman_liau_index" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Coleman-Liau index
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#automated_readability_index" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Automated readability index (ARI)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#smog_index" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SMOG index
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gunning_fog_index" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gunning fog index
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LIX readability index
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RIX readability index
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mu_index" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Legibilidad µ
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#consensus_grade" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2638,90 +2300,12 @@
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#methods" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Methods
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Methods">
-      <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#describe_grade" class="md-nav__link">
+  <a href="#reading_time" class="md-nav__link">
     <span class="md-ellipsis">
       
-        describe_grade
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#describe_level" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        describe_level
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#describe" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        describe
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#reading_time_by_speed" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        reading_time_by_speed
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#reading_time_by_norm" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        reading_time_by_norm
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#get_stats" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        get_stats
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#print_stats" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        print_stats
+        Reading time
       
     </span>
   </a>
@@ -2734,10 +2318,60 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#usage-example" class="md-nav__link">
+  <a href="#methods" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Usage example
+        Methods
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scales" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scales
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Scales">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#grade_to_age" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        School stage and age
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#scale_level" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Band of a scale
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        For library developers
       
     </span>
   </a>
@@ -2765,420 +2399,23 @@
 
 
 <h1 id="readability-metrics">Readability metrics<a class="headerlink" href="#readability-metrics" title="Permanent link">&para;</a></h1>
-<div class="admonition info">
-<p><strong>anyts.readability_stats.ReadabilityStats</strong></p>
-</div>
-<h2 id="description">Description<a class="headerlink" href="#description" title="Permanent link">&para;</a></h2>
+<div class="signature highlight"><pre><span></span><code><span class="n">ReadabilityStats</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">sents_extractor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">words_extractor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">preset</span><span class="o">=</span><span class="s1">'original'</span><span class="p">)</span>
+</code></pre></div>
 <!-- --8<-- [start:ReadabilityStats] -->
 <p>The <a href="https://en.wikipedia.org/wiki/Readability">readability</a> metrics of a text from its basic statistics: the mean sentence length in words, the mean word length in syllables or letters, the share of polysyllabic and of long words and the variability of word length. The data source is a text, a <code>Doc</code> object of <a href="https://github.com/explosion/spaCy">spaCy</a> or ready basic statistics, which are reused as they are; the extractors are passed on to the basic statistics of a text or a <code>Doc</code>. The formulas count only the letters of the counted words, so a word extractor that drops words does not lengthen the mean word.</p>
 <p>The metrics are properties computed on each access, so a change of the <code>coefficients</code> of an object applies at once.</p>
-<p>A source that is neither a string, a <code>Doc</code> nor basic statistics, basic statistics of a class other than those of the library and an extractor of another type raise <code>SourceTypeError</code>, a source without words or sentences <code>SourceError</code>, an unknown preset or one that is not a string <code>ParameterError</code>.</p>
+<p>Raises:</p>
+<ul>
+<li><code>SourceTypeError</code> - a source that is neither a string, a <code>Doc</code> nor basic statistics, basic statistics of a class other than those of the library, an extractor of another type, a string or a <code>Doc</code> to a class without <code>basic_stats_class</code>;</li>
+<li><code>SourceError</code> - a source without words or sentences;</li>
+<li><code>ParameterError</code> - an unknown preset or one that is not a string.</li>
+</ul>
 <!-- --8<-- [end:ReadabilityStats] -->
 
-<h2 id="language-hooks">Language hooks<a class="headerlink" href="#language-hooks" title="Permanent link">&para;</a></h2>
-<!-- --8<-- [start:ReadabilityStats-hooks] -->
-<p>A language library subclasses <code>ReadabilityStats</code>:</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: center;">Hook</th>
-<th style="text-align: center;">Kind</th>
-<th style="text-align: center;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: center;"><code>basic_stats_class</code></td>
-<td style="text-align: center;">class attribute</td>
-<td style="text-align: center;">Its subclass of <code>BasicStats</code> for a string or a <code>Doc</code>; without it the source must be a <code>BasicStats</code> object</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>presets</code></td>
-<td style="text-align: center;">class attribute</td>
-<td style="text-align: center;">Coefficients of the formulas by preset; a formula missing from a preset takes the defaults of its function</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>grade_stats</code></td>
-<td style="text-align: center;">class attribute</td>
-<td style="text-align: center;">Grade formulas of the consensus grade; <code>anyts.constants.READABILITY_GRADE_STATS</code> by default</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>stats_desc</code>, <code>stats_headers</code></td>
-<td style="text-align: center;">class attributes</td>
-<td style="text-align: center;">Metrics of <code>get_stats</code> with their descriptions (<code>READABILITY_STATS_DESC</code> by default), headers of the columns for <code>print_stats</code></td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>smog_complex_syl_factor</code></td>
-<td style="text-align: center;">class attribute</td>
-<td style="text-align: center;">Minimum number of syllables in a polysyllabic word of SMOG and Gunning fog; <code>SMOG_COMPLEX_SYL_FACTOR</code> by default</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>lix_long_word_letter_factor</code></td>
-<td style="text-align: center;">class attribute</td>
-<td style="text-align: center;">Minimum number of letters in a long word of LIX and RIX; <code>LIX_LONG_WORD_LETTER_FACTOR</code> by default</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>grade_age_levels</code>, <code>postgraduate_level</code></td>
-<td style="text-align: center;">class attributes</td>
-<td style="text-align: center;">School stages and ages of <code>describe_grade</code></td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>level_scales</code></td>
-<td style="text-align: center;">class attribute</td>
-<td style="text-align: center;">Interpretation scales by metric, as lower bounds and their bands</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>preset_level_scales</code></td>
-<td style="text-align: center;">class attribute</td>
-<td style="text-align: center;">Interpretation scales by preset and metric, in place of <code>level_scales</code> for the preset</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>level_scale(stat)</code></td>
-<td style="text-align: center;">method</td>
-<td style="text-align: center;">Interpretation scale of a metric for <code>describe_level</code> and <code>describe</code>; that of <code>preset_level_scales</code>, else of <code>level_scales</code> by default</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>grade_scales</code></td>
-<td style="text-align: center;">class attribute</td>
-<td style="text-align: center;">Scales of a metric in years of schooling for <code>describe</code>, as lower bounds and grades; a scale of bands comes first, so a metric read by years of schooling stays out of <code>level_scales</code> and <code>preset_level_scales</code></td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>reading_speed</code>, <code>reading_speed_norms</code></td>
-<td style="text-align: center;">class attributes</td>
-<td style="text-align: center;">Reading speed of <code>reading_time</code> and the speeds of the norms, words per minute; <code>READING_SPEED_WPM</code> and <code>READING_SPEED_NORMS</code> by default</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>reading_ease_grades</code></td>
-<td style="text-align: center;">class attribute</td>
-<td style="text-align: center;">Scale of the reading ease in years of schooling for the consensus grade, as lower bounds and grades, the lowest band open below</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>preset_reading_ease_grades</code></td>
-<td style="text-align: center;">class attribute</td>
-<td style="text-align: center;">Scales of <code>reading_ease_grades</code> by preset, in its place for the preset</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>reading_ease_to_grade(flesch_reading_easy)</code></td>
-<td style="text-align: center;">method</td>
-<td style="text-align: center;">Years of schooling for the reading ease in the consensus grade; the band of the scale of the preset in <code>preset_reading_ease_grades</code>, else of <code>reading_ease_grades</code> by default</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>messages</code></td>
-<td style="text-align: center;">class attribute</td>
-<td style="text-align: center;">Messages of the errors by key; <code>MESSAGES</code> by default</td>
-</tr>
-</tbody>
-</table>
-<p>A formula of the library is a property of the subclass named in <code>stats_desc</code>, and in <code>grade_stats</code> when it gives years of schooling; its coefficients may live in the presets under its name. The preset is a parameter: a library sets its own default in its <code>__init__</code> and passes it on. When the class is defined, <code>ParameterError</code> is raised by a preset unknown to <code>presets</code> among the keys of <code>preset_level_scales</code> or <code>preset_reading_ease_grades</code>, by a scale of them, of <code>grade_scales</code> or of <code>reading_ease_grades</code> that is not one of <code>scale_level</code> with finite grades, by <code>grade_age_levels</code> that are not quadruples of the first and the last year, the stage and the age in ascending order of the years, and by a <code>postgraduate_level</code> that is not a pair of strings.</p>
-<!-- --8<-- [end:ReadabilityStats-hooks] -->
-
-<p>The core defaults are the original English formulas: the preset <code>original</code> of <code>anyts.constants.READABILITY_PRESETS</code>, the grade formulas Flesch-Kincaid, Coleman-Liau, ARI, SMOG and Gunning fog, polysyllabic words of three syllables and long words of seven letters, the school stages of the United States, the scales of the reading ease, LIX and RIX, the years of schooling of the reading ease of <code>text_standard</code> of textstat (<code>READING_EASE_GRADES</code>, 13 below 30), and the reading speed of 238 words per minute with the norm <code>adult</code> - 183 words per minute aloud and 238 silently (Brysbaert, 2019).</p>
-<h2 id="parameters">Parameters<a class="headerlink" href="#parameters" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th style="text-align: center;">Parameter</th>
-<th style="text-align: center;">Type</th>
-<th style="text-align: center;">Default</th>
-<th style="text-align: center;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: center;"><code>source</code></td>
-<td style="text-align: center;">str/Doc/BasicStats</td>
-<td style="text-align: center;"><code>-</code></td>
-<td style="text-align: center;">Data source (a string, a Doc object or ready basic statistics)</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>sents_extractor</code></td>
-<td style="text-align: center;">SentsExtractor</td>
-<td style="text-align: center;"><code>None</code></td>
-<td style="text-align: center;">Sentence extraction tool</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>words_extractor</code></td>
-<td style="text-align: center;">WordsExtractor</td>
-<td style="text-align: center;"><code>None</code></td>
-<td style="text-align: center;">Word extraction tool</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>preset</code></td>
-<td style="text-align: center;">str</td>
-<td style="text-align: center;"><code>original</code></td>
-<td style="text-align: center;">Coefficient preset</td>
-</tr>
-</tbody>
-</table>
-<p>In the core <code>basic_stats_class</code> is <code>None</code>, so the class takes only a ready <code>BasicStats</code> object of a library.</p>
-<h2 id="attributes">Attributes<a class="headerlink" href="#attributes" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th style="text-align: center;">Attribute</th>
-<th style="text-align: center;">Type</th>
-<th style="text-align: center;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: center;"><code>flesch_reading_easy</code></td>
-<td style="text-align: center;">float</td>
-<td style="text-align: center;">Flesch reading ease</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>flesch_kincaid_grade</code></td>
-<td style="text-align: center;">float</td>
-<td style="text-align: center;">Flesch-Kincaid grade</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>coleman_liau_index</code></td>
-<td style="text-align: center;">float</td>
-<td style="text-align: center;">Coleman-Liau index</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>automated_readability_index</code></td>
-<td style="text-align: center;">float</td>
-<td style="text-align: center;">Automated readability index</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>smog_index</code></td>
-<td style="text-align: center;">float</td>
-<td style="text-align: center;">SMOG index</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>gunning_fog_index</code></td>
-<td style="text-align: center;">float</td>
-<td style="text-align: center;">Gunning fog index</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>lix</code></td>
-<td style="text-align: center;">float</td>
-<td style="text-align: center;">LIX readability index</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>rix</code></td>
-<td style="text-align: center;">float</td>
-<td style="text-align: center;">RIX readability index</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>mu_index</code></td>
-<td style="text-align: center;">float</td>
-<td style="text-align: center;">Legibilidad µ</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>consensus_grade</code></td>
-<td style="text-align: center;">float</td>
-<td style="text-align: center;">Consensus grade over the grade formulas and the reading ease</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>reading_time</code></td>
-<td style="text-align: center;">float</td>
-<td style="text-align: center;">Reading time in minutes at the reading speed</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>bs</code></td>
-<td style="text-align: center;">BasicStats</td>
-<td style="text-align: center;">Basic statistics of the text</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>preset</code></td>
-<td style="text-align: center;">str</td>
-<td style="text-align: center;">Name of the coefficient preset, read-only: an object of another preset can reuse the basic statistics, <code>ReadabilityStats(rs.bs, preset=...)</code></td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>coefficients</code></td>
-<td style="text-align: center;">dict[str, tuple[float, ...]]</td>
-<td style="text-align: center;">Coefficients of the preset by formula, a copy that can be changed for one object</td>
-</tr>
-</tbody>
-</table>
-<p>The formulas are described in the <a href="../readability_stats_funcs/">metric functions</a> section.</p>
-<h2 id="consensus_grade">Consensus grade<a class="headerlink" href="#consensus_grade" title="Permanent link">&para;</a></h2>
-<!-- --8<-- [start:ReadabilityStats-consensus] -->
-<p>The <code>consensus_grade</code> attribute is the median of the values of the grade formulas (<code>grade_stats</code>) rounded half up, together with the reading ease in years of schooling (<code>reading_ease_to_grade</code>), not rounded. A library aligns the bounds of <code>reading_ease_grades</code>, and of each scale of <code>preset_reading_ease_grades</code>, with its scale of the reading ease, so that the consensus grade and <code>describe</code> read the value alike.</p>
-<!-- --8<-- [end:ReadabilityStats-consensus] -->
-
-<h2 id="methods">Methods<a class="headerlink" href="#methods" title="Permanent link">&para;</a></h2>
-<h3 id="describe_grade">describe_grade<a class="headerlink" href="#describe_grade" title="Permanent link">&para;</a></h3>
-<!-- --8<-- [start:ReadabilityStats-describe_grade] -->
-<p>Returns the school stage and reader age for the consensus grade or a grade formula; another metric raises <code>ParameterError</code>.</p>
-<p>Parameters:</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: center;">Parameter</th>
-<th style="text-align: center;">Type</th>
-<th style="text-align: center;">Default</th>
-<th style="text-align: center;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: center;"><code>stat</code></td>
-<td style="text-align: center;">str</td>
-<td style="text-align: center;"><code>consensus_grade</code></td>
-<td style="text-align: center;">Name of the grade formula</td>
-</tr>
-</tbody>
-</table>
-<!-- --8<-- [end:ReadabilityStats-describe_grade] -->
-
-<h3 id="describe_level">describe_level<a class="headerlink" href="#describe_level" title="Permanent link">&para;</a></h3>
-<!-- --8<-- [start:ReadabilityStats-describe_level] -->
-<p>Returns the band of the interpretation scale of a metric (<code>level_scale</code>); a metric without a scale of bands and an undefined value (nan) raise <code>ParameterError</code>.</p>
-<p>Parameters:</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: center;">Parameter</th>
-<th style="text-align: center;">Type</th>
-<th style="text-align: center;">Default</th>
-<th style="text-align: center;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: center;"><code>stat</code></td>
-<td style="text-align: center;">str</td>
-<td style="text-align: center;"><code>flesch_reading_easy</code></td>
-<td style="text-align: center;">Name of the metric</td>
-</tr>
-</tbody>
-</table>
-<!-- --8<-- [end:ReadabilityStats-describe_level] -->
-
-<p>The default scales are the school levels of Flesch for the reading ease (<code>anyts.constants.READING_EASE_LEVELS</code>, How to Write Plain English, 1979), the text types of Björnsson for <a href="../readability_stats_funcs/#lix-readability-index">LIX</a> (<code>LIX_LEVELS</code>) and the grades of Anderson for <a href="../readability_stats_funcs/#rix-readability-index">RIX</a> (<code>RIX_LEVELS</code>), whose last band, from 7.2 up, is "college and above":</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: center;">Reading ease</th>
-<th style="text-align: center;">Level</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: center;"><code>90-100</code></td>
-<td style="text-align: center;">5th grade</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>80-90</code></td>
-<td style="text-align: center;">6th grade</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>70-80</code></td>
-<td style="text-align: center;">7th grade</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>60-70</code></td>
-<td style="text-align: center;">8th and 9th grade</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>50-60</code></td>
-<td style="text-align: center;">10th to 12th grade</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>30-50</code></td>
-<td style="text-align: center;">college</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>10-30</code></td>
-<td style="text-align: center;">college graduate</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>&lt; 10</code></td>
-<td style="text-align: center;">professional</td>
-</tr>
-</tbody>
-</table>
-<h3 id="describe">describe<a class="headerlink" href="#describe" title="Permanent link">&para;</a></h3>
-<!-- --8<-- [start:ReadabilityStats-describe] -->
-<p>Returns the reading of any metric by its scale: for the consensus grade and a grade formula the school stage and reader age (<code>describe_grade</code>), for a metric with a scale of bands (<code>level_scale</code>) its band, for another metric of <code>grade_scales</code> the stage and age of the years of schooling its scale gives, and <code>None</code> for a metric without a scale or with an undefined value (nan). A name that is neither in <code>stats_desc</code> nor a public property of the class raises <code>UnknownStatError</code>.</p>
-<p>Parameters:</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: center;">Parameter</th>
-<th style="text-align: center;">Type</th>
-<th style="text-align: center;">Default</th>
-<th style="text-align: center;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: center;"><code>stat</code></td>
-<td style="text-align: center;">str</td>
-<td style="text-align: center;"><code>-</code></td>
-<td style="text-align: center;">Name of the metric</td>
-</tr>
-</tbody>
-</table>
-<!-- --8<-- [end:ReadabilityStats-describe] -->
-
-<p>By default RIX is read by its scale of bands; <code>grade_scales</code> keeps its grades as years of schooling (<code>anyts.constants.RIX_GRADES</code>, college as 13) for a library whose scales of bands leave RIX out.</p>
-<h3 id="reading_time_by_speed">reading_time_by_speed<a class="headerlink" href="#reading_time_by_speed" title="Permanent link">&para;</a></h3>
-<!-- --8<-- [start:ReadabilityStats-reading_time_by_speed] -->
-<p>Returns the reading time of the text in minutes at the given speed; a speed that is not a positive number raises <code>ParameterError</code>.</p>
-<p>Parameters:</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: center;">Parameter</th>
-<th style="text-align: center;">Type</th>
-<th style="text-align: center;">Default</th>
-<th style="text-align: center;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: center;"><code>wpm</code></td>
-<td style="text-align: center;">float</td>
-<td style="text-align: center;"><code>-</code></td>
-<td style="text-align: center;">Reading speed, words per minute</td>
-</tr>
-</tbody>
-</table>
-<!-- --8<-- [end:ReadabilityStats-reading_time_by_speed] -->
-
-<h3 id="reading_time_by_norm">reading_time_by_norm<a class="headerlink" href="#reading_time_by_norm" title="Permanent link">&para;</a></h3>
-<!-- --8<-- [start:ReadabilityStats-reading_time_by_norm] -->
-<p>Returns the reading times of the text in minutes at the speeds of a norm of <code>reading_speed_norms</code>, in their order; an unknown norm raises <code>ParameterError</code>.</p>
-<p>Parameters:</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: center;">Parameter</th>
-<th style="text-align: center;">Type</th>
-<th style="text-align: center;">Default</th>
-<th style="text-align: center;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: center;"><code>norm</code></td>
-<td style="text-align: center;">str</td>
-<td style="text-align: center;"><code>-</code></td>
-<td style="text-align: center;">Name of the reading speed norm</td>
-</tr>
-</tbody>
-</table>
-<!-- --8<-- [end:ReadabilityStats-reading_time_by_norm] -->
-
-<h3 id="get_stats">get_stats<a class="headerlink" href="#get_stats" title="Permanent link">&para;</a></h3>
-<!-- --8<-- [start:ReadabilityStats-get_stats] -->
-<p>Returns a dictionary of the readability metrics of <code>stats_desc</code>.</p>
-<!-- --8<-- [end:ReadabilityStats-get_stats] -->
-
-<h3 id="print_stats">print_stats<a class="headerlink" href="#print_stats" title="Permanent link">&para;</a></h3>
-<!-- --8<-- [start:ReadabilityStats-print_stats] -->
-<p>Prints a table of the readability metrics with their descriptions from <code>stats_desc</code> under the headers of <code>stats_headers</code>.</p>
-<!-- --8<-- [end:ReadabilityStats-print_stats] -->
-
-<p>The frame of the metrics (<code>to_dataframe</code>) is that of the <a href="../stats/">statistics interface</a>.</p>
-<h2 id="usage-example">Usage example<a class="headerlink" href="#usage-example" title="Permanent link">&para;</a></h2>
 <p>A subclass with the basic statistics of a language - here the syllables are the groups of vowels, a rough rule for English.</p>
-<div class="admonition example">
-<p class="admonition-title">Example</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Code</label><label for="__tabbed_1_2">Result</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">anyts.basic_stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">BasicStats</span>
@@ -3195,16 +2432,1132 @@
 
 
 <span class="n">rs</span> <span class="o">=</span> <span class="n">Readability</span><span class="p">(</span><span class="s2">"The cat sat on the mat. A beautiful day!"</span><span class="p">)</span>
-<span class="nb">round</span><span class="p">(</span><span class="n">rs</span><span class="o">.</span><span class="n">flesch_reading_easy</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="nb">round</span><span class="p">(</span><span class="n">rs</span><span class="o">.</span><span class="n">flesch_kincaid_grade</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-<span class="c1"># (98.87, 0.59)</span>
-<span class="n">rs</span><span class="o">.</span><span class="n">consensus_grade</span><span class="p">,</span> <span class="n">rs</span><span class="o">.</span><span class="n">describe_grade</span><span class="p">()</span>
-<span class="c1"># (3.0, 'elementary school, grades 1-5 (6-11 years)')</span>
-<span class="n">rs</span><span class="o">.</span><span class="n">describe</span><span class="p">(</span><span class="s2">"flesch_reading_easy"</span><span class="p">),</span> <span class="n">rs</span><span class="o">.</span><span class="n">describe</span><span class="p">(</span><span class="s2">"lix"</span><span class="p">),</span> <span class="n">rs</span><span class="o">.</span><span class="n">describe</span><span class="p">(</span><span class="s2">"mu_index"</span><span class="p">)</span>
-<span class="c1"># ('5th grade', "very easy texts, children's books", None)</span>
-<span class="n">rs</span><span class="o">.</span><span class="n">reading_time_by_norm</span><span class="p">(</span><span class="s2">"adult"</span><span class="p">)</span>
-<span class="c1"># (0.04918032786885246, 0.037815126050420166)</span>
+<span class="n">rs</span><span class="o">.</span><span class="n">print_stats</span><span class="p">()</span>
 </code></pre></div>
 </div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>           Metric           |  Value
+---------------------------------------
+Flesch reading ease         |  98.87
+Flesch-Kincaid grade        |   0.59
+Coleman-Liau index          |  -2.78
+Automated readability index |  -3.48
+SMOG index                  |   7.17
+Gunning fog index           |   6.24
+LIX readability index       |  15.61
+RIX readability index       |   0.50
+Legibilidad µ               |  66.67
+Consensus grade             |   3.00
+Reading time (min)          |   0.04
+</code></pre></div>
+</div>
+</div>
+</div>
+<h2 id="parameters">Parameters<a class="headerlink" href="#parameters" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Parameter</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Default</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>source</code></td>
+<td style="text-align: left;"><code>str</code> / <code>Doc</code> / <code>BasicStats</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Data source (a string, a Doc object or ready basic statistics)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>sents_extractor</code></td>
+<td style="text-align: left;"><code>SentsExtractor</code></td>
+<td style="text-align: left;"><code>None</code></td>
+<td style="text-align: left;">Sentence extraction tool</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>words_extractor</code></td>
+<td style="text-align: left;"><code>WordsExtractor</code></td>
+<td style="text-align: left;"><code>None</code></td>
+<td style="text-align: left;">Word extraction tool</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>preset</code></td>
+<td style="text-align: left;"><code>str</code></td>
+<td style="text-align: left;"><code>'original'</code></td>
+<td style="text-align: left;">Coefficient preset</td>
+</tr>
+</tbody>
+</table>
+<p>In the core <code>basic_stats_class</code> is <code>None</code>, so the class takes only a ready <code>BasicStats</code> object of a library. The object keeps the basic statistics of the text in <code>bs</code>, the name of the preset in <code>preset</code>, read-only, and the coefficients of the preset by formula in <code>coefficients</code>, a copy that can be changed for one object. An object of another preset can reuse the basic statistics: <code>ReadabilityStats(rs.bs, preset=...)</code>.</p>
+<h2 id="presets">Presets<a class="headerlink" href="#presets" title="Permanent link">&para;</a></h2>
+<p>The coefficients of the formulas are parameters of their functions, and a preset gives them by formula. The core defaults are the original English formulas: the preset <code>original</code> of <code>anyts.constants.READABILITY_PRESETS</code>, the grade formulas Flesch-Kincaid, Coleman-Liau, ARI, SMOG and Gunning fog, polysyllabic words of three syllables and long words of seven letters, the school stages of the United States, the scales of the reading ease, LIX and RIX, the years of schooling of the reading ease of <code>text_standard</code> of textstat (<code>READING_EASE_GRADES</code>, 13 below 30), and the reading speed of 238 words per minute with the norm <code>adult</code> - 183 words per minute aloud and 238 silently (Brysbaert, 2019).</p>
+<h2 id="metrics">Metrics<a class="headerlink" href="#metrics" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:ReadabilityStats-metrics] -->
+<p>A formula is computed by the function of its card on the counts of <code>bs</code>, with its coefficients in <code>coefficients</code>; a formula of counts gives <code>nan</code> when the number of words or of sentences it divides by is zero.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Metric</th>
+<th style="text-align: left;">Measures</th>
+<th style="text-align: left;">Range</th>
+<th style="text-align: left;">Higher means</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><a href="#flesch_reading_easy"><code>flesch_reading_easy</code></a></td>
+<td style="text-align: left;">Ease of reading by the sentence length and the syllables per word</td>
+<td style="text-align: left;">Nominally 0-100, above 100 for the simplest texts and below 0 for the hardest</td>
+<td style="text-align: left;">An easier text</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a href="#flesch_kincaid_grade"><code>flesch_kincaid_grade</code></a></td>
+<td style="text-align: left;">Grade by the sentence length and the syllables per word</td>
+<td style="text-align: left;">Years of schooling, below 0 for the simplest texts</td>
+<td style="text-align: left;">A harder text</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a href="#coleman_liau_index"><code>coleman_liau_index</code></a></td>
+<td style="text-align: left;">Grade by the letters and the sentences per 100 words</td>
+<td style="text-align: left;">Years of schooling, below 0 for the simplest texts</td>
+<td style="text-align: left;">A harder text</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a href="#automated_readability_index"><code>automated_readability_index</code></a></td>
+<td style="text-align: left;">Grade by the letters per word and the sentence length</td>
+<td style="text-align: left;">Years of schooling, below 0 for the simplest texts</td>
+<td style="text-align: left;">A harder text</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a href="#smog_index"><code>smog_index</code></a></td>
+<td style="text-align: left;">Grade by the polysyllabic words per sentence</td>
+<td style="text-align: left;">Years of schooling</td>
+<td style="text-align: left;">A harder text</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a href="#gunning_fog_index"><code>gunning_fog_index</code></a></td>
+<td style="text-align: left;">Grade by the sentence length and the share of complex words</td>
+<td style="text-align: left;">Years of schooling</td>
+<td style="text-align: left;">A harder text</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a href="#lix"><code>lix</code></a></td>
+<td style="text-align: left;">Sentence length and the share of long words</td>
+<td style="text-align: left;">0 and above</td>
+<td style="text-align: left;">A harder text</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a href="#rix"><code>rix</code></a></td>
+<td style="text-align: left;">Long words per sentence</td>
+<td style="text-align: left;">0 and above</td>
+<td style="text-align: left;">A harder text</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a href="#mu_index"><code>mu_index</code></a></td>
+<td style="text-align: left;">Mean word length in letters against its variance</td>
+<td style="text-align: left;">Above 0, <code>nan</code> with fewer than two words or without variability</td>
+<td style="text-align: left;">An easier text</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a href="#consensus_grade"><code>consensus_grade</code></a></td>
+<td style="text-align: left;">Median of the grade formulas and the reading ease as a grade</td>
+<td style="text-align: left;">Years of schooling, below 0 for the simplest texts</td>
+<td style="text-align: left;">A harder text</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a href="#reading_time"><code>reading_time</code></a></td>
+<td style="text-align: left;">Reading time at the reading speed (<code>reading_speed</code>)</td>
+<td style="text-align: left;">Minutes, above 0</td>
+<td style="text-align: left;">A longer text</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:ReadabilityStats-metrics] -->
+
+<div class="metric-card">
+<h3 id="flesch_reading_easy">Flesch reading ease<a class="headerlink" href="#flesch_reading_easy" title="Permanent link">&para;</a></h3>
+<p class="metric-meta"><code>flesch_reading_easy</code> · Flesch, 1948</p>
+<div class="signature highlight"><pre><span></span><code><span class="n">calc_flesch_reading_easy</span><span class="p">(</span><span class="n">n_syllables</span><span class="p">,</span> <span class="n">n_words</span><span class="p">,</span> <span class="n">n_sents</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="mf">1.015</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="mf">84.6</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mf">206.835</span><span class="p">)</span>
+</code></pre></div>
+<!-- --8<-- [start:calc_flesch_reading_easy] -->
+<p>The ease of reading a text by the mean sentence length in words and the mean word length in syllables.</p>
+<div class="arithmatex">\[
+c - a \cdot \frac{\textrm{Number of words}}{\textrm{Number of sentences}} - b \cdot \frac{\textrm{Number of syllables}}{\textrm{Number of words}}
+\]</div>
+<!-- --8<-- [end:calc_flesch_reading_easy] -->
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Parameter</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Default</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>n_syllables</code></td>
+<td style="text-align: left;"><code>int</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Number of syllables</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>n_words</code></td>
+<td style="text-align: left;"><code>int</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Number of words</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>n_sents</code></td>
+<td style="text-align: left;"><code>int</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Number of sentences</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>a</code></td>
+<td style="text-align: left;"><code>float</code></td>
+<td style="text-align: left;"><code>1.015</code></td>
+<td style="text-align: left;">Coefficient a, at the mean sentence length</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>b</code></td>
+<td style="text-align: left;"><code>float</code></td>
+<td style="text-align: left;"><code>84.6</code></td>
+<td style="text-align: left;">Coefficient b, at the mean word length</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>c</code></td>
+<td style="text-align: left;"><code>float</code></td>
+<td style="text-align: left;"><code>206.835</code></td>
+<td style="text-align: left;">Coefficient c, the constant</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="metric-card">
+<h3 id="flesch_kincaid_grade">Flesch-Kincaid grade<a class="headerlink" href="#flesch_kincaid_grade" title="Permanent link">&para;</a></h3>
+<p class="metric-meta"><code>flesch_kincaid_grade</code> · Kincaid et al., 1975</p>
+<div class="signature highlight"><pre><span></span><code><span class="n">calc_flesch_kincaid_grade</span><span class="p">(</span><span class="n">n_syllables</span><span class="p">,</span> <span class="n">n_words</span><span class="p">,</span> <span class="n">n_sents</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="mf">0.39</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="mf">11.8</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mf">15.59</span><span class="p">)</span>
+</code></pre></div>
+<!-- --8<-- [start:calc_flesch_kincaid_grade] -->
+<p>The years of schooling needed to read the text, by the mean sentence length in words and the mean word length in syllables.</p>
+<div class="arithmatex">\[
+a \cdot \frac{\textrm{Number of words}}{\textrm{Number of sentences}} + b \cdot \frac{\textrm{Number of syllables}}{\textrm{Number of words}} - c
+\]</div>
+<!-- --8<-- [end:calc_flesch_kincaid_grade] -->
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Parameter</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Default</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>n_syllables</code></td>
+<td style="text-align: left;"><code>int</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Number of syllables</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>n_words</code></td>
+<td style="text-align: left;"><code>int</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Number of words</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>n_sents</code></td>
+<td style="text-align: left;"><code>int</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Number of sentences</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>a</code></td>
+<td style="text-align: left;"><code>float</code></td>
+<td style="text-align: left;"><code>0.39</code></td>
+<td style="text-align: left;">Coefficient a, at the mean sentence length</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>b</code></td>
+<td style="text-align: left;"><code>float</code></td>
+<td style="text-align: left;"><code>11.8</code></td>
+<td style="text-align: left;">Coefficient b, at the mean word length</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>c</code></td>
+<td style="text-align: left;"><code>float</code></td>
+<td style="text-align: left;"><code>15.59</code></td>
+<td style="text-align: left;">Coefficient c, the constant</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="metric-card">
+<h3 id="coleman_liau_index">Coleman-Liau index<a class="headerlink" href="#coleman_liau_index" title="Permanent link">&para;</a></h3>
+<p class="metric-meta"><code>coleman_liau_index</code> · Coleman and Liau, 1975</p>
+<div class="signature highlight"><pre><span></span><code><span class="n">calc_coleman_liau_index</span><span class="p">(</span><span class="n">n_letters</span><span class="p">,</span> <span class="n">n_words</span><span class="p">,</span> <span class="n">n_sents</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="mf">0.0588</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="mf">0.296</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mf">15.8</span><span class="p">)</span>
+</code></pre></div>
+<!-- --8<-- [start:calc_coleman_liau_index] -->
+<p>The years of schooling needed to read the text, by the letters and the sentences per 100 words.</p>
+<div class="arithmatex">\[
+a \cdot \frac{100 \cdot \textrm{Number of letters}}{\textrm{Number of words}} - b \cdot \frac{100 \cdot \textrm{Number of sentences}}{\textrm{Number of words}} - c
+\]</div>
+<!-- --8<-- [end:calc_coleman_liau_index] -->
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Parameter</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Default</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>n_letters</code></td>
+<td style="text-align: left;"><code>int</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Number of letters of the words</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>n_words</code></td>
+<td style="text-align: left;"><code>int</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Number of words</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>n_sents</code></td>
+<td style="text-align: left;"><code>int</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Number of sentences</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>a</code></td>
+<td style="text-align: left;"><code>float</code></td>
+<td style="text-align: left;"><code>0.0588</code></td>
+<td style="text-align: left;">Coefficient a, at the letters per 100 words</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>b</code></td>
+<td style="text-align: left;"><code>float</code></td>
+<td style="text-align: left;"><code>0.296</code></td>
+<td style="text-align: left;">Coefficient b, at the sentences per 100 words</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>c</code></td>
+<td style="text-align: left;"><code>float</code></td>
+<td style="text-align: left;"><code>15.8</code></td>
+<td style="text-align: left;">Coefficient c, the constant</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="metric-card">
+<h3 id="automated_readability_index">Automated readability index (ARI)<a class="headerlink" href="#automated_readability_index" title="Permanent link">&para;</a></h3>
+<p class="metric-meta"><code>automated_readability_index</code> · Smith and Senter, 1967</p>
+<div class="signature highlight"><pre><span></span><code><span class="n">calc_automated_readability_index</span><span class="p">(</span><span class="n">n_letters</span><span class="p">,</span> <span class="n">n_words</span><span class="p">,</span> <span class="n">n_sents</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="mf">4.71</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mf">21.43</span><span class="p">)</span>
+</code></pre></div>
+<!-- --8<-- [start:calc_automated_readability_index] -->
+<p>The years of schooling needed to read the text, by the letters per word and the words per sentence.</p>
+<div class="arithmatex">\[
+a \cdot \frac{\textrm{Number of letters}}{\textrm{Number of words}} + b \cdot \frac{\textrm{Number of words}}{\textrm{Number of sentences}} - c
+\]</div>
+<!-- --8<-- [end:calc_automated_readability_index] -->
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Parameter</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Default</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>n_letters</code></td>
+<td style="text-align: left;"><code>int</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Number of letters of the words</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>n_words</code></td>
+<td style="text-align: left;"><code>int</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Number of words</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>n_sents</code></td>
+<td style="text-align: left;"><code>int</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Number of sentences</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>a</code></td>
+<td style="text-align: left;"><code>float</code></td>
+<td style="text-align: left;"><code>4.71</code></td>
+<td style="text-align: left;">Coefficient a, at the letters per word</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>b</code></td>
+<td style="text-align: left;"><code>float</code></td>
+<td style="text-align: left;"><code>0.5</code></td>
+<td style="text-align: left;">Coefficient b, at the mean sentence length</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>c</code></td>
+<td style="text-align: left;"><code>float</code></td>
+<td style="text-align: left;"><code>21.43</code></td>
+<td style="text-align: left;">Coefficient c, the constant</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="metric-card">
+<h3 id="smog_index">SMOG index<a class="headerlink" href="#smog_index" title="Permanent link">&para;</a></h3>
+<p class="metric-meta"><code>smog_index</code> · McLaughlin, 1969</p>
+<div class="signature highlight"><pre><span></span><code><span class="n">calc_smog_index</span><span class="p">(</span><span class="n">n_complex</span><span class="p">,</span> <span class="n">n_sents</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="mf">1.043</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mf">3.1291</span><span class="p">)</span>
+</code></pre></div>
+<!-- --8<-- [start:calc_smog_index] -->
+<p>The years of schooling needed to read the text, by the polysyllabic words per sentence. In the original formula the polysyllabic words have three or more syllables and <code>b</code> brings their number to a sample of 30 sentences.</p>
+<div class="arithmatex">\[
+a \cdot \sqrt{b \cdot \frac{\textrm{Number of polysyllabic words}}{\textrm{Number of sentences}}} + c
+\]</div>
+<p>A number of words or sentences that is not a non-negative integer raises <code>ParameterError</code>.</p>
+<!-- --8<-- [end:calc_smog_index] -->
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Parameter</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Default</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>n_complex</code></td>
+<td style="text-align: left;"><code>int</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Number of polysyllabic words</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>n_sents</code></td>
+<td style="text-align: left;"><code>int</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Number of sentences</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>a</code></td>
+<td style="text-align: left;"><code>float</code></td>
+<td style="text-align: left;"><code>1.043</code></td>
+<td style="text-align: left;">Coefficient a, at the square root</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>b</code></td>
+<td style="text-align: left;"><code>float</code></td>
+<td style="text-align: left;"><code>30</code></td>
+<td style="text-align: left;">Coefficient b, the number of sentences of the sample</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>c</code></td>
+<td style="text-align: left;"><code>float</code></td>
+<td style="text-align: left;"><code>3.1291</code></td>
+<td style="text-align: left;">Coefficient c, the constant</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="metric-card">
+<h3 id="gunning_fog_index">Gunning fog index<a class="headerlink" href="#gunning_fog_index" title="Permanent link">&para;</a></h3>
+<p class="metric-meta"><code>gunning_fog_index</code> · Gunning, 1952</p>
+<div class="signature highlight"><pre><span></span><code><span class="n">calc_gunning_fog_index</span><span class="p">(</span><span class="n">n_complex</span><span class="p">,</span> <span class="n">n_words</span><span class="p">,</span> <span class="n">n_sents</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="mf">0.4</span><span class="p">)</span>
+</code></pre></div>
+<!-- --8<-- [start:calc_gunning_fog_index] -->
+<p>The years of schooling needed to read the text, by the mean sentence length and the percentage of complex words, in the original formula the words of three or more syllables.</p>
+<div class="arithmatex">\[
+a \cdot \left(\frac{\textrm{Number of words}}{\textrm{Number of sentences}} + \frac{100 \cdot \textrm{Number of complex words}}{\textrm{Number of words}}\right)
+\]</div>
+<!-- --8<-- [end:calc_gunning_fog_index] -->
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Parameter</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Default</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>n_complex</code></td>
+<td style="text-align: left;"><code>int</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Number of complex words</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>n_words</code></td>
+<td style="text-align: left;"><code>int</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Number of words</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>n_sents</code></td>
+<td style="text-align: left;"><code>int</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Number of sentences</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>a</code></td>
+<td style="text-align: left;"><code>float</code></td>
+<td style="text-align: left;"><code>0.4</code></td>
+<td style="text-align: left;">Coefficient a</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="metric-card">
+<h3 id="lix">LIX readability index<a class="headerlink" href="#lix" title="Permanent link">&para;</a></h3>
+<p class="metric-meta"><code>lix</code> · Björnsson, 1968</p>
+<!-- --8<-- [start:calc_lix] -->
+<div class="signature highlight"><pre><span></span><code><span class="n">calc_lix</span><span class="p">(</span><span class="n">n_long_words</span><span class="p">,</span> <span class="n">n_words</span><span class="p">,</span> <span class="n">n_sents</span><span class="p">)</span>
+</code></pre></div>
+<p>The mean sentence length plus the percentage of long words, the words of more than six letters; there are no coefficients to fit. The values read as text types:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Value</th>
+<th style="text-align: left;">Text</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>0-30</code></td>
+<td style="text-align: left;">very easy texts, children's books</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>30-40</code></td>
+<td style="text-align: left;">easy texts, fiction, newspaper articles</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>40-50</code></td>
+<td style="text-align: left;">texts of medium difficulty, magazine articles</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>50-60</code></td>
+<td style="text-align: left;">hard texts, popular science, official texts</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>60-100</code></td>
+<td style="text-align: left;">very hard texts, laws and bureaucratic language</td>
+</tr>
+</tbody>
+</table>
+<div class="arithmatex">\[
+\frac{\textrm{Number of words}}{\textrm{Number of sentences}} + \frac{100 \cdot \textrm{Number of long words}}{\textrm{Number of words}}
+\]</div>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Parameter</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Default</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>n_long_words</code></td>
+<td style="text-align: left;"><code>int</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Number of long words</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>n_words</code></td>
+<td style="text-align: left;"><code>int</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Number of words</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>n_sents</code></td>
+<td style="text-align: left;"><code>int</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Number of sentences</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:calc_lix] -->
+</div>
+<div class="metric-card">
+<h3 id="rix">RIX readability index<a class="headerlink" href="#rix" title="Permanent link">&para;</a></h3>
+<p class="metric-meta"><code>rix</code> · Anderson, 1983</p>
+<!-- --8<-- [start:calc_rix] -->
+<div class="signature highlight"><pre><span></span><code><span class="n">calc_rix</span><span class="p">(</span><span class="n">n_long_words</span><span class="p">,</span> <span class="n">n_sents</span><span class="p">)</span>
+</code></pre></div>
+<p>The long words, of more than six letters, per sentence; there are no coefficients to fit. The values read as grades:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Value</th>
+<th style="text-align: left;">Grade</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>&lt; 0.2</code></td>
+<td style="text-align: left;">1</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>0.2-0.5</code></td>
+<td style="text-align: left;">2</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>0.5-0.8</code></td>
+<td style="text-align: left;">3</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>0.8-1.3</code></td>
+<td style="text-align: left;">4</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>1.3-1.8</code></td>
+<td style="text-align: left;">5</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>1.8-2.4</code></td>
+<td style="text-align: left;">6</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>2.4-3.0</code></td>
+<td style="text-align: left;">7</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>3.0-3.7</code></td>
+<td style="text-align: left;">8</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>3.7-4.5</code></td>
+<td style="text-align: left;">9</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>4.5-5.3</code></td>
+<td style="text-align: left;">10</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>5.3-6.2</code></td>
+<td style="text-align: left;">11</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>6.2-7.2</code></td>
+<td style="text-align: left;">12</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>&gt; 7.2</code></td>
+<td style="text-align: left;">college</td>
+</tr>
+</tbody>
+</table>
+<div class="arithmatex">\[
+\frac{\textrm{Number of long words}}{\textrm{Number of sentences}}
+\]</div>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Parameter</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Default</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>n_long_words</code></td>
+<td style="text-align: left;"><code>int</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Number of long words</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>n_sents</code></td>
+<td style="text-align: left;"><code>int</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Number of sentences</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:calc_rix] -->
+</div>
+<div class="metric-card">
+<h3 id="mu_index">Legibilidad µ<a class="headerlink" href="#mu_index" title="Permanent link">&para;</a></h3>
+<p class="metric-meta"><code>mu_index</code> · Muñoz Baquedano and Muñoz Urra, 2006</p>
+<!-- --8<-- [start:calc_mu_index] -->
+<div class="signature highlight"><pre><span></span><code><span class="n">calc_mu_index</span><span class="p">(</span><span class="n">c_letters</span><span class="p">)</span>
+</code></pre></div>
+<p>The mean number of letters per word divided by its sample variance, times 100; there are no coefficients to fit. Words without letters (numbers) are left out; with fewer than two words or without variability the index is undefined (<code>nan</code>).</p>
+<div class="arithmatex">\[
+100 \cdot \frac{\bar{x}}{s^2}, \quad s^2 = \frac{\sum (x_i - \bar{x})^2}{n - 1}
+\]</div>
+<p>where <span class="arithmatex">\(x_i\)</span> is the number of letters of a word and <span class="arithmatex">\(n\)</span> the number of words.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Parameter</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Default</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>c_letters</code></td>
+<td style="text-align: left;"><code>dict[int, int]</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Distribution of words by number of letters</td>
+</tr>
+</tbody>
+</table>
+<p>A <code>c_letters</code> that is not a mapping raises <code>SourceTypeError</code>.</p>
+<!-- --8<-- [end:calc_mu_index] -->
+</div>
+<div class="metric-card">
+<h3 id="consensus_grade">Consensus grade<a class="headerlink" href="#consensus_grade" title="Permanent link">&para;</a></h3>
+<p class="metric-meta"><code>consensus_grade</code></p>
+<!-- --8<-- [start:ReadabilityStats-consensus] -->
+<p>The <code>consensus_grade</code> attribute is the median of the values of the grade formulas (<code>grade_stats</code>) rounded half up, together with the reading ease in years of schooling (<code>reading_ease_to_grade</code>), not rounded. A library aligns the bounds of <code>reading_ease_grades</code>, and of each scale of <code>preset_reading_ease_grades</code>, with its scale of the reading ease, so that the consensus grade and <code>describe</code> read the value alike.</p>
+<!-- --8<-- [end:ReadabilityStats-consensus] -->
+<!-- --8<-- [start:calc_consensus_grade] -->
+<div class="signature highlight"><pre><span></span><code><span class="n">calc_consensus_grade</span><span class="p">(</span><span class="n">grades</span><span class="p">,</span> <span class="n">flesch_reading_easy</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">to_grade</span><span class="o">=</span><span class="n">flesch_reading_easy_to_grade</span><span class="p">)</span>
+</code></pre></div>
+<p>The median of the values of the grade formulas rounded half up, together with the reading ease in years of schooling by <code>to_grade</code>, not rounded - so a band of 8.5 votes for 8.5.</p>
+<div class="arithmatex">\[
+\textrm{median}\left(\lfloor g_1 + 0.5 \rfloor, \ldots, \lfloor g_k + 0.5 \rfloor, \textrm{to\_grade}(\textrm{reading ease})\right)
+\]</div>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Parameter</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Default</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>grades</code></td>
+<td style="text-align: left;"><code>list[float]</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Values of the grade formulas</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>flesch_reading_easy</code></td>
+<td style="text-align: left;"><code>float</code></td>
+<td style="text-align: left;"><code>None</code></td>
+<td style="text-align: left;">Value of the reading ease</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>to_grade</code></td>
+<td style="text-align: left;"><code>Callable</code></td>
+<td style="text-align: left;"><code>flesch_reading_easy_to_grade</code></td>
+<td style="text-align: left;">Conversion of the reading ease into years of schooling</td>
+</tr>
+</tbody>
+</table>
+<p>No values at all, a grade or a reading ease that is not a finite number raise <code>ParameterError</code>; grades that are not a list and a <code>to_grade</code> that is not callable raise <code>SourceTypeError</code>.</p>
+<!-- --8<-- [end:calc_consensus_grade] -->
+<div class="signature highlight"><pre><span></span><code><span class="n">flesch_reading_easy_to_grade</span><span class="p">(</span><span class="n">flesch_reading_easy</span><span class="p">,</span> <span class="n">grades</span><span class="o">=</span><span class="p">((</span><span class="mi">90</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> <span class="p">(</span><span class="mi">80</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span> <span class="p">(</span><span class="mi">70</span><span class="p">,</span> <span class="mi">7</span><span class="p">),</span> <span class="p">(</span><span class="mi">60</span><span class="p">,</span> <span class="mf">8.5</span><span class="p">),</span> <span class="p">(</span><span class="mi">50</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span> <span class="p">(</span><span class="mi">40</span><span class="p">,</span> <span class="mi">11</span><span class="p">),</span> <span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="mi">12</span><span class="p">)),</span> <span class="n">below</span><span class="o">=</span><span class="mi">13</span><span class="p">)</span>
+</code></pre></div>
+<!-- --8<-- [start:flesch_reading_easy_to_grade] -->
+<p>Conversion of the Flesch reading ease into years of schooling for the consensus grade: the grade of the first band whose lower bound the value reaches, or <code>below</code> under the last bound; values above 100 belong to the first band. A reading ease or a <code>below</code> that is not a finite number raises <code>ParameterError</code>, and so do <code>grades</code> that are empty or not pairs of finite numbers with descending bounds.</p>
+<!-- --8<-- [end:flesch_reading_easy_to_grade] -->
+<p>The default bands are those of <code>text_standard</code> of <a href="https://github.com/textstat/textstat">textstat</a>, which follow the table of Flesch (1948) down to 60 and split his lower bands, with 8.5 for its grades 8 and 9: 90-100 - 5, 80-90 - 6, 70-80 - 7, 60-70 - 8.5, 50-60 - 10, 40-50 - 11, 30-40 - 12, below 30 - 13 (<code>anyts.constants.READING_EASE_GRADES</code>).</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Parameter</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Default</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>flesch_reading_easy</code></td>
+<td style="text-align: left;"><code>float</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Value of the reading ease</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>grades</code></td>
+<td style="text-align: left;"><code>list[tuple[float, float]]</code></td>
+<td style="text-align: left;"><code>READING_EASE_GRADES</code></td>
+<td style="text-align: left;">Lower bounds and their grades in descending order of the bounds</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>below</code></td>
+<td style="text-align: left;"><code>float</code></td>
+<td style="text-align: left;"><code>13</code></td>
+<td style="text-align: left;">Grade below the last bound</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="metric-card">
+<h3 id="reading_time">Reading time<a class="headerlink" href="#reading_time" title="Permanent link">&para;</a></h3>
+<p class="metric-meta"><code>reading_time</code> · <code>reading_time_by_speed(wpm)</code> · <code>reading_time_by_norm(norm)</code> · Brysbaert, 2019</p>
+<div class="signature highlight"><pre><span></span><code><span class="n">calc_reading_time</span><span class="p">(</span><span class="n">n_words</span><span class="p">,</span> <span class="n">wpm</span><span class="o">=</span><span class="mi">238</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">messages</span><span class="o">=</span><span class="n">MESSAGES</span><span class="p">)</span>
+</code></pre></div>
+<!-- --8<-- [start:calc_reading_time] -->
+<p>The reading time of a text in minutes: the number of words divided by the reading speed.</p>
+<div class="arithmatex">\[
+\frac{\textrm{Number of words}}{\textrm{wpm}}
+\]</div>
+<p>A number of words that is not a non-negative integer and a speed that is not a positive number raise <code>ParameterError</code>.</p>
+<!-- --8<-- [end:calc_reading_time] -->
+<p>The default speed is the silent reading speed of adults in English, 238 words per minute.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Parameter</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Default</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>n_words</code></td>
+<td style="text-align: left;"><code>int</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Number of words</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>wpm</code></td>
+<td style="text-align: left;"><code>float</code></td>
+<td style="text-align: left;"><code>238</code></td>
+<td style="text-align: left;">Reading speed, words per minute (<code>READING_SPEED_WPM</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>messages</code></td>
+<td style="text-align: left;"><code>dict[str, str]</code></td>
+<td style="text-align: left;"><code>MESSAGES</code></td>
+<td style="text-align: left;">Messages of the errors by key, a keyword</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h2 id="methods">Methods<a class="headerlink" href="#methods" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:ReadabilityStats-describe_grade] -->
+<p><code>describe_grade(stat)</code> returns the school stage and reader age for the consensus grade or the grade formula <code>stat</code>, <code>consensus_grade</code> by default; another metric raises <code>ParameterError</code>.</p>
+<!-- --8<-- [end:ReadabilityStats-describe_grade] -->
+
+<!-- --8<-- [start:ReadabilityStats-describe_level] -->
+<p><code>describe_level(stat)</code> returns the band of the interpretation scale (<code>level_scale</code>) of the metric <code>stat</code>, <code>flesch_reading_easy</code> by default; a metric without a scale of bands and an undefined value (nan) raise <code>ParameterError</code>.</p>
+<!-- --8<-- [end:ReadabilityStats-describe_level] -->
+
+<!-- --8<-- [start:ReadabilityStats-describe] -->
+<p><code>describe(stat)</code> returns the reading of any metric by its scale: for the consensus grade and a grade formula the school stage and reader age (<code>describe_grade</code>), for a metric with a scale of bands (<code>level_scale</code>) its band, for another metric of <code>grade_scales</code> the stage and age of the years of schooling its scale gives, and <code>None</code> for a metric without a scale or with an undefined value (nan). A name that is neither in <code>stats_desc</code> nor a public property of the class raises <code>UnknownStatError</code>.</p>
+<!-- --8<-- [end:ReadabilityStats-describe] -->
+
+<!-- --8<-- [start:ReadabilityStats-reading_time_by_speed] -->
+<p><code>reading_time_by_speed(wpm)</code> returns the reading time of the text in minutes at the speed <code>wpm</code>, words per minute; a speed that is not a positive number raises <code>ParameterError</code>.</p>
+<!-- --8<-- [end:ReadabilityStats-reading_time_by_speed] -->
+
+<!-- --8<-- [start:ReadabilityStats-reading_time_by_norm] -->
+<p><code>reading_time_by_norm(norm)</code> returns the reading times of the text in minutes at the speeds of the norm <code>norm</code> of <code>reading_speed_norms</code>, in their order; an unknown norm raises <code>ParameterError</code>.</p>
+<!-- --8<-- [end:ReadabilityStats-reading_time_by_norm] -->
+
+<!-- --8<-- [start:ReadabilityStats-get_stats] -->
+<p><code>get_stats()</code> returns a dictionary of the readability metrics of <code>stats_desc</code>.</p>
+<!-- --8<-- [end:ReadabilityStats-get_stats] -->
+
+<!-- --8<-- [start:ReadabilityStats-print_stats] -->
+<p><code>print_stats()</code> prints a table of the readability metrics with their descriptions from <code>stats_desc</code> under the headers of <code>stats_headers</code>.</p>
+<!-- --8<-- [end:ReadabilityStats-print_stats] -->
+
+<div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Code</label><label for="__tabbed_2_2">Result</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="n">rs</span><span class="o">.</span><span class="n">describe_grade</span><span class="p">()</span>
+<span class="n">rs</span><span class="o">.</span><span class="n">describe</span><span class="p">(</span><span class="s2">"flesch_reading_easy"</span><span class="p">),</span> <span class="n">rs</span><span class="o">.</span><span class="n">describe</span><span class="p">(</span><span class="s2">"lix"</span><span class="p">),</span> <span class="n">rs</span><span class="o">.</span><span class="n">describe</span><span class="p">(</span><span class="s2">"mu_index"</span><span class="p">)</span>
+<span class="n">rs</span><span class="o">.</span><span class="n">reading_time_by_norm</span><span class="p">(</span><span class="s2">"adult"</span><span class="p">)</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>'elementary school, grades 1-5 (6-11 years)'
+('5th grade', "very easy texts, children's books", None)
+(0.04918032786885246, 0.037815126050420166)
+</code></pre></div>
+</div>
+</div>
+</div>
+<p>The frame of the metrics (<code>to_dataframe</code>) is that of the <a href="../stats/">statistics interface</a>.</p>
+<h2 id="scales">Scales<a class="headerlink" href="#scales" title="Permanent link">&para;</a></h2>
+<p>The default scales of <code>describe_level</code> are the school levels of Flesch for the reading ease (<code>anyts.constants.READING_EASE_LEVELS</code>, How to Write Plain English, 1979), the text types of Björnsson for <a href="#lix">LIX</a> (<code>LIX_LEVELS</code>) and the grades of Anderson for <a href="#rix">RIX</a> (<code>RIX_LEVELS</code>), whose last band, from 7.2 up, is "college and above". The reading ease reads as follows:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Reading ease</th>
+<th style="text-align: left;">Level</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>90-100</code></td>
+<td style="text-align: left;">5th grade</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>80-90</code></td>
+<td style="text-align: left;">6th grade</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>70-80</code></td>
+<td style="text-align: left;">7th grade</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>60-70</code></td>
+<td style="text-align: left;">8th and 9th grade</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>50-60</code></td>
+<td style="text-align: left;">10th to 12th grade</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>30-50</code></td>
+<td style="text-align: left;">college</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>10-30</code></td>
+<td style="text-align: left;">college graduate</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>&lt; 10</code></td>
+<td style="text-align: left;">professional</td>
+</tr>
+</tbody>
+</table>
+<p>By default RIX is read by its scale of bands; <code>grade_scales</code> keeps its grades as years of schooling (<code>anyts.constants.RIX_GRADES</code>, college as 13) for a library whose scales of bands leave RIX out.</p>
+<h3 id="grade_to_age">School stage and age<a class="headerlink" href="#grade_to_age" title="Permanent link">&para;</a></h3>
+<div class="signature highlight"><pre><span></span><code><span class="n">grade_to_age</span><span class="p">(</span><span class="n">grade</span><span class="p">,</span> <span class="n">levels</span><span class="o">=</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="s1">'elementary school, grades 1-5'</span><span class="p">,</span> <span class="s1">'6-11 years'</span><span class="p">),</span> <span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="s1">'middle school, grades 6-8'</span><span class="p">,</span> <span class="s1">'11-14 years'</span><span class="p">),</span> <span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="s1">'high school, grades 9-12'</span><span class="p">,</span> <span class="s1">'14-18 years'</span><span class="p">),</span> <span class="p">(</span><span class="mi">13</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="s1">'college'</span><span class="p">,</span> <span class="s1">'18-22 years'</span><span class="p">)),</span> <span class="n">above</span><span class="o">=</span><span class="p">(</span><span class="s1">'graduate school'</span><span class="p">,</span> <span class="s1">'over 22 years'</span><span class="p">))</span>
+</code></pre></div>
+<!-- --8<-- [start:grade_to_age] -->
+<p>The school stage and reader age by the value of a grade formula: the value is rounded half up and falls into the first stage whose last year it does not exceed, values below 1 into the first stage; above the last stage lies <code>above</code>. A grade that is not a finite number, stages that are not quadruples of two whole years and two strings in ascending order of the years and an <code>above</code> that is not a pair of strings raise <code>ParameterError</code>.</p>
+<!-- --8<-- [end:grade_to_age] -->
+
+<p>The default stages are those of the United States (<code>anyts.constants.GRADE_AGE_LEVELS</code> and <code>POSTGRADUATE_LEVEL</code>):</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Grade</th>
+<th style="text-align: left;">Stage</th>
+<th style="text-align: left;">Age</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">1-5</td>
+<td style="text-align: left;">elementary school, grades 1-5</td>
+<td style="text-align: left;">6-11 years</td>
+</tr>
+<tr>
+<td style="text-align: left;">6-8</td>
+<td style="text-align: left;">middle school, grades 6-8</td>
+<td style="text-align: left;">11-14 years</td>
+</tr>
+<tr>
+<td style="text-align: left;">9-12</td>
+<td style="text-align: left;">high school, grades 9-12</td>
+<td style="text-align: left;">14-18 years</td>
+</tr>
+<tr>
+<td style="text-align: left;">13-16</td>
+<td style="text-align: left;">college</td>
+<td style="text-align: left;">18-22 years</td>
+</tr>
+<tr>
+<td style="text-align: left;">above 16</td>
+<td style="text-align: left;">graduate school</td>
+<td style="text-align: left;">over 22 years</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Parameter</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Default</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>grade</code></td>
+<td style="text-align: left;"><code>float</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Value of a grade formula</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>levels</code></td>
+<td style="text-align: left;"><code>list[tuple[int, int, str, str]]</code></td>
+<td style="text-align: left;"><code>GRADE_AGE_LEVELS</code></td>
+<td style="text-align: left;">Stages as the first and the last year, the stage and the age, in ascending order</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>above</code></td>
+<td style="text-align: left;"><code>tuple[str, str]</code></td>
+<td style="text-align: left;"><code>POSTGRADUATE_LEVEL</code></td>
+<td style="text-align: left;">Stage and age above the last stage</td>
+</tr>
+</tbody>
+</table>
+<h3 id="scale_level">Band of a scale<a class="headerlink" href="#scale_level" title="Permanent link">&para;</a></h3>
+<!-- --8<-- [start:scale_level] -->
+<div class="signature highlight"><pre><span></span><code><span class="n">scale_level</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">scale</span><span class="p">)</span>
+</code></pre></div>
+<p>The band of a scale for a value: the scale is given as the lower bounds of its bands in descending order, the value falls into the first band whose bound it reaches, and the lowest band is open below.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Parameter</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Default</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>value</code></td>
+<td style="text-align: left;"><code>float</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Value of a metric</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>scale</code></td>
+<td style="text-align: left;"><code>list[tuple[float, Any]]</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Lower bounds and their bands in descending order</td>
+</tr>
+</tbody>
+</table>
+<p>A value that is not a finite number and a scale that is empty, not a list of pairs of a finite lower bound and a band or with bounds that do not descend raise <code>ParameterError</code>.</p>
+<!-- --8<-- [end:scale_level] -->
+
+<div class="tabbed-set tabbed-alternate" data-tabs="3:2"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Code</label><label for="__tabbed_3_2">Result</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">READING_EASE_LEVELS</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">anyts.readability_stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">scale_level</span>
+
+<span class="n">scale_level</span><span class="p">(</span><span class="mi">45</span><span class="p">,</span> <span class="n">READING_EASE_LEVELS</span><span class="p">),</span> <span class="n">scale_level</span><span class="p">(</span><span class="o">-</span><span class="mi">40</span><span class="p">,</span> <span class="n">READING_EASE_LEVELS</span><span class="p">)</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>('college', 'professional')
+</code></pre></div>
+</div>
+</div>
+</div>
+<h2 id="hooks">For library developers<a class="headerlink" href="#hooks" title="Permanent link">&para;</a></h2>
+<details class="library-hooks">
+<summary>Language hooks of a subclass</summary>
+<!-- --8<-- [start:ReadabilityStats-hooks] -->
+<p>A language library subclasses <code>ReadabilityStats</code>:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Hook</th>
+<th style="text-align: left;">Kind</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>basic_stats_class</code></td>
+<td style="text-align: left;">class attribute</td>
+<td style="text-align: left;">Its subclass of <code>BasicStats</code> for a string or a <code>Doc</code>; without it the source must be a <code>BasicStats</code> object</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>presets</code></td>
+<td style="text-align: left;">class attribute</td>
+<td style="text-align: left;">Coefficients of the formulas by preset; a formula missing from a preset takes the defaults of its function</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>grade_stats</code></td>
+<td style="text-align: left;">class attribute</td>
+<td style="text-align: left;">Grade formulas of the consensus grade; <code>anyts.constants.READABILITY_GRADE_STATS</code> by default</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>stats_desc</code>, <code>stats_headers</code></td>
+<td style="text-align: left;">class attributes</td>
+<td style="text-align: left;">Metrics of <code>get_stats</code> with their descriptions (<code>READABILITY_STATS_DESC</code> by default), headers of the columns for <code>print_stats</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>smog_complex_syl_factor</code></td>
+<td style="text-align: left;">class attribute</td>
+<td style="text-align: left;">Minimum number of syllables in a polysyllabic word of SMOG and Gunning fog; <code>SMOG_COMPLEX_SYL_FACTOR</code> by default</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>lix_long_word_letter_factor</code></td>
+<td style="text-align: left;">class attribute</td>
+<td style="text-align: left;">Minimum number of letters in a long word of LIX and RIX; <code>LIX_LONG_WORD_LETTER_FACTOR</code> by default</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>grade_age_levels</code>, <code>postgraduate_level</code></td>
+<td style="text-align: left;">class attributes</td>
+<td style="text-align: left;">School stages and ages of <code>describe_grade</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>level_scales</code></td>
+<td style="text-align: left;">class attribute</td>
+<td style="text-align: left;">Interpretation scales by metric, as lower bounds and their bands</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>preset_level_scales</code></td>
+<td style="text-align: left;">class attribute</td>
+<td style="text-align: left;">Interpretation scales by preset and metric, in place of <code>level_scales</code> for the preset</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>level_scale(stat)</code></td>
+<td style="text-align: left;">method</td>
+<td style="text-align: left;">Interpretation scale of a metric for <code>describe_level</code> and <code>describe</code>; that of <code>preset_level_scales</code>, else of <code>level_scales</code> by default</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>grade_scales</code></td>
+<td style="text-align: left;">class attribute</td>
+<td style="text-align: left;">Scales of a metric in years of schooling for <code>describe</code>, as lower bounds and grades; a scale of bands comes first, so a metric read by years of schooling stays out of <code>level_scales</code> and <code>preset_level_scales</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>reading_speed</code>, <code>reading_speed_norms</code></td>
+<td style="text-align: left;">class attributes</td>
+<td style="text-align: left;">Reading speed of <code>reading_time</code> and the speeds of the norms, words per minute; <code>READING_SPEED_WPM</code> and <code>READING_SPEED_NORMS</code> by default</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>reading_ease_grades</code></td>
+<td style="text-align: left;">class attribute</td>
+<td style="text-align: left;">Scale of the reading ease in years of schooling for the consensus grade, as lower bounds and grades, the lowest band open below</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>preset_reading_ease_grades</code></td>
+<td style="text-align: left;">class attribute</td>
+<td style="text-align: left;">Scales of <code>reading_ease_grades</code> by preset, in its place for the preset</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>reading_ease_to_grade(flesch_reading_easy)</code></td>
+<td style="text-align: left;">method</td>
+<td style="text-align: left;">Years of schooling for the reading ease in the consensus grade; the band of the scale of the preset in <code>preset_reading_ease_grades</code>, else of <code>reading_ease_grades</code> by default</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>messages</code></td>
+<td style="text-align: left;">class attribute</td>
+<td style="text-align: left;">Messages of the errors by key; <code>MESSAGES</code> by default</td>
+</tr>
+</tbody>
+</table>
+<p>A formula of the library is a property of the subclass named in <code>stats_desc</code>, and in <code>grade_stats</code> when it gives years of schooling; its coefficients may live in the presets under its name. The preset is a parameter: a library sets its own default in its <code>__init__</code> and passes it on. When the class is defined, <code>ParameterError</code> is raised by a preset unknown to <code>presets</code> among the keys of <code>preset_level_scales</code> or <code>preset_reading_ease_grades</code>, by a scale of them, of <code>grade_scales</code> or of <code>reading_ease_grades</code> that is not one of <code>scale_level</code> with finite grades, by <code>grade_age_levels</code> that are not quadruples of the first and the last year, the stage and the age in ascending order of the years, and by a <code>postgraduate_level</code> that is not a pair of strings.</p>
+<!-- --8<-- [end:ReadabilityStats-hooks] -->
+</details>
 
 
 
@@ -3224,6 +3577,12 @@
           
 <script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
         </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
         
       </main>
       
@@ -3281,7 +3640,7 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.top", "content.code.copy", "search.highlight", "search.suggest"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
       <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
