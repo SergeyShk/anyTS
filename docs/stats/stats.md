@@ -55,7 +55,7 @@ Prints a table of the statistics of `stats_desc` with their descriptions under t
 ### describe
 
 <!-- --8<-- [start:Stats-describe] -->
-Returns the band of the scale of a statistic (`level_scale`), and `None` for a statistic without a scale or with an undefined value (nan). A name that is neither of `stat_names` nor a public property of the class raises `UnknownStatError`.
+Returns the band of the scale of a statistic (`level_scale`), and `None` for a statistic without a scale, with an undefined value (nan) or for a key of the flat statistics (`get_stats(flat=True)`). A name that is neither of `stat_names` nor a public property of the class raises `UnknownStatError`.
 
 Parameters:
 

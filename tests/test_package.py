@@ -1,5 +1,6 @@
 import importlib
 import importlib.metadata
+import inspect
 import re
 import shutil
 import subprocess
@@ -182,6 +183,26 @@ def test_lazy_package_of_its_own_mapping(tmp_path, monkeypatch):
     from anyts_lazy_own import Heavy
 
     assert Heavy.__module__ == "anyts_lazy_own.heavy" and package.helper() == 1
+
+
+def test_lazy_package_lists_the_public_names(tmp_path, monkeypatch):
+    package = _package(
+        tmp_path,
+        monkeypatch,
+        "anyts_lazy_public",
+        {
+            "__init__.py": "from anyts.utils import make_lazy\n"
+            "__all__ = ['Light']\n"
+            "make_lazy(__name__, {'Light': 'light', 'Heavy': 'heavy'})\n",
+            "light.py": "class Light: ...\n",
+            "heavy.py": "import anyts_no_such_dependency\n",
+        },
+    )
+    assert "Light" in dir(package) and "Heavy" not in dir(package)
+    assert "Light" in dict(inspect.getmembers(package))
+    assert "anyts_lazy_public.heavy" not in sys.modules
+    with pytest.raises(ModuleNotFoundError, match="anyts_no_such_dependency"):
+        package.Heavy  # noqa: B018
 
 
 def test_lazy_package_keeps_the_error_of_an_import(tmp_path, monkeypatch):

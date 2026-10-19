@@ -583,6 +583,8 @@ class Subordinating(ConnectorMatcher):
         # A subordinator opening a sentence starts a clause of that sentence
         (["When", "it", "came"], ["SCONJ", "PRON", "VERB"], 0),
         (["As", "soon", "as", "it", "came"], ["ADV", "ADV", "SCONJ", "PRON", "VERB"], 0),
+        # So does a preposition, whose phrase belongs to the sentence
+        (["Despite", "the", "rain"], ["ADP", "DET", "NOUN"], 0),
         # A connector of several words is not a subordinator by the tag of its first word
         (["That", "is", "it", "came"], ["SCONJ", "AUX", "PRON", "VERB"], 1),
         # Without a part of speech the place alone decides
@@ -599,6 +601,7 @@ def test_connectors_by_place(words, pos, inter):
             return {
                 "when": ("temporal", "primary"),
                 "as soon as": ("temporal", "secondary"),
+                "despite": ("concessive", "secondary"),
                 "that is": ("reformulative", "secondary"),
                 "however": ("adversative", "secondary"),
             }
@@ -623,6 +626,7 @@ def test_is_subordinator():
     )
     when, as_soon_as = matcher.find(["when", "as", "soon", "as"])
     assert matcher.is_subordinator(when, "SCONJ") and not matcher.is_subordinator(when, "ADV")
+    assert matcher.is_subordinator(when, "ADP")
     assert not matcher.is_subordinator(when)
     assert matcher.is_subordinator(as_soon_as) and matcher.is_subordinator(as_soon_as, "ADV")
 

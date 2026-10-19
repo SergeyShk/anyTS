@@ -222,25 +222,24 @@ def find_phrases(
     check_words(words)
     check_words(phrases, "phrases", ordered=False)
     check_callable(normalize, "normalization")
-    patterns = sorted(
+    by_first: dict[str, list[list[str]]] = {}
+    for pattern in sorted(
         {pattern for phrase in phrases if (pattern := tuple(normalize(phrase).split()))},
-        key=lambda pattern: (-len(pattern), pattern),
-    )
-    by_first: dict[str, list[tuple[str, ...]]] = {}
-    for pattern in patterns:
-        by_first.setdefault(pattern[0], []).append(pattern)
-    normalized = [normalize(word) for word in words]
-    spans = []
-    position = 0
-    while position < len(normalized):
-        for pattern in by_first.get(normalized[position], ()):
-            end = position + len(pattern)
-            if tuple(normalized[position:end]) == pattern:
+        key=len,
+        reverse=True,
+    ):
+        by_first.setdefault(pattern[0], []).append(list(pattern))
+    normalized = list(map(normalize, words))
+    spans: list[tuple[int, int]] = []
+    end = 0
+    for position, word in enumerate(normalized):
+        if position < end or word not in by_first:
+            continue
+        for phrase_words in by_first[word]:
+            if normalized[position : position + len(phrase_words)] == phrase_words:
+                end = position + len(phrase_words)
                 spans.append((position, end))
-                position = end
                 break
-        else:
-            position += 1
     return spans
 
 
@@ -1189,7 +1188,9 @@ class LazyPackage(ModuleType):
         not load the dependencies of every module; a module of the package is
         imported as its attribute too. A module named as one of its functions
         (zipf, kwic) leaves the function under that name in the package, as an
-        eager import would
+        eager import would. dir() lists the names of the mapping that __all__
+        holds, all of them for a package without __all__, so that help() and
+        inspect.getmembers() import only the public names
     """
 
     def __getattr__(self, name: str) -> Any:
@@ -1219,7 +1220,10 @@ class LazyPackage(ModuleType):
         super().__setattr__(name, value)
 
     def __dir__(self) -> list[str]:
-        return sorted({*super().__dir__(), *self.__dict__["_MODULES"]})
+        names = self.__dict__["_MODULES"]
+        if (public := self.__dict__.get("__all__")) is not None:
+            names = [name for name in names if name in public]
+        return sorted({*super().__dir__(), *names})
 
 
 def make_lazy(name: str, modules: Mapping[str, str]) -> None:

@@ -655,7 +655,17 @@ def calc_smog_index(
 
     Returns:
         float: Value of the index, nan without sentences
+
+    Raises:
+        ParameterError: If a number of words or sentences is not an integer or is negative
     """
+    for count, what in (
+        (n_complex, "number of polysyllabic words"),
+        (n_sents, "number of sentences"),
+    ):
+        check_integer(count, what)
+        if count < 0:
+            raise ParameterError(f"The {what} cannot be negative")
     return a * sqrt(safe_divide(b * n_complex, n_sents, nan)) + c
 
 

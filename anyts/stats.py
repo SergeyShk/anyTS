@@ -142,7 +142,8 @@ class Stats:
 
         Description:
             The band of the scale of level_scale. A statistic is a name of
-            stat_names or a public property of the class
+            stat_names or a public property of the class; a key of the flat
+            statistics (get_stats(flat=True)) has no scale
 
         Arguments:
             stat (str): Name of the statistic
@@ -154,6 +155,8 @@ class Stats:
         Raises:
             UnknownStatError: If the class has no such statistic
         """
+        if self._is_flat_key(stat):
+            return None
         self._check_stat(stat)
         scale = self.level_scale(stat)
         if scale is None:
@@ -162,6 +165,18 @@ class Stats:
         if isinstance(value, Real) and not isfinite(value):
             return None
         return scale_level(value, scale)
+
+    def _is_flat_key(self, stat: object) -> bool:
+        """Whether a name is a key that a dictionary statistic gives in the flat statistics"""
+        if not isinstance(stat, str):
+            return False
+        names = self.stat_names()
+        return stat not in names and any(
+            stat.startswith(f"{name}_")
+            and isinstance(value := getattr(self, name), Mapping)
+            and stat in _flatten(value, f"{name}_")
+            for name in names
+        )
 
     def _check_stat(self, stat: object) -> None:
         """Raising UnknownStatError for a name neither of stat_names nor a public property"""

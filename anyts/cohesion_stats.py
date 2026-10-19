@@ -94,7 +94,7 @@ class ConnectorMatcher:
     Methods:
         normalize: Normalized form of a word or a connector
         find: Finding the connectors of a sentence
-        is_subordinator: Whether a connector is a subordinating conjunction
+        is_subordinator: Whether a connector ties its clause or phrase to its own sentence
 
     Class attributes:
         classes (tuple[str, ...]): Classes of the connectors (CONNECTOR_CLASSES)
@@ -117,7 +117,8 @@ class ConnectorMatcher:
         only_after (dict[str, frozenset[str]]): Connectors, by their text, that count
             inside a sentence only after these words
         subordinators (frozenset[str]): Connectors, by their text, that are
-            subordinating conjunctions besides the one-word ones tagged SCONJ
+            subordinating conjunctions or prepositions besides the one-word ones
+            tagged SCONJ or ADP
         messages (dict[str, str]): Messages of the errors by key (MESSAGES)
 
     Raises:
@@ -292,11 +293,12 @@ class ConnectorMatcher:
 
     def is_subordinator(self, connector: Connector, pos: str | None = None) -> bool:
         """
-        Checking whether a connector is a subordinating conjunction
+        Checking whether a connector ties its clause or phrase to its own sentence
 
         Description:
             A connector of subordinators, or a one-word connector whose part of
-            speech is SCONJ; its clause belongs to the sentence of the connector,
+            speech is SCONJ or ADP: the clause of a subordinating conjunction and
+            the phrase of a preposition belong to the sentence of the connector,
             wherever it stands
 
         Arguments:
@@ -307,7 +309,7 @@ class ConnectorMatcher:
             bool: Result of the check
         """
         return connector.text in self.subordinators or (
-            connector.end - connector.start == 1 and pos == "SCONJ"
+            connector.end - connector.start == 1 and pos in ("SCONJ", "ADP")
         )
 
     def _find(
@@ -478,8 +480,8 @@ class CohesionStats(Stats):
         temporal_cohesion (float): Mean of the repetitions of temporal_features
         connectors (float): Connectors per 1000 words
         connectors_inter (float): Inter-sentential connectors per 1000 words: those
-            opening a sentence, unless a subordinating conjunction by is_subordinator
-            of the matcher, whose clause belongs to the same sentence
+            opening a sentence, unless a subordinator by is_subordinator of the
+            matcher, whose clause or phrase belongs to the same sentence
         connectors_intra (float): Intra-sentential connectors per 1000 words, the
             others
         connectors_<class>, connectors_<kind> (float): Connectors of every class and
