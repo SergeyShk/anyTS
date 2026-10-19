@@ -29,9 +29,7 @@ nav:
         - Metrics module: stats/syntax_stats.md
         - Metric functions: stats/syntax_stats_funcs.md
       - Lexical sophistication: stats/lexical_stats.md
-      - Style metrics:
-        - Metrics module: stats/style_stats.md
-        - Metric functions: stats/style_stats_funcs.md
+      - Style metrics: stats/style_stats.md
       - Phonetic statistics:
         - Metrics module: stats/phon_stats.md
         - Metric functions: stats/phon_stats_funcs.md
@@ -66,12 +64,31 @@ theme:
   name: material
   language: en
   palette:
-    primary: teal
-    accent: teal
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/weather-night
+        name: Dark theme
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/weather-sunny
+        name: Light theme
   font:
     text: Source Sans Pro
+    code: Source Code Pro
   features:
     - navigation.tabs
+    - navigation.instant
+    - navigation.top
+    - content.code.copy
+    - content.tabs.link
+    - search.highlight
+    - search.suggest
 
 plugins:
   - search
@@ -94,10 +111,14 @@ markdown_extensions:
   - toc:
       permalink: True
   - attr_list
+  - md_in_html
+  - tables
   - admonition
   - pymdownx.highlight
   - pymdownx.details
   - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
   - pymdownx.arithmatex:
       generic: True
   - pymdownx.emoji:

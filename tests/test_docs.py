@@ -161,26 +161,31 @@ def public_constants(module) -> list[str]:
     return names
 
 
+MODULES = [
+    constants,
+    basic_stats,
+    cohesion_stats,
+    components,
+    datasets,
+    diversity_stats,
+    extractors,
+    lexical_stats,
+    phon_stats,
+    readability_stats,
+    stats,
+    style_stats,
+    syntax_stats,
+    utils,
+    *CORPUS_MODULES,
+    *VISUALIZER_MODULES,
+]
+# A signature block of a page: ``` {.python .signature} with one call on one line
+SIGNATURE = re.compile(r"^``` \{\.python \.signature\}\n(\w+)\((.*)\)\n```$", re.MULTILINE)
+
+
 def test_public_constants_are_named():
     text = "\n".join(page.read_text(encoding="utf-8") for page in PAGES)
-    modules = [
-        constants,
-        basic_stats,
-        cohesion_stats,
-        components,
-        datasets,
-        diversity_stats,
-        extractors,
-        lexical_stats,
-        phon_stats,
-        readability_stats,
-        stats,
-        style_stats,
-        syntax_stats,
-        utils,
-        *CORPUS_MODULES,
-        *VISUALIZER_MODULES,
-    ]
+    modules = MODULES
     unnamed = sorted(
         {
             name
@@ -190,3 +195,64 @@ def test_public_constants_are_named():
         }
     )
     assert not unnamed, f"constants not named in the docs: {unnamed}"
+
+
+def default_text(value: object) -> str:
+    """A default as a signature block writes it: a literal, a qualified name or a constant"""
+    if value is None or isinstance(value, bool | int | float | str | tuple):
+        return repr(value)
+    if callable(value) and hasattr(value, "__qualname__"):
+        return value.__qualname__
+    for module in MODULES:
+        for name, constant in vars(module).items():
+            if name.isupper() and constant is value:
+                return name
+    return repr(value)
+
+
+def signature_text(target: object) -> str:
+    """The parameters of a callable as a signature block writes them"""
+    parts = []
+    keyword_only = False
+    for param in inspect.signature(target).parameters.values():
+        if param.kind is param.KEYWORD_ONLY and not keyword_only:
+            parts.append("*")
+            keyword_only = True
+        if param.kind is param.VAR_POSITIONAL:
+            parts.append(f"*{param.name}")
+            keyword_only = True
+        elif param.kind is param.VAR_KEYWORD:
+            parts.append(f"**{param.name}")
+        elif param.default is param.empty:
+            parts.append(param.name)
+        else:
+            parts.append(f"{param.name}={default_text(param.default)}")
+    return ", ".join(parts)
+
+
+def page_target(page: Path, name: str) -> object:
+    """A callable of a page: from the module named after the page, or the only one with the name"""
+    parts = page.relative_to(DOCS).with_suffix("").parts
+    folders = {"stats": parts[-1], "utils": "utils", "extractors": "extractors"}
+    module_name = "anyts." + folders.get(parts[0], ".".join(parts))
+    try:
+        module = importlib.import_module(module_name)
+    except ImportError:
+        module = None
+    if module is not None and name in vars(module):
+        return vars(module)[name]
+    targets = {id(vars(m)[name]): vars(m)[name] for m in MODULES if name in vars(m)}
+    return next(iter(targets.values())) if len(targets) == 1 else None
+
+
+def test_signatures_match_the_code():
+    found = 0
+    for page in PAGES:
+        for name, written in SIGNATURE.findall(page.read_text(encoding="utf-8")):
+            target = page_target(page, name)
+            assert target is not None, f"{page.relative_to(DOCS)}: {name} is not in the package"
+            assert written == signature_text(target), (
+                f"{page.relative_to(DOCS)}: {name}({written}) differs from the code"
+            )
+            found += 1
+    assert found
