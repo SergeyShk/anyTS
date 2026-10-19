@@ -78,7 +78,7 @@ Raises:
     0        6            5
     ```
 
-The band is found by [`scale_level`](readability_stats_funcs.md#band-of-a-scale); `ReadabilityStats` also reads the grade formulas by school stages.
+The band is found by [`scale_level`](readability_stats.md#scale_level); `ReadabilityStats` also reads the grade formulas by school stages.
 
 ## For library developers { #hooks }
 
