@@ -1,10 +1,5 @@
 # Stylometry
 
-!!! info ""
-    **anyts.corpus.delta()**, **anyts.corpus.delta_profiles()**, **anyts.corpus.frequency_table()**, **anyts.corpus.z_scores()**, **anyts.corpus.zeta()**, **anyts.corpus.kilgarriff_chi2()**, **anyts.corpus.mendenhall_curve()**, **anyts.corpus.mendenhall_distance()**
-
-## Description
-
 <!-- --8<-- [start:stylometry] -->
 Measures of stylometry and authorship attribution: distances between texts by the frequencies of the most frequent words (Burrows's Delta and its variants, as in [stylo](https://github.com/computationalstylistics/stylo)), markers of preferred and avoided words (Zeta), Kilgarriff's chi-square distance between corpora and the Mendenhall curve. The functions work on lists of units of a text: lower-case word forms (the usual choice for Delta), lemmas or character N-grams - case and lemmatization belong to the extractors.
 <!-- --8<-- [end:stylometry] -->
@@ -12,17 +7,41 @@ Measures of stylometry and authorship attribution: distances between texts by th
 ## Burrows's Delta { #delta }
 
 <!-- --8<-- [start:frequency_table] -->
-A corpus is a dictionary "name of a text → units". `frequency_table(corpus, n_mfw=100, culling=0.0)` builds the table of relative frequencies: rows are the texts, columns the `n_mfw` most frequent units by descending mean relative frequency (alphabetically when equal); `culling` keeps the units that occur in at least the given share of the texts, as in stylo. A corpus that is not a mapping of lists of strings raises `SourceTypeError`; an empty corpus, a text without units and no unit left after culling raise `SourceError`, and an `n_mfw` that is not an integer of at least one and a `culling` that is not a number within [0, 1] `ParameterError`.
+``` {.python .signature}
+frequency_table(corpus, n_mfw=100, culling=0.0)
+```
+
+Builds the table of relative frequencies of a corpus, a dictionary "name of a text → units": rows are the texts, columns the `n_mfw` most frequent units by descending mean relative frequency (alphabetically when equal); `culling` keeps the units that occur in at least the given share of the texts, as in stylo.
+
+| Parameter | Type | Default | Description |
+| :-------- | :--- | :------ | :---------- |
+| `corpus` | `dict[str, list[str]]` | - | Units of the texts by the names of the texts |
+| `n_mfw` | `int` | `100` | Number of the most frequent units; `None` - all of them |
+| `culling` | `float` | `0.0` | Smallest share of the texts a unit occurs in |
+
+A corpus that is not a mapping of lists of strings raises `SourceTypeError`; an empty corpus, a text without units and no unit left after culling raise `SourceError`, and an `n_mfw` that is not an integer of at least one and a `culling` that is not a number within [0, 1] `ParameterError`.
 <!-- --8<-- [end:frequency_table] -->
 
 <!-- --8<-- [start:z_scores] -->
-`z_scores(table)` standardizes the columns with the sample standard deviation, like `scale()` of R; a column with the same frequency in every text gives zeros.
+``` {.python .signature}
+z_scores(table)
+```
+
+Standardizes the columns of a table of frequencies with the sample standard deviation, like `scale()` of R; a column with the same frequency in every text gives zeros.
+
+| Parameter | Type | Default | Description |
+| :-------- | :--- | :------ | :---------- |
+| `table` | `DataFrame` | - | Table of relative frequencies |
 <!-- --8<-- [end:z_scores] -->
 
 <!-- --8<-- [start:delta] -->
-`delta` computes a symmetric matrix of distances from the z-scores (a `DataFrame` with the names of the texts); at least three texts are needed - with two, the z-scores degenerate to ±1/√2 and the distances do not depend on the frequencies.
+``` {.python .signature}
+delta(corpus, n_mfw=100, variant='burrows', culling=0.0)
+```
 
-Variants (`anyts.constants.DELTA_VARIANTS`), with the formulas of the sources of stylo; $n$ is the number of units, $z_A$ and $z_B$ the vectors of z-scores of the texts:
+Computes a symmetric matrix of distances from the z-scores (a `DataFrame` with the names of the texts); at least three texts are needed - with two, the z-scores degenerate to ±1/√2 and the distances do not depend on the frequencies.
+
+The variants (`anyts.constants.DELTA_VARIANTS`), with the formulas of the sources of stylo; $n$ is the number of units, $z_A$ and $z_B$ the vectors of z-scores of the texts:
 
 | Variant | Key | Formula | Source |
 | :------ | :-- | :------ | :----- |
@@ -33,23 +52,36 @@ Variants (`anyts.constants.DELTA_VARIANTS`), with the formulas of the sources of
 
 Cosine Delta clusters the texts by author best in the experiments of Evert et al. The usual number of units is 100 to 500 most frequent words, 100-200 for character N-grams.
 
-Parameters of `delta`:
-
 | Parameter | Type | Default | Description |
-| :-------: | :--: | :-----: | :---------: |
-| `corpus` | dict[str, list[str]] | `-` | Units of the texts by the names of the texts |
-| `n_mfw` | int | `100` | Number of the most frequent units; `None` - all of them |
-| `variant` | str | `burrows` | Variant of Delta of `anyts.constants.DELTA_VARIANTS` |
-| `culling` | float | `0.0` | Smallest share of the texts a unit occurs in |
+| :-------- | :--- | :------ | :---------- |
+| `corpus` | `dict[str, list[str]]` | - | Units of the texts by the names of the texts |
+| `n_mfw` | `int` | `100` | Number of the most frequent units; `None` - all of them |
+| `variant` | `str` | `'burrows'` | Variant of Delta of `anyts.constants.DELTA_VARIANTS` |
+| `culling` | `float` | `0.0` | Smallest share of the texts a unit occurs in |
 
 The corpus, `n_mfw` and `culling` raise the errors of `frequency_table`; fewer than three texts raise `SourceError`, and an unknown variant `ParameterError`.
 <!-- --8<-- [end:delta] -->
 
 <!-- --8<-- [start:delta_profiles] -->
-`delta_profiles(reference, samples, n_mfw, variant, culling, statistics)` is for authorship attribution. The most frequent units, the culling and the statistics of the z-scores come from the reference texts (the profiles of the authors) or from a separate set `statistics`, such as training windows when the profiles are too few to estimate the spread of the frequencies; the texts under test `samples` get the same units and scaling. The result is the distances from the samples (rows) to the references (columns); the nearest reference is the presumed author. Unlike in `delta`, a sample affects neither the units nor the scaling, so its result does not depend on the other samples. The corpora, `n_mfw` and `culling` raise the errors of `frequency_table`; fewer than three texts for the statistics raise `SourceError`, and an unknown variant `ParameterError`.
+``` {.python .signature}
+delta_profiles(reference, samples, n_mfw=100, variant='burrows', culling=0.0, statistics=None)
+```
+
+Distances by Delta for authorship attribution. The most frequent units, the culling and the statistics of the z-scores come from the reference texts (the profiles of the authors) or from a separate set `statistics`, such as training windows when the profiles are too few to estimate the spread of the frequencies; the texts under test `samples` get the same units and scaling. The result is the distances from the samples (rows) to the references (columns); the nearest reference is the presumed author. Unlike in `delta`, a sample affects neither the units nor the scaling, so its result does not depend on the other samples.
+
+| Parameter | Type | Default | Description |
+| :-------- | :--- | :------ | :---------- |
+| `reference` | `dict[str, list[str]]` | - | Units of the reference texts by the names of the texts |
+| `samples` | `dict[str, list[str]]` | - | Units of the texts under test by the names of the texts |
+| `n_mfw` | `int` | `100` | Number of the most frequent units; `None` - all of them |
+| `variant` | `str` | `'burrows'` | Variant of Delta of `anyts.constants.DELTA_VARIANTS` |
+| `culling` | `float` | `0.0` | Smallest share of the texts a unit occurs in |
+| `statistics` | `dict[str, list[str]]` | `None` | Texts of the units and of the statistics of the scaling; `None` - the reference texts |
+
+The corpora, `n_mfw` and `culling` raise the errors of `frequency_table`; fewer than three texts for the statistics raise `SourceError`, and an unknown variant `ParameterError`.
 <!-- --8<-- [end:delta_profiles] -->
 
-!!! example "Example"
+=== "Code"
 
     ``` python
     from anyts import WordsExtractor
@@ -67,98 +99,145 @@ The corpus, `n_mfw` and `culling` raise the errors of `frequency_table`; fewer t
     corpus = {name: we.extract(text) for name, text in texts.items()}
 
     frequency_table(corpus, n_mfw=5).round(3)
-    #      the    and    dog  slept  birds
-    # A  0.286  0.095  0.000  0.048  0.095
-    # B  0.222  0.111  0.111  0.111  0.000
-    # C  0.222  0.056  0.056  0.000  0.056
-
     delta(corpus, n_mfw=5).round(3)
-    #        A      B      C
-    # A  0.000  1.483  1.161
-    # B  1.483  0.000  1.219
-    # C  1.161  1.219  0.000
-
     delta(corpus, n_mfw=5, variant="cosine").round(3)
-    #        A      B      C
-    # A  0.000  1.676  1.273
-    # B  1.676  0.000  1.525
-    # C  1.273  1.525  0.000
 
     sample = {"?": we.extract("The cat woke up at the window and watched the birds again.")}
     delta_profiles(corpus, sample, n_mfw=5).round(3)
-    #        A      B      C
-    # ?  0.499  1.493  0.662
+    ```
+
+=== "Result"
+
+    ```
+         the    and    dog  slept  birds
+    A  0.286  0.095  0.000  0.048  0.095
+    B  0.222  0.111  0.111  0.111  0.000
+    C  0.222  0.056  0.056  0.000  0.056
+
+           A      B      C
+    A  0.000  1.483  1.161
+    B  1.483  0.000  1.219
+    C  1.161  1.219  0.000
+
+           A      B      C
+    A  0.000  1.676  1.273
+    B  1.676  0.000  1.525
+    C  1.273  1.525  0.000
+
+           A      B      C
+    ?  0.499  1.493  0.662
     ```
 
 ## Zeta { #zeta }
 
 <!-- --8<-- [start:zeta] -->
+``` {.python .signature}
+zeta(target, comparison, segment_size=2000, top_n=None)
+```
+
 Markers of preferred and avoided words after Burrows (2007) and Craig and Kinney (2009). Every text of both corpora is split into segments of about `segment_size` words (the length over the size rounded half up, at least one segment); $DP$ is the share of the segments of a corpus with the word. Zeta is $DP_{target} - DP_{comparison}$, from −1 to 1 (`zeta.craig` in stylo; the classic Zeta of Craig, $DP_{target} + (1 - DP_{comparison})$, is greater by one); the logarithmic Zeta is $\log_2 \frac{DP_{target}}{DP_{comparison}}$ ([Schöch et al. 2018](https://zeta-project.eu/en/keyness-measures/burrows-zeta-logarithmic-zeta/)), a zero share replaced by half a segment. The list goes from the words the target corpus prefers to those it avoids.
 
 | Parameter | Type | Default | Description |
-| :-------: | :--: | :-----: | :---------: |
-| `target` | list[str]/list[list[str]] | `-` | Words of the target corpus - one text or a list of texts |
-| `comparison` | list[str]/list[list[str]] | `-` | Words of the comparison corpus |
-| `segment_size` | int | `2000` | Size of a segment in words |
-| `top_n` | int | `None` | Number of words from the start of the list; `None` - all of them |
+| :-------- | :--- | :------ | :---------- |
+| `target` | `list[str]` / `list[list[str]]` | - | Words of the target corpus - one text or a list of texts |
+| `comparison` | `list[str]` / `list[list[str]]` | - | Words of the comparison corpus |
+| `segment_size` | `int` | `2000` | Size of a segment in words |
+| `top_n` | `int` | `None` | Number of words from the start of the list; `None` - all of them |
 
 The result is a list of `ZetaScore(word, dp_target, dp_comparison, zeta, log_zeta)` named tuples by descending Zeta, by descending logarithmic Zeta and alphabetically when equal. A corpus that is neither a list of strings nor a list of such lists raises `SourceTypeError`, and a corpus without words `SourceError`; a `segment_size` or a `top_n` that is not an integer of at least one raises `ParameterError`.
 <!-- --8<-- [end:zeta] -->
 
-!!! example "Example"
+=== "Code"
 
     ``` python
     from anyts.corpus import zeta
 
     zeta(corpus["A"], corpus["B"], segment_size=5, top_n=2)
-    # [ZetaScore(word='at', dp_target=0.5, dp_comparison=0.0, zeta=0.5, log_zeta=2.0),
-    #  ZetaScore(word='birds', dp_target=0.5, dp_comparison=0.0, zeta=0.5, log_zeta=2.0)]
-
     zeta(corpus["A"], corpus["B"], segment_size=5)[-1]
-    # ZetaScore(word='on', dp_target=0.0, dp_comparison=0.5, zeta=-0.5, log_zeta=-2.0)
+    ```
+
+=== "Result"
+
+    ```
+    [ZetaScore(word='at', dp_target=0.5, dp_comparison=0.0, zeta=0.5, log_zeta=2.0), ZetaScore(word='birds', dp_target=0.5, dp_comparison=0.0, zeta=0.5, log_zeta=2.0)]
+    ZetaScore(word='on', dp_target=0.0, dp_comparison=0.5, zeta=-0.5, log_zeta=-2.0)
     ```
 
 ## Kilgarriff's chi-square { #kilgarriff_chi2 }
 
 <!-- --8<-- [start:kilgarriff_chi2] -->
+``` {.python .signature}
+kilgarriff_chi2(words_a, words_b, n_mfw=500)
+```
+
 The distance between two corpora after [Kilgarriff (2001)](https://www.sketchengine.eu/wp-content/uploads/comparing_corpora_2001.pdf): for the `n_mfw` most frequent words of the joint corpus the expected frequencies in the corpora are proportional to their sizes, $\chi^2 = \sum (O - E)^2 / E$ over the words and both corpora. The greater the value, the more the corpora differ; it grows with the size of the corpora, so only pairs of equal sizes are comparable.
 
 | Parameter | Type | Default | Description |
-| :-------: | :--: | :-----: | :---------: |
-| `words_a` | list[str] | `-` | Words of the first corpus |
-| `words_b` | list[str] | `-` | Words of the second corpus |
-| `n_mfw` | int | `500` | Number of the most frequent words of the joint corpus |
+| :-------- | :--- | :------ | :---------- |
+| `words_a` | `list[str]` | - | Words of the first corpus |
+| `words_b` | `list[str]` | - | Words of the second corpus |
+| `n_mfw` | `int` | `500` | Number of the most frequent words of the joint corpus |
 
 Words that are not a list of strings raise `SourceTypeError`, a corpus without words `SourceError`, and an `n_mfw` that is not an integer of at least one `ParameterError`.
 <!-- --8<-- [end:kilgarriff_chi2] -->
 
-!!! example "Example"
+=== "Code"
 
     ``` python
     from anyts.corpus import kilgarriff_chi2
 
     round(kilgarriff_chi2(corpus["A"], corpus["B"], n_mfw=5), 3)
-    # 4.113
+    ```
+
+=== "Result"
+
+    ```
+    4.113
     ```
 
 ## Mendenhall curve { #mendenhall }
 
 <!-- --8<-- [start:mendenhall_curve] -->
-`mendenhall_curve(words)` - the shares of the words of every length in characters (Mendenhall 1887), a profile of the author comparable between texts whatever their size. Words that are not a list of strings raise `SourceTypeError`, and no words `SourceError`.
+``` {.python .signature}
+mendenhall_curve(words)
+```
+
+The shares of the words of every length in characters by ascending length (Mendenhall 1887), a profile of the author comparable between texts whatever their size.
+
+| Parameter | Type | Default | Description |
+| :-------- | :--- | :------ | :---------- |
+| `words` | `list[str]` | - | Words of the text |
+
+Words that are not a list of strings raise `SourceTypeError`, and no words `SourceError`.
 <!-- --8<-- [end:mendenhall_curve] -->
 
 <!-- --8<-- [start:mendenhall_distance] -->
-`mendenhall_distance(words_a, words_b)` - the Jensen-Shannon distance with base 2 between the curves, from 0 (the distributions coincide) to 1. Words that are not a list of strings raise `SourceTypeError`, and a text without words `SourceError`.
+``` {.python .signature}
+mendenhall_distance(words_a, words_b)
+```
+
+The Jensen-Shannon distance with base 2 between the Mendenhall curves of two texts, from 0 (the distributions coincide) to 1.
+
+| Parameter | Type | Default | Description |
+| :-------- | :--- | :------ | :---------- |
+| `words_a` | `list[str]` | - | Words of the first text |
+| `words_b` | `list[str]` | - | Words of the second text |
+
+Words that are not a list of strings raise `SourceTypeError`, and a text without words `SourceError`.
 <!-- --8<-- [end:mendenhall_distance] -->
 
-!!! example "Example"
+=== "Code"
 
     ``` python
     from anyts.corpus import mendenhall_curve, mendenhall_distance
 
     {length: round(share, 3) for length, share in mendenhall_curve(corpus["A"]).items()}
-    # {2: 0.095, 3: 0.524, 4: 0.095, 5: 0.143, 6: 0.095, 7: 0.048}
-
     round(mendenhall_distance(corpus["A"], corpus["B"]), 3)
-    # 0.303
+    ```
+
+=== "Result"
+
+    ```
+    {2: 0.095, 3: 0.524, 4: 0.095, 5: 0.143, 6: 0.095, 7: 0.048}
+    0.303
     ```
