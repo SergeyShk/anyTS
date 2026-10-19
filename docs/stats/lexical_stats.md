@@ -9,7 +9,7 @@ Lexical sophistication in the manner of TAALES (Kyle, Crossley and Berger, 2018)
 
 Raises:
 
-- `SourceTypeError` - a dictionary of another class than that of the library;
+- `SourceTypeError` - a dictionary of another class than that of the library or, without `freq_dict_class`, one without `lookup` and `ipm` or none at all; an `analyze` that does not give `LexicalWord` objects;
 - `SourceError` - a source without words.
 <!-- --8<-- [end:LexicalStats] -->
 
@@ -121,8 +121,8 @@ Every metric is an attribute or a property of the object, and `get_stats` gives 
 | `mean_dispersion` | Mean dispersion of the words found | That of the dictionary | By the measure of the dictionary |
 | [`surprisal`](#surprisal) | Mean surprisal of the words by the unigram model of the dictionary, in bits | 0 and above | Rarer words |
 | [`perplexity`](#surprisal) | 2 to the power of the surprisal | 1 and above | Rarer words |
-| [`p_top1000`](#bands), [`p_top2000`](#bands), [`p_top5000`](#bands), [`p_top10000`](#bands) | Share of the words with a lemma in the top 1000, 2000, 5000 and 10000 of the list | 0-1 | More frequent words |
-| [`p_beyond_top10000`](#bands) | Share of the words with a lemma beyond the top 10000 | 0-1 | Rarer words |
+| [`p_top1000`](#bands), [`p_top2000`](#bands), [`p_top5000`](#bands), [`p_top10000`](#bands) | Share of the words with a lemma in the top 1000, 2000, 5000 and 10000 of the list | 0-1, `nan` for a band beyond `top_size` | More frequent words |
+| [`p_beyond_top10000`](#bands) | Share of the words with a lemma beyond the top 10000 | 0-1, `nan` for a list shorter than 10000 | Rarer words |
 | `lexical_density` | Share of the content words | 0-1 | More content words |
 <!-- --8<-- [end:LexicalStats-metrics] -->
 

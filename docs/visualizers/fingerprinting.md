@@ -1,10 +1,10 @@
 # Literature fingerprinting
 
-<!-- --8<-- [start:fingerprinting] -->
 ``` {.python .signature}
 fingerprinting(texts, segment_len=10, metric=None, x_size=800, y_size=600, cmap='viridis', ax=None, labels=None)
 ```
 
+<!-- --8<-- [start:fingerprinting] -->
 Visualization of literature fingerprinting ([Keim and Oelke 2007](https://www.uni-konstanz.de/mmsp/pubsys/publishedFiles/KeOe07.pdf)).
 
 Every text is cut into segments of `segment_len` words with a sliding step of a tenth of a segment, and a measure of lexical diversity is computed for every segment. All segments are `segment_len` words long, so the values are comparable: when the step leaves words after the last segment, one more ends with the text, and a text not longer than a segment is one segment.

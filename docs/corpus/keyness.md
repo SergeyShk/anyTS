@@ -148,9 +148,9 @@ The measures of `measure` by key, with their names and descriptions in `anyts.co
 | [`chi2`](#chi2) | Significance of the difference, with Yates's correction | Any number | A more significant excess in the target corpus |
 | [`diff`](#diff) | Difference of the frequencies per million, in percent of the reference | Above −100 | A larger excess in the target corpus |
 | [`log_ratio`](#log_ratio) | Binary logarithm of the ratio of the frequencies per million | Any number | A larger excess in the target corpus |
-| [`bic`](#bic) | Evidence of the difference: $G^2$ penalized by the size of the corpora | Any number | Stronger evidence of an excess in the target corpus |
+| [`bic`](#bic) | Evidence of the difference: $G^2$ penalized by the size of the corpora | Any number | Stronger evidence of an excess in the target corpus, for a word more frequent there |
 | [`ell`](#ell) | Effect size of $G^2$ | −1 to 1 as a rule, `nan` for small expected frequencies | A larger excess in the target corpus |
-| [`odds_ratio`](#odds_ratio) | Ratio of the odds of the word in the corpora | 0 to `inf` | Higher odds in the target corpus |
+| [`odds_ratio`](#odds_ratio) | Ratio of the odds of the word in the corpora | 0 to `inf`, `nan` if the word fills both corpora | Higher odds in the target corpus |
 
 Every measure is a function of the module `anyts.corpus.keyness` of the frequencies of a word and the sizes of the corpora, $N = c + d$:
 
@@ -176,7 +176,7 @@ A zero frequency in one of the corpora is replaced with 0.5 for %DIFF, Log Ratio
 calc_log_likelihood(a, b, c, d)
 ```
 
-The log-likelihood of the frequencies of the word against the expected ones $E_1$ and $E_2$; a term of zero frequency is zero. The critical values are `anyts.constants.G2_CRITICAL_VALUES`: 3.84 for p < 0.05, 6.63 for p < 0.01, 10.83 for p < 0.001, 15.13 for p < 0.0001.
+The log-likelihood of the frequencies of the word against the expected ones $E_1$ and $E_2$; a term of zero frequency is zero. The critical values are `anyts.constants.G2_CRITICAL_VALUES`: 3.84 for p < 0.05, 6.63 for p < 0.01, 10.83 for p < 0.001, 15.13 for p < 0.0001. The sign is negative when the word is more frequent in the reference.
 
 $$
 G^2 = 2 \left(a \ln \frac{a}{E_1} + b \ln \frac{b}{E_2}\right), \quad E_1 = \frac{c\,(a+b)}{N}, \quad E_2 = \frac{d\,(a+b)}{N}
@@ -205,7 +205,7 @@ The p-value of a $G^2$ or a chi-square, whatever its sign, by the chi-square dis
 calc_chi2(a, b, c, d)
 ```
 
-The chi-square with Yates's correction over the 2×2 contingency table of the word and the other words of each corpus. When the correction exceeds the difference, the statistic is zero.
+The chi-square with Yates's correction over the 2×2 contingency table of the word and the other words of each corpus. When the correction exceeds the difference, the statistic is zero. The sign is negative when the word is more frequent in the reference.
 
 $$
 \chi^2 = \frac{N\,\max(\lvert a(d-b) - b(c-a) \rvert - N/2,\ 0)^2}{(a+b)(N-a-b)\,c\,d}
@@ -289,7 +289,7 @@ $$
 calc_ell(a, b, c, d)
 ```
 
-The effect size of $G^2$: the share of the greatest possible departure from the expected frequencies $E_1$ and $E_2$. It grows without bound as the least expected frequency nears one and is `nan` when that frequency is at most one (a logarithm of zero or below).
+The effect size of $G^2$: the share of the greatest possible departure from the expected frequencies $E_1$ and $E_2$. It grows without bound as the least expected frequency nears one and is `nan` when that frequency is at most one (a logarithm of zero or below). The sign is negative when the word is more frequent in the reference.
 
 $$
 \frac{G^2}{N \ln \min(E_1, E_2)}

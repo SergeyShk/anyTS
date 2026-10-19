@@ -35,7 +35,7 @@ Downloads the archive of a dataset; when it is just downloaded or `missing` says
 | `force` | `bool` | `False` | Download the archive even if it is already there |
 | `user_agent` | `str` | `USER_AGENT` | User-Agent header of the request, the name of the library |
 
-A name of the archive without an extension raises `ParameterError` before the download, an archive that cannot be downloaded or fails the checksum twice `DownloadError`, and an archive that cannot be extracted or files that cannot replace the directory of the dataset `DataFileError`.
+A name of the archive without an extension raises `ParameterError` before the download, an archive that cannot be downloaded or fails the checksum twice `DownloadError`, an archive that cannot be extracted or files that cannot replace the directory of the dataset `DataFileError`, and a path of the archive that is neither a string nor a `Path` `SourceTypeError`.
 <!-- --8<-- [end:fetch_archive] -->
 
 ## Downloading a file { #download_file }
@@ -55,7 +55,7 @@ Downloads a file into a directory and returns its path, or an empty string if th
 | `force` | `bool` | `False` | Download the file even if it is already there |
 | `user_agent` | `str` | `USER_AGENT` | User-Agent header of the request, the name of the library |
 
-A directory that cannot be created, an address without a name of a file and no `filename`, a name that is not a plain name of a file, such as one with a drive or a separator, and a broken, interrupted or cut download raise `DownloadError`.
+A directory that cannot be created, an address without a name of a file and no `filename`, a name that is not a plain name of a file, such as one with a drive or a separator, and a broken, interrupted or cut download raise `DownloadError`, and a directory that is neither a string nor a `Path` `SourceTypeError`.
 <!-- --8<-- [end:download_file] -->
 
 A language library passes its own name as `user_agent`.
@@ -140,21 +140,19 @@ Returns the predicates that keep the records whose field `text` is at least `min
 A bound that is not an integer or is below one, or a minimum greater than the maximum, raises `ParameterError`.
 <!-- --8<-- [end:length_filters] -->
 
-<!-- --8<-- [start:substring_filter] -->
 ``` {.python .signature}
 substring_filter(field, value, fold=fold_diacritics)
 ```
 
-Returns the predicate that keeps the records whose field holds the substring `value`. Both are folded by `fold`, so the differences of case and diacritics a language ignores do not count. The substring is plain text, not a regular expression; a field that is not a string does not match.
+<!-- --8<-- [start:substring_filter] -->
+Returns the predicate that keeps the records whose field holds the substring `value`. Both are folded by `fold`, so the differences of case and diacritics a language ignores do not count. The substring is plain text, not a regular expression; a field that is not a string does not match. A value that is not a string raises `ParameterError`, and a `fold` that cannot be called `SourceTypeError`.
+<!-- --8<-- [end:substring_filter] -->
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
 | `field` | `str` | - | Name of the field of a record |
 | `value` | `str` | - | Substring to look for |
 | `fold` | `Callable` | `fold_diacritics` | Folding of a string before the comparison |
-
-A value that is not a string raises `ParameterError`, and a `fold` that cannot be called `SourceTypeError`.
-<!-- --8<-- [end:substring_filter] -->
 
 <!-- --8<-- [start:fold_diacritics] -->
 ``` {.python .signature}

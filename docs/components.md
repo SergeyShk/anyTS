@@ -123,7 +123,7 @@ With `preset` left at `None` the config of a saved pipeline holds no preset, and
 
 Raises:
 
-- `ParameterError` - a preset that is not a string or not one of the class, an extension not named by a string;
+- `ParameterError` - a `stats_class` that is not concrete, a preset that is not a string or not one of the class, an extension not named by a string;
 - `SourceTypeError` - a class without `basic_stats_class` and no `basic`;
 - `SourceError` - a document whose extension `basic` holds no basic statistics of the class.
 <!-- --8<-- [end:ReadabilityStatsComponent] -->
@@ -170,7 +170,7 @@ StyleStatsComponent(nlp, name, stopwords=None, top_n=10, nausea_stopwords=None, 
 
 Raises:
 
-- `SourceTypeError` - stopwords or cliches that are not a list of strings;
+- `SourceTypeError` - stopwords, nausea stopwords or cliches that are not a list of strings;
 - `ParameterError` - a `top_n` that is not an integer of at least one.
 <!-- --8<-- [end:StyleStatsComponent] -->
 

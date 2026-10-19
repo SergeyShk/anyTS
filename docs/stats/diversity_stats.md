@@ -6,13 +6,13 @@ DiversityStats(words, window_len=50, mtld_threshold=0.72, mtld_min_len=10, hdd_s
 
 <!-- --8<-- [start:DiversityStats] -->
 The main [lexical diversity](https://en.wikipedia.org/wiki/Lexical_diversity) metrics of a text, computed from its words.
+<!-- --8<-- [end:DiversityStats] -->
 
 Raises:
 
 - `SourceTypeError` - words that are not a sequence or an iterator of strings, and a string, a `Doc`, a set or a table;
 - `SourceError` - no words;
 - `ParameterError` - a parameter that `check_params` rejects.
-<!-- --8<-- [end:DiversityStats] -->
 
 === "Code"
 
@@ -431,7 +431,7 @@ A `min_len` that is not a non-negative integer and a `threshold` that is not a n
 calc_mtldw(text, min_len=10, threshold=0.72)
 ```
 
-A modification of MA-MTLD after `mtld_ma_wrap` of lexical-diversity and TAALED: factors not completed by the end of the text continue from its beginning, so all positions get equal weight. A factor cannot be longer than the text. If TTR does not drop to the threshold even over the whole text, the value is `nan`. The metric is unstable on texts shorter than 100 words.
+A modification of MA-MTLD after `mtld_ma_wrap` of lexical-diversity and TAALED: factors not completed by the end of the text continue from its beginning, so all positions get equal weight. A factor cannot be longer than the text. If no factor completes, because the text is shorter than `min_len` or TTR drops to the threshold from no start, the value is `nan`. The metric is unstable on texts shorter than 100 words.
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
@@ -1015,7 +1015,7 @@ The vocabulary growth curve of a list of words: the vocabulary size after every 
 fit_heaps(text)
 ```
 
-Fits Heaps' law over the vocabulary growth curve of a list of words, as `calc_heaps_beta` does, and returns a `HeapsFit` named tuple with the parameters `k`, `beta` and the coefficient of determination `r2`, all `nan` for texts shorter than two words.
+Fits Heaps' law over the vocabulary growth curve of a list of words, as `calc_heaps_beta` does, and returns a `HeapsFit` named tuple with the parameters `k`, `beta` and the coefficient of determination `r2`, all `nan` for texts shorter than two words; `r2` is `nan` for a text of one lexeme too.
 <!-- --8<-- [end:fit_heaps] -->
 
 </div>
@@ -1027,11 +1027,11 @@ Fits Heaps' law over the vocabulary growth curve of a list of words, as `calc_he
 `windowed(stat)`
 { .metric-meta }
 
-<!-- --8<-- [start:calc_windowed] -->
 ``` {.python .signature}
 calc_windowed(text, func, window_len=100, step=None, confidence=0.95, *, messages=MESSAGES)
 ```
 
+<!-- --8<-- [start:calc_windowed] -->
 The values of a metric over consecutive windows of equal length give their mean, their sample standard deviation and the confidence interval of the mean by Student's distribution. The standard way to compare texts of different lengths; Kubát and Milička's standardized TTR (not Summer's STTR) is a windowed TTR with a 1000-word window and a 95% interval. A text shorter than the window is a single window; `nan` windows are ignored. With fewer than two windows of a defined value the deviation and the interval are `nan`, and without any the mean too. A metric infinite in any window (e.g. the inverse Simpson's index on a window of unique words) makes the mean infinite and the deviation and the interval `nan`. The result is a `WindowStats` named tuple with the fields `mean`, `std`, `lower`, `upper` and `n_windows`, the number of the windows of a defined value.
 
 | Parameter | Type | Default | Description |
@@ -1097,11 +1097,11 @@ A language library subclasses `DiversityStats`. The class takes the words as giv
 | `messages` | class attribute | Messages of the errors by key; `MESSAGES` by default |
 <!-- --8<-- [end:DiversityStats-hooks] -->
 
-<!-- --8<-- [start:check_params] -->
 ``` {.python .signature}
 check_params(window_len=50, mtld_threshold=0.72, mtld_min_len=10, hdd_sample_size=42, log_base=10, *, messages=MESSAGES)
 ```
 
+<!-- --8<-- [start:check_params] -->
 Checks the parameters of the metrics: a `window_len` or an `hdd_sample_size` that is not an integer of at least one, an `mtld_min_len` that is not a non-negative integer, an `mtld_threshold` that is not a number in (0, 1) and a `log_base` that is not a finite number above 1 raise `ParameterError`. Called before the words are extracted, it reports a wrong parameter before an empty text.
 <!-- --8<-- [end:check_params] -->
 

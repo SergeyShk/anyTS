@@ -110,6 +110,8 @@ The class method `css()` returns the styles `to_html` adds: the container, the l
 
 ## Helpers of the layers
 
+The helpers and the finders of the layers are in `anyts.visualizers.highlight`.
+
 <!-- --8<-- [start:Word] -->
 ``` {.python .signature}
 Word(start, end, text, pos=None, lemma=None)

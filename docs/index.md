@@ -74,7 +74,7 @@
 
     ---
 
-    Compute the statistics of the dependency tree - dependency distances, tree depth, valency, coordination chains, clauses, modifiers of a noun, participial clauses, the passive, negations and split predicates - with the clauses and the constructions of a language library, on tree helpers that read the labels shared by Universal Dependencies and ClearNLP and the verb form of a predicate by its auxiliaries
+    Compute the statistics of the dependency tree - dependency distances, tree depth, valency, coordination chains, clauses, modifiers of a noun, participial clauses, the passive, negations and split predicates - with the clauses and the constructions of a language library, on [tree helpers](stats/syntax_stats.md#get_words) that read the labels shared by Universal Dependencies and ClearNLP and the verb form of a predicate by its auxiliaries
 
     [:octicons-arrow-right-24: Syntactic statistics](stats/syntax_stats.md)
 
@@ -82,7 +82,7 @@
 
     ---
 
-    Compute classes of the sounds, consonant clusters, hiatuses, entropy of the CV patterns, alliteration and assonance by the repetition index, open syllables, with the transcription and the syllables of a language library
+    Compute classes of the sounds, consonant clusters, hiatuses, entropy of the CV patterns, alliteration and assonance by the [repetition index](stats/phon_stats.md#repetition_index), open syllables, with the transcription and the syllables of a language library
 
     [:octicons-arrow-right-24: Phonetic statistics](stats/phon_stats.md)
 

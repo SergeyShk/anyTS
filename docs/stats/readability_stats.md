@@ -11,7 +11,7 @@ The metrics are properties computed on each access, so a change of the `coeffici
 
 Raises:
 
-- `SourceTypeError` - a source that is neither a string, a `Doc` nor basic statistics, basic statistics of a class other than those of the library, an extractor of another type;
+- `SourceTypeError` - a source that is neither a string, a `Doc` nor basic statistics, basic statistics of a class other than those of the library, an extractor of another type, a string or a `Doc` to a class without `basic_stats_class`;
 - `SourceError` - a source without words or sentences;
 - `ParameterError` - an unknown preset or one that is not a string.
 <!-- --8<-- [end:ReadabilityStats] -->
@@ -81,15 +81,15 @@ A formula is computed by the function of its card on the counts of `bs`, with it
 | Metric | Measures | Range | Higher means |
 | :----- | :------- | :---- | :----------- |
 | [`flesch_reading_easy`](#flesch_reading_easy) | Ease of reading by the sentence length and the syllables per word | Nominally 0-100, above 100 for the simplest texts and below 0 for the hardest | An easier text |
-| [`flesch_kincaid_grade`](#flesch_kincaid_grade) | Grade by the sentence length and the syllables per word | Years of schooling | A harder text |
-| [`coleman_liau_index`](#coleman_liau_index) | Grade by the letters and the sentences per 100 words | Years of schooling | A harder text |
-| [`automated_readability_index`](#automated_readability_index) | Grade by the letters per word and the sentence length | Years of schooling | A harder text |
+| [`flesch_kincaid_grade`](#flesch_kincaid_grade) | Grade by the sentence length and the syllables per word | Years of schooling, below 0 for the simplest texts | A harder text |
+| [`coleman_liau_index`](#coleman_liau_index) | Grade by the letters and the sentences per 100 words | Years of schooling, below 0 for the simplest texts | A harder text |
+| [`automated_readability_index`](#automated_readability_index) | Grade by the letters per word and the sentence length | Years of schooling, below 0 for the simplest texts | A harder text |
 | [`smog_index`](#smog_index) | Grade by the polysyllabic words per sentence | Years of schooling | A harder text |
 | [`gunning_fog_index`](#gunning_fog_index) | Grade by the sentence length and the share of complex words | Years of schooling | A harder text |
 | [`lix`](#lix) | Sentence length and the share of long words | 0 and above | A harder text |
 | [`rix`](#rix) | Long words per sentence | 0 and above | A harder text |
 | [`mu_index`](#mu_index) | Mean word length in letters against its variance | Above 0, `nan` with fewer than two words or without variability | An easier text |
-| [`consensus_grade`](#consensus_grade) | Median of the grade formulas and the reading ease as a grade | Years of schooling | A harder text |
+| [`consensus_grade`](#consensus_grade) | Median of the grade formulas and the reading ease as a grade | Years of schooling, below 0 for the simplest texts | A harder text |
 | [`reading_time`](#reading_time) | Reading time at the reading speed (`reading_speed`) | Minutes, above 0 | A longer text |
 <!-- --8<-- [end:ReadabilityStats-metrics] -->
 

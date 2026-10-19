@@ -83,7 +83,7 @@ The measures of `measure` by key, with their names and descriptions in `anyts.co
 | [`t_score`](#t_score) | Difference of the observed and the expected frequency of the pair | Any number | A surer association |
 | [`dice`](#dice) | Share of the pair in the occurrences of the two words | 0-1 | A stronger association |
 | [`logdice`](#logdice) | Dice coefficient on a logarithmic scale | 14 and below | A stronger association |
-| [`log_likelihood`](#log_likelihood) | Significance of the association | 0 and above | A more significant association |
+| [`log_likelihood`](#log_likelihood) | Significance of the association | 0 and above, `nan` when a word fills the text or a cell is negative | A more significant departure from independence, for attracted and avoided pairs alike |
 | [`npmi`](#npmi) | MI normalized by the information of the pair | −1 to 1 | A stronger association |
 | [`min_sensitivity`](#min_sensitivity) | Smaller share of the pair in the occurrences of either word | 0-1 | A stronger association |
 

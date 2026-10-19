@@ -154,7 +154,18 @@ A `top_n` that is not an integer of at least one raises `ParameterError`.
 find_nausea_words(text, top_n=10, stopwords=None, *, is_stopword=None, normalize=str.lower, messages=MESSAGES)
 ```
 
-The words the academic nausea counts, with their occurrences: the most frequent first, words of equal frequency in the order of the text. A stopword is a word of `stopwords` by its normalized form or, without the list, a word `is_stopword` accepts; without both there are no stopwords. The arguments are those of `calc_academic_nausea`.
+The `top_n` most frequent words without the stopwords, those the academic nausea counts, with their occurrences: the most frequent first, words of equal frequency in the order of the text. A stopword is a word of `stopwords` by its normalized form or, without the list, a word `is_stopword` accepts; without both there are no stopwords.
+
+| Parameter | Type | Default | Description |
+| :-------- | :--- | :------ | :---------- |
+| `text` | `list[str]` | - | List of words |
+| `top_n` | `int` | `10` | Number of the most frequent words (`NAUSEA_TOP_N`) |
+| `stopwords` | `list[str]` | `None` | Stopwords |
+| `is_stopword` | `Callable` | `None` | Whether a word is a stopword, without the list |
+| `normalize` | `Callable` | `str.lower` | Normalized form of a word |
+| `messages` | `dict[str, str]` | `MESSAGES` | Messages of the errors by key |
+
+A `top_n` that is not an integer of at least one raises `ParameterError`.
 <!-- --8<-- [end:find_nausea_words] -->
 
 </div>
@@ -303,6 +314,8 @@ The parenthetical expressions of a text: the phrases of the list, spelled out by
 | `is_parenthetical` | `Callable[[str], bool]` | `None` | Whether a word is a parenthetical expression by itself; none by default |
 | `expand` | `Callable` | `None` | Variants of the phrases in the forms of the text with the phrase of each; the phrases as they are by default |
 | `normalize` | `Callable[[str], str]` | `str.lower` | Normalized form of a word and of a phrase |
+
+Words or phrases that are not a list of strings and hooks that cannot be called raise `SourceTypeError`.
 <!-- --8<-- [end:find_parentheticals] -->
 
 <!-- --8<-- [start:calc_parentheticals] -->
