@@ -10,6 +10,7 @@ from pathlib import Path
 import pytest
 
 import anyts
+from anyts.exceptions import SourceTypeError
 
 ROOT = Path(__file__).parents[1]
 
@@ -142,11 +143,19 @@ def test_modules_of_lazy_packages_are_attributes():
     assert _run(code) == "anyts.corpus.stylometry anyts.visualizers.highlight True"
 
 
+@pytest.mark.parametrize("modules", [["highlight"], {"highlight": 1}, {1: "highlight"}])
+def test_modules_of_a_lazy_package_are_checked(modules):
+    from anyts.utils import make_lazy
+
+    with pytest.raises(SourceTypeError):
+        make_lazy("anyts.visualizers", modules)
+
+
 def test_lazy_package_reports_a_missing_dependency(tmp_path, monkeypatch):
     package = tmp_path / "anyts_lazy_fake"
     package.mkdir()
     (package / "__init__.py").write_text(
-        "from anyts._lazy import make_lazy\n_MODULES = {}\nmake_lazy(__name__)\n"
+        "from anyts.utils import make_lazy\nmake_lazy(__name__, {})\n"
     )
     (package / "broken.py").write_text("import anyts_no_such_dependency\n")
     monkeypatch.syspath_prepend(str(tmp_path))

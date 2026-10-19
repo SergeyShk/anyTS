@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from .._lazy import make_lazy
+from ..utils import make_lazy
 
 if TYPE_CHECKING:
     from .collocations import Collocation, collocations
@@ -100,4 +100,4 @@ __all__ = [
     "zeta",
 ]
 
-make_lazy(__name__)
+make_lazy(__name__, _MODULES)
