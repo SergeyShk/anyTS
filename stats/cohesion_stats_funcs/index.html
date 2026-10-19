@@ -1291,6 +1291,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#is_subordinator" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        is_subordinator
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2601,6 +2612,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#is_subordinator" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        is_subordinator
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2894,9 +2916,14 @@
 <td style="text-align: center;">Parts of speech of a one-word connector that counts only at the start of a sentence (a capitalized connector tagged as a proper noun)</td>
 </tr>
 <tr>
+<td style="text-align: center;"><code>subordinators</code></td>
+<td style="text-align: center;">class attribute</td>
+<td style="text-align: center;">Connectors that are subordinating conjunctions besides the one-word ones tagged <code>SCONJ</code> (<em>as soon as</em>), for <code>is_subordinator</code></td>
+</tr>
+<tr>
 <td style="text-align: center;"><code>classes</code>, <code>kinds</code></td>
 <td style="text-align: center;">class attributes</td>
-<td style="text-align: center;">Classes and kinds of the dictionary; <code>CONNECTOR_CLASSES</code> and <code>CONNECTOR_KINDS</code> by default</td>
+<td style="text-align: center;">Classes and kinds of the dictionary; <code>CONNECTOR_CLASSES</code> and <code>CONNECTOR_KINDS</code> by default. The names <code>inter</code> and <code>intra</code> (<code>CONNECTOR_PLACES</code>) belong to the densities by place of <code>CohesionStats</code> and raise <code>ParameterError</code> when the class is defined</td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>messages</code></td>
@@ -2968,6 +2995,10 @@
 <span class="c1"># [Connector(sent=0, start=2, end=3, text='and', cls='additive', kind='primary')]</span>
 </code></pre></div>
 </div>
+<h3 id="is_subordinator">is_subordinator<a class="headerlink" href="#is_subordinator" title="Permanent link">&para;</a></h3>
+<!-- --8<-- [start:ConnectorMatcher-is_subordinator] -->
+<p><code>is_subordinator(connector, pos=None)</code> checks whether an occurrence of a connector is a subordinating conjunction: a connector of <code>subordinators</code>, or a one-word connector whose part of speech <code>pos</code> is <code>SCONJ</code>. Its clause belongs to the sentence of the connector wherever the connector stands, so a subordinator opening a sentence (<em>when he came, ...</em>) does not link it to the ones before.</p>
+<!-- --8<-- [end:ConnectorMatcher-is_subordinator] -->
 
 
 

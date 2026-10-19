@@ -2696,6 +2696,11 @@
 <td style="text-align: center;">Number of the connectors, their occurrences and their number by connector</td>
 </tr>
 <tr>
+<td style="text-align: center;"><code>n_inter_connectors</code></td>
+<td style="text-align: center;">int</td>
+<td style="text-align: center;">Number of the inter-sentential connectors</td>
+</tr>
+<tr>
 <td style="text-align: center;"><code>noun_overlap_adjacent</code>, <code>noun_overlap_all</code></td>
 <td style="text-align: center;">float</td>
 <td style="text-align: center;">Shares of the adjacent and of all pairs of sentences sharing a noun</td>
@@ -2744,6 +2749,11 @@
 <td style="text-align: center;"><code>connectors</code></td>
 <td style="text-align: center;">float</td>
 <td style="text-align: center;">Connectors per 1000 words</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>connectors_inter</code>, <code>connectors_intra</code></td>
+<td style="text-align: center;">float</td>
+<td style="text-align: center;">Inter-sentential connectors per 1000 words, which link a sentence to the ones before: those opening a sentence, unless the matcher takes them for a subordinating conjunction (<code>is_subordinator</code>: one of its <code>subordinators</code> or a one-word connector tagged <code>SCONJ</code>, <em>when he came, ...</em>), whose clause belongs to the same sentence; and intra-sentential ones, the others</td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>connectors_&lt;class&gt;</code>, <code>connectors_&lt;kind&gt;</code></td>
