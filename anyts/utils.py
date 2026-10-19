@@ -1125,7 +1125,12 @@ class LazyPackage(ModuleType):
     def __getattr__(self, name: str) -> Any:
         modules = self.__dict__["_MODULES"]
         if name in modules:
-            value = getattr(import_module(f".{modules[name]}", self.__name__), name)
+            module = f"{self.__name__}.{modules[name]}"
+            # Python would take an AttributeError of the import for a missing name
+            try:
+                value = getattr(import_module(module), name)
+            except AttributeError as error:
+                raise ImportError(f"cannot import {name} from {module}: {error}") from error
             super().__setattr__(name, value)
             return value
         if name.isidentifier() and not name.startswith("__"):
@@ -1134,6 +1139,8 @@ class LazyPackage(ModuleType):
             except ModuleNotFoundError as error:
                 if error.name != f"{self.__name__}.{name}":
                     raise
+            except AttributeError as error:
+                raise ImportError(f"cannot import {self.__name__}.{name}: {error}") from error
         raise AttributeError(f"module {self.__name__!r} has no attribute {name!r}")
 
     def __setattr__(self, name: str, value: Any) -> None:
@@ -1161,19 +1168,31 @@ def make_lazy(name: str, modules: Mapping[str, str]) -> None:
         modules (dict[str, str]): Module of the package by name
 
     Raises:
-        SourceTypeError: If modules is not a mapping of strings to strings
+        SourceTypeError: If the name is not a string or modules is not a mapping of
+            strings to strings
+        ParameterError: If the name is not that of an imported package, a name of
+            modules is not an identifier or a module is not a dotted name of them
 
     Example:
         >>> import anyts.visualizers
         >>> type(anyts.visualizers).__name__
         'LazyPackage'
     """
+    check_word(name, "name of a lazy package")
+    package = sys.modules.get(name)
+    if package is None or not hasattr(package, "__path__"):
+        raise ParameterError(f"{name!r} is not the name of an imported package")
     if not isinstance(modules, Mapping):
         raise SourceTypeError(
             f"The modules of a lazy package must be a mapping, not {type(modules).__name__}"
         )
     check_words(list(modules), "names of a lazy package")
     check_words(list(modules.values()), "modules of a lazy package")
-    package = sys.modules[name]
+    for key, module in modules.items():
+        if not key.isidentifier() or not all(part.isidentifier() for part in module.split(".")):
+            raise ParameterError(
+                f"The lazy name {key!r} must be an identifier from a module of the package, "
+                f"not {module!r}"
+            )
     vars(package)["_MODULES"] = dict(modules)
     package.__class__ = LazyPackage
