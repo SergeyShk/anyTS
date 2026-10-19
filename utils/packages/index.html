@@ -2520,7 +2520,7 @@
 
 <h2 id="lazypackage">LazyPackage<a class="headerlink" href="#lazypackage" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:LazyPackage] -->
-<p><code>LazyPackage</code> is the class of a package after <code>make_lazy</code>, a subclass of <code>types.ModuleType</code>. It imports a name of its mapping on first read and keeps it as its attribute, gives a module of the package as an attribute, and lists the names of the mapping in <code>dir()</code>. A name that is neither raises <code>AttributeError</code>, a module that fails to import for a missing dependency raises its <code>ModuleNotFoundError</code>, and an <code>AttributeError</code> raised while a module imports comes as an <code>ImportError</code> with it as the cause, since Python would take it for a missing name.</p>
+<p><code>LazyPackage</code> is the class of a package after <code>make_lazy</code>, a subclass of <code>types.ModuleType</code>. It imports a name of its mapping on first read and keeps it as its attribute, gives a module of the package as an attribute, and lists the names of the mapping in <code>dir()</code>: those of <code>__all__</code> if the package has it, so that <code>help()</code> and <code>inspect.getmembers()</code> import only the public names. A name that is neither raises <code>AttributeError</code>, a module that fails to import for a missing dependency raises its <code>ModuleNotFoundError</code>, and an <code>AttributeError</code> raised while a module imports comes as an <code>ImportError</code> with it as the cause, since Python would take it for a missing name.</p>
 <!-- --8<-- [end:LazyPackage] -->
 
 <div class="admonition example">

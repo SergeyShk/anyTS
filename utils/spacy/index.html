@@ -2379,6 +2379,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#find_unit_marks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        find_unit_marks
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#add_tokenizer_rules" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2647,6 +2658,17 @@
     <span class="md-ellipsis">
       
         split_doc_units
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#find_unit_marks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        find_unit_marks
       
     </span>
   </a>
@@ -2947,6 +2969,29 @@
 </tbody>
 </table>
 <!-- --8<-- [end:split_doc_units] -->
+
+<h2 id="find_unit_marks">find_unit_marks<a class="headerlink" href="#find_unit_marks" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:find_unit_marks] -->
+<p>Finds the punctuation marks between the words of a sentence of a <code>Doc</code>: the words are those of <code>iter_doc_units</code>, and a word with a character of <code>is_punctuation</code> between it and the word before gets its position, except the hyphen that joins two parts of a word, as <code>find_marks</code> does for a text.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Parameter</th>
+<th style="text-align: center;">Type</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>units</code></td>
+<td style="text-align: center;">list[list[Token]]</td>
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: center;">Tokens of every word of a sentence</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:find_unit_marks] -->
 
 <h2 id="add_tokenizer_rules">add_tokenizer_rules<a class="headerlink" href="#add_tokenizer_rules" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:add_tokenizer_rules] -->

@@ -2929,6 +2929,16 @@
 <td style="text-align: center;">Connectors that count inside a sentence only after these words</td>
 </tr>
 <tr>
+<td style="text-align: center;"><code>read_through_marks</code></td>
+<td style="text-align: center;">class attribute</td>
+<td style="text-align: center;">Connectors whose rules read the words before and after them through a punctuation mark: a comma always separates a question word from the verb before it (<em>asked, why</em>)</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>split_by_marks</code></td>
+<td style="text-align: center;">class attribute</td>
+<td style="text-align: center;">Connectors of several words that a punctuation mark between their words makes no connector</td>
+</tr>
+<tr>
 <td style="text-align: center;"><code>pos_tags</code>, <code>pos_extra</code></td>
 <td style="text-align: center;">class attributes</td>
 <td style="text-align: center;">Parts of speech of a one-word connector, <code>CONNECTOR_POS</code> of Universal Dependencies by default, and those allowed for a word on top of them</td>
@@ -2946,7 +2956,7 @@
 <tr>
 <td style="text-align: center;"><code>subordinators</code></td>
 <td style="text-align: center;">class attribute</td>
-<td style="text-align: center;">Connectors that are subordinating conjunctions besides the one-word ones tagged <code>SCONJ</code> (<em>as soon as</em>), for <code>is_subordinator</code></td>
+<td style="text-align: center;">Connectors that are subordinating conjunctions or prepositions besides the one-word ones tagged <code>SCONJ</code> or <code>ADP</code> (<em>as soon as</em>, <em>in spite of</em>), for <code>is_subordinator</code></td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>classes</code>, <code>kinds</code></td>
@@ -2965,7 +2975,7 @@
 
 <h3 id="find">find<a class="headerlink" href="#find" title="Permanent link">&para;</a></h3>
 <!-- --8<-- [start:ConnectorMatcher-find] -->
-<p><code>find(words, sent_index, pos)</code> returns the occurrences of the connectors in a sentence in the order of its words. The words are those of one sentence without punctuation, the first one its start. With the parts of speech, a one-word connector counts only with one of <code>pos_tags</code> or of <code>pos_extra</code> for its form, never after one of <code>not_after_pos</code>, and with one of <code>start_only_pos</code> only at the start of the sentence; a word without a part of speech (<code>None</code>) passes. Without the parts of speech the rules that read them are skipped.</p>
+<p><code>find(words, sent_index, pos, breaks)</code> returns the occurrences of the connectors in a sentence in the order of its words. The words are those of one sentence without punctuation, the first one its start. With the parts of speech, a one-word connector counts only with one of <code>pos_tags</code> or of <code>pos_extra</code> for its form, never after one of <code>not_after_pos</code>, and with one of <code>start_only_pos</code> only at the start of the sentence; a word without a part of speech (<code>None</code>) passes. Without the parts of speech the rules that read them are skipped. The positions of the punctuation marks <code>breaks</code> cut a connector off its neighbours: a rule does not read a word across a mark, so in <em>so, the end</em> the word after the comma neither blocks nor lets the connector count, unless the connector is one of <code>read_through_marks</code>, and a mark between the words of a connector of <code>split_by_marks</code> makes it none; without them the words are read as adjacent.</p>
 <table>
 <thead>
 <tr>
@@ -2994,9 +3004,15 @@
 <td style="text-align: center;"><code>None</code></td>
 <td style="text-align: center;">Parts of speech of the words</td>
 </tr>
+<tr>
+<td style="text-align: center;"><code>breaks</code></td>
+<td style="text-align: center;">set[int]</td>
+<td style="text-align: center;"><code>None</code></td>
+<td style="text-align: center;">Positions of the words a punctuation mark stands before</td>
+</tr>
 </tbody>
 </table>
-<p>Words that are not a list of strings and parts of speech that are not a list of strings and <code>None</code> (the tags <code>token.pos_</code> of spaCy, not the numbers <code>token.pos</code>) raise <code>SourceTypeError</code>, a number of the sentence that is not an integer and parts of speech not as many as the words <code>ParameterError</code>.</p>
+<p>Words that are not a list of strings and parts of speech that are not a list of strings and <code>None</code> (the tags <code>token.pos_</code> of spaCy, not the numbers <code>token.pos</code>) and positions of the marks that are not a collection raise <code>SourceTypeError</code>, a number of the sentence or a position of a mark that is not an integer and parts of speech not as many as the words <code>ParameterError</code>.</p>
 <!-- --8<-- [end:ConnectorMatcher-find] -->
 
 <div class="admonition example">
@@ -3025,7 +3041,7 @@
 </div>
 <h3 id="is_subordinator">is_subordinator<a class="headerlink" href="#is_subordinator" title="Permanent link">&para;</a></h3>
 <!-- --8<-- [start:ConnectorMatcher-is_subordinator] -->
-<p><code>is_subordinator(connector, pos=None)</code> checks whether an occurrence of a connector is a subordinating conjunction: a connector of <code>subordinators</code>, or a one-word connector whose part of speech <code>pos</code> is <code>SCONJ</code>. Its clause belongs to the sentence of the connector wherever the connector stands, so a subordinator opening a sentence (<em>when he came, ...</em>) does not link it to the ones before.</p>
+<p><code>is_subordinator(connector, pos=None)</code> checks whether an occurrence of a connector ties its clause or phrase to its own sentence: a connector of <code>subordinators</code>, or a one-word connector whose part of speech <code>pos</code> is <code>SCONJ</code> or <code>ADP</code>. The clause of a subordinating conjunction and the phrase of a preposition belong to the sentence of the connector wherever it stands, so a subordinator opening a sentence (<em>when he came, ...</em>, <em>despite the rain, ...</em>) does not link it to the ones before.</p>
 <!-- --8<-- [end:ConnectorMatcher-is_subordinator] -->
 
 

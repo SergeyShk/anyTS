@@ -2909,7 +2909,7 @@
 <!-- --8<-- [end:find_phrase_highlights] -->
 
 <!-- --8<-- [start:find_connector_highlights] -->
-<p><code>find_connector_highlights(words, sents, matcher, note, pos)</code> - the layer <code>connectors</code>: the connectors of a <code>ConnectorMatcher</code> of the language inside every sentence, in the whole text when the sentences are <code>None</code>; a one-word connector is checked by its part of speech when a word of the sentence has one - its own, or that of the hook <code>pos</code>. The note gives the class and the kind of the connector by default.</p>
+<p><code>find_connector_highlights(words, sents, matcher, note, pos, text)</code> - the layer <code>connectors</code>: the connectors of a <code>ConnectorMatcher</code> of the language inside every sentence, in the whole text when the sentences are <code>None</code>; a one-word connector is checked by its part of speech when a word of the sentence has one - its own, or that of the hook <code>pos</code>. With the <code>text</code>, a character of <code>is_punctuation</code> between two words is a punctuation mark, which the rules of the matcher do not read through; the hyphen that joins two parts of a word is none. The note gives the class and the kind of the connector by default.</p>
 <!-- --8<-- [end:find_connector_highlights] -->
 
 <!-- --8<-- [start:find_split_predicate_highlights] -->

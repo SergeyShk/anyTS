@@ -3008,7 +3008,7 @@ a \cdot \frac{\textrm{Number of letters}}{\textrm{Number of words}} + b \cdot \f
 </div>
 <!-- --8<-- [start:calc_smog_index] -->
 <p>Computation of the SMOG index (McLaughlin, 1969).</p>
-<p>The years of schooling needed to read the text from the polysyllabic words per sentence; the higher the value, the harder the text. In the original formula the polysyllabic words have three or more syllables and <code>b</code> brings their number to a sample of 30 sentences.</p>
+<p>The years of schooling needed to read the text from the polysyllabic words per sentence; the higher the value, the harder the text. In the original formula the polysyllabic words have three or more syllables and <code>b</code> brings their number to a sample of 30 sentences. A number of words or sentences that is not a non-negative integer raises <code>ParameterError</code>.</p>
 <p>Formula:</p>
 <div class="arithmatex">\[
 a \cdot \sqrt{b \cdot \frac{\textrm{Number of polysyllabic words}}{\textrm{Number of sentences}}} + c
