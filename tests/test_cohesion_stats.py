@@ -320,6 +320,35 @@ def test_context_rules(matcher, text, found):
     assert texts(matcher.find(text.split())) == found
 
 
+@pytest.mark.parametrize(
+    ("text", "breaks", "found"),
+    [
+        # A mark cuts a connector off the neighbour its rule reads
+        ("He left before the end", {3}, ["before"]),
+        ("something as well as cats", {1}, ["as well as"]),
+        ("It still rains", {1}, ["still"]),
+        ("He left before the end", {2}, []),
+        ("It still rains", {2}, []),
+    ],
+)
+def test_context_rules_through_a_mark(matcher, text, breaks, found):
+    assert texts(matcher.find(text.split(), breaks=breaks)) == found
+
+
+def test_rules_of_the_parts_of_speech_through_a_mark(matcher):
+    assert texts(matcher.find(["The", "before"], pos=["DET", "ADV"], breaks=[1])) == ["before"]
+    words = ["Above", "all", "the", "rest"]
+    pos = ["ADV", "ADV", "DET", "NOUN"]
+    assert matcher.find(words, pos=pos) == []
+    assert texts(matcher.find(words, pos=pos, breaks={2})) == ["above all"]
+
+
+@pytest.mark.parametrize(("breaks", "error"), [("1", SourceTypeError), ([1.5], ParameterError)])
+def test_positions_of_the_marks_are_checked(matcher, breaks, error):
+    with pytest.raises(error):
+        matcher.find(["and"], breaks=breaks)
+
+
 def test_rules_of_the_parts_of_speech(matcher):
     words = ["The", "before", "and", "the", "after"]
     assert texts(matcher.find(words, pos=["DET", "ADV", "CCONJ", "DET", "ADV"])) == ["and"]
@@ -607,6 +636,51 @@ def test_names_of_the_densities_by_place_are_reserved(name):
 def test_subordinators_must_be_strings():
     with pytest.raises(SourceTypeError):
         type("Wrong", (ConnectorMatcher,), {"subordinators": "as soon as"})
+
+
+def test_default_analysis_marks_the_words():
+    doc = Doc(
+        VOCAB,
+        words=["However", ",", "the", "cat", "slept"],
+        pos=["ADV", "PUNCT", "DET", "NOUN", "VERB"],
+        lemmas=["however", ",", "the", "cat", "sleep"],
+        sent_starts=[True, False, False, False, False],
+    )
+    assert [word.break_before for word in CohesionStats(doc).analyze(doc)[0]] == [
+        False,
+        True,
+        False,
+        False,
+    ]
+
+
+def test_marks_of_the_words_reach_the_matcher():
+    class Before(ConnectorMatcher):
+        blocked_after: ClassVar = {"before": frozenset({"the"})}
+
+    def stats(break_before):
+        class Marked(CohesionStats):
+            connector_matcher_class = Before
+
+            @classmethod
+            def load_connectors(cls):
+                return {"before": ("temporal", "primary")}
+
+            def analyze(self, source):
+                return [
+                    [
+                        CohesionWord(word, word, "ADV", False, False, False, False, True)._replace(
+                            break_before=word == "the" and break_before
+                        )
+                        for word in ("it", "came", "before", "the", "end")
+                    ]
+                ]
+
+        return Marked(text_doc())
+
+    # It came before, the end: the comma lets before count
+    assert stats(False).n_connectors == 0 and stats(True).n_connectors == 1
+    assert CohesionWord("a", "a", None, False, False, False, False, False).break_before is False
 
 
 def test_densities_by_the_classes_of_the_matcher():

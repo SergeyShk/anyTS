@@ -495,6 +495,28 @@ def test_find_connector_highlights():
     ]
 
 
+def test_find_connector_highlights_through_a_mark():
+    class Before(Connectors):
+        blocked_after: ClassVar = {"before": frozenset({"the"})}
+
+    matcher = Before({"before": ("temporal", "primary")})
+    text = "He left before, the end"
+    words = [
+        Word(0, 2, "He"),
+        Word(3, 7, "left"),
+        Word(8, 14, "before"),
+        Word(16, 19, "the"),
+        Word(20, 23, "end"),
+    ]
+    assert find_connector_highlights(words, None, matcher) == []
+    found = find_connector_highlights(words, None, matcher, text=text)
+    assert [(h.start, h.end) for h in found] == [(8, 14)]
+    # Spaces alone are no mark
+    assert find_connector_highlights(words, None, matcher, text=text.replace(",", " ")) == []
+    with pytest.raises(SourceTypeError):
+        find_connector_highlights(words, None, matcher, text=5)
+
+
 def test_find_split_predicate_highlights():
     doc = Doc(
         spacy.blank("xx").vocab,

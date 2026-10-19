@@ -149,6 +149,16 @@ Splits the words of a `Doc` or a `Span` into the sentences of a sentence extract
 | `join_hyphens` | bool | `False` | Join the parts of hyphenated words |
 <!-- --8<-- [end:split_doc_units] -->
 
+## find_unit_marks
+
+<!-- --8<-- [start:find_unit_marks] -->
+Finds the punctuation marks between the words of a sentence of a `Doc`: the words are those of `iter_doc_units`, and a word with a token of `is_punctuation` characters between it and the word before gets its position, as `find_marks` does for a text.
+
+| Parameter | Type | Default | Description |
+| :-------: | :--: | :-----: | :---------: |
+| `units` | list[list[Token]] | `-` | Tokens of every word of a sentence |
+<!-- --8<-- [end:find_unit_marks] -->
+
 ## add_tokenizer_rules
 
 <!-- --8<-- [start:add_tokenizer_rules] -->

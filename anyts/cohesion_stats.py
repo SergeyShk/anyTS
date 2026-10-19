@@ -27,6 +27,7 @@ from .utils import (
     check_messages,
     check_sequence,
     check_words,
+    find_unit_marks,
     has_sents,
     is_doc,
     iter_doc_units,
@@ -241,9 +242,15 @@ class ConnectorMatcher:
         words: Sequence[str],
         sent_index: int = 0,
         pos: Sequence[str | None] | None = None,
+        breaks: Collection[int] | None = None,
     ) -> list[Connector]:
         """
         Finding the connectors of a sentence
+
+        Description:
+            The rules read the neighbours of a connector through no punctuation
+            mark: with the positions of the marks, a word after a comma neither
+            blocks nor lets the connector before it count (so, it is late)
 
         Arguments:
             words (list[str]): Words of the sentence without punctuation, the first
@@ -251,15 +258,18 @@ class ConnectorMatcher:
             sent_index (int): Number of the sentence, written into the occurrences
             pos (list[str]): Parts of speech of the words, None for a word without one;
                 without them the rules that read a part of speech are skipped
+            breaks (set[int]): Positions of the words a punctuation mark stands
+                before; without them the words are read as adjacent
 
         Returns:
             list[Connector]: Occurrences of the connectors in the order of the words
 
         Raises:
-            SourceTypeError: If the words are not a list of strings or the parts of
-                speech are not a list of strings and None
-            ParameterError: If the number of the sentence is not an integer or the parts
-                of speech are not as many as the words
+            SourceTypeError: If the words are not a list of strings, the parts of
+                speech are not a list of strings and None, or the positions of the
+                marks are not a collection
+            ParameterError: If the number of the sentence or a position of a mark is
+                not an integer, or the parts of speech are not as many as the words
         """
         check_words(words)
         check_integer(sent_index, "number of the sentence")
@@ -272,7 +282,13 @@ class ConnectorMatcher:
                     )
             if len(pos) != len(words):
                 raise ParameterError(self.messages["connector_pos"])
-        return self._find(words, sent_index, pos)
+        marks: frozenset[int] = frozenset()
+        if breaks is not None:
+            check_sequence(breaks, "positions of the marks", ordered=False)
+            for position in breaks:
+                check_integer(position, "position of a mark")
+            marks = frozenset(breaks)
+        return self._find(words, sent_index, pos, marks)
 
     def is_subordinator(self, connector: Connector, pos: str | None = None) -> bool:
         """
@@ -295,9 +311,13 @@ class ConnectorMatcher:
         )
 
     def _find(
-        self, words: Sequence[str], sent_index: int, pos: Sequence[str | None] | None
+        self,
+        words: Sequence[str],
+        sent_index: int,
+        pos: Sequence[str | None] | None,
+        breaks: frozenset[int] = frozenset(),
     ) -> list[Connector]:
-        """Connectors of a sentence whose words and parts of speech are checked"""
+        """Connectors of a sentence whose words, parts of speech and marks are checked"""
         normalized = [self.normalize(word) for word in words]
         found = []
         position = 0
@@ -307,12 +327,12 @@ class ConnectorMatcher:
                 if tuple(normalized[position:end]) != pattern:
                     continue
                 text, cls, kind = self._entries[" ".join(pattern)]
-                if self._is_blocked(text, normalized, position, end, pos):
+                if self._is_blocked(text, normalized, position, end, pos, breaks):
                     continue
                 if (
                     len(pattern) == 1
                     and pos is not None
-                    and not self._is_pos(pattern[0], pos, position)
+                    and not self._is_pos(pattern[0], pos, position, breaks)
                 ):
                     continue
                 found.append(Connector(sent_index, position, end, text, cls, kind))
@@ -329,28 +349,32 @@ class ConnectorMatcher:
         position: int,
         end: int,
         pos: Sequence[str | None] | None,
+        breaks: frozenset[int],
     ) -> bool:
         """Whether the context of the words of a connector makes them no connector"""
-        following = words[end] if end < len(words) else ""
-        previous = words[position - 1] if position else ""
-        if following in self.blocked_after.get(text, ()):
+        # A punctuation mark cuts the connector off its neighbour on that side
+        after = end < len(words) and end not in breaks
+        before = position > 0 and position not in breaks
+        if after and words[end] in self.blocked_after.get(text, ()):
             return True
-        if previous in self.blocked_before.get(text, ()):
+        if before and words[position - 1] in self.blocked_before.get(text, ()):
             return True
         if position == 0 and text in self.not_at_start:
             return True
-        if position and text in self.only_after and previous not in self.only_after[text]:
+        if before and text in self.only_after and words[position - 1] not in self.only_after[text]:
             return True
-        if pos is None or end >= len(pos):
+        if not after or pos is None:
             return False
         return pos[end] in self.blocked_after_pos.get(text, ())
 
-    def _is_pos(self, word: str, pos: Sequence[str | None], position: int) -> bool:
+    def _is_pos(
+        self, word: str, pos: Sequence[str | None], position: int, breaks: frozenset[int]
+    ) -> bool:
         """Whether the part of speech of a one-word connector lets it count"""
         tag = pos[position]
         if tag is None:
             return True
-        if position and pos[position - 1] in self.not_after_pos:
+        if position and position not in breaks and pos[position - 1] in self.not_after_pos:
             return False
         if tag in self.start_only_pos:
             return position == 0
@@ -374,6 +398,8 @@ class CohesionWord(NamedTuple):
         tense (str|None): Tense of a verb form
         mood (str|None): Mood of a verb form
         aspect (str|None): Aspect of a verb form
+        break_before (bool): Whether a punctuation mark stands between the word and
+            the one before it, which the rules of the connectors do not read through
     """
 
     word: str
@@ -387,6 +413,7 @@ class CohesionWord(NamedTuple):
     tense: str | None = None
     mood: str | None = None
     aspect: str | None = None
+    break_before: bool = False
 
 
 class CohesionStats(Stats):
@@ -596,7 +623,12 @@ class CohesionStats(Stats):
         self.connector_spans = tuple(
             connector
             for index, (words, sent) in enumerate(zip(self.words, sents, strict=True))
-            for connector in matcher._find(words, index, [word.pos for word in sent])
+            for connector in matcher._find(
+                words,
+                index,
+                [word.pos for word in sent],
+                frozenset(i for i, word in enumerate(sent) if word.break_before),
+            )
         )
         self.n_connectors = len(self.connector_spans)
         self.n_inter_connectors = sum(
@@ -645,7 +677,14 @@ class CohesionStats(Stats):
             raise SourceError(messages["no_pos"])
         if not source.has_annotation("LEMMA"):
             raise SourceError(messages["no_lemmas"])
-        return [[self.word_info(unit) for unit in sent] for sent in self.doc_units(source)]
+        return [
+            [
+                self.word_info(unit)._replace(break_before=position in marks)
+                for position, unit in enumerate(sent)
+            ]
+            for sent in self.doc_units(source)
+            for marks in (find_unit_marks(sent),)
+        ]
 
     def doc_units(self, doc: Doc) -> list[list[list[Token]]]:
         """

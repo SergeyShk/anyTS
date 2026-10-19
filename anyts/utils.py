@@ -131,6 +131,45 @@ def has_words(source: str | Doc | Span) -> bool:
     return any(not char.isspace() and not is_punctuation(char) for char in text)
 
 
+def find_marks(text: str, words: Sequence[str]) -> frozenset[int]:
+    """
+    Finding the punctuation marks between the words of a text
+
+    Description:
+        The words are found in the text in their order; a word with an
+        is_punctuation character between it and the word before gets its
+        position. A word the text does not hold is passed over
+
+    Arguments:
+        text (str): Text
+        words (list[str]): Words of the text in their order
+
+    Returns:
+        frozenset[int]: Positions of the words a punctuation mark stands before
+
+    Raises:
+        SourceTypeError: If the text is not a string or the words are not a list
+            of strings
+
+    Example:
+        >>> from anyts.utils import find_marks
+        >>> sorted(find_marks("So, it is late - very late", ["So", "it", "is", "late", "very", "late"]))
+        [1, 4]
+    """
+    check_word(text, "text")
+    check_words(words)
+    marks = set()
+    cursor = 0
+    for position, word in enumerate(words):
+        start = text.find(word, cursor)
+        if start == -1:
+            continue
+        if position and any(is_punctuation(char) for char in text[cursor:start]):
+            marks.add(position)
+        cursor = start + len(word)
+    return frozenset(marks)
+
+
 def in_order(words: Collection[str]) -> tuple[str, ...]:
     """
     Putting a collection of words in a fixed order
@@ -552,6 +591,37 @@ def split_doc_units(
         if spans[index][0] <= position < spans[index][1]:
             units[index].append(unit)
     return units
+
+
+def find_unit_marks(units: Sequence[Sequence[Token]]) -> frozenset[int]:
+    """
+    Finding the punctuation marks between the words of a sentence of a Doc
+
+    Description:
+        The words are those of iter_doc_units in one sentence; a word with a
+        token of is_punctuation characters between it and the word before gets
+        its position
+
+    Arguments:
+        units (list[list[Token]]): Tokens of every word of a sentence
+
+    Returns:
+        frozenset[int]: Positions of the words a punctuation mark stands before
+
+    Example:
+        >>> import spacy
+        >>> from anyts.utils import find_unit_marks, iter_doc_units
+        >>> doc = spacy.blank("en")("So, it is late")
+        >>> sorted(find_unit_marks(list(iter_doc_units(doc))))
+        [1]
+    """
+    marks = set()
+    for position in range(1, len(units)):
+        doc = units[position][0].doc
+        between = doc[units[position - 1][-1].i + 1 : units[position][0].i]
+        if any(is_punctuation(char) for token in between for char in token.text):
+            marks.add(position)
+    return frozenset(marks)
 
 
 def add_tokenizer_rules(

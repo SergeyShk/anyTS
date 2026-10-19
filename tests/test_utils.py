@@ -714,3 +714,25 @@ def test_add_tokenizer_rules_of_alternatives_once():
     add_tokenizer_rules(nlp, infixes=["~~|\\^\\^"], prefixes=["#|@"])
     assert nlp.tokenizer.infix_finditer is infixes
     assert nlp.tokenizer.prefix_search is prefixes
+
+
+def test_find_marks():
+    from anyts.utils import find_marks
+
+    words = ["So", "it", "is", "late", "very", "late"]
+    assert find_marks("So, it is late - very late", words) == {1, 4}
+    assert find_marks("So it is late very late", words) == frozenset()
+    # A word the text does not hold is passed over
+    assert find_marks("So, it is late", ["So", "cat", "it"]) == {2}
+    with pytest.raises(SourceTypeError):
+        find_marks(5, words)
+    with pytest.raises(SourceTypeError):
+        find_marks("So", "So")
+
+
+def test_find_unit_marks():
+    from anyts.utils import find_unit_marks, iter_doc_units
+
+    doc = spacy.blank("en")('So, "it" is late - very late')
+    assert find_unit_marks(list(iter_doc_units(doc))) == {1, 2, 4}
+    assert find_unit_marks([]) == frozenset()

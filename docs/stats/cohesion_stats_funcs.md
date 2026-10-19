@@ -133,15 +133,16 @@ The words of the lists and the keys of `pos_extra` are normalized forms, while t
 ### find
 
 <!-- --8<-- [start:ConnectorMatcher-find] -->
-`find(words, sent_index, pos)` returns the occurrences of the connectors in a sentence in the order of its words. The words are those of one sentence without punctuation, the first one its start. With the parts of speech, a one-word connector counts only with one of `pos_tags` or of `pos_extra` for its form, never after one of `not_after_pos`, and with one of `start_only_pos` only at the start of the sentence; a word without a part of speech (`None`) passes. Without the parts of speech the rules that read them are skipped.
+`find(words, sent_index, pos, breaks)` returns the occurrences of the connectors in a sentence in the order of its words. The words are those of one sentence without punctuation, the first one its start. With the parts of speech, a one-word connector counts only with one of `pos_tags` or of `pos_extra` for its form, never after one of `not_after_pos`, and with one of `start_only_pos` only at the start of the sentence; a word without a part of speech (`None`) passes. Without the parts of speech the rules that read them are skipped. The positions of the punctuation marks `breaks` cut a connector off its neighbours: a rule does not read a word across a mark, so in *so, the end* the word after the comma neither blocks nor lets the connector count; without them the words are read as adjacent.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
 | `words` | list[str] | `-` | Words of the sentence |
 | `sent_index` | int | `0` | Number of the sentence, written into the occurrences |
 | `pos` | list[str] | `None` | Parts of speech of the words |
+| `breaks` | set[int] | `None` | Positions of the words a punctuation mark stands before |
 
-Words that are not a list of strings and parts of speech that are not a list of strings and `None` (the tags `token.pos_` of spaCy, not the numbers `token.pos`) raise `SourceTypeError`, a number of the sentence that is not an integer and parts of speech not as many as the words `ParameterError`.
+Words that are not a list of strings and parts of speech that are not a list of strings and `None` (the tags `token.pos_` of spaCy, not the numbers `token.pos`) and positions of the marks that are not a collection raise `SourceTypeError`, a number of the sentence or a position of a mark that is not an integer and parts of speech not as many as the words `ParameterError`.
 <!-- --8<-- [end:ConnectorMatcher-find] -->
 
 !!! example "Example"
