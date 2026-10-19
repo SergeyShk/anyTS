@@ -75,6 +75,15 @@ class DigitsComponent(StatsComponent):
         return len(doc)
 
 
+class ClichedStyle(StyleStats):
+    cliches_list = ("at the end of the day",)
+
+
+@Language.factory("anyts_test_style")
+class ClichedStyleComponent(StyleStatsComponent):
+    stats_class = ClichedStyle
+
+
 @pytest.fixture
 def nlp():
     return spacy.blank("xx")
@@ -442,6 +451,7 @@ def test_components_pass_their_parameters(nlp):
         "stopwords": None,
         "top_n": NAUSEA_TOP_N,
         "nausea_stopwords": None,
+        "cliches": None,
     }
     assert Style(nlp, "s", stopwords={"the"}, top_n=2).compute(doc).kwargs["top_n"] == 2
     assert Phon(nlp, "p").compute(doc).kwargs == {"window_len": PHON_WINDOW_LEN}
@@ -466,8 +476,23 @@ def test_components_pass_their_parameters(nlp):
         Style(nlp, "s", stopwords="the")
     with pytest.raises(SourceTypeError):
         Style(nlp, "s", nausea_stopwords=[1])
+    with pytest.raises(SourceTypeError):
+        Style(nlp, "s", cliches="at the end of the day")
     with pytest.raises(ParameterError):
         Phon(nlp, "p", window_len=1)
+
+
+def test_style_component_with_its_cliches(nlp, tmp_path):
+    nlp.add_pipe("anyts_test_style", name="class_cliches")
+    nlp.add_pipe("anyts_test_style", name="own_cliches", config={"cliches": ["the cat slept"]})
+    nlp.add_pipe("anyts_test_style", name="no_cliches", config={"cliches": []})
+    nlp.to_disk(tmp_path)
+    doc = spacy.load(tmp_path)("At the end of the day the cat slept")
+    assert doc._.class_cliches.cliches_list == ("at the end of the day",)
+    assert doc._.class_cliches.cliches == pytest.approx(100 / 9)
+    assert doc._.own_cliches.cliches_list == ("the cat slept",)
+    assert doc._.own_cliches.cliches == pytest.approx(100 / 9)
+    assert doc._.no_cliches.cliches == 0.0
 
 
 def test_component_renamed_to_an_extension_of_another_package(nlp):
