@@ -83,7 +83,6 @@ theme:
     code: Source Code Pro
   features:
     - navigation.tabs
-    - navigation.instant
     - navigation.top
     - content.code.copy
     - content.tabs.link
