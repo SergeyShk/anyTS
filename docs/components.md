@@ -104,7 +104,7 @@ The class of the core is the default of `stats_class`. Where it cannot read a `D
 | `ReadabilityStatsComponent` | `ReadabilityStats` | `preset`, `basic` |
 | `DiversityStatsComponent` | set by a library | `window_len`, `mtld_threshold`, `mtld_min_len`, `hdd_sample_size`, `log_base` |
 | `LexicalStatsComponent` | `LexicalStats` | - |
-| `StyleStatsComponent` | `StyleStats` | `stopwords`, `top_n`, `nausea_stopwords` |
+| `StyleStatsComponent` | `StyleStats` | `stopwords`, `top_n`, `nausea_stopwords`, `cliches` |
 | `PhonStatsComponent` | `PhonStats` | `window_len` |
 | `SyntaxStatsComponent` | `SyntaxStats` | - |
 | `CohesionStatsComponent` | `CohesionStats` | - |
@@ -140,8 +140,9 @@ With `preset` left at `None` the config of a saved pipeline holds no preset, and
 | `stopwords` | list[str] | `None` | Stopwords of the water content; those of the class if `None` |
 | `top_n` | int | `10` | Number of the most frequent words of the academic nausea and of the naturalness by Zipf's law (`NAUSEA_TOP_N`) |
 | `nausea_stopwords` | list[str] | `None` | Words left out of the most frequent words of the academic nausea; those of the class if `None` |
+| `cliches` | list[str] | `None` | Cliches; those of the class (`cliches_list`) if `None` |
 
-Stopwords that are not a list of strings raise `SourceTypeError`, a `top_n` that is not an integer of at least one `ParameterError`.
+Stopwords or cliches that are not a list of strings raise `SourceTypeError`, a `top_n` that is not an integer of at least one `ParameterError`.
 <!-- --8<-- [end:StyleStatsComponent] -->
 
 <!-- --8<-- [start:PhonStatsComponent] -->

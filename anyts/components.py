@@ -432,15 +432,21 @@ class StyleStatsComponent(StatsComponent):
             of the naturalness by Zipf's law
         nausea_stopwords (list[str]): Words left out of the most frequent words of
             the academic nausea; those of the class if not set
+        cliches (list[str]): Cliches; those of the class if not set
 
     Raises:
-        SourceTypeError: If the stopwords are not a list of strings
+        SourceTypeError: If the stopwords or the cliches are not a list of strings
         ParameterError: If the number of the most frequent words is not an integer
             of at least one
     """
 
     stats_class: ClassVar[type[Any] | None] = StyleStats
-    stats_params: ClassVar[tuple[str, ...]] = ("stopwords", "top_n", "nausea_stopwords")
+    stats_params: ClassVar[tuple[str, ...]] = (
+        "stopwords",
+        "top_n",
+        "nausea_stopwords",
+        "cliches",
+    )
 
     def __init__(
         self,
@@ -449,15 +455,20 @@ class StyleStatsComponent(StatsComponent):
         stopwords: list[str] | None = None,
         top_n: int = NAUSEA_TOP_N,
         nausea_stopwords: list[str] | None = None,
+        cliches: list[str] | None = None,
     ):
         check_style_params(top_n, messages=self.messages)
-        if stopwords is not None:
-            check_words(stopwords, "stopwords", ordered=False)
-        if nausea_stopwords is not None:
-            check_words(nausea_stopwords, "nausea stopwords", ordered=False)
+        for words, what in (
+            (stopwords, "stopwords"),
+            (nausea_stopwords, "nausea stopwords"),
+            (cliches, "cliches"),
+        ):
+            if words is not None:
+                check_words(words, what, ordered=False)
         self.stopwords = stopwords
         self.top_n = top_n
         self.nausea_stopwords = nausea_stopwords
+        self.cliches = cliches
         super().__init__(nlp, name)
 
 

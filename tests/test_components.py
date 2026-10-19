@@ -442,6 +442,7 @@ def test_components_pass_their_parameters(nlp):
         "stopwords": None,
         "top_n": NAUSEA_TOP_N,
         "nausea_stopwords": None,
+        "cliches": None,
     }
     assert Style(nlp, "s", stopwords={"the"}, top_n=2).compute(doc).kwargs["top_n"] == 2
     assert Phon(nlp, "p").compute(doc).kwargs == {"window_len": PHON_WINDOW_LEN}
@@ -466,8 +467,19 @@ def test_components_pass_their_parameters(nlp):
         Style(nlp, "s", stopwords="the")
     with pytest.raises(SourceTypeError):
         Style(nlp, "s", nausea_stopwords=[1])
+    with pytest.raises(SourceTypeError):
+        Style(nlp, "s", cliches="at the end of the day")
     with pytest.raises(ParameterError):
         Phon(nlp, "p", window_len=1)
+
+
+def test_style_component_with_its_cliches(nlp):
+    doc = nlp("At the end of the day the cat slept")
+    default = StyleStatsComponent(nlp, "anyts_test_style")
+    own = StyleStatsComponent(nlp, "anyts_test_own_cliches", cliches=["at the end of the day"])
+    assert default.compute(doc).cliches == 0.0
+    assert own.compute(doc).cliches == pytest.approx(100 / 9)
+    assert own.compute(doc).cliches_list == ("at the end of the day",)
 
 
 def test_component_renamed_to_an_extension_of_another_package(nlp):
