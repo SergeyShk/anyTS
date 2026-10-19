@@ -15,6 +15,7 @@ from ..exceptions import ParameterError, SourceError, SourceTypeError
 from ..extractors import SentsExtractor, _check_spans, _iter_words, iter_part_sents
 from ..syntax_stats import get_words
 from ..utils import (
+    _is_mark_gap,
     _unit_word,
     check_callable,
     check_integer,
@@ -820,6 +821,7 @@ def find_connector_highlights(
     matcher: ConnectorMatcher,
     note: Callable[[Connector], str] | None = None,
     pos: Callable[[Word], str | None] | None = None,
+    text: str | None = None,
 ) -> list[Highlight]:
     """
     Finding the connectors
@@ -827,7 +829,9 @@ def find_connector_highlights(
     Description:
         The connectors of a matcher are looked for inside every sentence, in
         the whole text without the sentences, a one-word one checked by its
-        part of speech when a word of the sentence has one
+        part of speech when a word of the sentence has one. With the text, an
+        is_punctuation character between two words is a punctuation mark, which
+        the rules of the matcher do not read through
 
     Arguments:
         words (list[Word]): Words with their positions and parts of speech
@@ -837,20 +841,32 @@ def find_connector_highlights(
             not set
         pos (Callable[[Word], str|None]): Part of speech of a word for the matcher;
             that of the word if not set
+        text (str): Text of the words, for the punctuation marks between them
 
     Returns:
         list[Highlight]: Fragments of the layer connectors
 
     Raises:
-        SourceTypeError: If note or pos is not callable
+        SourceTypeError: If note or pos is not callable or the text is not a string
     """
     _check_hooks((note, "note"), (pos, "part of speech"))
+    if text is not None:
+        check_word(text, "text")
     note = note or (lambda connector: f"{connector.text}: {connector.cls}, {connector.kind}")
     groups = [list(words)] if sents is None else group_words_by_sents(words, sents)
     highlights: list[Highlight] = []
     for group in groups:
         tags = [word.pos if pos is None else pos(word) for word in group]
         texts = [word.text for word in group]
+        breaks = (
+            {
+                i
+                for i in range(1, len(group))
+                if _is_mark_gap(text[group[i - 1].end : group[i].start])
+            }
+            if text is not None
+            else None
+        )
         highlights.extend(
             Highlight(
                 group[connector.start].start,
@@ -858,7 +874,7 @@ def find_connector_highlights(
                 "connectors",
                 note(connector),
             )
-            for connector in matcher.find(texts, 0, tags if any(tags) else None)
+            for connector in matcher.find(texts, 0, tags if any(tags) else None, breaks)
         )
     return highlights
 

@@ -509,6 +509,19 @@ def test_formulas():
     assert calc_rix(3, 2) == 1.5
 
 
+@pytest.mark.parametrize(
+    ("n_complex", "n_sents", "message"),
+    [
+        (-1, 1, "number of polysyllabic words cannot be negative"),
+        (1, -1, "number of sentences cannot be negative"),
+        (1.5, 1, "number of polysyllabic words must be an integer"),
+    ],
+)
+def test_smog_index_counts(n_complex, n_sents, message):
+    with pytest.raises(ParameterError, match=message):
+        calc_smog_index(n_complex, n_sents)
+
+
 def test_mu_index():
     # the worked example of the authors' manual: 18 words, mean 6.9444, sample variance 13.5844
     manual = Counter([4, 6, 5, 5, 8, 14, 11, 11, 6, 1, 4, 10, 9, 11, 7, 3, 9, 1])

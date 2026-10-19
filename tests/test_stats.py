@@ -125,7 +125,16 @@ def test_describe(sizes):
     assert Sizes("").describe("mean_len") is None
 
 
-@pytest.mark.parametrize("stat", ["unknown", "words", "_private", "stat_names", None, ["n_words"]])
+@pytest.mark.parametrize("stat", ["c_lengths_3", "c_lengths_other_long"])
+def test_describe_flat_key(sizes, stat):
+    assert stat in sizes.get_stats(flat=True)
+    assert sizes.describe(stat) is None
+
+
+@pytest.mark.parametrize(
+    "stat",
+    ["unknown", "words", "_private", "stat_names", None, ["n_words"], "c_lengths_4", "n_words_3"],
+)
 def test_describe_unknown(sizes, stat):
     message = (
         f"Unknown statistic: {stat}. Available statistics: "

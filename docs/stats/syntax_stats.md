@@ -20,8 +20,9 @@ A language library subclasses `SyntaxStats`. The defaults read Universal Depende
 | :--: | :--: | :---------: |
 | `parse(source)` | method | `Doc` of a source; by default the source itself, which must be a `Doc`; a library may parse a string |
 | `is_clause_head(token)` | method | Whether a word heads a clause; by default `is_clause_head` of the module with `join_hyphens` of the class and the hook `is_infinitive_periphrasis` |
-| `is_infinitive_periphrasis(token)` | method | Whether an infinitive under `xcomp`, or an infinitive conjunct, makes one predicate with its head, a modal or phasal verb (*can leave*, *begins to leave*); none by default |
+| `is_infinitive_periphrasis(token)` | method | Whether an infinitive under `xcomp`, an infinitive conjunct or an infinitive subject (`csubj`) of a modal word makes one predicate with its head, a modal or phasal verb (*can leave*, *begins to leave*); none by default |
 | `is_subordinate_clause_head(token)` | method | Whether a clause head heads a subordinate clause, asked only of the words of `is_clause_head`; by default `is_subordinate_clause_head` of the module over the hook `is_clause_head` |
+| `is_infinitive_clause_head(token)` | method | Whether a clause head heads an infinitive clause under a verb (*wants to leave*), counted apart from the subordinate ones; by default `is_infinitive_clause_head` of the module over the hook `is_clause_head` |
 | `is_participle_clause(token)` | method | Whether a word heads a participial clause; by default a participle that is not the head of the sentence, has no auxiliary or copula and has a dependent (`calc_valency`) |
 | `is_passive(token)` | method | Whether a word is a passive verb form; by default `is_passive` of the module with `join_hyphens` of the class |
 | `is_agentless(token)` | method | Whether a passive form has no agent; by default the hook `is_passive` without an agent (`has_agent` of the module) |
@@ -54,6 +55,7 @@ The subclass adds the statistics of the constructions of its language (chains of
 | `n_leaves`, `n_subtrees` | int | Numbers of the words without and with dependent words |
 | `n_coordination_chains` | int | Number of the coordination chains |
 | `n_clauses`, `n_subordinate_clauses`, `n_complex_sents` | int | Numbers of the clauses, of the subordinate clauses and of the sentences with one |
+| `n_infinitive_clauses` | int | Number of the infinitive clauses under a verb |
 | `n_nouns`, `n_verbs` | int | Numbers of the nouns (`NOUN`, `PROPN`) and of the verb forms (`VERB`) |
 | `n_participle_clauses` | int | Number of the participial clauses |
 | `n_passive`, `n_agentless_passive` | int | Numbers of the passive forms and of those with no agent |
@@ -71,6 +73,7 @@ The subclass adds the statistics of the constructions of its language (chains of
 | `coordination_chains_per_sent`, `mean_coordination_chain_len` | float | Coordination chains per sentence and their mean length |
 | `clauses_per_sent`, `mean_clause_len` | float | Clauses per sentence and their mean length in words |
 | `subordinate_clauses_per_sent`, `p_complex_sents` | float | Subordinate clauses per sentence and the share of the sentences with one |
+| `infinitive_clauses_per_sent` | float | Infinitive clauses under a verb per sentence (*wants to leave*), which are not subordinate |
 | `modifiers_per_noun` | float | Mean number of the modifiers of a noun (`count_noun_modifiers`) |
 | `participle_clauses_per_sent`, `mean_participle_clause_len` | float | Participial clauses per sentence and their mean length in words |
 | `p_passive`, `p_agentless_passive` | float | Share of the passive forms among the verb forms and of those with no agent among them |

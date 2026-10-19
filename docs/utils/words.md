@@ -67,3 +67,23 @@ Checks whether a text, a `Doc` or a `Span` holds a word: an empty text or one of
     has_words("The cat sleeps"), has_words("?!"), has_words("")
     # (True, False, False)
     ```
+
+## find_marks
+
+<!-- --8<-- [start:find_marks] -->
+Finds the punctuation marks between the words of a text: the words are found in the text in their order, a word inside a longer one not counting, and a word with a character of `is_punctuation` between it and the word before gets its position; the hyphen that joins two parts of a word is no mark. A word the text does not hold is passed over. The positions go to `ConnectorMatcher.find`, whose rules do not read a word across a mark. A text that is not a string and words that are not a list of strings raise `SourceTypeError`.
+
+| Parameter | Type | Default | Description |
+| :-------: | :--: | :-----: | :---------: |
+| `text` | str | `-` | Text |
+| `words` | list[str] | `-` | Words of the text in their order |
+<!-- --8<-- [end:find_marks] -->
+
+!!! example "Example"
+
+    ``` python
+    from anyts.utils import find_marks
+
+    sorted(find_marks("So, it is late - very late", ["So", "it", "is", "late", "very", "late"]))
+    # [1, 4]
+    ```

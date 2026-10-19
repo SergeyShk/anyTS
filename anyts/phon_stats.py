@@ -3,6 +3,7 @@ from __future__ import annotations
 from abc import ABCMeta, abstractmethod
 from collections import Counter
 from collections.abc import Collection, Mapping, Sequence
+from itertools import chain, repeat
 from math import comb, fsum, nan
 from typing import TYPE_CHECKING, Any, ClassVar
 
@@ -161,24 +162,23 @@ class PhonStats(Stats, metaclass=ABCMeta):
             word: self._checked("syllabify", self.syllabify(word)) for word in counts
         }
         word_sounds = {word: self._checked("transcribe", self.transcribe(word)) for word in counts}
-        self.syllables = tuple(word_syllables[word] for word in words)
-        self.sounds = tuple(word_sounds[word] for word in words)
+        self.syllables = tuple(map(word_syllables.__getitem__, words))
+        self.sounds = tuple(map(word_sounds.__getitem__, words))
         consonants = self.sonorants | self.voiced | self.voiceless
-        sounds: Counter[str] = Counter()
+        classes = _cv_classes(self.vowels, consonants)
+        sounds = Counter(chain.from_iterable(self.sounds))
         all_syllables: Counter[tuple[str, ...]] = Counter()
         clusters: Counter[int] = Counter()
         patterns: Counter[str] = Counter()
         for word, count in counts.items():
-            for sound, number in Counter(word_sounds[word]).items():
-                sounds[sound] += number * count
             for syllable in self.syllable_sounds(word):
                 all_syllables[tuple(syllable)] += count
             for size in consonant_clusters(word_sounds[word], consonants, self.skipped):
                 clusters[size] += count
-            if pattern := cv_pattern(word_sounds[word], self.vowels, consonants):
+            if pattern := _cv_pattern(word_sounds[word], classes):
                 patterns[pattern] += count
         syllable_patterns = {
-            syllable: cv_pattern(syllable, self.vowels, consonants) for syllable in all_syllables
+            syllable: _cv_pattern(syllable, classes) for syllable in all_syllables
         }
         syllables = {
             syllable: count
@@ -226,21 +226,22 @@ class PhonStats(Stats, metaclass=ABCMeta):
 
     def _checked(self, hook: str, result: object) -> Any:
         """The syllables or the sounds a hook gives for a word, checked to be strings"""
-        if not (
-            isinstance(result, Sequence)
-            and (hook == "transcribe" or not isinstance(result, str))
-            and all(isinstance(item, str) for item in result)
+        if isinstance(result, str):
+            if hook == "transcribe":
+                return result
+        elif isinstance(result, (tuple, list, Sequence)) and all(
+            map(isinstance, result, repeat(str))
         ):
-            expected = "a sequence of strings" if hook == "syllabify" else "a string or strings"
-            raise SourceTypeError(
-                self.messages["hook_result"].format(
-                    hook=hook,
-                    cls=type(self).__name__,
-                    expected=expected,
-                    type=type(result).__name__,
-                )
+            return tuple(result) if hook == "syllabify" else result
+        expected = "a sequence of strings" if hook == "syllabify" else "a string or strings"
+        raise SourceTypeError(
+            self.messages["hook_result"].format(
+                hook=hook,
+                cls=type(self).__name__,
+                expected=expected,
+                type=type(result).__name__,
             )
-        return tuple(result) if hook == "syllabify" else result
+        )
 
     def doc_words(self, doc: Doc) -> tuple[str, ...]:
         """
@@ -345,11 +346,17 @@ def cv_pattern(sounds: Sequence[str], vowels: Collection[str], consonants: Colle
         >>> cv_pattern("strong", set("aeiou"), set("bcdfghjklmnpqrstvwxyz"))
         'CCCVCC'
     """
-    return "".join(
-        "V" if sound in vowels else "C"
-        for sound in sounds
-        if sound in vowels or sound in consonants
-    )
+    return _cv_pattern(sounds, _cv_classes(vowels, consonants))
+
+
+def _cv_classes(vowels: Collection[str], consonants: Collection[str]) -> dict[str, str]:
+    """The letter of every vowel and consonant in a CV pattern, a vowel first"""
+    return dict.fromkeys(consonants, "C") | dict.fromkeys(vowels, "V")
+
+
+def _cv_pattern(sounds: Sequence[str], classes: Mapping[str, str]) -> str:
+    """CV pattern of the sounds by the letters of _cv_classes"""
+    return "".join(filter(None, map(classes.get, sounds)))
 
 
 def consonant_clusters(
@@ -466,7 +473,7 @@ def calc_repetition_index(
         2.0
     """
     check_sequence(words)
-    keys = list(map(_word_key, words))
+    keys = words if all(map(isinstance, words, repeat(str))) else list(map(_word_key, words))
     unique = list(dict.fromkeys(keys))
     for word in unique:
         if not isinstance(word, str):
@@ -481,10 +488,9 @@ def calc_repetition_index(
     columns: dict[str, int] = {}
     cells: tuple[list[int], list[int]] = ([], [])
     for row, word in enumerate(unique):
-        for feature in word:
-            if features is None or feature in features:
-                cells[0].append(row)
-                cells[1].append(columns.setdefault(feature, len(columns)))
+        for feature in word if features is None else features.intersection(word):
+            cells[0].append(row)
+            cells[1].append(columns.setdefault(feature, len(columns)))
     presence = np.zeros((len(unique), len(columns)), dtype=np.int8)
     presence[cells] = 1
     indices = dict(zip(unique, range(len(unique)), strict=True))

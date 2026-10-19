@@ -120,10 +120,12 @@ The rules of a language are class attributes of a subclass, empty by default apa
 | `blocked_after_pos` | class attribute | Parts of speech of the word after a connector, by its text, that make it no connector |
 | `not_at_start` | class attribute | Connectors that do not count at the start of a sentence, where they open a reply (*Well, ...*) |
 | `only_after` | class attribute | Connectors that count inside a sentence only after these words |
+| `read_through_marks` | class attribute | Connectors whose rules read the words before and after them through a punctuation mark: a comma always separates a question word from the verb before it (*asked, why*) |
+| `split_by_marks` | class attribute | Connectors of several words that a punctuation mark between their words makes no connector |
 | `pos_tags`, `pos_extra` | class attributes | Parts of speech of a one-word connector, `CONNECTOR_POS` of Universal Dependencies by default, and those allowed for a word on top of them |
 | `not_after_pos` | class attribute | Parts of speech of the previous word that make a one-word connector no connector (a determiner: *the before and the after*) |
 | `start_only_pos` | class attribute | Parts of speech of a one-word connector that counts only at the start of a sentence (a capitalized connector tagged as a proper noun) |
-| `subordinators` | class attribute | Connectors that are subordinating conjunctions besides the one-word ones tagged `SCONJ` (*as soon as*), for `is_subordinator` |
+| `subordinators` | class attribute | Connectors that are subordinating conjunctions or prepositions besides the one-word ones tagged `SCONJ` or `ADP` (*as soon as*, *in spite of*), for `is_subordinator` |
 | `classes`, `kinds` | class attributes | Classes and kinds of the dictionary; `CONNECTOR_CLASSES` and `CONNECTOR_KINDS` by default. The names `inter` and `intra` (`CONNECTOR_PLACES`) belong to the densities by place of `CohesionStats` and raise `ParameterError` when the class is defined |
 | `messages` | class attribute | Messages of the errors by key; `MESSAGES` by default |
 
@@ -133,15 +135,16 @@ The words of the lists and the keys of `pos_extra` are normalized forms, while t
 ### find
 
 <!-- --8<-- [start:ConnectorMatcher-find] -->
-`find(words, sent_index, pos)` returns the occurrences of the connectors in a sentence in the order of its words. The words are those of one sentence without punctuation, the first one its start. With the parts of speech, a one-word connector counts only with one of `pos_tags` or of `pos_extra` for its form, never after one of `not_after_pos`, and with one of `start_only_pos` only at the start of the sentence; a word without a part of speech (`None`) passes. Without the parts of speech the rules that read them are skipped.
+`find(words, sent_index, pos, breaks)` returns the occurrences of the connectors in a sentence in the order of its words. The words are those of one sentence without punctuation, the first one its start. With the parts of speech, a one-word connector counts only with one of `pos_tags` or of `pos_extra` for its form, never after one of `not_after_pos`, and with one of `start_only_pos` only at the start of the sentence; a word without a part of speech (`None`) passes. Without the parts of speech the rules that read them are skipped. The positions of the punctuation marks `breaks` cut a connector off its neighbours: a rule does not read a word across a mark, so in *so, the end* the word after the comma neither blocks nor lets the connector count, unless the connector is one of `read_through_marks`, and a mark between the words of a connector of `split_by_marks` makes it none; without them the words are read as adjacent.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
 | `words` | list[str] | `-` | Words of the sentence |
 | `sent_index` | int | `0` | Number of the sentence, written into the occurrences |
 | `pos` | list[str] | `None` | Parts of speech of the words |
+| `breaks` | set[int] | `None` | Positions of the words a punctuation mark stands before |
 
-Words that are not a list of strings and parts of speech that are not a list of strings and `None` (the tags `token.pos_` of spaCy, not the numbers `token.pos`) raise `SourceTypeError`, a number of the sentence that is not an integer and parts of speech not as many as the words `ParameterError`.
+Words that are not a list of strings and parts of speech that are not a list of strings and `None` (the tags `token.pos_` of spaCy, not the numbers `token.pos`) and positions of the marks that are not a collection raise `SourceTypeError`, a number of the sentence or a position of a mark that is not an integer and parts of speech not as many as the words `ParameterError`.
 <!-- --8<-- [end:ConnectorMatcher-find] -->
 
 !!! example "Example"
@@ -172,5 +175,5 @@ Words that are not a list of strings and parts of speech that are not a list of 
 ### is_subordinator
 
 <!-- --8<-- [start:ConnectorMatcher-is_subordinator] -->
-`is_subordinator(connector, pos=None)` checks whether an occurrence of a connector is a subordinating conjunction: a connector of `subordinators`, or a one-word connector whose part of speech `pos` is `SCONJ`. Its clause belongs to the sentence of the connector wherever the connector stands, so a subordinator opening a sentence (*when he came, ...*) does not link it to the ones before.
+`is_subordinator(connector, pos=None)` checks whether an occurrence of a connector ties its clause or phrase to its own sentence: a connector of `subordinators`, or a one-word connector whose part of speech `pos` is `SCONJ` or `ADP`. The clause of a subordinating conjunction and the phrase of a preposition belong to the sentence of the connector wherever it stands, so a subordinator opening a sentence (*when he came, ...*, *despite the rain, ...*) does not link it to the ones before.
 <!-- --8<-- [end:ConnectorMatcher-is_subordinator] -->

@@ -75,6 +75,7 @@ class SyntaxStats(Stats):
         n_clauses (int): Number of clauses
         n_subordinate_clauses (int): Number of subordinate clauses
         n_complex_sents (int): Number of sentences with a subordinate clause
+        n_infinitive_clauses (int): Number of infinitive clauses under a verb
         n_nouns (int): Number of nouns
         n_participle_clauses (int): Number of participial clauses
         n_verbs (int): Number of verb forms
@@ -102,6 +103,7 @@ class SyntaxStats(Stats):
         mean_clause_len (float): Mean length of a clause in words
         subordinate_clauses_per_sent (float): Subordinate clauses per sentence
         p_complex_sents (float): Share of sentences with a subordinate clause
+        infinitive_clauses_per_sent (float): Infinitive clauses under a verb per sentence
         modifiers_per_noun (float): Mean number of modifiers of a noun
         participle_clauses_per_sent (float): Participial clauses per sentence
         mean_participle_clause_len (float): Mean length of a participial clause in words
@@ -117,6 +119,7 @@ class SyntaxStats(Stats):
         is_clause_head: Whether a word heads a clause
         is_infinitive_periphrasis: Whether an infinitive makes one predicate with its head
         is_subordinate_clause_head: Whether a clause head heads a subordinate clause
+        is_infinitive_clause_head: Whether a clause head heads an infinitive clause
         is_participle_clause: Whether a word heads a participial clause
         is_passive: Whether a word is a passive verb form
         is_agentless: Whether a passive form has no agent
@@ -203,6 +206,9 @@ class SyntaxStats(Stats):
         ]
         self.n_subordinate_clauses = sum(subordinate)
         self.n_complex_sents = sum(1 for count in subordinate if count)
+        self.n_infinitive_clauses = sum(
+            1 for sent in heads for token in sent if self.is_infinitive_clause_head(token)
+        )
         nouns = [token for token in words if token.pos_ in ("NOUN", "PROPN")]
         self.n_nouns = len(nouns)
         participle_clauses = [
@@ -246,6 +252,7 @@ class SyntaxStats(Stats):
         self.mean_clause_len = safe_divide(self.n_words, self.n_clauses, nan)
         self.subordinate_clauses_per_sent = self.n_subordinate_clauses / self.n_sents
         self.p_complex_sents = self.n_complex_sents / self.n_sents
+        self.infinitive_clauses_per_sent = self.n_infinitive_clauses / self.n_sents
         self.modifiers_per_noun = safe_divide(
             sum(count_noun_modifiers(token, join_hyphens) for token in nouns), self.n_nouns, nan
         )
@@ -326,8 +333,8 @@ class SyntaxStats(Stats):
         Description:
             A periphrasis of a modal or phasal verb with an infinitive (can
             leave, begins to leave) is one clause; the check gets an infinitive
-            under xcomp and an infinitive conjunct (is_clause_head); none by
-            default
+            under xcomp, an infinitive conjunct and an infinitive subject (csubj)
+            of a modal word (is_clause_head); none by default
 
         Arguments:
             token (Token): Token
@@ -351,6 +358,21 @@ class SyntaxStats(Stats):
             bool: Result of the check
         """
         return is_subordinate_clause_head(token, self.is_clause_head)
+
+    def is_infinitive_clause_head(self, token: Token) -> bool:
+        """
+        Checking whether a word heads an infinitive clause under a verb
+
+        Description:
+            is_infinitive_clause_head of the module over the hook is_clause_head
+
+        Arguments:
+            token (Token): Token
+
+        Returns:
+            bool: Result of the check
+        """
+        return is_infinitive_clause_head(token, self.is_clause_head)
 
     def is_participle_clause(self, token: Token) -> bool:
         """
@@ -944,9 +966,10 @@ def is_clause_head(
         xcomp, a finite predicate or an infinitive clause (is_infinitive_clause:
         wants to leave). A parataxis and a conjunct of a clause head count only
         as predicates (is_predicate), so a parenthetical word is no clause, nor
-        is an infinitive conjunct by the check is_infinitive_periphrasis, since
-        a model may attach the infinitive of a periphrasis to its verb as conj;
-        a loop of conjuncts is none
+        is an infinitive conjunct or an infinitive subject (csubj) by the check
+        is_infinitive_periphrasis, since a model may attach the infinitive of a
+        periphrasis to its verb as conj and to a modal word as csubj; a loop of
+        conjuncts is none
 
     Arguments:
         token (Token): Token
@@ -996,6 +1019,8 @@ def _is_clause_head(
                 return False
             if dep == "parataxis":
                 return is_predicate(token, join_hyphens)
+            if dep == "csubj" and form == "Inf" and is_infinitive_periphrasis:
+                return not is_infinitive_periphrasis(token)
             return not (dep == "acl" and form == "Inf")
         if form == "Inf" and is_infinitive_periphrasis and is_infinitive_periphrasis(token):
             return False
@@ -1089,9 +1114,11 @@ def is_subordinate_clause_head(
 
     Description:
         The head of a clause by is_clause_head with a relation of
-        SUBORDINATE_CLAUSE_DEPS (ccomp, advcl, acl, csubj and their subtypes)
-        or xcomp, or a conjunct of one: the relation of the first word up its
-        chain of conjuncts decides
+        SUBORDINATE_CLAUSE_DEPS (ccomp, advcl, acl, csubj and their subtypes),
+        or under xcomp with a finite predicate (a complement a model attaches
+        as xcomp), or a conjunct of one: the relation of the first word up its
+        chain of conjuncts decides. An infinitive under xcomp heads an
+        infinitive clause (is_infinitive_clause_head), not a subordinate one
 
     Arguments:
         token (Token): Token
@@ -1112,7 +1139,43 @@ def is_subordinate_clause_head(
         seen.add(token.i)
         token = token.head
     dep = base_dep(token)
-    return not is_root(token) and (dep in SUBORDINATE_CLAUSE_DEPS or dep == "xcomp")
+    if dep == "xcomp":
+        return predicate_form(token) != "Inf"
+    return not is_root(token) and dep in SUBORDINATE_CLAUSE_DEPS
+
+
+def is_infinitive_clause_head(
+    token: Token, is_clause_head: Callable[[Token], bool] = is_clause_head
+) -> bool:
+    """
+    Checking whether a word heads an infinitive clause under a verb
+
+    Description:
+        The head of a clause by is_clause_head whose predicate is an infinitive
+        under xcomp (wants to leave, asked him to leave), or a conjunct of one:
+        the first word up its chain of conjuncts decides. Such a clause is
+        counted apart from the subordinate ones, as grammars of many languages
+        take it for a part of a simple sentence
+
+    Arguments:
+        token (Token): Token
+        is_clause_head (callable): Whether a word heads a clause, is_clause_head
+            by default
+
+    Returns:
+        bool: Result of the check
+
+    Raises:
+        SourceTypeError: If is_clause_head is not callable
+    """
+    check_callable(is_clause_head, "check of a clause head")
+    if is_root(token) or not is_clause_head(token):
+        return False
+    seen = set()
+    while base_dep(token) == "conj" and token.i not in seen:
+        seen.add(token.i)
+        token = token.head
+    return base_dep(token) == "xcomp" and predicate_form(token) == "Inf"
 
 
 def is_passive(token: Token, join_hyphens: bool = False) -> bool:

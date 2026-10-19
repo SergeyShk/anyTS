@@ -24,6 +24,7 @@ from anyts.syntax_stats import (
     is_agentless,
     is_clause_head,
     is_infinitive_clause,
+    is_infinitive_clause_head,
     is_passive,
     is_predicate,
     is_root,
@@ -548,8 +549,9 @@ def test_syntax_stats_counts():
     assert (stats.n_sents, stats.n_words, stats.n_leaves, stats.n_subtrees) == (2, 18, 10, 8)
     assert stats.c_children == {0: 10, 1: 4, 2: 2, 3: 1, 5: 1}
     assert stats.c_deps["nsubj"] == 2 and "punct" not in stats.c_deps
-    # Clauses: sold; said, want (ccomp), leave (xcomp) and left (conj of the head)
-    assert (stats.n_clauses, stats.n_subordinate_clauses, stats.n_complex_sents) == (5, 2, 1)
+    # Clauses: sold; said, want (ccomp, subordinate), leave (xcomp, infinitive) and left
+    assert (stats.n_clauses, stats.n_subordinate_clauses, stats.n_complex_sents) == (5, 1, 1)
+    assert stats.n_infinitive_clauses == 1
     assert stats.n_coordination_chains == 1
     # built by workers is a participial clause, and both participles are passive
     assert (stats.n_nouns, stats.n_verbs, stats.n_participle_clauses) == (2, 6, 1)
@@ -576,8 +578,9 @@ def test_syntax_stats_metrics():
         "mean_coordination_chain_len": 2.0,
         "clauses_per_sent": 2.5,
         "mean_clause_len": 3.6,
-        "subordinate_clauses_per_sent": 1.0,
+        "subordinate_clauses_per_sent": 0.5,
         "p_complex_sents": 0.5,
+        "infinitive_clauses_per_sent": 0.5,
         "modifiers_per_noun": 1.0,
         "participle_clauses_per_sent": 0.5,
         "mean_participle_clause_len": 3.0,
@@ -1024,32 +1027,32 @@ def is_modal(token):
 
 
 @pytest.mark.parametrize(
-    ("periphrasis", "heads_of_clauses", "subordinate"),
+    ("periphrasis", "heads_of_clauses", "infinitive"),
     [
         # Without periphrases every infinitive complement is a clause
         (
             None,
             ["can", "come", "go", "wants", "leave", "rest", "seems", "said", "came"],
-            ["come", "go", "leave", "rest", "came"],
+            ["come", "go", "leave", "rest"],
         ),
-        # can come and go is one predicate, conjunct included; came is finite under xcomp
+        # can come and go is one predicate, conjunct included
         (
             is_modal,
             ["can", "wants", "leave", "rest", "seems", "said", "came"],
-            ["leave", "rest", "came"],
+            ["leave", "rest"],
         ),
     ],
 )
-def test_infinitive_clauses(periphrasis, heads_of_clauses, subordinate):
+def test_infinitive_clauses(periphrasis, heads_of_clauses, infinitive):
     doc = infinitives()
 
     def is_head(token):
         return is_clause_head(token, is_infinitive_periphrasis=periphrasis)
 
     assert [token.text for token in doc if is_head(token)] == heads_of_clauses
-    assert [
-        token.text for token in doc if is_subordinate_clause_head(token, is_head)
-    ] == subordinate
+    # came is finite under xcomp: a complement clause, subordinate
+    assert [token.text for token in doc if is_subordinate_clause_head(token, is_head)] == ["came"]
+    assert [token.text for token in doc if is_infinitive_clause_head(token, is_head)] == infinitive
     assert is_infinitive_clause(doc[8], periphrasis) and not is_infinitive_clause(doc[12])
     assert is_infinitive_clause(doc[2], periphrasis) is (periphrasis is None)
     assert not is_infinitive_clause(doc[4]) and not is_infinitive_clause(doc[15])
@@ -1060,7 +1063,7 @@ def is_has(token):
 
 
 @pytest.mark.parametrize(
-    ("words", "heads", "deps", "morphs", "periphrasis", "heads_of_clauses", "subordinate"),
+    ("words", "heads", "deps", "morphs", "periphrasis", "heads_of_clauses", "infinitive"),
     [
         # A participial phrase and an infinitive under acl hold their infinitives
         (
@@ -1142,7 +1145,7 @@ def is_has(token):
     ],
 )
 def test_infinitive_clause_cases(
-    words, heads, deps, morphs, periphrasis, heads_of_clauses, subordinate
+    words, heads, deps, morphs, periphrasis, heads_of_clauses, infinitive
 ):
     doc = parse(words, heads, deps, morphs, pos=["VERB"] * len(words))
 
@@ -1150,9 +1153,44 @@ def test_infinitive_clause_cases(
         return is_clause_head(token, is_infinitive_periphrasis=periphrasis)
 
     assert [token.text for token in doc if is_head(token)] == heads_of_clauses
-    assert [
-        token.text for token in doc if is_subordinate_clause_head(token, is_head)
-    ] == subordinate
+    assert not any(is_subordinate_clause_head(token, is_head) for token in doc)
+    assert [token.text for token in doc if is_infinitive_clause_head(token, is_head)] == infinitive
+
+
+def is_need(token):
+    return token.head.text == "Need"
+
+
+@pytest.mark.parametrize(
+    ("periphrasis", "heads_of_clauses"), [(None, ["Need", "leave"]), (is_need, ["Need"])]
+)
+def test_infinitive_subject_of_a_modal_word(periphrasis, heads_of_clauses):
+    # Need to leave: a model may hang the infinitive on the modal word as csubj
+    doc = parse(
+        ["Need", "to", "leave"],
+        [0, 2, 0],
+        ["ROOT", "mark", "csubj"],
+        ["", "", "VerbForm=Inf"],
+        pos=["ADJ", "PART", "VERB"],
+    )
+
+    def is_head(token):
+        return is_clause_head(token, is_infinitive_periphrasis=periphrasis)
+
+    assert [token.text for token in doc if is_head(token)] == heads_of_clauses
+    # An infinitive subject that is a clause stays a subordinate one
+    assert [token.text for token in doc if is_subordinate_clause_head(token, is_head)] == (
+        heads_of_clauses[1:]
+    )
+    assert not any(is_infinitive_clause_head(token, is_head) for token in doc)
+
+
+def test_infinitive_clause_head_by_a_hook():
+    doc = infinitives()
+    assert is_infinitive_clause_head(doc[8]) and not is_infinitive_clause_head(doc[6])
+    assert not is_infinitive_clause_head(doc[8], lambda token: False)
+    with pytest.raises(SourceTypeError):
+        is_infinitive_clause_head(doc[8], "clause")
 
 
 def test_infinitive_clause_by_a_check_of_a_clause_head():
@@ -1202,7 +1240,8 @@ def test_infinitive_periphrasis_hook():
     doc = infinitives()
     assert not DEFAULT.is_infinitive_periphrasis(doc[2])
     assert (SyntaxStats(doc).n_clauses, Modal(doc).n_clauses) == (9, 7)
-    assert Modal(doc).n_subordinate_clauses == 3
+    assert (Modal(doc).n_subordinate_clauses, Modal(doc).n_infinitive_clauses) == (1, 2)
+    assert SyntaxStats(doc).n_infinitive_clauses == 4
     for check in (is_clause_head, is_infinitive_clause):
         with pytest.raises(SourceTypeError):
             check(doc[2], is_infinitive_periphrasis="modal")

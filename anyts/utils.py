@@ -131,6 +131,69 @@ def has_words(source: str | Doc | Span) -> bool:
     return any(not char.isspace() and not is_punctuation(char) for char in text)
 
 
+def find_marks(text: str, words: Sequence[str]) -> frozenset[int]:
+    """
+    Finding the punctuation marks between the words of a text
+
+    Description:
+        The words are found in the text in their order, apart from the letters
+        and digits around them unless glued to the word before or after; a word
+        with an is_punctuation character between it and the word before gets
+        its position, except the hyphen that joins two parts of a word. A word
+        the text does not hold is passed over
+
+    Arguments:
+        text (str): Text
+        words (list[str]): Words of the text in their order
+
+    Returns:
+        frozenset[int]: Positions of the words a punctuation mark stands before
+
+    Raises:
+        SourceTypeError: If the text is not a string or the words are not a list
+            of strings
+
+    Example:
+        >>> from anyts.utils import find_marks
+        >>> sorted(find_marks("So, it is late - very late", ["So", "it", "is", "late", "very", "late"]))
+        [1, 4]
+    """
+    check_word(text, "text")
+    check_words(words)
+    marks = set()
+    cursor = 0
+    for position, word in enumerate(words):
+        following = words[position + 1] if position + 1 < len(words) else ""
+        start = text.find(word, cursor)
+        # A word inside a longer one (here in Therefore) is no occurrence of it
+        while start != -1 and not _stands_apart(text, start, start + len(word), cursor, following):
+            start = text.find(word, start + 1)
+        if start == -1:
+            continue
+        if position and _is_mark_gap(text[cursor:start]):
+            marks.add(position)
+        cursor = start + len(word)
+    return frozenset(marks)
+
+
+def _stands_apart(text: str, start: int, end: int, cursor: int, following: str) -> bool:
+    """Whether a word found in a text is no part of a longer word, but glued to the word
+    found before it (cursor) or to the next one"""
+    before = start == cursor or not text[start - 1].isalnum()
+    after = (
+        end == len(text)
+        or not text[end].isalnum()
+        or (bool(following) and text.startswith(following, end))
+    )
+    return before and after
+
+
+def _is_mark_gap(gap: str) -> bool:
+    """Whether the text between two words holds a punctuation mark, the hyphen that joins
+    two parts of a word aside"""
+    return gap != "-" and any(is_punctuation(char) for char in gap)
+
+
 def in_order(words: Collection[str]) -> tuple[str, ...]:
     """
     Putting a collection of words in a fixed order
@@ -183,25 +246,24 @@ def find_phrases(
     check_words(words)
     check_words(phrases, "phrases", ordered=False)
     check_callable(normalize, "normalization")
-    patterns = sorted(
+    by_first: dict[str, list[list[str]]] = {}
+    for pattern in sorted(
         {pattern for phrase in phrases if (pattern := tuple(normalize(phrase).split()))},
-        key=lambda pattern: (-len(pattern), pattern),
-    )
-    by_first: dict[str, list[tuple[str, ...]]] = {}
-    for pattern in patterns:
-        by_first.setdefault(pattern[0], []).append(pattern)
-    normalized = [normalize(word) for word in words]
-    spans = []
-    position = 0
-    while position < len(normalized):
-        for pattern in by_first.get(normalized[position], ()):
-            end = position + len(pattern)
-            if tuple(normalized[position:end]) == pattern:
+        key=len,
+        reverse=True,
+    ):
+        by_first.setdefault(pattern[0], []).append(list(pattern))
+    normalized = list(map(normalize, words))
+    spans: list[tuple[int, int]] = []
+    end = 0
+    for position, word in enumerate(normalized):
+        if position < end or word not in by_first:
+            continue
+        for phrase_words in by_first[word]:
+            if normalized[position : position + len(phrase_words)] == phrase_words:
+                end = position + len(phrase_words)
                 spans.append((position, end))
-                position = end
                 break
-        else:
-            position += 1
     return spans
 
 
@@ -552,6 +614,38 @@ def split_doc_units(
         if spans[index][0] <= position < spans[index][1]:
             units[index].append(unit)
     return units
+
+
+def find_unit_marks(units: Sequence[Sequence[Token]]) -> frozenset[int]:
+    """
+    Finding the punctuation marks between the words of a sentence of a Doc
+
+    Description:
+        The words are those of iter_doc_units in one sentence; a word with an
+        is_punctuation character between it and the word before gets its
+        position, except the hyphen that joins two parts of a word (find_marks)
+
+    Arguments:
+        units (list[list[Token]]): Tokens of every word of a sentence
+
+    Returns:
+        frozenset[int]: Positions of the words a punctuation mark stands before
+
+    Example:
+        >>> import spacy
+        >>> from anyts.utils import find_unit_marks, iter_doc_units
+        >>> doc = spacy.blank("en")("So, it is late")
+        >>> sorted(find_unit_marks(list(iter_doc_units(doc))))
+        [1]
+    """
+    marks = set()
+    for position in range(1, len(units)):
+        last, first = units[position - 1][-1], units[position][0]
+        # Doc.text is built anew on every read, so the gap is taken from its tokens
+        between = last.doc[last.i + 1 : first.i]
+        if _is_mark_gap(last.whitespace_ + "".join(token.text_with_ws for token in between)):
+            marks.add(position)
+    return frozenset(marks)
 
 
 def add_tokenizer_rules(
@@ -1119,7 +1213,9 @@ class LazyPackage(ModuleType):
         not load the dependencies of every module; a module of the package is
         imported as its attribute too. A module named as one of its functions
         (zipf, kwic) leaves the function under that name in the package, as an
-        eager import would
+        eager import would. dir() lists the names of the mapping that __all__
+        holds, all of them for a package without __all__, so that help() and
+        inspect.getmembers() import only the public names
     """
 
     def __getattr__(self, name: str) -> Any:
@@ -1149,7 +1245,10 @@ class LazyPackage(ModuleType):
         super().__setattr__(name, value)
 
     def __dir__(self) -> list[str]:
-        return sorted({*super().__dir__(), *self.__dict__["_MODULES"]})
+        names = self.__dict__["_MODULES"]
+        if (public := self.__dict__.get("__all__")) is not None:
+            names = [name for name in names if name in public]
+        return sorted({*super().__dir__(), *names})
 
 
 def make_lazy(name: str, modules: Mapping[str, str]) -> None:

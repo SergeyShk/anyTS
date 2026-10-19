@@ -122,7 +122,7 @@ Parameters:
 <!-- --8<-- [start:calc_smog_index] -->
 Computation of the SMOG index (McLaughlin, 1969).
 
-The years of schooling needed to read the text from the polysyllabic words per sentence; the higher the value, the harder the text. In the original formula the polysyllabic words have three or more syllables and `b` brings their number to a sample of 30 sentences.
+The years of schooling needed to read the text from the polysyllabic words per sentence; the higher the value, the harder the text. In the original formula the polysyllabic words have three or more syllables and `b` brings their number to a sample of 30 sentences. A number of words or sentences that is not a non-negative integer raises `ParameterError`.
 
 Formula:
 

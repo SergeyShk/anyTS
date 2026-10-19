@@ -77,6 +77,7 @@ SYNTAX_STATS_DESC = {
     "mean_clause_len": "Mean length of a clause (words)",
     "subordinate_clauses_per_sent": "Subordinate clauses per sentence",
     "p_complex_sents": "Share of sentences with a subordinate clause",
+    "infinitive_clauses_per_sent": "Infinitive clauses under a verb per sentence",
     "modifiers_per_noun": "Modifiers per noun phrase",
     "participle_clauses_per_sent": "Participial clauses per sentence",
     "mean_participle_clause_len": "Mean length of a participial clause (words)",
