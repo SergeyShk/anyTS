@@ -1,8 +1,5 @@
 # Exceptions
 
-!!! info ""
-    **anyts.exceptions**
-
 <!-- --8<-- [start:exceptions] -->
 All exceptions of the library inherit the base class `AnyTSError` and a built-in Python class, and can be caught by either.
 
@@ -20,7 +17,7 @@ All exceptions of the library inherit the base class `AnyTSError` and a built-in
 The classes are available from `anyts` and from `anyts.exceptions`. A language library re-exports them under its own names as aliases, not subclasses, so its base class catches the errors of the core too.
 <!-- --8<-- [end:exceptions] -->
 
-!!! example "Example"
+=== "Code"
 
     ``` python
     from anyts import AnyTSError, ParameterError, WordsExtractor
@@ -29,13 +26,18 @@ The classes are available from `anyts` and from `anyts.exceptions`. A language l
         WordsExtractor(ngram_range=(2, 1))
     except ParameterError as e:
         print(e)
-    # The lower N-gram bound is greater than the upper
 
     try:
         WordsExtractor(tokenizer=42).extract("The cat sleeps.")
     except AnyTSError as e:
         print(type(e).__name__)
-    # SourceTypeError
+    ```
+
+=== "Result"
+
+    ```
+    The lower N-gram bound is greater than the upper
+    SourceTypeError
     ```
 
 ## Messages { #messages }
@@ -46,7 +48,7 @@ The errors of the classes of statistics (`Stats` and its subclasses), of `StatsC
 The shared checks of `anyts.utils` (`check_integer`, `check_number`, `check_words`, `check_sequence`), which these classes call too, and the other functions of the core keep their messages in English.
 <!-- --8<-- [end:messages] -->
 
-!!! example "Example"
+=== "Code"
 
     ``` python
     from anyts.constants import MESSAGES
@@ -61,5 +63,10 @@ The shared checks of `anyts.utils` (`check_integer`, `check_number`, `check_word
         Diversity([])
     except ValueError as e:
         print(e)
-    # Il testo non contiene parole
+    ```
+
+=== "Result"
+
+    ```
+    Il testo non contiene parole
     ```

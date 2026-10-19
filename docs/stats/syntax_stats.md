@@ -1,23 +1,635 @@
 # Syntactic statistics
 
-!!! info ""
-    **anyts.syntax_stats.SyntaxStats**
-
-## Description
+``` {.python .signature}
+SyntaxStats(source)
+```
 
 <!-- --8<-- [start:SyntaxStats] -->
-The syntactic statistics of a text by its dependency tree (Ivanov, Solnyshkina and Solovyev 2018): dependency distances, tree depth, leaves and subtrees, valency of the finite verbs, coordination chains, clauses, modifiers of a noun, participial clauses, passive, infinitives, negations, split predicates and the ratio of the nouns to the verbs. The data source is a `Doc` object of [spaCy](https://github.com/explosion/spaCy) with a dependency parse. Punctuation, symbols and whitespace are no nodes of the tree, and the distances are counted in positions of words. The measures of a sentence (the longest dependency, the depth, the nodes per leaf) are averaged over the sentences; the constructions are given per sentence.
+The syntactic statistics of a text by its dependency tree ([Ivanov, Solnyshkina and Solovyev 2018](https://dialogue-conf.org/media/4302/ivanovvv.pdf)): the measures of the tree and of the syntactic constructions. The data source is a `Doc` object of [spaCy](https://github.com/explosion/spaCy) with a dependency parse. Punctuation, symbols and whitespace are no nodes of the tree, and the distances are counted in positions of words.
 
-A source that is not a `Doc` raises `SourceTypeError`; a source without a dependency parse (relations and sentence boundaries), without lemmas when the class requires them, or without words raises `SourceError`.
+Raises:
+
+- `SourceTypeError` - a source that is not a `Doc`;
+- `SourceError` - a source without a dependency parse (relations and sentence boundaries), without lemmas when the class requires them, or without words.
 <!-- --8<-- [end:SyntaxStats] -->
 
-## Language hooks
+=== "Code"
+
+    ``` python
+    import spacy
+    from spacy.tokens import Doc
+
+    from anyts.syntax_stats import SyntaxStats
+
+    # She said that the house was not built by him.
+    doc = Doc(
+        spacy.blank("en").vocab,
+        words="She said that the house was not built by him .".split(),
+        heads=[1, 1, 7, 4, 7, 7, 7, 1, 9, 7, 1],
+        deps="nsubj ROOT mark det nsubj:pass aux:pass advmod ccomp case obl:agent punct".split(),
+        pos="PRON VERB SCONJ DET NOUN AUX PART VERB ADP PRON PUNCT".split(),
+        morphs="_ VerbForm=Fin _ _ _ VerbForm=Fin Polarity=Neg VerbForm=Part|Voice=Pass _ _ _".split(),
+    )
+    stats = SyntaxStats(doc)
+    stats.print_stats()
+    ```
+
+=== "Result"
+
+    ```
+                        Statistic                     |  Value
+    -------------------------------------------------------------
+    Mean dependency distance                          |   2.44
+    Standard deviation of the dependency distance     |   1.77
+    Mean of the longest dependencies of the sentences |   6.00
+    Share of adjacent dependencies                    |   0.44
+    Depth of the dependency tree                      |   3.00
+    Leaves per sentence                               |   6.00
+    Subtrees per sentence                             |   4.00
+    Mean of the nodes per leaf of the sentences       |   1.67
+    Valency of the finite verbs                       |   2.00
+    Coordination chains per sentence                  |   0.00
+    Mean length of a coordination chain               |   nan
+    Clauses per sentence                              |   2.00
+    Mean length of a clause (words)                   |   5.00
+    Subordinate clauses per sentence                  |   1.00
+    Share of sentences with a subordinate clause      |   1.00
+    Infinitive clauses under a verb per sentence      |   0.00
+    Modifiers per noun phrase                         |   1.00
+    Participial clauses per sentence                  |   0.00
+    Mean length of a participial clause (words)       |   nan
+    Share of passive forms among the verbs            |   0.50
+    Share of agentless forms among the passive ones   |   0.00
+    Infinitives per sentence                          |   0.00
+    Words of negation per sentence                    |   1.00
+    Split predicates per sentence                     |   0.00
+    Ratio of nouns to verbs                           |   0.50
+    ```
+
+## Parameters
+
+<!-- --8<-- [start:SyntaxStats-parameters] -->
+| Parameter | Type | Default | Description |
+| :-------- | :--- | :------ | :---------- |
+| `source` | `Doc` | - | Data source: a `Doc` with a dependency parse, or what `parse` takes |
+<!-- --8<-- [end:SyntaxStats-parameters] -->
+
+## Attributes
+
+<!-- --8<-- [start:SyntaxStats-attributes] -->
+| Attribute | Type | Description |
+| :-------- | :--- | :---------- |
+| `sents` | `tuple[tuple[Token]]` | Words of every sentence with words |
+| `n_sents`, `n_words` | `int` | Numbers of the sentences with words and of the words |
+| `n_leaves`, `n_subtrees` | `int` | Numbers of the words without and with dependent words |
+| `n_coordination_chains` | `int` | Number of the coordination chains |
+| `n_clauses`, `n_subordinate_clauses`, `n_complex_sents` | `int` | Numbers of the clauses, of the subordinate clauses and of the sentences with one |
+| `n_infinitive_clauses` | `int` | Number of the infinitive clauses under a verb |
+| `n_nouns`, `n_verbs` | `int` | Numbers of the nouns (`NOUN`, `PROPN`) and of the verb forms (`VERB`) |
+| `n_participle_clauses` | `int` | Number of the participial clauses |
+| `n_passive`, `n_agentless_passive` | `int` | Numbers of the passive forms and of those with no agent |
+| `n_infinitives`, `n_negations` | `int` | Numbers of the infinitives and of the words of negation |
+| `n_split_predicates`, `split_predicates` | `int`, `tuple[str]` | Number of the split predicates and the predicates, the verb and the noun |
+| `c_children` | `dict[int, int]` | Number of the words by number of dependent words |
+| `c_deps` | `dict[str, int]` | Number of the words by relation |
+<!-- --8<-- [end:SyntaxStats-attributes] -->
+
+## Metrics
+
+<!-- --8<-- [start:SyntaxStats-metrics] -->
+Every metric is an attribute of the object, computed when it is created, and `get_stats` gives them all. The measures of a sentence (the longest dependency, the depth, the nodes per leaf) are averaged over the sentences; the constructions are given per sentence.
+
+| Metric | Measures | Range | Higher means |
+| :----- | :------- | :---- | :----------- |
+| [`mean_dependency_distance`](#dependency_distances) | Mean distance between a word and its head | 1 and above, `nan` without dependencies | Harder to process |
+| [`std_dependency_distance`](#dependency_distances) | Standard deviation of the dependency distance | 0 and above, `nan` without dependencies | Less even distances |
+| [`max_dependency_distance`](#dependency_distances) | Mean of the longest dependencies of the sentences that have dependencies | 1 and above, `nan` without dependencies | Longer longest dependencies |
+| [`p_adjacent_dependencies`](#dependency_distances) | Share of the dependencies of length 1 | 0-1, `nan` without dependencies | More links between neighbours |
+| [`tree_depth`](#tree_depth) | Mean depth of the tree of a sentence | 0 and above | Deeper embedding |
+| [`leaves_per_sent`](#leaves) | Leaves per sentence | 0 and above | Longer or flatter sentences |
+| [`subtrees_per_sent`](#leaves) | Subtrees per sentence | 0 and above | More phrases in a sentence |
+| [`nodes_per_leaf`](#leaves) | Mean over the sentences of the words per leaf | 1 and above, `nan` for a sentence without leaves | Longer branches |
+| [`verb_valency`](#valency) | Mean number of the dependents of a finite verb | 0 and above, `nan` without finite verbs | More dependents of a verb |
+| [`coordination_chains_per_sent`](#coordination_chains) | Coordination chains per sentence | 0 and above | More coordination |
+| [`mean_coordination_chain_len`](#coordination_chains) | Mean length of a coordination chain in words | 2 and above, `nan` without chains | Longer enumerations |
+| [`clauses_per_sent`](#clauses) | Clauses per sentence | 0 and above | More clauses in a sentence |
+| [`mean_clause_len`](#clauses) | Mean length of a clause in words | 1 and above, `nan` without clauses | Longer clauses |
+| [`subordinate_clauses_per_sent`](#subordinate_clauses) | Subordinate clauses per sentence | 0 and above | More subordination |
+| [`p_complex_sents`](#subordinate_clauses) | Share of the sentences with a subordinate clause | 0-1 | More complex sentences |
+| [`infinitive_clauses_per_sent`](#infinitive_clauses) | Infinitive clauses under a verb per sentence (*wants to leave*), which are not subordinate | 0 and above | More infinitive complements |
+| [`modifiers_per_noun`](#noun_modifiers) | Mean number of the modifiers of a noun | 0 and above, `nan` without nouns | Heavier noun phrases |
+| [`participle_clauses_per_sent`](#participle_clauses) | Participial clauses per sentence | 0 and above | More participial clauses |
+| [`mean_participle_clause_len`](#participle_clauses) | Mean length of a participial clause in words | 1 and above, `nan` without participial clauses | Longer participial clauses |
+| [`p_passive`](#passive) | Share of the passive forms among the verb forms | 0-1, `nan` without verb forms | More passive |
+| [`p_agentless_passive`](#passive) | Share of the forms with no agent among the passive ones | 0-1, `nan` without passive forms | More passive without an agent |
+| [`infinitives_per_sent`](#constructions) | Infinitives per sentence | 0 and above | More infinitives |
+| [`negations_per_sent`](#constructions) | Words of negation per sentence | 0 and above | More negation |
+| [`split_predicates_per_sent`](#constructions) | Split predicates per sentence | 0 and above | More split predicates |
+| [`noun_verb_ratio`](#noun_verb_ratio) | Ratio of the nouns to the verb forms | 0 and above, `nan` without verb forms | A more nominal style |
+<!-- --8<-- [end:SyntaxStats-metrics] -->
+
+<div class="metric-card" markdown>
+
+### Dependency distance { #dependency_distances }
+
+`mean_dependency_distance` · `std_dependency_distance` · `max_dependency_distance` · `p_adjacent_dependencies`
+{ .metric-meta }
+
+<!-- --8<-- [start:calc_dependency_distances] -->
+``` {.python .signature}
+calc_dependency_distances(tokens, join_hyphens=False)
+```
+
+The dependency distances (Liu 2008): the distance between a word and its head in positions of words, punctuation left out, in the order of the words. The head of a sentence and a word whose head lies outside the sequence are skipped.
+
+| Parameter | Type | Default | Description |
+| :-------- | :--- | :------ | :---------- |
+| `tokens` | `Doc` / `Span` / `list[Token]` | - | Sequence of tokens |
+| `join_hyphens` | `bool` | `False` | Take a hyphenated word for one position |
+<!-- --8<-- [end:calc_dependency_distances] -->
+
+</div>
+
+<div class="metric-card" markdown>
+
+### Tree depth { #tree_depth }
+
+`tree_depth`
+{ .metric-meta }
+
+<!-- --8<-- [start:calc_tree_depth] -->
+``` {.python .signature}
+calc_tree_depth(tokens, join_hyphens=False)
+```
+
+The depth of the dependency tree: the longest path from the head of a sentence to a leaf, in relations between words; the maximum for several sentences, 0 for a sentence of one word. With `join_hyphens` a hyphenated word is one word, and the words that hang on any of its parts are one level below it.
+
+| Parameter | Type | Default | Description |
+| :-------- | :--- | :------ | :---------- |
+| `tokens` | `Doc` / `Span` / `list[Token]` | - | Sequence of tokens |
+| `join_hyphens` | `bool` | `False` | Take a hyphenated word for one word |
+<!-- --8<-- [end:calc_tree_depth] -->
+
+</div>
+
+<div class="metric-card" markdown>
+
+### Leaves and subtrees { #leaves }
+
+`leaves_per_sent` · `subtrees_per_sent` · `nodes_per_leaf`
+{ .metric-meta }
+
+<!-- --8<-- [start:SyntaxStats-leaves] -->
+A leaf is a word without dependent words (`count_children`), a subtree a word with them. The nodes per leaf are the words of a sentence over its leaves, averaged over the $S$ sentences.
+
+$$
+\frac{1}{S} \sum_{s=1}^{S} \frac{\textrm{Number of words of } s}{\textrm{Number of leaves of } s}
+$$
+<!-- --8<-- [end:SyntaxStats-leaves] -->
+
+</div>
+
+<div class="metric-card" markdown>
+
+### Valency of the finite verbs { #valency }
+
+`verb_valency`
+{ .metric-meta }
+
+<!-- --8<-- [start:calc_valency] -->
+``` {.python .signature}
+calc_valency(token, join_hyphens=False)
+```
+
+The valency of a token: the number of its dependent words, the relations `cc`, `conj`, `parataxis` and `punct` left out (`anyts.constants.VALENCY_IGNORED_DEPS`); with `join_hyphens=True` a hyphenated dependent counts once, so `came` in `Some-one came` has one dependent and not two.
+
+| Parameter | Type | Default | Description |
+| :-------- | :--- | :------ | :---------- |
+| `token` | `Token` | - | Token |
+| `join_hyphens` | `bool` | `False` | Take a hyphenated word for one word |
+<!-- --8<-- [end:calc_valency] -->
+
+</div>
+
+<div class="metric-card" markdown>
+
+### Coordination chains { #coordination_chains }
+
+`coordination_chains_per_sent` · `mean_coordination_chain_len`
+{ .metric-meta }
+
+<!-- --8<-- [start:calc_coordination_chains] -->
+``` {.python .signature}
+calc_coordination_chains(tokens, join_hyphens=False)
+```
+
+The lengths of the coordination chains, in the order of their first words. A chain is a group of words linked by `conj`, whichever word each conjunct hangs on: Universal Dependencies attaches every conjunct to the first one (`pears → apples`, `plums → apples`), ClearNLP to the previous one (`pears → apples`, `plums → pears`); both give one chain of three for `apples, pears and plums`. A nested coordination (`cats and dogs, or birds`) and an enumeration split between several heads are one chain too. The length of a chain is the number of its words; a conjunct whose head lies outside the sequence is not linked to it. With `join_hyphens` a hyphenated word is one conjunct, linked by the `conj` of any of its parts (`member and vice-governor` is a chain of two).
+
+| Parameter | Type | Default | Description |
+| :-------- | :--- | :------ | :---------- |
+| `tokens` | `Doc` / `Span` / `list[Token]` | - | Sequence of tokens |
+| `join_hyphens` | `bool` | `False` | Take a hyphenated word for one word |
+<!-- --8<-- [end:calc_coordination_chains] -->
+
+</div>
+
+<div class="metric-card" markdown>
+
+### Clauses { #clauses }
+
+`clauses_per_sent` · `mean_clause_len`
+{ .metric-meta }
+
+<!-- --8<-- [start:is_clause_head] -->
+``` {.python .signature}
+is_clause_head(token, join_hyphens=False, is_infinitive_periphrasis=None)
+```
+
+Checks whether a word heads a clause: the head of the sentence or a word with `ccomp`, `advcl`, `acl`, `csubj` or `parataxis` (`anyts.constants.CLAUSE_DEPS`, subtypes included) whose predicate (`predicate_form`, so `has been built` is finite) is not a participle, a converb or a gerund (`NONFINITE_CLAUSE_FORMS`, counted apart), nor an infinitive under `acl`; under `xcomp`, a finite predicate or an infinitive clause (`is_infinitive_clause`). A `parataxis` and a conjunct of a clause head count only as predicates (`is_predicate`); an infinitive conjunct and an infinitive subject (`csubj`) are no clause by the check `is_infinitive_periphrasis`, since a model may attach the infinitive of a periphrasis to its verb as `conj` and to a modal word as `csubj`; a loop of conjuncts is no clause.
+
+| Parameter | Type | Default | Description |
+| :-------- | :--- | :------ | :---------- |
+| `token` | `Token` | - | Token |
+| `join_hyphens` | `bool` | `False` | Take a hyphenated word for one word |
+| `is_infinitive_periphrasis` | `Callable[[Token], bool]` | `None` | Whether an infinitive makes one predicate with its head; none by default |
+
+A check of a periphrasis that is not callable raises `SourceTypeError`.
+<!-- --8<-- [end:is_clause_head] -->
+
+<!-- --8<-- [start:is_infinitive_clause] -->
+``` {.python .signature}
+is_infinitive_clause(token, is_infinitive_periphrasis=None, is_clause_head=is_clause_head)
+```
+
+Checks whether an infinitive complement heads a clause of its own: an infinitive (`predicate_form`, so `to be chosen` is one) under `xcomp` (*wants to leave*), unless the language check `is_infinitive_periphrasis` says it makes one predicate with its head (*can leave*, *begins to leave*), or the word it completes, the first one up its chain of non-finite complements under `xcomp` (*kept trying to leave*, *seemed able to leave*), heads no clause by the check `is_clause_head`: an infinitive in a participial phrase or under an infinitive under `acl` (*trying to leave*, *the wish to try to leave*) belongs to that phrase. A ClearNLP parse hangs an infinitive after a predicative adjective on an `acomp` or `oprd` (*is ready to leave*), which heads no clause, so that infinitive is none.
+
+| Parameter | Type | Default | Description |
+| :-------- | :--- | :------ | :---------- |
+| `token` | `Token` | - | Token |
+| `is_infinitive_periphrasis` | `Callable[[Token], bool]` | `None` | Whether an infinitive makes one predicate with its head; none by default |
+| `is_clause_head` | `Callable[[Token], bool]` | `is_clause_head` | Whether a word heads a clause |
+
+A check that is not callable raises `SourceTypeError`.
+<!-- --8<-- [end:is_infinitive_clause] -->
+
+</div>
+
+<div class="metric-card" markdown>
+
+### Subordinate clauses { #subordinate_clauses }
+
+`subordinate_clauses_per_sent` · `p_complex_sents`
+{ .metric-meta }
+
+<!-- --8<-- [start:is_subordinate_clause_head] -->
+``` {.python .signature}
+is_subordinate_clause_head(token, is_clause_head=is_clause_head)
+```
+
+Checks whether a word heads a subordinate clause: a clause head by the check `is_clause_head` with `ccomp`, `advcl`, `acl` or `csubj` (`SUBORDINATE_CLAUSE_DEPS`), or under `xcomp` with a finite predicate (a complement a model attaches as `xcomp`), or a conjunct of one, by the relation of the first word up its chain of conjuncts. An infinitive under `xcomp` heads an infinitive clause, counted apart.
+
+| Parameter | Type | Default | Description |
+| :-------- | :--- | :------ | :---------- |
+| `token` | `Token` | - | Token |
+| `is_clause_head` | `Callable[[Token], bool]` | `is_clause_head` | Whether a word heads a clause |
+
+A check that is not callable raises `SourceTypeError`.
+<!-- --8<-- [end:is_subordinate_clause_head] -->
+
+</div>
+
+<div class="metric-card" markdown>
+
+### Infinitive clauses { #infinitive_clauses }
+
+`infinitive_clauses_per_sent`
+{ .metric-meta }
+
+<!-- --8<-- [start:is_infinitive_clause_head] -->
+``` {.python .signature}
+is_infinitive_clause_head(token, is_clause_head=is_clause_head)
+```
+
+Checks whether a word heads an infinitive clause under a verb: a clause head by the check `is_clause_head` whose predicate is an infinitive under `xcomp` (*wants to leave*, *asked him to leave*), or a conjunct of one. Such a clause is counted apart from the subordinate ones, as grammars of many languages take it for a part of a simple sentence.
+
+| Parameter | Type | Default | Description |
+| :-------- | :--- | :------ | :---------- |
+| `token` | `Token` | - | Token |
+| `is_clause_head` | `Callable[[Token], bool]` | `is_clause_head` | Whether a word heads a clause |
+
+A check that is not callable raises `SourceTypeError`.
+<!-- --8<-- [end:is_infinitive_clause_head] -->
+
+</div>
+
+<div class="metric-card" markdown>
+
+### Modifiers of a noun { #noun_modifiers }
+
+`modifiers_per_noun`
+{ .metric-meta }
+
+<!-- --8<-- [start:count_noun_modifiers] -->
+``` {.python .signature}
+count_noun_modifiers(token, join_hyphens=False)
+```
+
+Counts the modifiers of a noun phrase: the dependents with the relations `amod`, `det`, `nmod`, `nummod`, `acl` and their subtypes (`anyts.constants.NOUN_MODIFIER_DEPS`); `conj` and `appos` are no modifiers.
+
+| Parameter | Type | Default | Description |
+| :-------- | :--- | :------ | :---------- |
+| `token` | `Token` | - | Token |
+| `join_hyphens` | `bool` | `False` | Take a hyphenated word for one word |
+<!-- --8<-- [end:count_noun_modifiers] -->
+
+</div>
+
+<div class="metric-card" markdown>
+
+### Participial clauses { #participle_clauses }
+
+`participle_clauses_per_sent` · `mean_participle_clause_len`
+{ .metric-meta }
+
+<!-- --8<-- [start:SyntaxStats-participle_clauses] -->
+The clauses headed by the words of the hook `is_participle_clause`; the length of a clause is the number of the words in the subtree of its head (`subtree_len`).
+<!-- --8<-- [end:SyntaxStats-participle_clauses] -->
+
+</div>
+
+<div class="metric-card" markdown>
+
+### Passive { #passive }
+
+`p_passive` · `p_agentless_passive`
+{ .metric-meta }
+
+<!-- --8<-- [start:is_passive] -->
+``` {.python .signature}
+is_passive(token, join_hyphens=False)
+```
+
+Checks whether a word is a passive verb form: a verb with `Voice=Pass` or a dependent `nsubj:pass`, `csubj:pass`, `aux:pass`, or `nsubjpass`, `csubjpass`, `auxpass` of ClearNLP (`PASSIVE_DEPS`).
+
+| Parameter | Type | Default | Description |
+| :-------- | :--- | :------ | :---------- |
+| `token` | `Token` | - | Token |
+| `join_hyphens` | `bool` | `False` | Take a hyphenated word for one word |
+<!-- --8<-- [end:is_passive] -->
+
+<!-- --8<-- [start:has_agent] -->
+``` {.python .signature}
+has_agent(token, join_hyphens=False)
+```
+
+Checks whether a word has an agent: a dependent `obl:agent`, or `agent` of ClearNLP (`AGENT_DEPS`). The arguments are those of `is_passive`.
+<!-- --8<-- [end:has_agent] -->
+
+<!-- --8<-- [start:is_agentless] -->
+``` {.python .signature}
+is_agentless(token, join_hyphens=False)
+```
+
+Checks whether a word is a passive form (`is_passive`) without an agent (`has_agent`), with the same arguments.
+<!-- --8<-- [end:is_agentless] -->
+
+</div>
+
+<div class="metric-card" markdown>
+
+### Infinitives, negations and split predicates { #constructions }
+
+`infinitives_per_sent` · `negations_per_sent` · `split_predicates_per_sent`
+{ .metric-meta }
+
+<!-- --8<-- [start:SyntaxStats-constructions] -->
+The infinitives (`is_infinitive` of `anyts.utils`), the words of negation of the hook `is_negation` and the split predicates of the hook `find_split_predicates`, per sentence.
+<!-- --8<-- [end:SyntaxStats-constructions] -->
+
+</div>
+
+<div class="metric-card" markdown>
+
+### Ratio of the nouns to the verbs { #noun_verb_ratio }
+
+`noun_verb_ratio`
+{ .metric-meta }
+
+<!-- --8<-- [start:SyntaxStats-noun_verb_ratio] -->
+The number of the nouns `n_nouns` to the number of the verb forms `n_verbs`.
+
+$$
+\frac{\textrm{Number of nouns}}{\textrm{Number of verb forms}}
+$$
+<!-- --8<-- [end:SyntaxStats-noun_verb_ratio] -->
+
+</div>
+
+
+## Methods
+
+The methods `get_stats`, `to_dataframe`, `print_stats` and `describe` are those of the [statistics interface](stats.md).
+
+The functions of the tree take a spaCy `Doc`, a `Span` or a list of tokens; its words are the tokens of `anyts.utils.is_word`. They read the relations that Universal Dependencies and the ClearNLP labels of the English models share: the head of a token, `cc`, `conj`, `parataxis`, `punct` and `aux`, the subjects `nsubj` and `csubj`, the modifiers of a noun `amod`, `det`, `nmod`, `nummod` and `acl`, the clause relations `ccomp`, `advcl` and `xcomp`, and the root; the copula `cop` of `predicate_form` exists in Universal Dependencies alone. The passive and its agent (`is_passive`, `has_agent`) read the relations of both schemes (`PASSIVE_DEPS`, `AGENT_DEPS`). Everything else is up to a language library.
+
+## Words of a sequence { #get_words }
+
+<!-- --8<-- [start:get_words] -->
+``` {.python .signature}
+get_words(tokens, join_hyphens=False)
+```
+
+The words of a sequence of tokens in their order; with `join_hyphens=True` a word the tokenizer split at its hyphens is one word, given by its part that holds its relation, as with the dependents of `get_children` (`governor` in `He is vice-governor`), or by its first part when a hyphen holds it.
+
+| Parameter | Type | Default | Description |
+| :-------- | :--- | :------ | :---------- |
+| `tokens` | `Doc` / `Span` / `list[Token]` | - | Sequence of tokens |
+| `join_hyphens` | `bool` | `False` | Take a hyphenated word for one word |
+<!-- --8<-- [end:get_words] -->
+
+## Hyphenated words { #hyphenated-words }
+
+<!-- --8<-- [start:hyphenated_words] -->
+A tokenizer may split a word at its hyphens (`well-known` into `well`, `-`, `known`), and a parser then hangs every part on its own head. With `join_hyphens=True` the functions of the tree take a word whose parts `anyts.utils.joins_previous` joins for one word with its hyphens. A word holding the head of the sentence has no head; the head of another one is that of its part hanging outside it, the nearest to the root (a word rather than a hyphen when equal). The dependents of a word are the words whose head hangs on one of its tokens, each given by that part (or by its first part when it hangs by a hyphen); its subtree is the word and the words that hang on it, directly or through punctuation. So every word has one dependency and is the dependent of one word.
+<!-- --8<-- [end:hyphenated_words] -->
+
+## Head of a sentence { #is_root }
+
+<!-- --8<-- [start:is_root] -->
+``` {.python .signature}
+is_root(token)
+```
+
+Checks whether a token is the head of its sentence: its head is the token itself.
+
+| Parameter | Type | Default | Description |
+| :-------- | :--- | :------ | :---------- |
+| `token` | `Token` | - | Token |
+<!-- --8<-- [end:is_root] -->
+
+## Base relation { #base_dep }
+
+<!-- --8<-- [start:base_dep] -->
+``` {.python .signature}
+base_dep(token)
+```
+
+The relation of a token without its subtype, which Universal Dependencies separates by a colon: `nsubj:pass` gives `nsubj`, `expl:pass` gives `expl`.
+
+| Parameter | Type | Default | Description |
+| :-------- | :--- | :------ | :---------- |
+| `token` | `Token` | - | Token |
+<!-- --8<-- [end:base_dep] -->
+
+## Dependent words { #get_children }
+
+<!-- --8<-- [start:get_children] -->
+``` {.python .signature}
+get_children(token, join_hyphens=False)
+```
+
+The dependent words of a token, punctuation and whitespace left out; with `join_hyphens=True`, the dependents of the whole hyphenated word the token belongs to.
+
+| Parameter | Type | Default | Description |
+| :-------- | :--- | :------ | :---------- |
+| `token` | `Token` | - | Token |
+| `join_hyphens` | `bool` | `False` | Take a hyphenated word for one word |
+<!-- --8<-- [end:get_children] -->
+
+<!-- --8<-- [start:count_children] -->
+``` {.python .signature}
+count_children(token, join_hyphens=False)
+```
+
+The number of the dependent words of a token; the arguments are those of `get_children`.
+<!-- --8<-- [end:count_children] -->
+
+<!-- --8<-- [start:subtree_len] -->
+``` {.python .signature}
+subtree_len(token, join_hyphens=False)
+```
+
+The number of words in the subtree of a token: the token itself and all of its direct and indirect dependents; the arguments are those of `get_children`.
+<!-- --8<-- [end:subtree_len] -->
+
+## Verb form of a predicate { #verb-forms }
+
+<!-- --8<-- [start:predicate_form] -->
+``` {.python .signature}
+predicate_form(token, auxiliary_form=None)
+```
+
+The verb form of a predicate by the forms (`VerbForm`) of its auxiliaries and copulas (`aux` and `cop` with their subtypes, `anyts.constants.AUXILIARY_DEPS`), as Universal Dependencies annotates them. A finite auxiliary makes the predicate finite wherever it stands (*had arrived*, the German *gekommen sein wird*); otherwise the first auxiliary decides (*to have gone* is an infinitive, *being chosen* a gerund), and without auxiliaries the word itself. A past participle auxiliary counts as finite, since it follows a finite one the parser may attach to another word (*had been chosen*); a present participle (*having eaten*) does not. A ClearNLP parse has no copula relation: its copula heads the clause with its own form, and its passive auxiliary `auxpass` is not read. An auxiliary the model leaves without a form is read by the language hook `auxiliary_form`, which gives its form or an empty string to skip it; without the hook it is skipped. A word with no verb form gives an empty string.
+
+| Parameter | Type | Default | Description |
+| :-------- | :--- | :------ | :---------- |
+| `token` | `Token` | - | Token |
+| `auxiliary_form` | `Callable[[Token], str]` | `None` | Verb form of an auxiliary without `VerbForm` |
+
+A hook that is not callable raises `SourceTypeError`.
+<!-- --8<-- [end:predicate_form] -->
+
+=== "Code"
+
+    ``` python
+    import spacy
+    from spacy.tokens import Doc
+
+    from anyts.syntax_stats import predicate_form
+
+    vocab = spacy.blank("en").vocab
+    doc = Doc(
+        vocab,
+        words=["She", "had", "been", "chosen"],
+        heads=[3, 3, 3, 3],
+        deps=["nsubj:pass", "aux", "aux:pass", "ROOT"],
+        morphs=["Case=Nom", "VerbForm=Fin", "VerbForm=Part", "VerbForm=Part"],
+    )
+    predicate_form(doc[3])
+    # An auxiliary the model left without a form, read by the hook
+    doc = Doc(
+        vocab,
+        words=["to", "have", "gone"],
+        heads=[2, 2, 2],
+        deps=["mark", "aux", "ROOT"],
+        morphs=["", "", "VerbForm=Part"],
+    )
+    predicate_form(doc[2]), predicate_form(doc[2], lambda aux: "Inf" if aux.lower_ == "have" else "")
+    ```
+
+=== "Result"
+
+    ```
+    'Fin'
+    ('Part', 'Inf')
+    ```
+
+## Predicate of a clause { #is_predicate }
+
+<!-- --8<-- [start:is_predicate] -->
+``` {.python .signature}
+is_predicate(token, join_hyphens=False)
+```
+
+Checks whether a word can be the predicate of its clause: a verb (`VERB`, `AUX`) or a word with a subject of its own (`nsubj`, `csubj` and their subtypes, `anyts.constants.SUBJECT_DEPS`), so the nominal predicate of `he is tall` passes and a parenthetical word does not.
+
+| Parameter | Type | Default | Description |
+| :-------- | :--- | :------ | :---------- |
+| `token` | `Token` | - | Token |
+| `join_hyphens` | `bool` | `False` | Take a hyphenated word for one word |
+<!-- --8<-- [end:is_predicate] -->
+
+## Chains of modifiers { #calc_modifier_chains }
+
+<!-- --8<-- [start:calc_modifier_chains] -->
+``` {.python .signature}
+calc_modifier_chains(tokens, is_modifier, join_hyphens=False)
+```
+
+The lengths of the chains of nested modifiers, in the order of the words. A chain is two or more modifiers each hanging on the previous one, such as the complements of `the increase of the efficiency of the use of resources` (length 3); the check `is_modifier` of a language says what a modifier is (a complement with a preposition, a noun in the genitive). A chain starts at a modifier whose head is none, and its length is the number of modifiers in its longest branch. The links are those of `get_children`: punctuation is no link, and with `join_hyphens` a hyphenated word is one link.
+
+| Parameter | Type | Default | Description |
+| :-------- | :--- | :------ | :---------- |
+| `tokens` | `Doc` / `Span` / `list[Token]` | - | Sequence of tokens |
+| `is_modifier` | `Callable[[Token], bool]` | - | Whether a word is a modifier of the chain |
+| `join_hyphens` | `bool` | `False` | Take a hyphenated word for one word |
+
+A check that is not callable raises `SourceTypeError`.
+<!-- --8<-- [end:calc_modifier_chains] -->
+
+=== "Code"
+
+    ``` python
+    import spacy
+    from spacy.tokens import Doc
+
+    from anyts.syntax_stats import calc_modifier_chains
+
+    doc = Doc(
+        spacy.blank("en").vocab,
+        words=["the", "use", "of", "the", "water", "of", "the", "river"],
+        heads=[1, 1, 4, 4, 1, 7, 7, 4],
+        deps=["det", "ROOT", "case", "det", "nmod", "case", "det", "nmod"],
+    )
+    calc_modifier_chains(doc, lambda token: token.dep_ == "nmod")
+    ```
+
+=== "Result"
+
+    ```
+    [2]
+    ```
+
+## For library developers { #hooks }
+
+<details class="library-hooks" markdown>
+<summary>Language hooks of a subclass</summary>
 
 <!-- --8<-- [start:SyntaxStats-hooks] -->
 A language library subclasses `SyntaxStats`. The defaults read Universal Dependencies with its morphological features and the relations it shares with ClearNLP; the passive and its agent read the relations of both:
 
 | Hook | Kind | Description |
-| :--: | :--: | :---------: |
+| :--- | :--- | :---------- |
 | `parse(source)` | method | `Doc` of a source; by default the source itself, which must be a `Doc`; a library may parse a string |
 | `is_clause_head(token)` | method | Whether a word heads a clause; by default `is_clause_head` of the module with `join_hyphens` of the class and the hook `is_infinitive_periphrasis` |
 | `is_infinitive_periphrasis(token)` | method | Whether an infinitive under `xcomp`, an infinitive conjunct or an infinitive subject (`csubj`) of a modal word makes one predicate with its head, a modal or phasal verb (*can leave*, *begins to leave*); none by default |
@@ -37,80 +649,4 @@ A language library subclasses `SyntaxStats`. The defaults read Universal Depende
 The subclass adds the statistics of the constructions of its language (chains of complements by `calc_modifier_chains`, its own clauses) in its constructor from `sents`, with its own `stats_desc`. A `negation_words` that is not a collection of strings raises `SourceTypeError` when the class is defined, and so does a `parse` that does not return a `Doc` when the statistics are computed.
 <!-- --8<-- [end:SyntaxStats-hooks] -->
 
-## Parameters
-
-<!-- --8<-- [start:SyntaxStats-parameters] -->
-| Parameter | Type | Default | Description |
-| :-------: | :--: | :-----: | :---------: |
-| `source` | Doc | `-` | Data source: a `Doc` with a dependency parse, or what `parse` takes |
-<!-- --8<-- [end:SyntaxStats-parameters] -->
-
-## Attributes
-
-<!-- --8<-- [start:SyntaxStats-attributes] -->
-| Attribute | Type | Description |
-| :-------: | :--: | :---------: |
-| `sents` | tuple[tuple[Token]] | Words of every sentence with words |
-| `n_sents`, `n_words` | int | Numbers of the sentences with words and of the words |
-| `n_leaves`, `n_subtrees` | int | Numbers of the words without and with dependent words |
-| `n_coordination_chains` | int | Number of the coordination chains |
-| `n_clauses`, `n_subordinate_clauses`, `n_complex_sents` | int | Numbers of the clauses, of the subordinate clauses and of the sentences with one |
-| `n_infinitive_clauses` | int | Number of the infinitive clauses under a verb |
-| `n_nouns`, `n_verbs` | int | Numbers of the nouns (`NOUN`, `PROPN`) and of the verb forms (`VERB`) |
-| `n_participle_clauses` | int | Number of the participial clauses |
-| `n_passive`, `n_agentless_passive` | int | Numbers of the passive forms and of those with no agent |
-| `n_infinitives`, `n_negations` | int | Numbers of the infinitives and of the words of negation |
-| `n_split_predicates`, `split_predicates` | int, tuple[str] | Number of the split predicates and the predicates, the verb and the noun |
-| `c_children` | dict[int, int] | Number of the words by number of dependent words |
-| `c_deps` | dict[str, int] | Number of the words by relation |
-| `mean_dependency_distance`, `std_dependency_distance` | float | Mean and standard deviation of the dependency distance |
-| `max_dependency_distance` | float | Mean of the longest dependencies of the sentences that have dependencies |
-| `p_adjacent_dependencies` | float | Share of the dependencies of length 1 |
-| `tree_depth` | float | Mean depth of the tree of a sentence |
-| `leaves_per_sent`, `subtrees_per_sent` | float | Leaves and subtrees per sentence |
-| `nodes_per_leaf` | float | Mean over the sentences of the words per leaf |
-| `verb_valency` | float | Mean number of the dependents of a finite verb |
-| `coordination_chains_per_sent`, `mean_coordination_chain_len` | float | Coordination chains per sentence and their mean length |
-| `clauses_per_sent`, `mean_clause_len` | float | Clauses per sentence and their mean length in words |
-| `subordinate_clauses_per_sent`, `p_complex_sents` | float | Subordinate clauses per sentence and the share of the sentences with one |
-| `infinitive_clauses_per_sent` | float | Infinitive clauses under a verb per sentence (*wants to leave*), which are not subordinate |
-| `modifiers_per_noun` | float | Mean number of the modifiers of a noun (`count_noun_modifiers`) |
-| `participle_clauses_per_sent`, `mean_participle_clause_len` | float | Participial clauses per sentence and their mean length in words |
-| `p_passive`, `p_agentless_passive` | float | Share of the passive forms among the verb forms and of those with no agent among them |
-| `infinitives_per_sent`, `negations_per_sent`, `split_predicates_per_sent` | float | Infinitives, words of negation and split predicates per sentence |
-| `noun_verb_ratio` | float | Ratio of the nouns to the verb forms |
-
-A share, a ratio or a mean without anything to divide by is `nan`.
-<!-- --8<-- [end:SyntaxStats-attributes] -->
-
-The methods `get_stats`, `to_dataframe`, `print_stats` and `describe` are those of the [statistics interface](stats.md).
-
-## Metric functions
-
-The functions of the tree are described in the [metric functions](syntax_stats_funcs.md) section.
-
-## Usage example
-
-!!! example "Example"
-
-    ``` python
-    import spacy
-    from spacy.tokens import Doc
-
-    from anyts.syntax_stats import SyntaxStats
-
-    # It was not built by them
-    doc = Doc(
-        spacy.blank("en").vocab,
-        words=["It", "was", "not", "built", "by", "them"],
-        heads=[3, 3, 3, 3, 5, 3],
-        deps=["nsubj:pass", "aux:pass", "advmod", "ROOT", "case", "obl:agent"],
-        pos=["PRON", "AUX", "PART", "VERB", "ADP", "PRON"],
-        morphs=["", "VerbForm=Fin", "Polarity=Neg", "VerbForm=Part|Voice=Pass", "", ""],
-    )
-    stats = SyntaxStats(doc)
-    stats.mean_dependency_distance, stats.p_passive, stats.p_agentless_passive
-    # (1.8, 1.0, 0.0)
-    stats.negations_per_sent
-    # 1.0
-    ```
+</details>
