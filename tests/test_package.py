@@ -10,6 +10,7 @@ from pathlib import Path
 import pytest
 
 import anyts
+from anyts.exceptions import ParameterError, SourceTypeError
 
 ROOT = Path(__file__).parents[1]
 
@@ -142,11 +143,90 @@ def test_modules_of_lazy_packages_are_attributes():
     assert _run(code) == "anyts.corpus.stylometry anyts.visualizers.highlight True"
 
 
+@pytest.mark.parametrize("modules", [["highlight"], {"highlight": 1}, {1: "highlight"}])
+def test_modules_of_a_lazy_package_are_checked(modules):
+    from anyts.utils import make_lazy
+
+    with pytest.raises(SourceTypeError):
+        make_lazy("anyts.visualizers", modules)
+
+
+def _package(tmp_path, monkeypatch, name, files):
+    """A package of files in a temporary directory, imported in an isolated sys.modules"""
+    for file, text in files.items():
+        path = tmp_path / name / file
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text)
+    monkeypatch.syspath_prepend(str(tmp_path))
+    monkeypatch.setattr(sys, "modules", dict(sys.modules))
+    return importlib.import_module(name)
+
+
+def test_lazy_package_of_its_own_mapping(tmp_path, monkeypatch):
+    package = _package(
+        tmp_path,
+        monkeypatch,
+        "anyts_lazy_own",
+        {
+            "__init__.py": "from anyts.utils import make_lazy\n"
+            "from .light import Light\n"
+            "make_lazy(__name__, {'Heavy': 'heavy', 'helper': 'sub.tools'})\n",
+            "light.py": "class Light: ...\n",
+            "heavy.py": "class Heavy: ...\n",
+            "sub/__init__.py": "",
+            "sub/tools.py": "def helper(): return 1\n",
+        },
+    )
+    assert "anyts_lazy_own.heavy" not in sys.modules
+    assert {"Light", "Heavy", "helper"} <= set(dir(package))
+    from anyts_lazy_own import Heavy
+
+    assert Heavy.__module__ == "anyts_lazy_own.heavy" and package.helper() == 1
+
+
+def test_lazy_package_keeps_the_error_of_an_import(tmp_path, monkeypatch):
+    broken = "import json\njson.no_such_function\nclass Broken: ...\n"
+    package = _package(
+        tmp_path,
+        monkeypatch,
+        "anyts_lazy_broken",
+        {
+            "__init__.py": "from anyts.utils import make_lazy\n"
+            "make_lazy(__name__, {'Broken': 'broken'})\n",
+            "broken.py": broken,
+            "other.py": broken,
+        },
+    )
+    with pytest.raises(ImportError, match="no_such_function") as error:
+        package.Broken  # noqa: B018
+    assert isinstance(error.value.__cause__, AttributeError)
+    with pytest.raises(ImportError, match="no_such_function"):
+        package.other  # noqa: B018
+
+
+@pytest.mark.parametrize(
+    ("name", "modules", "error"),
+    [
+        (5, {}, SourceTypeError),
+        ("anyts_not_imported", {}, ParameterError),
+        ("anyts.utils", {}, ParameterError),
+        ("anyts.visualizers", {"Highlight": ""}, ParameterError),
+        ("anyts.visualizers", {"Highlight": ".highlight"}, ParameterError),
+        ("anyts.visualizers", {"": "highlight"}, ParameterError),
+    ],
+)
+def test_lazy_package_needs_a_package_and_dotted_names(name, modules, error):
+    from anyts.utils import make_lazy
+
+    with pytest.raises(error):
+        make_lazy(name, modules)
+
+
 def test_lazy_package_reports_a_missing_dependency(tmp_path, monkeypatch):
     package = tmp_path / "anyts_lazy_fake"
     package.mkdir()
     (package / "__init__.py").write_text(
-        "from anyts._lazy import make_lazy\n_MODULES = {}\nmake_lazy(__name__)\n"
+        "from anyts.utils import make_lazy\nmake_lazy(__name__, {})\n"
     )
     (package / "broken.py").write_text("import anyts_no_such_dependency\n")
     monkeypatch.syspath_prepend(str(tmp_path))

@@ -60,6 +60,7 @@ nav:
       - Arithmetic: utils/arithmetic.md
       - Input checks: utils/checks.md
       - Labels and messages: utils/messages.md
+      - Lazy packages: utils/packages.md
 
 theme:
   name: material

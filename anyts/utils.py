@@ -6,11 +6,13 @@ import sys
 import unicodedata
 from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, Sequence, Set, Sized
 from functools import lru_cache
+from importlib import import_module
 from itertools import repeat
 from numbers import Integral, Real
 from re import Pattern
 from statistics import StatisticsError, fmean
 from string import Formatter
+from types import ModuleType
 from typing import TYPE_CHECKING, Any, TypeGuard
 
 from .constants import MESSAGES
@@ -1105,3 +1107,92 @@ def check_messages(messages: object, defaults: Mapping[str, str] = MESSAGES) -> 
                 f"The message {key!r} has unknown fields {sorted(extra)}; "
                 f"available fields: {sorted(fields)}"
             )
+
+
+class LazyPackage(ModuleType):
+    """
+    Package whose names are imported from their modules on first use
+
+    Description:
+        The class make_lazy gives a package. A name of its mapping is imported
+        from its module when it is first read, so importing the package does
+        not load the dependencies of every module; a module of the package is
+        imported as its attribute too. A module named as one of its functions
+        (zipf, kwic) leaves the function under that name in the package, as an
+        eager import would
+    """
+
+    def __getattr__(self, name: str) -> Any:
+        modules = self.__dict__["_MODULES"]
+        if name in modules:
+            module = f"{self.__name__}.{modules[name]}"
+            # Python would take an AttributeError of the import for a missing name
+            try:
+                value = getattr(import_module(module), name)
+            except AttributeError as error:
+                raise ImportError(f"cannot import {name} from {module}: {error}") from error
+            super().__setattr__(name, value)
+            return value
+        if name.isidentifier() and not name.startswith("__"):
+            try:
+                return import_module(f".{name}", self.__name__)
+            except ModuleNotFoundError as error:
+                if error.name != f"{self.__name__}.{name}":
+                    raise
+            except AttributeError as error:
+                raise ImportError(f"cannot import {self.__name__}.{name}: {error}") from error
+        raise AttributeError(f"module {self.__name__!r} has no attribute {name!r}")
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        if isinstance(value, ModuleType) and name in self.__dict__.get("_MODULES", ()):
+            return
+        super().__setattr__(name, value)
+
+    def __dir__(self) -> list[str]:
+        return sorted({*super().__dir__(), *self.__dict__["_MODULES"]})
+
+
+def make_lazy(name: str, modules: Mapping[str, str]) -> None:
+    """
+    Making a package import its names on first use
+
+    Description:
+        The package turns into a LazyPackage: every name of modules is imported
+        from its module of the package when it is first read, so a light name
+        does not load the dependencies of a heavy one (spaCy, matplotlib). A
+        package calls it at the end of its __init__ with its __name__; the names
+        it imports itself stay as they are
+
+    Arguments:
+        name (str): Name of the package, imported
+        modules (dict[str, str]): Module of the package by name
+
+    Raises:
+        SourceTypeError: If the name is not a string or modules is not a mapping of
+            strings to strings
+        ParameterError: If the name is not that of an imported package, a name of
+            modules is not an identifier or a module is not a dotted name of them
+
+    Example:
+        >>> import anyts.visualizers
+        >>> type(anyts.visualizers).__name__
+        'LazyPackage'
+    """
+    check_word(name, "name of a lazy package")
+    package = sys.modules.get(name)
+    if package is None or not hasattr(package, "__path__"):
+        raise ParameterError(f"{name!r} is not the name of an imported package")
+    if not isinstance(modules, Mapping):
+        raise SourceTypeError(
+            f"The modules of a lazy package must be a mapping, not {type(modules).__name__}"
+        )
+    check_words(list(modules), "names of a lazy package")
+    check_words(list(modules.values()), "modules of a lazy package")
+    for key, module in modules.items():
+        if not key.isidentifier() or not all(part.isidentifier() for part in module.split(".")):
+            raise ParameterError(
+                f"The lazy name {key!r} must be an identifier from a module of the package, "
+                f"not {module!r}"
+            )
+    vars(package)["_MODULES"] = dict(modules)
+    package.__class__ = LazyPackage
