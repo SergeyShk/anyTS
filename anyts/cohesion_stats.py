@@ -118,6 +118,8 @@ class ConnectorMatcher:
             inside a sentence only after these words
         read_through_marks (frozenset[str]): Connectors, by their text, whose rules
             read the words before and after them through a punctuation mark
+        split_by_marks (frozenset[str]): Connectors, by their text, that a punctuation
+            mark between their words makes no connector
         subordinators (frozenset[str]): Connectors, by their text, that are
             subordinating conjunctions or prepositions besides the one-word ones
             tagged SCONJ or ADP
@@ -158,6 +160,7 @@ class ConnectorMatcher:
     not_at_start: ClassVar[frozenset[str]] = frozenset()
     only_after: ClassVar[Mapping[str, frozenset[str]]] = {}
     read_through_marks: ClassVar[frozenset[str]] = frozenset()
+    split_by_marks: ClassVar[frozenset[str]] = frozenset()
     subordinators: ClassVar[frozenset[str]] = frozenset()
     messages: ClassVar[Mapping[str, str]] = MESSAGES
 
@@ -177,6 +180,7 @@ class ConnectorMatcher:
             "start_only_pos",
             "not_at_start",
             "read_through_marks",
+            "split_by_marks",
             "subordinators",
         ):
             check_words(getattr(cls, name), name, ordered=False)
@@ -256,7 +260,8 @@ class ConnectorMatcher:
             The rules read the neighbours of a connector through no punctuation
             mark, unless it is one of read_through_marks: with the positions of
             the marks, a word after a comma neither blocks nor lets the connector
-            before it count (so, it is late)
+            before it count (so, it is late); a mark between the words of a
+            connector of split_by_marks makes it none
 
         Arguments:
             words (list[str]): Words of the sentence without punctuation, the first
@@ -334,12 +339,15 @@ class ConnectorMatcher:
                 if tuple(normalized[position:end]) != pattern:
                     continue
                 text, cls, kind = self._entries[" ".join(pattern)]
-                if self._is_blocked(text, normalized, position, end, pos, breaks):
+                if text in self.split_by_marks and not breaks.isdisjoint(range(position + 1, end)):
+                    continue
+                marks = frozenset() if text in self.read_through_marks else breaks
+                if self._is_blocked(text, normalized, position, end, pos, marks):
                     continue
                 if (
                     len(pattern) == 1
                     and pos is not None
-                    and not self._is_pos(pattern[0], pos, position, breaks)
+                    and not self._is_pos(pattern[0], pos, position, marks)
                 ):
                     continue
                 found.append(Connector(sent_index, position, end, text, cls, kind))
@@ -360,9 +368,8 @@ class ConnectorMatcher:
     ) -> bool:
         """Whether the context of the words of a connector makes them no connector"""
         # A punctuation mark cuts the connector off its neighbour on that side
-        through = text in self.read_through_marks
-        after = end < len(words) and (through or end not in breaks)
-        before = position > 0 and (through or position not in breaks)
+        after = end < len(words) and end not in breaks
+        before = position > 0 and position not in breaks
         if after and words[end] in self.blocked_after.get(text, ()):
             return True
         if before and words[position - 1] in self.blocked_before.get(text, ()):
@@ -687,12 +694,20 @@ class CohesionStats(Stats):
             raise SourceError(messages["no_lemmas"])
         return [
             [
-                self.word_info(unit)._replace(break_before=position in marks)
+                self._marked(self.word_info(unit), position in marks)
                 for position, unit in enumerate(sent)
             ]
             for sent in self.doc_units(source)
             for marks in (find_unit_marks(sent),)
         ]
+
+    @staticmethod
+    def _marked(word: object, break_before: bool) -> Any:
+        """A word of word_info with a punctuation mark before it; another result as it is,
+        for the check of analyze"""
+        if break_before and isinstance(word, CohesionWord):
+            return word._replace(break_before=True)
+        return word
 
     def doc_units(self, doc: Doc) -> list[list[list[Token]]]:
         """

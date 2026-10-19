@@ -346,6 +346,26 @@ def test_rules_read_through_the_marks_of_some_connectors():
     ]
 
 
+def test_parts_of_speech_read_through_the_marks_of_some_connectors():
+    class Through(ConnectorMatcher):
+        not_after_pos = frozenset({"DET"})
+        read_through_marks = frozenset({"before"})
+
+    matcher = Through({"before": ("temporal", "primary")})
+    assert matcher.find(["the", "before", "it"], pos=["DET", "ADV", "PRON"], breaks={1}) == []
+
+
+def test_connectors_split_by_marks():
+    class Split(ConnectorMatcher):
+        split_by_marks = frozenset({"so that"})
+
+    matcher = Split({"so that": ("causal", "primary"), "so": ("causal", "primary")})
+    words = ["so", "that", "he", "left"]
+    assert texts(matcher.find(words)) == ["so that"]
+    assert texts(matcher.find(words, breaks={1})) == ["so"]
+    assert texts(matcher.find(words, breaks={2})) == ["so that"]
+
+
 def test_rules_of_the_parts_of_speech_through_a_mark(matcher):
     assert texts(matcher.find(["The", "before"], pos=["DET", "ADV"], breaks=[1])) == ["before"]
     words = ["Above", "all", "the", "rest"]
@@ -648,7 +668,7 @@ def test_names_of_the_densities_by_place_are_reserved(name):
         type("Taken", (ConnectorMatcher,), {name: ("intra", "first", "inter")})
 
 
-@pytest.mark.parametrize("name", ["subordinators", "read_through_marks"])
+@pytest.mark.parametrize("name", ["subordinators", "read_through_marks", "split_by_marks"])
 def test_lists_of_connectors_must_be_strings(name):
     with pytest.raises(SourceTypeError):
         type("Wrong", (ConnectorMatcher,), {name: "as soon as"})
@@ -668,6 +688,29 @@ def test_default_analysis_marks_the_words():
         False,
         False,
     ]
+
+
+def test_word_info_keeps_its_own_mark_and_its_wrong_result():
+    doc = Doc(
+        VOCAB,
+        words=["However", "the", "cat", "slept"],
+        pos=["ADV", "DET", "NOUN", "VERB"],
+        lemmas=["however", "the", "cat", "sleep"],
+        sent_starts=[True, False, False, False],
+    )
+
+    class Marking(CohesionStats):
+        def word_info(self, unit):
+            return super().word_info(unit)._replace(break_before=unit[0].text == "cat")
+
+    class Dicts(CohesionStats):
+        def word_info(self, unit):
+            return {"word": unit[0].text}
+
+    marked = [word.break_before for word in Marking(doc).analyze(doc)[0]]
+    assert marked == [False, False, True, False]
+    with pytest.raises(SourceTypeError, match=r"must return sentences of CohesionWord"):
+        Dicts(doc)
 
 
 def test_marks_of_the_words_reach_the_matcher():

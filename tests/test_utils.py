@@ -724,6 +724,14 @@ def test_find_marks():
     assert find_marks("So it is late very late", words) == frozenset()
     # A word the text does not hold is passed over
     assert find_marks("So, it is late", ["So", "cat", "it"]) == {2}
+    # A word inside a longer one is no occurrence of it, a word glued to its neighbour is
+    assert find_marks("Therefore, here we go", ["therefore", "here", "we", "go"]) == {1}
+    assert find_marks("Anyway, way out", ["way", "out"]) == frozenset()
+    assert find_marks("the wayside, way out", ["the", "way", "out"]) == {1}
+    assert find_marks("I don't know, really", ["I", "do", "n't", "know", "really"]) == {4}
+    # The hyphen of a hyphenated word is no mark, a dash is
+    assert find_marks("The so-called experts", ["The", "so", "called", "experts"]) == frozenset()
+    assert find_marks("The so - called experts", ["The", "so", "called", "experts"]) == {2}
     with pytest.raises(SourceTypeError):
         find_marks(5, words)
     with pytest.raises(SourceTypeError):
@@ -735,4 +743,8 @@ def test_find_unit_marks():
 
     doc = spacy.blank("en")('So, "it" is late - very late')
     assert find_unit_marks(list(iter_doc_units(doc))) == {1, 2, 4}
+    doc = spacy.blank("en")("The so-called experts")
+    assert [token.text for token in doc] == ["The", "so", "-", "called", "experts"]
+    assert find_unit_marks(list(iter_doc_units(doc))) == frozenset()
+    assert find_unit_marks(list(iter_doc_units(doc, join_hyphens=True))) == frozenset()
     assert find_unit_marks([]) == frozenset()

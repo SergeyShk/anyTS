@@ -511,8 +511,12 @@ def test_find_connector_highlights_through_a_mark():
     assert find_connector_highlights(words, None, matcher) == []
     found = find_connector_highlights(words, None, matcher, text=text)
     assert [(h.start, h.end) for h in found] == [(8, 14)]
-    # Spaces alone are no mark
+    # Spaces alone are no mark, nor is the hyphen of a hyphenated word
     assert find_connector_highlights(words, None, matcher, text=text.replace(",", " ")) == []
+    hyphenated = [*words[:3], Word(15, 18, "the"), Word(19, 22, "end")]
+    assert (
+        find_connector_highlights(hyphenated, None, matcher, text="He left before-the end") == []
+    )
     with pytest.raises(SourceTypeError):
         find_connector_highlights(words, None, matcher, text=5)
 

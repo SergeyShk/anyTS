@@ -15,6 +15,7 @@ from ..exceptions import ParameterError, SourceError, SourceTypeError
 from ..extractors import SentsExtractor, _check_spans, _iter_words, iter_part_sents
 from ..syntax_stats import get_words
 from ..utils import (
+    _is_mark_gap,
     _unit_word,
     check_callable,
     check_integer,
@@ -26,7 +27,6 @@ from ..utils import (
     has_sents,
     in_order,
     is_doc,
-    is_punctuation,
     iter_doc_tokens,
 )
 
@@ -862,7 +862,7 @@ def find_connector_highlights(
             {
                 i
                 for i in range(1, len(group))
-                if any(is_punctuation(char) for char in text[group[i - 1].end : group[i].start])
+                if _is_mark_gap(text[group[i - 1].end : group[i].start])
             }
             if text is not None
             else None

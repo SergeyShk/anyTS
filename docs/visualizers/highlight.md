@@ -134,7 +134,7 @@ The layers the languages share are found by functions that take the language as 
 <!-- --8<-- [end:find_phrase_highlights] -->
 
 <!-- --8<-- [start:find_connector_highlights] -->
-`find_connector_highlights(words, sents, matcher, note, pos, text)` - the layer `connectors`: the connectors of a `ConnectorMatcher` of the language inside every sentence, in the whole text when the sentences are `None`; a one-word connector is checked by its part of speech when a word of the sentence has one - its own, or that of the hook `pos`. With the `text`, a character other than a space between two words is a punctuation mark, which the rules of the matcher do not read through. The note gives the class and the kind of the connector by default.
+`find_connector_highlights(words, sents, matcher, note, pos, text)` - the layer `connectors`: the connectors of a `ConnectorMatcher` of the language inside every sentence, in the whole text when the sentences are `None`; a one-word connector is checked by its part of speech when a word of the sentence has one - its own, or that of the hook `pos`. With the `text`, a character of `is_punctuation` between two words is a punctuation mark, which the rules of the matcher do not read through; the hyphen that joins two parts of a word is none. The note gives the class and the kind of the connector by default.
 <!-- --8<-- [end:find_connector_highlights] -->
 
 <!-- --8<-- [start:find_split_predicate_highlights] -->

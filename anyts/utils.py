@@ -136,9 +136,11 @@ def find_marks(text: str, words: Sequence[str]) -> frozenset[int]:
     Finding the punctuation marks between the words of a text
 
     Description:
-        The words are found in the text in their order; a word with an
-        is_punctuation character between it and the word before gets its
-        position. A word the text does not hold is passed over
+        The words are found in the text in their order, apart from the letters
+        and digits around them unless glued to the word before or after; a word
+        with an is_punctuation character between it and the word before gets
+        its position, except the hyphen that joins two parts of a word. A word
+        the text does not hold is passed over
 
     Arguments:
         text (str): Text
@@ -161,13 +163,36 @@ def find_marks(text: str, words: Sequence[str]) -> frozenset[int]:
     marks = set()
     cursor = 0
     for position, word in enumerate(words):
+        following = words[position + 1] if position + 1 < len(words) else ""
         start = text.find(word, cursor)
+        # A word inside a longer one (here in Therefore) is no occurrence of it
+        while start != -1 and not _stands_apart(text, start, start + len(word), cursor, following):
+            start = text.find(word, start + 1)
         if start == -1:
             continue
-        if position and any(is_punctuation(char) for char in text[cursor:start]):
+        if position and _is_mark_gap(text[cursor:start]):
             marks.add(position)
         cursor = start + len(word)
     return frozenset(marks)
+
+
+def _stands_apart(text: str, start: int, end: int, cursor: int, following: str) -> bool:
+    """Whether a word found in a text is no part of a longer word, but glued to the word
+    found before it (cursor) or to the next one"""
+    before = start == cursor or not text[start - 1].isalnum()
+    after = (
+        end == len(text)
+        or not text[end].isalnum()
+        or (bool(following)
+        and text.startswith(following, end))
+    )
+    return before and after
+
+
+def _is_mark_gap(gap: str) -> bool:
+    """Whether the text between two words holds a punctuation mark, the hyphen that joins
+    two parts of a word aside"""
+    return gap != "-" and any(is_punctuation(char) for char in gap)
 
 
 def in_order(words: Collection[str]) -> tuple[str, ...]:
@@ -597,9 +622,9 @@ def find_unit_marks(units: Sequence[Sequence[Token]]) -> frozenset[int]:
     Finding the punctuation marks between the words of a sentence of a Doc
 
     Description:
-        The words are those of iter_doc_units in one sentence; a word with a
-        token of is_punctuation characters between it and the word before gets
-        its position
+        The words are those of iter_doc_units in one sentence; a word with an
+        is_punctuation character between it and the word before gets its
+        position, except the hyphen that joins two parts of a word (find_marks)
 
     Arguments:
         units (list[list[Token]]): Tokens of every word of a sentence
@@ -616,9 +641,8 @@ def find_unit_marks(units: Sequence[Sequence[Token]]) -> frozenset[int]:
     """
     marks = set()
     for position in range(1, len(units)):
-        doc = units[position][0].doc
-        between = doc[units[position - 1][-1].i + 1 : units[position][0].i]
-        if any(is_punctuation(char) for token in between for char in token.text):
+        last, first = units[position - 1][-1], units[position][0]
+        if _is_mark_gap(first.doc.text[last.idx + len(last.text) : first.idx]):
             marks.add(position)
     return frozenset(marks)
 

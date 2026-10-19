@@ -152,7 +152,7 @@ Splits the words of a `Doc` or a `Span` into the sentences of a sentence extract
 ## find_unit_marks
 
 <!-- --8<-- [start:find_unit_marks] -->
-Finds the punctuation marks between the words of a sentence of a `Doc`: the words are those of `iter_doc_units`, and a word with a token of `is_punctuation` characters between it and the word before gets its position, as `find_marks` does for a text.
+Finds the punctuation marks between the words of a sentence of a `Doc`: the words are those of `iter_doc_units`, and a word with a character of `is_punctuation` between it and the word before gets its position, except the hyphen that joins two parts of a word, as `find_marks` does for a text.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |
