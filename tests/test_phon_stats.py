@@ -112,6 +112,21 @@ class Transcribed(English):
         return 7 if word == "poet" else 0
 
 
+@pytest.mark.parametrize(
+    ("hook", "result", "expected"),
+    [
+        ("syllabify", "the", "a sequence of strings"),
+        ("syllabify", ["th", 5], "a sequence of strings"),
+        ("transcribe", {"t"}, "a string or strings"),
+        ("transcribe", [b"t"], "a string or strings"),
+    ],
+)
+def test_results_of_the_hooks_are_checked(hook, result, expected):
+    hooked = type("Hooked", (English,), {hook: lambda self, word: result})
+    with pytest.raises(SourceTypeError, match=f"must return {expected}"):
+        hooked(TEXT)
+
+
 def test_hooks():
     stats = Transcribed("The poet sat")
     assert stats.sounds[0] == ("θ", "e")
