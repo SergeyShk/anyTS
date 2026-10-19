@@ -2578,7 +2578,12 @@
 <tr>
 <td style="text-align: center;"><code>is_clause_head(token)</code></td>
 <td style="text-align: center;">method</td>
-<td style="text-align: center;">Whether a word heads a clause; by default <code>is_clause_head</code> of the module with <code>join_hyphens</code> of the class</td>
+<td style="text-align: center;">Whether a word heads a clause; by default <code>is_clause_head</code> of the module with <code>join_hyphens</code> of the class and the hook <code>is_infinitive_periphrasis</code></td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>is_infinitive_periphrasis(token)</code></td>
+<td style="text-align: center;">method</td>
+<td style="text-align: center;">Whether an infinitive under <code>xcomp</code>, or an infinitive conjunct, makes one predicate with its head, a modal or phasal verb (<em>can leave</em>, <em>begins to leave</em>); none by default</td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>is_subordinate_clause_head(token)</code></td>
