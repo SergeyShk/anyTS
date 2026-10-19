@@ -2732,7 +2732,7 @@
 <tr>
 <td style="text-align: center;"><code>StyleStatsComponent</code></td>
 <td style="text-align: center;"><code>StyleStats</code></td>
-<td style="text-align: center;"><code>stopwords</code>, <code>top_n</code>, <code>nausea_stopwords</code></td>
+<td style="text-align: center;"><code>stopwords</code>, <code>top_n</code>, <code>nausea_stopwords</code>, <code>cliches</code></td>
 </tr>
 <tr>
 <td style="text-align: center;"><code>PhonStatsComponent</code></td>
@@ -2822,9 +2822,15 @@
 <td style="text-align: center;"><code>None</code></td>
 <td style="text-align: center;">Words left out of the most frequent words of the academic nausea; those of the class if <code>None</code></td>
 </tr>
+<tr>
+<td style="text-align: center;"><code>cliches</code></td>
+<td style="text-align: center;">list[str]</td>
+<td style="text-align: center;"><code>None</code></td>
+<td style="text-align: center;">Cliches; those of the class (<code>cliches_list</code>) if <code>None</code></td>
+</tr>
 </tbody>
 </table>
-<p>Stopwords that are not a list of strings raise <code>SourceTypeError</code>, a <code>top_n</code> that is not an integer of at least one <code>ParameterError</code>.</p>
+<p>Stopwords or cliches that are not a list of strings raise <code>SourceTypeError</code>, a <code>top_n</code> that is not an integer of at least one <code>ParameterError</code>.</p>
 <!-- --8<-- [end:StyleStatsComponent] -->
 
 <!-- --8<-- [start:PhonStatsComponent] -->
