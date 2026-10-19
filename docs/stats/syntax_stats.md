@@ -20,7 +20,7 @@ A language library subclasses `SyntaxStats`. The defaults read Universal Depende
 | :--: | :--: | :---------: |
 | `parse(source)` | method | `Doc` of a source; by default the source itself, which must be a `Doc`; a library may parse a string |
 | `is_clause_head(token)` | method | Whether a word heads a clause; by default `is_clause_head` of the module with `join_hyphens` of the class and the hook `is_infinitive_periphrasis` |
-| `is_infinitive_periphrasis(token)` | method | Whether an infinitive under `xcomp` makes one predicate with its head, a modal or phasal verb (*can leave*, *begins to leave*); none by default, so every infinitive complement is a clause |
+| `is_infinitive_periphrasis(token)` | method | Whether an infinitive under `xcomp`, or an infinitive conjunct, makes one predicate with its head, a modal or phasal verb (*can leave*, *begins to leave*); none by default, so every infinitive complement is a clause |
 | `is_subordinate_clause_head(token)` | method | Whether a clause head heads a subordinate clause, asked only of the words of `is_clause_head`; by default `is_subordinate_clause_head` of the module over the hook `is_clause_head` |
 | `is_participle_clause(token)` | method | Whether a word heads a participial clause; by default a participle that is not the head of the sentence, has no auxiliary or copula and has a dependent (`calc_valency`) |
 | `is_passive(token)` | method | Whether a word is a passive verb form; by default `is_passive` of the module with `join_hyphens` of the class |

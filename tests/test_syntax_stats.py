@@ -1055,6 +1055,113 @@ def test_infinitive_clauses(periphrasis, heads_of_clauses, subordinate):
     assert not is_infinitive_clause(doc[4]) and not is_infinitive_clause(doc[15])
 
 
+def is_has(token):
+    return token.head.text == "has"
+
+
+@pytest.mark.parametrize(
+    ("words", "heads", "deps", "morphs", "periphrasis", "heads_of_clauses", "subordinate"),
+    [
+        # A participial phrase and an infinitive under acl hold their infinitives
+        (
+            ["Trying", "to", "leave", "he", "fell"],
+            [4, 2, 0, 4, 4],
+            ["advcl", "mark", "xcomp", "nsubj", "ROOT"],
+            ["VerbForm=Ger", "", "VerbForm=Inf", "", "VerbForm=Fin"],
+            None,
+            ["fell"],
+            [],
+        ),
+        (
+            ["He", "had", "the", "wish", "to", "try", "to", "leave"],
+            [1, 1, 3, 1, 5, 3, 7, 5],
+            ["nsubj", "ROOT", "det", "obj", "mark", "acl", "mark", "xcomp"],
+            ["", "VerbForm=Fin", "", "", "", "VerbForm=Inf", "", "VerbForm=Inf"],
+            None,
+            ["had"],
+            [],
+        ),
+        # An infinitive under a periphrasis completes its verb
+        (
+            ["He", "can", "try", "to", "leave"],
+            [1, 1, 1, 4, 2],
+            ["nsubj", "ROOT", "xcomp", "mark", "xcomp"],
+            ["", "VerbForm=Fin", "VerbForm=Inf", "", "VerbForm=Inf"],
+            is_modal,
+            ["can", "leave"],
+            ["leave"],
+        ),
+        # The form comes from the auxiliaries: to be chosen is an infinitive
+        (
+            ["She", "wants", "to", "be", "chosen"],
+            [1, 1, 4, 4, 1],
+            ["nsubj", "ROOT", "mark", "aux:pass", "xcomp"],
+            ["", "VerbForm=Fin", "", "VerbForm=Inf", "VerbForm=Part"],
+            None,
+            ["wants", "chosen"],
+            ["chosen"],
+        ),
+        # A model may attach the infinitive of a periphrasis to its verb as conj
+        (
+            ["He", "has", "to", "leave"],
+            [1, 1, 3, 1],
+            ["nsubj", "ROOT", "cc", "conj"],
+            ["", "VerbForm=Fin", "", "VerbForm=Inf"],
+            is_has,
+            ["has"],
+            [],
+        ),
+        (
+            ["He", "has", "to", "leave"],
+            [1, 1, 3, 1],
+            ["nsubj", "ROOT", "cc", "conj"],
+            ["", "VerbForm=Fin", "", "VerbForm=Inf"],
+            None,
+            ["has", "leave"],
+            [],
+        ),
+    ],
+)
+def test_infinitive_clause_cases(
+    words, heads, deps, morphs, periphrasis, heads_of_clauses, subordinate
+):
+    doc = parse(words, heads, deps, morphs, pos=["VERB"] * len(words))
+
+    def is_head(token):
+        return is_clause_head(token, is_infinitive_periphrasis=periphrasis)
+
+    assert [token.text for token in doc if is_head(token)] == heads_of_clauses
+    assert [
+        token.text for token in doc if is_subordinate_clause_head(token, is_head)
+    ] == subordinate
+
+
+def test_infinitive_clause_by_a_check_of_a_clause_head():
+    doc = parse(
+        ["She", "wants", "to", "leave"],
+        [1, 1, 3, 1],
+        ["nsubj", "ROOT", "mark", "xcomp"],
+        ["", "VerbForm=Fin", "", "VerbForm=Inf"],
+    )
+    assert is_infinitive_clause(doc[3])
+    assert not is_infinitive_clause(doc[3], is_clause_head=lambda token: False)
+    with pytest.raises(SourceTypeError):
+        is_infinitive_clause(doc[3], is_clause_head="clause")
+
+
+def test_infinitive_clause_in_a_loop():
+    # leave completes go, a conjunct of leave: the checks would go round
+    doc = parse(
+        ["She", "go", "leave"],
+        [1, 2, 1],
+        ["nsubj", "conj", "xcomp"],
+        ["", "VerbForm=Fin", "VerbForm=Inf"],
+        pos=["PRON", "VERB", "VERB"],
+    )
+    assert not is_infinitive_clause(doc[2]) and not is_clause_head(doc[2])
+    assert not is_clause_head(doc[1])
+
+
 def test_infinitive_periphrasis_hook():
     class Modal(SyntaxStats):
         def is_infinitive_periphrasis(self, token):
