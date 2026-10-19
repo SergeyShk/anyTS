@@ -120,6 +120,7 @@ The rules of a language are class attributes of a subclass, empty by default apa
 | `blocked_after_pos` | class attribute | Parts of speech of the word after a connector, by its text, that make it no connector |
 | `not_at_start` | class attribute | Connectors that do not count at the start of a sentence, where they open a reply (*Well, ...*) |
 | `only_after` | class attribute | Connectors that count inside a sentence only after these words |
+| `read_through_marks` | class attribute | Connectors whose rules read the words before and after them through a punctuation mark: a comma always separates a question word from the verb before it (*asked, why*) |
 | `pos_tags`, `pos_extra` | class attributes | Parts of speech of a one-word connector, `CONNECTOR_POS` of Universal Dependencies by default, and those allowed for a word on top of them |
 | `not_after_pos` | class attribute | Parts of speech of the previous word that make a one-word connector no connector (a determiner: *the before and the after*) |
 | `start_only_pos` | class attribute | Parts of speech of a one-word connector that counts only at the start of a sentence (a capitalized connector tagged as a proper noun) |
@@ -133,7 +134,7 @@ The words of the lists and the keys of `pos_extra` are normalized forms, while t
 ### find
 
 <!-- --8<-- [start:ConnectorMatcher-find] -->
-`find(words, sent_index, pos, breaks)` returns the occurrences of the connectors in a sentence in the order of its words. The words are those of one sentence without punctuation, the first one its start. With the parts of speech, a one-word connector counts only with one of `pos_tags` or of `pos_extra` for its form, never after one of `not_after_pos`, and with one of `start_only_pos` only at the start of the sentence; a word without a part of speech (`None`) passes. Without the parts of speech the rules that read them are skipped. The positions of the punctuation marks `breaks` cut a connector off its neighbours: a rule does not read a word across a mark, so in *so, the end* the word after the comma neither blocks nor lets the connector count; without them the words are read as adjacent.
+`find(words, sent_index, pos, breaks)` returns the occurrences of the connectors in a sentence in the order of its words. The words are those of one sentence without punctuation, the first one its start. With the parts of speech, a one-word connector counts only with one of `pos_tags` or of `pos_extra` for its form, never after one of `not_after_pos`, and with one of `start_only_pos` only at the start of the sentence; a word without a part of speech (`None`) passes. Without the parts of speech the rules that read them are skipped. The positions of the punctuation marks `breaks` cut a connector off its neighbours: a rule does not read a word across a mark, so in *so, the end* the word after the comma neither blocks nor lets the connector count, unless the connector is one of `read_through_marks`; without them the words are read as adjacent.
 
 | Parameter | Type | Default | Description |
 | :-------: | :--: | :-----: | :---------: |

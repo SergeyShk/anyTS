@@ -335,6 +335,17 @@ def test_context_rules_through_a_mark(matcher, text, breaks, found):
     assert texts(matcher.find(text.split(), breaks=breaks)) == found
 
 
+def test_rules_read_through_the_marks_of_some_connectors():
+    matcher = type("Through", (Matcher,), {"read_through_marks": frozenset({"before", "still"})})(
+        CONNECTORS
+    )
+    assert matcher.find(["He", "left", "before", "the", "end"], breaks={3}) == []
+    assert matcher.find(["It", "still", "rains"], breaks={1}) == []
+    assert texts(matcher.find(["something", "as", "well", "as", "cats"], breaks={1})) == [
+        "as well as"
+    ]
+
+
 def test_rules_of_the_parts_of_speech_through_a_mark(matcher):
     assert texts(matcher.find(["The", "before"], pos=["DET", "ADV"], breaks=[1])) == ["before"]
     words = ["Above", "all", "the", "rest"]
@@ -637,9 +648,10 @@ def test_names_of_the_densities_by_place_are_reserved(name):
         type("Taken", (ConnectorMatcher,), {name: ("intra", "first", "inter")})
 
 
-def test_subordinators_must_be_strings():
+@pytest.mark.parametrize("name", ["subordinators", "read_through_marks"])
+def test_lists_of_connectors_must_be_strings(name):
     with pytest.raises(SourceTypeError):
-        type("Wrong", (ConnectorMatcher,), {"subordinators": "as soon as"})
+        type("Wrong", (ConnectorMatcher,), {name: "as soon as"})
 
 
 def test_default_analysis_marks_the_words():

@@ -116,6 +116,8 @@ class ConnectorMatcher:
             start of a sentence
         only_after (dict[str, frozenset[str]]): Connectors, by their text, that count
             inside a sentence only after these words
+        read_through_marks (frozenset[str]): Connectors, by their text, whose rules
+            read the words before and after them through a punctuation mark
         subordinators (frozenset[str]): Connectors, by their text, that are
             subordinating conjunctions or prepositions besides the one-word ones
             tagged SCONJ or ADP
@@ -155,6 +157,7 @@ class ConnectorMatcher:
     blocked_after_pos: ClassVar[Mapping[str, frozenset[str]]] = {}
     not_at_start: ClassVar[frozenset[str]] = frozenset()
     only_after: ClassVar[Mapping[str, frozenset[str]]] = {}
+    read_through_marks: ClassVar[frozenset[str]] = frozenset()
     subordinators: ClassVar[frozenset[str]] = frozenset()
     messages: ClassVar[Mapping[str, str]] = MESSAGES
 
@@ -173,6 +176,7 @@ class ConnectorMatcher:
             "not_after_pos",
             "start_only_pos",
             "not_at_start",
+            "read_through_marks",
             "subordinators",
         ):
             check_words(getattr(cls, name), name, ordered=False)
@@ -250,8 +254,9 @@ class ConnectorMatcher:
 
         Description:
             The rules read the neighbours of a connector through no punctuation
-            mark: with the positions of the marks, a word after a comma neither
-            blocks nor lets the connector before it count (so, it is late)
+            mark, unless it is one of read_through_marks: with the positions of
+            the marks, a word after a comma neither blocks nor lets the connector
+            before it count (so, it is late)
 
         Arguments:
             words (list[str]): Words of the sentence without punctuation, the first
@@ -355,8 +360,9 @@ class ConnectorMatcher:
     ) -> bool:
         """Whether the context of the words of a connector makes them no connector"""
         # A punctuation mark cuts the connector off its neighbour on that side
-        after = end < len(words) and end not in breaks
-        before = position > 0 and position not in breaks
+        through = text in self.read_through_marks
+        after = end < len(words) and (through or end not in breaks)
+        before = position > 0 and (through or position not in breaks)
         if after and words[end] in self.blocked_after.get(text, ()):
             return True
         if before and words[position - 1] in self.blocked_before.get(text, ()):
