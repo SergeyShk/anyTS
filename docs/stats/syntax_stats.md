@@ -242,7 +242,7 @@ The lengths of the coordination chains, in the order of their first words. A cha
 
 <!-- --8<-- [start:is_clause_head] -->
 ``` {.python .signature}
-is_clause_head(token, join_hyphens=False, is_infinitive_periphrasis=None)
+is_clause_head(token, join_hyphens=False, is_infinitive_periphrasis=None, auxiliary_form=None)
 ```
 
 Checks whether a word heads a clause: the head of the sentence or a word with `ccomp`, `advcl`, `acl`, `csubj` or `parataxis` (`anyts.constants.CLAUSE_DEPS`, subtypes included) whose predicate (`predicate_form`, so `has been built` is finite) is not a participle, a converb or a gerund (`NONFINITE_CLAUSE_FORMS`, counted apart), nor an infinitive under `acl`; under `xcomp`, a finite predicate or an infinitive clause (`is_infinitive_clause`). A `parataxis` and a conjunct of a clause head count only as predicates (`is_predicate`); an infinitive conjunct and an infinitive subject (`csubj`) are no clause by the check `is_infinitive_periphrasis`, since a model may attach the infinitive of a periphrasis to its verb as `conj` and to a modal word as `csubj`; a loop of conjuncts is no clause.
@@ -252,13 +252,14 @@ Checks whether a word heads a clause: the head of the sentence or a word with `c
 | `token` | `Token` | - | Token |
 | `join_hyphens` | `bool` | `False` | Take a hyphenated word for one word |
 | `is_infinitive_periphrasis` | `Callable[[Token], bool]` | `None` | Whether an infinitive makes one predicate with its head; none by default |
+| `auxiliary_form` | `Callable[[Token], str]` | `None` | Verb form of an auxiliary without `VerbForm` (`predicate_form`); none by default |
 
-A check of a periphrasis that is not callable raises `SourceTypeError`.
+A check of a periphrasis or a form of an auxiliary that is not callable raises `SourceTypeError`.
 <!-- --8<-- [end:is_clause_head] -->
 
 <!-- --8<-- [start:is_infinitive_clause] -->
 ``` {.python .signature}
-is_infinitive_clause(token, is_infinitive_periphrasis=None, is_clause_head=is_clause_head)
+is_infinitive_clause(token, is_infinitive_periphrasis=None, is_clause_head=None, auxiliary_form=None)
 ```
 
 Checks whether an infinitive complement heads a clause of its own: an infinitive (`predicate_form`, so `to be chosen` is one) under `xcomp` (*wants to leave*), unless the language check `is_infinitive_periphrasis` says it makes one predicate with its head (*can leave*, *begins to leave*), or the word it completes, the first one up its chain of non-finite complements under `xcomp` (*kept trying to leave*, *seemed able to leave*), heads no clause by the check `is_clause_head`: an infinitive in a participial phrase or under an infinitive under `acl` (*trying to leave*, *the wish to try to leave*) belongs to that phrase. A ClearNLP parse hangs an infinitive after a predicative adjective on an `acomp` or `oprd` (*is ready to leave*), which heads no clause, so that infinitive is none.
@@ -267,9 +268,10 @@ Checks whether an infinitive complement heads a clause of its own: an infinitive
 | :-------- | :--- | :------ | :---------- |
 | `token` | `Token` | - | Token |
 | `is_infinitive_periphrasis` | `Callable[[Token], bool]` | `None` | Whether an infinitive makes one predicate with its head; none by default |
-| `is_clause_head` | `Callable[[Token], bool]` | `is_clause_head` | Whether a word heads a clause |
+| `is_clause_head` | `Callable[[Token], bool]` | `None` | Whether a word heads a clause; `is_clause_head` of the module with the hooks of this check if not given |
+| `auxiliary_form` | `Callable[[Token], str]` | `None` | Verb form of an auxiliary without `VerbForm` (`predicate_form`); none by default |
 
-A check that is not callable raises `SourceTypeError`.
+A check or a form of an auxiliary that is not callable raises `SourceTypeError`.
 <!-- --8<-- [end:is_infinitive_clause] -->
 
 </div>
@@ -283,7 +285,7 @@ A check that is not callable raises `SourceTypeError`.
 
 <!-- --8<-- [start:is_subordinate_clause_head] -->
 ``` {.python .signature}
-is_subordinate_clause_head(token, is_clause_head=is_clause_head)
+is_subordinate_clause_head(token, is_clause_head=None, auxiliary_form=None)
 ```
 
 Checks whether a word heads a subordinate clause: a clause head by the check `is_clause_head` with `ccomp`, `advcl`, `acl` or `csubj` (`SUBORDINATE_CLAUSE_DEPS`), or under `xcomp` with a finite predicate (a complement a model attaches as `xcomp`), or a conjunct of one, by the relation of the first word up its chain of conjuncts. An infinitive under `xcomp` heads an infinitive clause, counted apart.
@@ -291,9 +293,10 @@ Checks whether a word heads a subordinate clause: a clause head by the check `is
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
 | `token` | `Token` | - | Token |
-| `is_clause_head` | `Callable[[Token], bool]` | `is_clause_head` | Whether a word heads a clause |
+| `is_clause_head` | `Callable[[Token], bool]` | `None` | Whether a word heads a clause; `is_clause_head` of the module with the hooks of this check if not given |
+| `auxiliary_form` | `Callable[[Token], str]` | `None` | Verb form of an auxiliary without `VerbForm` (`predicate_form`); none by default |
 
-A check that is not callable raises `SourceTypeError`.
+A check or a form of an auxiliary that is not callable raises `SourceTypeError`.
 <!-- --8<-- [end:is_subordinate_clause_head] -->
 
 </div>
@@ -307,7 +310,7 @@ A check that is not callable raises `SourceTypeError`.
 
 <!-- --8<-- [start:is_infinitive_clause_head] -->
 ``` {.python .signature}
-is_infinitive_clause_head(token, is_clause_head=is_clause_head)
+is_infinitive_clause_head(token, is_clause_head=None, auxiliary_form=None)
 ```
 
 Checks whether a word heads an infinitive clause under a verb: a clause head by the check `is_clause_head` whose predicate is an infinitive under `xcomp` (*wants to leave*, *asked him to leave*), or a conjunct of one. Such a clause is counted apart from the subordinate ones, as grammars of many languages take it for a part of a simple sentence.
@@ -315,9 +318,10 @@ Checks whether a word heads an infinitive clause under a verb: a clause head by 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
 | `token` | `Token` | - | Token |
-| `is_clause_head` | `Callable[[Token], bool]` | `is_clause_head` | Whether a word heads a clause |
+| `is_clause_head` | `Callable[[Token], bool]` | `None` | Whether a word heads a clause; `is_clause_head` of the module with the hooks of this check if not given |
+| `auxiliary_form` | `Callable[[Token], str]` | `None` | Verb form of an auxiliary without `VerbForm` (`predicate_form`); none by default |
 
-A check that is not callable raises `SourceTypeError`.
+A check or a form of an auxiliary that is not callable raises `SourceTypeError`.
 <!-- --8<-- [end:is_infinitive_clause_head] -->
 
 </div>
@@ -631,10 +635,11 @@ A language library subclasses `SyntaxStats`. The defaults read Universal Depende
 | Hook | Kind | Description |
 | :--- | :--- | :---------- |
 | `parse(source)` | method | `Doc` of a source; by default the source itself, which must be a `Doc`; a library may parse a string |
-| `is_clause_head(token)` | method | Whether a word heads a clause; by default `is_clause_head` of the module with `join_hyphens` of the class and the hook `is_infinitive_periphrasis` |
+| `is_clause_head(token)` | method | Whether a word heads a clause; by default `is_clause_head` of the module with `join_hyphens` of the class and the hooks `is_infinitive_periphrasis` and `auxiliary_form` |
 | `is_infinitive_periphrasis(token)` | method | Whether an infinitive under `xcomp`, an infinitive conjunct or an infinitive subject (`csubj`) of a modal word makes one predicate with its head, a modal or phasal verb (*can leave*, *begins to leave*); none by default |
-| `is_subordinate_clause_head(token)` | method | Whether a clause head heads a subordinate clause, asked only of the words of `is_clause_head`; by default `is_subordinate_clause_head` of the module over the hook `is_clause_head` |
-| `is_infinitive_clause_head(token)` | method | Whether a clause head heads an infinitive clause under a verb (*wants to leave*), counted apart from the subordinate ones; by default `is_infinitive_clause_head` of the module over the hook `is_clause_head` |
+| `auxiliary_form(token)` | method | Verb form the checks of the clauses read for an auxiliary or a copula without `VerbForm` (`predicate_form`); by default an empty string, which skips it |
+| `is_subordinate_clause_head(token)` | method | Whether a clause head heads a subordinate clause, asked only of the words of `is_clause_head`; by default `is_subordinate_clause_head` of the module over the hooks `is_clause_head` and `auxiliary_form` |
+| `is_infinitive_clause_head(token)` | method | Whether a clause head heads an infinitive clause under a verb (*wants to leave*), counted apart from the subordinate ones; by default `is_infinitive_clause_head` of the module over the hooks `is_clause_head` and `auxiliary_form` |
 | `is_participle_clause(token)` | method | Whether a word heads a participial clause; by default a participle that is not the head of the sentence, has no auxiliary or copula and has a dependent (`calc_valency`) |
 | `is_passive(token)` | method | Whether a word is a passive verb form; by default `is_passive` of the module with `join_hyphens` of the class |
 | `is_agentless(token)` | method | Whether a passive form has no agent; by default the hook `is_passive` without an agent (`has_agent` of the module) |

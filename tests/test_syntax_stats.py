@@ -157,7 +157,9 @@ def test_predicate_form_of_an_auxiliary_without_a_form():
 
 
 def test_predicate_form_hook_must_be_callable():
-    with pytest.raises(SourceTypeError, match="auxiliary_form must be callable, not str"):
+    with pytest.raises(
+        SourceTypeError, match=r"^The verb form of an auxiliary must be callable, not str$"
+    ):
         predicate_form(predicate(["arrived"], [], ["VerbForm=Part"]), "Fin")
 
 
@@ -898,6 +900,122 @@ def test_default_clause_heads_by_the_form_of_the_predicate():
     assert not DEFAULT.is_clause_head(doc[4])
 
 
+def finite_by_ending(token):
+    """Form of an auxiliary without VerbForm: habéis is finite"""
+    return "Fin" if token.text == "habéis" else ""
+
+
+def test_clause_heads_by_the_form_of_an_auxiliary():
+    # Sé que os habéis posado: the model leaves habéis without a form
+    doc = parse(
+        ["Sé", "que", "os", "habéis", "posado", "."],
+        [0, 4, 4, 4, 0, 0],
+        ["ROOT", "mark", "obj", "aux", "ccomp", "punct"],
+        ["VerbForm=Fin", "", "", "", "VerbForm=Part", ""],
+        pos=["VERB", "SCONJ", "PRON", "AUX", "VERB", "PUNCT"],
+    )
+    assert not is_clause_head(doc[4]) and not is_subordinate_clause_head(doc[4])
+    assert is_clause_head(doc[4], auxiliary_form=finite_by_ending)
+    assert is_subordinate_clause_head(doc[4], auxiliary_form=finite_by_ending)
+    assert is_subordinate_clause_head(
+        doc[4], lambda token: is_clause_head(token, auxiliary_form=finite_by_ending)
+    )
+
+    class Spanish(SyntaxStats):
+        def auxiliary_form(self, token):
+            return finite_by_ending(token)
+
+    assert DEFAULT.auxiliary_form(doc[3]) == ""
+    assert (SyntaxStats(doc).n_clauses, SyntaxStats(doc).n_subordinate_clauses) == (1, 0)
+    assert (Spanish(doc).n_clauses, Spanish(doc).n_subordinate_clauses) == (2, 1)
+
+
+def test_infinitive_clauses_by_the_form_of_an_auxiliary():
+    # Quiere haber llegado: the model leaves haber without a form
+    doc = parse(
+        ["Quiere", "haber", "llegado"],
+        [0, 2, 0],
+        ["ROOT", "aux", "xcomp"],
+        ["VerbForm=Fin", "", "VerbForm=Part"],
+        pos=["VERB", "AUX", "VERB"],
+    )
+    infinitive = lambda token: "Inf" if token.text == "haber" else ""  # noqa: E731
+    assert not is_infinitive_clause(doc[2]) and not is_infinitive_clause_head(doc[2])
+    assert is_infinitive_clause(doc[2], auxiliary_form=infinitive)
+    assert is_infinitive_clause_head(doc[2], auxiliary_form=infinitive)
+    assert is_clause_head(doc[2], auxiliary_form=infinitive)
+    # a complement of a non-finite complement: llegado completes the word above it
+    doc = parse(
+        ["Dijo", "querer", "haber", "llegado"],
+        [0, 0, 3, 1],
+        ["ROOT", "xcomp", "aux", "xcomp"],
+        ["VerbForm=Fin", "VerbForm=Inf", "", "VerbForm=Part"],
+        pos=["VERB", "VERB", "AUX", "VERB"],
+    )
+    assert is_infinitive_clause(doc[3], auxiliary_form=infinitive)
+    # Sé que habéis querido ir: ir completes querido, finite by habéis without a form
+    doc = parse(
+        ["Sé", "que", "habéis", "querido", "ir"],
+        [0, 3, 3, 0, 3],
+        ["ROOT", "mark", "aux", "ccomp", "xcomp"],
+        ["VerbForm=Fin", "", "", "VerbForm=Part", "VerbForm=Inf"],
+        pos=["VERB", "SCONJ", "AUX", "VERB", "VERB"],
+    )
+    assert not is_infinitive_clause(doc[4]) and not is_infinitive_clause_head(doc[4])
+    assert is_infinitive_clause(doc[4], auxiliary_form=finite_by_ending)
+    assert is_infinitive_clause_head(doc[4], auxiliary_form=finite_by_ending)
+    # ir completes querido under xcomp of a participle, finite by habéis without a form
+    doc = parse(
+        ["Vio", "hombres", "dispuestos", "habéis", "querido", "ir"],
+        [0, 0, 1, 4, 2, 4],
+        ["ROOT", "obj", "acl", "aux", "xcomp", "xcomp"],
+        ["VerbForm=Fin", "", "VerbForm=Part", "", "VerbForm=Part", "VerbForm=Inf"],
+        pos=["VERB", "NOUN", "VERB", "AUX", "VERB", "VERB"],
+    )
+    assert not is_infinitive_clause(doc[5]) and not is_clause_head(doc[5])
+    assert is_infinitive_clause(doc[5], auxiliary_form=finite_by_ending)
+    assert is_clause_head(doc[5], auxiliary_form=finite_by_ending)
+
+
+def test_infinitive_clauses_by_the_hook_of_the_class():
+    # Quiere haber llegado: an infinitive clause by the form of haber, not a subordinate one
+    doc = parse(
+        ["Quiere", "haber", "llegado"],
+        [0, 2, 0],
+        ["ROOT", "aux", "xcomp"],
+        ["VerbForm=Fin", "", "VerbForm=Part"],
+        pos=["VERB", "AUX", "VERB"],
+    )
+
+    def infinitive(token):
+        return "Inf" if token.text == "haber" else ""
+
+    assert not is_subordinate_clause_head(doc[2], auxiliary_form=infinitive)
+
+    class Hooked(SyntaxStats):
+        def auxiliary_form(self, token):
+            return infinitive(token)
+
+    stats = Hooked(doc)
+    assert (stats.n_clauses, stats.n_subordinate_clauses, stats.n_infinitive_clauses) == (2, 0, 1)
+
+
+@pytest.mark.parametrize(
+    "check",
+    [
+        lambda token: is_clause_head(token, auxiliary_form="Fin"),
+        lambda token: is_infinitive_clause(token, auxiliary_form="Fin"),
+        lambda token: is_subordinate_clause_head(token, auxiliary_form="Fin"),
+        lambda token: is_infinitive_clause_head(token, auxiliary_form="Fin"),
+    ],
+)
+def test_form_of_an_auxiliary_must_be_callable(check):
+    with pytest.raises(
+        SourceTypeError, match=r"^The verb form of an auxiliary must be callable, not str$"
+    ):
+        check(parse(["Yes"], [0], ["ROOT"])[0])
+
+
 def listing(n, pos, dep):
     """He listed w0, w1, ...: every conjunct hangs on the previous one, as in ClearNLP"""
     return parse(
@@ -1056,6 +1174,23 @@ def test_infinitive_clauses(periphrasis, heads_of_clauses, infinitive):
     assert is_infinitive_clause(doc[8], periphrasis) and not is_infinitive_clause(doc[12])
     assert is_infinitive_clause(doc[2], periphrasis) is (periphrasis is None)
     assert not is_infinitive_clause(doc[4]) and not is_infinitive_clause(doc[15])
+
+
+def test_infinitive_clause_by_the_hooks_of_its_clause_head():
+    # Debe salir y querer cantar: querer, a conjunct of the periphrasis, heads no clause
+    doc = parse(
+        ["Debe", "salir", "y", "querer", "cantar"],
+        [0, 0, 3, 0, 3],
+        ["ROOT", "xcomp", "cc", "conj", "xcomp"],
+        ["VerbForm=Fin", "VerbForm=Inf", "", "VerbForm=Inf", "VerbForm=Inf"],
+        pos=["AUX", "VERB", "CCONJ", "VERB", "VERB"],
+    )
+
+    def periphrasis(token):
+        return token.head.text == "Debe"
+
+    assert not is_infinitive_clause(doc[4], periphrasis)
+    assert is_infinitive_clause(doc[4], periphrasis, is_clause_head)
 
 
 def is_has(token):

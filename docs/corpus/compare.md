@@ -184,7 +184,7 @@ split_windows(text, window=1000, min_words=None, *, tokenize=None, opening_marks
 ```
 
 <!-- --8<-- [start:split_windows] -->
-Cuts a text into consecutive windows of exactly `window` words, so the features that depend on length are comparable between texts. The rest is a window only with at least `min_words` words (by default a whole window, so it is dropped). A boundary goes before the first word of a window and its opening marks; a symmetric mark, such as a straight quote or the dash of an aside, closes the previous window when glued to its last word or after a closing mark. Windows are stripped of whitespace; `window=None` gives the whole text. The words and their positions come from `tokenize`, by default the words of `WordsExtractor`.
+Cuts a text into consecutive windows of exactly `window` words, so the features that depend on length are comparable between texts. The rest is a window only with at least `min_words` words (by default a whole window, so it is dropped). A boundary goes before the first word of a window and its opening marks; symmetric marks, such as a straight quote or the dash of an aside, close the previous window when glued to its last word, or after a closing mark when whitespace follows them; a dash glued to the next word opens a line of dialogue, and a run of such marks goes as a whole. Windows are stripped of whitespace; `window=None` gives the whole text. The words and their positions come from `tokenize`, by default the words of `WordsExtractor`.
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
