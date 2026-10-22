@@ -259,9 +259,16 @@ MESSAGES = {
     "band_bound": "A bound of a band must be an integer from 1 to {size}, not {band}",
     "phon_window_len": "The size of a window must be at least 2",
     "phon_classes": "The sounds of {first} and {second} of {cls} overlap: {sounds}",
-    "no_parse": "The data source has no dependency parse",
-    "no_lemmas": "The data source has no lemmas",
-    "no_pos": "The data source has no parts of speech",
+    "no_parse": (
+        "The data source has no dependency parse: parse the text with a model that has a parser"
+    ),
+    "no_lemmas": (
+        "The data source has no lemmas: parse the text with a pipeline that has a lemmatizer"
+    ),
+    "no_pos": (
+        "The data source has no parts of speech: "
+        "parse the text with a model instead of a blank pipeline"
+    ),
     "temporal_features": (
         "The temporal features of {cls} must be one or more distinct features of {features}, "
         "not {value}"

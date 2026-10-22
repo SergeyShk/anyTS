@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import Counter
 from collections.abc import Callable, Iterable, Mapping, Sequence
-from functools import cache
+from functools import cache, partial
 from math import nan
 from statistics import fmean, pstdev
 from typing import TYPE_CHECKING, Any, ClassVar
@@ -118,6 +118,7 @@ class SyntaxStats(Stats):
         parse: Doc of a source
         is_clause_head: Whether a word heads a clause
         is_infinitive_periphrasis: Whether an infinitive makes one predicate with its head
+        auxiliary_form: Verb form of an auxiliary without the feature VerbForm
         is_subordinate_clause_head: Whether a clause head heads a subordinate clause
         is_infinitive_clause_head: Whether a clause head heads an infinitive clause
         is_participle_clause: Whether a word heads a participial clause
@@ -316,7 +317,7 @@ class SyntaxStats(Stats):
 
         Description:
             is_clause_head of the module with join_hyphens of the class and the
-            hook is_infinitive_periphrasis
+            hooks is_infinitive_periphrasis and auxiliary_form
 
         Arguments:
             token (Token): Token
@@ -324,7 +325,9 @@ class SyntaxStats(Stats):
         Returns:
             bool: Result of the check
         """
-        return is_clause_head(token, self.join_hyphens, self.is_infinitive_periphrasis)
+        return is_clause_head(
+            token, self.join_hyphens, self.is_infinitive_periphrasis, self.auxiliary_form
+        )
 
     def is_infinitive_periphrasis(self, token: Token) -> bool:
         """
@@ -344,12 +347,30 @@ class SyntaxStats(Stats):
         """
         return False
 
+    def auxiliary_form(self, token: Token) -> str:
+        """
+        Getting the verb form of an auxiliary without the feature VerbForm
+
+        Description:
+            The form the checks of the clauses read for an auxiliary or a copula
+            the model leaves without one (predicate_form); an empty string, which
+            skips the auxiliary, by default
+
+        Arguments:
+            token (Token): Auxiliary or copula
+
+        Returns:
+            str: Value of VerbForm, an empty string to skip the auxiliary
+        """
+        return ""
+
     def is_subordinate_clause_head(self, token: Token) -> bool:
         """
         Checking whether a word heads a subordinate clause
 
         Description:
-            is_subordinate_clause_head of the module over the hook is_clause_head
+            is_subordinate_clause_head of the module over the hooks is_clause_head
+            and auxiliary_form
 
         Arguments:
             token (Token): Token
@@ -357,14 +378,15 @@ class SyntaxStats(Stats):
         Returns:
             bool: Result of the check
         """
-        return is_subordinate_clause_head(token, self.is_clause_head)
+        return is_subordinate_clause_head(token, self.is_clause_head, self.auxiliary_form)
 
     def is_infinitive_clause_head(self, token: Token) -> bool:
         """
         Checking whether a word heads an infinitive clause under a verb
 
         Description:
-            is_infinitive_clause_head of the module over the hook is_clause_head
+            is_infinitive_clause_head of the module over the hooks is_clause_head
+            and auxiliary_form
 
         Arguments:
             token (Token): Token
@@ -372,7 +394,7 @@ class SyntaxStats(Stats):
         Returns:
             bool: Result of the check
         """
-        return is_infinitive_clause_head(token, self.is_clause_head)
+        return is_infinitive_clause_head(token, self.is_clause_head, self.auxiliary_form)
 
     def is_participle_clause(self, token: Token) -> bool:
         """
@@ -954,6 +976,7 @@ def is_clause_head(
     token: Token,
     join_hyphens: bool = False,
     is_infinitive_periphrasis: Callable[[Token], bool] | None = None,
+    auxiliary_form: Callable[[Token], str] | None = None,
 ) -> bool:
     """
     Checking whether a word heads a clause
@@ -976,28 +999,35 @@ def is_clause_head(
         join_hyphens (bool): Join the parts of hyphenated words (is_predicate)
         is_infinitive_periphrasis (callable): Whether an infinitive makes one
             predicate with its head (is_infinitive_clause); none by default
+        auxiliary_form (callable): Verb form of an auxiliary without the feature
+            VerbForm (predicate_form); none by default
 
     Returns:
         bool: Result of the check
 
     Raises:
-        SourceTypeError: If is_infinitive_periphrasis is not callable
+        SourceTypeError: If is_infinitive_periphrasis or auxiliary_form is not callable
     """
     if is_infinitive_periphrasis is not None:
         check_callable(is_infinitive_periphrasis, "check of an infinitive periphrasis")
-    return _is_clause_head(token, join_hyphens, is_infinitive_periphrasis)
+    if auxiliary_form is not None:
+        check_callable(auxiliary_form, "verb form of an auxiliary")
+    return _is_clause_head(token, join_hyphens, is_infinitive_periphrasis, auxiliary_form)
 
 
 def _is_clause_head(
-    token: Token, join_hyphens: bool, is_infinitive_periphrasis: Callable[[Token], bool] | None
+    token: Token,
+    join_hyphens: bool,
+    is_infinitive_periphrasis: Callable[[Token], bool] | None,
+    auxiliary_form: Callable[[Token], str] | None,
 ) -> bool:
-    """is_clause_head with a checked hook"""
+    """is_clause_head with checked hooks"""
     seen = set()
     # Up the chains of conjuncts and infinitive complements to the word that is none
     while is_word(token) and token.i not in seen:
         if is_root(token):
             return True
-        form = predicate_form(token)
+        form = predicate_form(token, auxiliary_form)
         if form in NONFINITE_CLAUSE_FORMS:
             return False
         dep = base_dep(token)
@@ -1006,8 +1036,8 @@ def _is_clause_head(
                 if form == "Fin":
                     return True
                 completed = (
-                    _completed_word(token)
-                    if _is_infinitive_complement(token, is_infinitive_periphrasis)
+                    _completed_word(token, auxiliary_form)
+                    if _is_infinitive_complement(token, is_infinitive_periphrasis, auxiliary_form)
                     else None
                 )
                 if completed is None:
@@ -1034,7 +1064,8 @@ def _is_clause_head(
 def is_infinitive_clause(
     token: Token,
     is_infinitive_periphrasis: Callable[[Token], bool] | None = None,
-    is_clause_head: Callable[[Token], bool] = is_clause_head,
+    is_clause_head: Callable[[Token], bool] | None = None,
+    auxiliary_form: Callable[[Token], str] | None = None,
 ) -> bool:
     """
     Checking whether an infinitive complement heads a clause of its own
@@ -1054,48 +1085,74 @@ def is_infinitive_clause(
         token (Token): Token
         is_infinitive_periphrasis (callable): Whether an infinitive makes one
             predicate with its head; none by default
-        is_clause_head (callable): Whether a word heads a clause, is_clause_head
-            by default
+        is_clause_head (callable): Whether a word heads a clause; by default
+            is_clause_head of the module with the hooks of this check
+        auxiliary_form (callable): Verb form of an auxiliary without the feature
+            VerbForm (predicate_form); none by default
 
     Returns:
         bool: Result of the check
 
     Raises:
-        SourceTypeError: If is_infinitive_periphrasis or is_clause_head is not
-            callable
+        SourceTypeError: If is_infinitive_periphrasis, is_clause_head or
+            auxiliary_form is not callable
     """
     if is_infinitive_periphrasis is not None:
         check_callable(is_infinitive_periphrasis, "check of an infinitive periphrasis")
+    if auxiliary_form is not None:
+        check_callable(auxiliary_form, "verb form of an auxiliary")
+    if is_clause_head is None:
+        is_clause_head = _clause_head_check(is_infinitive_periphrasis, auxiliary_form)
     check_callable(is_clause_head, "check of a clause head")
-    return _is_infinitive_clause(token, is_infinitive_periphrasis, is_clause_head)
+    return _is_infinitive_clause(token, is_infinitive_periphrasis, is_clause_head, auxiliary_form)
+
+
+def _clause_head_check(
+    is_infinitive_periphrasis: Callable[[Token], bool] | None,
+    auxiliary_form: Callable[[Token], str] | None,
+) -> Callable[[Token], bool]:
+    """is_clause_head of the module with checked hooks"""
+    return partial(
+        _is_clause_head,
+        join_hyphens=False,
+        is_infinitive_periphrasis=is_infinitive_periphrasis,
+        auxiliary_form=auxiliary_form,
+    )
 
 
 def _is_infinitive_clause(
     token: Token,
     is_infinitive_periphrasis: Callable[[Token], bool] | None,
     is_clause_head: Callable[[Token], bool],
+    auxiliary_form: Callable[[Token], str] | None,
 ) -> bool:
     """is_infinitive_clause with checked hooks"""
-    if not _is_infinitive_complement(token, is_infinitive_periphrasis):
+    if not _is_infinitive_complement(token, is_infinitive_periphrasis, auxiliary_form):
         return False
-    completed = _completed_word(token)
+    completed = _completed_word(token, auxiliary_form)
     return completed is not None and is_clause_head(completed)
 
 
 def _is_infinitive_complement(
-    token: Token, is_infinitive_periphrasis: Callable[[Token], bool] | None
+    token: Token,
+    is_infinitive_periphrasis: Callable[[Token], bool] | None,
+    auxiliary_form: Callable[[Token], str] | None,
 ) -> bool:
     """Infinitive under xcomp that makes no periphrasis with its head"""
-    if base_dep(token) != "xcomp" or predicate_form(token) != "Inf":
+    if base_dep(token) != "xcomp" or predicate_form(token, auxiliary_form) != "Inf":
         return False
     return not (is_infinitive_periphrasis is not None and is_infinitive_periphrasis(token))
 
 
-def _completed_word(token: Token) -> Token | None:
+def _completed_word(token: Token, auxiliary_form: Callable[[Token], str] | None) -> Token | None:
     """Word an infinitive complement completes, up its non-finite complements; None in a loop"""
     seen = {token.i}
     word = token.head
-    while base_dep(word) == "xcomp" and predicate_form(word) != "Fin" and word.i not in seen:
+    while (
+        base_dep(word) == "xcomp"
+        and predicate_form(word, auxiliary_form) != "Fin"
+        and word.i not in seen
+    ):
         seen.add(word.i)
         word = word.head
     # A loop through the words above would bring the checks back to the infinitive
@@ -1107,7 +1164,9 @@ def _completed_word(token: Token) -> Token | None:
 
 
 def is_subordinate_clause_head(
-    token: Token, is_clause_head: Callable[[Token], bool] = is_clause_head
+    token: Token,
+    is_clause_head: Callable[[Token], bool] | None = None,
+    auxiliary_form: Callable[[Token], str] | None = None,
 ) -> bool:
     """
     Checking whether a word heads a subordinate clause
@@ -1122,15 +1181,21 @@ def is_subordinate_clause_head(
 
     Arguments:
         token (Token): Token
-        is_clause_head (callable): Whether a word heads a clause, is_clause_head
-            by default
+        is_clause_head (callable): Whether a word heads a clause; by default
+            is_clause_head of the module with the hooks of this check
+        auxiliary_form (callable): Verb form of an auxiliary without the feature
+            VerbForm (predicate_form); none by default
 
     Returns:
         bool: Result of the check
 
     Raises:
-        SourceTypeError: If is_clause_head is not callable
+        SourceTypeError: If is_clause_head or auxiliary_form is not callable
     """
+    if auxiliary_form is not None:
+        check_callable(auxiliary_form, "verb form of an auxiliary")
+    if is_clause_head is None:
+        is_clause_head = _clause_head_check(None, auxiliary_form)
     check_callable(is_clause_head, "check of a clause head")
     if is_root(token) or not is_clause_head(token):
         return False
@@ -1140,12 +1205,14 @@ def is_subordinate_clause_head(
         token = token.head
     dep = base_dep(token)
     if dep == "xcomp":
-        return predicate_form(token) != "Inf"
+        return predicate_form(token, auxiliary_form) != "Inf"
     return not is_root(token) and dep in SUBORDINATE_CLAUSE_DEPS
 
 
 def is_infinitive_clause_head(
-    token: Token, is_clause_head: Callable[[Token], bool] = is_clause_head
+    token: Token,
+    is_clause_head: Callable[[Token], bool] | None = None,
+    auxiliary_form: Callable[[Token], str] | None = None,
 ) -> bool:
     """
     Checking whether a word heads an infinitive clause under a verb
@@ -1159,15 +1226,21 @@ def is_infinitive_clause_head(
 
     Arguments:
         token (Token): Token
-        is_clause_head (callable): Whether a word heads a clause, is_clause_head
-            by default
+        is_clause_head (callable): Whether a word heads a clause; by default
+            is_clause_head of the module with the hooks of this check
+        auxiliary_form (callable): Verb form of an auxiliary without the feature
+            VerbForm (predicate_form); none by default
 
     Returns:
         bool: Result of the check
 
     Raises:
-        SourceTypeError: If is_clause_head is not callable
+        SourceTypeError: If is_clause_head or auxiliary_form is not callable
     """
+    if auxiliary_form is not None:
+        check_callable(auxiliary_form, "verb form of an auxiliary")
+    if is_clause_head is None:
+        is_clause_head = _clause_head_check(None, auxiliary_form)
     check_callable(is_clause_head, "check of a clause head")
     if is_root(token) or not is_clause_head(token):
         return False
@@ -1175,7 +1248,7 @@ def is_infinitive_clause_head(
     while base_dep(token) == "conj" and token.i not in seen:
         seen.add(token.i)
         token = token.head
-    return base_dep(token) == "xcomp" and predicate_form(token) == "Inf"
+    return base_dep(token) == "xcomp" and predicate_form(token, auxiliary_form) == "Inf"
 
 
 def is_passive(token: Token, join_hyphens: bool = False) -> bool:

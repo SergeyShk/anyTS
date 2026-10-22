@@ -552,9 +552,10 @@ def split_windows(
         Consecutive windows of exactly window words, so the features that
         depend on length are comparable between texts; the rest is a window
         only with at least min_words words. A boundary goes before the first
-        word of a window and its opening marks; a symmetric mark (a straight
-        quote, the dash of an aside) glued to the last word of the previous
-        window or after a closing mark closes that window. The windows are
+        word of a window and its opening marks; symmetric marks (a straight
+        quote, the dash of an aside) close the previous window when glued to
+        its last word, or after a closing mark when whitespace follows them (a
+        dash glued to the next word opens a line of dialogue). The windows are
         stripped of whitespace
 
     Arguments:
@@ -619,13 +620,14 @@ def split_windows(
             text[boundary - 1].isspace() or text[boundary - 1] in opening_marks
         ):
             boundary -= 1
-        while (
-            boundary < start
-            and text[boundary] in symmetric_marks
-            and (boundary == previous_end or text[boundary - 1] in closing_marks)
+        run_end = boundary
+        while run_end < start and text[run_end] in symmetric_marks:
+            run_end += 1
+        if run_end > boundary and (
+            boundary == previous_end
+            or (text[boundary - 1] in closing_marks and text[run_end].isspace())
         ):
-            boundary += 1
-            previous_end = boundary
+            boundary = run_end
         boundaries.append(boundary)
     boundaries.append(len(text))
     return [
