@@ -157,7 +157,9 @@ def test_predicate_form_of_an_auxiliary_without_a_form():
 
 
 def test_predicate_form_hook_must_be_callable():
-    with pytest.raises(SourceTypeError, match="auxiliary_form must be callable, not str"):
+    with pytest.raises(
+        SourceTypeError, match=r"^The verb form of an auxiliary must be callable, not str$"
+    ):
         predicate_form(predicate(["arrived"], [], ["VerbForm=Part"]), "Fin")
 
 
@@ -962,6 +964,40 @@ def test_infinitive_clauses_by_the_form_of_an_auxiliary():
     assert not is_infinitive_clause(doc[4]) and not is_infinitive_clause_head(doc[4])
     assert is_infinitive_clause(doc[4], auxiliary_form=finite_by_ending)
     assert is_infinitive_clause_head(doc[4], auxiliary_form=finite_by_ending)
+    # ir completes querido under xcomp of a participle, finite by habéis without a form
+    doc = parse(
+        ["Vio", "hombres", "dispuestos", "habéis", "querido", "ir"],
+        [0, 0, 1, 4, 2, 4],
+        ["ROOT", "obj", "acl", "aux", "xcomp", "xcomp"],
+        ["VerbForm=Fin", "", "VerbForm=Part", "", "VerbForm=Part", "VerbForm=Inf"],
+        pos=["VERB", "NOUN", "VERB", "AUX", "VERB", "VERB"],
+    )
+    assert not is_infinitive_clause(doc[5]) and not is_clause_head(doc[5])
+    assert is_infinitive_clause(doc[5], auxiliary_form=finite_by_ending)
+    assert is_clause_head(doc[5], auxiliary_form=finite_by_ending)
+
+
+def test_infinitive_clauses_by_the_hook_of_the_class():
+    # Quiere haber llegado: an infinitive clause by the form of haber, not a subordinate one
+    doc = parse(
+        ["Quiere", "haber", "llegado"],
+        [0, 2, 0],
+        ["ROOT", "aux", "xcomp"],
+        ["VerbForm=Fin", "", "VerbForm=Part"],
+        pos=["VERB", "AUX", "VERB"],
+    )
+
+    def infinitive(token):
+        return "Inf" if token.text == "haber" else ""
+
+    assert not is_subordinate_clause_head(doc[2], auxiliary_form=infinitive)
+
+    class Hooked(SyntaxStats):
+        def auxiliary_form(self, token):
+            return infinitive(token)
+
+    stats = Hooked(doc)
+    assert (stats.n_clauses, stats.n_subordinate_clauses, stats.n_infinitive_clauses) == (2, 0, 1)
 
 
 @pytest.mark.parametrize(
@@ -1138,6 +1174,23 @@ def test_infinitive_clauses(periphrasis, heads_of_clauses, infinitive):
     assert is_infinitive_clause(doc[8], periphrasis) and not is_infinitive_clause(doc[12])
     assert is_infinitive_clause(doc[2], periphrasis) is (periphrasis is None)
     assert not is_infinitive_clause(doc[4]) and not is_infinitive_clause(doc[15])
+
+
+def test_infinitive_clause_by_the_hooks_of_its_clause_head():
+    # Debe salir y querer cantar: querer, a conjunct of the periphrasis, heads no clause
+    doc = parse(
+        ["Debe", "salir", "y", "querer", "cantar"],
+        [0, 0, 3, 0, 3],
+        ["ROOT", "xcomp", "cc", "conj", "xcomp"],
+        ["VerbForm=Fin", "VerbForm=Inf", "", "VerbForm=Inf", "VerbForm=Inf"],
+        pos=["AUX", "VERB", "CCONJ", "VERB", "VERB"],
+    )
+
+    def periphrasis(token):
+        return token.head.text == "Debe"
+
+    assert not is_infinitive_clause(doc[4], periphrasis)
+    assert is_infinitive_clause(doc[4], periphrasis, is_clause_head)
 
 
 def is_has(token):

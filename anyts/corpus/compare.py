@@ -555,8 +555,8 @@ def split_windows(
         word of a window and its opening marks; symmetric marks (a straight
         quote, the dash of an aside) close the previous window when glued to
         its last word, or after a closing mark when whitespace follows them (a
-        dash glued to the next word opens a line of dialogue). The windows are
-        stripped of whitespace
+        dash glued to the next word opens a line of dialogue); a run of such
+        marks goes as a whole. The windows are stripped of whitespace
 
     Arguments:
         text (str): Text string

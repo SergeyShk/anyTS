@@ -402,6 +402,7 @@ def test_split_windows_without_words():
         ("one two three four.— Five six", ["one two three four.—", "Five six"]),
         ('one two three four."— Five six', ['one two three four."—', "Five six"]),
         ('one two three four.—"Five six', ["one two three four.", '—"Five six']),
+        ('one two three four."—Five six', ["one two three four.", '"—Five six']),
     ],
 )
 def test_split_windows_marks_at_a_boundary(source, expected):

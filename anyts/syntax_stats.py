@@ -847,10 +847,8 @@ def predicate_form(token: Token, auxiliary_form: Callable[[Token], str] | None =
         >>> predicate_form(doc[2]), predicate_form(doc[0])
         ('Fin', '')
     """
-    if auxiliary_form is not None and not callable(auxiliary_form):
-        raise SourceTypeError(
-            f"auxiliary_form must be callable, not {type(auxiliary_form).__name__}"
-        )
+    if auxiliary_form is not None:
+        check_callable(auxiliary_form, "verb form of an auxiliary")
     auxiliaries = [
         (child, form)
         for child in token.children

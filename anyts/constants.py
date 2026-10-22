@@ -140,9 +140,9 @@ COHESION_STATS_DESC = {
     "connectors_secondary": "Secondary connectors per 1000 words",
 }
 
-# Marks at a window boundary of split_windows: an opening one goes with the next window; a
-# symmetric one (a straight quote, the dash of an aside) closes the previous window when it
-# is glued to its last word or follows a closing mark
+# Marks at a window boundary of split_windows: an opening one goes with the next window;
+# symmetric ones (a straight quote, the dash of an aside) close the previous window when
+# glued to its last word, or after a closing mark when whitespace follows them
 OPENING_MARKS = frozenset("«\"'„“‘([{—–―-")
 SYMMETRIC_MARKS = frozenset("\"'—–―-")
 CLOSING_MARKS = frozenset(".!?…,;)]}»”’")
