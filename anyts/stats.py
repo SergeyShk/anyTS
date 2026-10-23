@@ -167,16 +167,10 @@ class Stats:
         return scale_level(value, scale)
 
     def _is_flat_key(self, stat: object) -> bool:
-        """Whether a name is a key that a dictionary statistic gives in the flat statistics"""
-        if not isinstance(stat, str):
+        """Whether a name is a key of the flat statistics that is no statistic of its own"""
+        if not isinstance(stat, str) or stat in self.stat_names():
             return False
-        names = self.stat_names()
-        return stat not in names and any(
-            stat.startswith(f"{name}_")
-            and isinstance(value := getattr(self, name), Mapping)
-            and stat in _flatten(value, f"{name}_")
-            for name in names
-        )
+        return stat in self.get_stats(flat=True)
 
     def _check_stat(self, stat: object) -> None:
         """Raising UnknownStatError for a name neither of stat_names nor a public property"""

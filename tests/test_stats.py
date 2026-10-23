@@ -1,3 +1,4 @@
+from collections import Counter
 from math import nan
 from typing import ClassVar
 
@@ -129,6 +130,26 @@ def test_describe(sizes):
 def test_describe_flat_key(sizes, stat):
     assert stat in sizes.get_stats(flat=True)
     assert sizes.describe(stat) is None
+
+
+class Tagged(Stats):
+    """Statistics of per-word values, counted by get_stats"""
+
+    stats_desc: ClassVar = {"pos": "Parts of speech"}
+
+    def __init__(self, tags):
+        self.pos = tuple(tags)
+
+    def get_stats(self, flat=False):
+        counts = {"pos": dict(Counter(self.pos))}
+        return {f"pos_{tag}": n for tag, n in counts["pos"].items()} if flat else counts
+
+
+def test_describe_flat_key_of_an_own_get_stats():
+    tagged = Tagged(["NOUN", "VERB", "NOUN"])
+    assert tagged.describe("pos_NOUN") is None and tagged.describe("pos") is None
+    with pytest.raises(UnknownStatError):
+        tagged.describe("pos_ADJ")
 
 
 @pytest.mark.parametrize(

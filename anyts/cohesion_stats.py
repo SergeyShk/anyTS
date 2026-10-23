@@ -123,6 +123,9 @@ class ConnectorMatcher:
         subordinators (frozenset[str]): Connectors, by their text, that are
             subordinating conjunctions or prepositions besides the one-word ones
             tagged SCONJ or ADP
+        parcellation (frozenset[str]): Connectors, by their text, that are no
+            subordinators whatever their part of speech: a sentence they open is
+            linked to the one before (parcellation)
         messages (dict[str, str]): Messages of the errors by key (MESSAGES)
 
     Raises:
@@ -162,6 +165,7 @@ class ConnectorMatcher:
     read_through_marks: ClassVar[frozenset[str]] = frozenset()
     split_by_marks: ClassVar[frozenset[str]] = frozenset()
     subordinators: ClassVar[frozenset[str]] = frozenset()
+    parcellation: ClassVar[frozenset[str]] = frozenset()
     messages: ClassVar[Mapping[str, str]] = MESSAGES
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
@@ -182,6 +186,7 @@ class ConnectorMatcher:
             "read_through_marks",
             "split_by_marks",
             "subordinators",
+            "parcellation",
         ):
             check_words(getattr(cls, name), name, ordered=False)
         for name in (
@@ -307,9 +312,9 @@ class ConnectorMatcher:
 
         Description:
             A connector of subordinators, or a one-word connector whose part of
-            speech is SCONJ or ADP: the clause of a subordinating conjunction and
-            the phrase of a preposition belong to the sentence of the connector,
-            wherever it stands
+            speech is SCONJ or ADP, but none of parcellation: the clause of a
+            subordinating conjunction and the phrase of a preposition belong to
+            the sentence of the connector, wherever it stands
 
         Arguments:
             connector (Connector): Occurrence of a connector
@@ -318,6 +323,8 @@ class ConnectorMatcher:
         Returns:
             bool: Result of the check
         """
+        if connector.text in self.parcellation:
+            return False
         return connector.text in self.subordinators or (
             connector.end - connector.start == 1 and pos in ("SCONJ", "ADP")
         )

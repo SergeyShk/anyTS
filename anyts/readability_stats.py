@@ -154,7 +154,10 @@ class ReadabilityStats(Stats):
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
+        # The scales of the presets a class sets itself: a subclass may narrow the presets
         for attribute in ("preset_level_scales", "preset_reading_ease_grades"):
+            if attribute not in vars(cls):
+                continue
             unknown = [preset for preset in getattr(cls, attribute) if preset not in cls.presets]
             if unknown:
                 raise ParameterError(

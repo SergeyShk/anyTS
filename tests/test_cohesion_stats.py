@@ -662,6 +662,18 @@ def test_is_subordinator():
     assert matcher.is_subordinator(as_soon_as) and matcher.is_subordinator(as_soon_as, "ADV")
 
 
+def test_parcellation_is_no_subordinator():
+    class Parcellating(Subordinating):
+        parcellation = frozenset({"because"})
+
+    matcher = Parcellating({"because": ("causal", "primary"), "when": ("temporal", "primary")})
+    because, when = matcher.find(["because", "when"])
+    assert not matcher.is_subordinator(because, "SCONJ")
+    assert matcher.is_subordinator(when, "SCONJ")
+    with pytest.raises(SourceTypeError):
+        type("Wrong", (ConnectorMatcher,), {"parcellation": frozenset({1})})
+
+
 @pytest.mark.parametrize("name", ["classes", "kinds"])
 def test_names_of_the_densities_by_place_are_reserved(name):
     with pytest.raises(ParameterError, match=r"cannot be named inter, intra"):

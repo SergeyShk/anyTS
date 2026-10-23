@@ -354,6 +354,30 @@ def is_span(value: object) -> TypeGuard[Span]:
     return tokens is not None and isinstance(value, tokens.Span)
 
 
+def is_language(value: object) -> TypeGuard[Language]:
+    """
+    Checking whether a value is a Language pipeline of spaCy
+
+    Description:
+        The check does not import spaCy, as is_doc: a pipeline exists only once
+        spaCy is loaded, so before that every value gives False
+
+    Arguments:
+        value (object): Value to check
+
+    Returns:
+        bool: Result of the check
+
+    Example:
+        >>> import spacy
+        >>> from anyts.utils import is_language
+        >>> is_language(spacy.blank("en")), is_language("en_core_web_sm")
+        (True, False)
+    """
+    language = getattr(sys.modules.get("spacy.language"), "Language", None)
+    return language is not None and isinstance(value, language)
+
+
 def has_sents(doc: Doc) -> bool:
     """
     Checking whether a Doc has its sentence boundaries
