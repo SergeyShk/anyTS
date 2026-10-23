@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, NamedTuple
 
 from ..exceptions import ParameterError, SourceTypeError
 from ..extractors import BLANK_LINE, _check_spans, _iter_words
-from ..utils import _unit_word, check_integer, has_sents, is_doc, iter_doc_units
+from ..utils import _unit_word, check_bool, check_integer, has_sents, is_doc, iter_doc_units
 
 if TYPE_CHECKING:
     from spacy.tokens import Doc, Token
@@ -95,8 +95,8 @@ def kwic(
         SourceTypeError: If the source is neither a string nor a Doc object, the keyword
             is not a string, a hook is not callable, tokenize does not give the words
             of a string in order or sentenize its sentences inside it
-        ParameterError: If the keyword has no words or the window is not an integer
-            or is negative
+        ParameterError: If the keyword has no words, the window is not an integer or
+            is negative, or by_lemma or ignore_case is not a bool
 
     Example:
         >>> from anyts.corpus import kwic
@@ -132,6 +132,8 @@ def kwic(
         for index in range(1, len(key_words))
     ]
     check_integer(window, "window")
+    check_bool(by_lemma, "comparison by the lemmas")
+    check_bool(ignore_case, "folding of the case")
     if window < 0:
         raise ParameterError("The window cannot be negative")
     text, words, tokens = _source_words(source, split, join_hyphens)

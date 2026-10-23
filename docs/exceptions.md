@@ -43,20 +43,22 @@ The classes are available from `anyts` and from `anyts.exceptions`. A language l
 ## Messages { #messages }
 
 <!-- --8<-- [start:messages] -->
-The errors of the classes of statistics (`Stats` and its subclasses), of `StatsComponent`, of the extractors `SentsExtractor`, `WordsExtractor` and `CharNgramsExtractor` and of `ConnectorMatcher` take their messages from the class attribute `messages`, a mapping of a key to a message, `anyts.constants.MESSAGES` in English by default; the messages with fields in braces are format strings. A language library sets the messages of its language on its subclasses, `messages = {**MESSAGES, **own}`, and they cover every error such a class raises itself. The functions `check_params`, `calc_windowed` and `calc_reading_time`, which these classes call, take the messages as the keyword `messages`.
+The errors of the classes of statistics (`Stats` and its subclasses), of `StatsComponent`, of the extractors `SentsExtractor`, `WordsExtractor` and `CharNgramsExtractor` and of `ConnectorMatcher` take their messages from the class attribute `messages`, a mapping of a key to a message, `anyts.constants.MESSAGES` in English by default, a read-only mapping shared by every class; the messages with fields in braces are format strings. A language library sets the messages of its language on its subclasses, `messages = MappingProxyType({**MESSAGES, **own})`, and they cover every error such a class raises itself, except the positions of the marks of `ConnectorMatcher.find` and the type of the connector of `is_subordinator`, whose messages are in English. The functions `check_params`, `calc_windowed` and `calc_reading_time`, which these classes call, take the messages as the keyword `messages`.
 
-The shared checks of `anyts.utils` (`check_integer`, `check_number`, `check_words`, `check_sequence`), which these classes call too, and the other functions of the core keep their messages in English.
+The shared checks of `anyts.utils` (`check_integer`, `check_number`, `check_bool`, `check_words`, `check_sequence`), which these classes call too, and the other functions of the core keep their messages in English.
 <!-- --8<-- [end:messages] -->
 
 === "Code"
 
     ``` python
+    from types import MappingProxyType
+
     from anyts.constants import MESSAGES
     from anyts.diversity_stats import DiversityStats
 
 
     class Diversity(DiversityStats):
-        messages = {**MESSAGES, "no_words": "Il testo non contiene parole"}
+        messages = MappingProxyType({**MESSAGES, "no_words": "Il testo non contiene parole"})
 
 
     try:

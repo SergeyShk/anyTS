@@ -11,7 +11,7 @@ Whitespace runs are collapsed into a single space, punctuation marks are kept. W
 
 Raises:
 
-- `ParameterError` - an `n` that is not an integer of at least one.
+- `ParameterError` - an `n` that is not an integer of at least one, a `lowercase` or `within_words` that is not a `bool`.
 <!-- --8<-- [end:CharNgramsExtractor] -->
 
 === "Code"

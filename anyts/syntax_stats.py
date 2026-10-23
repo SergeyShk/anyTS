@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+import zlib
 from collections import Counter
 from collections.abc import Callable, Iterable, Mapping, Sequence
-from functools import cache, partial
+from functools import cache, partial, wraps
 from math import nan
 from statistics import fmean, pstdev
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, TypeVar, cast
 
 from .constants import (
     AGENT_DEPS,
@@ -29,6 +30,7 @@ from .utils import (
     is_doc,
     is_finite_verb,
     is_infinitive,
+    is_token,
     is_word,
     joins_previous,
     safe_divide,
@@ -38,6 +40,23 @@ from .utils import (
 if TYPE_CHECKING:
     from spacy.tokens import Doc, Token
     from spacy.vocab import Vocab
+
+_Function = TypeVar("_Function", bound=Callable[..., Any])
+
+
+def _takes_token(function: _Function) -> _Function:
+    """A function of a token: a value that is no Token raises SourceTypeError, not AttributeError"""
+
+    @wraps(function)
+    def checked(token: object, *args: Any, **kwargs: Any) -> Any:
+        try:
+            return function(token, *args, **kwargs)
+        except AttributeError:
+            if is_token(token):
+                raise
+            raise SourceTypeError(f"A Token is expected, not {type(token).__name__}") from None
+
+    return cast(_Function, checked)
 
 
 class SyntaxStats(Stats):
@@ -178,7 +197,7 @@ class SyntaxStats(Stats):
                 sents.append(tuple(sent_words))
         if not sents:
             raise SourceError(messages["no_words"])
-        self.sents = tuple(sents)
+        self.sents = _light_sents(doc, sents)
         words = [token for sent in sents for token in sent]
         self.n_sents = len(sents)
         self.n_words = len(words)
@@ -267,13 +286,14 @@ class SyntaxStats(Stats):
         self.noun_verb_ratio = safe_divide(self.n_nouns, self.n_verbs, nan)
 
     def __getstate__(self) -> dict[str, Any]:
-        """State for pickle and copy: spaCy pickles no token, so sents goes as the bytes of
-        its Doc and the positions of the words"""
+        """State for pickle and copy: spaCy pickles no token, so sents goes as the compressed
+        bytes of its Doc and the positions of the words"""
         state = self.__dict__.copy()
         sents = state.pop("sents", None)
         if sents:
             doc = sents[0][0].doc
-            state["_sents_doc"] = (doc.lang_, doc.to_bytes(exclude=["tensor", "user_data"]))
+            data = zlib.compress(doc.to_bytes(exclude=["tensor", "user_data"]))
+            state["_sents_doc"] = (doc.lang_, data)
             state["_sents_positions"] = tuple(tuple(token.i for token in sent) for sent in sents)
         return state
 
@@ -287,7 +307,7 @@ class SyntaxStats(Stats):
             from spacy.tokens import Doc
 
             lang, data = saved
-            doc = Doc(_blank_vocab(lang)).from_bytes(data)
+            doc = Doc(_blank_vocab(lang)).from_bytes(zlib.decompress(data))
             self.sents = tuple(tuple(doc[i] for i in sent) for sent in positions)
 
     def parse(self, source: Doc) -> Doc:
@@ -480,6 +500,17 @@ class SyntaxStats(Stats):
             list[tuple[Token, Token]]: Pairs of the verb and the noun in the order of the words
         """
         return []
+
+
+def _light_sents(doc: Doc, sents: Sequence[Sequence[Token]]) -> tuple[tuple[Token, ...], ...]:
+    """
+    Words of the sentences on a copy of the Doc without its tensor and user data: the
+    statistics keep neither the activations of the model nor a cycle through an extension
+    """
+    from spacy.tokens import Doc
+
+    light = Doc.from_docs([doc], exclude=["spans", "tensor", "user_data"])  # type: ignore[call-arg]  # not in the stub of spaCy
+    return tuple(tuple(light[token.i] for token in sent) for sent in sents)
 
 
 @cache
@@ -808,6 +839,7 @@ def _unit_parents(units: Sequence[Sequence[Token]]) -> list[int | None]:
     return parents
 
 
+@_takes_token
 def predicate_form(token: Token, auxiliary_form: Callable[[Token], str] | None = None) -> str:
     """
     Getting the verb form of a predicate
@@ -831,7 +863,7 @@ def predicate_form(token: Token, auxiliary_form: Callable[[Token], str] | None =
             an empty string for a word with no verb form
 
     Raises:
-        SourceTypeError: If auxiliary_form is not callable
+        SourceTypeError: If the token is not a Token or auxiliary_form is not callable
 
     Example:
         >>> import spacy
@@ -949,14 +981,16 @@ def _chain_sizes(nodes: Iterable[int], links: Iterable[tuple[int, int]]) -> list
     return list(chains.values())
 
 
+@_takes_token
 def is_predicate(token: Token, join_hyphens: bool = False) -> bool:
     """
     Checking whether a word can be the predicate of its clause
 
     Description:
-        A verb (VERB, AUX) or a word with a subject of its own (nsubj, csubj and
-        their subtypes): the nominal predicate of he is tall passes, a
-        parenthetical word does not
+        A verb (VERB, AUX), a word with a subject of its own (nsubj, csubj and
+        their subtypes) or with a copula (cop): the nominal predicate of he is
+        tall and of a language that drops the subject (y estaba cansado) passes,
+        a parenthetical word does not
 
     Arguments:
         token (Token): Token
@@ -964,12 +998,17 @@ def is_predicate(token: Token, join_hyphens: bool = False) -> bool:
 
     Returns:
         bool: Result of the check
+
+    Raises:
+        SourceTypeError: If the token is not a Token
     """
     return token.pos_ in ("VERB", "AUX") or any(
-        base_dep(child) in SUBJECT_DEPS for child in get_children(token, join_hyphens)
+        base_dep(child) in SUBJECT_DEPS or base_dep(child) == "cop"
+        for child in get_children(token, join_hyphens)
     )
 
 
+@_takes_token
 def is_clause_head(
     token: Token,
     join_hyphens: bool = False,
@@ -1004,7 +1043,8 @@ def is_clause_head(
         bool: Result of the check
 
     Raises:
-        SourceTypeError: If is_infinitive_periphrasis or auxiliary_form is not callable
+        SourceTypeError: If the token is not a Token, or is_infinitive_periphrasis or
+            auxiliary_form is not callable
     """
     if is_infinitive_periphrasis is not None:
         check_callable(is_infinitive_periphrasis, "check of an infinitive periphrasis")
@@ -1034,7 +1074,7 @@ def _is_clause_head(
                 if form == "Fin":
                     return True
                 completed = (
-                    _completed_word(token, auxiliary_form)
+                    _completed_word(token, is_infinitive_periphrasis, auxiliary_form)
                     if _is_infinitive_complement(token, is_infinitive_periphrasis, auxiliary_form)
                     else None
                 )
@@ -1059,6 +1099,7 @@ def _is_clause_head(
     return False
 
 
+@_takes_token
 def is_infinitive_clause(
     token: Token,
     is_infinitive_periphrasis: Callable[[Token], bool] | None = None,
@@ -1092,8 +1133,8 @@ def is_infinitive_clause(
         bool: Result of the check
 
     Raises:
-        SourceTypeError: If is_infinitive_periphrasis, is_clause_head or
-            auxiliary_form is not callable
+        SourceTypeError: If the token is not a Token, or is_infinitive_periphrasis,
+            is_clause_head or auxiliary_form is not callable
     """
     if is_infinitive_periphrasis is not None:
         check_callable(is_infinitive_periphrasis, "check of an infinitive periphrasis")
@@ -1127,7 +1168,7 @@ def _is_infinitive_clause(
     """is_infinitive_clause with checked hooks"""
     if not _is_infinitive_complement(token, is_infinitive_periphrasis, auxiliary_form):
         return False
-    completed = _completed_word(token, auxiliary_form)
+    completed = _completed_word(token, is_infinitive_periphrasis, auxiliary_form)
     return completed is not None and is_clause_head(completed)
 
 
@@ -1142,14 +1183,25 @@ def _is_infinitive_complement(
     return not (is_infinitive_periphrasis is not None and is_infinitive_periphrasis(token))
 
 
-def _completed_word(token: Token, auxiliary_form: Callable[[Token], str] | None) -> Token | None:
-    """Word an infinitive complement completes, up its non-finite complements; None in a loop"""
+def _completed_word(
+    token: Token,
+    is_infinitive_periphrasis: Callable[[Token], bool] | None,
+    auxiliary_form: Callable[[Token], str] | None,
+) -> Token | None:
+    """
+    Word an infinitive complement completes, up its non-finite complements and the
+    infinitives of a periphrasis a model attaches as conj or csubj; None in a loop
+    """
     seen = {token.i}
     word = token.head
-    while (
-        base_dep(word) == "xcomp"
-        and predicate_form(word, auxiliary_form) != "Fin"
-        and word.i not in seen
+    while word.i not in seen and (
+        (base_dep(word) == "xcomp" and predicate_form(word, auxiliary_form) != "Fin")
+        or (
+            is_infinitive_periphrasis is not None
+            and base_dep(word) in ("conj", "csubj")
+            and predicate_form(word, auxiliary_form) == "Inf"
+            and is_infinitive_periphrasis(word)
+        )
     ):
         seen.add(word.i)
         word = word.head
@@ -1161,6 +1213,7 @@ def _completed_word(token: Token, auxiliary_form: Callable[[Token], str] | None)
     return None if above.i == token.i else word
 
 
+@_takes_token
 def is_subordinate_clause_head(
     token: Token,
     is_clause_head: Callable[[Token], bool] | None = None,
@@ -1188,7 +1241,8 @@ def is_subordinate_clause_head(
         bool: Result of the check
 
     Raises:
-        SourceTypeError: If is_clause_head or auxiliary_form is not callable
+        SourceTypeError: If the token is not a Token, or is_clause_head or auxiliary_form
+            is not callable
     """
     if auxiliary_form is not None:
         check_callable(auxiliary_form, "verb form of an auxiliary")
@@ -1207,6 +1261,7 @@ def is_subordinate_clause_head(
     return not is_root(token) and dep in SUBORDINATE_CLAUSE_DEPS
 
 
+@_takes_token
 def is_infinitive_clause_head(
     token: Token,
     is_clause_head: Callable[[Token], bool] | None = None,
@@ -1233,7 +1288,8 @@ def is_infinitive_clause_head(
         bool: Result of the check
 
     Raises:
-        SourceTypeError: If is_clause_head or auxiliary_form is not callable
+        SourceTypeError: If the token is not a Token, or is_clause_head or auxiliary_form
+            is not callable
     """
     if auxiliary_form is not None:
         check_callable(auxiliary_form, "verb form of an auxiliary")
@@ -1249,6 +1305,7 @@ def is_infinitive_clause_head(
     return base_dep(token) == "xcomp" and predicate_form(token, auxiliary_form) == "Inf"
 
 
+@_takes_token
 def is_passive(token: Token, join_hyphens: bool = False) -> bool:
     """
     Checking whether a word is a passive verb form
@@ -1264,6 +1321,9 @@ def is_passive(token: Token, join_hyphens: bool = False) -> bool:
 
     Returns:
         bool: Result of the check
+
+    Raises:
+        SourceTypeError: If the token is not a Token
     """
     if token.pos_ != "VERB":
         return False
@@ -1272,6 +1332,7 @@ def is_passive(token: Token, join_hyphens: bool = False) -> bool:
     )
 
 
+@_takes_token
 def has_agent(token: Token, join_hyphens: bool = False) -> bool:
     """
     Checking whether a word has an agent
@@ -1286,10 +1347,14 @@ def has_agent(token: Token, join_hyphens: bool = False) -> bool:
 
     Returns:
         bool: Result of the check
+
+    Raises:
+        SourceTypeError: If the token is not a Token
     """
     return any(child.dep_ in AGENT_DEPS for child in get_children(token, join_hyphens))
 
 
+@_takes_token
 def is_agentless(token: Token, join_hyphens: bool = False) -> bool:
     """
     Checking whether a word is a passive form with no agent
@@ -1303,6 +1368,9 @@ def is_agentless(token: Token, join_hyphens: bool = False) -> bool:
 
     Returns:
         bool: Result of the check
+
+    Raises:
+        SourceTypeError: If the token is not a Token
     """
     return is_passive(token, join_hyphens) and not has_agent(token, join_hyphens)
 

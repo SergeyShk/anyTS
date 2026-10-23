@@ -374,10 +374,39 @@ def test_rules_of_the_parts_of_speech_through_a_mark(matcher):
     assert texts(matcher.find(words, pos=pos, breaks={2})) == ["above all"]
 
 
-@pytest.mark.parametrize(("breaks", "error"), [("1", SourceTypeError), ([1.5], ParameterError)])
+@pytest.mark.parametrize(
+    ("breaks", "error"),
+    [
+        ("1", SourceTypeError),
+        ([1.5], ParameterError),
+        ([0], ParameterError),
+        ([2], ParameterError),
+    ],
+)
 def test_positions_of_the_marks_are_checked(matcher, breaks, error):
     with pytest.raises(error):
-        matcher.find(["and"], breaks=breaks)
+        matcher.find(["and", "so"], breaks=breaks)
+
+
+@pytest.mark.parametrize(("words", "position"), [(["so"], 1), ([], 0)])
+def test_positions_of_the_marks_in_a_sentence_of_fewer_than_two_words(matcher, words, position):
+    with pytest.raises(
+        ParameterError, match=r"^A sentence of fewer than two words has no positions"
+    ):
+        matcher.find(words, breaks={position})
+
+
+def test_rules_by_the_normalized_text_of_a_connector():
+    class Rules(Subordinating):
+        subordinators = frozenset({"as  Soon as"})
+        blocked_after: ClassVar = {"Before": frozenset({"the"})}
+
+    matcher = Rules({"As soon AS": ("temporal", "secondary"), "BEFORE": ("temporal", "primary")})
+    (as_soon_as,) = matcher.find(["as", "soon", "as", "he", "came"])
+    assert as_soon_as.text == "As soon AS" and matcher.is_subordinator(as_soon_as)
+    assert matcher.find(["before", "the", "rain"]) == []
+    with pytest.raises(SourceTypeError, match=r"^A Connector is expected, not str$"):
+        matcher.is_subordinator("before")
 
 
 def test_rules_of_the_parts_of_speech(matcher):

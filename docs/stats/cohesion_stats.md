@@ -385,7 +385,7 @@ Raises:
 | `pos` | `list[str]` | `None` | Parts of speech of the words |
 | `breaks` | `set[int]` | `None` | Positions of the words a punctuation mark stands before |
 
-Words that are not a list of strings and parts of speech that are not a list of strings and `None` (the tags `token.pos_` of spaCy, not the numbers `token.pos`) and positions of the marks that are not a collection raise `SourceTypeError`, a number of the sentence or a position of a mark that is not an integer and parts of speech not as many as the words `ParameterError`.
+Words that are not a list of strings and parts of speech that are not a list of strings and `None` (the tags `token.pos_` of spaCy, not the numbers `token.pos`) and positions of the marks that are not a collection raise `SourceTypeError`, a number of the sentence or a position of a mark that is not an integer, a position of a mark that is not that of a word after the first and parts of speech not as many as the words `ParameterError`.
 <!-- --8<-- [end:ConnectorMatcher-find] -->
 
 === "Code"
@@ -419,7 +419,7 @@ Words that are not a list of strings and parts of speech that are not a list of 
     ```
 
 <!-- --8<-- [start:ConnectorMatcher-is_subordinator] -->
-`is_subordinator(connector, pos=None)` checks whether an occurrence of a connector ties its clause or phrase to its own sentence: a connector of `subordinators`, or a one-word connector whose part of speech `pos` is `SCONJ` or `ADP`, but none of `parcellation`. The clause of a subordinating conjunction and the phrase of a preposition belong to the sentence of the connector wherever it stands, so a subordinator opening a sentence (*when he came, ...*, *despite the rain, ...*) does not link it to the ones before.
+`is_subordinator(connector, pos=None)` checks whether an occurrence of a connector ties its clause or phrase to its own sentence: a connector of `subordinators`, or a one-word connector whose part of speech `pos` is `SCONJ` or `ADP`, but none of `parcellation`. The clause of a subordinating conjunction and the phrase of a preposition belong to the sentence of the connector wherever it stands, so a subordinator opening a sentence (*when he came, ...*, *despite the rain, ...*) does not link it to the ones before. A connector that is not a `Connector` raises `SourceTypeError`.
 <!-- --8<-- [end:ConnectorMatcher-is_subordinator] -->
 
 ## For library developers { #hooks }
@@ -471,7 +471,7 @@ The rules of a language are class attributes of a subclass, empty by default apa
 | `classes`, `kinds` | class attributes | Classes and kinds of the dictionary; `CONNECTOR_CLASSES` and `CONNECTOR_KINDS` by default. The names `inter` and `intra` (`CONNECTOR_PLACES`) belong to the densities by place of `CohesionStats` and raise `ParameterError` when the class is defined |
 | `messages` | class attribute | Messages of the errors by key; `MESSAGES` by default |
 
-The words of the lists and the keys of `pos_extra` are normalized forms, while the other lists are keyed by the connector as the dictionary writes it. A rule that is not a collection of strings, or a mapping of strings to them, raises `SourceTypeError` when the class is defined.
+The words of the lists and the keys of `pos_extra` are normalized forms; the other lists are keyed by the connector, and a connector of the dictionary finds its rules by its normalized form, however either of them writes it. A rule that is not a collection of strings, or a mapping of strings to them, raises `SourceTypeError` when the class is defined.
 <!-- --8<-- [end:ConnectorMatcher-hooks] -->
 
 </details>

@@ -143,7 +143,9 @@ class Stats:
         Description:
             The band of the scale of level_scale. A statistic is a name of
             stat_names or a public property of the class; a key of the flat
-            statistics (get_stats(flat=True)) has no scale
+            statistics (get_stats(flat=True)) has no scale, and so has a key of
+            any value of a dictionary statistic, which the table of another
+            text may have
 
         Arguments:
             stat (str): Name of the statistic
@@ -172,11 +174,12 @@ class Stats:
             return False
         names = self.stat_names()
         # The statistics are computed only for a name that begins as one of them
-        return (
-            stat not in names
-            and any(stat.startswith(f"{name}_") for name in names)
-            and stat in self.get_stats(flat=True)
-        )
+        prefixed = [name for name in names if stat.startswith(f"{name}_")]
+        if stat in names or not prefixed:
+            return False
+        # Any value of a dictionary statistic: another text may have it in its table
+        stats = self.get_stats()
+        return any(isinstance(stats.get(name), Mapping) for name in prefixed)
 
     def _check_stat(self, stat: object) -> None:
         """Raising UnknownStatError for a name neither of stat_names nor a public property"""

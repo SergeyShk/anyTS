@@ -56,7 +56,7 @@ Raises:
 <!-- --8<-- [end:Stats-print_stats] -->
 
 <!-- --8<-- [start:Stats-describe] -->
-`describe(stat)` returns the band of the scale of the statistic `stat` (`level_scale`), and `None` for a statistic without a scale, with an undefined value (nan) or for a key of the flat statistics (`get_stats(flat=True)`). A name that is neither of `stat_names` nor a public property of the class raises `UnknownStatError`.
+`describe(stat)` returns the band of the scale of the statistic `stat` (`level_scale`), and `None` for a statistic without a scale, with an undefined value (nan) or for a key of the flat statistics (`get_stats(flat=True)`), a key of any value of a dictionary statistic included, as the table of another text may have it. A name that is neither of `stat_names` nor a public property of the class raises `UnknownStatError`.
 <!-- --8<-- [end:Stats-describe] -->
 
 === "Code"

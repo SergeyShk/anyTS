@@ -92,7 +92,7 @@ Compares two sets of values of one feature and returns one row in the order of `
 | `texts_a` | `list` | `None` | Texts of the values in the first corpus for the bootstrap; `None` - every value a text of its own |
 | `texts_b` | `list` | `None` | Texts of the values in the second corpus |
 
-A value that is not a number or a missing one, values that are not a flat list and texts that are not labels of one type raise `SourceTypeError`; an `n_bootstrap` that is not an integer of at least one, texts not as many as the values and an `rng` that is not a numpy `Generator` raise `ParameterError`.
+A value that is neither a number nor a missing one, values that are not a flat list and texts that are not labels of one type raise `SourceTypeError`; an `n_bootstrap` that is not an integer of at least one, texts not as many as the values and an `rng` that is not a numpy `Generator` raise `ParameterError`.
 <!-- --8<-- [end:compare_values] -->
 
 <!-- --8<-- [start:calc_cohen_d] -->
@@ -107,7 +107,7 @@ Cohen's d with the pooled sample variances (ddof=1); `nan` with fewer than two v
 | `values_a` | `list[float]` | - | Values in the first corpus |
 | `values_b` | `list[float]` | - | Values in the second corpus |
 
-A value that is not a number or a missing one (`None`, `NA`) and values that are not a flat list raise `SourceTypeError`.
+A value that is neither a number nor a missing one (`None`, `NA`) and values that are not a flat list raise `SourceTypeError`.
 <!-- --8<-- [end:calc_cohen_d] -->
 
 <!-- --8<-- [start:calc_cliff_delta] -->
@@ -122,7 +122,7 @@ Cliff's delta, the share of the pairs where the first value is greater minus the
 | `values_a` | `list[float]` | - | Values in the first corpus |
 | `values_b` | `list[float]` | - | Values in the second corpus |
 
-A value that is not a number or a missing one (`None`, `NA`) and values that are not a flat list raise `SourceTypeError`.
+A value that is neither a number nor a missing one (`None`, `NA`) and values that are not a flat list raise `SourceTypeError`.
 <!-- --8<-- [end:calc_cliff_delta] -->
 
 <!-- --8<-- [start:bootstrap_median_diff] -->
@@ -142,7 +142,7 @@ The percentile bootstrap interval of the difference of the medians. With `texts_
 | `texts_a` | `list` | `None` | Texts of the values in the first corpus; `None` - every value is resampled on its own |
 | `texts_b` | `list` | `None` | Texts of the values in the second corpus |
 
-A value that is not a number or a missing one, values that are not a flat list and texts that are not labels of one type raise `SourceTypeError`; an `n_bootstrap` that is not an integer of at least one, a `confidence` that is not a number in (0, 1), texts not as many as the values and an `rng` that is not a numpy `Generator` raise `ParameterError`.
+A value that is neither a number nor a missing one, values that are not a flat list and texts that are not labels of one type raise `SourceTypeError`; an `n_bootstrap` that is not an integer of at least one, a `confidence` that is not a number in (0, 1), texts not as many as the values and an `rng` that is not a numpy `Generator` raise `ParameterError`.
 <!-- --8<-- [end:bootstrap_median_diff] -->
 
 <!-- --8<-- [start:holm_correction] -->
@@ -156,7 +156,7 @@ Holm's correction for multiple comparisons: the p-values are sorted in ascending
 | :-------- | :--- | :------ | :---------- |
 | `p_values` | `list[float]` | - | p-values |
 
-A p-value that is not a number or a missing one and p-values that are not a flat list raise `SourceTypeError`, and a p-value outside [0, 1] `ParameterError`.
+A p-value that is neither a number nor a missing one and p-values that are not a flat list raise `SourceTypeError`, and a p-value outside [0, 1] `ParameterError`.
 <!-- --8<-- [end:holm_correction] -->
 
 === "Code"

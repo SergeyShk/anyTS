@@ -132,6 +132,12 @@ def test_describe_flat_key(sizes, stat):
     assert sizes.describe(stat) is None
 
 
+def test_describe_key_of_another_text(sizes):
+    # a column of a table of several objects
+    assert "c_lengths_4" not in sizes.get_stats(flat=True)
+    assert sizes.describe("c_lengths_4") is None
+
+
 class Tagged(Stats):
     """Statistics of per-word values, counted by get_stats"""
 
@@ -166,13 +172,13 @@ def test_describe_unknown_computes_nothing():
 def test_describe_flat_key_of_an_own_get_stats():
     tagged = Tagged(["NOUN", "VERB", "NOUN"])
     assert tagged.describe("pos_NOUN") is None and tagged.describe("pos") is None
-    with pytest.raises(UnknownStatError):
-        tagged.describe("pos_ADJ")
+    # a value of another text, a column of a table of several objects
+    assert tagged.describe("pos_ADJ") is None
 
 
 @pytest.mark.parametrize(
     "stat",
-    ["unknown", "words", "_private", "stat_names", None, ["n_words"], "c_lengths_4", "n_words_3"],
+    ["unknown", "words", "_private", "stat_names", None, ["n_words"], "n_words_3"],
 )
 def test_describe_unknown(sizes, stat):
     message = (

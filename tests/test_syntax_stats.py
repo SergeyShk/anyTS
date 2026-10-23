@@ -1177,20 +1177,41 @@ def test_infinitive_clauses(periphrasis, heads_of_clauses, infinitive):
 
 
 def test_infinitive_clause_by_the_hooks_of_its_clause_head():
-    # Debe salir y querer cantar: querer, a conjunct of the periphrasis, heads no clause
+    # Debe salir y querer, pide cantar: pide hangs on querer, a conjunct of the periphrasis,
+    # so the clause of pide is the one of the periphrasis
     doc = parse(
-        ["Debe", "salir", "y", "querer", "cantar"],
-        [0, 0, 3, 0, 3],
-        ["ROOT", "xcomp", "cc", "conj", "xcomp"],
-        ["VerbForm=Fin", "VerbForm=Inf", "", "VerbForm=Inf", "VerbForm=Inf"],
-        pos=["AUX", "VERB", "CCONJ", "VERB", "VERB"],
+        ["Debe", "salir", "y", "querer", "pide", "cantar"],
+        [0, 0, 3, 0, 3, 4],
+        ["ROOT", "xcomp", "cc", "conj", "conj", "xcomp"],
+        ["VerbForm=Fin", "VerbForm=Inf", "", "VerbForm=Inf", "VerbForm=Fin", "VerbForm=Inf"],
+        pos=["AUX", "VERB", "CCONJ", "VERB", "VERB", "VERB"],
     )
 
     def periphrasis(token):
         return token.head.text == "Debe"
 
-    assert not is_infinitive_clause(doc[4], periphrasis)
-    assert is_infinitive_clause(doc[4], periphrasis, is_clause_head)
+    assert not is_infinitive_clause(doc[5], periphrasis)
+    assert is_infinitive_clause(doc[5], periphrasis, is_clause_head)
+
+
+@pytest.mark.parametrize(("verb", "dep"), [("Tiene", "conj"), ("Hay", "csubj")])
+def test_infinitive_clause_under_a_periphrasis_attached_as_conj_or_csubj(verb, dep):
+    # Tiene que intentar salir, Hay que intentar salir: the models attach intentar to the
+    # verb of the periphrasis as conj or csubj
+    doc = parse(
+        [verb, "que", "intentar", "salir"],
+        [0, 2, 0, 2],
+        ["ROOT", "mark", dep, "xcomp"],
+        ["VerbForm=Fin", "", "VerbForm=Inf", "VerbForm=Inf"],
+        pos=["VERB", "SCONJ", "VERB", "VERB"],
+    )
+
+    def periphrasis(token):
+        return token.head.text == verb
+
+    assert not is_clause_head(doc[2], is_infinitive_periphrasis=periphrasis)
+    assert is_infinitive_clause(doc[3], periphrasis)
+    assert is_clause_head(doc[3], is_infinitive_periphrasis=periphrasis)
 
 
 def is_has(token):
@@ -1412,6 +1433,63 @@ def test_pickle_and_copy():
             ["She", "slept"],
         ]
         assert clone.sents[0][1].dep_ == "ROOT"
+
+
+def test_sents_keep_no_tensor_and_no_user_data():
+    import numpy as np
+
+    doc = parse(["He", "came"], [1, 1], ["nsubj", "ROOT"], pos=["PRON", "VERB"])
+    doc.tensor = np.ones((2, 4), dtype="float32")
+    doc.user_data["stats"] = object()
+    light = SyntaxStats(doc).sents[0][0].doc
+    assert light is not doc
+    assert light.tensor.size == 0 and not light.user_data
+    assert [(token.text, token.dep_, token.head.i) for token in light] == [
+        ("He", "nsubj", 1),
+        ("came", "ROOT", 1),
+    ]
+
+
+def test_copula_makes_a_predicate():
+    # y estaba cansado: a nominal predicate without a subject of its own
+    doc = parse(
+        ["Lo", "pensó", "y", "estaba", "cansado"],
+        [1, 1, 4, 4, 1],
+        ["obj", "ROOT", "cc", "cop", "conj"],
+        pos=["PRON", "VERB", "CCONJ", "AUX", "ADJ"],
+    )
+    assert is_predicate(doc[4]) and not is_predicate(doc[0])
+    assert is_clause_head(doc[4])
+
+
+@pytest.mark.parametrize(
+    "check",
+    [
+        is_clause_head,
+        is_infinitive_clause,
+        is_subordinate_clause_head,
+        is_infinitive_clause_head,
+        predicate_form,
+        is_predicate,
+        is_passive,
+        has_agent,
+        is_agentless,
+    ],
+)
+def test_checks_of_a_token(check):
+    with pytest.raises(SourceTypeError, match=r"^A Token is expected, not NoneType$"):
+        check(None)
+    with pytest.raises(SourceTypeError, match=r"^A Token is expected, not str$"):
+        check("came")
+
+
+def test_error_of_a_hook_on_a_token():
+    # An AttributeError of a hook on a real token is no error of the argument
+    doc = parse(
+        ["Wants", "to", "leave"], [0, 2, 0], ["ROOT", "mark", "xcomp"], ["", "", "VerbForm=Inf"]
+    )
+    with pytest.raises(AttributeError):
+        is_clause_head(doc[2], is_infinitive_periphrasis=lambda token: token.missing)
 
 
 def test_pickle_without_a_language_and_without_sents():

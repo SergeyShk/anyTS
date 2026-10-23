@@ -56,7 +56,7 @@ A phrase does not cross the end of a paragraph or a sentence unless the keyword 
 | `by_lemma` | `bool` | `False` | Compare lemmas instead of word forms |
 | `ignore_case` | `bool` | `True` | Ignore case when comparing word forms |
 
-A keyword without words and a window that is not an integer or is negative raise `ParameterError`; a source that is neither a string nor a `Doc`, a keyword that is not a string and a hook that is not callable raise `SourceTypeError`.
+A keyword without words, a window that is not an integer or is negative and a `by_lemma` or `ignore_case` that is not a `bool` raise `ParameterError`; a source that is neither a string nor a `Doc`, a keyword that is not a string and a hook that is not callable raise `SourceTypeError`.
 <!-- --8<-- [end:kwic-parameters] -->
 
 ## Result
