@@ -1194,18 +1194,20 @@ def test_infinitive_clause_by_the_hooks_of_its_clause_head():
     assert is_infinitive_clause(doc[5], periphrasis, is_clause_head)
 
 
-def test_infinitive_clause_under_a_periphrasis_attached_as_conj():
-    # Tiene que intentar salir: the model attaches intentar to tener as conj
+@pytest.mark.parametrize(("verb", "dep"), [("Tiene", "conj"), ("Hay", "csubj")])
+def test_infinitive_clause_under_a_periphrasis_attached_as_conj_or_csubj(verb, dep):
+    # Tiene que intentar salir, Hay que intentar salir: the models attach intentar to the
+    # verb of the periphrasis as conj or csubj
     doc = parse(
-        ["Tiene", "que", "intentar", "salir"],
+        [verb, "que", "intentar", "salir"],
         [0, 2, 0, 2],
-        ["ROOT", "cc", "conj", "xcomp"],
+        ["ROOT", "mark", dep, "xcomp"],
         ["VerbForm=Fin", "", "VerbForm=Inf", "VerbForm=Inf"],
         pos=["VERB", "SCONJ", "VERB", "VERB"],
     )
 
     def periphrasis(token):
-        return token.head.text == "Tiene"
+        return token.head.text == verb
 
     assert not is_clause_head(doc[2], is_infinitive_periphrasis=periphrasis)
     assert is_infinitive_clause(doc[3], periphrasis)

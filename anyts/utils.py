@@ -1069,7 +1069,7 @@ def check_integer(value: object, what: str) -> None:
 
 def check_bool(value: object, what: str) -> None:
     """
-    Checking that a parameter is a bool
+    Checking that a parameter is a bool, a numpy bool included
 
     Arguments:
         value (object): Value to check
@@ -1086,7 +1086,8 @@ def check_bool(value: object, what: str) -> None:
         ...
         anyts.exceptions.ParameterError: The normalization must be a bool, not str
     """
-    if not isinstance(value, bool):
+    numpy = sys.modules.get("numpy")
+    if not (isinstance(value, bool) or (numpy is not None and isinstance(value, numpy.bool_))):
         raise ParameterError(f"The {what} must be a bool, not {type(value).__name__}")
 
 

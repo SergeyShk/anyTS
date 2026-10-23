@@ -436,7 +436,7 @@ $$
 
 The methods `get_stats`, `to_dataframe`, `print_stats` and `describe` are those of the [statistics interface](stats.md).
 
-The functions of the tree take a spaCy `Doc`, a `Span` or a list of tokens; its words are the tokens of `anyts.utils.is_word`. They read the relations that Universal Dependencies and the ClearNLP labels of the English models share: the head of a token, `cc`, `conj`, `parataxis`, `punct` and `aux`, the subjects `nsubj` and `csubj`, the modifiers of a noun `amod`, `det`, `nmod`, `nummod` and `acl`, the clause relations `ccomp`, `advcl` and `xcomp`, and the root; the copula `cop` of `predicate_form` exists in Universal Dependencies alone. The passive and its agent (`is_passive`, `has_agent`) read the relations of both schemes (`PASSIVE_DEPS`, `AGENT_DEPS`). Everything else is up to a language library.
+The functions of the tree take a spaCy `Doc`, a `Span` or a list of tokens; its words are the tokens of `anyts.utils.is_word`. They read the relations that Universal Dependencies and the ClearNLP labels of the English models share: the head of a token, `cc`, `conj`, `parataxis`, `punct` and `aux`, the subjects `nsubj` and `csubj`, the modifiers of a noun `amod`, `det`, `nmod`, `nummod` and `acl`, the clause relations `ccomp`, `advcl` and `xcomp`, and the root; the copula `cop` of `predicate_form` and `is_predicate` exists in Universal Dependencies alone. The passive and its agent (`is_passive`, `has_agent`) read the relations of both schemes (`PASSIVE_DEPS`, `AGENT_DEPS`). Everything else is up to a language library.
 
 ## Words of a sequence { #get_words }
 

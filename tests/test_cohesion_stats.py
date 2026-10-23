@@ -388,6 +388,11 @@ def test_positions_of_the_marks_are_checked(matcher, breaks, error):
         matcher.find(["and", "so"], breaks=breaks)
 
 
+def test_positions_of_the_marks_in_a_sentence_of_one_word(matcher):
+    with pytest.raises(ParameterError, match=r"^A sentence of one word has no positions"):
+        matcher.find(["so"], breaks={1})
+
+
 def test_rules_by_the_normalized_text_of_a_connector():
     class Rules(Subordinating):
         subordinators = frozenset({"as  Soon as"})

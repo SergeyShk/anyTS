@@ -767,6 +767,7 @@ def test_is_token(nlp):
 @pytest.mark.parametrize("value", ["yes", 1, None])
 def test_check_bool(value):
     check_bool(True, "switch")
+    check_bool(np.True_, "switch")
     with pytest.raises(ParameterError, match=r"^The switch must be a bool"):
         check_bool(value, "switch")
 

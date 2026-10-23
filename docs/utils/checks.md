@@ -189,7 +189,7 @@ A value that is not an integer, a `bool` or a `float` included, even a whole one
 check_bool(value, what)
 ```
 
-Checks that a parameter is a `bool`.
+Checks that a parameter is a `bool`, a numpy `bool_` included.
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |

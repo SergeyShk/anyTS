@@ -326,6 +326,8 @@ class ConnectorMatcher:
                     raise ParameterError(
                         f"A position of a mark must be between 1 and {len(words) - 1}, "
                         f"the positions of the words after the first, not {position}"
+                        if len(words) > 1
+                        else f"A sentence of one word has no positions of the marks, not {position}"
                     )
             marks = frozenset(breaks)
         return self._find(words, sent_index, pos, marks)
