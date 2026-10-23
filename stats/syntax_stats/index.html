@@ -2641,7 +2641,7 @@ Ratio of nouns to verbs                           |   0.50
 <tr>
 <td style="text-align: left;"><code>sents</code></td>
 <td style="text-align: left;"><code>tuple[tuple[Token]]</code></td>
-<td style="text-align: left;">Words of every sentence with words</td>
+<td style="text-align: left;">Words of every sentence with words, on a copy of the <code>Doc</code> without its tensor and user data</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>n_sents</code>, <code>n_words</code></td>
@@ -3059,12 +3059,12 @@ Ratio of nouns to verbs                           |   0.50
 </tr>
 </tbody>
 </table>
-<p>A check of a periphrasis or a form of an auxiliary that is not callable raises <code>SourceTypeError</code>.</p>
+<p>A value that is not a <code>Token</code> and a check of a periphrasis or a form of an auxiliary that is not callable raise <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:is_clause_head] -->
 <!-- --8<-- [start:is_infinitive_clause] -->
 <div class="signature highlight"><pre><span></span><code><span class="n">is_infinitive_clause</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="n">is_infinitive_periphrasis</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">is_clause_head</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">auxiliary_form</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
-<p>Checks whether an infinitive complement heads a clause of its own: an infinitive (<code>predicate_form</code>, so <code>to be chosen</code> is one) under <code>xcomp</code> (<em>wants to leave</em>), unless the language check <code>is_infinitive_periphrasis</code> says it makes one predicate with its head (<em>can leave</em>, <em>begins to leave</em>), or the word it completes, the first one up its chain of non-finite complements under <code>xcomp</code> (<em>kept trying to leave</em>, <em>seemed able to leave</em>), heads no clause by the check <code>is_clause_head</code>: an infinitive in a participial phrase or under an infinitive under <code>acl</code> (<em>trying to leave</em>, <em>the wish to try to leave</em>) belongs to that phrase. A ClearNLP parse hangs an infinitive after a predicative adjective on an <code>acomp</code> or <code>oprd</code> (<em>is ready to leave</em>), which heads no clause, so that infinitive is none.</p>
+<p>Checks whether an infinitive complement heads a clause of its own: an infinitive (<code>predicate_form</code>, so <code>to be chosen</code> is one) under <code>xcomp</code> (<em>wants to leave</em>), unless the language check <code>is_infinitive_periphrasis</code> says it makes one predicate with its head (<em>can leave</em>, <em>begins to leave</em>), or the word it completes, the first one up its chain of non-finite complements under <code>xcomp</code> (<em>kept trying to leave</em>, <em>seemed able to leave</em>) and of the infinitives of a periphrasis that a model attaches as <code>conj</code> or <code>csubj</code>, heads no clause by the check <code>is_clause_head</code>: an infinitive in a participial phrase or under an infinitive under <code>acl</code> (<em>trying to leave</em>, <em>the wish to try to leave</em>) belongs to that phrase. A ClearNLP parse hangs an infinitive after a predicative adjective on an <code>acomp</code> or <code>oprd</code> (<em>is ready to leave</em>), which heads no clause, so that infinitive is none.</p>
 <table>
 <thead>
 <tr>
@@ -3101,7 +3101,7 @@ Ratio of nouns to verbs                           |   0.50
 </tr>
 </tbody>
 </table>
-<p>A check or a form of an auxiliary that is not callable raises <code>SourceTypeError</code>.</p>
+<p>A value that is not a <code>Token</code> and a check or a form of an auxiliary that is not callable raise <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:is_infinitive_clause] -->
 </div>
 <div class="metric-card">
@@ -3141,7 +3141,7 @@ Ratio of nouns to verbs                           |   0.50
 </tr>
 </tbody>
 </table>
-<p>A check or a form of an auxiliary that is not callable raises <code>SourceTypeError</code>.</p>
+<p>A value that is not a <code>Token</code> and a check or a form of an auxiliary that is not callable raise <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:is_subordinate_clause_head] -->
 </div>
 <div class="metric-card">
@@ -3181,7 +3181,7 @@ Ratio of nouns to verbs                           |   0.50
 </tr>
 </tbody>
 </table>
-<p>A check or a form of an auxiliary that is not callable raises <code>SourceTypeError</code>.</p>
+<p>A value that is not a <code>Token</code> and a check or a form of an auxiliary that is not callable raise <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:is_infinitive_clause_head] -->
 </div>
 <div class="metric-card">
@@ -3255,16 +3255,17 @@ Ratio of nouns to verbs                           |   0.50
 </tr>
 </tbody>
 </table>
+<p>A value that is not a <code>Token</code> raises <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:is_passive] -->
 <!-- --8<-- [start:has_agent] -->
 <div class="signature highlight"><pre><span></span><code><span class="n">has_agent</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="n">join_hyphens</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 </code></pre></div>
-<p>Checks whether a word has an agent: a dependent <code>obl:agent</code>, or <code>agent</code> of ClearNLP (<code>AGENT_DEPS</code>). The arguments are those of <code>is_passive</code>.</p>
+<p>Checks whether a word has an agent: a dependent <code>obl:agent</code>, or <code>agent</code> of ClearNLP (<code>AGENT_DEPS</code>). The arguments and the error are those of <code>is_passive</code>.</p>
 <!-- --8<-- [end:has_agent] -->
 <!-- --8<-- [start:is_agentless] -->
 <div class="signature highlight"><pre><span></span><code><span class="n">is_agentless</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="n">join_hyphens</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 </code></pre></div>
-<p>Checks whether a word is a passive form (<code>is_passive</code>) without an agent (<code>has_agent</code>), with the same arguments.</p>
+<p>Checks whether a word is a passive form (<code>is_passive</code>) without an agent (<code>has_agent</code>), with the same arguments and error.</p>
 <!-- --8<-- [end:is_agentless] -->
 </div>
 <div class="metric-card">
@@ -3286,7 +3287,7 @@ Ratio of nouns to verbs                           |   0.50
 </div>
 <h2 id="methods">Methods<a class="headerlink" href="#methods" title="Permanent link">&para;</a></h2>
 <p>The methods <code>get_stats</code>, <code>to_dataframe</code>, <code>print_stats</code> and <code>describe</code> are those of the <a href="../stats/">statistics interface</a>.</p>
-<p>The functions of the tree take a spaCy <code>Doc</code>, a <code>Span</code> or a list of tokens; its words are the tokens of <code>anyts.utils.is_word</code>. They read the relations that Universal Dependencies and the ClearNLP labels of the English models share: the head of a token, <code>cc</code>, <code>conj</code>, <code>parataxis</code>, <code>punct</code> and <code>aux</code>, the subjects <code>nsubj</code> and <code>csubj</code>, the modifiers of a noun <code>amod</code>, <code>det</code>, <code>nmod</code>, <code>nummod</code> and <code>acl</code>, the clause relations <code>ccomp</code>, <code>advcl</code> and <code>xcomp</code>, and the root; the copula <code>cop</code> of <code>predicate_form</code> exists in Universal Dependencies alone. The passive and its agent (<code>is_passive</code>, <code>has_agent</code>) read the relations of both schemes (<code>PASSIVE_DEPS</code>, <code>AGENT_DEPS</code>). Everything else is up to a language library.</p>
+<p>The functions of the tree take a spaCy <code>Doc</code>, a <code>Span</code> or a list of tokens; its words are the tokens of <code>anyts.utils.is_word</code>. They read the relations that Universal Dependencies and the ClearNLP labels of the English models share: the head of a token, <code>cc</code>, <code>conj</code>, <code>parataxis</code>, <code>punct</code> and <code>aux</code>, the subjects <code>nsubj</code> and <code>csubj</code>, the modifiers of a noun <code>amod</code>, <code>det</code>, <code>nmod</code>, <code>nummod</code> and <code>acl</code>, the clause relations <code>ccomp</code>, <code>advcl</code> and <code>xcomp</code>, and the root; the copula <code>cop</code> of <code>predicate_form</code> and <code>is_predicate</code> exists in Universal Dependencies alone. The passive and its agent (<code>is_passive</code>, <code>has_agent</code>) read the relations of both schemes (<code>PASSIVE_DEPS</code>, <code>AGENT_DEPS</code>). Everything else is up to a language library.</p>
 <h2 id="get_words">Words of a sequence<a class="headerlink" href="#get_words" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:get_words] -->
 <div class="signature highlight"><pre><span></span><code><span class="n">get_words</span><span class="p">(</span><span class="n">tokens</span><span class="p">,</span> <span class="n">join_hyphens</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
@@ -3445,7 +3446,7 @@ Ratio of nouns to verbs                           |   0.50
 </tr>
 </tbody>
 </table>
-<p>A hook that is not callable raises <code>SourceTypeError</code>.</p>
+<p>A value that is not a <code>Token</code> and a hook that is not callable raise <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:predicate_form] -->
 
 <div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Code</label><label for="__tabbed_2_2">Result</label></div>
@@ -3487,7 +3488,7 @@ Ratio of nouns to verbs                           |   0.50
 <!-- --8<-- [start:is_predicate] -->
 <div class="signature highlight"><pre><span></span><code><span class="n">is_predicate</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="n">join_hyphens</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 </code></pre></div>
-<p>Checks whether a word can be the predicate of its clause: a verb (<code>VERB</code>, <code>AUX</code>) or a word with a subject of its own (<code>nsubj</code>, <code>csubj</code> and their subtypes, <code>anyts.constants.SUBJECT_DEPS</code>), so the nominal predicate of <code>he is tall</code> passes and a parenthetical word does not.</p>
+<p>Checks whether a word can be the predicate of its clause: a verb (<code>VERB</code>, <code>AUX</code>), a word with a subject of its own (<code>nsubj</code>, <code>csubj</code> and their subtypes, <code>anyts.constants.SUBJECT_DEPS</code>) or with a copula (<code>cop</code>), so the nominal predicate of <code>he is tall</code> and of a language that drops the subject passes and a parenthetical word does not.</p>
 <table>
 <thead>
 <tr>
@@ -3512,6 +3513,7 @@ Ratio of nouns to verbs                           |   0.50
 </tr>
 </tbody>
 </table>
+<p>A value that is not a <code>Token</code> raises <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:is_predicate] -->
 
 <h2 id="calc_modifier_chains">Chains of modifiers<a class="headerlink" href="#calc_modifier_chains" title="Permanent link">&para;</a></h2>

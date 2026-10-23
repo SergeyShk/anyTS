@@ -2884,7 +2884,7 @@ Secondary connectors per 1000 words                             |  142.86
 </tr>
 </tbody>
 </table>
-<p>Words that are not a list of strings and parts of speech that are not a list of strings and <code>None</code> (the tags <code>token.pos_</code> of spaCy, not the numbers <code>token.pos</code>) and positions of the marks that are not a collection raise <code>SourceTypeError</code>, a number of the sentence or a position of a mark that is not an integer and parts of speech not as many as the words <code>ParameterError</code>.</p>
+<p>Words that are not a list of strings and parts of speech that are not a list of strings and <code>None</code> (the tags <code>token.pos_</code> of spaCy, not the numbers <code>token.pos</code>) and positions of the marks that are not a collection raise <code>SourceTypeError</code>, a number of the sentence or a position of a mark that is not an integer, a position of a mark that is not that of a word after the first and parts of speech not as many as the words <code>ParameterError</code>.</p>
 <!-- --8<-- [end:ConnectorMatcher-find] -->
 
 <div class="tabbed-set tabbed-alternate" data-tabs="5:2"><input checked="checked" id="__tabbed_5_1" name="__tabbed_5" type="radio" /><input id="__tabbed_5_2" name="__tabbed_5" type="radio" /><div class="tabbed-labels"><label for="__tabbed_5_1">Code</label><label for="__tabbed_5_2">Result</label></div>
@@ -2918,7 +2918,7 @@ Secondary connectors per 1000 words                             |  142.86
 </div>
 </div>
 <!-- --8<-- [start:ConnectorMatcher-is_subordinator] -->
-<p><code>is_subordinator(connector, pos=None)</code> checks whether an occurrence of a connector ties its clause or phrase to its own sentence: a connector of <code>subordinators</code>, or a one-word connector whose part of speech <code>pos</code> is <code>SCONJ</code> or <code>ADP</code>, but none of <code>parcellation</code>. The clause of a subordinating conjunction and the phrase of a preposition belong to the sentence of the connector wherever it stands, so a subordinator opening a sentence (<em>when he came, ...</em>, <em>despite the rain, ...</em>) does not link it to the ones before.</p>
+<p><code>is_subordinator(connector, pos=None)</code> checks whether an occurrence of a connector ties its clause or phrase to its own sentence: a connector of <code>subordinators</code>, or a one-word connector whose part of speech <code>pos</code> is <code>SCONJ</code> or <code>ADP</code>, but none of <code>parcellation</code>. The clause of a subordinating conjunction and the phrase of a preposition belong to the sentence of the connector wherever it stands, so a subordinator opening a sentence (<em>when he came, ...</em>, <em>despite the rain, ...</em>) does not link it to the ones before. A connector that is not a <code>Connector</code> raises <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:ConnectorMatcher-is_subordinator] -->
 
 <h2 id="hooks">For library developers<a class="headerlink" href="#hooks" title="Permanent link">&para;</a></h2>
@@ -3075,7 +3075,7 @@ Secondary connectors per 1000 words                             |  142.86
 </tr>
 </tbody>
 </table>
-<p>The words of the lists and the keys of <code>pos_extra</code> are normalized forms, while the other lists are keyed by the connector as the dictionary writes it. A rule that is not a collection of strings, or a mapping of strings to them, raises <code>SourceTypeError</code> when the class is defined.</p>
+<p>The words of the lists and the keys of <code>pos_extra</code> are normalized forms; the other lists are keyed by the connector, and a connector of the dictionary finds its rules by its normalized form, however either of them writes it. A rule that is not a collection of strings, or a mapping of strings to them, raises <code>SourceTypeError</code> when the class is defined.</p>
 <!-- --8<-- [end:ConnectorMatcher-hooks] -->
 </details>
 

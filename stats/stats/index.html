@@ -2054,7 +2054,7 @@ Words by length |  {3: 5}
 <!-- --8<-- [end:Stats-print_stats] -->
 
 <!-- --8<-- [start:Stats-describe] -->
-<p><code>describe(stat)</code> returns the band of the scale of the statistic <code>stat</code> (<code>level_scale</code>), and <code>None</code> for a statistic without a scale, with an undefined value (nan) or for a key of the flat statistics (<code>get_stats(flat=True)</code>). A name that is neither of <code>stat_names</code> nor a public property of the class raises <code>UnknownStatError</code>.</p>
+<p><code>describe(stat)</code> returns the band of the scale of the statistic <code>stat</code> (<code>level_scale</code>), and <code>None</code> for a statistic without a scale, with an undefined value (nan) or for a key of the flat statistics (<code>get_stats(flat=True)</code>), a key of any value of a dictionary statistic included, as the table of another text may have it. A name that is neither of <code>stat_names</code> nor a public property of the class raises <code>UnknownStatError</code>.</p>
 <!-- --8<-- [end:Stats-describe] -->
 
 <div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Code</label><label for="__tabbed_2_2">Result</label></div>
