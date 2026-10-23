@@ -354,6 +354,30 @@ def is_span(value: object) -> TypeGuard[Span]:
     return tokens is not None and isinstance(value, tokens.Span)
 
 
+def is_token(value: object) -> TypeGuard[Token]:
+    """
+    Checking whether a value is a Token object of spaCy
+
+    Description:
+        The check does not import spaCy, as is_doc
+
+    Arguments:
+        value (object): Value to check
+
+    Returns:
+        bool: Result of the check
+
+    Example:
+        >>> import spacy
+        >>> from anyts.utils import is_token
+        >>> doc = spacy.blank("en")("The cat sleeps")
+        >>> is_token(doc[0]), is_token(doc[:1])
+        (True, False)
+    """
+    tokens = sys.modules.get("spacy.tokens")
+    return tokens is not None and isinstance(value, tokens.Token)
+
+
 def is_language(value: object) -> TypeGuard[Language]:
     """
     Checking whether a value is a Language pipeline of spaCy
@@ -1041,6 +1065,29 @@ def check_integer(value: object, what: str) -> None:
     """
     if isinstance(value, bool) or not isinstance(value, Integral):
         raise ParameterError(f"The {what} must be an integer, not {type(value).__name__}")
+
+
+def check_bool(value: object, what: str) -> None:
+    """
+    Checking that a parameter is a bool
+
+    Arguments:
+        value (object): Value to check
+        what (str): Name of the parameter, for the message of the error
+
+    Raises:
+        ParameterError: If the value is not a bool
+
+    Example:
+        >>> from anyts.utils import check_bool
+        >>> check_bool(True, "normalization")
+        >>> check_bool("yes", "normalization")
+        Traceback (most recent call last):
+        ...
+        anyts.exceptions.ParameterError: The normalization must be a bool, not str
+    """
+    if not isinstance(value, bool):
+        raise ParameterError(f"The {what} must be a bool, not {type(value).__name__}")
 
 
 def check_number(value: object, what: str) -> None:

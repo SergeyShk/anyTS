@@ -13,7 +13,7 @@ Raises:
 
 - `SourceTypeError` - a source that is neither a string nor a `Doc`, an extractor of another type;
 - `SourceError` - a source without words;
-- `ParameterError` - a threshold that is not an integer of at least one.
+- `ParameterError` - a threshold that is not an integer of at least one, a `normalize` that is not a `bool`.
 <!-- --8<-- [end:BasicStats] -->
 
 A subclass with the syllables of a language - here the groups of vowels, a rough rule for English.

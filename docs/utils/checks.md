@@ -182,6 +182,40 @@ A value that is not an integer, a `bool` or a `float` included, even a whole one
     anyts.exceptions.ParameterError: The window size must be an integer, not float
     ```
 
+## Bools { #check_bool }
+
+<!-- --8<-- [start:check_bool] -->
+``` {.python .signature}
+check_bool(value, what)
+```
+
+Checks that a parameter is a `bool`.
+
+| Parameter | Type | Default | Description |
+| :-------- | :--- | :------ | :---------- |
+| `value` | `object` | - | Value to check |
+| `what` | `str` | - | Name of the parameter, for the message of the error |
+
+A value that is not a `bool`, `0`, `1` and `"yes"` included, raises `ParameterError`.
+<!-- --8<-- [end:check_bool] -->
+
+=== "Code"
+
+    ``` python
+    from anyts.utils import check_bool
+
+    check_bool(True, "normalization")
+    check_bool("yes", "normalization")
+    ```
+
+=== "Result"
+
+    ```
+    Traceback (most recent call last):
+      ...
+    anyts.exceptions.ParameterError: The normalization must be a bool, not str
+    ```
+
 ## Numbers { #check_number }
 
 <!-- --8<-- [start:check_number] -->

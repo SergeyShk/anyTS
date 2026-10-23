@@ -147,6 +147,12 @@ def test_kwic_errors(keyword, window):
         kwic(text, keyword, window=window)
 
 
+@pytest.mark.parametrize("switch", ["by_lemma", "ignore_case"])
+def test_kwic_switches_are_bools(switch):
+    with pytest.raises(ParameterError, match=r"must be a bool, not str$"):
+        kwic(text, "cat", **{switch: "yes"})
+
+
 @pytest.mark.parametrize(
     ("hook", "value"),
     [("tokenize", "x"), ("lemmatize", "x"), ("sentenize", "x"), ("fold", "x"), ("fold", None)],

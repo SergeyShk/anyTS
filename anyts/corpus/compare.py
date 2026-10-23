@@ -1,7 +1,7 @@
 from collections.abc import Collection, Iterable, Iterator, Mapping, Sequence, Set
 from itertools import pairwise
 from math import isnan, nan, sqrt
-from numbers import Integral, Real
+from numbers import Integral, Number, Real
 from typing import Any
 
 import numpy as np
@@ -332,6 +332,12 @@ def _check_texts(values: Values, texts: Values | None) -> None:
         raise ParameterError(
             f"The texts must match the values one to one: {len(texts)} texts, {len(values)} values"
         )
+    kinds = {
+        str if isinstance(text, str) else Number if isinstance(text, Number) else type(text)
+        for text in texts
+    }
+    if len(kinds) > 1:
+        raise SourceTypeError("The texts must be labels of one type")
     try:
         np.unique(np.asarray(texts))
     except TypeError as e:

@@ -13,6 +13,7 @@ from .constants import MESSAGES
 from .exceptions import ParameterError, SourceTypeError
 from .utils import NUMBER_PATTERN as NUMBER_PATTERN
 from .utils import (
+    check_bool,
     check_callable,
     check_integer,
     check_messages,
@@ -443,7 +444,7 @@ class WordsExtractor(Extractor):
         ParameterError: If the N-gram range is not a pair of integers, its lower bound
             is less than one or greater than the upper
         ParameterError: If a length bound is not an integer, is negative or the minimum
-            is greater than the maximum
+            is greater than the maximum, or a switch is not a bool
         SourceTypeError: If the stop words are not a list of strings
     """
 
@@ -462,6 +463,13 @@ class WordsExtractor(Extractor):
         max_len: int = 0,
     ) -> None:
         super().__init__(tokenizer, min_len, max_len)
+        for value, what in (
+            (filter_punct, "filter of the punctuation"),
+            (filter_nums, "filter of the numbers"),
+            (use_lexemes, "use of the lexemes"),
+            (lowercase, "lowercasing"),
+        ):
+            check_bool(value, what)
         self.filter_punct = filter_punct
         self.filter_nums = filter_nums
         self.use_lexemes = use_lexemes
@@ -614,7 +622,8 @@ class CharNgramsExtractor(Extractor):
         get_most_common: Getting the top N-grams with their frequencies
 
     Raises:
-        ParameterError: If the N-gram length is not an integer or is less than one
+        ParameterError: If the N-gram length is not an integer or is less than one, or
+            lowercase or within_words is not a bool
     """
 
     def __init__(
@@ -625,6 +634,8 @@ class CharNgramsExtractor(Extractor):
         tokenizer: Tokenizer | None = None,
     ) -> None:
         super().__init__(tokenizer)
+        check_bool(lowercase, "lowercasing")
+        check_bool(within_words, "choice of the n-grams within the words")
         check_integer(n, "N-gram length")
         if n < 1:
             raise ParameterError(self.messages["ngram_len"])

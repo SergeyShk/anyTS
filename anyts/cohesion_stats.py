@@ -208,7 +208,7 @@ class ConnectorMatcher:
     def __init__(self, connectors: Mapping[str, tuple[str, str]]):
         if not isinstance(connectors, Mapping):
             raise SourceTypeError(self.messages["connector_dict"])
-        self._entries: dict[str, tuple[str, str, str]] = {}
+        self._entries: dict[str, tuple[str, str, str, str]] = {}
         patterns: dict[str, set[tuple[str, ...]]] = {}
         for connector, value in connectors.items():
             if not (
@@ -227,13 +227,31 @@ class ConnectorMatcher:
             split = " ".join(key.replace("-", " ").replace(".", " ").split())
             for variant in (key, split):
                 if variant:
-                    self._entries[variant] = (connector, cls, kind)
+                    self._entries[variant] = (connector, key, cls, kind)
                     pattern = tuple(variant.split())
                     patterns.setdefault(pattern[0], set()).add(pattern)
         self._by_first = {
             first: tuple(sorted(group, key=lambda pattern: (-len(pattern), pattern)))
             for first, group in patterns.items()
         }
+        # The rules by the normalized text of a connector, as the dictionary is matched
+        self._blocked_after = self._normalized_rules(self.blocked_after)
+        self._blocked_before = self._normalized_rules(self.blocked_before)
+        self._blocked_after_pos = self._normalized_rules(self.blocked_after_pos)
+        self._only_after = self._normalized_rules(self.only_after)
+        self._not_at_start = frozenset(map(self._key, self.not_at_start))
+        self._read_through_marks = frozenset(map(self._key, self.read_through_marks))
+        self._split_by_marks = frozenset(map(self._key, self.split_by_marks))
+        self._subordinators = frozenset(map(self._key, self.subordinators))
+        self._parcellation = frozenset(map(self._key, self.parcellation))
+
+    def _key(self, text: str) -> str:
+        """Normalized text of a connector, the key of the dictionary and of the rules"""
+        return " ".join(self.normalize(text).split())
+
+    def _normalized_rules(self, rules: Mapping[str, frozenset[str]]) -> dict[str, frozenset[str]]:
+        """Rules of the connectors by their normalized text"""
+        return {self._key(text): words for text, words in rules.items()}
 
     def normalize(self, text: str) -> str:
         """
@@ -285,7 +303,8 @@ class ConnectorMatcher:
                 speech are not a list of strings and None, or the positions of the
                 marks are not a collection
             ParameterError: If the number of the sentence or a position of a mark is
-                not an integer, or the parts of speech are not as many as the words
+                not an integer, a position of a mark is not that of a word after the
+                first, or the parts of speech are not as many as the words
         """
         check_words(words)
         check_integer(sent_index, "number of the sentence")
@@ -303,6 +322,11 @@ class ConnectorMatcher:
             check_sequence(breaks, "positions of the marks", ordered=False)
             for position in breaks:
                 check_integer(position, "position of a mark")
+                if not 0 < position < len(words):
+                    raise ParameterError(
+                        f"A position of a mark must be between 1 and {len(words) - 1}, "
+                        f"the positions of the words after the first, not {position}"
+                    )
             marks = frozenset(breaks)
         return self._find(words, sent_index, pos, marks)
 
@@ -322,10 +346,16 @@ class ConnectorMatcher:
 
         Returns:
             bool: Result of the check
+
+        Raises:
+            SourceTypeError: If the connector is not a Connector
         """
-        if connector.text in self.parcellation:
+        if not isinstance(connector, Connector):
+            raise SourceTypeError(f"A Connector is expected, not {type(connector).__name__}")
+        key = self._key(connector.text)
+        if key in self._parcellation:
             return False
-        return connector.text in self.subordinators or (
+        return key in self._subordinators or (
             connector.end - connector.start == 1 and pos in ("SCONJ", "ADP")
         )
 
@@ -345,11 +375,11 @@ class ConnectorMatcher:
                 end = position + len(pattern)
                 if tuple(normalized[position:end]) != pattern:
                     continue
-                text, cls, kind = self._entries[" ".join(pattern)]
-                if text in self.split_by_marks and not breaks.isdisjoint(range(position + 1, end)):
+                text, key, cls, kind = self._entries[" ".join(pattern)]
+                if key in self._split_by_marks and not breaks.isdisjoint(range(position + 1, end)):
                     continue
-                marks = frozenset() if text in self.read_through_marks else breaks
-                if self._is_blocked(text, normalized, position, end, pos, marks):
+                marks = frozenset() if key in self._read_through_marks else breaks
+                if self._is_blocked(key, normalized, position, end, pos, marks):
                     continue
                 if (
                     len(pattern) == 1
@@ -366,7 +396,7 @@ class ConnectorMatcher:
 
     def _is_blocked(
         self,
-        text: str,
+        key: str,
         words: Sequence[str],
         position: int,
         end: int,
@@ -377,17 +407,17 @@ class ConnectorMatcher:
         # A punctuation mark cuts the connector off its neighbour on that side
         after = end < len(words) and end not in breaks
         before = position > 0 and position not in breaks
-        if after and words[end] in self.blocked_after.get(text, ()):
+        if after and words[end] in self._blocked_after.get(key, ()):
             return True
-        if before and words[position - 1] in self.blocked_before.get(text, ()):
+        if before and words[position - 1] in self._blocked_before.get(key, ()):
             return True
-        if position == 0 and text in self.not_at_start:
+        if position == 0 and key in self._not_at_start:
             return True
-        if before and text in self.only_after and words[position - 1] not in self.only_after[text]:
+        if before and key in self._only_after and words[position - 1] not in self._only_after[key]:
             return True
         if not after or pos is None:
             return False
-        return pos[end] in self.blocked_after_pos.get(text, ())
+        return pos[end] in self._blocked_after_pos.get(key, ())
 
     def _is_pos(
         self, word: str, pos: Sequence[str | None], position: int, breaks: frozenset[int]

@@ -338,6 +338,9 @@ def test_compare_values_checks_first():
             compare_values([1.0, 2.0, 3.0], [4.0, 5.0, 6.0], 10, None, texts)
     with pytest.raises(SourceTypeError, match=r"^The texts must be labels of one type$"):
         compare_values([1.0, 2.0, 3.0], [4.0, 5.0, 6.0], 10, None, ["a", None, "b"])
+    for texts in ([0, "a", 0], [0, "0", 1], [{}, {}, {}]):
+        with pytest.raises(SourceTypeError, match=r"^The texts must be labels of one type$"):
+            compare_values([1.0, 2.0, 3.0], [4.0, 5.0, 6.0], 10, None, texts)
 
 
 def test_feature_columns():

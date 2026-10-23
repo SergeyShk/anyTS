@@ -79,7 +79,7 @@ Raises:
 <!-- --8<-- [start:SyntaxStats-attributes] -->
 | Attribute | Type | Description |
 | :-------- | :--- | :---------- |
-| `sents` | `tuple[tuple[Token]]` | Words of every sentence with words |
+| `sents` | `tuple[tuple[Token]]` | Words of every sentence with words, on a copy of the `Doc` without its tensor and user data |
 | `n_sents`, `n_words` | `int` | Numbers of the sentences with words and of the words |
 | `n_leaves`, `n_subtrees` | `int` | Numbers of the words without and with dependent words |
 | `n_coordination_chains` | `int` | Number of the coordination chains |
@@ -254,7 +254,7 @@ Checks whether a word heads a clause: the head of the sentence or a word with `c
 | `is_infinitive_periphrasis` | `Callable[[Token], bool]` | `None` | Whether an infinitive makes one predicate with its head; none by default |
 | `auxiliary_form` | `Callable[[Token], str]` | `None` | Verb form of an auxiliary without `VerbForm` (`predicate_form`); none by default |
 
-A check of a periphrasis or a form of an auxiliary that is not callable raises `SourceTypeError`.
+A value that is not a `Token` and a check of a periphrasis or a form of an auxiliary that is not callable raise `SourceTypeError`.
 <!-- --8<-- [end:is_clause_head] -->
 
 <!-- --8<-- [start:is_infinitive_clause] -->
@@ -262,7 +262,7 @@ A check of a periphrasis or a form of an auxiliary that is not callable raises `
 is_infinitive_clause(token, is_infinitive_periphrasis=None, is_clause_head=None, auxiliary_form=None)
 ```
 
-Checks whether an infinitive complement heads a clause of its own: an infinitive (`predicate_form`, so `to be chosen` is one) under `xcomp` (*wants to leave*), unless the language check `is_infinitive_periphrasis` says it makes one predicate with its head (*can leave*, *begins to leave*), or the word it completes, the first one up its chain of non-finite complements under `xcomp` (*kept trying to leave*, *seemed able to leave*), heads no clause by the check `is_clause_head`: an infinitive in a participial phrase or under an infinitive under `acl` (*trying to leave*, *the wish to try to leave*) belongs to that phrase. A ClearNLP parse hangs an infinitive after a predicative adjective on an `acomp` or `oprd` (*is ready to leave*), which heads no clause, so that infinitive is none.
+Checks whether an infinitive complement heads a clause of its own: an infinitive (`predicate_form`, so `to be chosen` is one) under `xcomp` (*wants to leave*), unless the language check `is_infinitive_periphrasis` says it makes one predicate with its head (*can leave*, *begins to leave*), or the word it completes, the first one up its chain of non-finite complements under `xcomp` (*kept trying to leave*, *seemed able to leave*) and of the infinitives of a periphrasis that a model attaches as `conj` or `csubj`, heads no clause by the check `is_clause_head`: an infinitive in a participial phrase or under an infinitive under `acl` (*trying to leave*, *the wish to try to leave*) belongs to that phrase. A ClearNLP parse hangs an infinitive after a predicative adjective on an `acomp` or `oprd` (*is ready to leave*), which heads no clause, so that infinitive is none.
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
@@ -271,7 +271,7 @@ Checks whether an infinitive complement heads a clause of its own: an infinitive
 | `is_clause_head` | `Callable[[Token], bool]` | `None` | Whether a word heads a clause; `is_clause_head` of the module with the hooks of this check if not given |
 | `auxiliary_form` | `Callable[[Token], str]` | `None` | Verb form of an auxiliary without `VerbForm` (`predicate_form`); none by default |
 
-A check or a form of an auxiliary that is not callable raises `SourceTypeError`.
+A value that is not a `Token` and a check or a form of an auxiliary that is not callable raise `SourceTypeError`.
 <!-- --8<-- [end:is_infinitive_clause] -->
 
 </div>
@@ -296,7 +296,7 @@ Checks whether a word heads a subordinate clause: a clause head by the check `is
 | `is_clause_head` | `Callable[[Token], bool]` | `None` | Whether a word heads a clause; `is_clause_head` of the module with the hooks of this check if not given |
 | `auxiliary_form` | `Callable[[Token], str]` | `None` | Verb form of an auxiliary without `VerbForm` (`predicate_form`); none by default |
 
-A check or a form of an auxiliary that is not callable raises `SourceTypeError`.
+A value that is not a `Token` and a check or a form of an auxiliary that is not callable raise `SourceTypeError`.
 <!-- --8<-- [end:is_subordinate_clause_head] -->
 
 </div>
@@ -321,7 +321,7 @@ Checks whether a word heads an infinitive clause under a verb: a clause head by 
 | `is_clause_head` | `Callable[[Token], bool]` | `None` | Whether a word heads a clause; `is_clause_head` of the module with the hooks of this check if not given |
 | `auxiliary_form` | `Callable[[Token], str]` | `None` | Verb form of an auxiliary without `VerbForm` (`predicate_form`); none by default |
 
-A check or a form of an auxiliary that is not callable raises `SourceTypeError`.
+A value that is not a `Token` and a check or a form of an auxiliary that is not callable raise `SourceTypeError`.
 <!-- --8<-- [end:is_infinitive_clause_head] -->
 
 </div>
@@ -379,6 +379,8 @@ Checks whether a word is a passive verb form: a verb with `Voice=Pass` or a depe
 | :-------- | :--- | :------ | :---------- |
 | `token` | `Token` | - | Token |
 | `join_hyphens` | `bool` | `False` | Take a hyphenated word for one word |
+
+A value that is not a `Token` raises `SourceTypeError`.
 <!-- --8<-- [end:is_passive] -->
 
 <!-- --8<-- [start:has_agent] -->
@@ -386,7 +388,7 @@ Checks whether a word is a passive verb form: a verb with `Voice=Pass` or a depe
 has_agent(token, join_hyphens=False)
 ```
 
-Checks whether a word has an agent: a dependent `obl:agent`, or `agent` of ClearNLP (`AGENT_DEPS`). The arguments are those of `is_passive`.
+Checks whether a word has an agent: a dependent `obl:agent`, or `agent` of ClearNLP (`AGENT_DEPS`). The arguments and the error are those of `is_passive`.
 <!-- --8<-- [end:has_agent] -->
 
 <!-- --8<-- [start:is_agentless] -->
@@ -394,7 +396,7 @@ Checks whether a word has an agent: a dependent `obl:agent`, or `agent` of Clear
 is_agentless(token, join_hyphens=False)
 ```
 
-Checks whether a word is a passive form (`is_passive`) without an agent (`has_agent`), with the same arguments.
+Checks whether a word is a passive form (`is_passive`) without an agent (`has_agent`), with the same arguments and error.
 <!-- --8<-- [end:is_agentless] -->
 
 </div>
@@ -530,7 +532,7 @@ The verb form of a predicate by the forms (`VerbForm`) of its auxiliaries and co
 | `token` | `Token` | - | Token |
 | `auxiliary_form` | `Callable[[Token], str]` | `None` | Verb form of an auxiliary without `VerbForm` |
 
-A hook that is not callable raises `SourceTypeError`.
+A value that is not a `Token` and a hook that is not callable raise `SourceTypeError`.
 <!-- --8<-- [end:predicate_form] -->
 
 === "Code"
@@ -575,12 +577,14 @@ A hook that is not callable raises `SourceTypeError`.
 is_predicate(token, join_hyphens=False)
 ```
 
-Checks whether a word can be the predicate of its clause: a verb (`VERB`, `AUX`) or a word with a subject of its own (`nsubj`, `csubj` and their subtypes, `anyts.constants.SUBJECT_DEPS`), so the nominal predicate of `he is tall` passes and a parenthetical word does not.
+Checks whether a word can be the predicate of its clause: a verb (`VERB`, `AUX`), a word with a subject of its own (`nsubj`, `csubj` and their subtypes, `anyts.constants.SUBJECT_DEPS`) or with a copula (`cop`), so the nominal predicate of `he is tall` and of a language that drops the subject passes and a parenthetical word does not.
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
 | `token` | `Token` | - | Token |
 | `join_hyphens` | `bool` | `False` | Take a hyphenated word for one word |
+
+A value that is not a `Token` raises `SourceTypeError`.
 <!-- --8<-- [end:is_predicate] -->
 
 ## Chains of modifiers { #calc_modifier_chains }

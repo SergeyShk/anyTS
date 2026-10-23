@@ -12,10 +12,12 @@ import spacy
 from spacy.tokens import Doc
 
 from anyts.components import start_sents_after_blank_lines
+from anyts.constants import MESSAGES
 from anyts.exceptions import ParameterError, SourceError, SourceTypeError
 from anyts.utils import (
     _PUNCTUATION_CATEGORIES,
     add_tokenizer_rules,
+    check_bool,
     check_callable,
     check_counts,
     check_integer,
@@ -37,6 +39,7 @@ from anyts.utils import (
     is_number,
     is_punctuation,
     is_span,
+    is_token,
     iter_doc_tokens,
     iter_doc_units,
     iter_doc_words,
@@ -754,3 +757,20 @@ def test_find_unit_marks():
     assert find_unit_marks(list(iter_doc_units(doc))) == frozenset()
     assert find_unit_marks(list(iter_doc_units(doc, join_hyphens=True))) == frozenset()
     assert find_unit_marks([]) == frozenset()
+
+
+def test_is_token(nlp):
+    doc = nlp("The cat")
+    assert is_token(doc[0]) and not is_token(doc[:1]) and not is_token("The")
+
+
+@pytest.mark.parametrize("value", ["yes", 1, None])
+def test_check_bool(value):
+    check_bool(True, "switch")
+    with pytest.raises(ParameterError, match=r"^The switch must be a bool"):
+        check_bool(value, "switch")
+
+
+def test_messages_are_read_only():
+    with pytest.raises(TypeError):
+        MESSAGES["no_words"] = "No words"  # type: ignore[index]

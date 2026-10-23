@@ -9,7 +9,7 @@ A class for extracting words from a text.
 
 Raises:
 
-- `ParameterError` - an `ngram_range` that is not a pair of integers or whose lower bound is below one or above the upper one, a length bound that is not an integer, a negative bound, a minimum above the maximum;
+- `ParameterError` - an `ngram_range` that is not a pair of integers or whose lower bound is below one or above the upper one, a length bound that is not an integer, a negative bound, a minimum above the maximum, a switch that is not a `bool`;
 - `SourceTypeError` - stop words that are not a collection of strings.
 <!-- --8<-- [end:WordsExtractor] -->
 

@@ -577,3 +577,15 @@ def test_iter_part_sents():
 def test_iter_part_sents_checks_its_arguments(iter_sents, text, message):
     with pytest.raises(SourceTypeError, match=message):
         list(iter_part_sents(iter_sents, text))
+
+
+@pytest.mark.parametrize("switch", ["filter_punct", "filter_nums", "use_lexemes", "lowercase"])
+def test_switches_of_the_words_are_bools(switch):
+    with pytest.raises(ParameterError, match=r"must be a bool, not str$"):
+        WordsExtractor(**{switch: "yes"})
+
+
+@pytest.mark.parametrize("switch", ["lowercase", "within_words"])
+def test_switches_of_the_ngrams_are_bools(switch):
+    with pytest.raises(ParameterError, match=r"must be a bool, not str$"):
+        CharNgramsExtractor(**{switch: "yes"})

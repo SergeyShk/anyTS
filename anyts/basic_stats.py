@@ -20,6 +20,7 @@ from .exceptions import ParameterError, SourceError, SourceTypeError
 from .extractors import SentsExtractor, WordsExtractor
 from .stats import Stats
 from .utils import (
+    check_bool,
     check_integer,
     check_words,
     count_letters,
@@ -203,7 +204,8 @@ class BasicStats(Stats, metaclass=ABCMeta):
         SourceTypeError: If the source is neither a string nor a Doc object, or an extractor
             is of another type
         SourceError: If the source has no words
-        ParameterError: If a factor is not an integer or is below one
+        ParameterError: If a factor is not an integer or is below one, or normalize is
+            not a bool
     """
 
     sents_extractor_class: ClassVar[type[SentsExtractor]] = SentsExtractor
@@ -222,6 +224,7 @@ class BasicStats(Stats, metaclass=ABCMeta):
     ):
         messages = self.messages
         _check_extractors(sents_extractor, words_extractor, messages)
+        check_bool(normalize, "normalization")
         _check_factor(
             complex_syl_factor,
             "minimum number of syllables in a complex word",

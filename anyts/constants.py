@@ -1,3 +1,6 @@
+from collections.abc import Mapping
+from types import MappingProxyType
+
 # Lexical diversity: the conventions of koRpus and lexical-diversity
 MATTR_WINDOW_LEN = 50
 MTLD_TTR_THRESHOLD = 0.72
@@ -186,107 +189,109 @@ DELTA_VARIANTS = {
 
 # Error messages of the statistics classes and the components by key; those with fields in
 # braces are format strings, and a language library passes its own over these
-MESSAGES = {
-    "source_type": "The data source is set incorrectly",
-    "no_words": "The data source has no words",
-    "no_sentences": "The data source has no sentences",
-    "sents_extractor_type": "The sentence extractor must be a SentsExtractor",
-    "words_extractor_type": "The word extractor must be a WordsExtractor",
-    "complex_syl_factor": "The minimum number of syllables in a complex word must be greater than 0",
-    "long_word_letter_factor": "The minimum number of letters in a long word must be greater than 0",
-    "preset_type": "The preset must be a string, not {type}",
-    "unknown_preset": "Unknown coefficient preset: {preset}. Available presets: {presets}",
-    "basic_stats_type": "The basic statistics must be a {expected} object, not {type}",
-    "no_basic_stats_class": (
-        "{cls} has no basic_stats_class, the data source must be a BasicStats object"
-    ),
-    "not_grade_formula": "The metric {stat} is not a grade formula. Grade formulas: {grade_stats}",
-    "no_scale": "The metric {stat} has no scale of bands",
-    "unknown_stat": "Unknown statistic: {stat}. Available statistics: {stats}",
-    "unknown_norm": "Unknown reading speed norm: {norm}. Available norms: {norms}",
-    "reading_speed": "The reading speed must be greater than 0",
-    "window_len": "The window size must be greater than 0",
-    "window_step": "The window step must be greater than 0",
-    "window_metric": "The metric must be a function, not {type}",
-    "confidence": "The confidence level must lie in the interval (0, 1)",
-    "mtld_threshold": "The TTR threshold of MTLD must lie in the interval (0, 1)",
-    "mtld_min_len": "The minimum factor length of MTLD cannot be negative",
-    "hdd_sample_size": "The HD-D sample size must be greater than 0",
-    "log_base": "The logarithm base must be greater than 1",
-    "missing_extension": (
-        "The extension {name} holds no {stats}: add the component {factory} "
-        "with the name {name} before {component}"
-    ),
-    "missing_extension_any": (
-        "The extension {name} holds no {stats}: add the component with the name {name} "
-        "before {component}"
-    ),
-    "extension_name": "The name of an extension must be a string, not {type}",
-    "no_stats_class": "{cls} has no concrete class of statistics in stats_class",
-    "stats_param": "{cls} has no attribute {param} of stats_params",
-    "foreign_extension": (
-        "The extension {name} of Doc belongs to another package: give the component another name"
-    ),
-    "layers_type": "The layers must be a list of names or a string",
-    "unknown_layer": "Unknown layer of the highlighting: {layer}",
-    "layer_unavailable": "The layer {layer} is not available",
-    "layer_annotations": "The layer {layer} needs a Doc with {annotations}",
-    "fragment_layer": "A fragment of the layer {found} is found for {layer}",
-    "fragment_outside": (
-        "A fragment of the layer {layer} is empty or lies outside the text: {start}-{end}"
-    ),
-    "long_sent_word_factor": "The number of words of a long sentence must be greater than 0",
-    "alliteration_threshold": "The threshold of the alliteration must lie in the interval (0, 1]",
-    "sent_len_bounds": "The sentence length bounds cannot be negative",
-    "sent_len_order": "The minimum sentence length is greater than the maximum",
-    "word_len_bounds": "The word length bounds cannot be negative",
-    "word_len_order": "The minimum word length is greater than the maximum",
-    "ngram_range": "The N-gram range must be a pair of integers",
-    "ngram_lower": "The lower N-gram bound must be greater than 0",
-    "ngram_order": "The lower N-gram bound is greater than the upper",
-    "ngram_len": "The N-gram length must be greater than 0",
-    "top_words": "The number of words must be greater than 0",
-    "top_ngrams": "The number of N-grams must be greater than 0",
-    "text_type": "A text string is expected, not {type}",
-    "min_words": "The smallest number of words in a window must be greater than 0",
-    "min_words_window": "The smallest number of words in a window cannot be greater than the window",
-    "sentence_lengths": "The sentence lengths must be integers",
-    "negative_lengths": "The sentence lengths cannot be negative",
-    "top_n": "The number of the most frequent words must be greater than 0",
-    "freq_dict_type": "The frequency dictionary must be a {expected}",
-    "no_freq_dict_class": "{cls} has no frequency dictionary of its own: pass freq_dict",
-    "bands_type": "The bounds of the bands must be a list, not {type}",
-    "band_bound": "A bound of a band must be an integer from 1 to {size}, not {band}",
-    "phon_window_len": "The size of a window must be at least 2",
-    "phon_classes": "The sounds of {first} and {second} of {cls} overlap: {sounds}",
-    "no_parse": (
-        "The data source has no dependency parse: parse the text with a model that has a parser"
-    ),
-    "no_lemmas": (
-        "The data source has no lemmas: parse the text with a pipeline that has a lemmatizer"
-    ),
-    "no_pos": (
-        "The data source has no parts of speech: "
-        "parse the text with a model instead of a blank pipeline"
-    ),
-    "temporal_features": (
-        "The temporal features of {cls} must be one or more distinct features of {features}, "
-        "not {value}"
-    ),
-    "tokenizer": "The tokenizer is set incorrectly",
-    "tokenizer_iterable": "The tokenizer must return an iterable object",
-    "tokenizer_strings": "The tokenizer must return strings, not {type}",
-    "hook_result": "The {hook} of {cls} must return {expected}, not {type}",
-    "hook_spans": (
-        "The {hook} of {cls} must give ascending triples of integer bounds inside the text "
-        "and a string, not {span}"
-    ),
-    "connector_dict": "The connectors must be a dictionary of a phrase and its class and kind",
-    "connector_entry": "A connector must be a phrase with a pair of its class and kind: {connector}",
-    "connector_class": "Unknown class or kind of a connector: {cls}, {kind}",
-    "connector_pos_type": "A part of speech must be a string or None, not {type}",
-    "connector_pos": "The parts of speech must be as many as the words",
-}
+MESSAGES: Mapping[str, str] = MappingProxyType(
+    {
+        "source_type": "The data source is set incorrectly",
+        "no_words": "The data source has no words",
+        "no_sentences": "The data source has no sentences",
+        "sents_extractor_type": "The sentence extractor must be a SentsExtractor",
+        "words_extractor_type": "The word extractor must be a WordsExtractor",
+        "complex_syl_factor": "The minimum number of syllables in a complex word must be greater than 0",
+        "long_word_letter_factor": "The minimum number of letters in a long word must be greater than 0",
+        "preset_type": "The preset must be a string, not {type}",
+        "unknown_preset": "Unknown coefficient preset: {preset}. Available presets: {presets}",
+        "basic_stats_type": "The basic statistics must be a {expected} object, not {type}",
+        "no_basic_stats_class": (
+            "{cls} has no basic_stats_class, the data source must be a BasicStats object"
+        ),
+        "not_grade_formula": "The metric {stat} is not a grade formula. Grade formulas: {grade_stats}",
+        "no_scale": "The metric {stat} has no scale of bands",
+        "unknown_stat": "Unknown statistic: {stat}. Available statistics: {stats}",
+        "unknown_norm": "Unknown reading speed norm: {norm}. Available norms: {norms}",
+        "reading_speed": "The reading speed must be greater than 0",
+        "window_len": "The window size must be greater than 0",
+        "window_step": "The window step must be greater than 0",
+        "window_metric": "The metric must be a function, not {type}",
+        "confidence": "The confidence level must lie in the interval (0, 1)",
+        "mtld_threshold": "The TTR threshold of MTLD must lie in the interval (0, 1)",
+        "mtld_min_len": "The minimum factor length of MTLD cannot be negative",
+        "hdd_sample_size": "The HD-D sample size must be greater than 0",
+        "log_base": "The logarithm base must be greater than 1",
+        "missing_extension": (
+            "The extension {name} holds no {stats}: add the component {factory} "
+            "with the name {name} before {component}"
+        ),
+        "missing_extension_any": (
+            "The extension {name} holds no {stats}: add the component with the name {name} "
+            "before {component}"
+        ),
+        "extension_name": "The name of an extension must be a string, not {type}",
+        "no_stats_class": "{cls} has no concrete class of statistics in stats_class",
+        "stats_param": "{cls} has no attribute {param} of stats_params",
+        "foreign_extension": (
+            "The extension {name} of Doc belongs to another package: give the component another name"
+        ),
+        "layers_type": "The layers must be a list of names or a string",
+        "unknown_layer": "Unknown layer of the highlighting: {layer}",
+        "layer_unavailable": "The layer {layer} is not available",
+        "layer_annotations": "The layer {layer} needs a Doc with {annotations}",
+        "fragment_layer": "A fragment of the layer {found} is found for {layer}",
+        "fragment_outside": (
+            "A fragment of the layer {layer} is empty or lies outside the text: {start}-{end}"
+        ),
+        "long_sent_word_factor": "The number of words of a long sentence must be greater than 0",
+        "alliteration_threshold": "The threshold of the alliteration must lie in the interval (0, 1]",
+        "sent_len_bounds": "The sentence length bounds cannot be negative",
+        "sent_len_order": "The minimum sentence length is greater than the maximum",
+        "word_len_bounds": "The word length bounds cannot be negative",
+        "word_len_order": "The minimum word length is greater than the maximum",
+        "ngram_range": "The N-gram range must be a pair of integers",
+        "ngram_lower": "The lower N-gram bound must be greater than 0",
+        "ngram_order": "The lower N-gram bound is greater than the upper",
+        "ngram_len": "The N-gram length must be greater than 0",
+        "top_words": "The number of words must be greater than 0",
+        "top_ngrams": "The number of N-grams must be greater than 0",
+        "text_type": "A text string is expected, not {type}",
+        "min_words": "The smallest number of words in a window must be greater than 0",
+        "min_words_window": "The smallest number of words in a window cannot be greater than the window",
+        "sentence_lengths": "The sentence lengths must be integers",
+        "negative_lengths": "The sentence lengths cannot be negative",
+        "top_n": "The number of the most frequent words must be greater than 0",
+        "freq_dict_type": "The frequency dictionary must be a {expected}",
+        "no_freq_dict_class": "{cls} has no frequency dictionary of its own: pass freq_dict",
+        "bands_type": "The bounds of the bands must be a list, not {type}",
+        "band_bound": "A bound of a band must be an integer from 1 to {size}, not {band}",
+        "phon_window_len": "The size of a window must be at least 2",
+        "phon_classes": "The sounds of {first} and {second} of {cls} overlap: {sounds}",
+        "no_parse": (
+            "The data source has no dependency parse: parse the text with a model that has a parser"
+        ),
+        "no_lemmas": (
+            "The data source has no lemmas: parse the text with a pipeline that has a lemmatizer"
+        ),
+        "no_pos": (
+            "The data source has no parts of speech: "
+            "parse the text with a model instead of a blank pipeline"
+        ),
+        "temporal_features": (
+            "The temporal features of {cls} must be one or more distinct features of {features}, "
+            "not {value}"
+        ),
+        "tokenizer": "The tokenizer is set incorrectly",
+        "tokenizer_iterable": "The tokenizer must return an iterable object",
+        "tokenizer_strings": "The tokenizer must return strings, not {type}",
+        "hook_result": "The {hook} of {cls} must return {expected}, not {type}",
+        "hook_spans": (
+            "The {hook} of {cls} must give ascending triples of integer bounds inside the text "
+            "and a string, not {span}"
+        ),
+        "connector_dict": "The connectors must be a dictionary of a phrase and its class and kind",
+        "connector_entry": "A connector must be a phrase with a pair of its class and kind: {connector}",
+        "connector_class": "Unknown class or kind of a connector: {cls}, {kind}",
+        "connector_pos_type": "A part of speech must be a string or None, not {type}",
+        "connector_pos": "The parts of speech must be as many as the words",
+    }
+)
 
 # Plot labels by the name of the visualizer; those with fields in braces are format
 # strings, and a language library passes its own over these
