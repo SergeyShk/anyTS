@@ -194,6 +194,14 @@ def test_scales_of_an_unknown_preset(attribute):
         type("Typo", (TwoPresets,), {attribute: {"strct": {}}})
 
 
+def test_scales_of_a_mixin_are_checked():
+    class Mixin:
+        preset_level_scales: ClassVar = {"strct": {}}
+
+    with pytest.raises(ParameterError, match=r"name unknown presets: \['strct'\]"):
+        type("Mixed", (Mixin, TwoPresets), {})
+
+
 def test_subclass_narrows_the_presets():
     # the scales of strict stay inherited and unused
     plain = type("Plain", (TwoPresets,), {"presets": {"plain": {}}})

@@ -99,11 +99,11 @@ def test_no_module_imports_spacy():
 def test_checks_of_spacy_objects_without_spacy():
     code = (
         "import sys\n"
-        "from anyts.utils import check_sequence, is_doc, is_span\n"
+        "from anyts.utils import check_sequence, is_doc, is_language, is_span\n"
         "check_sequence(['the', 'cat'])\n"
-        "print(is_doc('the cat'), is_span(['the']), 'spacy' in sys.modules)"
+        "print(is_doc('the cat'), is_span(['the']), is_language('en'), 'spacy' in sys.modules)"
     )
-    assert _run(code) == "False False False"
+    assert _run(code) == "False False False False"
 
 
 def test_names_of_modules_keep_their_functions():

@@ -168,9 +168,15 @@ class Stats:
 
     def _is_flat_key(self, stat: object) -> bool:
         """Whether a name is a key of the flat statistics that is no statistic of its own"""
-        if not isinstance(stat, str) or stat in self.stat_names():
+        if not isinstance(stat, str):
             return False
-        return stat in self.get_stats(flat=True)
+        names = self.stat_names()
+        # The statistics are computed only for a name that begins as one of them
+        return (
+            stat not in names
+            and any(stat.startswith(f"{name}_") for name in names)
+            and stat in self.get_stats(flat=True)
+        )
 
     def _check_stat(self, stat: object) -> None:
         """Raising UnknownStatError for a name neither of stat_names nor a public property"""
