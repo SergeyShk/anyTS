@@ -2918,7 +2918,7 @@ Secondary connectors per 1000 words                             |  142.86
 </div>
 </div>
 <!-- --8<-- [start:ConnectorMatcher-is_subordinator] -->
-<p><code>is_subordinator(connector, pos=None)</code> checks whether an occurrence of a connector ties its clause or phrase to its own sentence: a connector of <code>subordinators</code>, or a one-word connector whose part of speech <code>pos</code> is <code>SCONJ</code> or <code>ADP</code>. The clause of a subordinating conjunction and the phrase of a preposition belong to the sentence of the connector wherever it stands, so a subordinator opening a sentence (<em>when he came, ...</em>, <em>despite the rain, ...</em>) does not link it to the ones before.</p>
+<p><code>is_subordinator(connector, pos=None)</code> checks whether an occurrence of a connector ties its clause or phrase to its own sentence: a connector of <code>subordinators</code>, or a one-word connector whose part of speech <code>pos</code> is <code>SCONJ</code> or <code>ADP</code>, but none of <code>parcellation</code>. The clause of a subordinating conjunction and the phrase of a preposition belong to the sentence of the connector wherever it stands, so a subordinator opening a sentence (<em>when he came, ...</em>, <em>despite the rain, ...</em>) does not link it to the ones before.</p>
 <!-- --8<-- [end:ConnectorMatcher-is_subordinator] -->
 
 <h2 id="hooks">For library developers<a class="headerlink" href="#hooks" title="Permanent link">&para;</a></h2>
@@ -3057,6 +3057,11 @@ Secondary connectors per 1000 words                             |  142.86
 <td style="text-align: left;"><code>subordinators</code></td>
 <td style="text-align: left;">class attribute</td>
 <td style="text-align: left;">Connectors that are subordinating conjunctions or prepositions besides the one-word ones tagged <code>SCONJ</code> or <code>ADP</code> (<em>as soon as</em>, <em>in spite of</em>), for <code>is_subordinator</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>parcellation</code></td>
+<td style="text-align: left;">class attribute</td>
+<td style="text-align: left;">Connectors that are no subordinators whatever their part of speech: a sentence they open is linked to the one before (parcellation), for <code>is_subordinator</code></td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>classes</code>, <code>kinds</code></td>

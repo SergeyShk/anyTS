@@ -1786,7 +1786,7 @@
   <a href="#is_doc-is_span" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Doc and Span objects
+        Doc, Span and Language objects
       
     </span>
   </a>
@@ -2072,7 +2072,7 @@
   <a href="#is_doc-is_span" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Doc and Span objects
+        Doc, Span and Language objects
       
     </span>
   </a>
@@ -2222,7 +2222,7 @@
 
 <h1 id="spacy-objects">spaCy objects<a class="headerlink" href="#spacy-objects" title="Permanent link">&para;</a></h1>
 <p>Checks of spaCy objects without importing spaCy, the words of a <code>Doc</code> and their morphology, the parts of a hyphenated word, the sentences of a <code>Doc</code> and the tokenizer rules of a language.</p>
-<h2 id="is_doc-is_span">Doc and Span objects<a class="headerlink" href="#is_doc-is_span" title="Permanent link">&para;</a></h2>
+<h2 id="is_doc-is_span">Doc, Span and Language objects<a class="headerlink" href="#is_doc-is_span" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:is_doc] -->
 <div class="signature highlight"><pre><span></span><code><span class="n">is_doc</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
 </code></pre></div>
@@ -2271,19 +2271,46 @@
 </table>
 <!-- --8<-- [end:is_span] -->
 
+<!-- --8<-- [start:is_language] -->
+<div class="signature highlight"><pre><span></span><code><span class="n">is_language</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+</code></pre></div>
+<p>Checks whether a value is a <code>Language</code> pipeline of spaCy, without importing spaCy as <code>is_doc</code>: a library checks a pipeline passed to it this way.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Parameter</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Default</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>value</code></td>
+<td style="text-align: left;"><code>object</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Value to check</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:is_language] -->
+
 <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Code</label><label for="__tabbed_1_2">Result</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">spacy</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">anyts.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_doc</span><span class="p">,</span> <span class="n">is_span</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">anyts.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_doc</span><span class="p">,</span> <span class="n">is_language</span><span class="p">,</span> <span class="n">is_span</span>
 
-<span class="n">doc</span> <span class="o">=</span> <span class="n">spacy</span><span class="o">.</span><span class="n">blank</span><span class="p">(</span><span class="s2">"en"</span><span class="p">)(</span><span class="s2">"The cat sleeps"</span><span class="p">)</span>
+<span class="n">nlp</span> <span class="o">=</span> <span class="n">spacy</span><span class="o">.</span><span class="n">blank</span><span class="p">(</span><span class="s2">"en"</span><span class="p">)</span>
+<span class="n">doc</span> <span class="o">=</span> <span class="n">nlp</span><span class="p">(</span><span class="s2">"The cat sleeps"</span><span class="p">)</span>
 <span class="n">is_doc</span><span class="p">(</span><span class="n">doc</span><span class="p">),</span> <span class="n">is_doc</span><span class="p">(</span><span class="n">doc</span><span class="p">[:</span><span class="mi">2</span><span class="p">]),</span> <span class="n">is_span</span><span class="p">(</span><span class="n">doc</span><span class="p">[:</span><span class="mi">2</span><span class="p">]),</span> <span class="n">is_doc</span><span class="p">(</span><span class="s2">"The cat sleeps"</span><span class="p">)</span>
+<span class="n">is_language</span><span class="p">(</span><span class="n">nlp</span><span class="p">),</span> <span class="n">is_language</span><span class="p">(</span><span class="s2">"en_core_web_sm"</span><span class="p">)</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code>(True, False, True, False)
+(True, False)
 </code></pre></div>
 </div>
 </div>
