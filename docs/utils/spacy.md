@@ -2,7 +2,7 @@
 
 Checks of spaCy objects without importing spaCy, the words of a `Doc` and their morphology, the parts of a hyphenated word, the sentences of a `Doc` and the tokenizer rules of a language.
 
-## Doc and Span objects { #is_doc-is_span }
+## Doc, Span and Language objects { #is_doc-is_span }
 
 <!-- --8<-- [start:is_doc] -->
 ``` {.python .signature}
@@ -28,21 +28,36 @@ Checks whether a value is a `Span` object of spaCy, without importing spaCy as `
 | `value` | `object` | - | Value to check |
 <!-- --8<-- [end:is_span] -->
 
+<!-- --8<-- [start:is_language] -->
+``` {.python .signature}
+is_language(value)
+```
+
+Checks whether a value is a `Language` pipeline of spaCy, without importing spaCy as `is_doc`: a library checks a pipeline passed to it this way.
+
+| Parameter | Type | Default | Description |
+| :-------- | :--- | :------ | :---------- |
+| `value` | `object` | - | Value to check |
+<!-- --8<-- [end:is_language] -->
+
 === "Code"
 
     ``` python
     import spacy
 
-    from anyts.utils import is_doc, is_span
+    from anyts.utils import is_doc, is_language, is_span
 
-    doc = spacy.blank("en")("The cat sleeps")
+    nlp = spacy.blank("en")
+    doc = nlp("The cat sleeps")
     is_doc(doc), is_doc(doc[:2]), is_span(doc[:2]), is_doc("The cat sleeps")
+    is_language(nlp), is_language("en_core_web_sm")
     ```
 
 === "Result"
 
     ```
     (True, False, True, False)
+    (True, False)
     ```
 
 ## Sentence boundaries { #has_sents }

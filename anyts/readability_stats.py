@@ -154,7 +154,11 @@ class ReadabilityStats(Stats):
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
+        # Not the scales a class of the readability passes down: a subclass may narrow the presets
         for attribute in ("preset_level_scales", "preset_reading_ease_grades"):
+            owner = next(base for base in cls.__mro__ if attribute in vars(base))
+            if owner is not cls and issubclass(owner, ReadabilityStats):
+                continue
             unknown = [preset for preset in getattr(cls, attribute) if preset not in cls.presets]
             if unknown:
                 raise ParameterError(

@@ -33,6 +33,7 @@ from anyts.utils import (
     is_doc,
     is_finite_verb,
     is_infinitive,
+    is_language,
     is_number,
     is_punctuation,
     is_span,
@@ -164,6 +165,11 @@ def test_has_sents(nlp):
     assert not has_sents(partial)
     full = Doc(nlp.vocab, words=["The", "cat", "Dogs"], sent_starts=[True, False, True])
     assert has_sents(full)
+
+
+def test_is_language(nlp):
+    assert is_language(nlp) and not is_language("en_core_web_sm") and not is_language(None)
+    assert not is_language(nlp("The cat"))
 
 
 def test_is_doc_and_is_span(nlp):

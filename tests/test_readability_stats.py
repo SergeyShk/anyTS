@@ -194,6 +194,20 @@ def test_scales_of_an_unknown_preset(attribute):
         type("Typo", (TwoPresets,), {attribute: {"strct": {}}})
 
 
+def test_scales_of_a_mixin_are_checked():
+    class Mixin:
+        preset_level_scales: ClassVar = {"strct": {}}
+
+    with pytest.raises(ParameterError, match=r"name unknown presets: \['strct'\]"):
+        type("Mixed", (Mixin, TwoPresets), {})
+
+
+def test_subclass_narrows_the_presets():
+    # the scales of strict stay inherited and unused
+    plain = type("Plain", (TwoPresets,), {"presets": {"plain": {}}})
+    assert plain(TEXT).describe_level() == TwoPresets(TEXT).describe_level()
+
+
 def test_coefficients_copy():
     rs = Readability(TEXT)
     rs.coefficients["flesch_reading_easy"] = (1.0, 62.3, 206.835)
