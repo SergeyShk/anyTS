@@ -51,12 +51,14 @@ The shared checks of `anyts.utils` (`check_integer`, `check_number`, `check_bool
 === "Code"
 
     ``` python
+    from types import MappingProxyType
+
     from anyts.constants import MESSAGES
     from anyts.diversity_stats import DiversityStats
 
 
     class Diversity(DiversityStats):
-        messages = {**MESSAGES, "no_words": "Il testo non contiene parole"}
+        messages = MappingProxyType({**MESSAGES, "no_words": "Il testo non contiene parole"})
 
 
     try:

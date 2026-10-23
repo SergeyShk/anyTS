@@ -388,9 +388,12 @@ def test_positions_of_the_marks_are_checked(matcher, breaks, error):
         matcher.find(["and", "so"], breaks=breaks)
 
 
-def test_positions_of_the_marks_in_a_sentence_of_one_word(matcher):
-    with pytest.raises(ParameterError, match=r"^A sentence of one word has no positions"):
-        matcher.find(["so"], breaks={1})
+@pytest.mark.parametrize(("words", "position"), [(["so"], 1), ([], 0)])
+def test_positions_of_the_marks_in_a_sentence_of_fewer_than_two_words(matcher, words, position):
+    with pytest.raises(
+        ParameterError, match=r"^A sentence of fewer than two words has no positions"
+    ):
+        matcher.find(words, breaks={position})
 
 
 def test_rules_by_the_normalized_text_of_a_connector():
