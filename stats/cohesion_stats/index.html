@@ -1026,6 +1026,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#forward_overlap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overlap with the next sentences and paragraphs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#pronouns" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2170,6 +2181,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#forward_overlap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overlap with the next sentences and paragraphs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#pronouns" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2325,35 +2347,41 @@
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code>                           Statistic                            |  Value
----------------------------------------------------------------------------
-Noun overlap in adjacent sentences                              |   1.00
-Noun overlap in all pairs of sentences                          |   1.00
-Argument overlap in adjacent sentences                          |   1.00
-Argument overlap in all pairs of sentences                      |   1.00
-Content word overlap in adjacent sentences                      |   1.00
-Content word overlap in all pairs of sentences                  |   1.00
-Share of shared content words in adjacent sentences             |   0.40
-Share of shared content words in all pairs of sentences         |   0.40
-Share of pronouns                                               |   0.00
-Ratio of pronouns to nouns                                      |   0.00
-Share of demonstratives                                         |   0.00
-Share of content words seen before                              |   0.20
-Repetition of the tense in adjacent sentences                   |   1.00
-Repetition of the aspect in adjacent sentences                  |   1.00
-Temporal cohesion                                               |   1.00
-Connectors per 1000 words                                       |  142.86
-Connectors linking a sentence to the ones before per 1000 words |  142.86
-Connectors linking the parts of a sentence per 1000 words       |   0.00
-Causal connectors per 1000 words                                |   0.00
-Adversative connectors per 1000 words                           |  142.86
-Concessive connectors per 1000 words                            |   0.00
-Temporal connectors per 1000 words                              |   0.00
-Additive connectors per 1000 words                              |   0.00
-Conditional connectors per 1000 words                           |   0.00
-Reformulative connectors per 1000 words                         |   0.00
-Primary connectors per 1000 words                               |   0.00
-Secondary connectors per 1000 words                             |  142.86
+<div class="highlight"><pre><span></span><code>                             Statistic                             |  Value
+------------------------------------------------------------------------------
+Noun overlap in adjacent sentences                                 |   1.00
+Noun overlap in all pairs of sentences                             |   1.00
+Argument overlap in adjacent sentences                             |   1.00
+Argument overlap in all pairs of sentences                         |   1.00
+Content word overlap in adjacent sentences                         |   1.00
+Content word overlap in all pairs of sentences                     |   1.00
+Share of shared content words in adjacent sentences                |   0.40
+Share of shared content words in all pairs of sentences            |   0.40
+Share of the nouns of a sentence repeated in the next two          |   nan
+Share of the arguments of a sentence repeated in the next two      |   nan
+Share of the content words of a sentence repeated in the next two  |   nan
+Share of the nouns of a paragraph repeated in the next one         |   nan
+Share of the arguments of a paragraph repeated in the next one     |   nan
+Share of the content words of a paragraph repeated in the next one |   nan
+Share of pronouns                                                  |   0.00
+Ratio of pronouns to nouns                                         |   0.00
+Share of demonstratives                                            |   0.00
+Share of content words seen before                                 |   0.20
+Repetition of the tense in adjacent sentences                      |   1.00
+Repetition of the aspect in adjacent sentences                     |   1.00
+Temporal cohesion                                                  |   1.00
+Connectors per 1000 words                                          |  142.86
+Connectors linking a sentence to the ones before per 1000 words    |  142.86
+Connectors linking the parts of a sentence per 1000 words          |   0.00
+Causal connectors per 1000 words                                   |   0.00
+Adversative connectors per 1000 words                              |  142.86
+Concessive connectors per 1000 words                               |   0.00
+Temporal connectors per 1000 words                                 |   0.00
+Additive connectors per 1000 words                                 |   0.00
+Conditional connectors per 1000 words                              |   0.00
+Reformulative connectors per 1000 words                            |   0.00
+Primary connectors per 1000 words                                  |   0.00
+Secondary connectors per 1000 words                                |  142.86
 </code></pre></div>
 </div>
 </div>
@@ -2412,6 +2440,11 @@ Secondary connectors per 1000 words                             |  142.86
 <td style="text-align: left;"><code>n_sents</code>, <code>n_words</code></td>
 <td style="text-align: left;"><code>int</code></td>
 <td style="text-align: left;">Numbers of the sentences with words and of the words</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>n_paragraphs</code></td>
+<td style="text-align: left;"><code>int</code></td>
+<td style="text-align: left;">Number of the paragraphs, the parts of the text between blank lines that hold words</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>n_nouns</code>, <code>n_pronouns</code>, <code>n_demonstratives</code>, <code>n_content_words</code></td>
@@ -2511,6 +2544,42 @@ Secondary connectors per 1000 words                             |  142.86
 <td style="text-align: left;">Mean share of the shared content words (Dice) in all the pairs</td>
 <td style="text-align: left;">0-1, <code>nan</code> for one sentence</td>
 <td style="text-align: left;">More words shared across the text</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a href="#forward_overlap"><code>noun_overlap_2_sent</code></a></td>
+<td style="text-align: left;">Share of the nouns of a sentence repeated in one of the next two</td>
+<td style="text-align: left;">0-1, <code>nan</code> for fewer than three sentences or without nouns in the compared ones</td>
+<td style="text-align: left;">More nouns carried on</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a href="#forward_overlap"><code>argument_overlap_2_sent</code></a></td>
+<td style="text-align: left;">Share of the arguments of a sentence repeated in one of the next two</td>
+<td style="text-align: left;">0-1, <code>nan</code> for fewer than three sentences or without arguments in the compared ones</td>
+<td style="text-align: left;">More arguments carried on</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a href="#forward_overlap"><code>content_overlap_2_sent</code></a></td>
+<td style="text-align: left;">Share of the content words of a sentence repeated in one of the next two</td>
+<td style="text-align: left;">0-1, <code>nan</code> for fewer than three sentences or without content words in the compared ones</td>
+<td style="text-align: left;">More content words carried on</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a href="#forward_overlap"><code>noun_overlap_para</code></a></td>
+<td style="text-align: left;">Share of the nouns of a paragraph repeated in the next one</td>
+<td style="text-align: left;">0-1, <code>nan</code> for one paragraph or without nouns in the compared ones</td>
+<td style="text-align: left;">More nouns carried to the next paragraph</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a href="#forward_overlap"><code>argument_overlap_para</code></a></td>
+<td style="text-align: left;">Share of the arguments of a paragraph repeated in the next one</td>
+<td style="text-align: left;">0-1, <code>nan</code> for one paragraph or without arguments in the compared ones</td>
+<td style="text-align: left;">More arguments carried to the next paragraph</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a href="#forward_overlap"><code>content_overlap_para</code></a></td>
+<td style="text-align: left;">Share of the content words of a paragraph repeated in the next one</td>
+<td style="text-align: left;">0-1, <code>nan</code> for one paragraph or without content words in the compared ones</td>
+<td style="text-align: left;">More content words carried to the next paragraph</td>
 </tr>
 <tr>
 <td style="text-align: left;"><a href="#pronouns"><code>p_pronouns</code></a></td>
@@ -2693,6 +2762,60 @@ Secondary connectors per 1000 words                             |  142.86
 <!-- --8<-- [end:dice] -->
 </div>
 <div class="metric-card">
+<h3 id="forward_overlap">Overlap with the next sentences and paragraphs<a class="headerlink" href="#forward_overlap" title="Permanent link">&para;</a></h3>
+<p class="metric-meta"><code>noun_overlap_2_sent</code> · <code>argument_overlap_2_sent</code> · <code>content_overlap_2_sent</code> · <code>noun_overlap_para</code> · <code>argument_overlap_para</code> · <code>content_overlap_para</code> · <a href="https://doi.org/10.3758/s13428-015-0651-7">TAACO</a></p>
+<!-- --8<-- [start:CohesionStats-forward_overlap] -->
+<p>The adjacent overlap of TAACO, by the lemmas of the nouns, of the arguments and of the content words: the share of the distinct lemmas of a sentence repeated in one of the next two sentences (<code>adjacent_overlap_2_*_sent</code>), and of a paragraph repeated in the next paragraph (<code>adjacent_overlap_*_para</code>), over all the sentences or paragraphs that have them (<code>calc_forward_overlap</code>). Unlike the binary overlap, a pair of segments counts by the share of the lemmas they share. A paragraph is a part of the text between blank lines that holds words; a word that carries <code>paragraph_start</code> opens one, inside a sentence too, as when a parser joins a heading to the next sentence.</p>
+<!-- --8<-- [end:CohesionStats-forward_overlap] -->
+<!-- --8<-- [start:calc_forward_overlap] -->
+<div class="signature highlight"><pre><span></span><code><span class="n">calc_forward_overlap</span><span class="p">(</span><span class="n">sets</span><span class="p">,</span> <span class="n">span</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</code></pre></div>
+<p>The share of the elements of a segment repeated in the next ones: the distinct elements of every segment with <code>span</code> segments after it that one of these segments holds, over the distinct elements of those segments; <code>nan</code> for no more segments than <code>span</code> or for segments without elements.</p>
+<div class="arithmatex">\[
+\frac{\sum_{i=1}^{n-k} |A_i \cap (A_{i+1} \cup \dots \cup A_{i+k})|}{\sum_{i=1}^{n-k} |A_i|}
+\]</div>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Parameter</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Default</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>sets</code></td>
+<td style="text-align: left;"><code>list[set[str]]</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Elements of every segment</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>span</code></td>
+<td style="text-align: left;"><code>int</code></td>
+<td style="text-align: left;"><code>1</code></td>
+<td style="text-align: left;">Number <span class="arithmatex">\(k\)</span> of the next segments a segment is compared with</td>
+</tr>
+</tbody>
+</table>
+<p>Segments that are a string, a <code>Doc</code>, an iterator or a segment that is not a list of strings raise <code>SourceTypeError</code>, a span that is not an integer above 0 <code>ParameterError</code>.</p>
+<!-- --8<-- [end:calc_forward_overlap] -->
+<div class="tabbed-set tabbed-alternate" data-tabs="3:2"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Code</label><label for="__tabbed_3_2">Result</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts.cohesion_stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">calc_forward_overlap</span>
+
+<span class="n">calc_forward_overlap</span><span class="p">([{</span><span class="s2">"cat"</span><span class="p">,</span> <span class="s2">"mat"</span><span class="p">},</span> <span class="p">{</span><span class="s2">"dog"</span><span class="p">},</span> <span class="p">{</span><span class="s2">"cat"</span><span class="p">}],</span> <span class="n">span</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>0.5
+</code></pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="metric-card">
 <h3 id="pronouns">Pronouns and demonstratives<a class="headerlink" href="#pronouns" title="Permanent link">&para;</a></h3>
 <p class="metric-meta"><code>p_pronouns</code> · <code>pronoun_noun_ratio</code> · <code>p_demonstratives</code></p>
 <!-- --8<-- [start:CohesionStats-pronouns] -->
@@ -2796,7 +2919,7 @@ Secondary connectors per 1000 words                             |  142.86
 <p>A list of sentences that is a string, a <code>Doc</code>, an iterator, a set or a table raises <code>SourceTypeError</code>, and so does a sentence that is not a list of strings (<code>check_words</code>), such as a list of spaCy tokens. The overlaps (<code>calc_overlap</code>, <code>calc_proportional_overlap</code>, <code>calc_overlaps</code>) take a sentence as a set too; <code>count_given</code> and <code>calc_repetition</code> count the words in order and refuse a set.</p>
 <!-- --8<-- [end:cohesion-checks] -->
 
-<div class="tabbed-set tabbed-alternate" data-tabs="3:2"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Code</label><label for="__tabbed_3_2">Result</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="4:2"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><input id="__tabbed_4_2" name="__tabbed_4" type="radio" /><div class="tabbed-labels"><label for="__tabbed_4_1">Code</label><label for="__tabbed_4_2">Result</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts.cohesion_stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">calc_overlap</span><span class="p">,</span> <span class="n">calc_repetition</span><span class="p">,</span> <span class="n">count_given</span>
@@ -2848,7 +2971,7 @@ Secondary connectors per 1000 words                             |  142.86
 </table>
 <!-- --8<-- [end:calc_overlaps] -->
 
-<div class="tabbed-set tabbed-alternate" data-tabs="4:2"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><input id="__tabbed_4_2" name="__tabbed_4" type="radio" /><div class="tabbed-labels"><label for="__tabbed_4_1">Code</label><label for="__tabbed_4_2">Result</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="5:2"><input checked="checked" id="__tabbed_5_1" name="__tabbed_5" type="radio" /><input id="__tabbed_5_2" name="__tabbed_5" type="radio" /><div class="tabbed-labels"><label for="__tabbed_5_1">Code</label><label for="__tabbed_5_2">Result</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts.cohesion_stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">calc_overlaps</span>
@@ -2921,7 +3044,7 @@ Secondary connectors per 1000 words                             |  142.86
 <p>Words that are not a list of strings and parts of speech that are not a list of strings and <code>None</code> (the tags <code>token.pos_</code> of spaCy, not the numbers <code>token.pos</code>) and positions that are not a collection raise <code>SourceTypeError</code>, a number of the sentence or a position that is not an integer, a position of a mark that is not that of a word after the first, a blocked position that is not that of a word and parts of speech not as many as the words <code>ParameterError</code>.</p>
 <!-- --8<-- [end:ConnectorMatcher-find] -->
 
-<div class="tabbed-set tabbed-alternate" data-tabs="5:2"><input checked="checked" id="__tabbed_5_1" name="__tabbed_5" type="radio" /><input id="__tabbed_5_2" name="__tabbed_5" type="radio" /><div class="tabbed-labels"><label for="__tabbed_5_1">Code</label><label for="__tabbed_5_2">Result</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="6:2"><input checked="checked" id="__tabbed_6_1" name="__tabbed_6" type="radio" /><input id="__tabbed_6_2" name="__tabbed_6" type="radio" /><div class="tabbed-labels"><label for="__tabbed_6_1">Code</label><label for="__tabbed_6_2">Result</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts.cohesion_stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConnectorMatcher</span>
@@ -2972,7 +3095,7 @@ Secondary connectors per 1000 words                             |  142.86
 <tr>
 <td style="text-align: left;"><code>analyze(source)</code></td>
 <td style="text-align: left;">method</td>
-<td style="text-align: left;">Words of the sentences of a source as <code>CohesionWord</code>: the word, its lemma, its part of speech, whether it is a noun, a pronoun, a demonstrative, an argument and a content word, its tense, mood and aspect, whether a punctuation mark stands before it (<code>break_before</code>, which the rules of the connectors do not read through) and whether no connector starts at it (<code>connector_blocked</code>, by a rule of the parse such as an <em>if</em> of an indirect question); by default those of a <code>Doc</code>, sentence by sentence (<code>doc_units</code>), with the features of <code>word_info</code>; a library that reads a string or a <code>Doc</code> without these annotations overrides it</td>
+<td style="text-align: left;">Words of the sentences of a source as <code>CohesionWord</code>: the word, its lemma, its part of speech, whether it is a noun, a pronoun, a demonstrative, an argument and a content word, its tense, mood and aspect, whether a punctuation mark stands before it (<code>break_before</code>, which the rules of the connectors do not read through), whether no connector starts at it (<code>connector_blocked</code>, by a rule of the parse such as an <em>if</em> of an indirect question) and whether a blank line stands before it (<code>paragraph_start</code>); by default those of a <code>Doc</code>, sentence by sentence (<code>doc_units</code>), with the features of <code>word_info</code>; the default marks the words after a blank line of the <code>Doc</code>; a library that reads a string or a <code>Doc</code> without these annotations overrides it</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>doc_units(doc)</code></td>
