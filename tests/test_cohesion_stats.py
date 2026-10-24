@@ -662,11 +662,20 @@ def test_paragraphs_between_blank_lines():
     assert (stats.noun_overlap_para, stats.content_overlap_para) == (1.0, 0.5)
     first = [word.paragraph_start for sent in stats.analyze(paragraph_doc()) for word in sent[:1]]
     assert first == [False, True, False]
-    # A line break alone starts no paragraph, nor does a blank line inside a sentence
+    # A line break alone starts no paragraph; a blank line inside a sentence does, as when a
+    # parser joins a heading to the next sentence
     assert CohesionStats(paragraph_doc("\n")).n_paragraphs == 1
     inside = paragraph_doc()
     inside[5].is_sent_start = False
-    assert CohesionStats(inside).n_paragraphs == 1
+    assert CohesionStats(inside).n_paragraphs == 2
+    assert [word.paragraph_start for word in CohesionStats(inside).analyze(inside)[0]] == [
+        False,
+        False,
+        False,
+        True,
+        False,
+        False,
+    ]
     # The sentences of an extractor over the text keep the paragraphs
     assert CohesionStats(paragraph_doc(), sents_extractor=SentsExtractor()).n_paragraphs == 2
 
@@ -680,7 +689,7 @@ def test_paragraphs_of_a_library():
                     CohesionWord(
                         "cats", "cat", "NOUN", True, False, False, True, True, paragraph_start=True
                     ),
-                    # A mark on a word inside a sentence is not read
+                    # A paragraph may start inside a sentence
                     CohesionWord(
                         "dogs", "dog", "NOUN", True, False, False, True, True, paragraph_start=True
                     ),
@@ -688,7 +697,8 @@ def test_paragraphs_of_a_library():
             ]
 
     stats = Marked(text_doc())
-    assert stats.n_paragraphs == 2 and stats.noun_overlap_para == 1.0
+    # cat, cat and dog: the first paragraph shares its noun with the second, which does not
+    assert stats.n_paragraphs == 3 and stats.noun_overlap_para == 0.5
     assert CohesionWord("a", "a", None, False, False, False, False, False).paragraph_start is False
 
 

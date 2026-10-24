@@ -494,8 +494,8 @@ class CohesionWord(NamedTuple):
         connector_blocked (bool): Whether no connector starts at the word, by a rule of
             the language that reads more than the words and their parts of speech, such
             as its parse (word_info of a library)
-        paragraph_start (bool): Whether the word opens a sentence after a blank line, the
-            start of a paragraph; read on the first word of a sentence
+        paragraph_start (bool): Whether a blank line stands between the word and the one
+            before it, the start of a paragraph
     """
 
     word: str
@@ -546,6 +546,7 @@ class CohesionStats(Stats):
         lemmas (tuple[tuple[str, ...], ...]): Lemmas of every sentence with words
         n_sents (int): Number of sentences with words
         n_paragraphs (int): Number of paragraphs - parts of the text between blank lines
+            that hold words
         n_words (int): Number of words
         n_nouns (int): Number of nouns
         n_pronouns (int): Number of pronouns
@@ -704,20 +705,25 @@ class CohesionStats(Stats):
         self.content_overlap_all = content_overlap.all
         self.content_overlap_prop_adjacent = content_overlap.prop_adjacent
         self.content_overlap_prop_all = content_overlap.prop_all
-        groups: list[list[int]] = []
-        for index, sent in enumerate(sents):
-            if not groups or sent[0].paragraph_start:
-                groups.append([])
-            groups[-1].append(index)
-        self.n_paragraphs = len(groups)
+        paragraphs: list[list[CohesionWord]] = []
+        for word in (word for sent in sents for word in sent):
+            if not paragraphs or word.paragraph_start:
+                paragraphs.append([])
+            paragraphs[-1].append(word)
+        self.n_paragraphs = len(paragraphs)
         for name, sets in (
             ("noun", nouns),
             ("argument", arguments),
             ("content", [frozenset(sent) for sent in content]),
         ):
             setattr(self, f"{name}_overlap_2_sent", calc_forward_overlap(sets, 2))
-            paragraphs = [frozenset().union(*(sets[i] for i in group)) for group in groups]
-            setattr(self, f"{name}_overlap_para", calc_forward_overlap(paragraphs))
+            setattr(
+                self,
+                f"{name}_overlap_para",
+                calc_forward_overlap(
+                    [{word.lemma for word in part if getattr(word, name)} for part in paragraphs]
+                ),
+            )
         self.p_pronouns = self.n_pronouns / self.n_words
         self.pronoun_noun_ratio = safe_divide(self.n_pronouns, self.n_nouns, nan)
         self.p_demonstratives = self.n_demonstratives / self.n_words
@@ -797,12 +803,10 @@ class CohesionStats(Stats):
         starts = _paragraph_starts(sents)
         return [
             [
-                self._marked(
-                    self.word_info(unit), position in marks, not position and index in starts
-                )
+                self._marked(self.word_info(unit), position in marks, unit[0].i in starts)
                 for position, unit in enumerate(sent)
             ]
-            for index, sent in enumerate(sents)
+            for sent in sents
             for marks in (find_unit_marks(sent),)
         ]
 
@@ -917,20 +921,19 @@ class CohesionStats(Stats):
 
 
 def _paragraph_starts(sents: Sequence[Sequence[Sequence[Token]]]) -> set[int]:
-    """Numbers of the sentences of a Doc that a blank line separates from the words before"""
+    """Positions of the first tokens of the words of a Doc that a blank line separates from
+    the word before, inside a sentence too"""
     starts = set()
     last: Token | None = None
-    for index, sent in enumerate(sents):
-        if not sent:
-            continue
-        first = sent[0][0]
+    for unit in (unit for sent in sents for unit in sent):
+        first = unit[0]
         if last is not None:
-            gap = last.whitespace_ + "".join(
-                token.text_with_ws for token in last.doc[last.i + 1 : first.i]
-            )
+            gap = last.whitespace_
+            if first.i > last.i + 1:
+                gap += "".join(token.text_with_ws for token in last.doc[last.i + 1 : first.i])
             if BLANK_LINE.search(gap):
-                starts.add(index)
-        last = sent[-1][-1]
+                starts.add(first.i)
+        last = unit[-1]
     return starts
 
 
