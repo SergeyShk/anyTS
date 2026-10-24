@@ -85,6 +85,8 @@ Raises:
 | `n_coordination_chains` | `int` | Number of the coordination chains |
 | `n_clauses`, `n_subordinate_clauses`, `n_complex_sents` | `int` | Numbers of the clauses, of the subordinate clauses and of the sentences with one |
 | `n_infinitive_clauses` | `int` | Number of the infinitive clauses under a verb |
+| `n_t_units`, `n_complex_t_units` | `int` | Numbers of the T-units and of those with a subordinate clause |
+| `n_verb_phrases`, `n_coordinate_phrases`, `n_complex_nominals` | `int` | Numbers of the verb phrases, of the coordinate phrases and of the complex nominals |
 | `n_nouns`, `n_verbs` | `int` | Numbers of the nouns (`NOUN`, `PROPN`) and of the verb forms (`VERB`) |
 | `n_prep_chains` | `int` | Number of the prepositional chains |
 | `n_participle_clauses` | `int` | Number of the participial clauses |
@@ -121,6 +123,13 @@ Every metric is an attribute of the object, computed when it is created, and `ge
 | [`subordinate_clauses_per_sent`](#subordinate_clauses) | Subordinate clauses per sentence | 0 and above | More subordination |
 | [`p_complex_sents`](#subordinate_clauses) | Share of the sentences with a subordinate clause | 0-1 | More complex sentences |
 | [`infinitive_clauses_per_sent`](#infinitive_clauses) | Infinitive clauses under a verb per sentence (*wants to leave*), which are not subordinate | 0 and above | More infinitive complements |
+| [`t_units_per_sent`](#l2sca) | T-units per sentence (T/S) | 0 and above | More main clauses in a sentence |
+| [`mean_t_unit_len`](#l2sca) | Mean length of a T-unit in words (MLT) | 1 and above, `nan` without T-units | Longer T-units |
+| [`clauses_per_t_unit`](#l2sca) | Clauses per T-unit (C/T) | 1 and above, `nan` without T-units | More subordination |
+| [`p_complex_t_units`](#l2sca) | Share of the T-units with a subordinate clause (CT/T) | 0-1, `nan` without T-units | More complex T-units |
+| [`verb_phrases_per_t_unit`](#l2sca) | Verb phrases per T-unit (VP/T) | 0 and above, `nan` without T-units | More verb phrases |
+| [`coordinate_phrases_per_clause`](#l2sca) | Coordinate phrases per clause (CP/C) | 0 and above, `nan` without clauses | More phrasal coordination |
+| [`complex_nominals_per_clause`](#l2sca) | Complex nominals per clause (CN/C) | 0 and above, `nan` without clauses | Denser noun phrases |
 | [`modifiers_per_noun`](#noun_modifiers) | Mean number of the modifiers of a noun | 0 and above, `nan` without nouns | Heavier noun phrases |
 | [`prep_chains_per_sent`](#prep_chains) | Chains of nested complements with a preposition per sentence | 0 and above | More nested complements |
 | [`max_prep_chain_len`](#prep_chains) | Length of the longest prepositional chain | 0, or 2 and above | Longer chains |
@@ -346,6 +355,31 @@ Checks whether a word heads an infinitive clause under a verb: a clause head by 
 
 A value that is not a `Token` and a check or a form of an auxiliary that is not callable raise `SourceTypeError`.
 <!-- --8<-- [end:is_infinitive_clause_head] -->
+
+</div>
+
+<div class="metric-card" markdown>
+
+### Production units of L2SCA { #l2sca }
+
+`t_units_per_sent` · `mean_t_unit_len` · `clauses_per_t_unit` · `p_complex_t_units` · `verb_phrases_per_t_unit` · `coordinate_phrases_per_clause` · `complex_nominals_per_clause` · [Lu 2010](https://doi.org/10.1075/ijcl.15.4.02lu)
+{ .metric-meta }
+
+<!-- --8<-- [start:SyntaxStats-l2sca] -->
+The indices of the L2 Syntactic Complexity Analyzer (L2SCA) that the other metrics do not give, on Universal Dependencies. MLC and C/S are `mean_clause_len` and `clauses_per_sent`; MLS and DC/C come from the counts, `n_words / n_sents` and `n_subordinate_clauses / n_clauses`.
+
+- A T-unit is a main clause with the clauses that depend on it: the head of a sentence and every clause head joined to it through `conj` or `parataxis` (`anyts.constants.MAIN_CLAUSE_DEPS`), so *I came, and he left* holds two; a conjunct of a subordinate clause is none. A T-unit is complex with a subordinate clause (`is_subordinate_clause_head`) whose nearest T-unit above is it.
+- A verb phrase is a verb (`VERB`) or a predicate with a copula.
+- A coordinate phrase is a coordination of words that are no clause heads (*the man and the woman*), counted once by its first conjunct; coordinated predicates count as clauses.
+- A complex nominal is a noun with a modifier of `anyts.constants.COMPLEX_NOMINAL_DEPS` (an adjective, a complement, a relative or participial clause, an apposition, a possessive), or a nominal clause, a clause head of `anyts.constants.NOMINAL_CLAUSE_DEPS`.
+
+$$
+\textrm{MLT} = \frac{\textrm{Words}}{\textrm{T-units}}, \quad
+\textrm{C/T} = \frac{\textrm{Clauses}}{\textrm{T-units}}, \quad
+\textrm{CT/T} = \frac{\textrm{Complex T-units}}{\textrm{T-units}}, \quad
+\textrm{CN/C} = \frac{\textrm{Complex nominals}}{\textrm{Clauses}}
+$$
+<!-- --8<-- [end:SyntaxStats-l2sca] -->
 
 </div>
 

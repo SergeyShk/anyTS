@@ -605,6 +605,15 @@ def test_syntax_stats_metrics():
         "subordinate_clauses_per_sent": 0.5,
         "p_complex_sents": 0.5,
         "infinitive_clauses_per_sent": 0.5,
+        # T-units: sold; said and left. The second holds the subordinate want
+        "t_units_per_sent": 1.5,
+        "mean_t_unit_len": 6.0,
+        "clauses_per_t_unit": 5 / 3,
+        "p_complex_t_units": 1 / 3,
+        "verb_phrases_per_t_unit": 2.0,
+        # No coordinate phrase: said and left are clauses; house with built, and want under ccomp
+        "coordinate_phrases_per_clause": 0.0,
+        "complex_nominals_per_clause": 0.4,
         "modifiers_per_noun": 1.0,
         # by workers is one complement with a preposition, no chain
         "prep_chains_per_sent": 0.0,
@@ -1022,6 +1031,98 @@ def test_prepositional_complement_of_a_hyphenated_word():
         join_hyphens = True
 
     assert Hyphens(doc).n_prep_chains == 1 and SyntaxStats(doc).n_prep_chains == 0
+
+
+# The man and the woman came ; she was tired , and he said that they left .
+L2SCA = [
+    ("The", 1, "det", "DET"),
+    ("man", 5, "nsubj", "NOUN"),
+    ("and", 4, "cc", "CCONJ"),
+    ("the", 4, "det", "DET"),
+    ("woman", 1, "conj", "NOUN"),
+    ("came", 5, "ROOT", "VERB"),
+    (";", 9, "punct", "PUNCT"),
+    ("she", 9, "nsubj", "PRON"),
+    ("was", 9, "cop", "AUX"),
+    ("tired", 5, "parataxis", "ADJ"),
+    (",", 13, "punct", "PUNCT"),
+    ("and", 13, "cc", "CCONJ"),
+    ("he", 13, "nsubj", "PRON"),
+    ("said", 9, "conj", "VERB"),
+    ("that", 16, "mark", "SCONJ"),
+    ("they", 16, "nsubj", "PRON"),
+    ("left", 13, "ccomp", "VERB"),
+    (".", 5, "punct", "PUNCT"),
+]
+
+
+def l2sca_doc():
+    words, heads, deps, pos = (list(column) for column in zip(*L2SCA, strict=True))
+    return Doc(VOCAB, words=words, heads=heads, deps=deps, pos=pos)
+
+
+def test_t_units_and_phrases():
+    stats = SyntaxStats(l2sca_doc())
+    # came, tired by parataxis and said by conj are main clauses; left is subordinate
+    assert (stats.n_clauses, stats.n_t_units, stats.n_complex_t_units) == (4, 3, 1)
+    assert stats.t_units_per_sent == 3.0 and stats.mean_t_unit_len == 15 / 3
+    assert stats.clauses_per_t_unit == 4 / 3 and stats.p_complex_t_units == 1 / 3
+    # the man and the woman is a coordinate phrase; three verbs and a predicate with a copula
+    assert stats.n_coordinate_phrases == 1 and stats.coordinate_phrases_per_clause == 0.25
+    assert stats.n_verb_phrases == 4 and stats.verb_phrases_per_t_unit == 4 / 3
+    # left under ccomp is a nominal clause; no noun has a modifier of a complex nominal
+    assert stats.n_complex_nominals == 1 and stats.complex_nominals_per_clause == 0.25
+
+
+def test_coordinated_subordinate_clauses_make_no_t_unit():
+    # he said that they came and that they left: left is a conjunct of a subordinate clause
+    doc = parse(
+        ["he", "said", "that", "they", "came", "and", "that", "they", "left"],
+        [1, 1, 4, 4, 1, 8, 8, 8, 4],
+        ["nsubj", "ROOT", "mark", "nsubj", "ccomp", "cc", "mark", "nsubj", "conj"],
+        pos=["PRON", "VERB", "SCONJ", "PRON", "VERB", "CCONJ", "SCONJ", "PRON", "VERB"],
+    )
+    stats = SyntaxStats(doc)
+    assert (stats.n_t_units, stats.n_complex_t_units) == (1, 1)
+
+
+def test_t_units_without_a_word_at_the_root():
+    stats = SyntaxStats(parse(["Well", "!"], [1, 1], ["discourse", "ROOT"], pos=["INTJ", "PUNCT"]))
+    assert stats.n_t_units == 0 and stats.n_clauses == 0
+    for name in ("mean_t_unit_len", "clauses_per_t_unit", "coordinate_phrases_per_clause"):
+        assert isnan(getattr(stats, name))
+    assert stats.t_units_per_sent == 0.0
+
+
+def test_t_units_through_broken_links():
+    # A conjunct whose head is a mark, and conjuncts linked in a loop, head no T-unit
+    doc = parse(
+        ["came", ";", "went", "ran", "saw"],
+        [0, 0, 1, 4, 3],
+        ["ROOT", "punct", "conj", "conj", "conj"],
+        pos=["VERB", "PUNCT", "VERB", "VERB", "VERB"],
+    )
+    stats = SyntaxStats(doc)
+    assert stats.n_t_units == 1
+    # A subordinate clause under a loop belongs to no T-unit
+    loop = parse(
+        ["came", "said", "left", "that", "won"],
+        [0, 2, 1, 4, 2],
+        ["ROOT", "conj", "conj", "mark", "advcl"],
+        pos=["VERB", "VERB", "VERB", "SCONJ", "VERB"],
+    )
+    assert SyntaxStats(loop).n_complex_t_units == 0
+
+
+def test_complex_nominals_of_both_schemes():
+    doc = parse(
+        ["a", "house", "of", "stone", "the", "man", "'s", "dog", "slept"],
+        [1, 8, 1, 2, 5, 7, 5, 8, 8],
+        ["det", "nsubj", "prep", "pobj", "det", "poss", "case", "nsubj", "ROOT"],
+        pos=["DET", "NOUN", "ADP", "NOUN", "DET", "NOUN", "PART", "NOUN", "VERB"],
+    )
+    # house with prep and dog with poss of ClearNLP are complex nominals; stone and man are not
+    assert SyntaxStats(doc).n_complex_nominals == 2
 
 
 def test_words_before_a_root_out_of_the_words():
