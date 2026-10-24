@@ -424,6 +424,10 @@ def test_orlov_z():
     assert isnan(calc_orlov_z(list("abcdef"))) and isnan(calc_orlov_z(["a"]))
     # A text of mostly new words has a Z beyond floats
     assert calc_orlov_z(["the", "the", *(f"w{i}" for i in range(2000))]) == inf
+    # A root just below the overflow is found, not jumped over
+    for n_words in (1000, 1020, 1050, 1200, 1310):
+        z = calc_orlov_z(["the", "the", *(f"w{i}" for i in range(n_words - 2))])
+        assert z > 1e300 or z == inf
     # At Z = N the right side takes its limit, Z / ln(pZ)
     assert _orlov_vocabulary(log(100), 100, 0.1) == pytest.approx(100 / log(10))
     assert _orlov_vocabulary(log(100) + 1e-9, 100, 0.1) == pytest.approx(100 / log(10))

@@ -138,7 +138,7 @@ Every metric is a property of the object, computed on each access by the functio
 | [`perplexity`](#perplexity) | Effective number of lexemes | 1 to the number of lexemes | A richer vocabulary |
 | [`zipf_alpha`](#zipf_alpha) | Fall of the frequency with the rank | 0 and above, `nan` for one lexeme | Frequencies falling faster |
 | [`heaps_beta`](#heaps_beta) | Growth of the vocabulary with the length | 0 and above, `nan` below two words | A faster growing vocabulary |
-| [`burstiness`](#burstiness) | Mean burstiness of the lexemes of five occurrences or more | -1 and above, `nan` without them | Words used in bursts |
+| [`burstiness`](#burstiness) | Mean burstiness of the lexemes of five occurrences or more | -1 to 1, `nan` without them | Words used in bursts |
 <!-- --8<-- [end:DiversityStats-metrics] -->
 
 <div class="metric-card" markdown>
@@ -825,6 +825,20 @@ $$
 | `text` | `list[str]` | - | List of words |
 <!-- --8<-- [end:calc_orlov_z] -->
 
+=== "Code"
+
+    ``` python
+    from anyts.diversity_stats import calc_orlov_z
+
+    calc_orlov_z("the cat saw the dog and the dog saw a bird near the old tree".split())
+    ```
+
+=== "Result"
+
+    ```
+    59.99999999999961
+    ```
+
 </div>
 
 <div class="metric-card" markdown>
@@ -1062,7 +1076,7 @@ Fits Heaps' law over the vocabulary growth curve of a list of words, as `calc_he
 calc_burstiness(text, min_freq=5)
 ```
 
-How a lexeme comes in bursts rather than spread over the text, by the burstiness of Kim and Jo, which corrects that of Goh and Barabási for a finite number $n$ of events, averaged over the lexemes of `min_freq` occurrences or more (`BURSTINESS_MIN_FREQ`). For the $n$ occurrences of a lexeme, $r$ is the coefficient of variation of their $n$ intervals, the one from the last to the first around the end of the text included. The value is −1 for occurrences at equal intervals, near 0 for a rare lexeme at random places and above 0 for occurrences in bursts; `nan` without such lexemes.
+How a lexeme comes in bursts rather than spread over the text, by the burstiness of Kim and Jo, which corrects that of Goh and Barabási for a finite number $n$ of events, averaged over the lexemes of `min_freq` occurrences or more (`BURSTINESS_MIN_FREQ`). For the $n$ occurrences of a lexeme, $r$ is the coefficient of variation of their $n$ intervals, the one from the last to the first around the end of the text included. The value is −1 for occurrences at equal intervals, near 0 for a rare lexeme at random places and up to 1 for occurrences in bursts; `nan` without such lexemes.
 
 $$
 A_n = \frac{\sqrt{n + 1} \cdot r - \sqrt{n - 1}}{(\sqrt{n + 1} - 2) \cdot r + \sqrt{n - 1}}
@@ -1079,17 +1093,15 @@ A `min_freq` that is not an integer of at least 2 raises `ParameterError`.
 === "Code"
 
     ``` python
-    from anyts.diversity_stats import calc_burstiness, calc_orlov_z
+    from anyts.diversity_stats import calc_burstiness
 
     calc_burstiness("a x a x a x a x a x".split()), calc_burstiness("a a a a a x x x x x".split())
-    calc_orlov_z("the cat saw the dog and the dog saw a bird near the old tree".split())
     ```
 
 === "Result"
 
     ```
     (-1.0, 0.18350341907227388)
-    59.99999999999961
     ```
 
 </div>

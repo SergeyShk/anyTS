@@ -1369,7 +1369,7 @@ def calc_orlov_z(text: Sequence[str]) -> float:
     n_words = len(text)
     counts = Counter(text)
     n_lexemes = len(counts)
-    if n_words < 2 or n_lexemes == n_words:
+    if n_lexemes == n_words:
         return nan
     from scipy.optimize import brentq, minimize_scalar
 
@@ -1377,15 +1377,15 @@ def calc_orlov_z(text: Sequence[str]) -> float:
     # Over u = ln Z the right side is defined above u = -ln p and tends to N at infinity
     low = -log(share)
     expected = partial(_orlov_vocabulary, n_words=n_words, share=share)
-    bound = max(log(n_words), low) + 50.0
+    bound = log(n_words) + 50.0
     lowest = minimize_scalar(expected, bounds=(low + 1e-9, bound), method="bounded")
     if n_lexemes <= lowest.fun:
         return nan
     high = bound
     while expected(high) <= n_lexemes:
-        if high > _MAX_LOG_Z:
+        if high >= _MAX_LOG_Z:
             return inf
-        high *= 2
+        high = min(2 * high, _MAX_LOG_Z)
     return exp(brentq(lambda u: expected(u) - n_lexemes, lowest.x, high, xtol=1e-12))
 
 
@@ -1729,7 +1729,7 @@ def calc_burstiness(text: Sequence[str], min_freq: int = BURSTINESS_MIN_FREQ) ->
         from the last to the first around the end of the text included, and
         A = (√(n+1)·r − √(n−1)) / ((√(n+1) − 2)·r + √(n−1)):
         −1 for occurrences at equal intervals, near 0 for a rare lexeme at random
-        places, above 0 for occurrences in bursts
+        places, up to 1 for occurrences in bursts
 
     References:
         https://doi.org/10.1103/PhysRevE.94.032311 (Kim and Jo 2016)
