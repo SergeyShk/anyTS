@@ -1,3 +1,4 @@
+from collections import Counter
 from math import isclose, log2, sqrt
 
 import numpy as np
@@ -16,8 +17,10 @@ from anyts.corpus import (
     kilgarriff_chi2,
     mendenhall_curve,
     mendenhall_distance,
+    rolling_delta,
     z_scores,
     zeta,
+    zeta_segments,
 )
 from anyts.exceptions import ParameterError, SourceError, SourceTypeError
 
@@ -215,6 +218,102 @@ def test_delta_errors():
         frequency_table({"A": spacy.blank("xx")(texts["A"])})
 
 
+def naive_rolling_delta(reference, text, window, step, n_mfw, variant, culling=0.0):
+    """Distances of the windows of a text to the centroids of the windows of the references"""
+
+    def windows(units):
+        return [units[start : start + window] for start in range(0, len(units) - window + 1, step)]
+
+    parts = {name: windows(units) for name, units in reference.items()}
+    pooled = {
+        f"{name}{i}": units for name, chunks in parts.items() for i, units in enumerate(chunks)
+    }
+    table = frequency_table(pooled, n_mfw, culling)
+    mean, deviation = table.mean(), table.std()
+
+    def scaled(units):
+        counts = Counter(units)
+        frequencies = pd.Series({unit: counts[unit] / len(units) for unit in table.columns})
+        return np.where(deviation > 0, (frequencies - mean) / deviation.where(deviation > 0, 1), 0)
+
+    n = len(table.columns)
+    weights = np.array([(n - rank + 2) / n for rank in range(1, n + 1)])
+    rows = []
+    for units in windows(text):
+        row = []
+        for chunks in parts.values():
+            a, b = scaled(units), np.mean([scaled(chunk) for chunk in chunks], axis=0)
+            row.append(
+                {
+                    "burrows": np.abs(a - b).sum() / n,
+                    "quadratic": np.sqrt(((a - b) ** 2).sum()) / n,
+                    "eder": (weights * np.abs(a - b)).sum(),
+                    "cosine": 1 - a @ b / (np.linalg.norm(a) * np.linalg.norm(b)),
+                }[variant]
+            )
+        rows.append(row)
+    return np.array(rows)
+
+
+def test_rolling_delta():
+    text = corpus["A"] + corpus["B"]
+    for variant in DELTA_VARIANTS:
+        for window, step, culling in ((8, 3, 0.0), (6, 6, 0.0), (8, 1, 0.5)):
+            distances = rolling_delta(corpus, text, window, step, 6, variant, culling)
+            expected = naive_rolling_delta(corpus, text, window, step, 6, variant, culling)
+            assert np.allclose(distances.to_numpy(), expected)
+    distances = rolling_delta(corpus, text, window=8, step=3, n_mfw=6)
+    assert list(distances.columns) == ["A", "B", "C"]
+    # The windows by their middles, the rest shorter than a window dropped
+    assert list(distances.index) == list(range(4, len(text) - 8 + 5, 3))
+    # Over all the units, the windows of A are nearest to A and those of B to B; the
+    # middle of the first window mostly of B is 24, the text of A ends at 21
+    nearest = rolling_delta(corpus, text, window=12, step=3, n_mfw=None).idxmin(axis=1)
+    assert nearest.to_dict() == {middle: "A" if middle < 24 else "B" for middle in range(6, 34, 3)}
+    # Texts of one window each: the distances of delta_profiles
+    length = min(len(units) for units in corpus.values())
+    cut = {name: units[:length] for name, units in corpus.items()}
+    sample = corpus["B"][-length:]
+    for variant in DELTA_VARIANTS:
+        rolled = rolling_delta(cut, sample, window=length, step=length, n_mfw=5, variant=variant)
+        profiles = delta_profiles(cut, {"x": sample}, n_mfw=5, variant=variant)
+        assert list(rolled.index) == [length // 2]
+        assert np.allclose(rolled.to_numpy(), profiles.to_numpy())
+
+
+def test_rolling_delta_errors():
+    text = corpus["A"]
+    with pytest.raises(ParameterError, match=r"^Unknown variant of Delta: manhattan$"):
+        rolling_delta(corpus, text, 8, 3, variant="manhattan")
+    for window, step, message in (
+        (0, 1, r"^The size of a window must be greater than 0$"),
+        (8, 0, r"^The step must be greater than 0$"),
+        (8.0, 3, r"^The size of a window must be an integer, not float$"),
+        (8, "3", r"^The step must be an integer, not str$"),
+        (8, 9, r"^The step must not exceed the size of a window$"),
+    ):
+        with pytest.raises(ParameterError, match=message):
+            rolling_delta(corpus, text, window, step)
+    two = {"A": text[:8], "B": text[8:16]}
+    for reference, units, message in (
+        ({}, text, r"^There are no reference texts$"),
+        ({**corpus, "D": []}, text, r"^One of the reference texts has no units$"),
+        ({"A": corpus["A"]}, text, r"^The rolling Delta needs at least two reference texts$"),
+        # One unit short of a window
+        ({"A": text[:7], "B": text[8:16]}, text, r"^One of the reference texts is shorter"),
+        (two, text[:7], r"^The text is shorter than a window$"),
+        (two, text, r"at least three windows$"),
+    ):
+        with pytest.raises(SourceError, match=message):
+            rolling_delta(reference, units, 8, 8)
+    # A reference text and the text of exactly one window are enough
+    assert rolling_delta({**two, "C": text[2:10]}, text[:8], 8, 8).shape == (1, 3)
+    with pytest.raises(SourceTypeError, match="must be a mapping of the names of the texts"):
+        rolling_delta(list(corpus.values()), text, 8, 3)
+    with pytest.raises(SourceTypeError):
+        rolling_delta(corpus, texts["A"], 8, 3)
+
+
 def test_zeta():
     # 21 and 19 words give four segments each
     scores = zeta(corpus["A"], corpus["B"], segment_size=5)
@@ -258,6 +357,60 @@ def test_zeta_errors():
         zeta(set(corpus["A"]), corpus["B"])
     with pytest.raises(SourceTypeError):
         zeta([set(corpus["A"])], corpus["B"])
+
+
+def test_zeta_segments():
+    scores = zeta(corpus["A"], corpus["B"], segment_size=5)
+    preferred = [score.word for score in scores if score.zeta > 0]
+    avoided = [score.word for score in scores if score.zeta < 0]
+    corpora = {"A": corpus["A"], "B": [corpus["B"]], "AC": [corpus["A"], [], corpus["C"]]}
+    segments = zeta_segments(corpora, preferred, avoided, segment_size=5)
+    assert list(segments.columns) == ["corpus", "preferred", "avoided"]
+    # Four segments of A and of B, three more of C after an empty text
+    assert segments["corpus"].tolist() == ["A"] * 4 + ["B"] * 4 + ["AC"] * 7
+    first = set(np.array_split(np.array(corpus["A"], dtype=object), 4)[0])
+    assert segments.loc[0, "preferred"] == len(first & set(preferred)) / len(set(preferred))
+    assert segments.loc[0, "avoided"] == len(first & set(avoided)) / len(set(avoided))
+    means = segments.groupby("corpus")[["preferred", "avoided"]].mean()
+    assert means.loc["A", "preferred"] > means.loc["B", "preferred"]
+    assert means.loc["A", "avoided"] < means.loc["B", "avoided"]
+    # A set or repeats of the markers give the same shares
+    same = zeta_segments(corpora, set(preferred), avoided * 2, segment_size=5)
+    pd.testing.assert_frame_equal(same, segments)
+    # One marker: the mean share over the segments is its share of the segments in zeta
+    acab = next(score for score in scores if score.word == "acab")
+    alone = zeta_segments({"A": corpus["A"], "B": corpus["B"]}, ["acab"], ["acab"], 5)
+    assert alone.groupby("corpus")["preferred"].mean().to_dict() == {
+        "A": acab.dp_target,
+        "B": acab.dp_comparison,
+    }
+
+
+def test_zeta_segments_errors():
+    corpora = {"A": corpus["A"]}
+    with pytest.raises(ParameterError, match=r"^The size of a segment must be greater than 0$"):
+        zeta_segments(corpora, ["ab"], ["ac"], segment_size=0)
+    with pytest.raises(ParameterError, match=r"^The size of a segment must be an integer"):
+        zeta_segments(corpora, ["ab"], ["ac"], segment_size=5.0)
+    with pytest.raises(SourceTypeError, match=r"^The corpora must be a mapping of their names"):
+        zeta_segments([corpus["A"]], ["ab"], ["ac"])
+    for corpora_, preferred, avoided, message in (
+        ({}, ["ab"], ["ac"], r"^There are no corpora$"),
+        (corpora, [], ["ac"], r"^There are no preferred words$"),
+        (corpora, ["ab"], set(), r"^There are no avoided words$"),
+        ({"A": corpus["A"], "B": []}, ["ab"], ["ac"], r"^The corpus B has no words$"),
+        ({"A": [[], []]}, ["ab"], ["ac"], r"^The corpus A has no words$"),
+    ):
+        with pytest.raises(SourceError, match=message):
+            zeta_segments(corpora_, preferred, avoided)
+    for corpora_, preferred in (
+        (corpora, "ab"),
+        (corpora, [1]),
+        ({"A": texts["A"]}, ["ab"]),
+        ({"A": ["acab", ["babaa"]]}, ["ab"]),
+    ):
+        with pytest.raises(SourceTypeError):
+            zeta_segments(corpora_, preferred, ["ac"])
 
 
 def test_kilgarriff_chi2():
@@ -307,6 +460,15 @@ def test_arrays_of_words(container):
     words = ["a", "b", "a", "c", "a", "b"]
     assert zeta(container(words), ["d"]) == zeta(words, ["d"])
     assert zeta(dict(enumerate(words)).values(), ["d"]) == zeta(words, ["d"])
+    expected = zeta_segments({"A": words}, ["a"], ["d"], segment_size=2)
+    pd.testing.assert_frame_equal(
+        zeta_segments({"A": container(words)}, ["a"], ["d"], 2), expected
+    )
+    reference = {"A": words * 2, "B": words[::-1] * 2, "C": ["c", *words, "c"]}
+    expected = rolling_delta(reference, words * 2, window=4, step=2, n_mfw=3)
+    arrays = {name: container(units) for name, units in reference.items()}
+    rolled = rolling_delta(arrays, container(words * 2), window=4, step=2, n_mfw=3)
+    pd.testing.assert_frame_equal(rolled, expected)
     assert mendenhall_curve(container(words)) == mendenhall_curve(words)
     assert mendenhall_distance(container(words), container(["dd", "e"])) == pytest.approx(
         mendenhall_distance(words, ["dd", "e"])

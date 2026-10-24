@@ -1,4 +1,5 @@
 from collections.abc import Mapping, Sequence
+from itertools import combinations
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -10,7 +11,7 @@ from scipy.spatial.distance import squareform
 from ..constants import VISUALIZER_LABELS
 from ..corpus.stylometry import frequency_table, mendenhall_curve, z_scores
 from ..exceptions import ParameterError, SourceError, SourceTypeError
-from ..utils import merge_labels
+from ..utils import check_integer, merge_labels
 from ._axes import check_axes
 
 # Methods of scipy.cluster.hierarchy.linkage
@@ -216,6 +217,201 @@ def mds_plot(
     ax.set_xlabel(captions["xlabel"])
     ax.set_ylabel(captions["ylabel"])
     ax.set_title(captions["title"])
+    return ax
+
+
+def delta_histogram_plot(
+    distances: pd.DataFrame,
+    authors: Mapping[str, str],
+    bins: int = 20,
+    ax: Axes | None = None,
+    labels: Mapping[str, str] | None = None,
+) -> Axes:
+    """
+    Plotting the histograms of the distances within and between authors
+
+    Description:
+        The distances of the pairs of texts by one author against those of the
+        pairs by different authors, as densities over common bins: the less the
+        histograms overlap, the better the distances (delta) tell the authors apart
+
+    Arguments:
+        distances (DataFrame): Symmetric matrix of distances with the names of the texts
+            in the rows and the columns, in any order
+        authors (dict[str, str]): Authors of the texts by the names of the texts
+        bins (int): Number of the bins
+        ax (Axes): Axes for the plot; if not given, a new figure is created
+        labels (dict[str, str]): Labels over VISUALIZER_LABELS["delta_histogram_plot"]
+
+    Returns:
+        Axes: Axes with the histograms
+
+    Raises:
+        SourceTypeError: If the distances are not a DataFrame of numbers or the
+            authors are not a mapping
+        SourceError: If the matrix fails the checks of dendrogram_plot, a text has
+            no author, no two texts have one author or all of them have one
+        ParameterError: If the number of the bins is below one, the labels are set
+            incorrectly (merge_labels) or ax is not a matplotlib Axes (check_axes)
+    """
+    captions = merge_labels(VISUALIZER_LABELS["delta_histogram_plot"], labels)
+    check_integer(bins, "number of bins")
+    if bins < 1:
+        raise ParameterError("The number of bins must be greater than 0")
+    values = _distance_matrix(distances, "the histogram of the distances")
+    if not isinstance(authors, Mapping):
+        raise SourceTypeError(
+            f"The authors must be a mapping of the names of the texts to their authors, "
+            f"not {type(authors).__name__}"
+        )
+    names = list(distances.index)
+    missing = [name for name in names if name not in authors]
+    if missing:
+        raise SourceError(f"The texts have no authors: {missing}")
+    within: list[float] = []
+    between: list[float] = []
+    for first, second in combinations(range(len(names)), 2):
+        same = authors[names[first]] == authors[names[second]]
+        (within if same else between).append(values[first, second])
+    if not within:
+        raise SourceError("The histogram of the distances needs two texts by one author")
+    if not between:
+        raise SourceError("The histogram of the distances needs texts by different authors")
+    check_axes(ax)
+    if ax is None:
+        _, ax = plt.subplots()
+    edges = np.histogram_bin_edges(within + between, bins).tolist()
+    ax.hist(within, edges, density=True, alpha=0.5, label=captions["within"])
+    ax.hist(between, edges, density=True, alpha=0.5, label=captions["between"])
+    ax.set_xlabel(captions["xlabel"])
+    ax.set_ylabel(captions["ylabel"])
+    ax.set_title(captions["title"])
+    ax.legend()
+    return ax
+
+
+def rolling_delta_plot(
+    distances: pd.DataFrame, ax: Axes | None = None, labels: Mapping[str, str] | None = None
+) -> Axes:
+    """
+    Plotting the distances of rolling Delta along a text
+
+    Description:
+        A line of the distances to every reference text over the middles of the
+        windows (rolling_delta): the lowest line is the nearest reference of a
+        part of the text, and where the lines cross, the style changes
+
+    Arguments:
+        distances (DataFrame): Distances of rolling_delta, rows - the windows by
+            the position of their middle, columns - the reference texts
+        ax (Axes): Axes for the plot; if not given, a new figure is created
+        labels (dict[str, str]): Labels over VISUALIZER_LABELS["rolling_delta_plot"]
+
+    Returns:
+        Axes: Axes with the lines
+
+    Raises:
+        SourceTypeError: If the distances are not a DataFrame of numbers with
+            numbers in the index
+        SourceError: If there are no windows or no reference texts, or a position is
+            not finite or a distance is infinite or negative
+        ParameterError: If the labels are set incorrectly (merge_labels) or ax is not a matplotlib
+            Axes (check_axes)
+    """
+    captions = merge_labels(VISUALIZER_LABELS["rolling_delta_plot"], labels)
+    if not isinstance(distances, pd.DataFrame):
+        raise SourceTypeError(
+            f"The distances must be a DataFrame with the windows in the rows, "
+            f"not {type(distances).__name__}"
+        )
+    if distances.empty:
+        raise SourceError("The rolling Delta needs a window and a reference text")
+    try:
+        positions = distances.index.to_numpy(dtype=float)
+        values = distances.to_numpy(dtype=float)
+    except (TypeError, ValueError) as e:
+        raise SourceTypeError(
+            "The positions of the windows and the distances must be numbers"
+        ) from e
+    if not np.isfinite(positions).all():
+        raise SourceError("The rolling Delta needs every position of a window to be finite")
+    if not np.isfinite(values).all():
+        raise SourceError("The rolling Delta needs every distance to be finite")
+    if ((values < 0) & ~np.isclose(values, 0)).any():
+        raise SourceError("The rolling Delta needs non-negative distances")
+    check_axes(ax)
+    if ax is None:
+        _, ax = plt.subplots(figsize=(10, 5))
+    for index, name in enumerate(distances.columns):
+        ax.plot(positions, values[:, index], marker=".", label=str(name))
+    ax.set_xlabel(captions["xlabel"])
+    ax.set_ylabel(captions["ylabel"])
+    ax.set_title(captions["title"])
+    ax.legend()
+    return ax
+
+
+def zeta_scatter_plot(
+    segments: pd.DataFrame, ax: Axes | None = None, labels: Mapping[str, str] | None = None
+) -> Axes:
+    """
+    Plotting the segments of corpora by the shares of the markers of Zeta
+
+    Description:
+        A point for every segment of zeta_segments, the share of the avoided
+        words along the horizontal axis and of the preferred ones along the
+        vertical axis, a colour for every corpus
+
+    Arguments:
+        segments (DataFrame): Segments of zeta_segments with the columns corpus,
+            preferred and avoided
+        ax (Axes): Axes for the plot; if not given, a new figure is created
+        labels (dict[str, str]): Labels over VISUALIZER_LABELS["zeta_scatter_plot"]
+
+    Returns:
+        Axes: Axes with the points
+
+    Raises:
+        SourceTypeError: If the segments are not a DataFrame or their shares are not numbers
+        SourceError: If a column is missing or repeated, there are no segments or a share
+            is not finite
+        ParameterError: If the labels are set incorrectly (merge_labels) or ax is not a matplotlib
+            Axes (check_axes)
+    """
+    captions = merge_labels(VISUALIZER_LABELS["zeta_scatter_plot"], labels)
+    if not isinstance(segments, pd.DataFrame):
+        raise SourceTypeError(
+            f"The segments must be a DataFrame of zeta_segments, not {type(segments).__name__}"
+        )
+    missing = [column for column in ("corpus", "preferred", "avoided") if column not in segments]
+    if missing:
+        raise SourceError(f"The segments have no columns {missing}")
+    repeated = [
+        column
+        for column in ("corpus", "preferred", "avoided")
+        if (segments.columns == column).sum() > 1
+    ]
+    if repeated:
+        raise SourceError(f"The segments have repeated columns {repeated}")
+    if segments.empty:
+        raise SourceError("The plot needs at least one segment")
+    try:
+        shares = segments[["avoided", "preferred"]].to_numpy(dtype=float)
+    except (TypeError, ValueError) as e:
+        raise SourceTypeError("The shares of the markers must be numbers") from e
+    if not np.isfinite(shares).all():
+        raise SourceError("The plot needs every share to be finite")
+    check_axes(ax)
+    if ax is None:
+        _, ax = plt.subplots(figsize=(7, 6))
+    codes, names = pd.factorize(segments["corpus"], use_na_sentinel=False)
+    for code, name in enumerate(names):
+        selected = codes == code
+        ax.scatter(shares[selected, 0], shares[selected, 1], label=str(name))
+    ax.set_xlabel(captions["xlabel"])
+    ax.set_ylabel(captions["ylabel"])
+    ax.set_title(captions["title"])
+    ax.legend()
     return ax
 
 

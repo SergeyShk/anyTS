@@ -6,9 +6,10 @@ import pytest
 
 import anyts.visualizers
 from anyts import WordsExtractor
-from anyts.corpus import Keyword, delta
+from anyts.corpus import Keyword, delta, rolling_delta, zeta_segments
 from anyts.exceptions import ParameterError
 from anyts.visualizers import (
+    delta_histogram_plot,
     dendrogram_plot,
     dispersion_plot,
     fingerprinting,
@@ -18,7 +19,9 @@ from anyts.visualizers import (
     mds_plot,
     mendenhall_plot,
     pca_plot,
+    rolling_delta_plot,
     sentence_lengths_plot,
+    zeta_scatter_plot,
     zipf,
     zipf_theory,
 )
@@ -56,6 +59,15 @@ PLOTS = {
     "dendrogram_plot": lambda ax: dendrogram_plot(delta(CORPUS, n_mfw=5), ax=ax),
     "pca_plot": lambda ax: pca_plot(CORPUS, n_mfw=5, ax=ax),
     "mds_plot": lambda ax: mds_plot(delta(CORPUS, n_mfw=5), ax=ax),
+    "delta_histogram_plot": lambda ax: delta_histogram_plot(
+        delta(CORPUS, n_mfw=5), {"A": "X", "B": "X", "C": "Y"}, ax=ax
+    ),
+    "rolling_delta_plot": lambda ax: rolling_delta_plot(
+        rolling_delta(CORPUS, WORDS, window=5, step=5, n_mfw=5), ax=ax
+    ),
+    "zeta_scatter_plot": lambda ax: zeta_scatter_plot(
+        zeta_segments(CORPUS, ["cat"], ["dog"], segment_size=5), ax=ax
+    ),
     "mendenhall_plot": lambda ax: mendenhall_plot(CORPUS, ax=ax),
     "heaps_plot": lambda ax: heaps_plot(WORDS, ax=ax),
     "frequency_spectrum_plot": lambda ax: frequency_spectrum_plot(WORDS, ax=ax),

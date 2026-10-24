@@ -98,7 +98,7 @@
 
     ---
 
-    Compare corpora by [keywords](corpus/keyness.md) against a corpus or a frequency dictionary, [collocations](corpus/collocations.md), the [dispersion](corpus/dispersion.md) of a word, [stylometry](corpus/stylometry.md) (Burrows's Delta and its variants, Zeta, Kilgarriff's chi-square, the Mendenhall curve), the [comparison](corpus/compare.md) of corpora feature by feature with effect sizes, a bootstrap by texts and the Holm correction, and a [KWIC concordance](corpus/kwic.md)
+    Compare corpora by [keywords](corpus/keyness.md) against a corpus or a frequency dictionary, [collocations](corpus/collocations.md), the [dispersion](corpus/dispersion.md) of a word, [stylometry](corpus/stylometry.md) (Burrows's Delta and its variants, rolling Delta, Zeta, Kilgarriff's chi-square, the Mendenhall curve), the [comparison](corpus/compare.md) of corpora feature by feature with effect sizes, a bootstrap by texts and the Holm correction, and a [KWIC concordance](corpus/kwic.md)
 
     [:octicons-arrow-right-24: Corpus measures](corpus/keyness.md)
 
