@@ -1109,6 +1109,14 @@ def test_triples_through_punctuation_and_hyphens():
     # A word under a mark at the root has no word above it
     marked = parse(["!", "Yes"], [0, 0], ["ROOT", "discourse"], pos=["PUNCT", "INTJ"])
     assert dependency_triples(marked) == [("", "root", "INTJ")]
+    # Marks above a word linked in a loop end the climb
+    loop = parse(
+        ["Stop", "go", ",", ";"],
+        [0, 2, 3, 2],
+        ["ROOT", "dep", "punct", "punct"],
+        pos=["VERB", "VERB", "PUNCT", "PUNCT"],
+    )
+    assert dependency_triples(loop) == [("", "root", "VERB"), ("", "root", "VERB")]
     # A hyphenated word gives one triple by the part that holds its relation
     hyphen = parse(
         ["a", "well", "-", "known", "poet"],

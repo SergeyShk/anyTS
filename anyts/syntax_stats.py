@@ -596,11 +596,13 @@ def _word_triple(token: Token) -> tuple[str, str, str]:
     """Dependency triple of a word: the part of speech of its head, the nearest word above it
     through punctuation, its base relation and its own part of speech; a word with no word
     above it has an empty head and the relation root"""
-    head = token
-    while not is_root(head):
+    head, seen = token, {token.i}
+    # A broken parse can link the marks above a word in a loop
+    while not is_root(head) and head.head.i not in seen:
         head = head.head
         if is_word(head):
             return (head.pos_, base_dep(token), token.pos_)
+        seen.add(head.i)
     return ("", "root", token.pos_)
 
 
