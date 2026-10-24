@@ -376,8 +376,8 @@ def rolling_delta(
     Raises:
         ParameterError: If the variant is unknown, the size of a window or the
             step is below one, the step exceeds the window or n_mfw is below one
-        SourceError: If there are no reference texts, a text is shorter than a
-            window or the reference texts have fewer than three windows
+        SourceError: If there are fewer than two reference texts, a text is
+            shorter than a window or the reference texts have fewer than three windows
         SourceTypeError: If the reference corpus is not a mapping or the units
             of a text are not a list of strings (check_words)
 
@@ -404,6 +404,8 @@ def rolling_delta(
     if step > window:
         raise ParameterError("The step must not exceed the size of a window")
     _check_corpus(reference, "reference")
+    if len(reference) < 2:
+        raise SourceError("The rolling Delta needs at least two reference texts")
     check_words(text, "units of the text")
     if any(len(units) < window for units in reference.values()):
         raise SourceError("One of the reference texts is shorter than a window")

@@ -139,7 +139,7 @@ def test_delta_histogram_plot():
     assert ax is given
     assert ax.get_legend().get_texts()[0].get_text() == "Same"
     # The columns follow the rows, extra authors do not matter
-    reordered = PAIRS.iloc[::-1, ::-1]
+    reordered = PAIRS.iloc[::-1][["B2", "A1", "B1", "A2"]]
     ax = delta_histogram_plot(reordered, {**AUTHORS, "C": "C"}, bins=7)
     assert [patch.get_height() for patch in ax.patches] == heights
     plt.close("all")
@@ -196,6 +196,16 @@ def test_rolling_delta_plot():
         (distances.iloc[:, :0], SourceError, r"needs a window and a reference text$"),
         (distances.assign(A="far"), SourceTypeError, r"must be numbers$"),
         (distances.set_axis([f"w{i}" for i in range(len(distances))]), SourceTypeError, "numbers"),
+        (
+            distances.set_axis([2, np.inf, *distances.index[2:]]),
+            SourceError,
+            "position of a window",
+        ),
+        (
+            distances.set_axis([2, np.nan, *distances.index[2:]]),
+            SourceError,
+            "position of a window",
+        ),
         (distances.replace(distances.iloc[0, 0], np.inf), SourceError, r"to be finite$"),
         (distances - 1, SourceError, r"non-negative distances$"),
     ):
@@ -223,6 +233,11 @@ def test_zeta_scatter_plot():
     assert ax.get_title() == "Zeta markers in the segments"
     _, given = plt.subplots()
     assert zeta_scatter_plot(segments, ax=given) is given
+    # Segments without the name of a corpus are a corpus of their own
+    unnamed = segments.assign(corpus=segments["corpus"].where(segments["corpus"] != "C"))
+    ax = zeta_scatter_plot(unnamed)
+    assert [len(points.get_offsets()) for points in ax.collections] == [4, 4, 3]
+    assert ax.get_legend().get_texts()[2].get_text() == "nan"
     plt.close("all")
     for frame, error, message in (
         (segments.to_numpy(), SourceTypeError, r"^The segments must be a DataFrame"),
@@ -230,6 +245,16 @@ def test_zeta_scatter_plot():
             segments.drop(columns="avoided"),
             SourceError,
             r"^The segments have no columns \['avoided'\]$",
+        ),
+        (
+            pd.concat([segments, segments[["avoided"]]], axis=1),
+            SourceError,
+            r"^The segments have repeated columns \['avoided'\]$",
+        ),
+        (
+            pd.concat([segments, segments[["corpus"]]], axis=1),
+            SourceError,
+            r"^The segments have repeated columns \['corpus'\]$",
         ),
         (segments.iloc[:0], SourceError, r"^The plot needs at least one segment$"),
         (segments.assign(avoided="x"), SourceTypeError, r"must be numbers$"),

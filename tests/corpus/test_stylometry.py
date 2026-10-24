@@ -294,16 +294,20 @@ def test_rolling_delta_errors():
     ):
         with pytest.raises(ParameterError, match=message):
             rolling_delta(corpus, text, window, step)
+    two = {"A": text[:8], "B": text[8:16]}
     for reference, units, message in (
         ({}, text, r"^There are no reference texts$"),
         ({**corpus, "D": []}, text, r"^One of the reference texts has no units$"),
-        (corpus, text, r"^One of the reference texts is shorter than a window$"),
-        ({"A": corpus["A"]}, text[:8], r"^The text is shorter than a window$"),
-        ({"A": text[:8], "B": text[8:16]}, text, r"at least three windows$"),
+        ({"A": corpus["A"]}, text, r"^The rolling Delta needs at least two reference texts$"),
+        # One unit short of a window
+        ({"A": text[:7], "B": text[8:16]}, text, r"^One of the reference texts is shorter"),
+        (two, text[:7], r"^The text is shorter than a window$"),
+        (two, text, r"at least three windows$"),
     ):
-        window = 20 if units is text and reference is corpus else 8
         with pytest.raises(SourceError, match=message):
-            rolling_delta(reference, units[:7] if "text is" in message else units, window, 8)
+            rolling_delta(reference, units, 8, 8)
+    # A reference text and the text of exactly one window are enough
+    assert rolling_delta({**two, "C": text[2:10]}, text[:8], 8, 8).shape == (1, 3)
     with pytest.raises(SourceTypeError, match="must be a mapping of the names of the texts"):
         rolling_delta(list(corpus.values()), text, 8, 3)
     with pytest.raises(SourceTypeError):

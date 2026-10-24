@@ -147,7 +147,7 @@ Delta along a text, after `rolling.delta` of stylo: the reference texts and the 
 | `variant` | `str` | `'burrows'` | Variant of Delta of `anyts.constants.DELTA_VARIANTS` |
 | `culling` | `float` | `0.0` | Smallest share of the windows of the reference texts a unit occurs in |
 
-A reference corpus that is not a mapping of lists of strings and units of the text that are not a list of strings raise `SourceTypeError`; no reference texts, a text without units or shorter than a window and fewer than three windows of the reference texts raise `SourceError`. An unknown variant, a `window` or a `step` that is not an integer of at least one, a `step` greater than the window and the `n_mfw` and `culling` that `frequency_table` refuses raise `ParameterError`.
+A reference corpus that is not a mapping of lists of strings and units of the text that are not a list of strings raise `SourceTypeError`; fewer than two reference texts, a text without units or shorter than a window and fewer than three windows of the reference texts raise `SourceError`. An unknown variant, a `window` or a `step` that is not an integer of at least one, a `step` greater than the window and the `n_mfw` and `culling` that `frequency_table` refuses raise `ParameterError`.
 <!-- --8<-- [end:rolling_delta] -->
 
 === "Code"

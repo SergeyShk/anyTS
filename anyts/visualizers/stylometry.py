@@ -313,8 +313,8 @@ def rolling_delta_plot(
     Raises:
         SourceTypeError: If the distances are not a DataFrame of numbers with
             numbers in the index
-        SourceError: If there are no windows or no reference texts, or a distance is
-            infinite or negative
+        SourceError: If there are no windows or no reference texts, or a position is
+            not finite or a distance is infinite or negative
         ParameterError: If the labels are set incorrectly (merge_labels) or ax is not a matplotlib
             Axes (check_axes)
     """
@@ -333,6 +333,8 @@ def rolling_delta_plot(
         raise SourceTypeError(
             "The positions of the windows and the distances must be numbers"
         ) from e
+    if not np.isfinite(positions).all():
+        raise SourceError("The rolling Delta needs every position of a window to be finite")
     if not np.isfinite(values).all():
         raise SourceError("The rolling Delta needs every distance to be finite")
     if ((values < 0) & ~np.isclose(values, 0)).any():
@@ -371,7 +373,8 @@ def zeta_scatter_plot(
 
     Raises:
         SourceTypeError: If the segments are not a DataFrame or their shares are not numbers
-        SourceError: If a column is missing, there are no segments or a share is not finite
+        SourceError: If a column is missing or repeated, there are no segments or a share
+            is not finite
         ParameterError: If the labels are set incorrectly (merge_labels) or ax is not a matplotlib
             Axes (check_axes)
     """
@@ -383,6 +386,13 @@ def zeta_scatter_plot(
     missing = [column for column in ("corpus", "preferred", "avoided") if column not in segments]
     if missing:
         raise SourceError(f"The segments have no columns {missing}")
+    repeated = [
+        column
+        for column in ("corpus", "preferred", "avoided")
+        if (segments.columns == column).sum() > 1
+    ]
+    if repeated:
+        raise SourceError(f"The segments have repeated columns {repeated}")
     if segments.empty:
         raise SourceError("The plot needs at least one segment")
     try:
@@ -394,9 +404,9 @@ def zeta_scatter_plot(
     check_axes(ax)
     if ax is None:
         _, ax = plt.subplots(figsize=(7, 6))
-    corpora = segments["corpus"]
-    for name in pd.unique(corpora):
-        selected = (corpora == name).to_numpy()
+    codes, names = pd.factorize(segments["corpus"], use_na_sentinel=False)
+    for code, name in enumerate(names):
+        selected = codes == code
         ax.scatter(shares[selected, 0], shares[selected, 1], label=str(name))
     ax.set_xlabel(captions["xlabel"])
     ax.set_ylabel(captions["ylabel"])

@@ -94,7 +94,7 @@ The distances of `rolling_delta` as a line for every reference text over the mid
 | `ax` | `Axes` | `None` | Axes for the plot |
 | `labels` | `dict[str, str]` | `None` | Labels over the defaults: `title`, `xlabel`, `ylabel` |
 
-Distances that are not a `DataFrame` of numbers with numbers in the index raise `SourceTypeError`; no windows or no reference texts and an infinite or negative distance raise `SourceError` before a figure is created. Labels that `merge_labels` refuses and an `ax` that is not a matplotlib `Axes` raise `ParameterError`.
+Distances that are not a `DataFrame` of numbers with numbers in the index raise `SourceTypeError`; no windows or no reference texts, a position that is not finite and an infinite or negative distance raise `SourceError` before a figure is created. Labels that `merge_labels` refuses and an `ax` that is not a matplotlib `Axes` raise `ParameterError`.
 <!-- --8<-- [end:rolling_delta_plot] -->
 
 ## Zeta scatter { #zeta_scatter_plot }
@@ -112,7 +112,7 @@ The segments of `zeta_segments` on the plane of the shares of the avoided words 
 | `ax` | `Axes` | `None` | Axes for the plot |
 | `labels` | `dict[str, str]` | `None` | Labels over the defaults: `title`, `xlabel`, `ylabel` |
 
-Segments that are not a `DataFrame` or shares that are not numbers raise `SourceTypeError`; a missing column, no segments and a share that is not finite raise `SourceError` before a figure is created. Labels that `merge_labels` refuses and an `ax` that is not a matplotlib `Axes` raise `ParameterError`.
+Segments that are not a `DataFrame` or shares that are not numbers raise `SourceTypeError`; a missing or repeated column, no segments and a share that is not finite raise `SourceError` before a figure is created. Segments without the name of a corpus (`NaN`) are drawn as a corpus of their own. Labels that `merge_labels` refuses and an `ax` that is not a matplotlib `Axes` raise `ParameterError`.
 <!-- --8<-- [end:zeta_scatter_plot] -->
 
 ## Mendenhall curves { #mendenhall_plot }
