@@ -966,6 +966,15 @@ def test_prepositional_complements_of_several_words_and_of_a_copula():
         pos=["AUX", "ADP", "DET", "NOUN", "ADP", "DET", "NOUN"],
     )
     assert is_prep_complement(doc[3]) and SyntaxStats(doc).max_prep_chain_len == 2
+    # talked about the house that was by the river: the predicate of the relative clause is
+    # no link of the chain of house
+    doc = parse(
+        ["talked", "about", "the", "house", "that", "was", "by", "the", "river"],
+        [0, 3, 3, 0, 8, 8, 8, 8, 3],
+        ["ROOT", "case", "det", "obl", "nsubj", "cop", "case", "det", "acl:relcl"],
+        pos=["VERB", "ADP", "DET", "NOUN", "PRON", "AUX", "ADP", "DET", "NOUN"],
+    )
+    assert not is_prep_complement(doc[8]) and SyntaxStats(doc).n_prep_chains == 0
     # A conjunct of a complement starts no chain of its own
     doc = parse(
         ["lived", "in", "town", "and", "in", "the", "centre", "of", "the", "city"],

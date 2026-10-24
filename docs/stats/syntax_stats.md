@@ -377,7 +377,7 @@ Counts the modifiers of a noun phrase: the dependents with the relations `amod`,
 { .metric-meta }
 
 <!-- --8<-- [start:SyntaxStats-prep_chains] -->
-A prepositional chain is two or more nested complements with a preposition, each hanging on the previous one: *on the mat of the house of the mayor* (length 3). The links are the words of the hook `is_prep_complement`, and the chains and their lengths are those of `calc_modifier_chains`; a chain may start at a complement of a verb (`obl`) or at a prepositional predicate with a copula (*was in the house of the mayor*), but not at a conjunct of a complement (*in Madrid and in the centre of the city*). The chains read Universal Dependencies alone: ClearNLP heads a phrase by its preposition (`prep`, `pobj`), so its parses give no chains.
+A prepositional chain is two or more nested complements with a preposition, each hanging on the previous one: *on the mat of the house of the mayor* (length 3). The links are the words of the hook `is_prep_complement`, and the chains and their lengths are those of `calc_modifier_chains`; a chain may start at a complement of a verb (`obl`) or at a prepositional predicate with a copula (*was in the house of the mayor*), but not at a conjunct of a complement (*in Madrid and in the centre of the city*), and a predicate of a relative clause (*the house that was by the river*) is no link of the chain of its noun. The chains read Universal Dependencies alone: ClearNLP heads a phrase by its preposition (`prep`, `pobj`), so its parses give no chains.
 <!-- --8<-- [end:SyntaxStats-prep_chains] -->
 
 <!-- --8<-- [start:is_prep_complement] -->
@@ -385,7 +385,7 @@ A prepositional chain is two or more nested complements with a preposition, each
 is_prep_complement(token, join_hyphens=False)
 ```
 
-Checks whether a word is a complement with a preposition: a word with the relation `nmod` or `obl` or a subtype of them (`anyts.constants.PREP_COMPLEMENT_DEPS`), or a predicate with a copula, that has a dependent of the relation `case` that is an adposition (`ADP`) or begins one of several words (`fixed`: *in front of*). A noun in a case without a preposition and a possessive marker are none.
+Checks whether a word is a complement with a preposition: a word with the relation `nmod` or `obl` or a subtype of them (`anyts.constants.PREP_COMPLEMENT_DEPS`), or a predicate with a copula out of a relative clause (`acl`), that has a dependent of the relation `case` that is an adposition (`ADP`) or begins one of several words (`fixed`: *in front of*). A noun in a case without a preposition and a possessive marker are none.
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |

@@ -1454,11 +1454,12 @@ def is_prep_complement(token: Token, join_hyphens: bool = False) -> bool:
 
     Description:
         A word with the relation nmod or obl or a subtype of them
-        (PREP_COMPLEMENT_DEPS), or a predicate with a copula, that has a
-        dependent of the relation case that is an adposition or a word with a
-        fixed adposition (in front of): the house of the father, went to the
-        house, was in the house. A noun in a case without a preposition is none.
-        The links of a prepositional chain (calc_modifier_chains)
+        (PREP_COMPLEMENT_DEPS), or a predicate with a copula out of a relative
+        clause (acl), that has a dependent of the relation case that is an
+        adposition or a word with a fixed adposition (in front of): the house of
+        the father, went to the house, was in the house. A noun in a case
+        without a preposition is none. The links of a prepositional chain
+        (calc_modifier_chains)
 
     Arguments:
         token (Token): Token
@@ -1484,8 +1485,15 @@ def is_prep_complement(token: Token, join_hyphens: bool = False) -> bool:
         >>> is_prep_complement(doc[4]), is_prep_complement(doc[1])
         (True, False)
     """
-    children = get_children(token, join_hyphens)
-    if base_dep(token) not in PREP_COMPLEMENT_DEPS and not any(
+    relation = base_dep(token)
+    if relation == "acl":
+        return False
+    children: Iterable[Token] = token.children
+    # Only a hyphenated word has dependents on its other parts
+    if join_hyphens and len(_hyphenated_word(token) or ()) > 1:
+        children = get_children(token, join_hyphens)
+    children = list(children)
+    if relation not in PREP_COMPLEMENT_DEPS and not any(
         base_dep(child) == "cop" for child in children
     ):
         return False
