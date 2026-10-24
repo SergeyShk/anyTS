@@ -18,6 +18,7 @@ nav:
       - Lexical diversity metrics: stats/diversity_stats.md
       - Basic statistics: stats/basic_stats.md
       - Readability metrics: stats/readability_stats.md
+      - Unadapted readability formulas: stats/unadapted_readability_stats.md
       - Cohesion statistics: stats/cohesion_stats.md
       - Syntactic statistics: stats/syntax_stats.md
       - Lexical sophistication: stats/lexical_stats.md

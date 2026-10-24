@@ -27,6 +27,7 @@ from .readability_stats import ReadabilityStats
 from .style_stats import StyleStats
 from .style_stats import check_params as check_style_params
 from .syntax_stats import SyntaxStats
+from .unadapted_readability_stats import UnadaptedReadabilityStats
 from .utils import check_messages, check_words, has_words, is_number, iter_doc_words
 
 if TYPE_CHECKING:
@@ -533,6 +534,60 @@ class MorphStatsComponent(StatsComponent):
     """
 
     stats_class: ClassVar[type[Any] | None] = MorphStats
+
+
+class UnadaptedReadabilityStatsComponent(StatsComponent):
+    """
+    Component of the readability formulas of other languages
+
+    Description:
+        Puts an object of stats_class (UnadaptedReadabilityStats) into
+        doc._.<name>, of the document or of the basic statistics of another
+        component; a language library sets its subclass of
+        UnadaptedReadabilityStats with basic_stats_class and basic_factory
+
+    Arguments:
+        nlp (Language): Pipeline the component is added to
+        name (str): Name of the component in the pipeline and of the extension
+        basic (str): Extension of a component of the basic statistics to reuse
+            instead of computing them again
+
+    Class attributes:
+        basic_factory (str|None): Factory of the component of the basic statistics,
+            named in the error when they are missing
+
+    Raises:
+        ParameterError: If the class of statistics is not concrete or the extension is
+            not named by a string
+        SourceTypeError: If the class has no basic_stats_class to read a document and
+            no basic statistics are reused
+        SourceError: If the named extension holds no basic statistics of the class
+    """
+
+    stats_class: ClassVar[type[Any] | None] = UnadaptedReadabilityStats
+    basic_factory: ClassVar[str | None] = None
+
+    def __init__(self, nlp: Language, name: str, basic: str | None = None):
+        messages = self.messages
+        stats_class = self._stats_class()
+        if basic is None and stats_class.basic_stats_class is None:
+            raise SourceTypeError(
+                messages["no_basic_stats_class"].format(cls=stats_class.__name__)
+            )
+        if basic is not None and not isinstance(basic, str):
+            raise ParameterError(messages["extension_name"].format(type=type(basic).__name__))
+        self.basic = basic
+        super().__init__(nlp, name)
+
+    def compute(self, doc: Doc) -> Any:
+        stats_class = self._stats_class()
+        if self.basic is None:
+            return stats_class(doc)
+        return stats_class(
+            self.from_extension(
+                doc, self.basic, stats_class.basic_stats_class or BasicStats, self.basic_factory
+            )
+        )
 
 
 def start_sents_after_blank_lines(doc: Doc) -> Doc:

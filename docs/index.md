@@ -36,7 +36,7 @@
 
     Compute Flesch reading ease, Flesch-Kincaid, Coleman-Liau, ARI, SMOG, Gunning fog, LIX, RIX, Legibilidad µ, the consensus grade and the reading time, with the coefficients of a language library
 
-    [:octicons-arrow-right-24: Readability metrics](stats/readability_stats.md)
+    [:octicons-arrow-right-24: Readability metrics](stats/readability_stats.md) · [Unadapted formulas](stats/unadapted_readability_stats.md)
 
 -   :material-chart-bell-curve:{ .lg .middle } __Lexical diversity__
 
