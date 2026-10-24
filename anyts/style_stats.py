@@ -18,6 +18,7 @@ from .utils import (
     is_doc,
     iter_doc_words,
     safe_divide,
+    source_type_error,
 )
 
 if TYPE_CHECKING:
@@ -159,7 +160,7 @@ class StyleStats(Stats):
             self.forms = self.words_extractor_class(lowercase=True).extract(source)
             self.words = words_extractor.extract(source) if words_extractor else self.forms
         else:
-            raise SourceTypeError(messages["source_type"])
+            raise source_type_error(messages, source)
         if not self.words:
             raise SourceError(messages["no_words"])
         self.stopwords = in_order(stopwords) if stopwords is not None else None

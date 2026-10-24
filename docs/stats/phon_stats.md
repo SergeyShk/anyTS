@@ -270,7 +270,7 @@ Words that are not a list of strings or of collections of strings and features t
 { .metric-meta }
 
 <!-- --8<-- [start:PhonStats-syllables] -->
-The syllables are the sounds of every syllable of a word by `syllable_sounds`; a syllable without a sound of the classes (a number) is no syllable, in `c_syllable_patterns` too. An open syllable ends in a vowel by its CV pattern (`cv_pattern`), and the length of a syllable is the number of its sounds.
+The syllables are the sounds of every syllable of a word by `syllable_sounds`; a syllable without a sound of the classes (a number) is no syllable, in `c_syllable_patterns` too. An open syllable ends in a vowel by its CV pattern (`cv_pattern`), and the length of a syllable is the length of that pattern: the sounds of the classes, without `skipped` and the signs out of them.
 <!-- --8<-- [end:PhonStats-syllables] -->
 
 </div>

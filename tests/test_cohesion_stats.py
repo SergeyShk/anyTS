@@ -396,6 +396,39 @@ def test_positions_of_the_marks_in_a_sentence_of_fewer_than_two_words(matcher, w
         matcher.find(words, breaks={position})
 
 
+def test_no_connector_starts_at_a_blocked_word(matcher):
+    words = ["Before", "he", "left", "on", "the", "other", "hand"]
+    assert texts(matcher.find(words)) == ["before", "on the other hand"]
+    assert texts(matcher.find(words, blocked={0})) == ["on the other hand"]
+    # A blocked word inside a connector does not block it
+    assert texts(matcher.find(words, blocked={4})) == ["before", "on the other hand"]
+    assert matcher.find(words, blocked=[0, 3]) == []
+
+
+@pytest.mark.parametrize(
+    ("blocked", "error", "message"),
+    [
+        ("1", SourceTypeError, r"^A list of positions of the blocked words is expected"),
+        ([1.5], ParameterError, r"^The position of a blocked word must be an integer"),
+        (
+            [-1],
+            ParameterError,
+            r"^A position of a word that starts no connector must be between 0 and 1, not -1$",
+        ),
+        (
+            [2],
+            ParameterError,
+            r"^A position of a word that starts no connector must be between 0 and 1, not 2$",
+        ),
+    ],
+)
+def test_blocked_positions_are_checked(matcher, blocked, error, message):
+    with pytest.raises(error, match=message):
+        matcher.find(["and", "so"], blocked=blocked)
+    with pytest.raises(ParameterError, match=r"^A sentence without words has no positions"):
+        matcher.find([], blocked={0})
+
+
 def test_rules_by_the_normalized_text_of_a_connector():
     class Rules(Subordinating):
         subordinators = frozenset({"as  Soon as"})
@@ -783,6 +816,34 @@ def test_marks_of_the_words_reach_the_matcher():
     assert CohesionWord("a", "a", None, False, False, False, False, False).break_before is False
 
 
+def test_blocked_words_reach_the_matcher():
+    doc = Doc(
+        VOCAB,
+        words=["I", "wonder", "if", "it", "rains", "and", "if", "so"],
+        pos=["PRON", "VERB", "SCONJ", "PRON", "VERB", "CCONJ", "SCONJ", "ADV"],
+        lemmas=["I", "wonder", "if", "it", "rain", "and", "if", "so"],
+        sent_starts=[True] + [False] * 7,
+    )
+
+    class Conditions(CohesionStats):
+        @classmethod
+        def load_connectors(cls):
+            return {"if": ("conditional", "primary"), "and": ("additive", "primary")}
+
+    class Questions(Conditions):
+        def word_info(self, unit):
+            # An if after wonder opens an indirect question, no condition
+            blocked = unit[0].lower_ == "if" and unit[0].nbor(-1).lemma_ == "wonder"
+            return super().word_info(unit)._replace(connector_blocked=blocked)
+
+    assert texts(Conditions(doc).connector_spans) == ["if", "and", "if"]
+    assert texts(Questions(doc).connector_spans) == ["and", "if"]
+    assert Questions(doc).connectors_conditional == 1000 / 8
+    assert (
+        CohesionWord("a", "a", None, False, False, False, False, False).connector_blocked is False
+    )
+
+
 def test_densities_by_the_classes_of_the_matcher():
     class Contrast(ConnectorMatcher):
         classes = ("contrast",)
@@ -874,7 +935,8 @@ def test_own_analysis():
 @pytest.mark.parametrize(
     ("source", "kwargs", "error", "message"),
     [
-        ("The cat", {}, SourceTypeError, MESSAGES["source_type"]),
+        ("The cat", {}, SourceTypeError, MESSAGES["source_type"].format(type="str")),
+        (text_doc()[:2], {}, SourceTypeError, MESSAGES["source_span"]),
         (None, {"sents_extractor": "x"}, SourceTypeError, MESSAGES["sents_extractor_type"]),
         (text_doc(pos=False), {}, SourceError, MESSAGES["no_pos"]),
         (text_doc(lemmas=False), {}, SourceError, MESSAGES["no_lemmas"]),

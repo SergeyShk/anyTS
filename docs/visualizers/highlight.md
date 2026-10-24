@@ -260,10 +260,10 @@ Phrases that are not a collection of strings or a mapping of strings raise `Sour
 
 <!-- --8<-- [start:find_connector_highlights] -->
 ``` {.python .signature}
-find_connector_highlights(words, sents, matcher, note=None, pos=None, text=None)
+find_connector_highlights(words, sents, matcher, note=None, pos=None, text=None, blocked=None)
 ```
 
-The layer `connectors`: the connectors of a `ConnectorMatcher` of the language inside every sentence, in the whole text when the sentences are `None`; a one-word connector is checked by its part of speech when a word of the sentence has one - its own, or that of the hook `pos`. With the `text`, a character of `is_punctuation` between two words is a punctuation mark, which the rules of the matcher do not read through; the hyphen that joins two parts of a word is none. The note gives the text, the class and the kind of the connector by default.
+The layer `connectors`: the connectors of a `ConnectorMatcher` of the language inside every sentence, in the whole text when the sentences are `None`; a one-word connector is checked by its part of speech when a word of the sentence has one - its own, or that of the hook `pos`. With the `text`, a character of `is_punctuation` between two words is a punctuation mark, which the rules of the matcher do not read through; a quote, an apostrophe and the hyphen that joins two parts of a word are none. No connector starts at a word the hook `blocked` rules out, such as one its parse makes no connector. The note gives the text, the class and the kind of the connector by default.
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
@@ -273,8 +273,9 @@ The layer `connectors`: the connectors of a `ConnectorMatcher` of the language i
 | `note` | `Callable[[Connector], str]` | `None` | Note of a connector |
 | `pos` | `Callable[[Word], str]` | `None` | Part of speech of a word for the matcher |
 | `text` | `str` | `None` | Text of the words, for the punctuation marks between them |
+| `blocked` | `Callable[[Word], bool]` | `None` | Whether no connector starts at a word |
 
-A `text` that is not a string raises `SourceTypeError`.
+A hook that cannot be called or a `text` that is not a string raises `SourceTypeError`.
 <!-- --8<-- [end:find_connector_highlights] -->
 
 ### Split predicates { #find_split_predicate_highlights }

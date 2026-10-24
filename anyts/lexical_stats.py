@@ -140,11 +140,8 @@ class LexicalStats(Stats, metaclass=ABCMeta):
         for word in words:
             if not isinstance(word, LexicalWord):
                 raise SourceTypeError(
-                    messages["hook_result"].format(
-                        hook="analyze",
-                        cls=type(self).__name__,
-                        expected="LexicalWord objects",
-                        type=type(word).__name__,
+                    messages["hook_lexical_words"].format(
+                        hook="analyze", cls=type(self).__name__, type=type(word).__name__
                     )
                 )
         if not words:

@@ -139,8 +139,8 @@ def find_marks(text: str, words: Sequence[str]) -> frozenset[int]:
         The words are found in the text in their order, apart from the letters
         and digits around them unless glued to the word before or after; a word
         with an is_punctuation character between it and the word before gets
-        its position, except the hyphen that joins two parts of a word. A word
-        the text does not hold is passed over
+        its position, except a quote, an apostrophe and the hyphen that joins
+        two parts of a word. A word the text does not hold is passed over
 
     Arguments:
         text (str): Text
@@ -189,9 +189,15 @@ def _stands_apart(text: str, start: int, end: int, cursor: int, following: str) 
 
 
 def _is_mark_gap(gap: str) -> bool:
-    """Whether the text between two words holds a punctuation mark, the hyphen that joins
-    two parts of a word aside"""
-    return gap != "-" and any(is_punctuation(char) for char in gap)
+    """Whether the text between two words holds a punctuation mark, the quotes and the
+    hyphen that joins two parts of a word aside"""
+    return gap != "-" and any(is_punctuation(char) and not _is_quote(char) for char in gap)
+
+
+def _is_quote(char: str) -> bool:
+    """Whether a character is a quote or an apostrophe: an initial or a final quote of
+    Unicode, a straight or a low one"""
+    return unicodedata.category(char) in ("Pi", "Pf") or char in "\"'„‚"
 
 
 def in_order(words: Collection[str]) -> tuple[str, ...]:
@@ -671,7 +677,8 @@ def find_unit_marks(units: Sequence[Sequence[Token]]) -> frozenset[int]:
     Description:
         The words are those of iter_doc_units in one sentence; a word with an
         is_punctuation character between it and the word before gets its
-        position, except the hyphen that joins two parts of a word (find_marks)
+        position, except a quote, an apostrophe and the hyphen that joins two
+        parts of a word (find_marks)
 
     Arguments:
         units (list[list[Token]]): Tokens of every word of a sentence
@@ -1273,6 +1280,32 @@ def check_messages(messages: object, defaults: Mapping[str, str] = MESSAGES) -> 
                 f"The message {key!r} has unknown fields {sorted(extra)}; "
                 f"available fields: {sorted(fields)}"
             )
+
+
+def source_type_error(messages: Mapping[str, str], source: object) -> SourceTypeError:
+    """
+    Getting the error of a data source of a wrong type
+
+    Description:
+        The message source_span for a Span, which as_doc turns into a Doc, and
+        source_type with the name of the type for any other source
+
+    Arguments:
+        messages (dict[str, str]): Messages by key (MESSAGES)
+        source (object): Data source
+
+    Returns:
+        SourceTypeError: Error to raise
+
+    Example:
+        >>> from anyts.constants import MESSAGES
+        >>> from anyts.utils import source_type_error
+        >>> source_type_error(MESSAGES, 5)
+        SourceTypeError('The data source cannot be of type int')
+    """
+    if is_span(source):
+        return SourceTypeError(messages["source_span"])
+    return SourceTypeError(messages["source_type"].format(type=type(source).__name__))
 
 
 class LazyPackage(ModuleType):

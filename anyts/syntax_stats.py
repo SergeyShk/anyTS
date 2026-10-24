@@ -35,6 +35,7 @@ from .utils import (
     joins_previous,
     safe_divide,
     safe_mean,
+    source_type_error,
 )
 
 if TYPE_CHECKING:
@@ -178,11 +179,8 @@ class SyntaxStats(Stats):
         doc = self.parse(source)
         if not is_doc(doc):
             raise SourceTypeError(
-                messages["hook_result"].format(
-                    hook="parse",
-                    cls=type(self).__name__,
-                    expected="a Doc",
-                    type=type(doc).__name__,
+                messages["hook_doc"].format(
+                    hook="parse", cls=type(self).__name__, type=type(doc).__name__
                 )
             )
         if not doc.has_annotation("DEP") or not has_sents(doc):
@@ -328,7 +326,7 @@ class SyntaxStats(Stats):
             SourceTypeError: If the source is not a Doc object
         """
         if not is_doc(source):
-            raise SourceTypeError(self.messages["source_type"])
+            raise source_type_error(self.messages, source)
         return source
 
     def is_clause_head(self, token: Token) -> bool:

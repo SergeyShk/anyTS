@@ -21,6 +21,7 @@ from .utils import (
     iter_doc_words,
     safe_divide,
     shannon_entropy,
+    source_type_error,
 )
 
 if TYPE_CHECKING:
@@ -81,7 +82,7 @@ class PhonStats(Stats, metaclass=ABCMeta):
         alliteration (float): Alliteration index
         assonance (float): Assonance index
         p_open_syllables (float): Share of the open syllables
-        mean_syllable_len (float): Mean length of a syllable in sounds
+        mean_syllable_len (float): Mean length of a syllable in sounds of the classes
 
     Methods:
         doc_words: Words of a Doc
@@ -152,7 +153,7 @@ class PhonStats(Stats, metaclass=ABCMeta):
             extractor = words_extractor or self.words_extractor_class(lowercase=True)
             words = tuple(word.lower() for word in extractor.extract(source))
         else:
-            raise SourceTypeError(messages["source_type"])
+            raise source_type_error(messages, source)
         if not words:
             raise SourceError(messages["no_words"])
         self.words = words
@@ -219,7 +220,7 @@ class PhonStats(Stats, metaclass=ABCMeta):
         )
         self.p_open_syllables = safe_divide(open_syllables, n_syllables, nan)
         self.mean_syllable_len = safe_divide(
-            sum(len(syllable) * count for syllable, count in syllables.items()),
+            sum(len(syllable_patterns[syllable]) * count for syllable, count in syllables.items()),
             n_syllables,
             nan,
         )
@@ -233,13 +234,10 @@ class PhonStats(Stats, metaclass=ABCMeta):
             map(isinstance, result, repeat(str))
         ):
             return tuple(result) if hook == "syllabify" else result
-        expected = "a sequence of strings" if hook == "syllabify" else "a string or strings"
+        key = "hook_syllables" if hook == "syllabify" else "hook_sounds"
         raise SourceTypeError(
-            self.messages["hook_result"].format(
-                hook=hook,
-                cls=type(self).__name__,
-                expected=expected,
-                type=type(result).__name__,
+            self.messages[key].format(
+                hook=hook, cls=type(self).__name__, type=type(result).__name__
             )
         )
 
