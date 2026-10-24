@@ -191,22 +191,9 @@ class ReadabilityStats(Stats):
             )
         self._preset = preset
         self.coefficients = dict(self.presets[preset])
-        _check_extractors(sents_extractor, words_extractor, messages)
-        if isinstance(source, BasicStats):
-            expected = self.basic_stats_class or BasicStats
-            if not isinstance(source, expected):
-                raise SourceTypeError(
-                    messages["basic_stats_type"].format(
-                        expected=expected.__name__, type=type(source).__name__
-                    )
-                )
-            self.bs = source
-        elif self.basic_stats_class is None:
-            raise SourceTypeError(messages["no_basic_stats_class"].format(cls=type(self).__name__))
-        else:
-            self.bs = self.basic_stats_class(source, sents_extractor, words_extractor)
-        if not self.bs.n_sents:
-            raise SourceError(messages["no_sentences"])
+        self.bs = _read_basic_stats(
+            self, source, self.basic_stats_class, sents_extractor, words_extractor
+        )
 
     @property
     def preset(self) -> str:
@@ -446,6 +433,56 @@ class ReadabilityStats(Stats):
             calc_reading_time(self.bs.n_words, wpm, messages=self.messages)
             for wpm in self.reading_speed_norms[norm]
         )
+
+
+def _read_basic_stats(
+    stats: Stats,
+    source: str | Doc | BasicStats,
+    basic_stats_class: type[BasicStats] | None,
+    sents_extractor: SentsExtractor | None = None,
+    words_extractor: WordsExtractor | None = None,
+) -> BasicStats:
+    """
+    Getting the basic statistics of the source of a class of readability
+
+    Description:
+        A BasicStats object of basic_stats_class (any BasicStats without it) as
+        it is, or basic_stats_class over a string or a Doc with the extractors;
+        the errors take the messages of the class
+
+    Arguments:
+        stats (Stats): Object of the class whose messages and name the errors take
+        source (str|Doc|BasicStats): Data source
+        basic_stats_class (type[BasicStats]|None): Basic statistics of a string or a Doc
+        sents_extractor (SentsExtractor): Sentence extraction tool
+        words_extractor (WordsExtractor): Word extraction tool
+
+    Returns:
+        BasicStats: Basic statistics with sentences
+
+    Raises:
+        SourceTypeError: If the basic statistics are of another class, an extractor is
+            of another type, or a string or a Doc comes without basic_stats_class
+        SourceError: If the source has no words or no sentences
+    """
+    messages = stats.messages
+    _check_extractors(sents_extractor, words_extractor, messages)
+    if isinstance(source, BasicStats):
+        expected = basic_stats_class or BasicStats
+        if not isinstance(source, expected):
+            raise SourceTypeError(
+                messages["basic_stats_type"].format(
+                    expected=expected.__name__, type=type(source).__name__
+                )
+            )
+        bs = source
+    elif basic_stats_class is None:
+        raise SourceTypeError(messages["no_basic_stats_class"].format(cls=type(stats).__name__))
+    else:
+        bs = basic_stats_class(source, sents_extractor, words_extractor)
+    if not bs.n_sents:
+        raise SourceError(messages["no_sentences"])
+    return bs
 
 
 def _word_letters(bs: BasicStats) -> int:

@@ -28,6 +28,7 @@ from anyts.phon_stats import PhonStats
 from anyts.readability_stats import ReadabilityStats, calc_reading_time
 from anyts.style_stats import StyleStats
 from anyts.syntax_stats import SyntaxStats
+from anyts.unadapted_readability_stats import UnadaptedReadabilityStats
 from anyts.utils import check_messages
 from anyts.visualizers.highlight import Highlight, HighlightedText
 from anyts.visualizers.highlight import check_params as check_highlight_params
@@ -51,6 +52,15 @@ class OtherStats(BasicStats):
 
 class Readability(ReadabilityStats):
     basic_stats_class = Stats
+    messages = OWN
+
+
+class Unadapted(UnadaptedReadabilityStats):
+    basic_stats_class = Stats
+    messages = OWN
+
+
+class BareUnadapted(UnadaptedReadabilityStats):
     messages = OWN
 
 
@@ -228,6 +238,14 @@ CASES = [
     ("preset_type", ParameterError, lambda: Readability(TEXT, preset=5)),
     ("unknown_preset", ParameterError, lambda: Readability(TEXT, preset="unknown")),
     ("basic_stats_type", SourceTypeError, lambda: Readability(OtherStats(TEXT))),
+    ("basic_stats_type", SourceTypeError, lambda: Unadapted(OtherStats(TEXT))),
+    ("no_basic_stats_class", SourceTypeError, lambda: BareUnadapted(TEXT)),
+    (
+        "no_sentences",
+        SourceError,
+        lambda: Unadapted(TEXT, sents_extractor=SentsExtractor(min_len=1000)),
+    ),
+    ("sents_extractor_type", SourceTypeError, lambda: Unadapted(TEXT, sents_extractor=5)),
     ("no_basic_stats_class", SourceTypeError, lambda: Bare(TEXT)),
     ("not_grade_formula", ParameterError, lambda: Readability(TEXT).describe_grade("lix")),
     ("no_scale", ParameterError, lambda: Readability(TEXT).describe_level("smog_index")),

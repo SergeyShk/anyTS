@@ -27,6 +27,7 @@ from .readability_stats import ReadabilityStats
 from .style_stats import StyleStats
 from .style_stats import check_params as check_style_params
 from .syntax_stats import SyntaxStats
+from .unadapted_readability_stats import UnadaptedReadabilityStats
 from .utils import check_messages, check_words, has_words, is_number, iter_doc_words
 
 if TYPE_CHECKING:
@@ -533,6 +534,18 @@ class MorphStatsComponent(StatsComponent):
     """
 
     stats_class: ClassVar[type[Any] | None] = MorphStats
+
+
+class UnadaptedReadabilityStatsComponent(StatsComponent):
+    """
+    Component of the readability formulas of other languages
+
+    Description:
+        Puts an object of stats_class into doc._.<name>: a subclass of
+        UnadaptedReadabilityStats of a language library with its basic_stats_class
+    """
+
+    stats_class: ClassVar[type[Any] | None] = UnadaptedReadabilityStats
 
 
 def start_sents_after_blank_lines(doc: Doc) -> Doc:

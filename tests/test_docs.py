@@ -24,6 +24,7 @@ from anyts import (
     stats,
     style_stats,
     syntax_stats,
+    unadapted_readability_stats,
     utils,
 )
 
@@ -136,6 +137,7 @@ def test_public_api_has_sections():
         *public_names(phon_stats),
         "PhonStats",
         *public_names(morph_stats),
+        *public_names(unadapted_readability_stats),
         "BasicStats",
         "StatsComponent",
         "Dataset",
@@ -178,6 +180,7 @@ MODULES = [
     stats,
     style_stats,
     syntax_stats,
+    unadapted_readability_stats,
     utils,
     *CORPUS_MODULES,
     *VISUALIZER_MODULES,

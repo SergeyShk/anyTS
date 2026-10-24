@@ -95,6 +95,7 @@ The class of the core is the default of `stats_class`. Where it cannot read a `D
 | [`SyntaxStatsComponent`](#SyntaxStatsComponent) | `SyntaxStats` | - |
 | [`CohesionStatsComponent`](#CohesionStatsComponent) | `CohesionStats` | - |
 | [`MorphStatsComponent`](#MorphStatsComponent) | `MorphStats` | - |
+| [`UnadaptedReadabilityStatsComponent`](#UnadaptedReadabilityStatsComponent) | set by a library | - |
 
 ### Basic statistics { #BasicStatsComponent }
 
@@ -218,6 +219,16 @@ MorphStatsComponent(nlp, name)
 <!-- --8<-- [start:MorphStatsComponent] -->
 `MorphStatsComponent` puts the morphological statistics into the extension; by default they need the parts of speech before it.
 <!-- --8<-- [end:MorphStatsComponent] -->
+
+### Unadapted readability formulas { #UnadaptedReadabilityStatsComponent }
+
+``` {.python .signature}
+UnadaptedReadabilityStatsComponent(nlp, name)
+```
+
+<!-- --8<-- [start:UnadaptedReadabilityStatsComponent] -->
+`UnadaptedReadabilityStatsComponent` puts the readability formulas of other languages into the extension; its `stats_class` is a subclass of `UnadaptedReadabilityStats` of a library with its `basic_stats_class`.
+<!-- --8<-- [end:UnadaptedReadabilityStatsComponent] -->
 
 ## Sentences after blank lines { #start_sents_after_blank_lines }
 

@@ -704,6 +704,25 @@ READABILITY_STATS_DESC = {
     "consensus_grade": "Consensus grade",
     "reading_time": "Reading time (min)",
 }
+# Readability formulas of other languages taken with their original coefficients: the
+# largest number of letters of a mini word of EFLAW
+EFLAW_MINI_WORD_LETTERS = 3
+UNADAPTED_READABILITY_STATS_DESC = {
+    "forcast": "FORCAST grade",
+    "linsear_write": "Linsear Write grade",
+    "powers_sumner_kearl": "Powers-Sumner-Kearl grade",
+    "eflaw": "McAlpine EFLAW score",
+    "wiener_sachtextformel_1": "Wiener Sachtextformel 1",
+    "wiener_sachtextformel_2": "Wiener Sachtextformel 2",
+    "wiener_sachtextformel_3": "Wiener Sachtextformel 3",
+    "wiener_sachtextformel_4": "Wiener Sachtextformel 4",
+    "dickes_steiwer": "Dickes-Steiwer index",
+    "gulpease": "Gulpease index",
+    "fucks": "Fucks index",
+    "strain_index": "Strain index",
+    "elf": "Easy listening formula (ELF)",
+    "wheeler_smith": "Wheeler-Smith index",
+}
 READABILITY_GRADE_STATS = (
     "flesch_kincaid_grade",
     "coleman_liau_index",
