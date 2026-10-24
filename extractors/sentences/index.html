@@ -750,6 +750,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#split_paragraphs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Paragraphs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#FixedSentsExtractor" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2081,6 +2092,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#split_paragraphs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Paragraphs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#FixedSentsExtractor" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2285,6 +2307,45 @@
 </div>
 </div>
 </div>
+<h2 id="split_paragraphs">Paragraphs<a class="headerlink" href="#split_paragraphs" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:split_paragraphs] -->
+<div class="signature highlight"><pre><span></span><code><span class="n">split_paragraphs</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+</code></pre></div>
+<p>The paragraphs of a text: its parts between blank lines (<code>BLANK_LINE</code>), stripped of whitespace at their edges; a part of whitespace alone is none. Their words give the sizes of the parts of <code>dispersion</code> by paragraph; a paragraph without words, such as a scene break of asterisks, is still one. A text that is not a string raises <code>SourceTypeError</code>.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Parameter</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Default</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>text</code></td>
+<td style="text-align: left;"><code>str</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Text string</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:split_paragraphs] -->
+
+<div class="tabbed-set tabbed-alternate" data-tabs="4:2"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><input id="__tabbed_4_2" name="__tabbed_4" type="radio" /><div class="tabbed-labels"><label for="__tabbed_4_1">Code</label><label for="__tabbed_4_2">Result</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts.extractors</span><span class="w"> </span><span class="kn">import</span> <span class="n">split_paragraphs</span>
+
+<span class="n">split_paragraphs</span><span class="p">(</span><span class="s2">"Chapter 1</span><span class="se">\n\n</span><span class="s2">The cat slept.</span><span class="se">\n</span><span class="s2">Then it woke.</span><span class="se">\n</span><span class="s2"> </span><span class="se">\n</span><span class="s2">* * *</span><span class="se">\n\n</span><span class="s2">The end."</span><span class="p">)</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>['Chapter 1', 'The cat slept.\nThen it woke.', '* * *', 'The end.']
+</code></pre></div>
+</div>
+</div>
+</div>
 <h2 id="FixedSentsExtractor">Ready sentences<a class="headerlink" href="#FixedSentsExtractor" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:FixedSentsExtractor] -->
 <div class="signature highlight"><pre><span></span><code><span class="n">FixedSentsExtractor</span><span class="p">(</span><span class="n">sents</span><span class="p">)</span>
@@ -2311,7 +2372,7 @@
 <p>Sentences that are not a list of strings raise <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:FixedSentsExtractor] -->
 
-<div class="tabbed-set tabbed-alternate" data-tabs="4:2"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><input id="__tabbed_4_2" name="__tabbed_4" type="radio" /><div class="tabbed-labels"><label for="__tabbed_4_1">Code</label><label for="__tabbed_4_2">Result</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="5:2"><input checked="checked" id="__tabbed_5_1" name="__tabbed_5" type="radio" /><input id="__tabbed_5_2" name="__tabbed_5" type="radio" /><div class="tabbed-labels"><label for="__tabbed_5_1">Code</label><label for="__tabbed_5_2">Result</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts.extractors</span><span class="w"> </span><span class="kn">import</span> <span class="n">FixedSentsExtractor</span>
