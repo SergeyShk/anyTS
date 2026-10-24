@@ -1206,6 +1206,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#orlov_z" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Orlov's Z
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#hapax_ratio" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1287,6 +1298,17 @@
     <span class="md-ellipsis">
       
         Heaps' law exponent
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#burstiness" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Burstiness
       
     </span>
   </a>
@@ -2731,6 +2753,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#orlov_z" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Orlov's Z
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#hapax_ratio" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2812,6 +2845,17 @@
     <span class="md-ellipsis">
       
         Heaps' law exponent
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#burstiness" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Burstiness
       
     </span>
   </a>
@@ -2926,6 +2970,7 @@ Michéa's M                                                             |   5.50
 Brunet's W                                                             |   6.01
 Dugast's k                                                             |  14.78
 Baayen's P                                                             |   0.53
+Orlov's Z (words)                                                      |   nan
 Hapax ratio                                                            |   0.73
 Exponent α₂                                                            |   0.50
 Shannon entropy (bits)                                                 |   3.32
@@ -2933,6 +2978,7 @@ Evenness                                                               |   0.96
 Perplexity                                                             |  10.01
 Zipf's law slope (α)                                                   |   0.49
 Heaps' law exponent (β)                                                |   0.84
+Burstiness of the frequent lexemes                                     |   nan
 </code></pre></div>
 </div>
 </div>
@@ -3204,6 +3250,12 @@ Heaps' law exponent (β)                                                |   0.84
 <td style="text-align: left;">A faster growing vocabulary</td>
 </tr>
 <tr>
+<td style="text-align: left;"><a href="#orlov_z"><code>orlov_z</code></a></td>
+<td style="text-align: left;">Text length in words at which the law of Zipf fits the vocabulary best</td>
+<td style="text-align: left;">Above 0, <code>nan</code> without a solution, <code>inf</code> beyond floats</td>
+<td style="text-align: left;">A richer vocabulary</td>
+</tr>
+<tr>
 <td style="text-align: left;"><a href="#hapax_ratio"><code>hapax_ratio</code></a></td>
 <td style="text-align: left;">Share of the hapaxes among the lexemes</td>
 <td style="text-align: left;">0-1</td>
@@ -3244,6 +3296,12 @@ Heaps' law exponent (β)                                                |   0.84
 <td style="text-align: left;">Growth of the vocabulary with the length</td>
 <td style="text-align: left;">0 and above, <code>nan</code> below two words</td>
 <td style="text-align: left;">A faster growing vocabulary</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a href="#burstiness"><code>burstiness</code></a></td>
+<td style="text-align: left;">Mean burstiness of the lexemes of five occurrences or more</td>
+<td style="text-align: left;">-1 to 1, <code>nan</code> without them</td>
+<td style="text-align: left;">Words used in bursts</td>
 </tr>
 </tbody>
 </table>
@@ -3592,9 +3650,9 @@ Heaps' law exponent (β)                                                |   0.84
 <h3 id="mamtld">Moving Average Measure of Textual Lexical Diversity (MA-MTLD)<a class="headerlink" href="#mamtld" title="Permanent link">&para;</a></h3>
 <p class="metric-meta"><code>mamtld</code></p>
 <!-- --8<-- [start:calc_mamtld] -->
-<div class="signature highlight"><pre><span></span><code><span class="n">calc_mamtld</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">min_len</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.72</span><span class="p">)</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">calc_mamtld</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">min_len</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.72</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 </code></pre></div>
-<p>A moving-window modification of MTLD after MTLD-MA of koRpus: a factor starts at every position of the text, and the value is the mean length of the completed factors over a forward and a backward pass. koRpus makes the forward pass only, closes a factor at TTR strictly below the threshold and drops factors shorter than the minimum length instead of extending them. If no factor completes, the value is <code>nan</code>. The metric is unstable on short texts.</p>
+<p>A moving-window modification of MTLD after MTLD-MA of koRpus: a factor starts at every position of the text, and the value is the mean length of the completed factors over a forward and a backward pass. koRpus makes the forward pass only, closes a factor at TTR strictly below the threshold and drops factors shorter than the minimum length instead of extending them. With a <code>step</code> of k a factor starts at every k-th position from either end, as <code>MTLDMA.steps</code> of koRpus. If no factor completes, the value is <code>nan</code>. The metric is unstable on short texts.</p>
 <table>
 <thead>
 <tr>
@@ -3623,9 +3681,15 @@ Heaps' law exponent (β)                                                |   0.84
 <td style="text-align: left;"><code>0.72</code></td>
 <td style="text-align: left;">TTR threshold for completing a factor (<code>MTLD_TTR_THRESHOLD</code>)</td>
 </tr>
+<tr>
+<td style="text-align: left;"><code>step</code></td>
+<td style="text-align: left;"><code>int</code></td>
+<td style="text-align: left;"><code>1</code></td>
+<td style="text-align: left;">Distance between the starts of the factors</td>
+</tr>
 </tbody>
 </table>
-<p>A <code>min_len</code> that is not a non-negative integer and a <code>threshold</code> that is not a number in (0, 1) raise <code>ParameterError</code>.</p>
+<p>A <code>min_len</code> that is not a non-negative integer, a <code>threshold</code> that is not a number in (0, 1) and a <code>step</code> that is not an integer above 0 raise <code>ParameterError</code>.</p>
 <!-- --8<-- [end:calc_mamtld] -->
 </div>
 <div class="metric-card">
@@ -4105,6 +4169,50 @@ P = \frac{V_1}{N}
 <!-- --8<-- [end:calc_baayen_p] -->
 </div>
 <div class="metric-card">
+<h3 id="orlov_z">Orlov's Z<a class="headerlink" href="#orlov_z" title="Permanent link">&para;</a></h3>
+<p class="metric-meta"><code>orlov_z</code> · <a href="https://doi.org/10.1023/A:1001749303137">Tweedie and Baayen 1998</a></p>
+<!-- --8<-- [start:calc_orlov_z] -->
+<div class="signature highlight"><pre><span></span><code><span class="n">calc_orlov_z</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+</code></pre></div>
+<p>The text length at which the law of Zipf fits the vocabulary best (Orlov 1983): the solution <span class="arithmatex">\(Z\)</span> for <span class="arithmatex">\(N\)</span> words, <span class="arithmatex">\(V\)</span> lexemes and the share <span class="arithmatex">\(p\)</span> of the most frequent lexeme. The right side has a minimum over <span class="arithmatex">\(Z\)</span>, and <span class="arithmatex">\(Z\)</span> is the solution above it; it is <code>nan</code> when <span class="arithmatex">\(V\)</span> lies at or below that minimum or when every word is a lexeme of its own, and <code>inf</code> when <span class="arithmatex">\(V\)</span> comes so close to <span class="arithmatex">\(N\)</span> that <span class="arithmatex">\(Z\)</span> overflows a float. With Yule's K, Z separated the authors best among the measures Tweedie and Baayen compared.</p>
+<div class="arithmatex">\[
+V = \frac{Z}{\ln(pZ)} \cdot \frac{N}{N - Z} \cdot \ln \frac{N}{Z}
+\]</div>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Parameter</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Default</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>text</code></td>
+<td style="text-align: left;"><code>list[str]</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">List of words</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:calc_orlov_z] -->
+<div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Code</label><label for="__tabbed_2_2">Result</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts.diversity_stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">calc_orlov_z</span>
+
+<span class="n">calc_orlov_z</span><span class="p">(</span><span class="s2">"the cat saw the dog and the dog saw a bird near the old tree"</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>59.99999999999961
+</code></pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="metric-card">
 <h3 id="hapax_ratio">Hapax ratio<a class="headerlink" href="#hapax_ratio" title="Permanent link">&para;</a></h3>
 <p class="metric-meta"><code>hapax_ratio</code></p>
 <!-- --8<-- [start:calc_hapax_ratio] -->
@@ -4308,7 +4416,7 @@ H = -\sum_k p_k \log_2 p_k
 </table>
 <p>A counter whose words are not strings or whose frequencies are not numbers raises <code>SourceTypeError</code>, and a negative, <code>nan</code> or infinite frequency <code>SourceError</code> (<code>check_counts</code>).</p>
 <!-- --8<-- [end:fit_zipf_mandelbrot] -->
-<div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Code</label><label for="__tabbed_2_2">Result</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="3:2"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Code</label><label for="__tabbed_3_2">Result</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts.diversity_stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">fit_zipf_mandelbrot</span>
@@ -4362,6 +4470,57 @@ H = -\sum_k p_k \log_2 p_k
 </code></pre></div>
 <p>Fits Heaps' law over the vocabulary growth curve of a list of words, as <code>calc_heaps_beta</code> does, and returns a <code>HeapsFit</code> named tuple with the parameters <code>k</code>, <code>beta</code> and the coefficient of determination <code>r2</code>, all <code>nan</code> for texts shorter than two words; <code>r2</code> is <code>nan</code> for a text of one lexeme too.</p>
 <!-- --8<-- [end:fit_heaps] -->
+</div>
+<div class="metric-card">
+<h3 id="burstiness">Burstiness<a class="headerlink" href="#burstiness" title="Permanent link">&para;</a></h3>
+<p class="metric-meta"><code>burstiness</code> · <a href="https://doi.org/10.1103/PhysRevE.94.032311">Kim and Jo 2016</a></p>
+<!-- --8<-- [start:calc_burstiness] -->
+<div class="signature highlight"><pre><span></span><code><span class="n">calc_burstiness</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">min_freq</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+</code></pre></div>
+<p>How a lexeme comes in bursts rather than spread over the text, by the burstiness of Kim and Jo, which corrects that of Goh and Barabási for a finite number <span class="arithmatex">\(n\)</span> of events, averaged over the lexemes of <code>min_freq</code> occurrences or more (<code>BURSTINESS_MIN_FREQ</code>). For the <span class="arithmatex">\(n\)</span> occurrences of a lexeme, <span class="arithmatex">\(r\)</span> is the coefficient of variation of their <span class="arithmatex">\(n\)</span> intervals, the one from the last to the first around the end of the text included. The value is −1 for occurrences at equal intervals, near 0 for a rare lexeme at random places and up to 1 for occurrences in bursts; <code>nan</code> without such lexemes.</p>
+<div class="arithmatex">\[
+A_n = \frac{\sqrt{n + 1} \cdot r - \sqrt{n - 1}}{(\sqrt{n + 1} - 2) \cdot r + \sqrt{n - 1}}
+\]</div>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Parameter</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Default</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>text</code></td>
+<td style="text-align: left;"><code>list[str]</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">List of words</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>min_freq</code></td>
+<td style="text-align: left;"><code>int</code></td>
+<td style="text-align: left;"><code>5</code></td>
+<td style="text-align: left;">Smallest number of occurrences of a lexeme measured</td>
+</tr>
+</tbody>
+</table>
+<p>A <code>min_freq</code> that is not an integer of at least 2 raises <code>ParameterError</code>.</p>
+<!-- --8<-- [end:calc_burstiness] -->
+<div class="tabbed-set tabbed-alternate" data-tabs="4:2"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><input id="__tabbed_4_2" name="__tabbed_4" type="radio" /><div class="tabbed-labels"><label for="__tabbed_4_1">Code</label><label for="__tabbed_4_2">Result</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts.diversity_stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">calc_burstiness</span>
+
+<span class="n">calc_burstiness</span><span class="p">(</span><span class="s2">"a x a x a x a x a x"</span><span class="o">.</span><span class="n">split</span><span class="p">()),</span> <span class="n">calc_burstiness</span><span class="p">(</span><span class="s2">"a a a a a x x x x x"</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>(-1.0, 0.18350341907227388)
+</code></pre></div>
+</div>
+</div>
+</div>
 </div>
 <div class="metric-card">
 <h3 id="windowed">Windowed computation<a class="headerlink" href="#windowed" title="Permanent link">&para;</a></h3>
@@ -4430,7 +4589,7 @@ H = -\sum_k p_k \log_2 p_k
 <p><code>windowed(stat, window_len=100, step=None, confidence=0.95)</code> computes a metric of <code>get_stats</code> by its name over windows: <code>calc_windowed</code> with the function of the metric and the parameters of the object. The other arguments, the result and the errors are those of <code>calc_windowed</code>; an unknown name raises <code>UnknownStatError</code>.</p>
 <!-- --8<-- [end:DiversityStats-windowed] -->
 
-<div class="tabbed-set tabbed-alternate" data-tabs="3:2"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Code</label><label for="__tabbed_3_2">Result</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="5:2"><input checked="checked" id="__tabbed_5_1" name="__tabbed_5" type="radio" /><input id="__tabbed_5_2" name="__tabbed_5" type="radio" /><div class="tabbed-labels"><label for="__tabbed_5_1">Code</label><label for="__tabbed_5_2">Result</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><span class="n">ds</span><span class="o">.</span><span class="n">windowed</span><span class="p">(</span><span class="s2">"ttr"</span><span class="p">,</span> <span class="n">window_len</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
