@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import zlib
 from collections import Counter
-from collections.abc import Callable, Hashable, Iterable, Mapping, Sequence
+from collections.abc import Callable, Collection, Hashable, Iterable, Mapping, Sequence
 from functools import cache, partial, wraps
 from itertools import pairwise
 from math import nan
@@ -13,6 +13,9 @@ from .constants import (
     AGENT_DEPS,
     AUXILIARY_DEPS,
     CLAUSE_DEPS,
+    COMPLEX_NOMINAL_DEPS,
+    MAIN_CLAUSE_DEPS,
+    NOMINAL_CLAUSE_DEPS,
     NOMINAL_SUBJECT_DEPS,
     NONFINITE_CLAUSE_FORMS,
     NOUN_MODIFIER_DEPS,
@@ -101,6 +104,10 @@ class SyntaxStats(Stats):
         n_subordinate_clauses (int): Number of subordinate clauses
         n_complex_sents (int): Number of sentences with a subordinate clause
         n_infinitive_clauses (int): Number of infinitive clauses under a verb
+        n_t_units, n_complex_t_units (int): Numbers of the T-units and of those with a
+            subordinate clause
+        n_verb_phrases, n_coordinate_phrases, n_complex_nominals (int): Numbers of the verb
+            phrases, of the coordinate phrases and of the complex nominals
         n_nouns (int): Number of nouns
         n_prep_chains (int): Number of prepositional chains
         n_participle_clauses (int): Number of participial clauses
@@ -135,6 +142,13 @@ class SyntaxStats(Stats):
         subordinate_clauses_per_sent (float): Subordinate clauses per sentence
         p_complex_sents (float): Share of sentences with a subordinate clause
         infinitive_clauses_per_sent (float): Infinitive clauses under a verb per sentence
+        t_units_per_sent (float): T-units per sentence
+        mean_t_unit_len (float): Mean length of a T-unit in words
+        clauses_per_t_unit (float): Clauses per T-unit
+        p_complex_t_units (float): Share of the T-units with a subordinate clause
+        verb_phrases_per_t_unit (float): Verb phrases per T-unit
+        coordinate_phrases_per_clause (float): Coordinate phrases per clause
+        complex_nominals_per_clause (float): Complex nominals per clause
         modifiers_per_noun (float): Mean number of modifiers of a noun
         prep_chains_per_sent (float): Prepositional chains per sentence
         max_prep_chain_len (int): Length of the longest prepositional chain, 0 without
@@ -241,10 +255,10 @@ class SyntaxStats(Stats):
         heads = [[token for token in sent if self.is_clause_head(token)] for sent in sents]
         self.n_clauses = sum(map(len, heads))
         subordinate = [
-            sum(1 for token in sent if self.is_subordinate_clause_head(token)) for sent in heads
+            [token for token in sent if self.is_subordinate_clause_head(token)] for sent in heads
         ]
-        self.n_subordinate_clauses = sum(subordinate)
-        self.n_complex_sents = sum(1 for count in subordinate if count)
+        self.n_subordinate_clauses = sum(map(len, subordinate))
+        self.n_complex_sents = sum(1 for sent in subordinate if sent)
         self.n_infinitive_clauses = sum(
             1 for sent in heads for token in sent if self.is_infinitive_clause_head(token)
         )
@@ -277,6 +291,41 @@ class SyntaxStats(Stats):
         self.n_preverbal_subjects = sum(1 for token in subjects if token.i < token.head.i)
         self.n_nominal_objects = len(objects)
         self.n_preverbal_objects = sum(1 for token in objects if token.i < token.head.i)
+        t_units = [_t_unit_heads(sent, join_hyphens) for sent in heads]
+        self.n_t_units = sum(map(len, t_units))
+        self.n_complex_t_units = sum(
+            len(
+                {_t_unit_of(token, {unit.i for unit in units}, join_hyphens) for token in sent}
+                - {None}
+            )
+            for units, sent in zip(t_units, subordinate, strict=True)
+        )
+        clause_ids = {token.i for sent in heads for token in sent}
+        word_of = {token.i: token for token in words}
+        firsts = {token.i: _first_conjunct(token, join_hyphens) for token in words}
+        coordinations: dict[int, list[int]] = {}
+        for token in words:
+            first = firsts[token.i]
+            if base_dep(token) == "conj" and first is not None:
+                coordinations.setdefault(first.i, [first.i]).append(token.i)
+        self.n_coordinate_phrases = sum(
+            1 for members in coordinations.values() if any(i not in clause_ids for i in members)
+        )
+        modified = _heads_of(words, COMPLEX_NOMINAL_DEPS, join_hyphens)
+        self.n_complex_nominals = sum(1 for token in nouns if token.i in modified) + sum(
+            1
+            for sent in heads
+            for token in sent
+            if (first := firsts[token.i]) is not None and base_dep(first) in NOMINAL_CLAUSE_DEPS
+        )
+        predicates = {token.i for token in words if token.pos_ in ("VERB", "AUX")} | _heads_of(
+            words, SUBJECT_DEPS | {"cop"}, join_hyphens
+        )
+        self.n_verb_phrases = sum(
+            1
+            for i in predicates
+            if i in word_of and base_dep(word_of[i]) not in AUXILIARY_DEPS | {"auxpass"}
+        )
 
         self.mean_dependency_distance = safe_mean(all_distances)
         self.std_dependency_distance = pstdev(all_distances) if all_distances else nan
@@ -308,6 +357,17 @@ class SyntaxStats(Stats):
         self.subordinate_clauses_per_sent = self.n_subordinate_clauses / self.n_sents
         self.p_complex_sents = self.n_complex_sents / self.n_sents
         self.infinitive_clauses_per_sent = self.n_infinitive_clauses / self.n_sents
+        self.t_units_per_sent = self.n_t_units / self.n_sents
+        self.mean_t_unit_len = safe_divide(self.n_words, self.n_t_units, nan)
+        self.clauses_per_t_unit = safe_divide(self.n_clauses, self.n_t_units, nan)
+        self.p_complex_t_units = safe_divide(self.n_complex_t_units, self.n_t_units, nan)
+        self.verb_phrases_per_t_unit = safe_divide(self.n_verb_phrases, self.n_t_units, nan)
+        self.coordinate_phrases_per_clause = safe_divide(
+            self.n_coordinate_phrases, self.n_clauses, nan
+        )
+        self.complex_nominals_per_clause = safe_divide(
+            self.n_complex_nominals, self.n_clauses, nan
+        )
         self.modifiers_per_noun = safe_divide(
             sum(count_noun_modifiers(token, join_hyphens) for token in nouns), self.n_nouns, nan
         )
@@ -604,6 +664,65 @@ def _word_triple(token: Token) -> tuple[str, str, str]:
             return (head.pos_, base_dep(token), token.pos_)
         seen.add(head.i)
     return ("", "root", token.pos_)
+
+
+def _t_unit_heads(heads: Sequence[Token], join_hyphens: bool) -> list[Token]:
+    """Clause heads of a sentence that head a T-unit: the head of the sentence and the main
+    clauses joined to it through conj or parataxis"""
+    ids = {token.i for token in heads}
+    return [token for token in heads if _is_main_clause(token, ids, join_hyphens)]
+
+
+def _is_main_clause(token: Token, ids: Collection[int], join_hyphens: bool) -> bool:
+    """Whether a clause head reaches the head of the sentence through main clauses alone"""
+    seen = {token.i}
+    while not is_root(token):
+        parent = _chain_parent(token, join_hyphens)
+        if (
+            base_dep(token) not in MAIN_CLAUSE_DEPS
+            or parent is None
+            or parent.i not in ids
+            or parent.i in seen
+        ):
+            return False
+        seen.add(parent.i)
+        token = parent
+    return True
+
+
+def _t_unit_of(token: Token, units: Collection[int], join_hyphens: bool) -> int | None:
+    """Position of the head of the T-unit a clause belongs to, the nearest one above it"""
+    seen = {token.i}
+    parent = _chain_parent(token, join_hyphens)
+    while parent is not None and parent.i not in seen:
+        if parent.i in units:
+            return parent.i
+        seen.add(parent.i)
+        parent = _chain_parent(parent, join_hyphens)
+    return None
+
+
+def _first_conjunct(token: Token, join_hyphens: bool) -> Token | None:
+    """First conjunct of the coordination of a word, the word itself out of one; None through a
+    punctuation mark or a loop of conjuncts"""
+    seen = {token.i}
+    while base_dep(token) == "conj":
+        parent = _chain_parent(token, join_hyphens)
+        if parent is None or parent.i in seen:
+            return None
+        seen.add(parent.i)
+        token = parent
+    return token
+
+
+def _heads_of(words: Iterable[Token], relations: Collection[str], join_hyphens: bool) -> set[int]:
+    """Positions of the words some of the words hang on by one of the relations"""
+    return {
+        parent.i
+        for token in words
+        if base_dep(token) in relations
+        and (parent := _chain_parent(token, join_hyphens)) is not None
+    }
 
 
 def get_words(tokens: Iterable[Token], join_hyphens: bool = False) -> list[Token]:
@@ -1520,16 +1639,20 @@ def is_prep_complement(token: Token, join_hyphens: bool = False) -> bool:
     relation = base_dep(token)
     if relation == "acl":
         return False
-    children: Iterable[Token] = token.children
-    # Only a hyphenated word has dependents on its other parts
-    if join_hyphens and len(_hyphenated_word(token) or ()) > 1:
-        children = get_children(token, join_hyphens)
-    children = list(children)
+    children = _dependents(token, join_hyphens)
     if relation not in PREP_COMPLEMENT_DEPS and not any(
         base_dep(child) == "cop" for child in children
     ):
         return False
     return any(base_dep(child) == "case" and _is_adposition(child) for child in children)
+
+
+def _dependents(token: Token, join_hyphens: bool) -> list[Token]:
+    """Dependents of a word for a check of their relations: those of get_children for a
+    hyphenated word with join_hyphens, the children of its token otherwise"""
+    if join_hyphens and len(_hyphenated_word(token) or ()) > 1:
+        return get_children(token, join_hyphens)
+    return list(token.children)
 
 
 def _is_adposition(token: Token) -> bool:

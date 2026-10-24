@@ -74,7 +74,7 @@
 
     ---
 
-    Compute the statistics of the dependency tree - dependency distances, tree depth, valency, coordination chains, clauses, modifiers of a noun, prepositional chains, participial clauses, the passive, negations, split predicates, the words before the root, the order of the subjects and the objects and the similarity of adjacent sentences - with the clauses and the constructions of a language library, on [tree helpers](stats/syntax_stats.md#get_words) that read the labels shared by Universal Dependencies and ClearNLP and the verb form of a predicate by its auxiliaries
+    Compute the statistics of the dependency tree - dependency distances, tree depth, valency, coordination chains, clauses, modifiers of a noun, prepositional chains, participial clauses, the passive, negations, split predicates, the words before the root, the order of the subjects and the objects, the similarity of adjacent sentences and the T-units and phrases of L2SCA - with the clauses and the constructions of a language library, on [tree helpers](stats/syntax_stats.md#get_words) that read the labels shared by Universal Dependencies and ClearNLP and the verb form of a predicate by its auxiliaries
 
     [:octicons-arrow-right-24: Syntactic statistics](stats/syntax_stats.md)
 

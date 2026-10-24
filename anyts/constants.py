@@ -67,6 +67,11 @@ OBJECT_DEPS = frozenset({"dobj", "obj"})
 # Relations of a nominal subject by Universal Dependencies (nsubj:pass is a subtype) and by
 # ClearNLP
 NOMINAL_SUBJECT_DEPS = frozenset({"nsubj", "nsubjpass"})
+# Relations of the units of L2SCA: a main clause joined to another, a modifier that makes a
+# noun a complex nominal and a nominal clause, by Universal Dependencies and by ClearNLP
+MAIN_CLAUSE_DEPS = frozenset({"conj", "parataxis"})
+COMPLEX_NOMINAL_DEPS = frozenset({"acl", "amod", "appos", "nmod", "poss", "prep", "relcl"})
+NOMINAL_CLAUSE_DEPS = frozenset({"ccomp", "csubj", "csubjpass"})
 # Verb forms whose clauses are counted apart from the clauses of a finite verb
 NONFINITE_CLAUSE_FORMS = frozenset({"Conv", "Ger", "Part"})
 
@@ -89,6 +94,13 @@ SYNTAX_STATS_DESC = {
     "subordinate_clauses_per_sent": "Subordinate clauses per sentence",
     "p_complex_sents": "Share of sentences with a subordinate clause",
     "infinitive_clauses_per_sent": "Infinitive clauses under a verb per sentence",
+    "t_units_per_sent": "T-units per sentence",
+    "mean_t_unit_len": "Mean length of a T-unit (words)",
+    "clauses_per_t_unit": "Clauses per T-unit",
+    "p_complex_t_units": "Share of T-units with a subordinate clause",
+    "verb_phrases_per_t_unit": "Verb phrases per T-unit",
+    "coordinate_phrases_per_clause": "Coordinate phrases per clause",
+    "complex_nominals_per_clause": "Complex nominals per clause",
     "modifiers_per_noun": "Modifiers per noun phrase",
     "prep_chains_per_sent": "Prepositional chains per sentence",
     "max_prep_chain_len": "Maximum length of a prepositional chain",
