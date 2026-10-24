@@ -6,9 +6,18 @@ from bisect import bisect_left
 from collections.abc import Callable, Iterable, Sequence
 from typing import TYPE_CHECKING, NamedTuple
 
+from ..constants import MESSAGES
 from ..exceptions import ParameterError, SourceTypeError
 from ..extractors import BLANK_LINE, _check_spans, _iter_words
-from ..utils import _unit_word, check_bool, check_integer, has_sents, is_doc, iter_doc_units
+from ..utils import (
+    _unit_word,
+    check_bool,
+    check_integer,
+    has_sents,
+    is_doc,
+    iter_doc_units,
+    source_type_error,
+)
 
 if TYPE_CHECKING:
     from spacy.tokens import Doc, Token
@@ -205,7 +214,7 @@ def _source_words(
     if isinstance(source, str):
         words = list(split(source))
         return source, words, [()] * len(words)
-    raise SourceTypeError("The data source is set incorrectly")
+    raise source_type_error(MESSAGES, source)
 
 
 def _sent_starts(text: str, sentenize: Sentenizer | None) -> list[int] | None:

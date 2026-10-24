@@ -135,8 +135,10 @@ def test_kwic_join_hyphens():
 
 
 def test_kwic_of_a_wrong_source():
-    with pytest.raises(SourceTypeError, match=r"^The data source is set incorrectly$"):
+    with pytest.raises(SourceTypeError, match=r"^The data source cannot be of type list$"):
         kwic(["cat"], "cat")
+    with pytest.raises(SourceTypeError, match=r"^The data source cannot be a Span"):
+        kwic(spacy.blank("en")(text)[:2], "cat")
     with pytest.raises(SourceTypeError, match=r"^The keyword must be a string, not list$"):
         kwic(text, ["cat"])
 
