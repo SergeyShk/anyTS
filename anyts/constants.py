@@ -420,6 +420,23 @@ VISUALIZER_LABELS = {
         "xlabel": "Dimension 1",
         "ylabel": "Dimension 2",
     },
+    "delta_histogram_plot": {
+        "title": "Distances within and between authors",
+        "xlabel": "Distance",
+        "ylabel": "Density",
+        "within": "Same author",
+        "between": "Different authors",
+    },
+    "rolling_delta_plot": {
+        "title": "Rolling Delta",
+        "xlabel": "Middle of the window",
+        "ylabel": "Distance",
+    },
+    "zeta_scatter_plot": {
+        "title": "Zeta markers in the segments",
+        "xlabel": "Share of the avoided words",
+        "ylabel": "Share of the preferred words",
+    },
     "mendenhall_plot": {
         "title": "Mendenhall curves",
         "xlabel": "Length of the word, characters",

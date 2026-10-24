@@ -1,7 +1,7 @@
 # Stylometry
 
 <!-- --8<-- [start:stylometry] -->
-Measures of stylometry and authorship attribution: distances between texts by the frequencies of the most frequent words (Burrows's Delta and its variants, as in [stylo](https://github.com/computationalstylistics/stylo)), markers of preferred and avoided words (Zeta), Kilgarriff's chi-square distance between corpora and the Mendenhall curve. The functions work on lists of units of a text: lower-case word forms (the usual choice for Delta), lemmas or character N-grams - case and lemmatization belong to the extractors.
+Measures of stylometry and authorship attribution: distances between texts by the frequencies of the most frequent words (Burrows's Delta and its variants, as in [stylo](https://github.com/computationalstylistics/stylo)) and along a text by its windows (rolling Delta), markers of preferred and avoided words (Zeta) and their shares in the segments of corpora, Kilgarriff's chi-square distance between corpora and the Mendenhall curve. The functions work on lists of units of a text: lower-case word forms (the usual choice for Delta), lemmas or character N-grams - case and lemmatization belong to the extractors.
 <!-- --8<-- [end:stylometry] -->
 
 ## Burrows's Delta { #delta }
@@ -128,6 +128,48 @@ The corpora, `n_mfw` and `culling` raise the errors of `frequency_table`; fewer 
     ?  0.499  1.493  0.662
     ```
 
+## Rolling Delta { #rolling_delta }
+
+<!-- --8<-- [start:rolling_delta] -->
+``` {.python .signature}
+rolling_delta(reference, text, window=5000, step=1000, n_mfw=100, variant='burrows', culling=0.0)
+```
+
+Delta along a text, after `rolling.delta` of stylo: the reference texts and the text under test are cut into windows of `window` units every `step` units, the rest shorter than a window dropped. The most frequent units, the culling and the statistics of the z-scores come from the windows of the reference texts, and every window of the text is compared by the variant of Delta with the centroid of the windows of every reference text. The result is the distances from the windows (rows, by the position of their middle in units) to the references (columns); where the nearest reference changes along the text, so does the style - another author of a part of a text written together, a borrowed passage. Unlike stylo, which sums the differences of the raw frequencies, the distances are those of `delta_profiles` over z-scores.
+
+| Parameter | Type | Default | Description |
+| :-------- | :--- | :------ | :---------- |
+| `reference` | `dict[str, list[str]]` | - | Units of the reference texts by the names of the texts |
+| `text` | `list[str]` | - | Units of the text under test |
+| `window` | `int` | `5000` | Size of a window in units |
+| `step` | `int` | `1000` | Distance between the starts of the windows in units |
+| `n_mfw` | `int` | `100` | Number of the most frequent units; `None` - all of them |
+| `variant` | `str` | `'burrows'` | Variant of Delta of `anyts.constants.DELTA_VARIANTS` |
+| `culling` | `float` | `0.0` | Smallest share of the windows of the reference texts a unit occurs in |
+
+A reference corpus that is not a mapping of lists of strings and units of the text that are not a list of strings raise `SourceTypeError`; no reference texts, a text without units or shorter than a window and fewer than three windows of the reference texts raise `SourceError`. An unknown variant, a `window` or a `step` that is not an integer of at least one, a `step` greater than the window and the `n_mfw` and `culling` that `frequency_table` refuses raise `ParameterError`.
+<!-- --8<-- [end:rolling_delta] -->
+
+=== "Code"
+
+    ``` python
+    from anyts.corpus import rolling_delta
+
+    rolling_delta(corpus, corpus["A"] + corpus["B"], window=10, step=5, n_mfw=10).round(3)
+    ```
+
+=== "Result"
+
+    ```
+            A      B      C
+    5   0.527  1.337  0.633
+    10  0.744  1.155  0.970
+    15  0.563  1.227  1.152
+    20  1.111  1.077  1.170
+    25  1.079  0.353  0.760
+    30  1.337  0.166  1.279
+    ```
+
 ## Zeta { #zeta }
 
 <!-- --8<-- [start:zeta] -->
@@ -161,6 +203,52 @@ The result is a list of `ZetaScore(word, dp_target, dp_comparison, zeta, log_zet
     ```
     [ZetaScore(word='at', dp_target=0.5, dp_comparison=0.0, zeta=0.5, log_zeta=2.0), ZetaScore(word='birds', dp_target=0.5, dp_comparison=0.0, zeta=0.5, log_zeta=2.0)]
     ZetaScore(word='on', dp_target=0.0, dp_comparison=0.5, zeta=-0.5, log_zeta=-2.0)
+    ```
+
+<!-- --8<-- [start:zeta_segments] -->
+``` {.python .signature}
+zeta_segments(corpora, preferred, avoided, segment_size=2000)
+```
+
+The shares of the markers of Zeta in the segments of corpora, as `oppose` of stylo places the segments: every text is split into segments as in `zeta`, and a segment gets the shares of the words of the lists `preferred` and `avoided` found in it. With the markers of a target corpus against a comparison corpus, the segments of the target lie high on the left of the plane of the two shares and those of the comparison low on the right; the segments of a disputed text show which group it is near (`zeta_scatter_plot`).
+
+| Parameter | Type | Default | Description |
+| :-------- | :--- | :------ | :---------- |
+| `corpora` | `dict[str, list[str] / list[list[str]]]` | - | Words of the corpora by name - one text or a list of texts each |
+| `preferred` | `Collection[str]` | - | Words the target corpus prefers - the start of the list of `zeta` |
+| `avoided` | `Collection[str]` | - | Words the target corpus avoids - the end of the list |
+| `segment_size` | `int` | `2000` | Size of a segment in words |
+
+The result is a `DataFrame` of the segments in the order of the corpora and of their texts, with the columns `corpus` (the name of the corpus), `preferred` and `avoided` (the shares of the lists). Corpora that are not a mapping and a corpus or a list of markers that is not a list of strings raise `SourceTypeError`; no corpora, an empty list of markers and a corpus without words `SourceError`, and a `segment_size` that is not an integer of at least one `ParameterError`.
+<!-- --8<-- [end:zeta_segments] -->
+
+=== "Code"
+
+    ``` python
+    from anyts.corpus import zeta_segments
+
+    scores = zeta(corpus["A"], corpus["B"], segment_size=5)
+    preferred = [score.word for score in scores if score.zeta > 0]
+    avoided = [score.word for score in scores if score.zeta < 0]
+    zeta_segments(corpus, preferred, avoided, segment_size=5).round(3)
+    ```
+
+=== "Result"
+
+    ```
+       corpus  preferred  avoided
+    0       A      0.500    0.000
+    1       A      0.375    0.000
+    2       A      0.500    0.000
+    3       A      0.500    0.143
+    4       B      0.125    0.286
+    5       B      0.125    0.429
+    6       B      0.000    0.429
+    7       B      0.125    0.429
+    8       C      0.250    0.000
+    9       C      0.250    0.000
+    10      C      0.250    0.000
+    11      C      0.125    0.143
     ```
 
 ## Kilgarriff's chi-square { #kilgarriff_chi2 }

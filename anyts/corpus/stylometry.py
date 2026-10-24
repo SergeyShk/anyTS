@@ -1,5 +1,5 @@
 from collections import Counter
-from collections.abc import Mapping, Sequence
+from collections.abc import Collection, Iterator, Mapping, Sequence
 from math import floor, fsum, log2
 from typing import NamedTuple
 
@@ -301,15 +301,10 @@ def delta_profiles(
     _check_corpus(reference, "reference")
     _check_corpus(samples, "tested")
     table = frequency_table(basis, n_mfw, culling)
-    mean = table.mean(axis=0)
-    constant = _constant_columns(table)
-    scale = table.std(axis=0, ddof=1).where(~constant, 1.0)
-    scores = []
-    for corpus in (reference, samples):
-        frequencies = _relative_frequencies(corpus, table.columns)
-        scaled = np.array((frequencies - mean) / scale)
-        scaled[:, constant.to_numpy()] = 0.0
-        scores.append(scaled)
+    scores = [
+        _scale(_relative_frequencies(corpus, table.columns), table)
+        for corpus in (reference, samples)
+    ]
     distances = _delta_distances(scores[1], scores[0], variant)
     return pd.DataFrame(distances, index=list(samples), columns=list(reference))
 
@@ -332,6 +327,114 @@ def _relative_frequencies(corpus: Mapping[str, Sequence[str]], columns: pd.Index
         counts = Counter(units)
         rows.append([counts.get(unit, 0) / len(units) for unit in columns])
     return pd.DataFrame(rows, index=list(corpus), columns=columns)
+
+
+def _scale(frequencies: pd.DataFrame, table: pd.DataFrame) -> np.ndarray:
+    """Z-scores of frequencies by the means and deviations of the columns of a table"""
+    constant = _constant_columns(table)
+    scale = table.std(axis=0, ddof=1).where(~constant, 1.0)
+    scaled = np.array((frequencies - table.mean(axis=0)) / scale)
+    scaled[:, constant.to_numpy()] = 0.0
+    return scaled
+
+
+def rolling_delta(
+    reference: Mapping[str, Sequence[str]],
+    text: Sequence[str],
+    window: int = 5000,
+    step: int = 1000,
+    n_mfw: int | None = 100,
+    variant: str = "burrows",
+    culling: float = 0.0,
+) -> pd.DataFrame:
+    """
+    Computing the distances by Delta from the windows of a text to reference texts
+
+    Description:
+        The reference texts and the text under test are cut into windows of
+        window units every step units, the rest shorter than a window dropped,
+        as in stylo rolling.delta; the most frequent units, the culling and the
+        mean and deviation of the z-scores come from the windows of the
+        reference texts. The distance by the variant of Delta goes from every
+        window of the text to the centroid of the windows of every reference
+        text; where the nearest reference changes along the text, so does the
+        style
+
+    Arguments:
+        reference (dict[str, list[str]]): Units of the reference texts by name
+        text (list[str]): Units of the text under test
+        window (int): Size of a window in units
+        step (int): Distance between the starts of the windows in units
+        n_mfw (int): Number of the most frequent units; None - all of them
+        variant (str): Variant of Delta of DELTA_VARIANTS
+        culling (float): Smallest share of the windows a unit occurs in
+
+    Returns:
+        DataFrame: Distances, rows - the windows of the text by the position of
+            their middle, columns - the reference texts
+
+    Raises:
+        ParameterError: If the variant is unknown, the size of a window or the
+            step is below one, the step exceeds the window or n_mfw is below one
+        SourceError: If there are no reference texts, a text is shorter than a
+            window or the reference texts have fewer than three windows
+        SourceTypeError: If the reference corpus is not a mapping or the units
+            of a text are not a list of strings (check_words)
+
+    Example:
+        >>> from anyts.corpus import rolling_delta
+        >>> reference = {
+        ...     "A": "the cat and the cat and a cat".split(),
+        ...     "B": "a dog or a dog or the dog".split(),
+        ... }
+        >>> text = "the cat and the cat a dog or a dog".split()
+        >>> rolling_delta(reference, text, window=4, step=2, n_mfw=4).round(3)
+               A      B
+        2  0.306  1.327
+        4  0.408  1.021
+        6  1.021  0.408
+        8  1.633  0.204
+    """
+    if not isinstance(variant, str) or variant not in DELTA_VARIANTS:
+        raise ParameterError(f"Unknown variant of Delta: {variant}")
+    for value, what in ((window, "size of a window"), (step, "step")):
+        check_integer(value, what)
+        if value < 1:
+            raise ParameterError(f"The {what} must be greater than 0")
+    if step > window:
+        raise ParameterError("The step must not exceed the size of a window")
+    _check_corpus(reference, "reference")
+    check_words(text, "units of the text")
+    if any(len(units) < window for units in reference.values()):
+        raise SourceError("One of the reference texts is shorter than a window")
+    if len(text) < window:
+        raise SourceError("The text is shorter than a window")
+    windows = [_windows(units, window, step) for units in reference.values()]
+    pooled = [units for parts in windows for units in parts]
+    if len(pooled) < 3:
+        raise SourceError("The statistics of the scaling need at least three windows")
+    table = frequency_table(
+        {str(index): units for index, units in enumerate(pooled)}, n_mfw, culling
+    )
+    scaled = _scale(table, table)
+    centroids = []
+    start = 0
+    for parts in windows:
+        centroids.append(scaled[start : start + len(parts)].mean(axis=0))
+        start += len(parts)
+    samples = _windows(text, window, step)
+    frequencies = _relative_frequencies(
+        {str(index): units for index, units in enumerate(samples)}, table.columns
+    )
+    distances = _delta_distances(_scale(frequencies, table), np.array(centroids), variant)
+    middles = [index * step + window // 2 for index in range(len(samples))]
+    return pd.DataFrame(distances, index=middles, columns=list(reference))
+
+
+def _windows(units: Sequence[str], window: int, step: int) -> list[Sequence[str]]:
+    """Windows of window units every step units, without the rest shorter than a window"""
+    units = _sliceable(units)
+    return [units[start : start + window] for start in range(0, len(units) - window + 1, step)]
 
 
 def zeta(
@@ -411,10 +514,20 @@ def _segment_presence(
     texts: Sequence[str] | Sequence[Sequence[str]], segment_size: int
 ) -> tuple[Counter[str], int]:
     """Number of the segments every word occurs in and the number of the segments"""
-    if len(texts) and all(isinstance(text, str) for text in texts):
-        texts = [texts]  # type: ignore[list-item]
     presence: Counter[str] = Counter()
     n_segments = 0
+    for segment in _segments(texts, segment_size):
+        presence.update(segment)
+        n_segments += 1
+    return presence, n_segments
+
+
+def _segments(
+    texts: Sequence[str] | Sequence[Sequence[str]], segment_size: int
+) -> Iterator[set[str]]:
+    """Words of every segment of one text or of a list of texts"""
+    if len(texts) and all(isinstance(text, str) for text in texts):
+        texts = [texts]  # type: ignore[list-item]
     for text in texts:
         check_words(text, "words of a text")
         if not len(text):
@@ -423,9 +536,93 @@ def _segment_presence(
             np.asarray(_sliceable(text), dtype=object),
             max(1, floor(len(text) / segment_size + 0.5)),
         ):
-            presence.update(set(segment.tolist()))
-            n_segments += 1
-    return presence, n_segments
+            yield set(segment.tolist())
+
+
+def zeta_segments(
+    corpora: Mapping[str, Sequence[str] | Sequence[Sequence[str]]],
+    preferred: Collection[str],
+    avoided: Collection[str],
+    segment_size: int = 2000,
+) -> pd.DataFrame:
+    """
+    Computing the shares of the markers of Zeta in the segments of corpora
+
+    Description:
+        Every text is split into segments as in zeta; a segment gets the
+        shares of the preferred and of the avoided words found in it, as stylo
+        oppose places the segments. With the markers of a target corpus against
+        a comparison one, the segments of the target lie high on the left of
+        the plane of the two shares, those of the comparison low on the right,
+        and the segments of a disputed text fall near one of the groups
+
+    Arguments:
+        corpora (dict[str, list[str]|list[list[str]]]): Words of the corpora by
+            name - one text or a list of texts each
+        preferred (collection[str]): Words the target corpus prefers - the start
+            of the list of zeta
+        avoided (collection[str]): Words the target corpus avoids - the end of the list
+        segment_size (int): Size of a segment in words
+
+    Returns:
+        DataFrame: Segments in the order of the corpora and of their texts;
+            columns - corpus (the name of the corpus), preferred and avoided
+            (the shares of the words of the lists found in the segment)
+
+    Raises:
+        ParameterError: If the size of a segment is below one
+        SourceTypeError: If the corpora are not a mapping, or the words of a
+            corpus or a list of markers are not a list of strings
+        SourceError: If there are no corpora or no words in a list of markers,
+            or a corpus has no words
+
+    Example:
+        >>> from anyts.corpus import zeta, zeta_segments
+        >>> target = "the cat eats and the cat sleeps".split()
+        >>> comparison = "the dog eats and the dog barks".split()
+        >>> scores = zeta(target, comparison, segment_size=3)
+        >>> preferred = [score.word for score in scores if score.zeta > 0]
+        >>> avoided = [score.word for score in scores if score.zeta < 0]
+        >>> corpora = {"cat": target, "dog": comparison, "?": "the cat barks".split()}
+        >>> zeta_segments(corpora, preferred, avoided, segment_size=3)
+          corpus  preferred  avoided
+        0    cat        0.5      0.0
+        1    cat        1.0      0.0
+        2    dog        0.0      0.5
+        3    dog        0.0      1.0
+        4      ?        0.5      0.5
+    """
+    check_integer(segment_size, "size of a segment")
+    if segment_size < 1:
+        raise ParameterError("The size of a segment must be greater than 0")
+    if not isinstance(corpora, Mapping):
+        raise SourceTypeError(
+            f"The corpora must be a mapping of their names to their words, "
+            f"not {type(corpora).__name__}"
+        )
+    if not corpora:
+        raise SourceError("There are no corpora")
+    markers = []
+    for words, what in ((preferred, "preferred"), (avoided, "avoided")):
+        check_words(words, f"{what} words", ordered=False)
+        if not len(words):
+            raise SourceError(f"There are no {what} words")
+        markers.append(set(words))
+    rows = []
+    for name, texts in corpora.items():
+        check_sequence(texts)
+        segments = list(_segments(texts, segment_size))
+        if not segments:
+            raise SourceError(f"The corpus {name} has no words")
+        rows += [
+            (
+                name,
+                len(segment & markers[0]) / len(markers[0]),
+                len(segment & markers[1]) / len(markers[1]),
+            )
+            for segment in segments
+        ]
+    return pd.DataFrame(rows, columns=["corpus", "preferred", "avoided"])
 
 
 def kilgarriff_chi2(words_a: Sequence[str], words_b: Sequence[str], n_mfw: int = 500) -> float:
