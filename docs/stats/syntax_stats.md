@@ -377,15 +377,22 @@ Counts the modifiers of a noun phrase: the dependents with the relations `amod`,
 { .metric-meta }
 
 <!-- --8<-- [start:SyntaxStats-prep_chains] -->
-A prepositional chain is two or more nested complements with a preposition, each hanging on the previous one: *on the mat of the house of the mayor* (length 3). The links are the words of the hook `is_prep_complement`, and the chains and their lengths are those of `calc_modifier_chains`; a chain may start at a complement of a verb (`obl`).
+A prepositional chain is two or more nested complements with a preposition, each hanging on the previous one: *on the mat of the house of the mayor* (length 3). The links are the words of the hook `is_prep_complement`, and the chains and their lengths are those of `calc_modifier_chains`; a chain may start at a complement of a verb (`obl`) or at a prepositional predicate with a copula (*was in the house of the mayor*), but not at a conjunct of a complement (*in Madrid and in the centre of the city*). The chains read Universal Dependencies alone: ClearNLP heads a phrase by its preposition (`prep`, `pobj`), so its parses give no chains.
 <!-- --8<-- [end:SyntaxStats-prep_chains] -->
 
 <!-- --8<-- [start:is_prep_complement] -->
 ``` {.python .signature}
-is_prep_complement(token)
+is_prep_complement(token, join_hyphens=False)
 ```
 
-Checks whether a word is a complement with a preposition: a word with the relation `nmod` or `obl` or a subtype of them (`anyts.constants.PREP_COMPLEMENT_DEPS`) and a dependent of the relation `case` that is an adposition (`ADP`). A noun in a case without a preposition and a possessive marker are none. A value that is not a `Token` raises `SourceTypeError`.
+Checks whether a word is a complement with a preposition: a word with the relation `nmod` or `obl` or a subtype of them (`anyts.constants.PREP_COMPLEMENT_DEPS`), or a predicate with a copula, that has a dependent of the relation `case` that is an adposition (`ADP`) or begins one of several words (`fixed`: *in front of*). A noun in a case without a preposition and a possessive marker are none.
+
+| Parameter | Type | Default | Description |
+| :-------- | :--- | :------ | :---------- |
+| `token` | `Token` | - | Token |
+| `join_hyphens` | `bool` | `False` | Take a hyphenated word for one word |
+
+A value that is not a `Token` raises `SourceTypeError`.
 <!-- --8<-- [end:is_prep_complement] -->
 
 </div>
@@ -496,7 +503,7 @@ $$
 
 The methods `get_stats`, `to_dataframe`, `print_stats` and `describe` are those of the [statistics interface](stats.md).
 
-The functions of the tree take a spaCy `Doc`, a `Span` or a list of tokens; its words are the tokens of `anyts.utils.is_word`. They read the relations that Universal Dependencies and the ClearNLP labels of the English models share: the head of a token, `cc`, `conj`, `parataxis`, `punct` and `aux`, the subjects `nsubj` and `csubj`, the modifiers of a noun `amod`, `det`, `nmod`, `nummod` and `acl`, the clause relations `ccomp`, `advcl` and `xcomp`, and the root; the copula `cop` of `predicate_form` and `is_predicate` exists in Universal Dependencies alone. The passive and its agent (`is_passive`, `has_agent`) read the relations of both schemes (`PASSIVE_DEPS`, `AGENT_DEPS`). Everything else is up to a language library.
+The functions of the tree take a spaCy `Doc`, a `Span` or a list of tokens; its words are the tokens of `anyts.utils.is_word`. They read the relations that Universal Dependencies and the ClearNLP labels of the English models share: the head of a token, `cc`, `conj`, `parataxis`, `punct` and `aux`, the subjects `nsubj` and `csubj`, the modifiers of a noun `amod`, `det`, `nmod`, `nummod` and `acl`, the clause relations `ccomp`, `advcl` and `xcomp`, and the root; the copula `cop` of `predicate_form` and `is_predicate` exists in Universal Dependencies alone. The passive and its agent (`is_passive`, `has_agent`) and the order of the subjects and the objects read the relations of both schemes (`PASSIVE_DEPS`, `AGENT_DEPS`, `NOMINAL_SUBJECT_DEPS`, `OBJECT_DEPS`); the prepositional complements of `is_prep_complement` read Universal Dependencies alone. Everything else is up to a language library.
 
 ## Words of a sequence { #get_words }
 
@@ -694,7 +701,7 @@ A check that is not callable raises `SourceTypeError`.
 <summary>Language hooks of a subclass</summary>
 
 <!-- --8<-- [start:SyntaxStats-hooks] -->
-A language library subclasses `SyntaxStats`. The defaults read Universal Dependencies with its morphological features and the relations it shares with ClearNLP; the passive and its agent read the relations of both:
+A language library subclasses `SyntaxStats`. The defaults read Universal Dependencies with its morphological features and the relations it shares with ClearNLP; the passive, its agent and the order of the subjects and the objects read the relations of both, the prepositional chains those of Universal Dependencies:
 
 | Hook | Kind | Description |
 | :--- | :--- | :---------- |
@@ -704,7 +711,7 @@ A language library subclasses `SyntaxStats`. The defaults read Universal Depende
 | `auxiliary_form(token)` | method | Verb form the checks of the clauses read for an auxiliary or a copula without `VerbForm` (`predicate_form`); by default an empty string, which skips it |
 | `is_subordinate_clause_head(token)` | method | Whether a clause head heads a subordinate clause, asked only of the words of `is_clause_head`; by default `is_subordinate_clause_head` of the module over the hooks `is_clause_head` and `auxiliary_form` |
 | `is_infinitive_clause_head(token)` | method | Whether a clause head heads an infinitive clause under a verb (*wants to leave*), counted apart from the subordinate ones; by default `is_infinitive_clause_head` of the module over the hooks `is_clause_head` and `auxiliary_form` |
-| `is_prep_complement(token)` | method | Whether a word is a link of a prepositional chain; by default `is_prep_complement` of the module |
+| `is_prep_complement(token)` | method | Whether a word is a link of a prepositional chain; by default `is_prep_complement` of the module with `join_hyphens` of the class |
 | `is_participle_clause(token)` | method | Whether a word heads a participial clause; by default a participle that is not the head of the sentence, has no auxiliary or copula and has a dependent (`calc_valency`) |
 | `is_passive(token)` | method | Whether a word is a passive verb form; by default `is_passive` of the module with `join_hyphens` of the class |
 | `is_agentless(token)` | method | Whether a passive form has no agent; by default the hook `is_passive` without an agent (`has_agent` of the module) |

@@ -861,7 +861,7 @@ def test_modifier_chains():
 
 
 # Yesterday the cat of the neighbour slept on the mat of the house of the mayor . Came the
-# spring , and the guests saw it and the city .
+# spring , and the guests it saw the city .
 ORDER = [
     ("Yesterday", 6, "advmod", "ADV"),
     ("the", 2, "det", "DET"),
@@ -883,14 +883,14 @@ ORDER = [
     ("Came", 17, "ROOT", "VERB"),
     ("the", 19, "det", "DET"),
     ("spring", 17, "nsubj", "NOUN"),
-    (",", 26, "punct", "PUNCT"),
-    ("and", 26, "cc", "CCONJ"),
+    (",", 25, "punct", "PUNCT"),
+    ("and", 25, "cc", "CCONJ"),
     ("the", 23, "det", "DET"),
-    ("guests", 26, "nsubj", "NOUN"),
-    ("it", 26, "obj", "PRON"),
-    ("the", 26, "det", "DET"),
+    ("guests", 25, "nsubj", "NOUN"),
+    ("it", 25, "obj", "PRON"),
     ("saw", 17, "conj", "VERB"),
-    ("city", 26, "obj", "NOUN"),
+    ("the", 27, "det", "DET"),
+    ("city", 25, "obj", "NOUN"),
     (".", 17, "punct", "PUNCT"),
 ]
 
@@ -947,6 +947,50 @@ def test_hook_of_the_prepositional_complements():
     # Without the obl of the verb the chain is of the house of the mayor
     stats = OnlyNmod(order_doc())
     assert stats.n_prep_chains == 1 and stats.max_prep_chain_len == 2
+
+
+def test_prepositional_complements_of_several_words_and_of_a_copula():
+    # sat close to the door of the house: close begins the preposition, to is fixed to it
+    doc = parse(
+        ["sat", "close", "to", "the", "door", "of", "the", "house"],
+        [0, 4, 1, 4, 0, 7, 7, 4],
+        ["ROOT", "case", "fixed", "det", "obl", "case", "det", "nmod"],
+        pos=["VERB", "ADV", "ADP", "DET", "NOUN", "ADP", "DET", "NOUN"],
+    )
+    assert is_prep_complement(doc[4]) and SyntaxStats(doc).max_prep_chain_len == 2
+    # was in the house of the mayor: the predicate with a copula is the first link
+    doc = parse(
+        ["was", "in", "the", "house", "of", "the", "mayor"],
+        [3, 3, 3, 3, 6, 6, 3],
+        ["cop", "case", "det", "ROOT", "case", "det", "nmod"],
+        pos=["AUX", "ADP", "DET", "NOUN", "ADP", "DET", "NOUN"],
+    )
+    assert is_prep_complement(doc[3]) and SyntaxStats(doc).max_prep_chain_len == 2
+    # A conjunct of a complement starts no chain of its own
+    doc = parse(
+        ["lived", "in", "town", "and", "in", "the", "centre", "of", "the", "city"],
+        [0, 2, 0, 6, 6, 6, 2, 9, 9, 6],
+        ["ROOT", "case", "obl", "cc", "case", "det", "conj", "case", "det", "nmod"],
+        pos=["VERB", "ADP", "NOUN", "CCONJ", "ADP", "DET", "NOUN", "ADP", "DET", "NOUN"],
+    )
+    assert SyntaxStats(doc).n_prep_chains == 0
+
+
+def test_prepositional_complement_of_a_hyphenated_word():
+    # lives in north-west of the city: in hangs on north, the relation obl on west
+    doc = parse(
+        ["He", "lives", "in", "north", "-", "west", "of", "the", "city"],
+        [1, 1, 3, 5, 5, 1, 8, 8, 5],
+        ["nsubj", "ROOT", "case", "compound", "punct", "obl", "case", "det", "nmod"],
+        spaces=[True, True, True, False, False, True, True, True, True],
+        pos=["PRON", "VERB", "ADP", "NOUN", "PUNCT", "NOUN", "ADP", "DET", "NOUN"],
+    )
+    assert is_prep_complement(doc[5], join_hyphens=True) and not is_prep_complement(doc[5])
+
+    class Hyphens(SyntaxStats):
+        join_hyphens = True
+
+    assert Hyphens(doc).n_prep_chains == 1 and SyntaxStats(doc).n_prep_chains == 0
 
 
 def test_words_before_a_root_out_of_the_words():

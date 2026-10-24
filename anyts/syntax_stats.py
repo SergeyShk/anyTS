@@ -458,7 +458,7 @@ class SyntaxStats(Stats):
         Checking whether a word is a link of a prepositional chain
 
         Description:
-            is_prep_complement of the module by default
+            is_prep_complement of the module with join_hyphens of the class by default
 
         Arguments:
             token (Token): Token
@@ -466,7 +466,7 @@ class SyntaxStats(Stats):
         Returns:
             bool: Result of the check
         """
-        return is_prep_complement(token)
+        return is_prep_complement(token, self.join_hyphens)
 
     def is_participle_clause(self, token: Token) -> bool:
         """
@@ -1448,19 +1448,21 @@ def count_noun_modifiers(token: Token, join_hyphens: bool = False) -> int:
 
 
 @_takes_token
-def is_prep_complement(token: Token) -> bool:
+def is_prep_complement(token: Token, join_hyphens: bool = False) -> bool:
     """
     Checking whether a word is a complement with a preposition
 
     Description:
         A word with the relation nmod or obl or a subtype of them
-        (PREP_COMPLEMENT_DEPS) and a dependent of the relation case that is an
-        adposition: the house of the father, went to the house; a noun in a case
-        without a preposition is none. The links of a prepositional chain
-        (calc_modifier_chains)
+        (PREP_COMPLEMENT_DEPS), or a predicate with a copula, that has a
+        dependent of the relation case that is an adposition or a word with a
+        fixed adposition (in front of): the house of the father, went to the
+        house, was in the house. A noun in a case without a preposition is none.
+        The links of a prepositional chain (calc_modifier_chains)
 
     Arguments:
         token (Token): Token
+        join_hyphens (bool): Join the parts of hyphenated words (get_children)
 
     Returns:
         bool: Result of the check
@@ -1482,8 +1484,18 @@ def is_prep_complement(token: Token) -> bool:
         >>> is_prep_complement(doc[4]), is_prep_complement(doc[1])
         (True, False)
     """
-    return base_dep(token) in PREP_COMPLEMENT_DEPS and any(
-        base_dep(child) == "case" and child.pos_ == "ADP" for child in token.children
+    children = get_children(token, join_hyphens)
+    if base_dep(token) not in PREP_COMPLEMENT_DEPS and not any(
+        base_dep(child) == "cop" for child in children
+    ):
+        return False
+    return any(base_dep(child) == "case" and _is_adposition(child) for child in children)
+
+
+def _is_adposition(token: Token) -> bool:
+    """Whether a word is an adposition or begins one of several words (fixed)"""
+    return token.pos_ == "ADP" or any(
+        base_dep(child) == "fixed" and child.pos_ == "ADP" for child in token.children
     )
 
 
