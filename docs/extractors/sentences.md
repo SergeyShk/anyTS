@@ -89,18 +89,6 @@ Runs the splitter `iter_sents` on every part of a text between blank lines (`BLA
 A text that is not a string raises `SourceTypeError`, and so does an `iter_sents` that cannot be called or does not give the sentences of a part in order, as triples of integer bounds within it and a string.
 <!-- --8<-- [end:iter_part_sents] -->
 
-<!-- --8<-- [start:split_paragraphs] -->
-``` {.python .signature}
-split_paragraphs(text)
-```
-
-The paragraphs of a text: its parts between blank lines (`BLANK_LINE`), stripped of whitespace at their edges; a part of whitespace alone is none. Their words give the sizes of the parts of `dispersion` by paragraph. A text that is not a string raises `SourceTypeError`.
-
-| Parameter | Type | Default | Description |
-| :-------- | :--- | :------ | :---------- |
-| `text` | `str` | - | Text string |
-<!-- --8<-- [end:split_paragraphs] -->
-
 === "Code"
 
     ``` python
@@ -120,6 +108,34 @@ The paragraphs of a text: its parts between blank lines (`BLANK_LINE`), stripped
 
     ```
     [(0, 4, 'One.'), (5, 8, 'Two'), (10, 16, 'Three.')]
+    ```
+
+## Paragraphs { #split_paragraphs }
+
+<!-- --8<-- [start:split_paragraphs] -->
+``` {.python .signature}
+split_paragraphs(text)
+```
+
+The paragraphs of a text: its parts between blank lines (`BLANK_LINE`), stripped of whitespace at their edges; a part of whitespace alone is none. Their words give the sizes of the parts of `dispersion` by paragraph; a paragraph without words, such as a scene break of asterisks, is still one. A text that is not a string raises `SourceTypeError`.
+
+| Parameter | Type | Default | Description |
+| :-------- | :--- | :------ | :---------- |
+| `text` | `str` | - | Text string |
+<!-- --8<-- [end:split_paragraphs] -->
+
+=== "Code"
+
+    ``` python
+    from anyts.extractors import split_paragraphs
+
+    split_paragraphs("Chapter 1\n\nThe cat slept.\nThen it woke.\n \n* * *\n\nThe end.")
+    ```
+
+=== "Result"
+
+    ```
+    ['Chapter 1', 'The cat slept.\nThen it woke.', '* * *', 'The end.']
     ```
 
 ## Ready sentences { #FixedSentsExtractor }

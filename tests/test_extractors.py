@@ -595,5 +595,8 @@ def test_switches_of_the_ngrams_are_bools(switch):
 def test_split_paragraphs():
     assert split_paragraphs("One. Two\n\n \nThree.\n\n\n") == ["One. Two", "Three."]
     assert split_paragraphs("One\nline") == ["One\nline"] and split_paragraphs(" \n\n ") == []
+    # A blank line may hold whitespace and end with a carriage return
+    assert split_paragraphs("One\n \nTwo") == ["One", "Two"]
+    assert split_paragraphs("One\r\n\t\r\nTwo") == ["One", "Two"]
     with pytest.raises(SourceTypeError, match=r"^A text string is expected, not int$"):
         split_paragraphs(5)

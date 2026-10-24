@@ -50,7 +50,7 @@ Words are compared as they are: case, lemmatization and stop words belong to the
 | `top_n` | `int` | `None` | Number of collocations; `None` - all of them |
 | `side` | `str` | `None` | With a node, the side of its collocates: `"left"` or `"right"`; `None` - both |
 
-Words that are not a list of strings raise `SourceTypeError`, and no words `SourceError`. An unknown measure, a `window` or a `top_n` that is not an integer of at least one, a `min_freq` that is not an integer and a `node` that is not a string raise `ParameterError`.
+Words that are not a list of strings raise `SourceTypeError`, and no words `SourceError`. An unknown measure, a `window` or a `top_n` that is not an integer of at least one, a `min_freq` that is not an integer, a `node` that is not a string, and a `side` other than `"left"` and `"right"` or without a node raise `ParameterError`.
 <!-- --8<-- [end:collocations-parameters] -->
 
 ## Result
