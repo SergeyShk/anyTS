@@ -19,6 +19,7 @@ from anyts.extractors import (
     FixedWordsExtractor,
     _word_pattern,
     iter_part_sents,
+    split_paragraphs,
 )
 
 TEXT = (
@@ -589,3 +590,10 @@ def test_switches_of_the_words_are_bools(switch):
 def test_switches_of_the_ngrams_are_bools(switch):
     with pytest.raises(ParameterError, match=r"must be a bool, not str$"):
         CharNgramsExtractor(**{switch: "yes"})
+
+
+def test_split_paragraphs():
+    assert split_paragraphs("One. Two\n\n \nThree.\n\n\n") == ["One. Two", "Three."]
+    assert split_paragraphs("One\nline") == ["One\nline"] and split_paragraphs(" \n\n ") == []
+    with pytest.raises(SourceTypeError, match=r"^A text string is expected, not int$"):
+        split_paragraphs(5)

@@ -76,6 +76,7 @@ def keyness(
     min_freq: int = 1,
     positive: bool = True,
     top_n: int | None = None,
+    n: int = 1,
 ) -> list[Keyword]:
     """
     Finding the keywords of a target corpus against a reference one
@@ -105,6 +106,8 @@ def keyness(
         min_freq (int): Minimum frequency of a keyword in its own corpus
         positive (bool): Positive keywords (True) or negative ones (False)
         top_n (int): Number of keywords; None - all of them
+        n (int): Length of the n-grams made of a list of words, joined by spaces;
+            1 - the words; a mapping of frequencies is taken as it is
 
     Returns:
         list[Keyword]: Keywords by descending keyness, then by descending
@@ -115,9 +118,9 @@ def keyness(
             or a counter (check_counts), a frequency of the target corpus is
             not a whole number, or key or keep of a FrequencyReference is not
             callable
-        ParameterError: If the measure is unknown, top_n is below one,
-            min_freq is not an integer, or the size or the frequency of a missing
-            key of a FrequencyReference is not a finite number or is negative
+        ParameterError: If the measure is unknown, top_n or n is below one,
+            min_freq or n is not an integer, or the size or the frequency of a
+            missing key of a FrequencyReference is not a finite number or is negative
         SourceError: If one of the corpora is empty or a frequency of the
             reference is negative, nan or infinite
 
@@ -129,20 +132,24 @@ def keyness(
         [('cat', 2.77)]
     """
     check_keyness_params(measure, min_freq, top_n)
+    check_integer(n, "length of the n-grams")
+    if n < 1:
+        raise ParameterError(f"The length of the n-grams must be at least 1, not {n}")
     _check_target(target)
+    units = _ngrams(target, n)
     counts_reference: Mapping[str, float]
     keep = None
     if isinstance(reference, FrequencyReference):
         _check_reference(reference)
-        counts_target = _count(target, key=reference.key, keep=reference.keep)
+        counts_target = _count(units, key=reference.key, keep=reference.keep)
         size_reference = float(reference.size)
         counts_reference = reference.counts
         missing = float(reference.missing)
         keep = reference.keep
     else:
         _check_words_or_counts(reference)
-        counts_target = _count(target)
-        counts_reference = _count(reference)
+        counts_target = _count(units)
+        counts_reference = _count(_ngrams(reference, n))
         size_reference = float(sum(counts_reference.values()))
         missing = 0.0
     size_target = float(sum(counts_target.values()))
@@ -191,6 +198,16 @@ def keyness(
         )
     )
     return keywords[:top_n] if top_n else keywords
+
+
+def _ngrams(
+    words: Sequence[str] | Mapping[str, float], n: int
+) -> Sequence[str] | Mapping[str, float]:
+    """The n-grams of a list of words joined by spaces; a mapping or n = 1 as it is"""
+    if n == 1 or isinstance(words, Mapping):
+        return words
+    words = list(words)
+    return [" ".join(words[i : i + n]) for i in range(len(words) - n + 1)]
 
 
 def _reference_frequency(counts: Mapping[str, float], word: str, missing: float) -> float:

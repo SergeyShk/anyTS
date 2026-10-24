@@ -1,7 +1,7 @@
 # Keywords
 
 ``` {.python .signature}
-keyness(target, reference, measure='log_likelihood', min_freq=1, positive=True, top_n=None)
+keyness(target, reference, measure='log_likelihood', min_freq=1, positive=True, top_n=None, n=1)
 ```
 
 <!-- --8<-- [start:keyness] -->
@@ -9,7 +9,7 @@ Keyword extraction (keyness) for a target corpus against a reference one: the wo
 
 Every word gets two values that [Gabrielatos and Marchi](http://eprints.lancs.ac.uk/51449/4/Gabrielatos_Marchi_Keyness.pdf) and [Hardie](http://cass.lancs.ac.uk/log-ratio-an-informal-introduction/) recommend reading together: the log-likelihood $G^2$ with its p-value (whether there is a difference) and Log Ratio (how large it is), plus the chosen measure `score`, which sorts the list. The measures of significance ($G^2$, chi-square, BIC) and ELL, the effect size of $G^2$, are negative when the word is more frequent in the reference; %DIFF, Log Ratio and the odds ratio are directional by construction.
 
-The reference may be a list of words, a mapping of frequencies (its size is the sum of the counts) or a `FrequencyReference`. Words are compared as they are: case, lemmatization and stop words belong to the word extractor, and both corpora have to be extracted the same way.
+The reference may be a list of words, a mapping of frequencies (its size is the sum of the counts) or a `FrequencyReference`. Words are compared as they are: case, lemmatization and stop words belong to the word extractor, and both corpora have to be extracted the same way. With `n` above 1 the keywords are the n-grams of the lists of words of both corpora, joined by spaces (*black cat*); a mapping of frequencies is taken as it is, its keys the units already.
 <!-- --8<-- [end:keyness] -->
 
 === "Code"
@@ -50,6 +50,7 @@ The reference may be a list of words, a mapping of frequencies (its size is the 
 | `min_freq` | `int` | `1` | Minimum frequency of a keyword in its own corpus |
 | `positive` | `bool` | `True` | Positive keywords (more frequent in the target corpus) or negative ones (more frequent in the reference) |
 | `top_n` | `int` | `None` | Number of keywords; `None` - all of them |
+| `n` | `int` | `1` | Length of the n-grams of a list of words; `1` - the words |
 
 The parameters and the target corpus are checked by `check_keyness_params`. A reference that is not a list of strings, a counter or a `FrequencyReference` raises `SourceTypeError`, and a negative, `nan` or infinite frequency of a counter and an empty corpus raise `SourceError`.
 <!-- --8<-- [end:keyness-parameters] -->

@@ -2,12 +2,12 @@
 
 <!-- --8<-- [start:collocations] -->
 ``` {.python .signature}
-collocations(words, window=5, measure='logdice', min_freq=2, node=None, top_n=None)
+collocations(words, window=5, measure='logdice', min_freq=2, node=None, top_n=None, side=None)
 ```
 
 Collocation extraction - pairs of words that occur together more often than independence would give: fixed expressions, terminology, the combinatorics of a word. The measures of association are those of [Sketch Engine](https://www.sketchengine.eu/wp-content/uploads/ske-statistics.pdf) and of [`nltk.metrics.association`](https://www.nltk.org/api/nltk.metrics.association.html).
 
-Pairs are ordered, as in NLTK: the right word occurs at most `window` words after the left one, each pair of positions counted once; `window=1` gives bigrams. The measures take the pair frequency divided by the window (Church and Hanks 1990, as in NLTK), which keeps the expected frequency independent of the window and Dice and the minimum sensitivity at most one; `freq_pair` stays undivided. So with `window > 1` an always adjacent pair gets a logDice of $14 - \log_2 window$ (13 at a window of 2), not 14 as in Sketch Engine with its raw co-occurrence; 14 needs a pair at every distance within the window. `node` keeps the pairs with the given word on either side.
+Pairs are ordered, as in NLTK: the right word occurs at most `window` words after the left one, each pair of positions counted once; `window=1` gives bigrams. The measures take the pair frequency divided by the window (Church and Hanks 1990, as in NLTK), which keeps the expected frequency independent of the window and Dice and the minimum sensitivity at most one; `freq_pair` stays undivided. So with `window > 1` an always adjacent pair gets a logDice of $14 - \log_2 window$ (13 at a window of 2), not 14 as in Sketch Engine with its raw co-occurrence; 14 needs a pair at every distance within the window. `node` keeps the pairs with the given word on either side, and `side` on one of them: `"left"` the collocates before the node, `"right"` those after it.
 
 Words are compared as they are: case, lemmatization and stop words belong to the word extractor; lemmas suit fixed expressions, word forms suit grammatical constructions.
 <!-- --8<-- [end:collocations] -->
@@ -48,6 +48,7 @@ Words are compared as they are: case, lemmatization and stop words belong to the
 | `min_freq` | `int` | `2` | Minimum frequency of a pair |
 | `node` | `str` | `None` | Word whose combinatorics is needed; `None` - every pair |
 | `top_n` | `int` | `None` | Number of collocations; `None` - all of them |
+| `side` | `str` | `None` | With a node, the side of its collocates: `"left"` or `"right"`; `None` - both |
 
 Words that are not a list of strings raise `SourceTypeError`, and no words `SourceError`. An unknown measure, a `window` or a `top_n` that is not an integer of at least one, a `min_freq` that is not an integer and a `node` that is not a string raise `ParameterError`.
 <!-- --8<-- [end:collocations-parameters] -->

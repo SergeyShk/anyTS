@@ -402,6 +402,33 @@ def _check_spans(
     return checked
 
 
+def split_paragraphs(text: str) -> list[str]:
+    """
+    Splitting a text into its paragraphs
+
+    Description:
+        The parts of the text between blank lines (BLANK_LINE), stripped of
+        whitespace at their edges; a part of whitespace alone is no paragraph
+
+    Arguments:
+        text (str): Text string
+
+    Returns:
+        list[str]: Paragraphs in order
+
+    Raises:
+        SourceTypeError: If the text is not a string
+
+    Example:
+        >>> from anyts.extractors import split_paragraphs
+        >>> split_paragraphs("One. Two\\n\\n \\nThree.\\n")
+        ['One. Two', 'Three.']
+    """
+    if not isinstance(text, str):
+        raise SourceTypeError(MESSAGES["text_type"].format(type=type(text).__name__))
+    return [part.strip() for part in BLANK_LINE.split(text) if part.strip()]
+
+
 class WordsExtractor(Extractor):
     """
     Class for extracting words from a text

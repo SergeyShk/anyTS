@@ -378,3 +378,22 @@ def test_frequency_reference_checks_its_fields(fields, error, message):
     reference = FrequencyReference(**{"counts": {"cat": 5.0}, "size": 100, **fields})
     with pytest.raises(error, match=message):
         keyness(["cat", "dog", "cat"], reference)
+
+
+def test_keyness_of_ngrams():
+    target = ["the", "black", "cat", "sleeps", "and", "the", "black", "cat", "eats"]
+    reference = ["the", "white", "cat", "sleeps", "and", "the", "white", "cat", "eats"]
+    found = keyness(target, reference, n=2, min_freq=2)
+    assert [keyword.word for keyword in found] == ["black cat", "the black"]
+    assert keyness(target, reference, n=1) == keyness(target, reference)
+    # A mapping is taken as it is, its keys the units already
+    counts = {"black cat": 2, "the cat": 1}
+    assert [k.word for k in keyness(counts, reference, n=2)][:1] == ["black cat"]
+    for n in (0, -1):
+        with pytest.raises(ParameterError, match=r"^The length of the n-grams must be at least 1"):
+            keyness(target, reference, n=n)
+    with pytest.raises(ParameterError):
+        keyness(target, reference, n=1.5)
+    # Fewer words than n leave no n-grams
+    with pytest.raises(SourceError):
+        keyness(["cat"], reference, n=2)
