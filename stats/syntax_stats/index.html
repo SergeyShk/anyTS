@@ -1065,6 +1065,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#words_before_root" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Words before the root
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#valency" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1131,6 +1142,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#prep_chains" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prepositional chains
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#participle_clauses" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1157,6 +1179,17 @@
     <span class="md-ellipsis">
       
         Infinitives, negations and split predicates
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#word_order" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Order of the subjects and the objects
       
     </span>
   </a>
@@ -2324,6 +2357,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#words_before_root" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Words before the root
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#valency" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2390,6 +2434,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#prep_chains" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prepositional chains
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#participle_clauses" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2416,6 +2471,17 @@
     <span class="md-ellipsis">
       
         Infinitives, negations and split predicates
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#word_order" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Order of the subjects and the objects
       
     </span>
   </a>
@@ -2702,6 +2768,11 @@ Ratio of nouns to verbs                           |   0.50
 <td style="text-align: left;">Numbers of the nouns (<code>NOUN</code>, <code>PROPN</code>) and of the verb forms (<code>VERB</code>)</td>
 </tr>
 <tr>
+<td style="text-align: left;"><code>n_prep_chains</code></td>
+<td style="text-align: left;"><code>int</code></td>
+<td style="text-align: left;">Number of the prepositional chains</td>
+</tr>
+<tr>
 <td style="text-align: left;"><code>n_participle_clauses</code></td>
 <td style="text-align: left;"><code>int</code></td>
 <td style="text-align: left;">Number of the participial clauses</td>
@@ -2720,6 +2791,16 @@ Ratio of nouns to verbs                           |   0.50
 <td style="text-align: left;"><code>n_split_predicates</code>, <code>split_predicates</code></td>
 <td style="text-align: left;"><code>int</code>, <code>tuple[str]</code></td>
 <td style="text-align: left;">Number of the split predicates and the predicates, the verb and the noun</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>n_nominal_subjects</code>, <code>n_preverbal_subjects</code></td>
+<td style="text-align: left;"><code>int</code></td>
+<td style="text-align: left;">Numbers of the nominal subjects and of those before their head</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>n_nominal_objects</code>, <code>n_preverbal_objects</code></td>
+<td style="text-align: left;"><code>int</code></td>
+<td style="text-align: left;">Numbers of the nominal direct objects and of those before their head</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>c_children</code></td>
@@ -2797,6 +2878,12 @@ Ratio of nouns to verbs                           |   0.50
 <td style="text-align: left;">Longer branches</td>
 </tr>
 <tr>
+<td style="text-align: left;"><a href="#words_before_root"><code>words_before_root</code></a></td>
+<td style="text-align: left;">Mean number of the words before the root of a sentence</td>
+<td style="text-align: left;">0 and above, <code>nan</code> without a root among the words</td>
+<td style="text-align: left;">A later main predicate</td>
+</tr>
+<tr>
 <td style="text-align: left;"><a href="#valency"><code>verb_valency</code></a></td>
 <td style="text-align: left;">Mean number of the dependents of a finite verb</td>
 <td style="text-align: left;">0 and above, <code>nan</code> without finite verbs</td>
@@ -2851,6 +2938,18 @@ Ratio of nouns to verbs                           |   0.50
 <td style="text-align: left;">Heavier noun phrases</td>
 </tr>
 <tr>
+<td style="text-align: left;"><a href="#prep_chains"><code>prep_chains_per_sent</code></a></td>
+<td style="text-align: left;">Chains of nested complements with a preposition per sentence</td>
+<td style="text-align: left;">0 and above</td>
+<td style="text-align: left;">More nested complements</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a href="#prep_chains"><code>max_prep_chain_len</code></a></td>
+<td style="text-align: left;">Length of the longest prepositional chain</td>
+<td style="text-align: left;">0, or 2 and above</td>
+<td style="text-align: left;">Longer chains</td>
+</tr>
+<tr>
 <td style="text-align: left;"><a href="#participle_clauses"><code>participle_clauses_per_sent</code></a></td>
 <td style="text-align: left;">Participial clauses per sentence</td>
 <td style="text-align: left;">0 and above</td>
@@ -2891,6 +2990,18 @@ Ratio of nouns to verbs                           |   0.50
 <td style="text-align: left;">Split predicates per sentence</td>
 <td style="text-align: left;">0 and above</td>
 <td style="text-align: left;">More split predicates</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a href="#word_order"><code>p_preverbal_subjects</code></a></td>
+<td style="text-align: left;">Share of the nominal subjects before their head</td>
+<td style="text-align: left;">0-1, <code>nan</code> without nominal subjects</td>
+<td style="text-align: left;">Fewer inverted subjects</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a href="#word_order"><code>p_preverbal_objects</code></a></td>
+<td style="text-align: left;">Share of the nominal direct objects before their head</td>
+<td style="text-align: left;">0-1, <code>nan</code> without nominal objects</td>
+<td style="text-align: left;">More fronted objects</td>
 </tr>
 <tr>
 <td style="text-align: left;"><a href="#noun_verb_ratio"><code>noun_verb_ratio</code></a></td>
@@ -2977,6 +3088,13 @@ Ratio of nouns to verbs                           |   0.50
 \frac{1}{S} \sum_{s=1}^{S} \frac{\textrm{Number of words of } s}{\textrm{Number of leaves of } s}
 \]</div>
 <!-- --8<-- [end:SyntaxStats-leaves] -->
+</div>
+<div class="metric-card">
+<h3 id="words_before_root">Words before the root<a class="headerlink" href="#words_before_root" title="Permanent link">&para;</a></h3>
+<p class="metric-meta"><code>words_before_root</code> · <a href="https://doi.org/10.1017/CBO9780511894664">Coh-Metrix</a></p>
+<!-- --8<-- [start:SyntaxStats-words_before_root] -->
+<p>The left embeddedness of Coh-Metrix (SYNLE): the number of the words of a sentence before its root, the main predicate, averaged over the sentences whose root is a word. The root of a sentence with a copula is its nominal part (<em>she </em><em>is</em><em> a </em><em>doctor</em>**), as Universal Dependencies has it. In a language with a free word order the measure reads the order as much as the complexity.</p>
+<!-- --8<-- [end:SyntaxStats-words_before_root] -->
 </div>
 <div class="metric-card">
 <h3 id="valency">Valency of the finite verbs<a class="headerlink" href="#valency" title="Permanent link">&para;</a></h3>
@@ -3246,6 +3364,43 @@ Ratio of nouns to verbs                           |   0.50
 <!-- --8<-- [end:count_noun_modifiers] -->
 </div>
 <div class="metric-card">
+<h3 id="prep_chains">Prepositional chains<a class="headerlink" href="#prep_chains" title="Permanent link">&para;</a></h3>
+<p class="metric-meta"><code>prep_chains_per_sent</code> · <code>max_prep_chain_len</code> · <a href="https://aclanthology.org/2020.lrec-1.883/">Profiling-UD</a></p>
+<!-- --8<-- [start:SyntaxStats-prep_chains] -->
+<p>A prepositional chain is two or more nested complements with a preposition, each hanging on the previous one: <em>on the mat of the house of the mayor</em> (length 3). The links are the words of the hook <code>is_prep_complement</code>, and the chains and their lengths are those of <code>calc_modifier_chains</code>; a chain may start at a complement of a verb (<code>obl</code>) or at a prepositional predicate with a copula (<em>was in the house of the mayor</em>), but not at a conjunct of a complement (<em>in Madrid and in the centre of the city</em>), and a predicate of a relative clause (<em>the house that was by the river</em>) is no link of the chain of its noun. The chains read Universal Dependencies alone: ClearNLP heads a phrase by its preposition (<code>prep</code>, <code>pobj</code>), so its parses give no chains.</p>
+<!-- --8<-- [end:SyntaxStats-prep_chains] -->
+<!-- --8<-- [start:is_prep_complement] -->
+<div class="signature highlight"><pre><span></span><code><span class="n">is_prep_complement</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="n">join_hyphens</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</code></pre></div>
+<p>Checks whether a word is a complement with a preposition: a word with the relation <code>nmod</code> or <code>obl</code> or a subtype of them (<code>anyts.constants.PREP_COMPLEMENT_DEPS</code>), or a predicate with a copula out of a relative clause (<code>acl</code>), that has a dependent of the relation <code>case</code> that is an adposition (<code>ADP</code>) or begins one of several words (<code>fixed</code>: <em>in front of</em>). A noun in a case without a preposition and a possessive marker are none.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Parameter</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Default</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>token</code></td>
+<td style="text-align: left;"><code>Token</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Token</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>join_hyphens</code></td>
+<td style="text-align: left;"><code>bool</code></td>
+<td style="text-align: left;"><code>False</code></td>
+<td style="text-align: left;">Take a hyphenated word for one word</td>
+</tr>
+</tbody>
+</table>
+<p>A value that is not a <code>Token</code> raises <code>SourceTypeError</code>.</p>
+<!-- --8<-- [end:is_prep_complement] -->
+</div>
+<div class="metric-card">
 <h3 id="participle_clauses">Participial clauses<a class="headerlink" href="#participle_clauses" title="Permanent link">&para;</a></h3>
 <p class="metric-meta"><code>participle_clauses_per_sent</code> · <code>mean_participle_clause_len</code></p>
 <!-- --8<-- [start:SyntaxStats-participle_clauses] -->
@@ -3304,6 +3459,17 @@ Ratio of nouns to verbs                           |   0.50
 <!-- --8<-- [end:SyntaxStats-constructions] -->
 </div>
 <div class="metric-card">
+<h3 id="word_order">Order of the subjects and the objects<a class="headerlink" href="#word_order" title="Permanent link">&para;</a></h3>
+<p class="metric-meta"><code>p_preverbal_subjects</code> · <code>p_preverbal_objects</code> · <a href="https://aclanthology.org/2020.lrec-1.883/">Profiling-UD</a></p>
+<!-- --8<-- [start:SyntaxStats-word_order] -->
+<p>The order of the subjects and of the direct objects in the manner of Profiling-UD: the shares of those before their head, the predicate. Only the nominal ones (<code>NOUN</code>, <code>PROPN</code>) count: the place of a pronoun, such as a clitic object, is set by the grammar. A subject is a word of <code>nsubj</code> (<code>anyts.constants.NOMINAL_SUBJECT_DEPS</code>), an object one of <code>obj</code> (<code>anyts.constants.OBJECT_DEPS</code>), with the relations of ClearNLP and the subtypes.</p>
+<div class="arithmatex">\[
+\frac{\textrm{Nominal subjects before their head}}{\textrm{Nominal subjects}}, \quad
+\frac{\textrm{Nominal objects before their head}}{\textrm{Nominal objects}}
+\]</div>
+<!-- --8<-- [end:SyntaxStats-word_order] -->
+</div>
+<div class="metric-card">
 <h3 id="noun_verb_ratio">Ratio of the nouns to the verbs<a class="headerlink" href="#noun_verb_ratio" title="Permanent link">&para;</a></h3>
 <p class="metric-meta"><code>noun_verb_ratio</code></p>
 <!-- --8<-- [start:SyntaxStats-noun_verb_ratio] -->
@@ -3315,7 +3481,7 @@ Ratio of nouns to verbs                           |   0.50
 </div>
 <h2 id="methods">Methods<a class="headerlink" href="#methods" title="Permanent link">&para;</a></h2>
 <p>The methods <code>get_stats</code>, <code>to_dataframe</code>, <code>print_stats</code> and <code>describe</code> are those of the <a href="../stats/">statistics interface</a>.</p>
-<p>The functions of the tree take a spaCy <code>Doc</code>, a <code>Span</code> or a list of tokens; its words are the tokens of <code>anyts.utils.is_word</code>. They read the relations that Universal Dependencies and the ClearNLP labels of the English models share: the head of a token, <code>cc</code>, <code>conj</code>, <code>parataxis</code>, <code>punct</code> and <code>aux</code>, the subjects <code>nsubj</code> and <code>csubj</code>, the modifiers of a noun <code>amod</code>, <code>det</code>, <code>nmod</code>, <code>nummod</code> and <code>acl</code>, the clause relations <code>ccomp</code>, <code>advcl</code> and <code>xcomp</code>, and the root; the copula <code>cop</code> of <code>predicate_form</code> and <code>is_predicate</code> exists in Universal Dependencies alone. The passive and its agent (<code>is_passive</code>, <code>has_agent</code>) read the relations of both schemes (<code>PASSIVE_DEPS</code>, <code>AGENT_DEPS</code>). Everything else is up to a language library.</p>
+<p>The functions of the tree take a spaCy <code>Doc</code>, a <code>Span</code> or a list of tokens; its words are the tokens of <code>anyts.utils.is_word</code>. They read the relations that Universal Dependencies and the ClearNLP labels of the English models share: the head of a token, <code>cc</code>, <code>conj</code>, <code>parataxis</code>, <code>punct</code> and <code>aux</code>, the subjects <code>nsubj</code> and <code>csubj</code>, the modifiers of a noun <code>amod</code>, <code>det</code>, <code>nmod</code>, <code>nummod</code> and <code>acl</code>, the clause relations <code>ccomp</code>, <code>advcl</code> and <code>xcomp</code>, and the root; the copula <code>cop</code> of <code>predicate_form</code> and <code>is_predicate</code> exists in Universal Dependencies alone. The passive and its agent (<code>is_passive</code>, <code>has_agent</code>) and the order of the subjects and the objects read the relations of both schemes (<code>PASSIVE_DEPS</code>, <code>AGENT_DEPS</code>, <code>NOMINAL_SUBJECT_DEPS</code>, <code>OBJECT_DEPS</code>); the prepositional complements of <code>is_prep_complement</code> read Universal Dependencies alone. Everything else is up to a language library.</p>
 <h2 id="get_words">Words of a sequence<a class="headerlink" href="#get_words" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:get_words] -->
 <div class="signature highlight"><pre><span></span><code><span class="n">get_words</span><span class="p">(</span><span class="n">tokens</span><span class="p">,</span> <span class="n">join_hyphens</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
@@ -3609,7 +3775,7 @@ Ratio of nouns to verbs                           |   0.50
 <details class="library-hooks">
 <summary>Language hooks of a subclass</summary>
 <!-- --8<-- [start:SyntaxStats-hooks] -->
-<p>A language library subclasses <code>SyntaxStats</code>. The defaults read Universal Dependencies with its morphological features and the relations it shares with ClearNLP; the passive and its agent read the relations of both:</p>
+<p>A language library subclasses <code>SyntaxStats</code>. The defaults read Universal Dependencies with its morphological features and the relations it shares with ClearNLP; the passive, its agent and the order of the subjects and the objects read the relations of both, the prepositional chains those of Universal Dependencies:</p>
 <table>
 <thead>
 <tr>
@@ -3648,6 +3814,11 @@ Ratio of nouns to verbs                           |   0.50
 <td style="text-align: left;"><code>is_infinitive_clause_head(token)</code></td>
 <td style="text-align: left;">method</td>
 <td style="text-align: left;">Whether a clause head heads an infinitive clause under a verb (<em>wants to leave</em>), counted apart from the subordinate ones; by default <code>is_infinitive_clause_head</code> of the module over the hooks <code>is_clause_head</code> and <code>auxiliary_form</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>is_prep_complement(token)</code></td>
+<td style="text-align: left;">method</td>
+<td style="text-align: left;">Whether a word is a link of a prepositional chain; by default <code>is_prep_complement</code> of the module with <code>join_hyphens</code> of the class</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>is_participle_clause(token)</code></td>
