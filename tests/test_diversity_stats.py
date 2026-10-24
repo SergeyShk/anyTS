@@ -20,9 +20,11 @@ from anyts.diversity_stats import (
     WindowStats,
     _max_types,
     _mtld_factor_lengths,
+    _orlov_vocabulary,
     calc_alpha2,
     calc_baayen_p,
     calc_brunet_w,
+    calc_burstiness,
     calc_cttr,
     calc_dttr,
     calc_dugast_k,
@@ -45,6 +47,7 @@ from anyts.diversity_stats import (
     calc_mtld,
     calc_mtldw,
     calc_mttr,
+    calc_orlov_z,
     calc_perplexity,
     calc_rttr,
     calc_sichel_s,
@@ -356,6 +359,96 @@ def test_mtld_partial_factor_clamp():
 def test_mamtld(ds):
     assert ds.mamtld == pytest.approx(30.059322033898304)
     assert calc_mamtld(riddle) == 12.0
+
+
+def test_mamtld_step():
+    # Every factor of a step of one, every k-th factor from either end with a step k
+    assert calc_mamtld(riddle, step=1) == calc_mamtld(riddle)
+    words = list(riddle) * 4
+
+    def first_factors(text):
+        # The length of the first factor at every start, 0 for one that does not close
+        lengths = []
+        for start in range(len(text)):
+            types, length = set(), 0
+            for pos in range(start, len(text)):
+                types.add(text[pos])
+                if len(types) / (pos - start + 1) <= 0.72 and pos - start + 1 >= 10:
+                    length = pos - start + 1
+                    break
+            lengths.append(length)
+        return lengths
+
+    for step in (2, 3, 7):
+        starts = first_factors(words)[::step] + first_factors(words[::-1])[::step]
+        lengths = [length for length in starts if length]
+        assert calc_mamtld(words, step=step) == pytest.approx(sum(lengths) / len(lengths))
+    for step in (0, -1):
+        with pytest.raises(
+            ParameterError, match=r"^The step of the factors must be greater than 0"
+        ):
+            calc_mamtld(riddle, step=step)
+    with pytest.raises(ParameterError):
+        calc_mamtld(riddle, step=1.5)
+
+
+def test_orlov_z():
+    from math import log
+
+    words = [
+        "the",
+        "cat",
+        "saw",
+        "the",
+        "dog",
+        "and",
+        "the",
+        "dog",
+        "saw",
+        "a",
+        "bird",
+        "near",
+        "the",
+        "old",
+        "tree",
+    ]
+    z = calc_orlov_z(words)
+    n_words, counts = len(words), Counter(words)
+    share = max(counts.values()) / n_words
+    expected = z / log(share * z) * n_words / (n_words - z) * log(n_words / z)
+    assert expected == pytest.approx(len(counts), rel=1e-9) and z > n_words
+    # Below the minimum of the right side there is no solution, nor for words all distinct
+    assert isnan(
+        calc_orlov_z(["the", "cat", "and", "the", "dog", "and", "the", "bird", "saw", "a", "fish"])
+    )
+    assert isnan(calc_orlov_z(list("abcdef"))) and isnan(calc_orlov_z(["a"]))
+    # A text of mostly new words has a Z beyond floats
+    assert calc_orlov_z(["the", "the", *(f"w{i}" for i in range(2000))]) == inf
+    # A root near the float limit, below it or beyond it, gives a number or inf, no OverflowError
+    for n_words in (1000, 1020, 1050, 1200, 1310):
+        z = calc_orlov_z(["the", "the", *(f"w{i}" for i in range(n_words - 2))])
+        assert z > 1e300 or z == inf
+    # At Z = N the right side takes its limit, Z / ln(pZ)
+    assert _orlov_vocabulary(log(100), 100, 0.1) == pytest.approx(100 / log(10))
+    assert _orlov_vocabulary(log(100) + 1e-9, 100, 0.1) == pytest.approx(100 / log(10))
+
+
+def test_burstiness():
+    assert calc_burstiness(list("axaxaxaxax")) == -1.0
+    # Occurrences in a run are bursty, random ones near 0
+    assert calc_burstiness(list("aaaaaxxxxx")) == pytest.approx(0.18350341907227388)
+    # A rare lexeme at random places, among words of one occurrence, comes near 0
+    rng = random.Random(0)
+    scattered = ["a" if rng.random() < 0.01 else f"w{i}" for i in range(20000)]
+    assert abs(calc_burstiness(scattered)) < 0.05
+    # Lexemes below min_freq are not measured
+    assert isnan(calc_burstiness(list("abcd"))) and isnan(calc_burstiness(list("aab"), min_freq=3))
+    assert calc_burstiness(list("abab"), min_freq=2) == -1.0
+    for min_freq in (1, 0):
+        with pytest.raises(
+            ParameterError, match=r"^The smallest number of occurrences must be at least 2"
+        ):
+            calc_burstiness(riddle, min_freq=min_freq)
 
 
 def test_mtldw(ds):
@@ -801,7 +894,7 @@ WORD_FUNCTIONS = list(
 
 
 def test_word_functions_count():
-    assert len(WORD_FUNCTIONS) == 37
+    assert len(WORD_FUNCTIONS) == 39
 
 
 @pytest.mark.parametrize("func", WORD_FUNCTIONS, ids=lambda func: func.__name__)

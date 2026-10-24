@@ -38,21 +38,23 @@ A subclass with the syllables of a language - here the groups of vowels, a rough
 === "Result"
 
     ```
-         Statistic     |  Value
-    ------------------------------
-    Sentences          |    2
-    Words              |    9
-    Unique words       |    8
-    Long words         |    1
-    Complex words      |    1
-    Simple words       |    8
-    Monosyllabic words |    8
-    Polysyllabic words |    1
-    Characters         |    40
-    Letters            |    30
-    Spaces             |    8
-    Syllables          |    11
-    Punctuation marks  |    2
+                       Statistic                    |  Value
+    -----------------------------------------------------------
+    Sentences                                       |    2
+    Words                                           |    9
+    Unique words                                    |    8
+    Long words                                      |    1
+    Complex words                                   |    1
+    Simple words                                    |    8
+    Monosyllabic words                              |    8
+    Polysyllabic words                              |    1
+    Characters                                      |    40
+    Letters                                         |    30
+    Spaces                                          |    8
+    Syllables                                       |    11
+    Punctuation marks                               |    2
+    Entropy of the word lengths in letters (bits)   |   1.45
+    Entropy of the word lengths in syllables (bits) |   0.50
     ```
 
 ## Parameters
@@ -92,6 +94,8 @@ The thresholds of the core are `COMPLEX_SYL_FACTOR = 3` and `LONG_WORD_LETTER_FA
 | `n_spaces` | `int` | Number of spaces of Unicode (category Zs), such as the no-break space, and tabs | `p_spaces` |
 | `n_syllables` | `int` | Number of syllables | - |
 | `n_punctuations` | `int` | Number of punctuation marks | `p_punctuations` |
+| `letters_entropy` | `float` | Shannon entropy in bits of the word lengths in letters, of `c_letters`: 0 when the words have one length | - |
+| `syllables_entropy` | `float` | Shannon entropy in bits of the word lengths in syllables, of `c_syllables` | - |
 | `c_punctuations` | `dict[str, int]` | Distribution of punctuation marks by type ([`count_punctuations`](#count_punctuations)) | - |
 
 With `normalize=True` the object has the normalized statistics too, of the type `float`: the counts of the words divided by the number of words, those of the characters by the number of characters.
@@ -104,7 +108,7 @@ With `normalize=True` the object has the normalized statistics too, of the type 
 <!-- --8<-- [end:BasicStats-count_words_by] -->
 
 <!-- --8<-- [start:BasicStats-get_stats] -->
-`get_stats(flat)` returns a dictionary with the distributions `c_letters` and `c_syllables`, the counts of `stats_desc`, the distribution `c_punctuations` and, with `normalize=True`, the normalized counts, as a copy: editing it does not change the object. With `flat=True` the distributions give a key for every value the text has, such as `c_letters_3` and `c_punctuations_comma`.
+`get_stats(flat)` returns a dictionary with the distributions `c_letters` and `c_syllables`, the statistics of `stats_desc`, the distribution `c_punctuations` and, with `normalize=True`, the normalized counts, as a copy: editing it does not change the object. With `flat=True` the distributions give a key for every value the text has, such as `c_letters_3` and `c_punctuations_comma`.
 <!-- --8<-- [end:BasicStats-get_stats] -->
 
 <!-- --8<-- [start:BasicStats-print_stats] -->

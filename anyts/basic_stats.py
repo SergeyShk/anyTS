@@ -28,6 +28,7 @@ from .utils import (
     has_words,
     is_doc,
     iter_doc_words,
+    shannon_entropy,
     source_type_error,
 )
 
@@ -164,6 +165,8 @@ class BasicStats(Stats, metaclass=ABCMeta):
         long_word_letter_factor (int): Minimum number of letters in a long word
         c_letters (dict[int, int]): Distribution of words by number of letters
         c_syllables (dict[int, int]): Distribution of words by number of syllables
+        letters_entropy, syllables_entropy (float): Shannon entropy in bits of the
+            distributions c_letters and c_syllables
         n_sents (int): Number of sentences containing words
         n_words (int): Number of words
         n_unique_words (int): Number of unique words, case ignored
@@ -265,6 +268,8 @@ class BasicStats(Stats, metaclass=ABCMeta):
         syllables_per_word = tuple(self.count_syllables(word) for word in words)
         self.c_letters = dict(sorted(Counter(letters_per_word).items()))
         self.c_syllables = dict(sorted(Counter(syllables_per_word).items()))
+        self.letters_entropy = shannon_entropy(self.c_letters)
+        self.syllables_entropy = shannon_entropy(self.c_syllables)
         self.n_sents = sum(1 for sent in sents if has_words(sent))
         self.n_words = len(words)
         self.n_unique_words = len({word.lower() for word in words})
@@ -364,7 +369,7 @@ class BasicStats(Stats, metaclass=ABCMeta):
         Getting the names of the statistics of get_stats
 
         Returns:
-            tuple[str, ...]: c_letters, c_syllables, the counts of stats_desc,
+            tuple[str, ...]: c_letters, c_syllables, the statistics of stats_desc,
                 c_punctuations and, with normalize, the normalized counts
         """
         names = ("c_letters", "c_syllables", *self.stats_desc, "c_punctuations")

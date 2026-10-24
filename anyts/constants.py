@@ -8,6 +8,8 @@ MTLD_MIN_LEN = 10
 HDD_SAMPLE_SIZE = 42
 DIVERSITY_LOG_BASE = 10
 BRUNET_W_EXPONENT = 0.172
+# Smallest frequency of a lexeme whose burstiness is measured
+BURSTINESS_MIN_FREQ = 5
 DIVERSITY_STATS_DESC = {
     "ttr": "Type-Token Ratio (TTR)",
     "rttr": "Root Type-Token Ratio (RTTR)",
@@ -34,6 +36,7 @@ DIVERSITY_STATS_DESC = {
     "brunet_w": "Brunet's W",
     "dugast_k": "Dugast's k",
     "baayen_p": "Baayen's P",
+    "orlov_z": "Orlov's Z (words)",
     "hapax_ratio": "Hapax ratio",
     "alpha2": "Exponent α₂",
     "entropy": "Shannon entropy (bits)",
@@ -41,6 +44,7 @@ DIVERSITY_STATS_DESC = {
     "perplexity": "Perplexity",
     "zipf_alpha": "Zipf's law slope (α)",
     "heaps_beta": "Heaps' law exponent (β)",
+    "burstiness": "Burstiness of the frequent lexemes",
 }
 
 # Relations that are not arguments of a word: coordination, parataxis, punctuation
@@ -452,6 +456,8 @@ BASIC_STATS_DESC = {
     "n_spaces": "Spaces",
     "n_syllables": "Syllables",
     "n_punctuations": "Punctuation marks",
+    "letters_entropy": "Entropy of the word lengths in letters (bits)",
+    "syllables_entropy": "Entropy of the word lengths in syllables (bits)",
 }
 PUNCTUATION_TYPES = {
     "comma": "Commas",

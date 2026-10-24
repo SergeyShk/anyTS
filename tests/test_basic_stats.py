@@ -253,6 +253,19 @@ NORMALIZED = (
 )
 
 
+def test_entropy_of_the_word_lengths(bs):
+    from math import log2
+
+    for dist, value in (
+        (bs.c_letters, bs.letters_entropy),
+        (bs.c_syllables, bs.syllables_entropy),
+    ):
+        total = sum(dist.values())
+        assert value == pytest.approx(-sum(n / total * log2(n / total) for n in dist.values()))
+    # Words of one length have no entropy
+    assert Stats("cat dog cow").letters_entropy == 0.0
+
+
 def test_get_stats(bs):
     stats = bs.get_stats()
     names = ("c_letters", "c_syllables", *BASIC_STATS_DESC, "c_punctuations", *NORMALIZED)

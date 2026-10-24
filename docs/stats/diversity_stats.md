@@ -53,6 +53,7 @@ Raises:
     Brunet's W                                                             |   6.01
     Dugast's k                                                             |  14.78
     Baayen's P                                                             |   0.53
+    Orlov's Z (words)                                                      |   nan
     Hapax ratio                                                            |   0.73
     Exponent α₂                                                            |   0.50
     Shannon entropy (bits)                                                 |   3.32
@@ -60,6 +61,7 @@ Raises:
     Perplexity                                                             |  10.01
     Zipf's law slope (α)                                                   |   0.49
     Heaps' law exponent (β)                                                |   0.84
+    Burstiness of the frequent lexemes                                     |   nan
     ```
 
 ## Parameters
@@ -128,6 +130,7 @@ Every metric is a property of the object, computed on each access by the functio
 | [`brunet_w`](#brunet_w) | Words against the lexemes | 1 to the number of words | A poorer vocabulary |
 | [`dugast_k`](#dugast_k) | Lexemes against the words in logarithms | 0 and above, `nan` for a text no longer than the base | A richer vocabulary |
 | [`baayen_p`](#baayen_p) | Share of the hapaxes among the words | 0-1 | A faster growing vocabulary |
+| [`orlov_z`](#orlov_z) | Text length in words at which the law of Zipf fits the vocabulary best | Above 0, `nan` without a solution, `inf` beyond floats | A richer vocabulary |
 | [`hapax_ratio`](#hapax_ratio) | Share of the hapaxes among the lexemes | 0-1 | More lexemes used once |
 | [`alpha2`](#alpha2) | Shape of the lower frequency spectrum | 1 and below, `nan` without hapaxes | More hapaxes against dis legomena |
 | [`entropy`](#entropy) | Information per word in bits | 0 and above | A richer vocabulary |
@@ -135,6 +138,7 @@ Every metric is a property of the object, computed on each access by the functio
 | [`perplexity`](#perplexity) | Effective number of lexemes | 1 to the number of lexemes | A richer vocabulary |
 | [`zipf_alpha`](#zipf_alpha) | Fall of the frequency with the rank | 0 and above, `nan` for one lexeme | Frequencies falling faster |
 | [`heaps_beta`](#heaps_beta) | Growth of the vocabulary with the length | 0 and above, `nan` below two words | A faster growing vocabulary |
+| [`burstiness`](#burstiness) | Mean burstiness of the lexemes of five occurrences or more | -1 to 1, `nan` without them | Words used in bursts |
 <!-- --8<-- [end:DiversityStats-metrics] -->
 
 <div class="metric-card" markdown>
@@ -403,18 +407,19 @@ A `min_len` that is not a non-negative integer and a `threshold` that is not a n
 
 <!-- --8<-- [start:calc_mamtld] -->
 ``` {.python .signature}
-calc_mamtld(text, min_len=10, threshold=0.72)
+calc_mamtld(text, min_len=10, threshold=0.72, step=1)
 ```
 
-A moving-window modification of MTLD after MTLD-MA of koRpus: a factor starts at every position of the text, and the value is the mean length of the completed factors over a forward and a backward pass. koRpus makes the forward pass only, closes a factor at TTR strictly below the threshold and drops factors shorter than the minimum length instead of extending them. If no factor completes, the value is `nan`. The metric is unstable on short texts.
+A moving-window modification of MTLD after MTLD-MA of koRpus: a factor starts at every position of the text, and the value is the mean length of the completed factors over a forward and a backward pass. koRpus makes the forward pass only, closes a factor at TTR strictly below the threshold and drops factors shorter than the minimum length instead of extending them. With a `step` of k a factor starts at every k-th position from either end, as `MTLDMA.steps` of koRpus. If no factor completes, the value is `nan`. The metric is unstable on short texts.
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
 | `text` | `list[str]` | - | List of words |
 | `min_len` | `int` | `10` | Minimum factor length (`MTLD_MIN_LEN`) |
 | `threshold` | `float` | `0.72` | TTR threshold for completing a factor (`MTLD_TTR_THRESHOLD`) |
+| `step` | `int` | `1` | Distance between the starts of the factors |
 
-A `min_len` that is not a non-negative integer and a `threshold` that is not a number in (0, 1) raise `ParameterError`.
+A `min_len` that is not a non-negative integer, a `threshold` that is not a number in (0, 1) and a `step` that is not an integer above 0 raise `ParameterError`.
 <!-- --8<-- [end:calc_mamtld] -->
 
 </div>
@@ -799,6 +804,45 @@ $$
 
 <div class="metric-card" markdown>
 
+### Orlov's Z { #orlov_z }
+
+`orlov_z` · [Tweedie and Baayen 1998](https://doi.org/10.1023/A:1001749303137)
+{ .metric-meta }
+
+<!-- --8<-- [start:calc_orlov_z] -->
+``` {.python .signature}
+calc_orlov_z(text)
+```
+
+The text length at which the law of Zipf fits the vocabulary best (Orlov 1983): the solution $Z$ for $N$ words, $V$ lexemes and the share $p$ of the most frequent lexeme. The right side has a minimum over $Z$, and $Z$ is the solution above it; it is `nan` when $V$ lies at or below that minimum or when every word is a lexeme of its own, and `inf` when $V$ comes so close to $N$ that $Z$ overflows a float. With Yule's K, Z separated the authors best among the measures Tweedie and Baayen compared.
+
+$$
+V = \frac{Z}{\ln(pZ)} \cdot \frac{N}{N - Z} \cdot \ln \frac{N}{Z}
+$$
+
+| Parameter | Type | Default | Description |
+| :-------- | :--- | :------ | :---------- |
+| `text` | `list[str]` | - | List of words |
+<!-- --8<-- [end:calc_orlov_z] -->
+
+=== "Code"
+
+    ``` python
+    from anyts.diversity_stats import calc_orlov_z
+
+    calc_orlov_z("the cat saw the dog and the dog saw a bird near the old tree".split())
+    ```
+
+=== "Result"
+
+    ```
+    59.99999999999961
+    ```
+
+</div>
+
+<div class="metric-card" markdown>
+
 ### Hapax ratio { #hapax_ratio }
 
 `hapax_ratio`
@@ -1017,6 +1061,48 @@ fit_heaps(text)
 
 Fits Heaps' law over the vocabulary growth curve of a list of words, as `calc_heaps_beta` does, and returns a `HeapsFit` named tuple with the parameters `k`, `beta` and the coefficient of determination `r2`, all `nan` for texts shorter than two words; `r2` is `nan` for a text of one lexeme too.
 <!-- --8<-- [end:fit_heaps] -->
+
+</div>
+
+<div class="metric-card" markdown>
+
+### Burstiness { #burstiness }
+
+`burstiness` · [Kim and Jo 2016](https://doi.org/10.1103/PhysRevE.94.032311)
+{ .metric-meta }
+
+<!-- --8<-- [start:calc_burstiness] -->
+``` {.python .signature}
+calc_burstiness(text, min_freq=5)
+```
+
+How a lexeme comes in bursts rather than spread over the text, by the burstiness of Kim and Jo, which corrects that of Goh and Barabási for a finite number $n$ of events, averaged over the lexemes of `min_freq` occurrences or more (`BURSTINESS_MIN_FREQ`). For the $n$ occurrences of a lexeme, $r$ is the coefficient of variation of their $n$ intervals, the one from the last to the first around the end of the text included. The value is −1 for occurrences at equal intervals, near 0 for a rare lexeme at random places and up to 1 for occurrences in bursts; `nan` without such lexemes.
+
+$$
+A_n = \frac{\sqrt{n + 1} \cdot r - \sqrt{n - 1}}{(\sqrt{n + 1} - 2) \cdot r + \sqrt{n - 1}}
+$$
+
+| Parameter | Type | Default | Description |
+| :-------- | :--- | :------ | :---------- |
+| `text` | `list[str]` | - | List of words |
+| `min_freq` | `int` | `5` | Smallest number of occurrences of a lexeme measured |
+
+A `min_freq` that is not an integer of at least 2 raises `ParameterError`.
+<!-- --8<-- [end:calc_burstiness] -->
+
+=== "Code"
+
+    ``` python
+    from anyts.diversity_stats import calc_burstiness
+
+    calc_burstiness("a x a x a x a x a x".split()), calc_burstiness("a a a a a x x x x x".split())
+    ```
+
+=== "Result"
+
+    ```
+    (-1.0, 0.18350341907227388)
+    ```
 
 </div>
 
