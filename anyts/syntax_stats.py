@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import zlib
 from collections import Counter
-from collections.abc import Callable, Iterable, Mapping, Sequence
+from collections.abc import Callable, Hashable, Iterable, Mapping, Sequence
 from functools import cache, partial, wraps
+from itertools import pairwise
 from math import nan
 from statistics import fmean, pstdev
 from typing import TYPE_CHECKING, Any, ClassVar, TypeVar, cast
@@ -27,6 +28,7 @@ from .exceptions import SourceError, SourceTypeError
 from .stats import Stats
 from .utils import (
     check_callable,
+    check_sequence,
     check_words,
     has_feature,
     has_sents,
@@ -146,6 +148,10 @@ class SyntaxStats(Stats):
         split_predicates_per_sent (float): Split predicates per sentence
         p_preverbal_subjects (float): Share of the nominal subjects before their head
         p_preverbal_objects (float): Share of the nominal direct objects before their head
+        pos_edit_distance (float): Mean edit distance of the parts of speech of adjacent
+            sentences over the longer one
+        syntax_similarity (float): Mean similarity of the dependency triples of adjacent
+            sentences
         noun_verb_ratio (float): Ratio of the nouns to the verb forms
 
     Methods:
@@ -319,6 +325,18 @@ class SyntaxStats(Stats):
         )
         self.p_preverbal_objects = safe_divide(
             self.n_preverbal_objects, self.n_nominal_objects, nan
+        )
+        # Without the parts of speech the sequences would differ only by their lengths
+        tagged = doc.has_annotation("POS")
+        self.pos_edit_distance = (
+            calc_edit_distance([[token.pos_ for token in sent] for sent in sents])
+            if tagged
+            else nan
+        )
+        self.syntax_similarity = (
+            calc_multiset_similarity([[_word_triple(token) for token in sent] for sent in sents])
+            if tagged
+            else nan
         )
         self.noun_verb_ratio = safe_divide(self.n_nouns, self.n_verbs, nan)
 
@@ -572,6 +590,20 @@ def _blank_vocab(lang: str) -> Vocab:
     from spacy.vocab import Vocab
 
     return spacy.blank(lang).vocab if lang else Vocab()
+
+
+def _word_triple(token: Token) -> tuple[str, str, str]:
+    """Dependency triple of a word: the part of speech of its head, the nearest word above it
+    through punctuation, its base relation and its own part of speech; a word with no word
+    above it has an empty head and the relation root"""
+    head, seen = token, {token.i}
+    # A broken parse can link the marks above a word in a loop
+    while not is_root(head) and head.head.i not in seen:
+        head = head.head
+        if is_word(head):
+            return (head.pos_, base_dep(token), token.pos_)
+        seen.add(head.i)
+    return ("", "root", token.pos_)
 
 
 def get_words(tokens: Iterable[Token], join_hyphens: bool = False) -> list[Token]:
@@ -1505,6 +1537,149 @@ def _is_adposition(token: Token) -> bool:
     return token.pos_ == "ADP" or any(
         base_dep(child) == "fixed" and child.pos_ == "ADP" for child in token.children
     )
+
+
+def dependency_triples(
+    tokens: Iterable[Token], join_hyphens: bool = False
+) -> list[tuple[str, str, str]]:
+    """
+    Getting the dependency triples of the words of a sentence
+
+    Description:
+        For every word (get_words) the part of speech of its head, the nearest
+        word above it through punctuation, its relation without a subtype
+        (base_dep) and its own part of speech: (NOUN, amod, ADJ) for a red house;
+        the head of the sentence, and a word with no word above it, give an empty
+        head and the relation root, whatever its label
+
+    Arguments:
+        tokens (Doc|Span|list[Token]): Sequence of tokens
+        join_hyphens (bool): Join the parts of hyphenated words (get_words)
+
+    Returns:
+        list[tuple[str, str, str]]: Triples in the order of the words
+
+    Example:
+        >>> import spacy
+        >>> from spacy.tokens import Doc
+        >>> from anyts.syntax_stats import dependency_triples
+        >>> doc = Doc(
+        ...     spacy.blank("en").vocab,
+        ...     words=["a", "red", "house"],
+        ...     heads=[2, 2, 2],
+        ...     deps=["det", "amod", "ROOT"],
+        ...     pos=["DET", "ADJ", "NOUN"],
+        ... )
+        >>> dependency_triples(doc)
+        [('NOUN', 'det', 'DET'), ('NOUN', 'amod', 'ADJ'), ('', 'root', 'NOUN')]
+    """
+    return [_word_triple(token) for token in get_words(tokens, join_hyphens)]
+
+
+def calc_edit_distance(sents: Sequence[Sequence[Hashable]]) -> float:
+    """
+    Computing the mean edit distance of adjacent sentences
+
+    Description:
+        The Levenshtein distance of the items of every two adjacent sentences -
+        the fewest insertions, deletions and substitutions that turn one into the
+        other - over the number of the items of the longer one, averaged over
+        the pairs: 0 for the same sequences, 1 for ones with no item in common.
+        For the parts of speech it is the SYNMEDpos of Coh-Metrix
+
+    Arguments:
+        sents (list[list]): Items of every sentence, such as its parts of speech
+
+    Returns:
+        float: Mean distance, nan for fewer than two sentences
+
+    Raises:
+        SourceTypeError: If the sentences are not a list of lists (check_sequence)
+
+    Example:
+        >>> from anyts.syntax_stats import calc_edit_distance
+        >>> calc_edit_distance([["DET", "NOUN", "VERB"], ["DET", "ADJ", "NOUN", "VERB"]])
+        0.25
+    """
+    check_sequence(sents, "sentences")
+    for sent in sents:
+        check_sequence(sent, "items of a sentence")
+    return safe_mean(
+        [
+            safe_divide(_edit_distance(first, second), max(len(first), len(second)), 0.0)
+            for first, second in pairwise(sents)
+        ]
+    )
+
+
+def _edit_distance(first: Sequence[Hashable], second: Sequence[Hashable]) -> int:
+    """Levenshtein distance of two sequences by the bit-parallel algorithm of Myers in the
+    form of Hyyrö, the longer one as the pattern"""
+    if len(first) < len(second):
+        first, second = second, first
+    size = len(first)
+    if not len(second):
+        return size
+    full = (1 << size) - 1
+    last = 1 << (size - 1)
+    masks: dict[Hashable, int] = {}
+    for i, item in enumerate(first):
+        masks[item] = masks.get(item, 0) | (1 << i)
+    plus, minus, score = full, 0, size
+    for item in second:
+        match = masks.get(item, 0) | minus
+        diagonal = (((match & plus) + plus) ^ plus) | match
+        up = minus | (~(diagonal | plus) & full)
+        down = plus & diagonal
+        if up & last:
+            score += 1
+        elif down & last:
+            score -= 1
+        shifted = ((up << 1) | 1) & full
+        minus = shifted & diagonal
+        plus = ((down << 1) & full) | (~(shifted | diagonal) & full)
+    return score
+
+
+def calc_multiset_similarity(sents: Sequence[Iterable[Hashable]]) -> float:
+    """
+    Computing the mean similarity of the multisets of the items of adjacent sentences
+
+    Description:
+        The weighted Jaccard similarity of the items of every two adjacent
+        sentences - the items they share, each as many times as the sentence
+        with fewer of them has it, over the items of both, each as many times as
+        the sentence with more of them has it - averaged over the pairs: 1 for
+        the same multisets, 0 for disjoint ones, 1 for two empty ones. For the
+        dependency triples (dependency_triples) it is the syntactic similarity of
+        adjacent sentences in the manner of the SYNSTRUT of Coh-Metrix. A mapping
+        is read by its keys, as a set
+
+    Arguments:
+        sents (list[list]): Items of every sentence, such as its dependency triples
+
+    Returns:
+        float: Mean similarity, nan for fewer than two sentences
+
+    Raises:
+        SourceTypeError: If the sentences are not a list of collections (check_sequence)
+
+    Example:
+        >>> from anyts.syntax_stats import calc_multiset_similarity
+        >>> calc_multiset_similarity([["a", "a", "b"], ["a", "b", "b"]])
+        0.5
+    """
+    check_sequence(sents, "sentences")
+    for sent in sents:
+        check_sequence(sent, "items of a sentence", ordered=False)
+    counts = [Counter(iter(sent)) for sent in sents]
+    return safe_mean([_multiset_similarity(first, second) for first, second in pairwise(counts)])
+
+
+def _multiset_similarity(first: Counter[Hashable], second: Counter[Hashable]) -> float:
+    """Weighted Jaccard similarity of two multisets, 1 for two empty ones"""
+    union = sum((first | second).values())
+    return sum((first & second).values()) / union if union else 1.0
 
 
 def calc_modifier_chains(

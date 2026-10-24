@@ -13,11 +13,14 @@ from anyts.syntax_stats import (
     base_dep,
     calc_coordination_chains,
     calc_dependency_distances,
+    calc_edit_distance,
     calc_modifier_chains,
+    calc_multiset_similarity,
     calc_tree_depth,
     calc_valency,
     count_children,
     count_noun_modifiers,
+    dependency_triples,
     get_children,
     get_words,
     has_agent,
@@ -538,6 +541,22 @@ TWO_SENTS = [
 ]
 
 
+TWO_SENTS_POS = (
+    ["DET", "NOUN", "VERB", "ADP", "NOUN", "AUX", "VERB"],
+    ["PRON", "VERB", "SCONJ", "PRON", "AUX", "PART", "VERB", "PART", "VERB", "CCONJ", "VERB"],
+)
+
+
+def levenshtein(first, second):
+    """Edit distance by the full table, the reference of the bit-parallel one"""
+    row = list(range(len(second) + 1))
+    for i, item in enumerate(first, 1):
+        previous, row[0] = row[0], i
+        for j, other in enumerate(second, 1):
+            previous, row[j] = row[j], min(row[j] + 1, row[j - 1] + 1, previous + (item != other))
+    return row[-1]
+
+
 def two_sents():
     words, heads, deps, morphs, pos = (list(column) for column in zip(*TWO_SENTS, strict=True))
     return parse(words, heads, deps, morphs, pos=pos)
@@ -600,6 +619,9 @@ def test_syntax_stats_metrics():
         # house is the only nominal subject, before sold; there is no nominal object
         "p_preverbal_subjects": 1.0,
         "p_preverbal_objects": nan,
+        "pos_edit_distance": levenshtein(*TWO_SENTS_POS) / 11,
+        # The two sentences share the auxiliary under a verb and the verb at the root
+        "syntax_similarity": 2 / 16,
         "noun_verb_ratio": 1 / 3,
     }
     assert list(stats.get_stats()) == list(SYNTAX_STATS_DESC)
@@ -1006,6 +1028,126 @@ def test_words_before_a_root_out_of_the_words():
     # The root of the sentence is a mark, so the sentence gives no position
     doc = parse(["Well", "!"], [1, 1], ["discourse", "ROOT"], pos=["INTJ", "PUNCT"])
     assert isnan(SyntaxStats(doc).words_before_root)
+
+
+def test_dependency_triples():
+    doc = two_sents()
+    assert dependency_triples(doc[:8]) == [
+        ("NOUN", "det", "DET"),
+        ("VERB", "nsubj", "NOUN"),
+        ("NOUN", "acl", "VERB"),
+        ("NOUN", "case", "ADP"),
+        ("VERB", "obl", "NOUN"),
+        ("VERB", "aux", "AUX"),
+        ("", "root", "VERB"),
+    ]
+    # The root of a sentence is root whatever its label; punctuation gives no triple
+    root = parse(["Yes", "!"], [0, 0], ["root", "punct"], pos=["INTJ", "PUNCT"])
+    assert dependency_triples(root) == [("", "root", "INTJ")]
+
+
+def test_edit_distance_against_the_full_table():
+    import random
+
+    rng = random.Random(0)
+    for _ in range(3000):
+        # Past 64 items the masks of the pattern need more than one machine word
+        first = [rng.choice("ABCD") for _ in range(rng.randint(0, 80))]
+        second = [rng.choice("ABCDE") for _ in range(rng.randint(0, 80))]
+        expected = levenshtein(first, second) / max(len(first), len(second), 1)
+        assert calc_edit_distance([first, second]) == expected
+
+
+def test_edit_distance():
+    assert calc_edit_distance([["a", "b"], ["a", "b"], ["b", "a"]]) == 0.5
+    assert calc_edit_distance([[], []]) == 0.0 and calc_edit_distance([[], ["a"]]) == 1.0
+    assert isnan(calc_edit_distance([["a"]])) and isnan(calc_edit_distance([]))
+    # The order of the pair does not matter
+    assert calc_edit_distance([["a", "b", "c"], ["c"]]) == calc_edit_distance(
+        [["c"], ["a", "b", "c"]]
+    )
+    for sents in ("ab", ["ab"], iter([["a"]])):
+        with pytest.raises(SourceTypeError):
+            calc_edit_distance(sents)
+
+
+def test_multiset_similarity():
+    assert calc_multiset_similarity([["a", "a", "b"], ["a", "b", "b"]]) == 0.5
+    assert calc_multiset_similarity([["a"], ["a"], ["b"]]) == 0.5
+    assert (
+        calc_multiset_similarity([[], []]) == 1.0
+        and calc_multiset_similarity([{"a"}, set()]) == 0.0
+    )
+    assert isnan(calc_multiset_similarity([["a"]]))
+    for sents in ("ab", ["ab"], [iter(["a"])]):
+        with pytest.raises(SourceTypeError):
+            calc_multiset_similarity(sents)
+
+
+def test_similarity_of_arrays_and_mappings():
+    import numpy as np
+    import pandas as pd
+
+    tags = [np.array(["DET", "NOUN"]), np.array(["DET", "ADJ", "NOUN"])]
+    assert calc_edit_distance(tags) == calc_edit_distance([list(tag) for tag in tags]) == 1 / 3
+    assert calc_edit_distance([pd.Series([0, 5]), pd.Series([0])]) == 0.5
+    # A mapping is read by its keys, as calc_overlap reads it
+    assert calc_multiset_similarity([{"a": 1, "b": 5}, ["a", "b"]]) == 1.0
+    assert calc_multiset_similarity([{"a": "x"}, ["a"]]) == 1.0
+
+
+def test_triples_through_punctuation_and_hyphens():
+    # use « water »: water hangs on the opening quote, the quote on use
+    doc = parse(
+        ["use", "\u00ab", "water", "\u00bb"],
+        [0, 0, 1, 0],
+        ["ROOT", "punct", "nmod", "punct"],
+        pos=["NOUN", "PUNCT", "NOUN", "PUNCT"],
+    )
+    assert doc[2].head.i == 1
+    assert dependency_triples(doc) == [("", "root", "NOUN"), ("NOUN", "nmod", "NOUN")]
+    # A word under a mark at the root has no word above it
+    marked = parse(["!", "Yes"], [0, 0], ["ROOT", "discourse"], pos=["PUNCT", "INTJ"])
+    assert dependency_triples(marked) == [("", "root", "INTJ")]
+    # Marks above a word linked in a loop end the climb
+    loop = parse(
+        ["Stop", "go", ",", ";"],
+        [0, 2, 3, 2],
+        ["ROOT", "dep", "punct", "punct"],
+        pos=["VERB", "VERB", "PUNCT", "PUNCT"],
+    )
+    assert dependency_triples(loop) == [("", "root", "VERB"), ("", "root", "VERB")]
+    # A hyphenated word gives one triple by the part that holds its relation
+    hyphen = parse(
+        ["a", "well", "-", "known", "poet"],
+        [4, 3, 3, 4, 4],
+        ["det", "advmod", "punct", "amod", "ROOT"],
+        spaces=[True, False, False, True, True],
+        pos=["DET", "ADV", "PUNCT", "ADJ", "NOUN"],
+    )
+    assert dependency_triples(hyphen, join_hyphens=True) == [
+        ("NOUN", "det", "DET"),
+        ("NOUN", "amod", "ADJ"),
+        ("", "root", "NOUN"),
+    ]
+    assert len(dependency_triples(hyphen)) == 4
+
+
+def test_similarity_without_parts_of_speech():
+    doc = two_sents()
+    bare = Doc(
+        VOCAB,
+        words=[token.text for token in doc],
+        heads=[token.head.i for token in doc],
+        deps=[token.dep_ for token in doc],
+    )
+    stats = SyntaxStats(bare)
+    assert isnan(stats.pos_edit_distance) and isnan(stats.syntax_similarity)
+
+
+def test_similarity_of_one_sentence(house):
+    stats = SyntaxStats(house)
+    assert isnan(stats.pos_edit_distance) and isnan(stats.syntax_similarity)
 
 
 def test_modifier_chains_skip_punctuation():
