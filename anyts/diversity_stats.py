@@ -1,8 +1,9 @@
 from collections import Counter
 from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from functools import partial, wraps
-from itertools import islice
-from math import inf, log, log2, nan, sqrt
+from itertools import islice, pairwise
+from math import exp, expm1, inf, log, log2, nan, sqrt
+from statistics import pstdev
 from typing import Any, ClassVar, NamedTuple, TypeVar, cast
 
 import numpy as np
@@ -10,6 +11,7 @@ from numpy.lib.stride_tricks import sliding_window_view
 
 from .constants import (
     BRUNET_W_EXPONENT,
+    BURSTINESS_MIN_FREQ,
     DIVERSITY_LOG_BASE,
     DIVERSITY_STATS_DESC,
     HDD_SAMPLE_SIZE,
@@ -28,12 +30,15 @@ from .utils import (
     check_sequence,
     check_words,
     safe_divide,
+    safe_mean,
     shannon_entropy,
 )
 
 # Block of factor starts and window of offsets in the MA-MTLD and MTLD-W computation
 _MTLD_BLOCK_SIZE = 4096
 _MTLD_WINDOW_LEN = 32
+# Largest ln Z of Orlov's Z before exp overflows a float
+_MAX_LOG_Z = 709.0
 
 Calculator = Callable[[Sequence[str]], float]
 Function = TypeVar("Function", bound=Callable[..., Any])
@@ -190,6 +195,7 @@ class DiversityStats(Stats):
         brunet_w (float): Brunet's W
         dugast_k (float): Dugast's k
         baayen_p (float): Baayen's P
+        orlov_z (float): Orlov's Z, a text length in words
         hapax_ratio (float): Share of hapaxes among lexemes
         alpha2 (float): The α₂ exponent
         entropy (float): Shannon entropy in bits
@@ -197,6 +203,8 @@ class DiversityStats(Stats):
         perplexity (float): Perplexity
         zipf_alpha (float): Zipf's law slope
         heaps_beta (float): Heaps' law exponent
+        burstiness (float): Mean burstiness of the lexemes of BURSTINESS_MIN_FREQ
+            occurrences or more
 
     Methods:
         windowed: Windowed computation of a metric with the mean and a confidence interval
@@ -276,6 +284,7 @@ class DiversityStats(Stats):
             "brunet_w": calc_brunet_w,
             "dugast_k": partial(calc_dugast_k, base=self.log_base),
             "baayen_p": calc_baayen_p,
+            "orlov_z": calc_orlov_z,
             "hapax_ratio": calc_hapax_ratio,
             "alpha2": calc_alpha2,
             "entropy": calc_entropy,
@@ -283,6 +292,7 @@ class DiversityStats(Stats):
             "perplexity": calc_perplexity,
             "zipf_alpha": calc_zipf_alpha,
             "heaps_beta": calc_heaps_beta,
+            "burstiness": calc_burstiness,
         }
 
     def _calc(self, stat: str) -> float:
@@ -397,6 +407,10 @@ class DiversityStats(Stats):
         return self._calc("baayen_p")
 
     @property
+    def orlov_z(self) -> float:
+        return self._calc("orlov_z")
+
+    @property
     def hapax_ratio(self) -> float:
         return self._calc("hapax_ratio")
 
@@ -423,6 +437,10 @@ class DiversityStats(Stats):
     @property
     def heaps_beta(self) -> float:
         return self._calc("heaps_beta")
+
+    @property
+    def burstiness(self) -> float:
+        return self._calc("burstiness")
 
     def windowed(
         self,
@@ -797,7 +815,10 @@ def _count_mtld_factors(text: Sequence[str], threshold: float, min_len: int) -> 
 
 @_checks_words
 def calc_mamtld(
-    text: Sequence[str], min_len: int = MTLD_MIN_LEN, threshold: float = MTLD_TTR_THRESHOLD
+    text: Sequence[str],
+    min_len: int = MTLD_MIN_LEN,
+    threshold: float = MTLD_TTR_THRESHOLD,
+    step: int = 1,
 ) -> float:
     """
     Computing the Moving Average Measure of Textual Lexical Diversity (MA-MTLD)
@@ -808,32 +829,38 @@ def calc_mamtld(
         completed factors over a forward and a backward pass; factors close as in
         calc_mtld, incomplete ones are ignored. koRpus makes the forward pass only,
         closes a factor at TTR strictly below the threshold and drops factors
-        shorter than the minimum
+        shorter than the minimum. With a step k a factor starts at every k-th
+        position from either end (MTLDMA.steps of koRpus)
 
     Arguments:
         text (list[str]): List of words
         min_len (int): Minimum factor length
         threshold (float): TTR threshold for completing a factor
+        step (int): Distance between the starts of the factors
 
     Returns:
         float: Value of the metric, nan if no factor completes
 
     Raises:
-        ParameterError: If the TTR threshold is outside the interval (0, 1)
-            or the minimum factor length is negative
+        ParameterError: If the TTR threshold is outside the interval (0, 1),
+            the minimum factor length is negative or the step is not an integer
+            greater than 0
         SourceTypeError: If the words are not a list of strings (check_words)
     """
     _check_mtld_params(threshold, min_len)
-    lengths = _mtld_factor_lengths(text, threshold, min_len, wrap=False)
-    lengths += _mtld_factor_lengths(text[::-1], threshold, min_len, wrap=False)
+    check_integer(step, "step of the factors")
+    if step < 1:
+        raise ParameterError(f"The step of the factors must be greater than 0, not {step}")
+    lengths = _mtld_factor_lengths(text, threshold, min_len, wrap=False, step=step)
+    lengths += _mtld_factor_lengths(text[::-1], threshold, min_len, wrap=False, step=step)
     return safe_divide(sum(lengths), len(lengths), nan)
 
 
 def _mtld_factor_lengths(
-    text: Sequence[str], threshold: float, min_len: int, wrap: bool
+    text: Sequence[str], threshold: float, min_len: int, wrap: bool, step: int = 1
 ) -> list[int]:
     """
-    Lengths of the first MTLD factors starting at every position of the text
+    Lengths of the first MTLD factors starting at every step-th position of the text
 
     Description:
         The number of lexemes on the stretch [start, pos] is the number of its
@@ -884,7 +911,8 @@ def _mtld_factor_lengths(
             limits = limits[remaining]
             counts = types[remaining, -1]
             offset += _MTLD_WINDOW_LEN
-    return [int(length) for length in lengths[lengths > 0]]
+    starts = lengths[::step]
+    return [int(length) for length in starts[starts > 0]]
 
 
 def _previous_positions(text: Sequence[str], wrap: bool) -> np.ndarray:
@@ -1308,6 +1336,67 @@ def calc_baayen_p(text: Sequence[str]) -> float:
 
 
 @_checks_words
+def calc_orlov_z(text: Sequence[str]) -> float:
+    """
+    Computing Orlov's Z
+
+    Description:
+        The text length at which the law of Zipf fits the vocabulary best
+        (Orlov 1983): the solution Z of
+        V = Z / ln(pZ) · N / (N − Z) · ln(N / Z)
+        for N words, V lexemes and the share p of the most frequent one. The
+        right side has a minimum over Z, and Z is the solution above it; Z is
+        taken for a constant of the author (Tweedie and Baayen 1998)
+
+    References:
+        https://doi.org/10.1023/A:1001749303137 (Tweedie and Baayen 1998)
+
+    Arguments:
+        text (list[str]): List of words
+
+    Returns:
+        float: Value of the measure in words; nan when V lies at or below the minimum
+            of the right side, inf when V comes so close to N that Z overflows
+
+    Raises:
+        SourceTypeError: If the words are not a list of strings (check_words)
+
+    Example:
+        >>> from anyts.diversity_stats import calc_orlov_z
+        >>> round(calc_orlov_z("the cat saw the dog and the dog saw a bird near the old tree".split()))
+        60
+    """
+    n_words = len(text)
+    counts = Counter(text)
+    n_lexemes = len(counts)
+    if n_words < 2 or n_lexemes == n_words:
+        return nan
+    from scipy.optimize import brentq, minimize_scalar
+
+    share = max(counts.values()) / n_words
+    # Over u = ln Z the right side is defined above u = -ln p and tends to N at infinity
+    low = -log(share)
+    expected = partial(_orlov_vocabulary, n_words=n_words, share=share)
+    bound = max(log(n_words), low) + 50.0
+    lowest = minimize_scalar(expected, bounds=(low + 1e-9, bound), method="bounded")
+    if n_lexemes <= lowest.fun:
+        return nan
+    high = bound
+    while expected(high) <= n_lexemes:
+        if high > _MAX_LOG_Z:
+            return inf
+        high *= 2
+    return exp(brentq(lambda u: expected(u) - n_lexemes, lowest.x, high, xtol=1e-12))
+
+
+def _orlov_vocabulary(u: float, n_words: int, share: float) -> float:
+    """Number of lexemes Orlov's model expects for Z = e^u, without the singularity at Z = N"""
+    v = u - log(n_words)
+    growth = v / -expm1(-v) if v else 1.0
+    return n_words * growth / (log(share) + u)
+
+
+@_checks_words
 def calc_hapax_ratio(text: Sequence[str]) -> float:
     """
     Computing the hapax ratio
@@ -1626,6 +1715,66 @@ def calc_heaps_beta(text: Sequence[str]) -> float:
         SourceTypeError: If the words are not a list of strings (check_words)
     """
     return _unchecked(fit_heaps)(text).beta
+
+
+@_checks_words
+def calc_burstiness(text: Sequence[str], min_freq: int = BURSTINESS_MIN_FREQ) -> float:
+    """
+    Computing the burstiness of the lexemes
+
+    Description:
+        The burstiness of Kim and Jo (2016) of every lexeme with min_freq
+        occurrences or more, averaged over them. For the n occurrences of a
+        lexeme r is the coefficient of variation of their n intervals, the one
+        from the last to the first around the end of the text included, and
+        A = (√(n+1)·r − √(n−1)) / ((√(n+1) − 2)·r + √(n−1)):
+        −1 for occurrences at equal intervals, near 0 for a rare lexeme at random
+        places, above 0 for occurrences in bursts
+
+    References:
+        https://doi.org/10.1103/PhysRevE.94.032311 (Kim and Jo 2016)
+
+    Arguments:
+        text (list[str]): List of words
+        min_freq (int): Smallest number of occurrences of a lexeme measured
+
+    Returns:
+        float: Mean burstiness, nan without a lexeme of min_freq occurrences
+
+    Raises:
+        ParameterError: If the smallest number of occurrences is not an integer of at
+            least 2
+        SourceTypeError: If the words are not a list of strings (check_words)
+
+    Example:
+        >>> from anyts.diversity_stats import calc_burstiness
+        >>> calc_burstiness("a x a x a x a x a x".split()), round(calc_burstiness("a a a a a x x x x x".split()), 3)
+        (-1.0, 0.184)
+    """
+    check_integer(min_freq, "smallest number of occurrences")
+    if min_freq < 2:
+        raise ParameterError(
+            f"The smallest number of occurrences must be at least 2, not {min_freq}"
+        )
+    n_words = len(text)
+    positions: dict[str, list[int]] = {}
+    for position, word in enumerate(text):
+        positions.setdefault(word, []).append(position)
+    values = [
+        _burstiness(occurrences, n_words)
+        for occurrences in positions.values()
+        if len(occurrences) >= min_freq
+    ]
+    return safe_mean(values)
+
+
+def _burstiness(occurrences: Sequence[int], n_words: int) -> float:
+    """Burstiness of Kim and Jo of the occurrences of a lexeme in a text of n_words words"""
+    n = len(occurrences)
+    intervals = [later - earlier for earlier, later in pairwise(occurrences)]
+    intervals.append(n_words - occurrences[-1] + occurrences[0])
+    ratio = pstdev(intervals) / (n_words / n)
+    return (sqrt(n + 1) * ratio - sqrt(n - 1)) / ((sqrt(n + 1) - 2) * ratio + sqrt(n - 1))
 
 
 @_checks_words

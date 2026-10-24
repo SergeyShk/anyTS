@@ -37,33 +37,47 @@ Raises:
 === "Result"
 
     ```
-                        Statistic                     |  Value
-    -------------------------------------------------------------
-    Mean dependency distance                          |   2.44
-    Standard deviation of the dependency distance     |   1.77
-    Mean of the longest dependencies of the sentences |   6.00
-    Share of adjacent dependencies                    |   0.44
-    Depth of the dependency tree                      |   3.00
-    Leaves per sentence                               |   6.00
-    Subtrees per sentence                             |   4.00
-    Mean of the nodes per leaf of the sentences       |   1.67
-    Valency of the finite verbs                       |   2.00
-    Coordination chains per sentence                  |   0.00
-    Mean length of a coordination chain               |   nan
-    Clauses per sentence                              |   2.00
-    Mean length of a clause (words)                   |   5.00
-    Subordinate clauses per sentence                  |   1.00
-    Share of sentences with a subordinate clause      |   1.00
-    Infinitive clauses under a verb per sentence      |   0.00
-    Modifiers per noun phrase                         |   1.00
-    Participial clauses per sentence                  |   0.00
-    Mean length of a participial clause (words)       |   nan
-    Share of passive forms among the verbs            |   0.50
-    Share of agentless forms among the passive ones   |   0.00
-    Infinitives per sentence                          |   0.00
-    Words of negation per sentence                    |   1.00
-    Split predicates per sentence                     |   0.00
-    Ratio of nouns to verbs                           |   0.50
+                             Statistic                         |  Value
+    ----------------------------------------------------------------------
+    Mean dependency distance                                   |   2.44
+    Standard deviation of the dependency distance              |   1.77
+    Mean of the longest dependencies of the sentences          |   6.00
+    Share of adjacent dependencies                             |   0.44
+    Depth of the dependency tree                               |   3.00
+    Leaves per sentence                                        |   6.00
+    Subtrees per sentence                                      |   4.00
+    Mean of the nodes per leaf of the sentences                |   1.67
+    Mean number of words before the root of a sentence         |   1.00
+    Valency of the finite verbs                                |   2.00
+    Coordination chains per sentence                           |   0.00
+    Mean length of a coordination chain                        |   nan
+    Clauses per sentence                                       |   2.00
+    Mean length of a clause (words)                            |   5.00
+    Subordinate clauses per sentence                           |   1.00
+    Share of sentences with a subordinate clause               |   1.00
+    Infinitive clauses under a verb per sentence               |   0.00
+    T-units per sentence                                       |   1.00
+    Mean length of a T-unit (words)                            |  10.00
+    Clauses per T-unit                                         |   2.00
+    Share of T-units with a subordinate clause                 |   1.00
+    Verb phrases per T-unit                                    |   2.00
+    Coordinate phrases per clause                              |   0.00
+    Complex nominals per clause                                |   0.50
+    Modifiers per noun phrase                                  |   1.00
+    Prepositional chains per sentence                          |   0.00
+    Maximum length of a prepositional chain                    |    0
+    Participial clauses per sentence                           |   0.00
+    Mean length of a participial clause (words)                |   nan
+    Share of passive forms among the verbs                     |   0.50
+    Share of agentless forms among the passive ones            |   0.00
+    Infinitives per sentence                                   |   0.00
+    Words of negation per sentence                             |   1.00
+    Split predicates per sentence                              |   0.00
+    Share of nominal subjects before their head                |   1.00
+    Share of nominal objects before their head                 |   nan
+    Edit distance of the parts of speech of adjacent sentences |   nan
+    Syntactic similarity of adjacent sentences                 |   nan
+    Ratio of nouns to verbs                                    |   0.50
     ```
 
 ## Parameters
