@@ -31,7 +31,9 @@ Raises:
         basic_stats_class = Basic
 
 
-    stats = Unadapted("The cat sat on the mat. A beautiful day came, and the extraordinary dog barked!")
+    stats = Unadapted(
+        "The cat sat on the mat. A beautiful day came, and the extraordinary dog barked!"
+    )
     stats.print_stats()
     ```
 
@@ -81,7 +83,7 @@ Every metric is a property of the object, computed on each access from `bs`, and
 
 | Metric | Language and readers | Range | Higher means |
 | :----- | :------------------- | :---- | :----------- |
-| [`forcast`](#forcast) | English technical texts, a grade | 20 and below | Harder |
+| [`forcast`](#forcast) | English technical texts, a grade | 5-20 | Harder |
 | [`linsear_write`](#linsear_write) | English, a grade | -1 and above | Harder |
 | [`powers_sumner_kearl`](#powers_sumner_kearl) | English primary school texts, a grade | Any | Harder |
 | [`eflaw`](#eflaw) | English for foreign learners | 1 and above | Harder |
@@ -106,7 +108,7 @@ Every metric is a property of the object, computed on each access from `bs`, and
 calc_forcast(n_monosyllable_words, n_words)
 ```
 
-The grade of Caylor et al. (1973) for technical texts: 20 minus a tenth of the monosyllabic words per 150 words; `nan` without words.
+The grade of Caylor et al. (1973) for technical texts: 20 minus a tenth of the monosyllabic words per 150 words, from 5 (every word monosyllabic) to 20; `nan` without words.
 
 $$
 \textrm{FORCAST} = 20 - \frac{150 \times \textrm{Monosyllabic words}}{10 \times \textrm{Words}}
@@ -210,7 +212,7 @@ $$
 
 <!-- --8<-- [start:calc_wiener_sachtextformel] -->
 ``` {.python .signature}
-calc_wiener_sachtextformel(n_polysyllable_words, n_long_words, n_monosyllable_words, n_words, n_sents, variant=1)
+calc_wiener_sachtextformel(n_complex, n_long_words, n_monosyllable_words, n_words, n_sents, variant=1)
 ```
 
 The four formulas of Bamberger and Vanecek (1984) for German non-fiction, a grade from 4 to 15, over the percentages of the words of three syllables or more (MS), of more than six letters (IW) and of one syllable (ES) and the mean sentence length (SL); `nan` without words or sentences. A variant that is not an integer from 1 to 4 raises `ParameterError`.
@@ -221,7 +223,7 @@ $$
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
-| `n_polysyllable_words` | `int` | - | Number of the words of three syllables or more |
+| `n_complex` | `int` | - | Number of the words of three syllables or more |
 | `n_long_words` | `int` | - | Number of the words of more than six letters |
 | `n_monosyllable_words` | `int` | - | Number of monosyllabic words |
 | `n_words` | `int` | - | Number of words |
@@ -271,7 +273,7 @@ $$
 calc_gulpease(n_letters, n_words, n_sents)
 ```
 
-The index of Lucisano and Piemontese (1988) for Italian, by letters rather than syllables: from 0, the hardest, to 100, the easiest; below 80 a text is hard for a reader of primary school, below 40 for a reader with a secondary education. `nan` without words.
+The index of Lucisano and Piemontese (1988) for Italian, by letters rather than syllables: about 0 for the hardest texts and 100 for the easiest, beyond them for extreme ones; below 80 a text is hard for a reader of primary school, below 40 for a reader with a secondary education. `nan` without words.
 
 $$
 \textrm{Gulpease} = 89 + \frac{300 \times \textrm{Sentences} - 10 \times \textrm{Letters}}{\textrm{Words}}
@@ -347,19 +349,19 @@ $$
 
 <!-- --8<-- [start:calc_elf] -->
 ``` {.python .signature}
-calc_elf(n_syllables, n_words, n_sents)
+calc_elf(n_syllables, n_syllabic_words, n_sents)
 ```
 
-The formula of Fang (1966) for texts read aloud: the syllables above one per word, per sentence; 12 and below is easy to listen to. `nan` without sentences.
+The formula of Fang (1966) for texts read aloud: the syllables above one per word, per sentence, a word without syllables (a number) adding none; 12 and below is easy to listen to. `nan` without sentences.
 
 $$
-\textrm{ELF} = \frac{\textrm{Syllables} - \textrm{Words}}{\textrm{Sentences}}
+\textrm{ELF} = \frac{\textrm{Syllables} - \textrm{Words of one syllable or more}}{\textrm{Sentences}}
 $$
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
 | `n_syllables` | `int` | - | Number of syllables |
-| `n_words` | `int` | - | Number of words |
+| `n_syllabic_words` | `int` | - | Number of the words of one syllable or more |
 | `n_sents` | `int` | - | Number of sentences |
 <!-- --8<-- [end:calc_elf] -->
 

@@ -17,6 +17,7 @@ from anyts.components import (
     ReadabilityStatsComponent,
     StatsComponent,
     StyleStatsComponent,
+    UnadaptedReadabilityStatsComponent,
 )
 from anyts.constants import MESSAGES
 from anyts.corpus import sentence_rhythm, split_windows
@@ -163,6 +164,10 @@ class OtherLayer(Layers):
 
 class OwnReadability(ReadabilityStatsComponent):
     stats_class = Readability
+    messages = OWN
+
+
+class OwnUnadapted(UnadaptedReadabilityStatsComponent):
     messages = OWN
 
 
@@ -440,6 +445,12 @@ CASES = [
         "extension_name",
         ParameterError,
         lambda: OwnReadability(spacy.blank("en"), "own_r", basic=5),
+    ),
+    ("no_basic_stats_class", SourceTypeError, lambda: OwnUnadapted(spacy.blank("en"), "own_u")),
+    (
+        "extension_name",
+        ParameterError,
+        lambda: OwnUnadapted(spacy.blank("en"), "own_u", basic=5),
     ),
     ("preset_type", ParameterError, lambda: OwnReadability(spacy.blank("en"), "own_r", preset=5)),
     (

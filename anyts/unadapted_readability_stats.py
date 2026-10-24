@@ -172,7 +172,7 @@ class UnadaptedReadabilityStats(Stats):
 
     @property
     def elf(self) -> float:
-        return calc_elf(self.bs.n_syllables, self.bs.n_words, self.bs.n_sents)
+        return calc_elf(self.bs.n_syllables, self.bs.count_words_by_syllables(1), self.bs.n_sents)
 
     @property
     def wheeler_smith(self) -> float:
@@ -185,7 +185,7 @@ def calc_forcast(n_monosyllable_words: int, n_words: int) -> float:
 
     Description:
         Caylor et al. (1973), for technical texts: 20 minus a tenth of the
-        monosyllabic words per 150 words
+        monosyllabic words per 150 words, from 5 (every word monosyllabic) to 20
 
     Arguments:
         n_monosyllable_words (int): Number of monosyllabic words
@@ -281,7 +281,7 @@ def calc_eflaw(n_mini_words: int, n_words: int, n_sents: int) -> float:
 
 
 def calc_wiener_sachtextformel(
-    n_polysyllable_words: int,
+    n_complex: int,
     n_long_words: int,
     n_monosyllable_words: int,
     n_words: int,
@@ -302,7 +302,7 @@ def calc_wiener_sachtextformel(
         4: 0.2744·MS + 0.2656·SL − 1.693
 
     Arguments:
-        n_polysyllable_words (int): Number of the words of three syllables or more
+        n_complex (int): Number of the words of three syllables or more
         n_long_words (int): Number of the words of more than six letters
         n_monosyllable_words (int): Number of monosyllabic words
         n_words (int): Number of words
@@ -329,7 +329,7 @@ def calc_wiener_sachtextformel(
         return nan
     ms, sl, iw, es, constant = _WIENER_COEFFICIENTS[variant]
     return (
-        ms * 100 * n_polysyllable_words / n_words
+        ms * 100 * n_complex / n_words
         + sl * n_words / n_sents
         + iw * 100 * n_long_words / n_words
         + es * 100 * n_monosyllable_words / n_words
@@ -378,8 +378,9 @@ def calc_gulpease(n_letters: int, n_words: int, n_sents: int) -> float:
 
     Description:
         Lucisano and Piemontese (1988), for Italian: by letters, not syllables,
-        from 0 (hardest) to 100 (easiest); below 80 is hard for a reader of
-        primary school, below 40 for a reader with a secondary education
+        about 0 for the hardest texts and 100 for the easiest; below 80 is hard
+        for a reader of primary school, below 40 for a reader with a secondary
+        education
 
     Arguments:
         n_letters (int): Number of the letters of the words
@@ -444,17 +445,18 @@ def calc_strain_index(n_syllables: int, n_sents: int) -> float:
     return safe_divide(3 * n_syllables, 10 * n_sents, nan)
 
 
-def calc_elf(n_syllables: int, n_words: int, n_sents: int) -> float:
+def calc_elf(n_syllables: int, n_syllabic_words: int, n_sents: int) -> float:
     """
     Computing the easy listening formula (ELF)
 
     Description:
         Fang (1966), for texts read aloud: the syllables above one per word, per
-        sentence; 12 and below is easy to listen to
+        sentence; a word without syllables (a number) adds none. 12 and below is
+        easy to listen to
 
     Arguments:
         n_syllables (int): Number of syllables
-        n_words (int): Number of words
+        n_syllabic_words (int): Number of the words of one syllable or more
         n_sents (int): Number of sentences
 
     Returns:
@@ -465,7 +467,7 @@ def calc_elf(n_syllables: int, n_words: int, n_sents: int) -> float:
         >>> calc_elf(150, 100, 10)
         5.0
     """
-    return safe_divide(n_syllables - n_words, n_sents, nan)
+    return safe_divide(n_syllables - n_syllabic_words, n_sents, nan)
 
 
 def calc_wheeler_smith(n_polysyllable_words: int, n_sents: int) -> float:

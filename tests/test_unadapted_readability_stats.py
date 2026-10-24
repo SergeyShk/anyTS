@@ -5,7 +5,7 @@ import pytest
 import spacy
 
 from anyts.basic_stats import BasicStats
-from anyts.components import UnadaptedReadabilityStatsComponent
+from anyts.components import BasicStatsComponent, UnadaptedReadabilityStatsComponent
 from anyts.constants import MESSAGES, UNADAPTED_READABILITY_STATS_DESC
 from anyts.exceptions import ParameterError, SourceError, SourceTypeError
 from anyts.extractors import SentsExtractor
@@ -76,7 +76,9 @@ def test_formulas_over_the_basic_statistics(stats):
     assert stats.gulpease == pytest.approx(89 + (300 * sents - 10 * letters) / words)
     assert stats.fucks == syllables / sents
     assert stats.strain_index == pytest.approx(syllables / sents * 3 / 10)
-    assert stats.elf == (syllables - words) / sents
+    # 2026 has no syllables to take one away from
+    assert stats.elf == (syllables - by_syllables(1)) / sents
+    assert Unadapted("We met in 1990, 2000, 2010 and 2020.").elf == 0.0
     assert stats.wheeler_smith == pytest.approx(words / sents * two / words * 10)
     # 2026 has no letters and is no mini word
     assert 0 in bs.c_letters
@@ -107,6 +109,8 @@ def test_linsear_write_above_and_below_20():
     # (80 + 3 * 20) / 5 = 28 is halved, (8 + 3 * 2) / 2 = 7 loses 2 first
     assert calc_linsear_write(80, 20, 5) == 14.0
     assert calc_linsear_write(8, 2, 2) == 2.5
+    # 20 itself loses 2
+    assert calc_linsear_write(20, 0, 1) == 9.0
 
 
 @pytest.mark.parametrize("variant", [0, 5, 1.5, "1"])
@@ -152,3 +156,37 @@ def test_component():
     doc = nlp(TEXT)
     Own(nlp, "anyts_test_unadapted")(doc)
     assert doc._.anyts_test_unadapted.fucks == Unadapted(TEXT).fucks
+
+
+def test_component_reuses_the_basic_statistics():
+    nlp = spacy.blank("en")
+
+    class Basic(BasicStatsComponent):
+        stats_class = Stats
+
+    class Own(UnadaptedReadabilityStatsComponent):
+        stats_class = Unadapted
+        basic_factory = "anyts_test_basic_unadapted"
+
+    doc = nlp(TEXT)
+    Basic(nlp, "anyts_test_basic_unadapted")(doc)
+    Own(nlp, "anyts_test_reused", basic="anyts_test_basic_unadapted")(doc)
+    assert doc._.anyts_test_reused.bs is doc._.anyts_test_basic_unadapted
+    # The core class reads the basic statistics of a library, not a document
+    UnadaptedReadabilityStatsComponent(nlp, "anyts_test_core", basic="anyts_test_basic_unadapted")(
+        doc
+    )
+    assert doc._.anyts_test_core.get_stats() == doc._.anyts_test_reused.get_stats()
+    with pytest.raises(SourceError, match="anyts_test_basic_unadapted"):
+        Own(nlp, "anyts_test_missing", basic="anyts_test_none")(nlp(TEXT))
+
+
+def test_component_errors():
+    nlp = spacy.blank("en")
+    message = MESSAGES["no_basic_stats_class"].format(cls="UnadaptedReadabilityStats")
+    with pytest.raises(SourceTypeError, match=f"^{re.escape(message)}$"):
+        UnadaptedReadabilityStatsComponent(nlp, "anyts_test_unadapted_core")
+    with pytest.raises(
+        ParameterError, match=r"^The name of an extension must be a string, not int$"
+    ):
+        UnadaptedReadabilityStatsComponent(nlp, "anyts_test_unadapted_core", basic=5)

@@ -81,7 +81,7 @@ class PhonStatsComponent(anyts.components.PhonStatsComponent):
     stats_class = PhonStats  # the subclass of the library
 ```
 
-The class of the core is the default of `stats_class`. Where it cannot read a `Doc` - an abstract class (`BasicStats`, `LexicalStats`, `PhonStats`), `ReadabilityStats` without the `basic_stats_class` of a library, none at all (`DiversityStatsComponent`, the class of the core taking a list of words) - the component cannot be added until the library gives its class.
+The class of the core is the default of `stats_class`. Where it cannot read a `Doc` - an abstract class (`BasicStats`, `LexicalStats`, `PhonStats`), `ReadabilityStats` and `UnadaptedReadabilityStats` without the `basic_stats_class` of a library, none at all (`DiversityStatsComponent`, the class of the core taking a list of words) - the component cannot be added until the library gives its class.
 <!-- --8<-- [end:class-components] -->
 
 | Component | Class of statistics | Parameters |
@@ -95,7 +95,7 @@ The class of the core is the default of `stats_class`. Where it cannot read a `D
 | [`SyntaxStatsComponent`](#SyntaxStatsComponent) | `SyntaxStats` | - |
 | [`CohesionStatsComponent`](#CohesionStatsComponent) | `CohesionStats` | - |
 | [`MorphStatsComponent`](#MorphStatsComponent) | `MorphStats` | - |
-| [`UnadaptedReadabilityStatsComponent`](#UnadaptedReadabilityStatsComponent) | set by a library | - |
+| [`UnadaptedReadabilityStatsComponent`](#UnadaptedReadabilityStatsComponent) | `UnadaptedReadabilityStats` | `basic` |
 
 ### Basic statistics { #BasicStatsComponent }
 
@@ -223,11 +223,21 @@ MorphStatsComponent(nlp, name)
 ### Unadapted readability formulas { #UnadaptedReadabilityStatsComponent }
 
 ``` {.python .signature}
-UnadaptedReadabilityStatsComponent(nlp, name)
+UnadaptedReadabilityStatsComponent(nlp, name, basic=None)
 ```
 
 <!-- --8<-- [start:UnadaptedReadabilityStatsComponent] -->
-`UnadaptedReadabilityStatsComponent` puts the readability formulas of other languages into the extension; its `stats_class` is a subclass of `UnadaptedReadabilityStats` of a library with its `basic_stats_class`.
+`UnadaptedReadabilityStatsComponent` puts the readability formulas of other languages into the extension, computed from the document or, with `basic`, from the basic statistics another component put into it. A library sets `basic_factory`, as for `ReadabilityStatsComponent`.
+
+| Parameter | Type | Default | Description |
+| :-------- | :--- | :------ | :---------- |
+| `basic` | `str` | `None` | Extension of a component of the basic statistics to reuse instead of computing them again |
+
+Raises:
+
+- `ParameterError` - a `stats_class` that is not concrete, an extension not named by a string;
+- `SourceTypeError` - a class without `basic_stats_class` and no `basic`;
+- `SourceError` - a document whose extension `basic` holds no basic statistics of the class.
 <!-- --8<-- [end:UnadaptedReadabilityStatsComponent] -->
 
 ## Sentences after blank lines { #start_sents_after_blank_lines }
