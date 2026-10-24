@@ -101,6 +101,8 @@ SYNTAX_STATS_DESC = {
     "split_predicates_per_sent": "Split predicates per sentence",
     "p_preverbal_subjects": "Share of nominal subjects before their head",
     "p_preverbal_objects": "Share of nominal objects before their head",
+    "pos_edit_distance": "Edit distance of the parts of speech of adjacent sentences",
+    "syntax_similarity": "Syntactic similarity of adjacent sentences",
     "noun_verb_ratio": "Ratio of nouns to verbs",
 }
 
