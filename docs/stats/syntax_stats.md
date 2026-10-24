@@ -133,8 +133,8 @@ Every metric is an attribute of the object, computed when it is created, and `ge
 | [`split_predicates_per_sent`](#constructions) | Split predicates per sentence | 0 and above | More split predicates |
 | [`p_preverbal_subjects`](#word_order) | Share of the nominal subjects before their head | 0-1, `nan` without nominal subjects | Fewer inverted subjects |
 | [`p_preverbal_objects`](#word_order) | Share of the nominal direct objects before their head | 0-1, `nan` without nominal objects | More fronted objects |
-| [`pos_edit_distance`](#similarity) | Mean edit distance of the parts of speech of adjacent sentences over the longer one | 0-1, `nan` for one sentence | Less alike sentences |
-| [`syntax_similarity`](#similarity) | Mean similarity of the dependency triples of adjacent sentences | 0-1, `nan` for one sentence | More alike sentences |
+| [`pos_edit_distance`](#similarity) | Mean edit distance of the parts of speech of adjacent sentences over the longer one | 0-1, `nan` for one sentence or without parts of speech | Less alike sentences |
+| [`syntax_similarity`](#similarity) | Mean similarity of the dependency triples of adjacent sentences | 0-1, `nan` for one sentence or without parts of speech | More alike sentences |
 | [`noun_verb_ratio`](#noun_verb_ratio) | Ratio of the nouns to the verb forms | 0 and above, `nan` without verb forms | A more nominal style |
 <!-- --8<-- [end:SyntaxStats-metrics] -->
 
@@ -491,7 +491,7 @@ $$
 { .metric-meta }
 
 <!-- --8<-- [start:SyntaxStats-similarity] -->
-How alike the structures of two adjacent sentences are, averaged over the $S - 1$ pairs. `pos_edit_distance` is the edit distance of the parts of speech of the words (SYNMEDpos of Coh-Metrix) over the length $n$ of the longer sentence of the pair, `calc_edit_distance`. `syntax_similarity` is the similarity of the multisets of the dependency triples $T$ of the two sentences (`dependency_triples`, `calc_multiset_similarity`), in the manner of SYNSTRUT of Coh-Metrix, which compares the nodes of phrase-structure trees.
+How alike the structures of two adjacent sentences are, averaged over the $S - 1$ pairs. `pos_edit_distance` is the edit distance of the parts of speech $P_s$ of the words of the sentences (SYNMEDpos of Coh-Metrix) over the length $n$ of the longer sentence of the pair, `calc_edit_distance`. `syntax_similarity` is the similarity of the multisets of the dependency triples $T$ of the two sentences (`dependency_triples`, `calc_multiset_similarity`), in the manner of SYNSTRUT of Coh-Metrix, which compares the nodes of phrase-structure trees. Both are `nan` for a `Doc` without parts of speech.
 
 $$
 \frac{1}{S - 1} \sum_{s=1}^{S-1} \frac{\textrm{lev}(P_s, P_{s+1})}{\max(n_s, n_{s+1})}, \quad
@@ -504,7 +504,7 @@ $$
 dependency_triples(tokens, join_hyphens=False)
 ```
 
-The dependency triples of the words of a sentence (`get_words`), in their order: the part of speech of the head of a word, its relation without a subtype (`base_dep`) and its own part of speech, such as `("NOUN", "amod", "ADJ")` for *a red house*. The head of the sentence gives an empty head and the relation `root`, whatever its label.
+The dependency triples of the words of a sentence (`get_words`), in their order: the part of speech of the head of a word - the nearest word above it through punctuation - its relation without a subtype (`base_dep`) and its own part of speech, such as `("NOUN", "amod", "ADJ")` for *a red house*. The head of the sentence, and a word with no word above it, give an empty head and the relation `root`, whatever its label.
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
@@ -517,7 +517,7 @@ The dependency triples of the words of a sentence (`get_words`), in their order:
 calc_edit_distance(sents)
 ```
 
-The mean edit distance of the items of adjacent sentences: the Levenshtein distance of every two - the fewest insertions, deletions and substitutions that turn one into the other - over the number of the items of the longer one, 0 for the same sequences and 1 for ones with no item in common in place; `nan` for fewer than two sentences.
+The mean edit distance of the items of adjacent sentences: the Levenshtein distance of every two - the fewest insertions, deletions and substitutions that turn one into the other - over the number of the items of the longer one, 0 for the same sequences and 1 for ones with no item in common; `nan` for fewer than two sentences.
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
@@ -531,7 +531,7 @@ Sentences that are not a list of lists raise `SourceTypeError`.
 calc_multiset_similarity(sents)
 ```
 
-The mean similarity of the multisets of the items of adjacent sentences: the weighted Jaccard similarity of every two - the items they share, each as many times as the sentence with fewer of them has it, over the items of both, each as many times as the sentence with more of them has it - 1 for the same multisets and for two empty ones, 0 for disjoint ones; `nan` for fewer than two sentences.
+The mean similarity of the multisets of the items of adjacent sentences: the weighted Jaccard similarity of every two - the items they share, each as many times as the sentence with fewer of them has it, over the items of both, each as many times as the sentence with more of them has it - 1 for the same multisets and for two empty ones, 0 for disjoint ones; `nan` for fewer than two sentences. A mapping is read by its keys, as a set.
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |

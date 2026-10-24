@@ -326,11 +326,17 @@ class SyntaxStats(Stats):
         self.p_preverbal_objects = safe_divide(
             self.n_preverbal_objects, self.n_nominal_objects, nan
         )
-        self.pos_edit_distance = calc_edit_distance(
-            [[token.pos_ for token in sent] for sent in sents]
+        # Without the parts of speech the sequences would differ only by their lengths
+        tagged = doc.has_annotation("POS")
+        self.pos_edit_distance = (
+            calc_edit_distance([[token.pos_ for token in sent] for sent in sents])
+            if tagged
+            else nan
         )
-        self.syntax_similarity = calc_multiset_similarity(
-            [[_word_triple(token) for token in sent] for sent in sents]
+        self.syntax_similarity = (
+            calc_multiset_similarity([[_word_triple(token) for token in sent] for sent in sents])
+            if tagged
+            else nan
         )
         self.noun_verb_ratio = safe_divide(self.n_nouns, self.n_verbs, nan)
 
@@ -587,11 +593,15 @@ def _blank_vocab(lang: str) -> Vocab:
 
 
 def _word_triple(token: Token) -> tuple[str, str, str]:
-    """Dependency triple of a word: the part of speech of its head, its base relation and its
-    own part of speech; the head of the sentence has an empty head and the relation root"""
-    if is_root(token):
-        return ("", "root", token.pos_)
-    return (token.head.pos_, base_dep(token), token.pos_)
+    """Dependency triple of a word: the part of speech of its head, the nearest word above it
+    through punctuation, its base relation and its own part of speech; a word with no word
+    above it has an empty head and the relation root"""
+    head = token
+    while not is_root(head):
+        head = head.head
+        if is_word(head):
+            return (head.pos_, base_dep(token), token.pos_)
+    return ("", "root", token.pos_)
 
 
 def get_words(tokens: Iterable[Token], join_hyphens: bool = False) -> list[Token]:
@@ -1534,10 +1544,11 @@ def dependency_triples(
     Getting the dependency triples of the words of a sentence
 
     Description:
-        For every word (get_words) the part of speech of its head, its relation
-        without a subtype (base_dep) and its own part of speech: (NOUN, amod,
-        ADJ) for a red house; the head of the sentence gives an empty head and
-        the relation root, whatever its label
+        For every word (get_words) the part of speech of its head, the nearest
+        word above it through punctuation, its relation without a subtype
+        (base_dep) and its own part of speech: (NOUN, amod, ADJ) for a red house;
+        the head of the sentence, and a word with no word above it, give an empty
+        head and the relation root, whatever its label
 
     Arguments:
         tokens (Doc|Span|list[Token]): Sequence of tokens
@@ -1571,8 +1582,8 @@ def calc_edit_distance(sents: Sequence[Sequence[Hashable]]) -> float:
         The Levenshtein distance of the items of every two adjacent sentences -
         the fewest insertions, deletions and substitutions that turn one into the
         other - over the number of the items of the longer one, averaged over
-        the pairs: 0 for the same sequences, 1 for ones with no item in common in
-        place. For the parts of speech it is the SYNMEDpos of Coh-Metrix
+        the pairs: 0 for the same sequences, 1 for ones with no item in common.
+        For the parts of speech it is the SYNMEDpos of Coh-Metrix
 
     Arguments:
         sents (list[list]): Items of every sentence, such as its parts of speech
@@ -1605,7 +1616,7 @@ def _edit_distance(first: Sequence[Hashable], second: Sequence[Hashable]) -> int
     if len(first) < len(second):
         first, second = second, first
     size = len(first)
-    if not second:
+    if not len(second):
         return size
     full = (1 << size) - 1
     last = 1 << (size - 1)
@@ -1639,7 +1650,8 @@ def calc_multiset_similarity(sents: Sequence[Iterable[Hashable]]) -> float:
         the sentence with more of them has it - averaged over the pairs: 1 for
         the same multisets, 0 for disjoint ones, 1 for two empty ones. For the
         dependency triples (dependency_triples) it is the syntactic similarity of
-        adjacent sentences in the manner of the SYNSTRUT of Coh-Metrix
+        adjacent sentences in the manner of the SYNSTRUT of Coh-Metrix. A mapping
+        is read by its keys, as a set
 
     Arguments:
         sents (list[list]): Items of every sentence, such as its dependency triples
@@ -1658,7 +1670,7 @@ def calc_multiset_similarity(sents: Sequence[Iterable[Hashable]]) -> float:
     check_sequence(sents, "sentences")
     for sent in sents:
         check_sequence(sent, "items of a sentence", ordered=False)
-    counts = [Counter(sent) for sent in sents]
+    counts = [Counter(iter(sent)) for sent in sents]
     return safe_mean([_multiset_similarity(first, second) for first, second in pairwise(counts)])
 
 

@@ -1084,6 +1084,59 @@ def test_multiset_similarity():
             calc_multiset_similarity(sents)
 
 
+def test_similarity_of_arrays_and_mappings():
+    import numpy as np
+    import pandas as pd
+
+    tags = [np.array(["DET", "NOUN"]), np.array(["DET", "ADJ", "NOUN"])]
+    assert calc_edit_distance(tags) == calc_edit_distance([list(tag) for tag in tags]) == 1 / 3
+    assert calc_edit_distance([pd.Series([0, 5]), pd.Series([0])]) == 0.5
+    # A mapping is read by its keys, as calc_overlap reads it
+    assert calc_multiset_similarity([{"a": 1, "b": 5}, ["a", "b"]]) == 1.0
+    assert calc_multiset_similarity([{"a": "x"}, ["a"]]) == 1.0
+
+
+def test_triples_through_punctuation_and_hyphens():
+    # use « water »: water hangs on the opening quote, the quote on use
+    doc = parse(
+        ["use", "\u00ab", "water", "\u00bb"],
+        [0, 0, 1, 0],
+        ["ROOT", "punct", "nmod", "punct"],
+        pos=["NOUN", "PUNCT", "NOUN", "PUNCT"],
+    )
+    assert doc[2].head.i == 1
+    assert dependency_triples(doc) == [("", "root", "NOUN"), ("NOUN", "nmod", "NOUN")]
+    # A word under a mark at the root has no word above it
+    marked = parse(["!", "Yes"], [0, 0], ["ROOT", "discourse"], pos=["PUNCT", "INTJ"])
+    assert dependency_triples(marked) == [("", "root", "INTJ")]
+    # A hyphenated word gives one triple by the part that holds its relation
+    hyphen = parse(
+        ["a", "well", "-", "known", "poet"],
+        [4, 3, 3, 4, 4],
+        ["det", "advmod", "punct", "amod", "ROOT"],
+        spaces=[True, False, False, True, True],
+        pos=["DET", "ADV", "PUNCT", "ADJ", "NOUN"],
+    )
+    assert dependency_triples(hyphen, join_hyphens=True) == [
+        ("NOUN", "det", "DET"),
+        ("NOUN", "amod", "ADJ"),
+        ("", "root", "NOUN"),
+    ]
+    assert len(dependency_triples(hyphen)) == 4
+
+
+def test_similarity_without_parts_of_speech():
+    doc = two_sents()
+    bare = Doc(
+        VOCAB,
+        words=[token.text for token in doc],
+        heads=[token.head.i for token in doc],
+        deps=[token.dep_ for token in doc],
+    )
+    stats = SyntaxStats(bare)
+    assert isnan(stats.pos_edit_distance) and isnan(stats.syntax_similarity)
+
+
 def test_similarity_of_one_sentence(house):
     stats = SyntaxStats(house)
     assert isnan(stats.pos_edit_distance) and isnan(stats.syntax_similarity)
