@@ -94,6 +94,7 @@ Raises:
 | :-------- | :--- | :---------- |
 | `words`, `lemmas` | `tuple[tuple[str]]` | Words and lemmas of every sentence with words |
 | `n_sents`, `n_words` | `int` | Numbers of the sentences with words and of the words |
+| `n_paragraphs` | `int` | Number of the paragraphs, the parts of the text between blank lines |
 | `n_nouns`, `n_pronouns`, `n_demonstratives`, `n_content_words` | `int` | Numbers of the words by kind |
 | `n_given` | `int` | Number of the content words whose lemma was used before |
 | `n_connectors`, `connector_spans`, `c_connectors` | `int`, `tuple[Connector]`, `dict[str, int]` | Number of the connectors, their occurrences and their number by connector |
@@ -129,6 +130,12 @@ Every metric is an attribute of the object, computed when it is created; `get_st
 | [`content_overlap_all`](#overlap) | Share of all the pairs sharing a content word | 0-1, `nan` for one sentence | The whole text tied tighter |
 | [`content_overlap_prop_adjacent`](#proportional_overlap) | Mean share of the shared content words (Dice) in the adjacent pairs | 0-1, `nan` for one sentence | More words shared by neighbours |
 | [`content_overlap_prop_all`](#proportional_overlap) | Mean share of the shared content words (Dice) in all the pairs | 0-1, `nan` for one sentence | More words shared across the text |
+| [`noun_overlap_2_sent`](#forward_overlap) | Share of the nouns of a sentence repeated in one of the next two | 0-1, `nan` for fewer than three sentences | More nouns carried on |
+| [`argument_overlap_2_sent`](#forward_overlap) | Share of the arguments of a sentence repeated in one of the next two | 0-1, `nan` for fewer than three sentences | More arguments carried on |
+| [`content_overlap_2_sent`](#forward_overlap) | Share of the content words of a sentence repeated in one of the next two | 0-1, `nan` for fewer than three sentences | More content words carried on |
+| [`noun_overlap_para`](#forward_overlap) | Share of the nouns of a paragraph repeated in the next one | 0-1, `nan` for one paragraph | More nouns carried to the next paragraph |
+| [`argument_overlap_para`](#forward_overlap) | Share of the arguments of a paragraph repeated in the next one | 0-1, `nan` for one paragraph | More arguments carried to the next paragraph |
+| [`content_overlap_para`](#forward_overlap) | Share of the content words of a paragraph repeated in the next one | 0-1, `nan` for one paragraph | More content words carried to the next paragraph |
 | [`p_pronouns`](#pronouns) | Share of the pronouns among the words | 0-1 | More reference by pronouns |
 | [`pronoun_noun_ratio`](#pronouns) | Ratio of the pronouns to the nouns | 0 and above, `nan` without nouns | More pronouns per noun |
 | [`p_demonstratives`](#pronouns) | Share of the demonstratives among the words | 0-1 | More pointing back |
@@ -209,6 +216,52 @@ $$
 | `first` | `frozenset[str]` | - | First set |
 | `second` | `frozenset[str]` | - | Second set |
 <!-- --8<-- [end:dice] -->
+
+</div>
+
+<div class="metric-card" markdown>
+
+### Overlap with the next sentences and paragraphs { #forward_overlap }
+
+`noun_overlap_2_sent` · `argument_overlap_2_sent` · `content_overlap_2_sent` · `noun_overlap_para` · `argument_overlap_para` · `content_overlap_para` · [TAACO](https://doi.org/10.3758/s13428-015-0651-7)
+{ .metric-meta }
+
+<!-- --8<-- [start:CohesionStats-forward_overlap] -->
+The adjacent overlap of TAACO, by the lemmas of the nouns, of the arguments and of the content words: the share of the distinct lemmas of a sentence repeated in one of the next two sentences (`adjacent_overlap_2_*_sent`), and of a paragraph repeated in the next paragraph (`adjacent_overlap_*_para`), over all the sentences or paragraphs that have them (`calc_forward_overlap`). Unlike the binary overlap, a pair of segments counts by the share of the lemmas they share. A paragraph is a part of the text between blank lines: a sentence whose first word carries `paragraph_start` opens one.
+<!-- --8<-- [end:CohesionStats-forward_overlap] -->
+
+<!-- --8<-- [start:calc_forward_overlap] -->
+``` {.python .signature}
+calc_forward_overlap(sets, span=1)
+```
+
+The share of the elements of a segment repeated in the next ones: the distinct elements of every segment with `span` segments after it that one of these segments holds, over the distinct elements of those segments; `nan` for no more segments than `span` or for segments without elements.
+
+$$
+\frac{\sum_{i=1}^{n-k} |A_i \cap (A_{i+1} \cup \dots \cup A_{i+k})|}{\sum_{i=1}^{n-k} |A_i|}
+$$
+
+| Parameter | Type | Default | Description |
+| :-------- | :--- | :------ | :---------- |
+| `sets` | `list[set[str]]` | - | Elements of every segment |
+| `span` | `int` | `1` | Number $k$ of the next segments a segment is compared with |
+
+Segments that are a string, a `Doc`, an iterator or a segment that is not a list of strings raise `SourceTypeError`, a span that is not an integer above 0 `ParameterError`.
+<!-- --8<-- [end:calc_forward_overlap] -->
+
+=== "Code"
+
+    ``` python
+    from anyts.cohesion_stats import calc_forward_overlap
+
+    calc_forward_overlap([{"cat", "mat"}, {"dog"}, {"cat"}], span=2)
+    ```
+
+=== "Result"
+
+    ```
+    0.5
+    ```
 
 </div>
 
@@ -433,7 +486,7 @@ A language library subclasses `CohesionStats`. By default the words and their fe
 
 | Hook | Kind | Description |
 | :--- | :--- | :---------- |
-| `analyze(source)` | method | Words of the sentences of a source as `CohesionWord`: the word, its lemma, its part of speech, whether it is a noun, a pronoun, a demonstrative, an argument and a content word, its tense, mood and aspect, whether a punctuation mark stands before it (`break_before`, which the rules of the connectors do not read through) and whether no connector starts at it (`connector_blocked`, by a rule of the parse such as an *if* of an indirect question); by default those of a `Doc`, sentence by sentence (`doc_units`), with the features of `word_info`; a library that reads a string or a `Doc` without these annotations overrides it |
+| `analyze(source)` | method | Words of the sentences of a source as `CohesionWord`: the word, its lemma, its part of speech, whether it is a noun, a pronoun, a demonstrative, an argument and a content word, its tense, mood and aspect, whether a punctuation mark stands before it (`break_before`, which the rules of the connectors do not read through) whether no connector starts at it (`connector_blocked`, by a rule of the parse such as an *if* of an indirect question) and whether it opens a paragraph (`paragraph_start`, read on the first word of a sentence); by default those of a `Doc`, sentence by sentence (`doc_units`), with the features of `word_info`; the default marks the sentences after a blank line of the `Doc`; a library that reads a string or a `Doc` without these annotations overrides it |
 | `doc_units(doc)` | method | Words of the sentences of a `Doc` as lists of tokens: by its boundaries, or by the extractor over its text (`split_doc_units` of `anyts.utils`) |
 | `word_info(unit)` | method | Features of a word of a `Doc`; by default a noun is `NOUN` or `PROPN`, a pronoun `PRON` or a possessive, demonstrative or personal determiner, a demonstrative carries `PronType=Dem`, an argument is `NOUN`, `PROPN` or `PRON`, a content word one of `anyts.constants.CONTENT_UD_POS` and no demonstrative, and the tense, the mood and the aspect are the features `Tense`, `Mood` and `Aspect`; a library sets `connector_blocked` where its parse rules a connector out |
 | `load_connectors()` | class method | Dictionary of the connectors of the language, class and kind by connector; empty by default |

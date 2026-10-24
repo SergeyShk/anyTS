@@ -22,6 +22,7 @@ from anyts.cohesion_stats import (
     Overlap,
     _count_sharing_pairs,
     _sum_dice,
+    calc_forward_overlap,
     calc_overlap,
     calc_overlaps,
     calc_proportional_overlap,
@@ -617,6 +618,78 @@ def test_cohesion_stats_metrics():
     assert values["temporal_cohesion"] == 0.75
     assert stats.mood_repetition == 1.0
     assert all(values[name] == 0 for name in values if name.startswith("connectors"))
+    # Only the first sentence has two after it: cat of cat, mat; of cat, mat; of cat, sit, mat
+    assert (values["noun_overlap_2_sent"], values["argument_overlap_2_sent"]) == (0.5, 0.5)
+    assert values["content_overlap_2_sent"] == 1 / 3
+    # The text is one paragraph
+    assert stats.n_paragraphs == 1
+    assert all(isnan(values[f"{name}_overlap_para"]) for name in ("noun", "argument", "content"))
+
+
+def test_forward_overlap():
+    sets = [{"cat", "mat"}, {"dog"}, {"cat"}, {"dog", "mat"}]
+    # No segment shares an element with the next; cat of the first is in the third, dog of
+    # the second in the fourth
+    assert calc_forward_overlap(sets) == 0.0
+    assert calc_forward_overlap(sets, 2) == 2 / 3
+    assert calc_forward_overlap(sets, 3) == 1.0
+    assert isnan(calc_forward_overlap(sets, 4)) and isnan(calc_forward_overlap([]))
+    assert isnan(calc_forward_overlap([set(), {"cat"}]))
+    assert calc_forward_overlap([["cat", "cat"], ["cat"]]) == 1.0
+    for span in (0, -1):
+        with pytest.raises(ParameterError, match=r"^The span must be greater than 0"):
+            calc_forward_overlap(sets, span)
+    with pytest.raises(ParameterError):
+        calc_forward_overlap(sets, 1.5)
+    with pytest.raises(SourceTypeError):
+        calc_forward_overlap("cat")
+
+
+def paragraph_doc(gap="\n\n"):
+    # The cat slept . <gap> The cat ate . The dog ran .
+    words = ["The", "cat", "slept", ".", gap, "The", "cat", "ate", ".", "The", "dog", "ran", "."]
+    pos = ["DET", "NOUN", "VERB", "PUNCT", "SPACE", *["DET", "NOUN", "VERB", "PUNCT"] * 2]
+    lemmas = [word.lower() for word in words]
+    spaces = [True, True, False, True, False, True, True, False, True, True, True, False, False]
+    starts = [i in (0, 5, 9) for i in range(len(words))]
+    return Doc(VOCAB, words=words, spaces=spaces, pos=pos, lemmas=lemmas, sent_starts=starts)
+
+
+def test_paragraphs_between_blank_lines():
+    stats = CohesionStats(paragraph_doc())
+    assert stats.n_paragraphs == 2
+    # The cat of the first paragraph is repeated in the second, the verbs are not
+    assert (stats.noun_overlap_para, stats.content_overlap_para) == (1.0, 0.5)
+    first = [word.paragraph_start for sent in stats.analyze(paragraph_doc()) for word in sent[:1]]
+    assert first == [False, True, False]
+    # A line break alone starts no paragraph, nor does a blank line inside a sentence
+    assert CohesionStats(paragraph_doc("\n")).n_paragraphs == 1
+    inside = paragraph_doc()
+    inside[5].is_sent_start = False
+    assert CohesionStats(inside).n_paragraphs == 1
+    # The sentences of an extractor over the text keep the paragraphs
+    assert CohesionStats(paragraph_doc(), sents_extractor=SentsExtractor()).n_paragraphs == 2
+
+
+def test_paragraphs_of_a_library():
+    class Marked(CohesionStats):
+        def analyze(self, source):
+            return [
+                [CohesionWord("cats", "cat", "NOUN", True, False, False, True, True)],
+                [
+                    CohesionWord(
+                        "cats", "cat", "NOUN", True, False, False, True, True, paragraph_start=True
+                    ),
+                    # A mark on a word inside a sentence is not read
+                    CohesionWord(
+                        "dogs", "dog", "NOUN", True, False, False, True, True, paragraph_start=True
+                    ),
+                ],
+            ]
+
+    stats = Marked(text_doc())
+    assert stats.n_paragraphs == 2 and stats.noun_overlap_para == 1.0
+    assert CohesionWord("a", "a", None, False, False, False, False, False).paragraph_start is False
 
 
 def test_connectors():

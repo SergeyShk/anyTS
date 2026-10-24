@@ -66,7 +66,7 @@
 
     ---
 
-    Measure the cohesion between sentences in the manner of Coh-Metrix - the overlap of nouns, arguments and content words, adjacent and over all pairs, Dice, givenness, the repetition of the tense and the aspect - and find the connectors of a dictionary with the context rules of a language, with the words and the features of a language library
+    Measure the cohesion between sentences in the manner of Coh-Metrix - the overlap of nouns, arguments and content words, adjacent and over all pairs, Dice, with the next two sentences and between paragraphs in the manner of TAACO, givenness, the repetition of the tense and the aspect - and find the connectors of a dictionary with the context rules of a language, with the words and the features of a language library
 
     [:octicons-arrow-right-24: Cohesion statistics](stats/cohesion_stats.md)
 
