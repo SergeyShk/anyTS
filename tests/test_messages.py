@@ -23,6 +23,7 @@ from anyts.corpus import sentence_rhythm, split_windows
 from anyts.diversity_stats import DiversityStats, calc_ttr, calc_windowed, check_params
 from anyts.exceptions import ParameterError, SourceError, SourceTypeError, UnknownStatError
 from anyts.lexical_stats import LexicalStats, LexicalWord
+from anyts.morph_stats import MorphStats
 from anyts.phon_stats import PhonStats
 from anyts.readability_stats import ReadabilityStats, calc_reading_time
 from anyts.style_stats import StyleStats
@@ -115,6 +116,10 @@ class Syntax(SyntaxStats):
 
 
 class Cohesion(CohesionStats):
+    messages = OWN
+
+
+class Morph(MorphStats):
     messages = OWN
 
 
@@ -295,6 +300,26 @@ CASES = [
     ("no_lemmas", SourceError, lambda: Lemmas(PARSED)),
     ("source_type", SourceTypeError, lambda: Cohesion("Yes")),
     ("source_span", SourceTypeError, lambda: Cohesion(PARSED[:1])),
+    ("source_type", SourceTypeError, lambda: Morph("Yes")),
+    ("source_span", SourceTypeError, lambda: Morph(PARSED[:1])),
+    ("no_pos", SourceError, lambda: Morph(PARSED)),
+    ("no_words", SourceError, lambda: Morph(Doc(VOCAB, words=["."], pos=["PUNCT"]))),
+    (
+        "hook_morph_words",
+        SourceTypeError,
+        lambda: hooked(Morph, analyze=lambda self, source: ["Yes"])(PARSED),
+    ),
+    ("morph_features", ParameterError, lambda: type("Bad", (Morph,), {"feature_names": ["case"]})),
+    (
+        "morph_stats_desc",
+        ParameterError,
+        lambda: type("Bad", (Morph,), {"feature_names": {"case": "Case"}}),
+    ),
+    (
+        "morph_values_desc",
+        ParameterError,
+        lambda: type("Bad", (Morph,), {"values_desc": [5]}),
+    ),
     ("no_stats_class", ParameterError, lambda: BareComponent(spacy.blank("en"), "own_bare")),
     (
         "hook_doc",

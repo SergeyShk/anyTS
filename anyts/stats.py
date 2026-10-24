@@ -110,14 +110,9 @@ class Stats:
     def print_stats(self) -> None:
         """Printing the computed statistics of stats_desc with descriptions"""
         stats = self.get_stats()
-        rows = [(desc, _format(stats[stat])) for stat, desc in self.stats_desc.items()]
-        stat_header, value_header = self.stats_headers
-        left = max([len(stat_header), *(len(desc) for desc, _ in rows)]) + 1
-        right = max([8, len(value_header), *(len(value) for _, value in rows)]) + 2
-        print(f"{stat_header:^{left}}|{value_header:^{right}}")
-        print("-" * (left + 1 + right))
-        for desc, value in rows:
-            print(f"{desc:{left}}|{value:^{right}}")
+        _print_table(
+            [(desc, stats[stat]) for stat, desc in self.stats_desc.items()], self.stats_headers
+        )
 
     def level_scale(self, stat: str) -> tuple[tuple[float, str], ...] | None:
         """
@@ -212,8 +207,20 @@ def _flatten(stats: Mapping[Any, Any], prefix: str = "") -> dict[str, Any]:
     return flat
 
 
+def _print_table(rows: Iterable[tuple[str, Any]], headers: tuple[str, str]) -> None:
+    """Printing descriptions and their values in two columns as wide as their longest cell"""
+    cells = [(desc, _format(value)) for desc, value in rows]
+    stat_header, value_header = headers
+    left = max([len(stat_header), *(len(desc) for desc, _ in cells)]) + 1
+    right = max([8, len(value_header), *(len(value) for _, value in cells)]) + 2
+    print(f"{stat_header:^{left}}|{value_header:^{right}}")
+    print("-" * (left + 1 + right))
+    for desc, value in cells:
+        print(f"{desc:{left}}|{value:^{right}}")
+
+
 def _format(value: Any) -> str:
-    """Value for print_stats, a float with two decimals"""
+    """Value for _print_table, a float with two decimals"""
     return f"{value:.2f}" if isinstance(value, float) else str(value)
 
 

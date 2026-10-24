@@ -20,6 +20,7 @@ from .diversity_stats import check_params as check_diversity_params
 from .exceptions import ParameterError, SourceError, SourceTypeError
 from .extractors import BLANK_LINE
 from .lexical_stats import LexicalStats
+from .morph_stats import MorphStats
 from .phon_stats import PhonStats
 from .phon_stats import check_params as check_phon_params
 from .readability_stats import ReadabilityStats
@@ -585,3 +586,15 @@ def start_sents_after_blank_lines(doc: Doc) -> Doc:
         end = token.idx + len(token)
     doc.from_array([SENT_START], cast("Ints2d", starts.astype("uint64")))
     return doc
+
+
+class MorphStatsComponent(StatsComponent):
+    """
+    Component of the morphological statistics of a text
+
+    Description:
+        Puts an object of stats_class (MorphStats) into doc._.<name>; the class
+        of the core needs the parts of speech before it
+    """
+
+    stats_class: ClassVar[type[Any] | None] = MorphStats

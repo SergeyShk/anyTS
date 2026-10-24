@@ -22,6 +22,7 @@ nav:
       - Syntactic statistics: stats/syntax_stats.md
       - Lexical sophistication: stats/lexical_stats.md
       - Style metrics: stats/style_stats.md
+      - Morphological statistics: stats/morph_stats.md
       - Phonetic statistics: stats/phon_stats.md
     - Corpus measures:
       - Keywords: corpus/keyness.md

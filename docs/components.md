@@ -94,6 +94,7 @@ The class of the core is the default of `stats_class`. Where it cannot read a `D
 | [`PhonStatsComponent`](#PhonStatsComponent) | `PhonStats` | `window_len` |
 | [`SyntaxStatsComponent`](#SyntaxStatsComponent) | `SyntaxStats` | - |
 | [`CohesionStatsComponent`](#CohesionStatsComponent) | `CohesionStats` | - |
+| [`MorphStatsComponent`](#MorphStatsComponent) | `MorphStats` | - |
 
 ### Basic statistics { #BasicStatsComponent }
 
@@ -207,6 +208,16 @@ CohesionStatsComponent(nlp, name)
 <!-- --8<-- [start:CohesionStatsComponent] -->
 `CohesionStatsComponent` puts the cohesion statistics into the extension; by default they need the parts of speech and the lemmas before it.
 <!-- --8<-- [end:CohesionStatsComponent] -->
+
+### Morphological statistics { #MorphStatsComponent }
+
+``` {.python .signature}
+MorphStatsComponent(nlp, name)
+```
+
+<!-- --8<-- [start:MorphStatsComponent] -->
+`MorphStatsComponent` puts the morphological statistics into the extension; by default they need the parts of speech before it.
+<!-- --8<-- [end:MorphStatsComponent] -->
 
 ## Sentences after blank lines { #start_sents_after_blank_lines }
 
