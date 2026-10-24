@@ -2474,7 +2474,9 @@ True
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">anyts.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">has_feature</span>
 
-<span class="n">doc</span> <span class="o">=</span> <span class="n">Doc</span><span class="p">(</span><span class="n">Vocab</span><span class="p">(),</span> <span class="n">words</span><span class="o">=</span><span class="p">[</span><span class="s2">"She"</span><span class="p">,</span> <span class="s2">"has"</span><span class="p">,</span> <span class="s2">"left"</span><span class="p">],</span> <span class="n">morphs</span><span class="o">=</span><span class="p">[</span><span class="s2">""</span><span class="p">,</span> <span class="s2">"Mood=Ind|VerbForm=Fin"</span><span class="p">,</span> <span class="s2">"VerbForm=Part"</span><span class="p">])</span>
+<span class="n">doc</span> <span class="o">=</span> <span class="n">Doc</span><span class="p">(</span>
+    <span class="n">Vocab</span><span class="p">(),</span> <span class="n">words</span><span class="o">=</span><span class="p">[</span><span class="s2">"She"</span><span class="p">,</span> <span class="s2">"has"</span><span class="p">,</span> <span class="s2">"left"</span><span class="p">],</span> <span class="n">morphs</span><span class="o">=</span><span class="p">[</span><span class="s2">""</span><span class="p">,</span> <span class="s2">"Mood=Ind|VerbForm=Fin"</span><span class="p">,</span> <span class="s2">"VerbForm=Part"</span><span class="p">]</span>
+<span class="p">)</span>
 <span class="n">has_feature</span><span class="p">(</span><span class="n">doc</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s2">"VerbForm"</span><span class="p">,</span> <span class="s2">"Fin"</span><span class="p">),</span> <span class="n">has_feature</span><span class="p">(</span><span class="n">doc</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="s2">"VerbForm"</span><span class="p">,</span> <span class="s2">"Fin"</span><span class="p">)</span>
 </code></pre></div>
 </div>
@@ -2793,7 +2795,7 @@ True
 <!-- --8<-- [start:find_unit_marks] -->
 <div class="signature highlight"><pre><span></span><code><span class="n">find_unit_marks</span><span class="p">(</span><span class="n">units</span><span class="p">)</span>
 </code></pre></div>
-<p>Finds the punctuation marks between the words of a sentence of a <code>Doc</code>: the words are those of <code>iter_doc_units</code>, and a word with a character of <code>is_punctuation</code> between it and the word before gets its position, except the hyphen that joins two parts of a word, as <code>find_marks</code> does for a text.</p>
+<p>Finds the punctuation marks between the words of a sentence of a <code>Doc</code>: the words are those of <code>iter_doc_units</code>, and a word with a character of <code>is_punctuation</code> between it and the word before gets its position, except a quote, an apostrophe and the hyphen that joins two parts of a word, as <code>find_marks</code> does for a text.</p>
 <table>
 <thead>
 <tr>

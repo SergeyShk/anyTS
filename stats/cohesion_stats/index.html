@@ -2566,7 +2566,7 @@ Secondary connectors per 1000 words                             |  142.86
 <!-- --8<-- [start:calc_overlap] -->
 <div class="signature highlight"><pre><span></span><code><span class="n">calc_overlap</span><span class="p">(</span><span class="n">sets</span><span class="p">,</span> <span class="n">adjacent</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </code></pre></div>
-<p>The binary overlap of Coh-Metrix (CRFNO1, CRFAO1, CRFSO1 over the adjacent pairs, CRFNOa, CRFAOa, CRFSOa over all of them): the share of the pairs of sentences that share at least one element; <code>nan</code> for a text shorter than two sentences. All the pairs are counted as in <code>calc_overlaps</code>, without going through them.</p>
+<p>The binary overlap of Coh-Metrix (CRFNO1, CRFAO1, CRFSO1 over the adjacent pairs, CRFNOa, CRFAOa, CRFSOa over all of them): the share of the pairs of sentences that share at least one element; <code>nan</code> for a text shorter than two sentences.</p>
 <div class="arithmatex">\[
 \frac{\textrm{Number of pairs sharing an element}}{\textrm{Number of pairs}}
 \]</div>
@@ -2602,7 +2602,7 @@ Secondary connectors per 1000 words                             |  142.86
 <!-- --8<-- [start:calc_proportional_overlap] -->
 <div class="signature highlight"><pre><span></span><code><span class="n">calc_proportional_overlap</span><span class="p">(</span><span class="n">sets</span><span class="p">,</span> <span class="n">adjacent</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </code></pre></div>
-<p>The proportional overlap of Coh-Metrix (CRFCWO1, CRFCWOa): the Dice coefficient of a pair of sentences (<code>dice</code>) averaged over the pairs; <code>nan</code> for a text shorter than two sentences. Over all the pairs the sum is computed as in <code>calc_overlaps</code>, without going through them.</p>
+<p>The proportional overlap of Coh-Metrix (CRFCWO1, CRFCWOa): the Dice coefficient of a pair of sentences (<code>dice</code>) averaged over the pairs; <code>nan</code> for a text shorter than two sentences.</p>
 <div class="arithmatex">\[
 \frac{1}{\textrm{Number of pairs}} \sum_{(A, B)} \textrm{Dice}(A, B)
 \]</div>
@@ -2793,7 +2793,7 @@ Secondary connectors per 1000 words                             |  142.86
 <!-- --8<-- [start:calc_overlaps] -->
 <div class="signature highlight"><pre><span></span><code><span class="n">calc_overlaps</span><span class="p">(</span><span class="n">sets</span><span class="p">,</span> <span class="n">proportional</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </code></pre></div>
-<p>The values of <code>calc_overlap</code> and <code>calc_proportional_overlap</code> over the adjacent and over all the pairs at once, as an <code>Overlap</code> named tuple with the fields <code>adjacent</code>, <code>all</code>, <code>prop_adjacent</code> and <code>prop_all</code>; without <code>proportional</code> the last two are <code>nan</code>. The values over all the pairs are computed without going through every pair: the sharing pairs are counted over bit masks of the sentences, and the sum of the Dice coefficients over the histograms of the lengths of the sentences holding each element, added by <code>math.fsum</code> so that it does not depend on the order of the elements.</p>
+<p>The values of <code>calc_overlap</code> and <code>calc_proportional_overlap</code> over the adjacent and over all the pairs at once, as an <code>Overlap</code> named tuple with the fields <code>adjacent</code>, <code>all</code>, <code>prop_adjacent</code> and <code>prop_all</code>; without <code>proportional</code> the last two are <code>nan</code>. The values over all the pairs come without going through every pair, and none of them depends on the order of the elements in the sets.</p>
 <table>
 <thead>
 <tr>
@@ -2847,7 +2847,7 @@ Secondary connectors per 1000 words                             |  142.86
 <!-- --8<-- [end:ConnectorMatcher] -->
 
 <!-- --8<-- [start:ConnectorMatcher-find] -->
-<p><code>find(words, sent_index, pos, breaks)</code> returns the occurrences of the connectors in a sentence in the order of its words. The words are those of one sentence without punctuation, the first one its start. With the parts of speech, a one-word connector counts only with one of <code>pos_tags</code> or of <code>pos_extra</code> for its form, never after one of <code>not_after_pos</code>, and with one of <code>start_only_pos</code> only at the start of the sentence; a word without a part of speech (<code>None</code>) passes. Without the parts of speech the rules that read them are skipped. The positions of the punctuation marks <code>breaks</code> cut a connector off its neighbours: a rule does not read a word across a mark, so in <em>so, the end</em> the word after the comma neither blocks nor lets the connector count, unless the connector is one of <code>read_through_marks</code>, and a mark between the words of a connector of <code>split_by_marks</code> makes it none; without them the words are read as adjacent.</p>
+<p><code>find(words, sent_index, pos, breaks, blocked)</code> returns the occurrences of the connectors in a sentence in the order of its words. The words are those of one sentence without punctuation, the first one its start. With the parts of speech, a one-word connector counts only with one of <code>pos_tags</code> or of <code>pos_extra</code> for its form, never after one of <code>not_after_pos</code>, and with one of <code>start_only_pos</code> only at the start of the sentence; a word without a part of speech (<code>None</code>) passes. Without the parts of speech the rules that read them are skipped. The positions of the punctuation marks <code>breaks</code> cut a connector off its neighbours: a rule does not read a word across a mark, so in <em>so, the end</em> the word after the comma neither blocks nor lets the connector count, unless the connector is one of <code>read_through_marks</code>, and a mark between the words of a connector of <code>split_by_marks</code> makes it none; without them the words are read as adjacent. No connector starts at a word of <code>blocked</code>, which a language rules out by more than the words and their parts of speech, such as its parse.</p>
 <table>
 <thead>
 <tr>
@@ -2882,9 +2882,15 @@ Secondary connectors per 1000 words                             |  142.86
 <td style="text-align: left;"><code>None</code></td>
 <td style="text-align: left;">Positions of the words a punctuation mark stands before</td>
 </tr>
+<tr>
+<td style="text-align: left;"><code>blocked</code></td>
+<td style="text-align: left;"><code>set[int]</code></td>
+<td style="text-align: left;"><code>None</code></td>
+<td style="text-align: left;">Positions of the words no connector starts at</td>
+</tr>
 </tbody>
 </table>
-<p>Words that are not a list of strings and parts of speech that are not a list of strings and <code>None</code> (the tags <code>token.pos_</code> of spaCy, not the numbers <code>token.pos</code>) and positions of the marks that are not a collection raise <code>SourceTypeError</code>, a number of the sentence or a position of a mark that is not an integer, a position of a mark that is not that of a word after the first and parts of speech not as many as the words <code>ParameterError</code>.</p>
+<p>Words that are not a list of strings and parts of speech that are not a list of strings and <code>None</code> (the tags <code>token.pos_</code> of spaCy, not the numbers <code>token.pos</code>) and positions that are not a collection raise <code>SourceTypeError</code>, a number of the sentence or a position that is not an integer, a position of a mark that is not that of a word after the first, a blocked position that is not that of a word and parts of speech not as many as the words <code>ParameterError</code>.</p>
 <!-- --8<-- [end:ConnectorMatcher-find] -->
 
 <div class="tabbed-set tabbed-alternate" data-tabs="5:2"><input checked="checked" id="__tabbed_5_1" name="__tabbed_5" type="radio" /><input id="__tabbed_5_2" name="__tabbed_5" type="radio" /><div class="tabbed-labels"><label for="__tabbed_5_1">Code</label><label for="__tabbed_5_2">Result</label></div>
@@ -2938,7 +2944,7 @@ Secondary connectors per 1000 words                             |  142.86
 <tr>
 <td style="text-align: left;"><code>analyze(source)</code></td>
 <td style="text-align: left;">method</td>
-<td style="text-align: left;">Words of the sentences of a source as <code>CohesionWord</code>: the word, its lemma, its part of speech, whether it is a noun, a pronoun, a demonstrative, an argument and a content word, its tense, mood and aspect, and whether a punctuation mark stands before it (<code>break_before</code>, which the rules of the connectors do not read through); by default those of a <code>Doc</code>, sentence by sentence (<code>doc_units</code>), with the features of <code>word_info</code>; a library that reads a string or a <code>Doc</code> without these annotations overrides it</td>
+<td style="text-align: left;">Words of the sentences of a source as <code>CohesionWord</code>: the word, its lemma, its part of speech, whether it is a noun, a pronoun, a demonstrative, an argument and a content word, its tense, mood and aspect, whether a punctuation mark stands before it (<code>break_before</code>, which the rules of the connectors do not read through) and whether no connector starts at it (<code>connector_blocked</code>, by a rule of the parse such as an <em>if</em> of an indirect question); by default those of a <code>Doc</code>, sentence by sentence (<code>doc_units</code>), with the features of <code>word_info</code>; a library that reads a string or a <code>Doc</code> without these annotations overrides it</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>doc_units(doc)</code></td>
@@ -2948,7 +2954,7 @@ Secondary connectors per 1000 words                             |  142.86
 <tr>
 <td style="text-align: left;"><code>word_info(unit)</code></td>
 <td style="text-align: left;">method</td>
-<td style="text-align: left;">Features of a word of a <code>Doc</code>; by default a noun is <code>NOUN</code> or <code>PROPN</code>, a pronoun <code>PRON</code> or a possessive, demonstrative or personal determiner, a demonstrative carries <code>PronType=Dem</code>, an argument is <code>NOUN</code>, <code>PROPN</code> or <code>PRON</code>, a content word one of <code>anyts.constants.CONTENT_UD_POS</code> and no demonstrative, and the tense, the mood and the aspect are the features <code>Tense</code>, <code>Mood</code> and <code>Aspect</code></td>
+<td style="text-align: left;">Features of a word of a <code>Doc</code>; by default a noun is <code>NOUN</code> or <code>PROPN</code>, a pronoun <code>PRON</code> or a possessive, demonstrative or personal determiner, a demonstrative carries <code>PronType=Dem</code>, an argument is <code>NOUN</code>, <code>PROPN</code> or <code>PRON</code>, a content word one of <code>anyts.constants.CONTENT_UD_POS</code> and no demonstrative, and the tense, the mood and the aspect are the features <code>Tense</code>, <code>Mood</code> and <code>Aspect</code>; a library sets <code>connector_blocked</code> where its parse rules a connector out</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>load_connectors()</code></td>

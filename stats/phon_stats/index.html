@@ -2686,7 +2686,7 @@ P = 1 - \frac{\binom{N-K}{w} + K \binom{N-K}{w-1}}{\binom{N}{w}}
 <h3 id="syllables">Syllables<a class="headerlink" href="#syllables" title="Permanent link">&para;</a></h3>
 <p class="metric-meta"><code>p_open_syllables</code> · <code>mean_syllable_len</code></p>
 <!-- --8<-- [start:PhonStats-syllables] -->
-<p>The syllables are the sounds of every syllable of a word by <code>syllable_sounds</code>; a syllable without a sound of the classes (a number) is no syllable, in <code>c_syllable_patterns</code> too. An open syllable ends in a vowel by its CV pattern (<code>cv_pattern</code>), and the length of a syllable is the number of its sounds.</p>
+<p>The syllables are the sounds of every syllable of a word by <code>syllable_sounds</code>; a syllable without a sound of the classes (a number) is no syllable, in <code>c_syllable_patterns</code> too. An open syllable ends in a vowel by its CV pattern (<code>cv_pattern</code>), and the length of a syllable is the length of that pattern: the sounds of the classes, without <code>skipped</code> and the signs out of them.</p>
 <!-- --8<-- [end:PhonStats-syllables] -->
 </div>
 <p>The functions know no language: a word is given as its letters (the characters of a string) or the sounds of its transcription, and the classes of the sounds or the features to count come through the parameters.</p>

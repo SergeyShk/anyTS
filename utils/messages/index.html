@@ -1888,6 +1888,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#source_type_error" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error of a source
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1974,6 +1985,17 @@
     <span class="md-ellipsis">
       
         Messages of the errors
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#source_type_error" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error of a source
       
     </span>
   </a>
@@ -2105,6 +2127,56 @@ anyts.exceptions.ParameterError: The label 'title' has unknown fields ['size']; 
 <div class="highlight"><pre><span></span><code>Traceback (most recent call last):
   ...
 anyts.exceptions.ParameterError: The message 'text_type' has unknown fields ['kind']; available fields: ['type']
+</code></pre></div>
+</div>
+</div>
+</div>
+<h2 id="source_type_error">Error of a source<a class="headerlink" href="#source_type_error" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:source_type_error] -->
+<div class="signature highlight"><pre><span></span><code><span class="n">source_type_error</span><span class="p">(</span><span class="n">messages</span><span class="p">,</span> <span class="n">source</span><span class="p">)</span>
+</code></pre></div>
+<p>Gives the error of a data source of a wrong type, for a class to raise: the message <code>source_span</code> for a <code>Span</code> of spaCy, which <code>span.as_doc()</code> turns into a <code>Doc</code>, and <code>source_type</code> with the name of the type for any other source.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Parameter</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Default</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>messages</code></td>
+<td style="text-align: left;"><code>dict[str, str]</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Messages by key, <code>MESSAGES</code> or those of a class</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>source</code></td>
+<td style="text-align: left;"><code>object</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Data source</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:source_type_error] -->
+
+<div class="tabbed-set tabbed-alternate" data-tabs="3:2"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Code</label><label for="__tabbed_3_2">Result</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">spacy</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">anyts.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">MESSAGES</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">anyts.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">source_type_error</span>
+
+<span class="n">source_type_error</span><span class="p">(</span><span class="n">MESSAGES</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+<span class="n">source_type_error</span><span class="p">(</span><span class="n">MESSAGES</span><span class="p">,</span> <span class="n">spacy</span><span class="o">.</span><span class="n">blank</span><span class="p">(</span><span class="s2">"en"</span><span class="p">)(</span><span class="s2">"The cat sleeps"</span><span class="p">)[:</span><span class="mi">2</span><span class="p">])</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>SourceTypeError('The data source cannot be of type int')
+SourceTypeError('The data source cannot be a Span: pass span.as_doc()')
 </code></pre></div>
 </div>
 </div>

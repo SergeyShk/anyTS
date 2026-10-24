@@ -2702,9 +2702,9 @@
 
 <h3 id="find_connector_highlights">Connectors<a class="headerlink" href="#find_connector_highlights" title="Permanent link">&para;</a></h3>
 <!-- --8<-- [start:find_connector_highlights] -->
-<div class="signature highlight"><pre><span></span><code><span class="n">find_connector_highlights</span><span class="p">(</span><span class="n">words</span><span class="p">,</span> <span class="n">sents</span><span class="p">,</span> <span class="n">matcher</span><span class="p">,</span> <span class="n">note</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pos</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">find_connector_highlights</span><span class="p">(</span><span class="n">words</span><span class="p">,</span> <span class="n">sents</span><span class="p">,</span> <span class="n">matcher</span><span class="p">,</span> <span class="n">note</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pos</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">blocked</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
-<p>The layer <code>connectors</code>: the connectors of a <code>ConnectorMatcher</code> of the language inside every sentence, in the whole text when the sentences are <code>None</code>; a one-word connector is checked by its part of speech when a word of the sentence has one - its own, or that of the hook <code>pos</code>. With the <code>text</code>, a character of <code>is_punctuation</code> between two words is a punctuation mark, which the rules of the matcher do not read through; the hyphen that joins two parts of a word is none. The note gives the text, the class and the kind of the connector by default.</p>
+<p>The layer <code>connectors</code>: the connectors of a <code>ConnectorMatcher</code> of the language inside every sentence, in the whole text when the sentences are <code>None</code>; a one-word connector is checked by its part of speech when a word of the sentence has one - its own, or that of the hook <code>pos</code>. With the <code>text</code>, a character of <code>is_punctuation</code> between two words is a punctuation mark, which the rules of the matcher do not read through; a quote, an apostrophe and the hyphen that joins two parts of a word are none. No connector starts at a word the hook <code>blocked</code> rules out, such as one its parse makes no connector. The note gives the text, the class and the kind of the connector by default.</p>
 <table>
 <thead>
 <tr>
@@ -2751,9 +2751,15 @@
 <td style="text-align: left;"><code>None</code></td>
 <td style="text-align: left;">Text of the words, for the punctuation marks between them</td>
 </tr>
+<tr>
+<td style="text-align: left;"><code>blocked</code></td>
+<td style="text-align: left;"><code>Callable[[Word], bool]</code></td>
+<td style="text-align: left;"><code>None</code></td>
+<td style="text-align: left;">Whether no connector starts at a word</td>
+</tr>
 </tbody>
 </table>
-<p>A <code>text</code> that is not a string raises <code>SourceTypeError</code>.</p>
+<p>A hook that cannot be called or a <code>text</code> that is not a string raises <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:find_connector_highlights] -->
 
 <h3 id="find_split_predicate_highlights">Split predicates<a class="headerlink" href="#find_split_predicate_highlights" title="Permanent link">&para;</a></h3>
