@@ -1131,6 +1131,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#l2sca" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Production units of L2SCA
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#noun_modifiers" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2434,6 +2445,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#l2sca" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Production units of L2SCA
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#noun_modifiers" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2785,6 +2807,16 @@ Ratio of nouns to verbs                           |   0.50
 <td style="text-align: left;">Number of the infinitive clauses under a verb</td>
 </tr>
 <tr>
+<td style="text-align: left;"><code>n_t_units</code>, <code>n_complex_t_units</code></td>
+<td style="text-align: left;"><code>int</code></td>
+<td style="text-align: left;">Numbers of the T-units and of those with a subordinate clause</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>n_verb_phrases</code>, <code>n_coordinate_phrases</code>, <code>n_complex_nominals</code></td>
+<td style="text-align: left;"><code>int</code></td>
+<td style="text-align: left;">Numbers of the verb phrases, of the coordinate phrases and of the complex nominals</td>
+</tr>
+<tr>
 <td style="text-align: left;"><code>n_nouns</code>, <code>n_verbs</code></td>
 <td style="text-align: left;"><code>int</code></td>
 <td style="text-align: left;">Numbers of the nouns (<code>NOUN</code>, <code>PROPN</code>) and of the verb forms (<code>VERB</code>)</td>
@@ -2952,6 +2984,48 @@ Ratio of nouns to verbs                           |   0.50
 <td style="text-align: left;">Infinitive clauses under a verb per sentence (<em>wants to leave</em>), which are not subordinate</td>
 <td style="text-align: left;">0 and above</td>
 <td style="text-align: left;">More infinitive complements</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a href="#l2sca"><code>t_units_per_sent</code></a></td>
+<td style="text-align: left;">T-units per sentence (T/S)</td>
+<td style="text-align: left;">0 and above</td>
+<td style="text-align: left;">More main clauses in a sentence</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a href="#l2sca"><code>mean_t_unit_len</code></a></td>
+<td style="text-align: left;">Mean length of a T-unit in words (MLT)</td>
+<td style="text-align: left;">1 and above, <code>nan</code> without T-units</td>
+<td style="text-align: left;">Longer T-units</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a href="#l2sca"><code>clauses_per_t_unit</code></a></td>
+<td style="text-align: left;">Clauses per T-unit (C/T)</td>
+<td style="text-align: left;">1 and above, <code>nan</code> without T-units</td>
+<td style="text-align: left;">More subordination</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a href="#l2sca"><code>p_complex_t_units</code></a></td>
+<td style="text-align: left;">Share of the T-units with a subordinate clause (CT/T)</td>
+<td style="text-align: left;">0-1, <code>nan</code> without T-units</td>
+<td style="text-align: left;">More complex T-units</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a href="#l2sca"><code>verb_phrases_per_t_unit</code></a></td>
+<td style="text-align: left;">Verb phrases per T-unit (VP/T)</td>
+<td style="text-align: left;">0 and above, <code>nan</code> without T-units</td>
+<td style="text-align: left;">More verb phrases</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a href="#l2sca"><code>coordinate_phrases_per_clause</code></a></td>
+<td style="text-align: left;">Coordinate phrases per clause (CP/C)</td>
+<td style="text-align: left;">0 and above, <code>nan</code> without clauses</td>
+<td style="text-align: left;">More phrasal coordination</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a href="#l2sca"><code>complex_nominals_per_clause</code></a></td>
+<td style="text-align: left;">Complex nominals per clause (CN/C)</td>
+<td style="text-align: left;">0 and above, <code>nan</code> without clauses</td>
+<td style="text-align: left;">Denser noun phrases</td>
 </tr>
 <tr>
 <td style="text-align: left;"><a href="#noun_modifiers"><code>modifiers_per_noun</code></a></td>
@@ -3363,6 +3437,25 @@ Ratio of nouns to verbs                           |   0.50
 </table>
 <p>A value that is not a <code>Token</code> and a check or a form of an auxiliary that is not callable raise <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:is_infinitive_clause_head] -->
+</div>
+<div class="metric-card">
+<h3 id="l2sca">Production units of L2SCA<a class="headerlink" href="#l2sca" title="Permanent link">&para;</a></h3>
+<p class="metric-meta"><code>t_units_per_sent</code> · <code>mean_t_unit_len</code> · <code>clauses_per_t_unit</code> · <code>p_complex_t_units</code> · <code>verb_phrases_per_t_unit</code> · <code>coordinate_phrases_per_clause</code> · <code>complex_nominals_per_clause</code> · <a href="https://doi.org/10.1075/ijcl.15.4.02lu">Lu 2010</a></p>
+<!-- --8<-- [start:SyntaxStats-l2sca] -->
+<p>The indices of the L2 Syntactic Complexity Analyzer (L2SCA) that the other metrics do not give, on Universal Dependencies. MLC and C/S are <code>mean_clause_len</code> and <code>clauses_per_sent</code>; MLS and DC/C come from the counts, <code>n_words / n_sents</code> and <code>n_subordinate_clauses / n_clauses</code>.</p>
+<ul>
+<li>A T-unit is a main clause with the clauses that depend on it: the head of a sentence and every clause head joined to it through <code>conj</code> or <code>parataxis</code> (<code>anyts.constants.MAIN_CLAUSE_DEPS</code>), so <em>I came, and he left</em> holds two; a conjunct of a subordinate clause is none. A T-unit is complex with a subordinate clause (<code>is_subordinate_clause_head</code>) whose nearest T-unit above is it.</li>
+<li>A verb phrase is a predicate (<code>is_predicate</code>) that is no auxiliary or copula: a verb, an auxiliary used as a predicate (<em>there </em><em>is</em><em> trouble</em>), a word with a subject or a copula.</li>
+<li>A coordinate phrase is a coordination with a conjunct that is no clause head (<em>the man and the woman</em>, <em>is big and nice</em>), counted once by its first conjunct; a coordination of clause heads counts as clauses.</li>
+<li>A complex nominal is a noun with a modifier of <code>anyts.constants.COMPLEX_NOMINAL_DEPS</code> (an adjective, a complement, a relative or participial clause, an apposition, a possessive), or a nominal clause, a clause head of <code>anyts.constants.NOMINAL_CLAUSE_DEPS</code> or a conjunct of one.</li>
+</ul>
+<div class="arithmatex">\[
+\textrm{MLT} = \frac{\textrm{Words}}{\textrm{T-units}}, \quad
+\textrm{C/T} = \frac{\textrm{Clauses}}{\textrm{T-units}}, \quad
+\textrm{CT/T} = \frac{\textrm{Complex T-units}}{\textrm{T-units}}, \quad
+\textrm{CN/C} = \frac{\textrm{Complex nominals}}{\textrm{Clauses}}
+\]</div>
+<!-- --8<-- [end:SyntaxStats-l2sca] -->
 </div>
 <div class="metric-card">
 <h3 id="noun_modifiers">Modifiers of a noun<a class="headerlink" href="#noun_modifiers" title="Permanent link">&para;</a></h3>
