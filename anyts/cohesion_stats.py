@@ -20,7 +20,7 @@ from .constants import (
     TEMPORAL_FEATURES,
 )
 from .exceptions import ParameterError, SourceError, SourceTypeError
-from .extractors import SentsExtractor
+from .extractors import BLANK_LINE, SentsExtractor
 from .stats import Stats
 from .utils import (
     check_integer,
@@ -494,6 +494,8 @@ class CohesionWord(NamedTuple):
         connector_blocked (bool): Whether no connector starts at the word, by a rule of
             the language that reads more than the words and their parts of speech, such
             as its parse (word_info of a library)
+        paragraph_start (bool): Whether a blank line stands between the word and the one
+            before it, the start of a paragraph
     """
 
     word: str
@@ -509,6 +511,7 @@ class CohesionWord(NamedTuple):
     aspect: str | None = None
     break_before: bool = False
     connector_blocked: bool = False
+    paragraph_start: bool = False
 
 
 class CohesionStats(Stats):
@@ -542,6 +545,8 @@ class CohesionStats(Stats):
         words (tuple[tuple[str, ...], ...]): Words of every sentence with words
         lemmas (tuple[tuple[str, ...], ...]): Lemmas of every sentence with words
         n_sents (int): Number of sentences with words
+        n_paragraphs (int): Number of paragraphs - parts of the text between blank lines
+            that hold words
         n_words (int): Number of words
         n_nouns (int): Number of nouns
         n_pronouns (int): Number of pronouns
@@ -562,6 +567,11 @@ class CohesionStats(Stats):
         content_overlap_prop_adjacent (float): Mean share of shared content words in
             adjacent pairs of sentences
         content_overlap_prop_all (float): Mean share of shared content words in all pairs
+        noun_overlap_2_sent, argument_overlap_2_sent, content_overlap_2_sent (float):
+            Shares of the nouns, the arguments and the content words of a sentence
+            repeated in one of the next two sentences (calc_forward_overlap)
+        noun_overlap_para, argument_overlap_para, content_overlap_para (float): The same
+            for a paragraph and the next one
         p_pronouns (float): Share of pronouns among the words
         pronoun_noun_ratio (float): Ratio of the pronouns to the nouns
         p_demonstratives (float): Share of demonstratives among the words
@@ -695,6 +705,25 @@ class CohesionStats(Stats):
         self.content_overlap_all = content_overlap.all
         self.content_overlap_prop_adjacent = content_overlap.prop_adjacent
         self.content_overlap_prop_all = content_overlap.prop_all
+        paragraphs: list[list[CohesionWord]] = []
+        for word in (word for sent in sents for word in sent):
+            if not paragraphs or word.paragraph_start:
+                paragraphs.append([])
+            paragraphs[-1].append(word)
+        self.n_paragraphs = len(paragraphs)
+        for name, sets in (
+            ("noun", nouns),
+            ("argument", arguments),
+            ("content", [frozenset(sent) for sent in content]),
+        ):
+            setattr(self, f"{name}_overlap_2_sent", calc_forward_overlap(sets, 2))
+            setattr(
+                self,
+                f"{name}_overlap_para",
+                calc_forward_overlap(
+                    [{word.lemma for word in part if getattr(word, name)} for part in paragraphs]
+                ),
+            )
         self.p_pronouns = self.n_pronouns / self.n_words
         self.pronoun_noun_ratio = safe_divide(self.n_pronouns, self.n_nouns, nan)
         self.p_demonstratives = self.n_demonstratives / self.n_words
@@ -770,21 +799,26 @@ class CohesionStats(Stats):
             raise SourceError(messages["no_pos"])
         if not source.has_annotation("LEMMA"):
             raise SourceError(messages["no_lemmas"])
+        sents = self.doc_units(source)
+        starts = _paragraph_starts(sents)
         return [
             [
-                self._marked(self.word_info(unit), position in marks)
+                self._marked(self.word_info(unit), position in marks, unit[0].i in starts)
                 for position, unit in enumerate(sent)
             ]
-            for sent in self.doc_units(source)
+            for sent in sents
             for marks in (find_unit_marks(sent),)
         ]
 
     @staticmethod
-    def _marked(word: object, break_before: bool) -> Any:
-        """A word of word_info with a punctuation mark before it; another result as it is,
-        for the check of analyze"""
-        if break_before and isinstance(word, CohesionWord):
-            return word._replace(break_before=True)
+    def _marked(word: object, break_before: bool, paragraph_start: bool) -> Any:
+        """A word of word_info with a punctuation mark or a blank line before it; another result
+        as it is, for the check of analyze"""
+        if (break_before or paragraph_start) and isinstance(word, CohesionWord):
+            return word._replace(
+                break_before=word.break_before or break_before,
+                paragraph_start=word.paragraph_start or paragraph_start,
+            )
         return word
 
     def doc_units(self, doc: Doc) -> list[list[list[Token]]]:
@@ -884,6 +918,23 @@ class CohesionStats(Stats):
             matcher = cls.connector_matcher_class(cls.load_connectors())
             cls._connector_matcher = matcher
         return matcher
+
+
+def _paragraph_starts(sents: Sequence[Sequence[Sequence[Token]]]) -> set[int]:
+    """Positions of the first tokens of the words of a Doc that a blank line separates from
+    the word before, inside a sentence too"""
+    starts = set()
+    last: Token | None = None
+    for unit in (unit for sent in sents for unit in sent):
+        first = unit[0]
+        if last is not None:
+            gap = last.whitespace_
+            if first.i > last.i + 1:
+                gap += "".join(token.text_with_ws for token in last.doc[last.i + 1 : first.i])
+            if BLANK_LINE.search(gap):
+                starts.add(first.i)
+        last = unit[-1]
+    return starts
 
 
 def _is_pronominal_det(features: Mapping[str, str], pron_type: list[str]) -> bool:
@@ -1042,6 +1093,52 @@ def dice(first: frozenset[str], second: frozenset[str]) -> float:
         float: The coefficient 2·|A ∩ B| / (|A| + |B|), 0 for two empty sets
     """
     return safe_divide(2 * len(first & second), len(first) + len(second))
+
+
+def calc_forward_overlap(sets: Sequence[Collection[str]], span: int = 1) -> float:
+    """
+    Computing the share of the elements of a segment repeated in the next ones
+
+    Description:
+        The adjacent overlap of TAACO: the distinct elements of every segment
+        with span segments after it that one of these segments holds, over the
+        distinct elements of those segments. With the sentences and span 2 a
+        sentence is compared with the next two (adjacent_overlap_2_*_sent), with
+        the paragraphs and span 1 a paragraph with the next one
+        (adjacent_overlap_*_para)
+
+    References:
+        https://doi.org/10.3758/s13428-015-0651-7 (Crossley et al. 2016, TAACO)
+
+    Arguments:
+        sets (list[set[str]]): Elements of every segment
+        span (int): Number of the next segments a segment is compared with
+
+    Returns:
+        float: Share of the elements, nan for no more segments than span or for
+            segments without elements
+
+    Raises:
+        SourceTypeError: If the segments are a string, a Doc or an iterator, or a segment
+            is not a list of strings (check_words)
+        ParameterError: If the span is not an integer greater than 0
+
+    Example:
+        >>> from anyts.cohesion_stats import calc_forward_overlap
+        >>> calc_forward_overlap([{"cat", "mat"}, {"dog"}, {"cat"}], span=2)
+        0.5
+    """
+    _check_sents(sets, "elements of a segment", ordered=False)
+    check_integer(span, "span")
+    if span < 1:
+        raise ParameterError(f"The span must be greater than 0, not {span}")
+    frozen = [frozenset(elements) for elements in sets]
+    shared = total = 0
+    for i in range(len(frozen) - span):
+        later = frozenset().union(*frozen[i + 1 : i + 1 + span])
+        shared += len(frozen[i] & later)
+        total += len(frozen[i])
+    return safe_divide(shared, total, nan)
 
 
 def calc_overlaps(sets: Sequence[Collection[str]], proportional: bool = True) -> Overlap:
