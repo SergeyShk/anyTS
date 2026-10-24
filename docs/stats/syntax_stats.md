@@ -369,9 +369,9 @@ A value that is not a `Token` and a check or a form of an auxiliary that is not 
 The indices of the L2 Syntactic Complexity Analyzer (L2SCA) that the other metrics do not give, on Universal Dependencies. MLC and C/S are `mean_clause_len` and `clauses_per_sent`; MLS and DC/C come from the counts, `n_words / n_sents` and `n_subordinate_clauses / n_clauses`.
 
 - A T-unit is a main clause with the clauses that depend on it: the head of a sentence and every clause head joined to it through `conj` or `parataxis` (`anyts.constants.MAIN_CLAUSE_DEPS`), so *I came, and he left* holds two; a conjunct of a subordinate clause is none. A T-unit is complex with a subordinate clause (`is_subordinate_clause_head`) whose nearest T-unit above is it.
-- A verb phrase is a verb (`VERB`) or a predicate with a copula.
-- A coordinate phrase is a coordination of words that are no clause heads (*the man and the woman*), counted once by its first conjunct; coordinated predicates count as clauses.
-- A complex nominal is a noun with a modifier of `anyts.constants.COMPLEX_NOMINAL_DEPS` (an adjective, a complement, a relative or participial clause, an apposition, a possessive), or a nominal clause, a clause head of `anyts.constants.NOMINAL_CLAUSE_DEPS`.
+- A verb phrase is a predicate (`is_predicate`) that is no auxiliary or copula: a verb, an auxiliary used as a predicate (*there **is** trouble*), a word with a subject or a copula.
+- A coordinate phrase is a coordination with a conjunct that is no clause head (*the man and the woman*, *is big and nice*), counted once by its first conjunct; a coordination of clause heads counts as clauses.
+- A complex nominal is a noun with a modifier of `anyts.constants.COMPLEX_NOMINAL_DEPS` (an adjective, a complement, a relative or participial clause, an apposition, a possessive), or a nominal clause, a clause head of `anyts.constants.NOMINAL_CLAUSE_DEPS` or a conjunct of one.
 
 $$
 \textrm{MLT} = \frac{\textrm{Words}}{\textrm{T-units}}, \quad

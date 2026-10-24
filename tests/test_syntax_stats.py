@@ -1114,6 +1114,42 @@ def test_t_units_through_broken_links():
     assert SyntaxStats(loop).n_complex_t_units == 0
 
 
+def test_phrases_of_predicates_without_a_verb():
+    # the house is big and nice: the nominal predicate heads a clause, its conjunct does not
+    doc = parse(
+        ["the", "house", "is", "big", "and", "nice"],
+        [1, 3, 3, 3, 5, 3],
+        ["det", "nsubj", "cop", "ROOT", "cc", "conj"],
+        pos=["DET", "NOUN", "AUX", "ADJ", "CCONJ", "ADJ"],
+    )
+    stats = SyntaxStats(doc)
+    assert (stats.n_clauses, stats.n_coordinate_phrases, stats.n_verb_phrases) == (1, 1, 1)
+    # A predicate tagged AUX, a copula tagged VERB and a predicate without a copula
+    for words, heads, deps, pos in (
+        (
+            ["there", "is", "trouble"],
+            [1, 1, 1],
+            ["expl", "ROOT", "nsubj"],
+            ["PRON", "AUX", "NOUN"],
+        ),
+        (["he", "is", "present"], [2, 2, 2], ["nsubj", "cop", "ROOT"], ["PRON", "VERB", "ADJ"]),
+        (["he", "doctor"], [1, 1], ["nsubj", "ROOT"], ["PRON", "NOUN"]),
+    ):
+        assert SyntaxStats(parse(words, heads, deps, pos=pos)).n_verb_phrases == 1
+
+
+def test_coordinated_nominal_clauses():
+    # he said that she came and that he left: both clauses are nominal ones
+    doc = parse(
+        ["he", "said", "that", "she", "came", "and", "that", "he", "left"],
+        [1, 1, 4, 4, 1, 8, 8, 8, 4],
+        ["nsubj", "ROOT", "mark", "nsubj", "ccomp", "cc", "mark", "nsubj", "conj"],
+        pos=["PRON", "VERB", "SCONJ", "PRON", "VERB", "CCONJ", "SCONJ", "PRON", "VERB"],
+    )
+    stats = SyntaxStats(doc)
+    assert (stats.n_complex_nominals, stats.n_coordinate_phrases) == (2, 0)
+
+
 def test_complex_nominals_of_both_schemes():
     doc = parse(
         ["a", "house", "of", "stone", "the", "man", "'s", "dog", "slept"],

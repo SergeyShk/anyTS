@@ -302,19 +302,29 @@ class SyntaxStats(Stats):
         )
         clause_ids = {token.i for sent in heads for token in sent}
         word_of = {token.i: token for token in words}
-        coordinated = _heads_of(words, {"conj"}, join_hyphens)
+        firsts = {token.i: _first_conjunct(token, join_hyphens) for token in words}
+        coordinations: dict[int, list[int]] = {}
+        for token in words:
+            first = firsts[token.i]
+            if base_dep(token) == "conj" and first is not None:
+                coordinations.setdefault(first.i, [first.i]).append(token.i)
         self.n_coordinate_phrases = sum(
-            1
-            for i in coordinated
-            if i in word_of and i not in clause_ids and base_dep(word_of[i]) != "conj"
+            1 for members in coordinations.values() if any(i not in clause_ids for i in members)
         )
         modified = _heads_of(words, COMPLEX_NOMINAL_DEPS, join_hyphens)
         self.n_complex_nominals = sum(1 for token in nouns if token.i in modified) + sum(
-            1 for sent in heads for token in sent if base_dep(token) in NOMINAL_CLAUSE_DEPS
+            1
+            for sent in heads
+            for token in sent
+            if (first := firsts[token.i]) is not None and base_dep(first) in NOMINAL_CLAUSE_DEPS
         )
-        copular = _heads_of(words, {"cop"}, join_hyphens)
-        self.n_verb_phrases = self.n_verbs + sum(
-            1 for i in copular if i in word_of and word_of[i].pos_ != "VERB"
+        predicates = {token.i for token in words if token.pos_ in ("VERB", "AUX")} | _heads_of(
+            words, SUBJECT_DEPS | {"cop"}, join_hyphens
+        )
+        self.n_verb_phrases = sum(
+            1
+            for i in predicates
+            if i in word_of and base_dep(word_of[i]) not in AUXILIARY_DEPS | {"auxpass"}
         )
 
         self.mean_dependency_distance = safe_mean(all_distances)
@@ -690,6 +700,19 @@ def _t_unit_of(token: Token, units: Collection[int], join_hyphens: bool) -> int 
         seen.add(parent.i)
         parent = _chain_parent(parent, join_hyphens)
     return None
+
+
+def _first_conjunct(token: Token, join_hyphens: bool) -> Token | None:
+    """First conjunct of the coordination of a word, the word itself out of one; None through a
+    punctuation mark or a loop of conjuncts"""
+    seen = {token.i}
+    while base_dep(token) == "conj":
+        parent = _chain_parent(token, join_hyphens)
+        if parent is None or parent.i in seen:
+            return None
+        seen.add(parent.i)
+        token = parent
+    return token
 
 
 def _heads_of(words: Iterable[Token], relations: Collection[str], join_hyphens: bool) -> set[int]:
