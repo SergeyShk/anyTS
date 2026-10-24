@@ -60,6 +60,13 @@ PASSIVE_DEPS = frozenset(
     {"aux:pass", "auxpass", "csubj:pass", "csubjpass", "nsubj:pass", "nsubjpass"}
 )
 AGENT_DEPS = frozenset({"agent", "obl:agent"})
+# Relations of a complement with a preposition of Universal Dependencies, the links of a
+# prepositional chain, and of a direct object by Universal Dependencies and by ClearNLP
+PREP_COMPLEMENT_DEPS = frozenset({"nmod", "obl"})
+OBJECT_DEPS = frozenset({"dobj", "obj"})
+# Relations of a nominal subject by Universal Dependencies (nsubj:pass is a subtype) and by
+# ClearNLP
+NOMINAL_SUBJECT_DEPS = frozenset({"nsubj", "nsubjpass"})
 # Verb forms whose clauses are counted apart from the clauses of a finite verb
 NONFINITE_CLAUSE_FORMS = frozenset({"Conv", "Ger", "Part"})
 
@@ -73,6 +80,7 @@ SYNTAX_STATS_DESC = {
     "leaves_per_sent": "Leaves per sentence",
     "subtrees_per_sent": "Subtrees per sentence",
     "nodes_per_leaf": "Mean of the nodes per leaf of the sentences",
+    "words_before_root": "Mean number of words before the root of a sentence",
     "verb_valency": "Valency of the finite verbs",
     "coordination_chains_per_sent": "Coordination chains per sentence",
     "mean_coordination_chain_len": "Mean length of a coordination chain",
@@ -82,6 +90,8 @@ SYNTAX_STATS_DESC = {
     "p_complex_sents": "Share of sentences with a subordinate clause",
     "infinitive_clauses_per_sent": "Infinitive clauses under a verb per sentence",
     "modifiers_per_noun": "Modifiers per noun phrase",
+    "prep_chains_per_sent": "Prepositional chains per sentence",
+    "max_prep_chain_len": "Maximum length of a prepositional chain",
     "participle_clauses_per_sent": "Participial clauses per sentence",
     "mean_participle_clause_len": "Mean length of a participial clause (words)",
     "p_passive": "Share of passive forms among the verbs",
@@ -89,6 +99,8 @@ SYNTAX_STATS_DESC = {
     "infinitives_per_sent": "Infinitives per sentence",
     "negations_per_sent": "Words of negation per sentence",
     "split_predicates_per_sent": "Split predicates per sentence",
+    "p_preverbal_subjects": "Share of nominal subjects before their head",
+    "p_preverbal_objects": "Share of nominal objects before their head",
     "noun_verb_ratio": "Ratio of nouns to verbs",
 }
 

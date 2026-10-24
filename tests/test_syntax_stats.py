@@ -1,4 +1,4 @@
-from math import isnan
+from math import isnan, nan
 from statistics import fmean, pstdev
 from typing import ClassVar
 
@@ -27,6 +27,7 @@ from anyts.syntax_stats import (
     is_infinitive_clause_head,
     is_passive,
     is_predicate,
+    is_prep_complement,
     is_root,
     is_subordinate_clause_head,
     predicate_form,
@@ -575,6 +576,8 @@ def test_syntax_stats_metrics():
         "leaves_per_sent": 5.0,
         "subtrees_per_sent": 4.0,
         "nodes_per_leaf": fmean([7 / 3, 11 / 7]),
+        # sold is the seventh word of its sentence, said the second
+        "words_before_root": 3.5,
         "verb_valency": 1.0,
         "coordination_chains_per_sent": 0.5,
         "mean_coordination_chain_len": 2.0,
@@ -584,6 +587,9 @@ def test_syntax_stats_metrics():
         "p_complex_sents": 0.5,
         "infinitive_clauses_per_sent": 0.5,
         "modifiers_per_noun": 1.0,
+        # by workers is one complement with a preposition, no chain
+        "prep_chains_per_sent": 0.0,
+        "max_prep_chain_len": 0,
         "participle_clauses_per_sent": 0.5,
         "mean_participle_clause_len": 3.0,
         "p_passive": 1 / 3,
@@ -591,6 +597,9 @@ def test_syntax_stats_metrics():
         "infinitives_per_sent": 1.0,
         "negations_per_sent": 0.5,
         "split_predicates_per_sent": 0.0,
+        # house is the only nominal subject, before sold; there is no nominal object
+        "p_preverbal_subjects": 1.0,
+        "p_preverbal_objects": nan,
         "noun_verb_ratio": 1 / 3,
     }
     assert list(stats.get_stats()) == list(SYNTAX_STATS_DESC)
@@ -849,6 +858,101 @@ def test_modifier_chains():
     # One chain from water: its longest branch is water - river - town
     assert calc_modifier_chains(doc, nmod) == [3]
     assert calc_modifier_chains(doc, lambda token: False) == []
+
+
+# Yesterday the cat of the neighbour slept on the mat of the house of the mayor . Came the
+# spring , and the guests saw it and the city .
+ORDER = [
+    ("Yesterday", 6, "advmod", "ADV"),
+    ("the", 2, "det", "DET"),
+    ("cat", 6, "nsubj", "NOUN"),
+    ("of", 5, "case", "ADP"),
+    ("the", 5, "det", "DET"),
+    ("neighbour", 2, "nmod", "NOUN"),
+    ("slept", 6, "ROOT", "VERB"),
+    ("on", 9, "case", "ADP"),
+    ("the", 9, "det", "DET"),
+    ("mat", 6, "obl", "NOUN"),
+    ("of", 12, "case", "ADP"),
+    ("the", 12, "det", "DET"),
+    ("house", 9, "nmod", "NOUN"),
+    ("of", 15, "case", "ADP"),
+    ("the", 15, "det", "DET"),
+    ("mayor", 12, "nmod", "NOUN"),
+    (".", 6, "punct", "PUNCT"),
+    ("Came", 17, "ROOT", "VERB"),
+    ("the", 19, "det", "DET"),
+    ("spring", 17, "nsubj", "NOUN"),
+    (",", 26, "punct", "PUNCT"),
+    ("and", 26, "cc", "CCONJ"),
+    ("the", 23, "det", "DET"),
+    ("guests", 26, "nsubj", "NOUN"),
+    ("it", 26, "obj", "PRON"),
+    ("the", 26, "det", "DET"),
+    ("saw", 17, "conj", "VERB"),
+    ("city", 26, "obj", "NOUN"),
+    (".", 17, "punct", "PUNCT"),
+]
+
+
+def order_doc():
+    words, heads, deps, pos = (list(column) for column in zip(*ORDER, strict=True))
+    starts = [i in (0, 17) for i in range(len(words))]
+    return Doc(VOCAB, words=words, heads=heads, deps=deps, pos=pos, sent_starts=starts)
+
+
+def test_prepositional_chains_and_the_order_of_the_members():
+    stats = SyntaxStats(order_doc())
+    # of the neighbour is a single complement; on the mat of the house of the mayor starts at
+    # the complement of the verb (obl) and holds three
+    assert stats.n_prep_chains == 1 and stats.max_prep_chain_len == 3
+    assert stats.prep_chains_per_sent == 0.5
+    # slept is the seventh word, Came the first
+    assert stats.words_before_root == 3.0
+    # cat and guests stand before their verbs, spring after; the pronoun it is no nominal object
+    assert (stats.n_nominal_subjects, stats.n_preverbal_subjects) == (3, 2)
+    assert stats.p_preverbal_subjects == 2 / 3
+    assert (stats.n_nominal_objects, stats.n_preverbal_objects) == (1, 0)
+    assert stats.p_preverbal_objects == 0.0
+
+
+def test_prepositional_complements():
+    doc = order_doc()
+    assert [token.text for token in doc if is_prep_complement(token)] == [
+        "neighbour",
+        "mat",
+        "house",
+        "mayor",
+    ]
+    # A complement without an adposition (a case of its own) is none
+    bare = parse(
+        ["the", "use", "water"], [1, 1, 1], ["det", "ROOT", "nmod"], pos=["DET", "NOUN", "NOUN"]
+    )
+    assert not is_prep_complement(bare[2])
+    # A subtype is the base relation; a possessive marker is no adposition
+    sub = parse(
+        ["went", "to", "town", "John", "'s"],
+        [0, 2, 0, 0, 3],
+        ["ROOT", "case", "obl:to", "nmod:poss", "case"],
+        pos=["VERB", "ADP", "NOUN", "PROPN", "PART"],
+    )
+    assert is_prep_complement(sub[2]) and not is_prep_complement(sub[3])
+
+
+def test_hook_of_the_prepositional_complements():
+    class OnlyNmod(SyntaxStats):
+        def is_prep_complement(self, token):
+            return token.dep_ == "nmod" and super().is_prep_complement(token)
+
+    # Without the obl of the verb the chain is of the house of the mayor
+    stats = OnlyNmod(order_doc())
+    assert stats.n_prep_chains == 1 and stats.max_prep_chain_len == 2
+
+
+def test_words_before_a_root_out_of_the_words():
+    # The root of the sentence is a mark, so the sentence gives no position
+    doc = parse(["Well", "!"], [1, 1], ["discourse", "ROOT"], pos=["INTJ", "PUNCT"])
+    assert isnan(SyntaxStats(doc).words_before_root)
 
 
 def test_modifier_chains_skip_punctuation():
@@ -1474,6 +1578,7 @@ def test_copula_makes_a_predicate():
         is_passive,
         has_agent,
         is_agentless,
+        is_prep_complement,
     ],
 )
 def test_checks_of_a_token(check):

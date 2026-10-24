@@ -12,9 +12,12 @@ from .constants import (
     AGENT_DEPS,
     AUXILIARY_DEPS,
     CLAUSE_DEPS,
+    NOMINAL_SUBJECT_DEPS,
     NONFINITE_CLAUSE_FORMS,
     NOUN_MODIFIER_DEPS,
+    OBJECT_DEPS,
     PASSIVE_DEPS,
+    PREP_COMPLEMENT_DEPS,
     SUBJECT_DEPS,
     SUBORDINATE_CLAUSE_DEPS,
     SYNTAX_STATS_DESC,
@@ -97,6 +100,7 @@ class SyntaxStats(Stats):
         n_complex_sents (int): Number of sentences with a subordinate clause
         n_infinitive_clauses (int): Number of infinitive clauses under a verb
         n_nouns (int): Number of nouns
+        n_prep_chains (int): Number of prepositional chains
         n_participle_clauses (int): Number of participial clauses
         n_verbs (int): Number of verb forms
         n_passive (int): Number of passive verb forms
@@ -104,6 +108,10 @@ class SyntaxStats(Stats):
         n_infinitives (int): Number of infinitives
         n_negations (int): Number of words of negation
         n_split_predicates (int): Number of split predicates
+        n_nominal_subjects, n_preverbal_subjects (int): Numbers of the nominal subjects
+            and of those before their head
+        n_nominal_objects, n_preverbal_objects (int): Numbers of the nominal direct
+            objects and of those before their head
         split_predicates (tuple[str]): Split predicates, the verb and the noun
         c_children (dict[int, int]): Distribution of words by number of dependent words
         c_deps (dict[str, int]): Distribution of words by syntactic relation
@@ -116,6 +124,7 @@ class SyntaxStats(Stats):
         leaves_per_sent (float): Leaves per sentence
         subtrees_per_sent (float): Subtrees per sentence
         nodes_per_leaf (float): Mean over the sentences of the words per leaf
+        words_before_root (float): Mean number of words before the root of a sentence
         verb_valency (float): Mean number of dependents of a finite verb
         coordination_chains_per_sent (float): Coordination chains per sentence
         mean_coordination_chain_len (float): Mean length of a coordination chain
@@ -125,6 +134,9 @@ class SyntaxStats(Stats):
         p_complex_sents (float): Share of sentences with a subordinate clause
         infinitive_clauses_per_sent (float): Infinitive clauses under a verb per sentence
         modifiers_per_noun (float): Mean number of modifiers of a noun
+        prep_chains_per_sent (float): Prepositional chains per sentence
+        max_prep_chain_len (int): Length of the longest prepositional chain, 0 without
+            chains
         participle_clauses_per_sent (float): Participial clauses per sentence
         mean_participle_clause_len (float): Mean length of a participial clause in words
         p_passive (float): Share of passive forms among the verb forms
@@ -132,6 +144,8 @@ class SyntaxStats(Stats):
         infinitives_per_sent (float): Infinitives per sentence
         negations_per_sent (float): Words of negation per sentence
         split_predicates_per_sent (float): Split predicates per sentence
+        p_preverbal_subjects (float): Share of the nominal subjects before their head
+        p_preverbal_objects (float): Share of the nominal direct objects before their head
         noun_verb_ratio (float): Ratio of the nouns to the verb forms
 
     Methods:
@@ -141,6 +155,7 @@ class SyntaxStats(Stats):
         auxiliary_form: Verb form of an auxiliary without the feature VerbForm
         is_subordinate_clause_head: Whether a clause head heads a subordinate clause
         is_infinitive_clause_head: Whether a clause head heads an infinitive clause
+        is_prep_complement: Whether a word is a link of a prepositional chain
         is_participle_clause: Whether a word heads a participial clause
         is_passive: Whether a word is a passive verb form
         is_agentless: Whether a passive form has no agent
@@ -229,6 +244,12 @@ class SyntaxStats(Stats):
         )
         nouns = [token for token in words if token.pos_ in ("NOUN", "PROPN")]
         self.n_nouns = len(nouns)
+        prep_chains = [
+            length
+            for span in spans
+            for length in calc_modifier_chains(span, self.is_prep_complement, join_hyphens)
+        ]
+        self.n_prep_chains = len(prep_chains)
         participle_clauses = [
             subtree_len(token, join_hyphens) for token in words if self.is_participle_clause(token)
         ]
@@ -244,6 +265,12 @@ class SyntaxStats(Stats):
         self.split_predicates = tuple(
             f"{verb.text} {noun.text}" for verb, noun in split_predicates
         )
+        subjects = [token for token in nouns if base_dep(token) in NOMINAL_SUBJECT_DEPS]
+        objects = [token for token in nouns if base_dep(token) in OBJECT_DEPS]
+        self.n_nominal_subjects = len(subjects)
+        self.n_preverbal_subjects = sum(1 for token in subjects if token.i < token.head.i)
+        self.n_nominal_objects = len(objects)
+        self.n_preverbal_objects = sum(1 for token in objects if token.i < token.head.i)
 
         self.mean_dependency_distance = safe_mean(all_distances)
         self.std_dependency_distance = pstdev(all_distances) if all_distances else nan
@@ -259,6 +286,10 @@ class SyntaxStats(Stats):
             safe_divide(len(sent), n_leaves, nan)
             for sent, n_leaves in zip(sents, leaves, strict=True)
         )
+        roots = [
+            next((i for i, token in enumerate(sent) if is_root(token)), None) for sent in sents
+        ]
+        self.words_before_root = safe_mean([i for i in roots if i is not None])
         self.verb_valency = safe_divide(
             sum(calc_valency(token, join_hyphens) for token in finite_verbs),
             len(finite_verbs),
@@ -274,6 +305,8 @@ class SyntaxStats(Stats):
         self.modifiers_per_noun = safe_divide(
             sum(count_noun_modifiers(token, join_hyphens) for token in nouns), self.n_nouns, nan
         )
+        self.prep_chains_per_sent = self.n_prep_chains / self.n_sents
+        self.max_prep_chain_len = max(prep_chains, default=0)
         self.participle_clauses_per_sent = self.n_participle_clauses / self.n_sents
         self.mean_participle_clause_len = safe_mean(participle_clauses)
         self.p_passive = safe_divide(self.n_passive, self.n_verbs, nan)
@@ -281,6 +314,12 @@ class SyntaxStats(Stats):
         self.infinitives_per_sent = self.n_infinitives / self.n_sents
         self.negations_per_sent = self.n_negations / self.n_sents
         self.split_predicates_per_sent = self.n_split_predicates / self.n_sents
+        self.p_preverbal_subjects = safe_divide(
+            self.n_preverbal_subjects, self.n_nominal_subjects, nan
+        )
+        self.p_preverbal_objects = safe_divide(
+            self.n_preverbal_objects, self.n_nominal_objects, nan
+        )
         self.noun_verb_ratio = safe_divide(self.n_nouns, self.n_verbs, nan)
 
     def __getstate__(self) -> dict[str, Any]:
@@ -413,6 +452,21 @@ class SyntaxStats(Stats):
             bool: Result of the check
         """
         return is_infinitive_clause_head(token, self.is_clause_head, self.auxiliary_form)
+
+    def is_prep_complement(self, token: Token) -> bool:
+        """
+        Checking whether a word is a link of a prepositional chain
+
+        Description:
+            is_prep_complement of the module by default
+
+        Arguments:
+            token (Token): Token
+
+        Returns:
+            bool: Result of the check
+        """
+        return is_prep_complement(token)
 
     def is_participle_clause(self, token: Token) -> bool:
         """
@@ -1390,6 +1444,46 @@ def count_noun_modifiers(token: Token, join_hyphens: bool = False) -> int:
     """
     return sum(
         1 for child in get_children(token, join_hyphens) if base_dep(child) in NOUN_MODIFIER_DEPS
+    )
+
+
+@_takes_token
+def is_prep_complement(token: Token) -> bool:
+    """
+    Checking whether a word is a complement with a preposition
+
+    Description:
+        A word with the relation nmod or obl or a subtype of them
+        (PREP_COMPLEMENT_DEPS) and a dependent of the relation case that is an
+        adposition: the house of the father, went to the house; a noun in a case
+        without a preposition is none. The links of a prepositional chain
+        (calc_modifier_chains)
+
+    Arguments:
+        token (Token): Token
+
+    Returns:
+        bool: Result of the check
+
+    Raises:
+        SourceTypeError: If the token is not a Token
+
+    Example:
+        >>> import spacy
+        >>> from spacy.tokens import Doc
+        >>> from anyts.syntax_stats import is_prep_complement
+        >>> doc = Doc(
+        ...     spacy.blank("en").vocab,
+        ...     words=["the", "house", "of", "the", "father"],
+        ...     heads=[1, 1, 4, 4, 1],
+        ...     deps=["det", "ROOT", "case", "det", "nmod"],
+        ...     pos=["DET", "NOUN", "ADP", "DET", "NOUN"],
+        ... )
+        >>> is_prep_complement(doc[4]), is_prep_complement(doc[1])
+        (True, False)
+    """
+    return base_dep(token) in PREP_COMPLEMENT_DEPS and any(
+        base_dep(child) == "case" and child.pos_ == "ADP" for child in token.children
     )
 
 

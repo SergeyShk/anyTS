@@ -86,10 +86,13 @@ Raises:
 | `n_clauses`, `n_subordinate_clauses`, `n_complex_sents` | `int` | Numbers of the clauses, of the subordinate clauses and of the sentences with one |
 | `n_infinitive_clauses` | `int` | Number of the infinitive clauses under a verb |
 | `n_nouns`, `n_verbs` | `int` | Numbers of the nouns (`NOUN`, `PROPN`) and of the verb forms (`VERB`) |
+| `n_prep_chains` | `int` | Number of the prepositional chains |
 | `n_participle_clauses` | `int` | Number of the participial clauses |
 | `n_passive`, `n_agentless_passive` | `int` | Numbers of the passive forms and of those with no agent |
 | `n_infinitives`, `n_negations` | `int` | Numbers of the infinitives and of the words of negation |
 | `n_split_predicates`, `split_predicates` | `int`, `tuple[str]` | Number of the split predicates and the predicates, the verb and the noun |
+| `n_nominal_subjects`, `n_preverbal_subjects` | `int` | Numbers of the nominal subjects and of those before their head |
+| `n_nominal_objects`, `n_preverbal_objects` | `int` | Numbers of the nominal direct objects and of those before their head |
 | `c_children` | `dict[int, int]` | Number of the words by number of dependent words |
 | `c_deps` | `dict[str, int]` | Number of the words by relation |
 <!-- --8<-- [end:SyntaxStats-attributes] -->
@@ -109,6 +112,7 @@ Every metric is an attribute of the object, computed when it is created, and `ge
 | [`leaves_per_sent`](#leaves) | Leaves per sentence | 0 and above | Longer or flatter sentences |
 | [`subtrees_per_sent`](#leaves) | Subtrees per sentence | 0 and above | More phrases in a sentence |
 | [`nodes_per_leaf`](#leaves) | Mean over the sentences of the words per leaf | 1 and above, `nan` for a sentence without leaves | Longer branches |
+| [`words_before_root`](#words_before_root) | Mean number of the words before the root of a sentence | 0 and above, `nan` without a root among the words | A later main predicate |
 | [`verb_valency`](#valency) | Mean number of the dependents of a finite verb | 0 and above, `nan` without finite verbs | More dependents of a verb |
 | [`coordination_chains_per_sent`](#coordination_chains) | Coordination chains per sentence | 0 and above | More coordination |
 | [`mean_coordination_chain_len`](#coordination_chains) | Mean length of a coordination chain in words | 2 and above, `nan` without chains | Longer enumerations |
@@ -118,6 +122,8 @@ Every metric is an attribute of the object, computed when it is created, and `ge
 | [`p_complex_sents`](#subordinate_clauses) | Share of the sentences with a subordinate clause | 0-1 | More complex sentences |
 | [`infinitive_clauses_per_sent`](#infinitive_clauses) | Infinitive clauses under a verb per sentence (*wants to leave*), which are not subordinate | 0 and above | More infinitive complements |
 | [`modifiers_per_noun`](#noun_modifiers) | Mean number of the modifiers of a noun | 0 and above, `nan` without nouns | Heavier noun phrases |
+| [`prep_chains_per_sent`](#prep_chains) | Chains of nested complements with a preposition per sentence | 0 and above | More nested complements |
+| [`max_prep_chain_len`](#prep_chains) | Length of the longest prepositional chain | 0, or 2 and above | Longer chains |
 | [`participle_clauses_per_sent`](#participle_clauses) | Participial clauses per sentence | 0 and above | More participial clauses |
 | [`mean_participle_clause_len`](#participle_clauses) | Mean length of a participial clause in words | 1 and above, `nan` without participial clauses | Longer participial clauses |
 | [`p_passive`](#passive) | Share of the passive forms among the verb forms | 0-1, `nan` without verb forms | More passive |
@@ -125,6 +131,8 @@ Every metric is an attribute of the object, computed when it is created, and `ge
 | [`infinitives_per_sent`](#constructions) | Infinitives per sentence | 0 and above | More infinitives |
 | [`negations_per_sent`](#constructions) | Words of negation per sentence | 0 and above | More negation |
 | [`split_predicates_per_sent`](#constructions) | Split predicates per sentence | 0 and above | More split predicates |
+| [`p_preverbal_subjects`](#word_order) | Share of the nominal subjects before their head | 0-1, `nan` without nominal subjects | Fewer inverted subjects |
+| [`p_preverbal_objects`](#word_order) | Share of the nominal direct objects before their head | 0-1, `nan` without nominal objects | More fronted objects |
 | [`noun_verb_ratio`](#noun_verb_ratio) | Ratio of the nouns to the verb forms | 0 and above, `nan` without verb forms | A more nominal style |
 <!-- --8<-- [end:SyntaxStats-metrics] -->
 
@@ -186,6 +194,19 @@ $$
 \frac{1}{S} \sum_{s=1}^{S} \frac{\textrm{Number of words of } s}{\textrm{Number of leaves of } s}
 $$
 <!-- --8<-- [end:SyntaxStats-leaves] -->
+
+</div>
+
+<div class="metric-card" markdown>
+
+### Words before the root { #words_before_root }
+
+`words_before_root` · [Coh-Metrix](https://doi.org/10.1017/CBO9780511894664)
+{ .metric-meta }
+
+<!-- --8<-- [start:SyntaxStats-words_before_root] -->
+The left embeddedness of Coh-Metrix (SYNLE): the number of the words of a sentence before its root, the main predicate, averaged over the sentences whose root is a word. The root of a sentence with a copula is its nominal part (*she **is** a **doctor***), as Universal Dependencies has it. In a language with a free word order the measure reads the order as much as the complexity.
+<!-- --8<-- [end:SyntaxStats-words_before_root] -->
 
 </div>
 
@@ -350,6 +371,27 @@ Counts the modifiers of a noun phrase: the dependents with the relations `amod`,
 
 <div class="metric-card" markdown>
 
+### Prepositional chains { #prep_chains }
+
+`prep_chains_per_sent` · `max_prep_chain_len` · [Profiling-UD](https://aclanthology.org/2020.lrec-1.883/)
+{ .metric-meta }
+
+<!-- --8<-- [start:SyntaxStats-prep_chains] -->
+A prepositional chain is two or more nested complements with a preposition, each hanging on the previous one: *on the mat of the house of the mayor* (length 3). The links are the words of the hook `is_prep_complement`, and the chains and their lengths are those of `calc_modifier_chains`; a chain may start at a complement of a verb (`obl`).
+<!-- --8<-- [end:SyntaxStats-prep_chains] -->
+
+<!-- --8<-- [start:is_prep_complement] -->
+``` {.python .signature}
+is_prep_complement(token)
+```
+
+Checks whether a word is a complement with a preposition: a word with the relation `nmod` or `obl` or a subtype of them (`anyts.constants.PREP_COMPLEMENT_DEPS`) and a dependent of the relation `case` that is an adposition (`ADP`). A noun in a case without a preposition and a possessive marker are none. A value that is not a `Token` raises `SourceTypeError`.
+<!-- --8<-- [end:is_prep_complement] -->
+
+</div>
+
+<div class="metric-card" markdown>
+
 ### Participial clauses { #participle_clauses }
 
 `participle_clauses_per_sent` · `mean_participle_clause_len`
@@ -411,6 +453,24 @@ Checks whether a word is a passive form (`is_passive`) without an agent (`has_ag
 <!-- --8<-- [start:SyntaxStats-constructions] -->
 The infinitives (`is_infinitive` of `anyts.utils`), the words of negation of the hook `is_negation` and the split predicates of the hook `find_split_predicates`, per sentence.
 <!-- --8<-- [end:SyntaxStats-constructions] -->
+
+</div>
+
+<div class="metric-card" markdown>
+
+### Order of the subjects and the objects { #word_order }
+
+`p_preverbal_subjects` · `p_preverbal_objects` · [Profiling-UD](https://aclanthology.org/2020.lrec-1.883/)
+{ .metric-meta }
+
+<!-- --8<-- [start:SyntaxStats-word_order] -->
+The order of the subjects and of the direct objects in the manner of Profiling-UD: the shares of those before their head, the predicate. Only the nominal ones (`NOUN`, `PROPN`) count: the place of a pronoun, such as a clitic object, is set by the grammar. A subject is a word of `nsubj` (`anyts.constants.NOMINAL_SUBJECT_DEPS`), an object one of `obj` (`anyts.constants.OBJECT_DEPS`), with the relations of ClearNLP and the subtypes.
+
+$$
+\frac{\textrm{Nominal subjects before their head}}{\textrm{Nominal subjects}}, \quad
+\frac{\textrm{Nominal objects before their head}}{\textrm{Nominal objects}}
+$$
+<!-- --8<-- [end:SyntaxStats-word_order] -->
 
 </div>
 
@@ -644,6 +704,7 @@ A language library subclasses `SyntaxStats`. The defaults read Universal Depende
 | `auxiliary_form(token)` | method | Verb form the checks of the clauses read for an auxiliary or a copula without `VerbForm` (`predicate_form`); by default an empty string, which skips it |
 | `is_subordinate_clause_head(token)` | method | Whether a clause head heads a subordinate clause, asked only of the words of `is_clause_head`; by default `is_subordinate_clause_head` of the module over the hooks `is_clause_head` and `auxiliary_form` |
 | `is_infinitive_clause_head(token)` | method | Whether a clause head heads an infinitive clause under a verb (*wants to leave*), counted apart from the subordinate ones; by default `is_infinitive_clause_head` of the module over the hooks `is_clause_head` and `auxiliary_form` |
+| `is_prep_complement(token)` | method | Whether a word is a link of a prepositional chain; by default `is_prep_complement` of the module |
 | `is_participle_clause(token)` | method | Whether a word heads a participial clause; by default a participle that is not the head of the sentence, has no auxiliary or copula and has a dependent (`calc_valency`) |
 | `is_passive(token)` | method | Whether a word is a passive verb form; by default `is_passive` of the module with `join_hyphens` of the class |
 | `is_agentless(token)` | method | Whether a passive form has no agent; by default the hook `is_passive` without an agent (`has_agent` of the module) |
