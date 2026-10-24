@@ -184,3 +184,25 @@ def test_refuses_a_doc(span):
 def test_collocations_of_a_deque():
     words = ["the", "cat", "sat", "on", "the", "mat", "and", "the", "cat", "ate"]
     assert collocations(deque(words)) == collocations(words)
+
+
+def test_collocates_on_one_side_of_the_node():
+    words = ["red", "wine", "and", "white", "wine", "but", "wine", "glass"]
+    both = collocations(words, window=1, node="wine", min_freq=1)
+    left = collocations(words, window=1, node="wine", min_freq=1, side="left")
+    right = collocations(words, window=1, node="wine", min_freq=1, side="right")
+    assert {(c.left, c.right) for c in left} == {
+        ("red", "wine"),
+        ("white", "wine"),
+        ("but", "wine"),
+    }
+    assert {(c.left, c.right) for c in right} == {
+        ("wine", "and"),
+        ("wine", "but"),
+        ("wine", "glass"),
+    }
+    assert {(c.left, c.right) for c in both} == {(c.left, c.right) for c in left + right}
+    with pytest.raises(ParameterError, match=r"^The side must be left or right, not 'up'$"):
+        collocations(words, node="wine", side="up")
+    with pytest.raises(ParameterError, match=r"^A side needs a node$"):
+        collocations(words, side="left")

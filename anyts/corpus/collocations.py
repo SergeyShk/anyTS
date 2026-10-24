@@ -36,6 +36,7 @@ def collocations(
     min_freq: int = 2,
     node: str | None = None,
     top_n: int | None = None,
+    side: str | None = None,
 ) -> list[Collocation]:
     """
     Finding the collocations of a sequence of words
@@ -60,6 +61,8 @@ def collocations(
         min_freq (int): Minimum frequency of a pair
         node (str): Word whose collocations are needed (left or right); None - every pair
         top_n (int): Number of collocations; None - all of them
+        side (str): With a node, its collocates on one side only: "left" before it,
+            "right" after it; None - on both
 
     Returns:
         list[Collocation]: Collocations by descending measure and frequency of the
@@ -69,7 +72,8 @@ def collocations(
         SourceTypeError: If the words are not a list of strings (check_words)
         SourceError: If there are no words
         ParameterError: If the measure is unknown, the window or top_n is below
-            one, min_freq is not an integer or the node is not a string
+            one, min_freq is not an integer, the node is not a string, or the side
+            is neither left nor right or comes without a node
 
     Example:
         >>> from anyts.corpus import collocations
@@ -89,6 +93,10 @@ def collocations(
     check_integer(min_freq, "minimum frequency")
     if node is not None and not isinstance(node, str):
         raise ParameterError(f"The node must be a string, not {type(node).__name__}")
+    if side is not None and side not in ("left", "right"):
+        raise ParameterError(f"The side must be left or right, not {side!r}")
+    if side is not None and node is None:
+        raise ParameterError("A side needs a node")
     check_words(words)
     if not len(words):
         raise SourceError("The data source has no words")
@@ -99,7 +107,7 @@ def collocations(
     pairs: Counter[tuple[str, str]] = Counter()
     for index, left in enumerate(words):
         for right in words[index + 1 : index + 1 + window]:
-            if node is None or node in (left, right):
+            if _holds_node(left, right, node, side):
                 pairs[left, right] += 1
     found = [
         Collocation(
@@ -123,6 +131,17 @@ def collocations(
         )
     )
     return found[:top_n] if top_n else found
+
+
+def _holds_node(left: str, right: str, node: str | None, side: str | None) -> bool:
+    """Whether a pair holds the node on the side asked for; every pair without a node"""
+    if node is None:
+        return True
+    if side == "left":
+        return right == node
+    if side == "right":
+        return left == node
+    return node in (left, right)
 
 
 def calc_mi(freq_a: int, freq_b: int, freq_ab: float, n: int) -> float:

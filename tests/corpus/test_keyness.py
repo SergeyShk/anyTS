@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 import spacy
 
+from anyts import WordsExtractor
 from anyts.constants import G2_CRITICAL_VALUES, KEYNESS_MEASURES
 from anyts.corpus import FrequencyReference, Keyword, check_keyness_params, keyness
 from anyts.corpus.keyness import (
@@ -378,3 +379,45 @@ def test_frequency_reference_checks_its_fields(fields, error, message):
     reference = FrequencyReference(**{"counts": {"cat": 5.0}, "size": 100, **fields})
     with pytest.raises(error, match=message):
         keyness(["cat", "dog", "cat"], reference)
+
+
+def test_keyness_of_ngrams():
+    target = ["the", "black", "cat", "sleeps", "and", "the", "black", "cat", "eats"]
+    reference = ["the", "white", "cat", "sleeps", "and", "the", "white", "cat", "eats"]
+    found = keyness(target, reference, n=2, min_freq=2)
+    assert [keyword.word for keyword in found] == ["black_cat", "the_black"]
+    assert keyness(target, reference, n=1) == keyness(target, reference)
+    # Every n-gram of a list, the last one too, against no common n-gram
+    words = ["a", "b", "c", "a", "b"]
+    for n, expected in (
+        (2, {"a_b": 2, "b_c": 1, "c_a": 1}),
+        (3, {"a_b_c": 1, "b_c_a": 1, "c_a_b": 1}),
+    ):
+        found = keyness(words, ["x", "y", "z"], n=n)
+        assert {keyword.word: keyword.freq_target for keyword in found} == expected
+    # The reference is cut into n-grams as well
+    negative = keyness(target, reference, n=2, positive=False)
+    assert {keyword.word: keyword.freq_reference for keyword in negative} == {
+        "the_white": 2,
+        "white_cat": 2,
+    }
+    # A mapping is taken as it is, its keys the units already, as the n-grams of WordsExtractor
+    bigrams = WordsExtractor(ngram_range=(2, 2)).extract(" ".join(reference))
+    assert keyness(target, Counter(bigrams), n=2) == keyness(target, reference, n=2)
+    counts = {"black_cat": 2, "the_cat": 1}
+    assert [k.word for k in keyness(counts, reference, n=2)][:1] == ["black_cat"]
+    for n in (0, -1):
+        with pytest.raises(ParameterError, match=r"^The length of the n-grams must be at least 1"):
+            keyness(target, reference, n=n)
+        with pytest.raises(ParameterError, match=r"^The length of the n-grams must be at least 1"):
+            check_keyness_params(n=n)
+    with pytest.raises(ParameterError):
+        keyness(target, reference, n=1.5)
+    # A frequency dictionary holds words
+    dictionary = FrequencyReference(Counter(reference), len(reference))
+    assert keyness(target, dictionary, n=1) == keyness(target, reference)
+    with pytest.raises(ParameterError, match=r"^A FrequencyReference holds words"):
+        keyness(target, dictionary, n=2)
+    # Fewer words than n leave no n-grams
+    with pytest.raises(SourceError):
+        keyness(["cat"], reference, n=2)
