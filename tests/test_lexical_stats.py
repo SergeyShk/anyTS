@@ -8,7 +8,7 @@ from anyts.constants import LEXICAL_STATS_DESC, MESSAGES
 from anyts.exceptions import ParameterError, SourceError, SourceTypeError
 from anyts.extractors import WordsExtractor
 from anyts.lexical_stats import LexicalStats, LexicalWord, calc_surprisal
-from anyts.utils import is_doc, is_number, iter_doc_words
+from anyts.utils import is_doc, is_number, iter_doc_words, source_type_error
 
 
 class Entry(NamedTuple):
@@ -52,7 +52,7 @@ class English(LexicalStats):
         elif isinstance(source, str):
             words = WordsExtractor().extract(source)
         else:
-            raise SourceTypeError("The data source is set incorrectly")
+            raise source_type_error(self.messages, source)
         return [
             LexicalWord(
                 word, LEMMAS.get(word.lower(), word.lower()), word.lower() not in FUNCTION_WORDS

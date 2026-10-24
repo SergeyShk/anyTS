@@ -124,7 +124,7 @@ Checks whether a text, a `Doc` or a `Span` holds a word: an empty text or one of
 find_marks(text, words)
 ```
 
-Finds the punctuation marks between the words of a text: the words are found in the text in their order, a word inside a longer one not counting, and a word with a character of `is_punctuation` between it and the word before gets its position; the hyphen that joins two parts of a word is no mark. A word the text does not hold is passed over. The positions go to `ConnectorMatcher.find`, whose rules do not read a word across a mark.
+Finds the punctuation marks between the words of a text: the words are found in the text in their order, a word inside a longer one not counting, and a word with a character of `is_punctuation` between it and the word before gets its position; a quote, an apostrophe and the hyphen that joins two parts of a word are no marks. A word the text does not hold is passed over. The positions go to `ConnectorMatcher.find`, whose rules do not read a word across a mark.
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |

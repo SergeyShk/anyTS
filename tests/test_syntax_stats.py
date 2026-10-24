@@ -798,7 +798,7 @@ def test_hyphenated_words_in_the_statistics():
 @pytest.mark.parametrize(
     ("source", "error", "message"),
     [
-        ("The house", SourceTypeError, MESSAGES["source_type"]),
+        ("The house", SourceTypeError, MESSAGES["source_type"].format(type="str")),
         (Doc(VOCAB, words=["The", "house"]), SourceError, MESSAGES["no_parse"]),
         (parse([",", "."], [1, 1], ["punct", "ROOT"]), SourceError, MESSAGES["no_words"]),
     ],

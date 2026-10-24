@@ -191,7 +191,8 @@ DELTA_VARIANTS = {
 # braces are format strings, and a language library passes its own over these
 MESSAGES: Mapping[str, str] = MappingProxyType(
     {
-        "source_type": "The data source is set incorrectly",
+        "source_type": "The data source cannot be of type {type}",
+        "source_span": "The data source cannot be a Span: pass span.as_doc()",
         "no_words": "The data source has no words",
         "no_sentences": "The data source has no sentences",
         "sents_extractor_type": "The sentence extractor must be a SentsExtractor",
@@ -234,7 +235,7 @@ MESSAGES: Mapping[str, str] = MappingProxyType(
         "layers_type": "The layers must be a list of names or a string",
         "unknown_layer": "Unknown layer of the highlighting: {layer}",
         "layer_unavailable": "The layer {layer} is not available",
-        "layer_annotations": "The layer {layer} needs a Doc with {annotations}",
+        "layer_annotations": "The layer {layer} needs a Doc with the annotations: {annotations}",
         "fragment_layer": "A fragment of the layer {found} is found for {layer}",
         "fragment_outside": (
             "A fragment of the layer {layer} is empty or lies outside the text: {start}-{end}"
@@ -280,7 +281,14 @@ MESSAGES: Mapping[str, str] = MappingProxyType(
         "tokenizer": "The tokenizer is set incorrectly",
         "tokenizer_iterable": "The tokenizer must return an iterable object",
         "tokenizer_strings": "The tokenizer must return strings, not {type}",
-        "hook_result": "The {hook} of {cls} must return {expected}, not {type}",
+        "hook_doc": "The {hook} of {cls} must return a Doc, not {type}",
+        "hook_lexical_words": "The {hook} of {cls} must return LexicalWord objects, not {type}",
+        "hook_cohesion_words": (
+            "The {hook} of {cls} must return sentences of CohesionWord objects, not {type}"
+        ),
+        "hook_syllables": "The {hook} of {cls} must return a sequence of strings, not {type}",
+        "hook_sounds": "The {hook} of {cls} must return a string or strings, not {type}",
+        "hook_highlights": "The {hook} of {cls} must return Highlight objects, not {type}",
         "hook_spans": (
             "The {hook} of {cls} must give ascending triples of integer bounds inside the text "
             "and a string, not {span}"
@@ -290,6 +298,21 @@ MESSAGES: Mapping[str, str] = MappingProxyType(
         "connector_class": "Unknown class or kind of a connector: {cls}, {kind}",
         "connector_pos_type": "A part of speech must be a string or None, not {type}",
         "connector_pos": "The parts of speech must be as many as the words",
+        "connector_breaks": (
+            "A position of a mark must be between 1 and {last}, the positions of the words after "
+            "the first, not {position}"
+        ),
+        "connector_breaks_short": (
+            "A sentence of fewer than two words has no positions of the marks, not {position}"
+        ),
+        "connector_blocked": (
+            "A position of a word that starts no connector must be between 0 and {last}, "
+            "not {position}"
+        ),
+        "connector_blocked_empty": (
+            "A sentence without words has no positions of the words, not {position}"
+        ),
+        "connector_type": "A Connector is expected, not {type}",
     }
 )
 

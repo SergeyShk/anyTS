@@ -92,7 +92,8 @@ def test_metrics(stats):
     assert stats.alliteration == calc_repetition_index(stats.words, 3, CONSONANTS)
     assert stats.assonance == calc_repetition_index(stats.words, 3, VOWELS)
     syllables = [s for word in stats.syllables for s in word]
-    assert stats.mean_syllable_len == sum(map(len, syllables)) / len(syllables)
+    lengths = [len(cv_pattern(s, VOWELS, CONSONANTS)) for s in syllables]
+    assert stats.mean_syllable_len == sum(lengths) / len(syllables)
     opened = sum(cv_pattern(s, VOWELS, CONSONANTS).endswith("V") for s in syllables)
     assert stats.p_open_syllables == opened / len(syllables)
     assert stats.c_syllable_patterns["CCV"] == 3
@@ -141,6 +142,9 @@ def test_hooks():
 
     assert Unsigned("three").c_clusters == {1: 2}
     assert Signed("three").c_clusters == {2: 1}
+    # A skipped sign is no sound of a syllable
+    assert Signed("three").mean_syllable_len == 4
+    assert Unsigned("three").mean_syllable_len == 4
 
     class Glided(English):
         glides = frozenset("e")
@@ -150,9 +154,14 @@ def test_hooks():
 
 
 def test_syllable_sounds_follow_transcribe():
-    stats = Transcribed("thin")
+    class Lisped(Transcribed):
+        voiceless = VOICELESS | {"θ"}
+
+    stats = Lisped("thin")
     assert stats.syllables == (("thin",),)
     assert stats.mean_syllable_len == 3
+    # θ of the transcription is in no class of Transcribed
+    assert Transcribed("thin").mean_syllable_len == 2
 
 
 def test_source_of_a_doc_and_an_extractor():

@@ -164,7 +164,9 @@ Checks whether a token carries a morphological feature with a given value: `has_
 
     from anyts.utils import has_feature
 
-    doc = Doc(Vocab(), words=["She", "has", "left"], morphs=["", "Mood=Ind|VerbForm=Fin", "VerbForm=Part"])
+    doc = Doc(
+        Vocab(), words=["She", "has", "left"], morphs=["", "Mood=Ind|VerbForm=Fin", "VerbForm=Part"]
+    )
     has_feature(doc[1], "VerbForm", "Fin"), has_feature(doc[2], "VerbForm", "Fin")
     ```
 
@@ -388,7 +390,7 @@ Splits the words of a `Doc` or a `Span` into the sentences of a sentence extract
 find_unit_marks(units)
 ```
 
-Finds the punctuation marks between the words of a sentence of a `Doc`: the words are those of `iter_doc_units`, and a word with a character of `is_punctuation` between it and the word before gets its position, except the hyphen that joins two parts of a word, as `find_marks` does for a text.
+Finds the punctuation marks between the words of a sentence of a `Doc`: the words are those of `iter_doc_units`, and a word with a character of `is_punctuation` between it and the word before gets its position, except a quote, an apostrophe and the hyphen that joins two parts of a word, as `find_marks` does for a text.
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |

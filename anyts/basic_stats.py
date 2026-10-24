@@ -28,6 +28,7 @@ from .utils import (
     has_words,
     is_doc,
     iter_doc_words,
+    source_type_error,
 )
 
 if TYPE_CHECKING:
@@ -253,7 +254,7 @@ class BasicStats(Stats, metaclass=ABCMeta):
             sents = (sents_extractor or self.sents_extractor_class()).extract(text)
             words = (words_extractor or self.words_extractor_class()).extract(text)
         else:
-            raise SourceTypeError(messages["source_type"])
+            raise source_type_error(messages, source)
         if not words:
             raise SourceError(messages["no_words"])
 

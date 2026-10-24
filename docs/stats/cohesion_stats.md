@@ -155,7 +155,7 @@ Every metric is an attribute of the object, computed when it is created; `get_st
 calc_overlap(sets, adjacent=True)
 ```
 
-The binary overlap of Coh-Metrix (CRFNO1, CRFAO1, CRFSO1 over the adjacent pairs, CRFNOa, CRFAOa, CRFSOa over all of them): the share of the pairs of sentences that share at least one element; `nan` for a text shorter than two sentences. All the pairs are counted as in `calc_overlaps`, without going through them.
+The binary overlap of Coh-Metrix (CRFNO1, CRFAO1, CRFSO1 over the adjacent pairs, CRFNOa, CRFAOa, CRFSOa over all of them): the share of the pairs of sentences that share at least one element; `nan` for a text shorter than two sentences.
 
 $$
 \frac{\textrm{Number of pairs sharing an element}}{\textrm{Number of pairs}}
@@ -181,7 +181,7 @@ $$
 calc_proportional_overlap(sets, adjacent=True)
 ```
 
-The proportional overlap of Coh-Metrix (CRFCWO1, CRFCWOa): the Dice coefficient of a pair of sentences (`dice`) averaged over the pairs; `nan` for a text shorter than two sentences. Over all the pairs the sum is computed as in `calc_overlaps`, without going through them.
+The proportional overlap of Coh-Metrix (CRFCWO1, CRFCWOa): the Dice coefficient of a pair of sentences (`dice`) averaged over the pairs; `nan` for a text shorter than two sentences.
 
 $$
 \frac{1}{\textrm{Number of pairs}} \sum_{(A, B)} \textrm{Dice}(A, B)
@@ -338,7 +338,7 @@ The methods `get_stats`, `to_dataframe`, `print_stats` and `describe` are those 
 calc_overlaps(sets, proportional=True)
 ```
 
-The values of `calc_overlap` and `calc_proportional_overlap` over the adjacent and over all the pairs at once, as an `Overlap` named tuple with the fields `adjacent`, `all`, `prop_adjacent` and `prop_all`; without `proportional` the last two are `nan`. The values over all the pairs are computed without going through every pair: the sharing pairs are counted over bit masks of the sentences, and the sum of the Dice coefficients over the histograms of the lengths of the sentences holding each element, added by `math.fsum` so that it does not depend on the order of the elements.
+The values of `calc_overlap` and `calc_proportional_overlap` over the adjacent and over all the pairs at once, as an `Overlap` named tuple with the fields `adjacent`, `all`, `prop_adjacent` and `prop_all`; without `proportional` the last two are `nan`. The values over all the pairs come without going through every pair, and none of them depends on the order of the elements in the sets.
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
@@ -376,7 +376,7 @@ Raises:
 <!-- --8<-- [end:ConnectorMatcher] -->
 
 <!-- --8<-- [start:ConnectorMatcher-find] -->
-`find(words, sent_index, pos, breaks)` returns the occurrences of the connectors in a sentence in the order of its words. The words are those of one sentence without punctuation, the first one its start. With the parts of speech, a one-word connector counts only with one of `pos_tags` or of `pos_extra` for its form, never after one of `not_after_pos`, and with one of `start_only_pos` only at the start of the sentence; a word without a part of speech (`None`) passes. Without the parts of speech the rules that read them are skipped. The positions of the punctuation marks `breaks` cut a connector off its neighbours: a rule does not read a word across a mark, so in *so, the end* the word after the comma neither blocks nor lets the connector count, unless the connector is one of `read_through_marks`, and a mark between the words of a connector of `split_by_marks` makes it none; without them the words are read as adjacent.
+`find(words, sent_index, pos, breaks, blocked)` returns the occurrences of the connectors in a sentence in the order of its words. The words are those of one sentence without punctuation, the first one its start. With the parts of speech, a one-word connector counts only with one of `pos_tags` or of `pos_extra` for its form, never after one of `not_after_pos`, and with one of `start_only_pos` only at the start of the sentence; a word without a part of speech (`None`) passes. Without the parts of speech the rules that read them are skipped. The positions of the punctuation marks `breaks` cut a connector off its neighbours: a rule does not read a word across a mark, so in *so, the end* the word after the comma neither blocks nor lets the connector count, unless the connector is one of `read_through_marks`, and a mark between the words of a connector of `split_by_marks` makes it none; without them the words are read as adjacent. No connector starts at a word of `blocked`, which a language rules out by more than the words and their parts of speech, such as its parse.
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
@@ -384,8 +384,9 @@ Raises:
 | `sent_index` | `int` | `0` | Number of the sentence, written into the occurrences |
 | `pos` | `list[str]` | `None` | Parts of speech of the words |
 | `breaks` | `set[int]` | `None` | Positions of the words a punctuation mark stands before |
+| `blocked` | `set[int]` | `None` | Positions of the words no connector starts at |
 
-Words that are not a list of strings and parts of speech that are not a list of strings and `None` (the tags `token.pos_` of spaCy, not the numbers `token.pos`) and positions of the marks that are not a collection raise `SourceTypeError`, a number of the sentence or a position of a mark that is not an integer, a position of a mark that is not that of a word after the first and parts of speech not as many as the words `ParameterError`.
+Words that are not a list of strings and parts of speech that are not a list of strings and `None` (the tags `token.pos_` of spaCy, not the numbers `token.pos`) and positions that are not a collection raise `SourceTypeError`, a number of the sentence or a position that is not an integer, a position of a mark that is not that of a word after the first, a blocked position that is not that of a word and parts of speech not as many as the words `ParameterError`.
 <!-- --8<-- [end:ConnectorMatcher-find] -->
 
 === "Code"
@@ -432,9 +433,9 @@ A language library subclasses `CohesionStats`. By default the words and their fe
 
 | Hook | Kind | Description |
 | :--- | :--- | :---------- |
-| `analyze(source)` | method | Words of the sentences of a source as `CohesionWord`: the word, its lemma, its part of speech, whether it is a noun, a pronoun, a demonstrative, an argument and a content word, its tense, mood and aspect, and whether a punctuation mark stands before it (`break_before`, which the rules of the connectors do not read through); by default those of a `Doc`, sentence by sentence (`doc_units`), with the features of `word_info`; a library that reads a string or a `Doc` without these annotations overrides it |
+| `analyze(source)` | method | Words of the sentences of a source as `CohesionWord`: the word, its lemma, its part of speech, whether it is a noun, a pronoun, a demonstrative, an argument and a content word, its tense, mood and aspect, whether a punctuation mark stands before it (`break_before`, which the rules of the connectors do not read through) and whether no connector starts at it (`connector_blocked`, by a rule of the parse such as an *if* of an indirect question); by default those of a `Doc`, sentence by sentence (`doc_units`), with the features of `word_info`; a library that reads a string or a `Doc` without these annotations overrides it |
 | `doc_units(doc)` | method | Words of the sentences of a `Doc` as lists of tokens: by its boundaries, or by the extractor over its text (`split_doc_units` of `anyts.utils`) |
-| `word_info(unit)` | method | Features of a word of a `Doc`; by default a noun is `NOUN` or `PROPN`, a pronoun `PRON` or a possessive, demonstrative or personal determiner, a demonstrative carries `PronType=Dem`, an argument is `NOUN`, `PROPN` or `PRON`, a content word one of `anyts.constants.CONTENT_UD_POS` and no demonstrative, and the tense, the mood and the aspect are the features `Tense`, `Mood` and `Aspect` |
+| `word_info(unit)` | method | Features of a word of a `Doc`; by default a noun is `NOUN` or `PROPN`, a pronoun `PRON` or a possessive, demonstrative or personal determiner, a demonstrative carries `PronType=Dem`, an argument is `NOUN`, `PROPN` or `PRON`, a content word one of `anyts.constants.CONTENT_UD_POS` and no demonstrative, and the tense, the mood and the aspect are the features `Tense`, `Mood` and `Aspect`; a library sets `connector_blocked` where its parse rules a connector out |
 | `load_connectors()` | class method | Dictionary of the connectors of the language, class and kind by connector; empty by default |
 | `connector_matcher()` | class method | Matcher of that dictionary, built once for a class and shared by its instances and by searches outside the statistics |
 | `connector_matcher_class` | class attribute | Class that finds the connectors with the context rules of the language; `ConnectorMatcher` by default. A matcher with other classes or kinds gives other `connectors_*` attributes, so the subclass sets its own `stats_desc` too |

@@ -28,6 +28,7 @@ from ..utils import (
     in_order,
     is_doc,
     iter_doc_tokens,
+    source_type_error,
 )
 
 if TYPE_CHECKING:
@@ -39,12 +40,12 @@ if TYPE_CHECKING:
 _LINE_BREAK = re.compile(r"\r\n?|\n")
 # What an annotation of a Doc gives a layer, for the message of an unavailable layer
 _ANNOTATION_NAMES = {
-    "DEP": "a dependency parse",
-    "LEMMA": "the lemmas",
-    "POS": "the parts of speech",
-    "TAG": "the tags",
-    "MORPH": "the morphological features",
-    "ENT_IOB": "the named entities",
+    "DEP": "dependency parse",
+    "LEMMA": "lemmas",
+    "POS": "parts of speech",
+    "TAG": "tags",
+    "MORPH": "morphological features",
+    "ENT_IOB": "named entities",
 }
 
 
@@ -228,7 +229,7 @@ class HighlightedText:
                 iter_part_sents(partial(self._hook_spans, "iter_sents"), source), words
             )
         else:
-            raise SourceTypeError(self.messages["source_type"])
+            raise source_type_error(self.messages, source)
         if not words:
             raise SourceError(self.messages["no_words"])
         available = [
@@ -352,11 +353,8 @@ class HighlightedText:
 
     def _find_error(self, value: object) -> str:
         """Message of a result of find that is not fragments of the highlighting"""
-        return self.messages["hook_result"].format(
-            hook="find",
-            cls=type(self).__name__,
-            expected="Highlight objects",
-            type=type(value).__name__,
+        return self.messages["hook_highlights"].format(
+            hook="find", cls=type(self).__name__, type=type(value).__name__
         )
 
     @classmethod
@@ -822,6 +820,7 @@ def find_connector_highlights(
     note: Callable[[Connector], str] | None = None,
     pos: Callable[[Word], str | None] | None = None,
     text: str | None = None,
+    blocked: Callable[[Word], bool] | None = None,
 ) -> list[Highlight]:
     """
     Finding the connectors
@@ -830,8 +829,9 @@ def find_connector_highlights(
         The connectors of a matcher are looked for inside every sentence, in
         the whole text without the sentences, a one-word one checked by its
         part of speech when a word of the sentence has one. With the text, an
-        is_punctuation character between two words is a punctuation mark, which
-        the rules of the matcher do not read through
+        is_punctuation character between two words is a punctuation mark,
+        which the rules of the matcher do not read through, as in find_marks.
+        No connector starts at a word that blocked rules out
 
     Arguments:
         words (list[Word]): Words with their positions and parts of speech
@@ -842,14 +842,18 @@ def find_connector_highlights(
         pos (Callable[[Word], str|None]): Part of speech of a word for the matcher;
             that of the word if not set
         text (str): Text of the words, for the punctuation marks between them
+        blocked (Callable[[Word], bool]): Whether no connector starts at a word, by a
+            rule of the language such as its parse; a connector may start at any word
+            if not set
 
     Returns:
         list[Highlight]: Fragments of the layer connectors
 
     Raises:
-        SourceTypeError: If note or pos is not callable or the text is not a string
+        SourceTypeError: If note, pos or blocked is not callable or the text is not a
+            string
     """
-    _check_hooks((note, "note"), (pos, "part of speech"))
+    _check_hooks((note, "note"), (pos, "part of speech"), (blocked, "check of the blocked words"))
     if text is not None:
         check_word(text, "text")
     note = note or (lambda connector: f"{connector.text}: {connector.cls}, {connector.kind}")
@@ -874,7 +878,13 @@ def find_connector_highlights(
                 "connectors",
                 note(connector),
             )
-            for connector in matcher.find(texts, 0, tags if any(tags) else None, breaks)
+            for connector in matcher.find(
+                texts,
+                0,
+                tags if any(tags) else None,
+                breaks,
+                None if blocked is None else {i for i, word in enumerate(group) if blocked(word)},
+            )
         )
     return highlights
 

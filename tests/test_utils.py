@@ -741,6 +741,12 @@ def test_find_marks():
     # The hyphen of a hyphenated word is no mark, a dash is
     assert find_marks("The so-called experts", ["The", "so", "called", "experts"]) == frozenset()
     assert find_marks("The so - called experts", ["The", "so", "called", "experts"]) == {2}
+    # Quotes and apostrophes are no marks, a comma beside a quote is
+    title = ["after", "The", "Inspector", "a", "play"]
+    assert find_marks("after «The Inspector», a play", title) == {3}
+    assert find_marks('after "The Inspector" a play', title) == frozenset()
+    assert find_marks("after „The Inspector“ a play", title) == frozenset()
+    assert find_marks("l’homme", ["l", "homme"]) == frozenset()
     with pytest.raises(SourceTypeError):
         find_marks(5, words)
     with pytest.raises(SourceTypeError):
@@ -751,7 +757,9 @@ def test_find_unit_marks():
     from anyts.utils import find_unit_marks, iter_doc_units
 
     doc = spacy.blank("en")('So, "it" is late - very late')
-    assert find_unit_marks(list(iter_doc_units(doc))) == {1, 2, 4}
+    assert find_unit_marks(list(iter_doc_units(doc))) == {1, 4}
+    doc = spacy.blank("en")("After \u00abThe Inspector\u00bb, a play")
+    assert find_unit_marks(list(iter_doc_units(doc))) == {3}
     doc = spacy.blank("en")("The so-called experts")
     assert [token.text for token in doc] == ["The", "so", "-", "called", "experts"]
     assert find_unit_marks(list(iter_doc_units(doc))) == frozenset()

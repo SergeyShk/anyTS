@@ -141,10 +141,11 @@ def test_doc_with_partial_boundaries():
 
 @pytest.mark.parametrize(
     ("layer", "requirement"),
-    [("subjects", "a dependency parse$"), ("nouns", "the parts of speech, the lemmas$")],
+    [("subjects", "dependency parse$"), ("nouns", "parts of speech, lemmas$")],
 )
 def test_layers_unavailable(layer, requirement):
-    with pytest.raises(ParameterError, match=f"^The layer {layer} needs a Doc with {requirement}"):
+    message = f"^The layer {layer} needs a Doc with the annotations: {requirement}"
+    with pytest.raises(ParameterError, match=message):
         Marks(text, layers=layer)
 
 
@@ -153,7 +154,7 @@ def test_layers_unknown_annotation():
         layers_desc: ClassVar[dict[str, str]] = {"entities": "entity"}
         layer_annotations: ClassVar[dict[str, tuple[str, ...]]] = {"entities": ("SPACY",)}
 
-    with pytest.raises(ParameterError, match=r"needs a Doc with SPACY$"):
+    with pytest.raises(ParameterError, match=r"needs a Doc with the annotations: SPACY$"):
         Entities(text, layers="entities")
 
 
@@ -241,7 +242,7 @@ def test_layer_requirements_listed():
             "subjects": ("DEP", "POS", "LEMMA")
         }
 
-    message = r"needs a Doc with a dependency parse, the parts of speech, the lemmas$"
+    message = r"needs a Doc with the annotations: dependency parse, parts of speech, lemmas$"
     with pytest.raises(ParameterError, match=message):
         Heavy(text, layers="subjects")
     with pytest.raises(ParameterError, match=r"^The layer long_sents is not available$"):
@@ -517,8 +518,21 @@ def test_find_connector_highlights_through_a_mark():
     assert (
         find_connector_highlights(hyphenated, None, matcher, text="He left before-the end") == []
     )
+    # A quote between the words is no mark either
+    quoted = [*words[:3], Word(16, 19, "the"), Word(20, 23, "end")]
+    assert find_connector_highlights(quoted, None, matcher, text='He left before "the end"') == []
     with pytest.raises(SourceTypeError):
         find_connector_highlights(words, None, matcher, text=5)
+
+
+def test_find_connector_highlights_blocked():
+    matcher = Connectors({"and": ("additive", "primary")})
+    words = words_of("cats and dogs and birds")
+    found = find_connector_highlights(words, None, matcher, blocked=lambda w: w.start == 5)
+    assert [(h.start, h.end) for h in found] == [(14, 17)]
+    assert len(find_connector_highlights(words, None, matcher, blocked=lambda w: False)) == 2
+    with pytest.raises(SourceTypeError, match=r"^The check of the blocked words must be callable"):
+        find_connector_highlights(words, None, matcher, blocked=True)
 
 
 def test_find_split_predicate_highlights():
@@ -568,13 +582,12 @@ def test_find_alliteration():
 
 
 class Translated(Marks):
-    annotation_names: ClassVar[dict[str, str]] = {"POS": "parts of speech", "LEMMA": "lemmas"}
+    annotation_names: ClassVar[dict[str, str]] = {"POS": "word classes", "LEMMA": "base forms"}
 
 
 def test_annotation_names():
-    with pytest.raises(
-        ParameterError, match=r"^The layer nouns needs a Doc with parts of speech, lemmas$"
-    ):
+    message = r"^The layer nouns needs a Doc with the annotations: word classes, base forms$"
+    with pytest.raises(ParameterError, match=message):
         Translated(text, ["nouns"])
 
 

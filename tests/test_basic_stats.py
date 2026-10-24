@@ -116,9 +116,13 @@ def test_errors():
         Stats("+ _")
     with pytest.raises(SourceError):
         Stats(spacy.blank("xx")("... !"))
-    for source in (666, ["a", "b"], {"a": "b"}):
-        with pytest.raises(SourceTypeError, match=r"^The data source is set incorrectly$"):
+    for source, name in ((666, "int"), (["a", "b"], "list"), ({"a": "b"}, "dict")):
+        with pytest.raises(SourceTypeError, match=rf"^The data source cannot be of type {name}$"):
             Stats(source)
+    with pytest.raises(
+        SourceTypeError, match=r"^The data source cannot be a Span: pass span\.as_doc\(\)$"
+    ):
+        Stats(spacy.blank("en")("The cat sleeps")[:2])
     with pytest.raises(SourceTypeError, match=r"must be a SentsExtractor$"):
         Stats(TEXT, sents_extractor=WordsExtractor())
     with pytest.raises(SourceTypeError, match=r"must be a WordsExtractor$"):
