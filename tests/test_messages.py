@@ -129,6 +129,7 @@ class Lemmas(Syntax):
 
 VOCAB = spacy.blank("xx").vocab
 PARSED = Doc(VOCAB, words=["Yes"], heads=[0], deps=["ROOT"])
+TAGGED = Doc(VOCAB, words=["Yes"], pos=["INTJ"])
 
 
 class Layers(HighlightedText):
@@ -303,6 +304,7 @@ CASES = [
     ("source_type", SourceTypeError, lambda: Morph("Yes")),
     ("source_span", SourceTypeError, lambda: Morph(PARSED[:1])),
     ("no_pos", SourceError, lambda: Morph(PARSED)),
+    ("unknown_stat", UnknownStatError, lambda: Morph(TAGGED).get_stats("cases")),
     ("no_words", SourceError, lambda: Morph(Doc(VOCAB, words=["."], pos=["PUNCT"]))),
     (
         "hook_morph_words",

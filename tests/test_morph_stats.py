@@ -99,6 +99,15 @@ def test_unknown_statistic(stats, call):
     with pytest.raises(UnknownStatError, match=r"^Unknown statistic: cases\."):
         getattr(stats, call)("pos", "cases")
 
+    class Lemmas(MorphStats):
+        @property
+        def lemmas(self):
+            return tuple(word.lower() for word in self.words)
+
+    # A property is no statistic to count
+    with pytest.raises(UnknownStatError, match=r"^Unknown statistic: lemmas\."):
+        getattr(Lemmas(make_doc()), call)("lemmas")
+
 
 def test_print_stats(capsys):
     doc = Doc(
@@ -181,7 +190,7 @@ def test_a_library_subclass(capsys):
 def test_a_feature_without_value_is_none():
     class Empty(MorphStats):
         def analyze(self, source):
-            return [MorphWord("cats", None, {"Number": "", "Case": "Nom"})]
+            return [MorphWord("cats", "", {"Number": "", "Case": "Nom"})]
 
     stats = Empty(None)
     assert (stats.number, stats.case, stats.pos, stats.tags) == (

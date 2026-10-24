@@ -523,6 +523,18 @@ class CohesionStatsComponent(StatsComponent):
     stats_class: ClassVar[type[Any] | None] = CohesionStats
 
 
+class MorphStatsComponent(StatsComponent):
+    """
+    Component of the morphological statistics of a text
+
+    Description:
+        Puts an object of stats_class (MorphStats) into doc._.<name>; the class
+        of the core needs the parts of speech before it
+    """
+
+    stats_class: ClassVar[type[Any] | None] = MorphStats
+
+
 def start_sents_after_blank_lines(doc: Doc) -> Doc:
     """
     Starting a sentence at the first token after a blank line
@@ -586,15 +598,3 @@ def start_sents_after_blank_lines(doc: Doc) -> Doc:
         end = token.idx + len(token)
     doc.from_array([SENT_START], cast("Ints2d", starts.astype("uint64")))
     return doc
-
-
-class MorphStatsComponent(StatsComponent):
-    """
-    Component of the morphological statistics of a text
-
-    Description:
-        Puts an object of stats_class (MorphStats) into doc._.<name>; the class
-        of the core needs the parts of speech before it
-    """
-
-    stats_class: ClassVar[type[Any] | None] = MorphStats

@@ -5,7 +5,7 @@ from collections.abc import Iterable, Mapping
 from typing import TYPE_CHECKING, Any, ClassVar, NamedTuple
 
 from .constants import MORPH_FEATURES, MORPH_STATS_DESC, MORPH_VALUES_DESC
-from .exceptions import ParameterError, SourceError, SourceTypeError
+from .exceptions import ParameterError, SourceError, SourceTypeError, UnknownStatError
 from .stats import Stats, _print_table
 from .utils import is_doc, iter_doc_tokens, source_type_error
 
@@ -42,7 +42,7 @@ class MorphStats(Stats):
         to_dataframe and describe come from Stats
 
     Arguments:
-        source (Doc): Data source (a Doc object, or what analyze reads)
+        source (str|Doc): Data source (a Doc object, or what analyze reads)
 
     Attributes:
         words (tuple[str]): Words
@@ -134,7 +134,7 @@ class MorphStats(Stats):
                 cls.messages["morph_features"].format(cls=cls.__name__, value=repr(names))
             )
         stats = list(cls.stats_desc)
-        if len(stats) != len(names) + 1 or set(stats) != {"pos", *names}:
+        if set(stats) != {"pos", *names}:
             raise ParameterError(
                 cls.messages["morph_stats_desc"].format(cls=cls.__name__, stats=stats)
             )
@@ -151,7 +151,7 @@ class MorphStats(Stats):
                 cls.messages["morph_values_desc"].format(cls=cls.__name__, value=repr(values))
             )
 
-    def __init__(self, source: Doc):
+    def __init__(self, source: str | Doc):
         messages = self.messages
         found = self.analyze(source)
         words = tuple(found) if isinstance(found, Iterable) else (found,)
@@ -166,11 +166,11 @@ class MorphStats(Stats):
             raise SourceError(messages["no_words"])
         self.words = tuple(word.word for word in words)
         self.tags = tuple(_conllu_features(word.features) for word in words)
-        self.pos = tuple(word.pos for word in words)
+        self.pos = tuple(word.pos or None for word in words)
         for stat, name in self.feature_names.items():
             setattr(self, stat, tuple(word.features.get(name) or None for word in words))
 
-    def analyze(self, source: Doc) -> Iterable[MorphWord]:
+    def analyze(self, source: str | Doc) -> Iterable[MorphWord]:
         """
         Getting the words of a source with their features
 
@@ -180,7 +180,7 @@ class MorphStats(Stats):
             string or a Doc without these annotations overrides it
 
         Arguments:
-            source (Doc): Data source
+            source (str|Doc): Data source
 
         Returns:
             iterable[MorphWord]: Words with their features
@@ -318,9 +318,13 @@ class MorphStats(Stats):
 
     def _checked_stats(self, stats: tuple[str, ...]) -> tuple[str, ...]:
         """Selected statistics checked by their names; all of them when none is selected"""
+        names = self.stat_names()
         for stat in stats:
-            self._check_stat(stat)
-        return stats or self.stat_names()
+            if stat not in names:
+                raise UnknownStatError(
+                    self.messages["unknown_stat"].format(stat=stat, stats=names)
+                )
+        return stats or names
 
 
 def _conllu_features(features: Mapping[str, str]) -> str:

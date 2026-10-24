@@ -52,7 +52,7 @@ Raises:
 <!-- --8<-- [start:MorphStats-parameters] -->
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
-| `source` | `Doc` | - | Data source: a `Doc` with the parts of speech, or what `analyze` takes |
+| `source` | `str` / `Doc` | - | Data source: a `Doc` with the parts of speech, or what `analyze` takes |
 <!-- --8<-- [end:MorphStats-parameters] -->
 
 ## Attributes
