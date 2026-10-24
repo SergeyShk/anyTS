@@ -14,6 +14,7 @@ from anyts.components import (
     CohesionStatsComponent,
     DiversityStatsComponent,
     LexicalStatsComponent,
+    MorphStatsComponent,
     PhonStatsComponent,
     ReadabilityStatsComponent,
     StatsComponent,
@@ -24,6 +25,7 @@ from anyts.components import (
 from anyts.constants import MATTR_WINDOW_LEN, NAUSEA_TOP_N, PHON_WINDOW_LEN
 from anyts.diversity_stats import check_params
 from anyts.exceptions import ParameterError, SourceError, SourceTypeError
+from anyts.morph_stats import MorphStats
 from anyts.readability_stats import ReadabilityStats
 from anyts.style_stats import StyleStats
 from anyts.syntax_stats import SyntaxStats
@@ -385,6 +387,7 @@ def test_components_of_the_core_classes():
     assert StyleStatsComponent.stats_class is StyleStats
     assert SyntaxStatsComponent.stats_class is SyntaxStats
     assert CohesionStatsComponent.stats_class is CohesionStats
+    assert MorphStatsComponent.stats_class is MorphStats
     assert DiversityStatsComponent.stats_class is None
 
 
@@ -399,8 +402,10 @@ def test_syntax_and_cohesion_components_on_their_core_classes(nlp):
     )
     SyntaxStatsComponent(nlp, "anyts_test_syntax")(doc)
     CohesionStatsComponent(nlp, "anyts_test_cohesion")(doc)
+    MorphStatsComponent(nlp, "anyts_test_morph")(doc)
     assert doc._.anyts_test_syntax.n_sents == 2
     assert doc._.anyts_test_cohesion.noun_overlap_adjacent == 1.0
+    assert doc._.anyts_test_morph.pos == ("NOUN", "VERB", "NOUN", "VERB")
 
 
 def test_readability_component(nlp):

@@ -78,6 +78,14 @@
 
     [:octicons-arrow-right-24: Syntactic statistics](stats/syntax_stats.md)
 
+-   :material-tag-text:{ .lg .middle } __Morphology__
+
+    ---
+
+    Count the parts of speech and the features of Universal Dependencies by value or word by word, with the descriptions of the values, the markers and the analysis of a language library
+
+    [:octicons-arrow-right-24: Morphological statistics](stats/morph_stats.md)
+
 -   :material-waveform:{ .lg .middle } __Phonetics__
 
     ---

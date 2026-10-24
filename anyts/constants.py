@@ -289,6 +289,7 @@ MESSAGES: Mapping[str, str] = MappingProxyType(
         "hook_syllables": "The {hook} of {cls} must return a sequence of strings, not {type}",
         "hook_sounds": "The {hook} of {cls} must return a string or strings, not {type}",
         "hook_highlights": "The {hook} of {cls} must return Highlight objects, not {type}",
+        "hook_morph_words": "The {hook} of {cls} must return MorphWord objects, not {type}",
         "hook_spans": (
             "The {hook} of {cls} must give ascending triples of integer bounds inside the text "
             "and a string, not {span}"
@@ -313,6 +314,18 @@ MESSAGES: Mapping[str, str] = MappingProxyType(
             "A sentence without words has no positions of the words, not {position}"
         ),
         "connector_type": "A Connector is expected, not {type}",
+        "morph_features": (
+            "The feature_names of {cls} must map the statistics other than pos to their "
+            "features, all of them strings, not {value}"
+        ),
+        "morph_stats_desc": (
+            "The stats_desc of {cls} must name pos and the statistics of feature_names, "
+            "not {stats}"
+        ),
+        "morph_values_desc": (
+            "The values_desc of {cls} must map statistics to the descriptions of their "
+            "values, all of them strings, not {value}"
+        ),
     }
 )
 
@@ -446,6 +459,159 @@ PHON_WINDOW_LEN = 3
 # counts, and the word length below which words are transparent
 ALLITERATION_THRESHOLD = 0.001
 ALLITERATION_MIN_WORD_LEN = 3
+
+# Morphological statistics: the feature of Universal Dependencies by statistic, the names of
+# the statistics and the descriptions of their values
+MORPH_FEATURES = {
+    "animacy": "Animacy",
+    "aspect": "Aspect",
+    "case": "Case",
+    "definite": "Definite",
+    "degree": "Degree",
+    "gender": "Gender",
+    "mood": "Mood",
+    "num_type": "NumType",
+    "number": "Number",
+    "person": "Person",
+    "polarity": "Polarity",
+    "polite": "Polite",
+    "poss": "Poss",
+    "pron_type": "PronType",
+    "reflex": "Reflex",
+    "tense": "Tense",
+    "verb_form": "VerbForm",
+    "voice": "Voice",
+}
+MORPH_STATS_DESC = {
+    "pos": "Part of speech",
+    "animacy": "Animacy",
+    "aspect": "Aspect",
+    "case": "Case",
+    "definite": "Definiteness",
+    "degree": "Degree",
+    "gender": "Gender",
+    "mood": "Mood",
+    "num_type": "Numeral type",
+    "number": "Number",
+    "person": "Person",
+    "polarity": "Polarity",
+    "polite": "Politeness",
+    "poss": "Possessive",
+    "pron_type": "Pronoun type",
+    "reflex": "Reflexive",
+    "tense": "Tense",
+    "verb_form": "Verb form",
+    "voice": "Voice",
+}
+MORPH_VALUES_DESC = {
+    "pos": {
+        "NOUN": "Noun",
+        "PROPN": "Proper noun",
+        "ADJ": "Adjective",
+        "ADV": "Adverb",
+        "VERB": "Verb",
+        "AUX": "Auxiliary verb",
+        "PRON": "Pronoun",
+        "DET": "Determiner",
+        "NUM": "Numeral",
+        "ADP": "Adposition",
+        "CCONJ": "Coordinating conjunction",
+        "SCONJ": "Subordinating conjunction",
+        "PART": "Particle",
+        "INTJ": "Interjection",
+        "PUNCT": "Punctuation",
+        "SYM": "Symbol",
+        "X": "Other",
+    },
+    "animacy": {"Anim": "Animate", "Inan": "Inanimate", "Hum": "Human", "Nhum": "Non-human"},
+    "aspect": {
+        "Imp": "Imperfective",
+        "Perf": "Perfective",
+        "Prog": "Progressive",
+        "Prosp": "Prospective",
+        "Hab": "Habitual",
+        "Iter": "Iterative",
+    },
+    "case": {
+        "Nom": "Nominative",
+        "Acc": "Accusative",
+        "Gen": "Genitive",
+        "Dat": "Dative",
+        "Ins": "Instrumental",
+        "Loc": "Locative",
+        "Voc": "Vocative",
+        "Abl": "Ablative",
+        "Com": "Comitative",
+        "Par": "Partitive",
+    },
+    "definite": {"Def": "Definite", "Ind": "Indefinite", "Spec": "Specific", "Cons": "Construct"},
+    "degree": {
+        "Pos": "Positive",
+        "Cmp": "Comparative",
+        "Sup": "Superlative",
+        "Abs": "Absolute superlative",
+        "Equ": "Equative",
+    },
+    "gender": {"Masc": "Masculine", "Fem": "Feminine", "Neut": "Neuter", "Com": "Common"},
+    "mood": {
+        "Ind": "Indicative",
+        "Sub": "Subjunctive",
+        "Imp": "Imperative",
+        "Cnd": "Conditional",
+        "Opt": "Optative",
+        "Pot": "Potential",
+    },
+    "num_type": {
+        "Card": "Cardinal",
+        "Ord": "Ordinal",
+        "Frac": "Fraction",
+        "Mult": "Multiplicative",
+        "Sets": "Collective",
+        "Dist": "Distributive",
+    },
+    "number": {"Sing": "Singular", "Plur": "Plural", "Dual": "Dual", "Ptan": "Plurale tantum"},
+    "person": {"1": "First", "2": "Second", "3": "Third"},
+    "polarity": {"Pos": "Positive", "Neg": "Negative"},
+    "polite": {"Form": "Formal", "Infm": "Informal"},
+    "poss": {"Yes": "Possessive"},
+    "pron_type": {
+        "Art": "Article",
+        "Prs": "Personal",
+        "Rcp": "Reciprocal",
+        "Dem": "Demonstrative",
+        "Ind": "Indefinite",
+        "Int": "Interrogative",
+        "Rel": "Relative",
+        "Neg": "Negative",
+        "Tot": "Total",
+        "Exc": "Exclamative",
+        "Emp": "Emphatic",
+    },
+    "reflex": {"Yes": "Reflexive"},
+    "tense": {
+        "Pres": "Present",
+        "Past": "Past",
+        "Fut": "Future",
+        "Imp": "Imperfect",
+        "Pqp": "Pluperfect",
+    },
+    "verb_form": {
+        "Fin": "Finite",
+        "Inf": "Infinitive",
+        "Part": "Participle",
+        "Ger": "Gerund",
+        "Conv": "Converb",
+        "Sup": "Supine",
+        "Vnoun": "Verbal noun",
+    },
+    "voice": {
+        "Act": "Active",
+        "Pass": "Passive",
+        "Mid": "Middle",
+        "Rcp": "Reciprocal",
+        "Cau": "Causative",
+    },
+}
 
 # Lexical sophistication by a frequency dictionary, in the manner of TAALES
 LEXICAL_STATS_DESC = {
