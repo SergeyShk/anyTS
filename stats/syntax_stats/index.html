@@ -1197,6 +1197,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#similarity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Similarity of adjacent sentences
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#noun_verb_ratio" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2489,6 +2500,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#similarity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Similarity of adjacent sentences
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#noun_verb_ratio" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3004,6 +3026,18 @@ Ratio of nouns to verbs                           |   0.50
 <td style="text-align: left;">More fronted objects</td>
 </tr>
 <tr>
+<td style="text-align: left;"><a href="#similarity"><code>pos_edit_distance</code></a></td>
+<td style="text-align: left;">Mean edit distance of the parts of speech of adjacent sentences over the longer one</td>
+<td style="text-align: left;">0-1, <code>nan</code> for one sentence or without parts of speech</td>
+<td style="text-align: left;">Less alike sentences</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a href="#similarity"><code>syntax_similarity</code></a></td>
+<td style="text-align: left;">Mean similarity of the dependency triples of adjacent sentences</td>
+<td style="text-align: left;">0-1, <code>nan</code> for one sentence or without parts of speech</td>
+<td style="text-align: left;">More alike sentences</td>
+</tr>
+<tr>
 <td style="text-align: left;"><a href="#noun_verb_ratio"><code>noun_verb_ratio</code></a></td>
 <td style="text-align: left;">Ratio of the nouns to the verb forms</td>
 <td style="text-align: left;">0 and above, <code>nan</code> without verb forms</td>
@@ -3470,6 +3504,110 @@ Ratio of nouns to verbs                           |   0.50
 <!-- --8<-- [end:SyntaxStats-word_order] -->
 </div>
 <div class="metric-card">
+<h3 id="similarity">Similarity of adjacent sentences<a class="headerlink" href="#similarity" title="Permanent link">&para;</a></h3>
+<p class="metric-meta"><code>pos_edit_distance</code> · <code>syntax_similarity</code> · <a href="https://doi.org/10.1017/CBO9780511894664">Coh-Metrix</a></p>
+<!-- --8<-- [start:SyntaxStats-similarity] -->
+<p>How alike the structures of two adjacent sentences are, averaged over the <span class="arithmatex">\(S - 1\)</span> pairs. <code>pos_edit_distance</code> is the edit distance of the parts of speech <span class="arithmatex">\(P_s\)</span> of the words of the sentences (SYNMEDpos of Coh-Metrix) over the length <span class="arithmatex">\(n\)</span> of the longer sentence of the pair, <code>calc_edit_distance</code>. <code>syntax_similarity</code> is the similarity of the multisets of the dependency triples <span class="arithmatex">\(T\)</span> of the two sentences (<code>dependency_triples</code>, <code>calc_multiset_similarity</code>), in the manner of SYNSTRUT of Coh-Metrix, which compares the nodes of phrase-structure trees. Both are <code>nan</code> for a <code>Doc</code> without parts of speech.</p>
+<div class="arithmatex">\[
+\frac{1}{S - 1} \sum_{s=1}^{S-1} \frac{\textrm{lev}(P_s, P_{s+1})}{\max(n_s, n_{s+1})}, \quad
+\frac{1}{S - 1} \sum_{s=1}^{S-1} \frac{|T_s \cap T_{s+1}|}{|T_s \cup T_{s+1}|}
+\]</div>
+<!-- --8<-- [end:SyntaxStats-similarity] -->
+<!-- --8<-- [start:dependency_triples] -->
+<div class="signature highlight"><pre><span></span><code><span class="n">dependency_triples</span><span class="p">(</span><span class="n">tokens</span><span class="p">,</span> <span class="n">join_hyphens</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</code></pre></div>
+<p>The dependency triples of the words of a sentence (<code>get_words</code>), in their order: the part of speech of the head of a word - the nearest word above it through punctuation - its relation without a subtype (<code>base_dep</code>) and its own part of speech, such as <code>("NOUN", "amod", "ADJ")</code> for <em>a red house</em>. The head of the sentence, and a word with no word above it, give an empty head and the relation <code>root</code>, whatever its label.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Parameter</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Default</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>tokens</code></td>
+<td style="text-align: left;"><code>Doc</code> / <code>Span</code> / <code>list[Token]</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Sequence of tokens</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>join_hyphens</code></td>
+<td style="text-align: left;"><code>bool</code></td>
+<td style="text-align: left;"><code>False</code></td>
+<td style="text-align: left;">Take a hyphenated word for one word</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:dependency_triples] -->
+<!-- --8<-- [start:calc_edit_distance] -->
+<div class="signature highlight"><pre><span></span><code><span class="n">calc_edit_distance</span><span class="p">(</span><span class="n">sents</span><span class="p">)</span>
+</code></pre></div>
+<p>The mean edit distance of the items of adjacent sentences: the Levenshtein distance of every two - the fewest insertions, deletions and substitutions that turn one into the other - over the number of the items of the longer one, 0 for the same sequences and 1 for ones with no item in common; <code>nan</code> for fewer than two sentences.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Parameter</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Default</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>sents</code></td>
+<td style="text-align: left;"><code>list[list]</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Items of every sentence, such as its parts of speech</td>
+</tr>
+</tbody>
+</table>
+<p>Sentences that are not a list of lists raise <code>SourceTypeError</code>.</p>
+<!-- --8<-- [end:calc_edit_distance] -->
+<!-- --8<-- [start:calc_multiset_similarity] -->
+<div class="signature highlight"><pre><span></span><code><span class="n">calc_multiset_similarity</span><span class="p">(</span><span class="n">sents</span><span class="p">)</span>
+</code></pre></div>
+<p>The mean similarity of the multisets of the items of adjacent sentences: the weighted Jaccard similarity of every two - the items they share, each as many times as the sentence with fewer of them has it, over the items of both, each as many times as the sentence with more of them has it - 1 for the same multisets and for two empty ones, 0 for disjoint ones; <code>nan</code> for fewer than two sentences. A mapping is read by its keys, as a set.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Parameter</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Default</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>sents</code></td>
+<td style="text-align: left;"><code>list[list]</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Items of every sentence, such as its dependency triples</td>
+</tr>
+</tbody>
+</table>
+<p>Sentences that are not a list of collections raise <code>SourceTypeError</code>.</p>
+<!-- --8<-- [end:calc_multiset_similarity] -->
+<div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Code</label><label for="__tabbed_2_2">Result</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts.syntax_stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">calc_edit_distance</span><span class="p">,</span> <span class="n">calc_multiset_similarity</span>
+
+<span class="n">calc_edit_distance</span><span class="p">([[</span><span class="s2">"DET"</span><span class="p">,</span> <span class="s2">"NOUN"</span><span class="p">,</span> <span class="s2">"VERB"</span><span class="p">],</span> <span class="p">[</span><span class="s2">"DET"</span><span class="p">,</span> <span class="s2">"ADJ"</span><span class="p">,</span> <span class="s2">"NOUN"</span><span class="p">,</span> <span class="s2">"VERB"</span><span class="p">]])</span>
+<span class="n">calc_multiset_similarity</span><span class="p">([[</span><span class="s2">"a"</span><span class="p">,</span> <span class="s2">"a"</span><span class="p">,</span> <span class="s2">"b"</span><span class="p">],</span> <span class="p">[</span><span class="s2">"a"</span><span class="p">,</span> <span class="s2">"b"</span><span class="p">,</span> <span class="s2">"b"</span><span class="p">]])</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>0.25
+0.5
+</code></pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="metric-card">
 <h3 id="noun_verb_ratio">Ratio of the nouns to the verbs<a class="headerlink" href="#noun_verb_ratio" title="Permanent link">&para;</a></h3>
 <p class="metric-meta"><code>noun_verb_ratio</code></p>
 <!-- --8<-- [start:SyntaxStats-noun_verb_ratio] -->
@@ -3643,7 +3781,7 @@ Ratio of nouns to verbs                           |   0.50
 <p>A value that is not a <code>Token</code> and a hook that is not callable raise <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:predicate_form] -->
 
-<div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Code</label><label for="__tabbed_2_2">Result</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="3:2"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Code</label><label for="__tabbed_3_2">Result</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">spacy</span>
@@ -3748,7 +3886,7 @@ Ratio of nouns to verbs                           |   0.50
 <p>A check that is not callable raises <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:calc_modifier_chains] -->
 
-<div class="tabbed-set tabbed-alternate" data-tabs="3:2"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Code</label><label for="__tabbed_3_2">Result</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="4:2"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><input id="__tabbed_4_2" name="__tabbed_4" type="radio" /><div class="tabbed-labels"><label for="__tabbed_4_1">Code</label><label for="__tabbed_4_2">Result</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">spacy</span>
