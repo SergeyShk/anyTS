@@ -2213,7 +2213,11 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">anyts.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">shannon_entropy</span>
 
-<span class="n">shannon_entropy</span><span class="p">({</span><span class="s2">"a"</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">"b"</span><span class="p">:</span> <span class="mi">2</span><span class="p">}),</span> <span class="n">shannon_entropy</span><span class="p">(</span><span class="n">Counter</span><span class="p">([</span><span class="s2">"the"</span><span class="p">,</span> <span class="s2">"cat"</span><span class="p">,</span> <span class="s2">"the"</span><span class="p">])),</span> <span class="n">shannon_entropy</span><span class="p">({})</span>
+<span class="p">(</span>
+    <span class="n">shannon_entropy</span><span class="p">({</span><span class="s2">"a"</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">"b"</span><span class="p">:</span> <span class="mi">2</span><span class="p">}),</span>
+    <span class="n">shannon_entropy</span><span class="p">(</span><span class="n">Counter</span><span class="p">([</span><span class="s2">"the"</span><span class="p">,</span> <span class="s2">"cat"</span><span class="p">,</span> <span class="s2">"the"</span><span class="p">])),</span>
+    <span class="n">shannon_entropy</span><span class="p">({}),</span>
+<span class="p">)</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">

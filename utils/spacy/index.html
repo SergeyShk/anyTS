@@ -1971,6 +1971,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#set_sent_starts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sentences by their starts
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#add_tokenizer_rules" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2261,6 +2272,17 @@
     <span class="md-ellipsis">
       
         Paragraph starts of a Doc
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#set_sent_starts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sentences by their starts
       
     </span>
   </a>
@@ -2953,6 +2975,57 @@ True
 </div>
 </div>
 </div>
+<h2 id="set_sent_starts">Sentences by their starts<a class="headerlink" href="#set_sent_starts" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:set_sent_starts] -->
+<div class="signature highlight"><pre><span></span><code><span class="n">set_sent_starts</span><span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">starts</span><span class="p">)</span>
+</code></pre></div>
+<p>Sets the sentences of a <code>Doc</code> by the character offsets of their starts, those of the segmenter of a language library: the first token at or after every offset that is not whitespace starts a sentence, and every other token does not, so that the parser, <code>senter</code> or <code>sentencizer</code> that runs after it keeps these sentences instead of placing its own; the whitespace stays with the sentence before it, and the whitespace at the start of a text with the first sentence. A parsed document passes untouched, since spaCy keeps its sentences. A document made by <code>nlp.make_doc</code> goes through the pipeline as <code>nlp(doc)</code>.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Parameter</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Default</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>doc</code></td>
+<td style="text-align: left;"><code>Doc</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Doc object</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>starts</code></td>
+<td style="text-align: left;"><code>list[int]</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Character offsets of the starts of the sentences</td>
+</tr>
+</tbody>
+</table>
+<p>Offsets that are not a collection raise <code>SourceTypeError</code>, and an offset that is not an integer or is negative <code>ParameterError</code>.</p>
+<!-- --8<-- [end:set_sent_starts] -->
+
+<div class="tabbed-set tabbed-alternate" data-tabs="13:2"><input checked="checked" id="__tabbed_13_1" name="__tabbed_13" type="radio" /><input id="__tabbed_13_2" name="__tabbed_13" type="radio" /><div class="tabbed-labels"><label for="__tabbed_13_1">Code</label><label for="__tabbed_13_2">Result</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">spacy</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">anyts.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">set_sent_starts</span>
+
+<span class="n">nlp</span> <span class="o">=</span> <span class="n">spacy</span><span class="o">.</span><span class="n">blank</span><span class="p">(</span><span class="s2">"en"</span><span class="p">)</span>
+<span class="n">nlp</span><span class="o">.</span><span class="n">add_pipe</span><span class="p">(</span><span class="s2">"sentencizer"</span><span class="p">)</span>
+<span class="n">doc</span> <span class="o">=</span> <span class="n">set_sent_starts</span><span class="p">(</span><span class="n">nlp</span><span class="o">.</span><span class="n">make_doc</span><span class="p">(</span><span class="s2">"Mr. Smith came. Dr. Who left."</span><span class="p">),</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">16</span><span class="p">])</span>
+<span class="p">[</span><span class="n">sent</span><span class="o">.</span><span class="n">text</span> <span class="k">for</span> <span class="n">sent</span> <span class="ow">in</span> <span class="n">nlp</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span><span class="o">.</span><span class="n">sents</span><span class="p">]</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>['Mr. Smith came.', 'Dr. Who left.']
+</code></pre></div>
+</div>
+</div>
+</div>
 <h2 id="add_tokenizer_rules">Tokenizer rules<a class="headerlink" href="#add_tokenizer_rules" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:add_tokenizer_rules] -->
 <div class="signature highlight"><pre><span></span><code><span class="n">add_tokenizer_rules</span><span class="p">(</span><span class="n">nlp</span><span class="p">,</span> <span class="n">prefixes</span><span class="o">=</span><span class="p">(),</span> <span class="n">suffixes</span><span class="o">=</span><span class="p">(),</span> <span class="n">infixes</span><span class="o">=</span><span class="p">(),</span> <span class="n">abbreviations</span><span class="o">=</span><span class="p">())</span>
@@ -3003,7 +3076,7 @@ True
 <p>Rules that are not lists of strings and abbreviations that are not a collection of strings raise <code>SourceTypeError</code>, a rule that is not a regular expression that can be joined to others <code>ParameterError</code>.</p>
 <!-- --8<-- [end:add_tokenizer_rules] -->
 
-<div class="tabbed-set tabbed-alternate" data-tabs="13:2"><input checked="checked" id="__tabbed_13_1" name="__tabbed_13" type="radio" /><input id="__tabbed_13_2" name="__tabbed_13" type="radio" /><div class="tabbed-labels"><label for="__tabbed_13_1">Code</label><label for="__tabbed_13_2">Result</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="14:2"><input checked="checked" id="__tabbed_14_1" name="__tabbed_14" type="radio" /><input id="__tabbed_14_2" name="__tabbed_14" type="radio" /><div class="tabbed-labels"><label for="__tabbed_14_1">Code</label><label for="__tabbed_14_2">Result</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">spacy</span>
