@@ -336,6 +336,13 @@ CASES = [
     ),
     ("morph_features", ParameterError, lambda: type("Bad", (Morph,), {"feature_names": ["case"]})),
     (
+        "morph_markers",
+        SourceTypeError,
+        lambda: type("Markers", (Morph,), {"markers_desc": {"p_past": "Past"}})(
+            TAGGED
+        ).print_markers(),
+    ),
+    (
         "morph_stats_desc",
         ParameterError,
         lambda: type("Bad", (Morph,), {"feature_names": {"case": "Case"}}),

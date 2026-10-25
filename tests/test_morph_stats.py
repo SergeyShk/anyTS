@@ -148,6 +148,14 @@ def test_markers(capsys, stats):
             return {"p_past": tenses.count("Past") / len(tenses), "p_none": nan}
 
     Verbs(make_doc()).print_markers()
+    # A marker of markers_desc that get_markers does not give
+    with pytest.raises(
+        SourceTypeError,
+        match=r"^The get_markers of Verbs gives no values of the markers \['p_none'\]$",
+    ):
+        type("Verbs", (Verbs,), {"get_markers": lambda self: {"p_past": 0.5}})(
+            make_doc()
+        ).print_markers()
     assert capsys.readouterr().out.splitlines() == [
         f"{'Form':^28}|{'Share':^10}",
         "-" * 39,
@@ -216,7 +224,18 @@ def test_source_errors(source, error, message):
 
 
 @pytest.mark.parametrize(
-    "result", [["cats"], None, MorphWord("cats", None, {}), [("cats", None, {})]]
+    "result",
+    [
+        ["cats"],
+        None,
+        MorphWord("cats", None, {}),
+        [("cats", None, {})],
+        # The features of spaCy are no mapping, its numbers of the parts of speech no strings
+        [MorphWord("cats", "NOUN", Doc(VOCAB, words=["cats"], morphs=["Number=Plur"])[0].morph)],
+        [MorphWord("cats", 92, {})],
+        [MorphWord(5, "NOUN", {})],
+        [MorphWord("cats", "NOUN", {"Number": ["Plur"]})],
+    ],
 )
 def test_analyze_must_give_words(result):
     hooked = type("Hooked", (MorphStats,), {"analyze": lambda self, source: result})
@@ -232,6 +251,12 @@ def test_analyze_must_give_words(result):
         ({"feature_names": {"case": 5}}, "morph_features"),
         ({"feature_names": {5: "Case"}}, "morph_features"),
         ({"feature_names": {"pos": "Pos", "case": "Case"}}, "morph_features"),
+        # A statistic would replace the words, the tags or a method of the class
+        ({"feature_names": {"words": "Number"}}, "morph_features"),
+        ({"feature_names": {"tags": "Number"}}, "morph_features"),
+        ({"feature_names": {"get_markers": "Number"}}, "morph_features"),
+        ({"feature_names": {"two words": "Number"}}, "morph_features"),
+        ({"feature_names": {"case": ""}}, "morph_features"),
         ({"feature_names": {"case": "Case"}}, "morph_stats_desc"),
         ({"stats_desc": {**MORPH_STATS_DESC, "extra": "Extra"}}, "morph_stats_desc"),
         (

@@ -123,12 +123,18 @@ class MorphStats(Stats):
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
         names = cls.feature_names
+        # A statistic is set by its name, so it may take no name of the class or of its words
         if not (
             isinstance(names, Mapping)
             and all(
-                isinstance(stat, str) and isinstance(name, str) for stat, name in names.items()
+                isinstance(stat, str)
+                and stat.isidentifier()
+                and not hasattr(cls, stat)
+                and stat not in ("pos", "tags", "words")
+                and isinstance(name, str)
+                and name
+                for stat, name in names.items()
             )
-            and "pos" not in names
         ):
             raise ParameterError(
                 cls.messages["morph_features"].format(cls=cls.__name__, value=repr(names))
@@ -156,10 +162,11 @@ class MorphStats(Stats):
         found = self.analyze(source)
         words = tuple(found) if isinstance(found, Iterable) else (found,)
         for word in words:
-            if not isinstance(word, MorphWord):
+            wrong = _wrong_field(word)
+            if wrong:
                 raise SourceTypeError(
                     messages["hook_morph_words"].format(
-                        hook="analyze", cls=type(self).__name__, type=type(word).__name__
+                        hook="analyze", cls=type(self).__name__, type=wrong
                     )
                 )
         if not words:
@@ -311,6 +318,11 @@ class MorphStats(Stats):
     def print_markers(self) -> None:
         """Printing the markers of get_markers with the descriptions of markers_desc"""
         markers = self.get_markers()
+        missing = [marker for marker in self.markers_desc if marker not in markers]
+        if missing:
+            raise SourceTypeError(
+                self.messages["morph_markers"].format(cls=type(self).__name__, markers=missing)
+            )
         _print_table(
             [(desc, markers[marker]) for marker, desc in self.markers_desc.items()],
             self.markers_headers,
@@ -325,6 +337,26 @@ class MorphStats(Stats):
                     self.messages["unknown_stat"].format(stat=stat, stats=names)
                 )
         return stats or names
+
+
+def _wrong_field(word: object) -> str:
+    """What makes a result of analyze no MorphWord of strings: its type, or the field of
+    another type; an empty string for a right one"""
+    if not isinstance(word, MorphWord):
+        return type(word).__name__
+    for field, value, right in (
+        ("word", word.word, isinstance(word.word, str)),
+        ("pos", word.pos, word.pos is None or isinstance(word.pos, str)),
+        (
+            "features",
+            word.features,
+            isinstance(word.features, Mapping)
+            and all(isinstance(item, str) for pair in word.features.items() for item in pair),
+        ),
+    ):
+        if not right:
+            return f"MorphWord with the {field} {value!r}"
+    return ""
 
 
 def _conllu_features(features: Mapping[str, str]) -> str:

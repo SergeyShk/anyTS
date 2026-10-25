@@ -264,6 +264,11 @@ def test_entropy_of_the_word_lengths(bs):
         assert value == pytest.approx(-sum(n / total * log2(n / total) for n in dist.values()))
     # Words of one length have no entropy
     assert Stats("cat dog cow").letters_entropy == 0.0
+    # Properties over the counts: an object pickled without them in its state reads them
+    restored = Stats("cat dog cow")
+    assert "letters_entropy" not in vars(restored)
+    restored.c_letters = {3: 2, 5: 2}
+    assert restored.letters_entropy == 1.0
 
 
 def test_get_stats(bs):
