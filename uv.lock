@@ -16,9 +16,6 @@ resolution-markers = [
     "python_full_version < '3.12' and sys_platform != 'emscripten' and sys_platform != 'win32'",
 ]
 
-[manifest]
-constraints = [{ name = "preshed", specifier = "!=3.0.14" }]
-
 [[package]]
 name = "annotated-doc"
 version = "0.0.5"
@@ -52,7 +49,7 @@ wheels = [
 
 [[package]]
 name = "anyts"
-version = "0.4.0.dev13"
+version = "0.4.0.dev14"
 source = { editable = "." }
 dependencies = [
     { name = "graphviz" },
@@ -60,6 +57,7 @@ dependencies = [
     { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
     { name = "numpy", version = "2.5.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
     { name = "pandas" },
+    { name = "preshed" },
     { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
     { name = "scipy", version = "1.18.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
     { name = "spacy" },
@@ -99,6 +97,7 @@ requires-dist = [
     { name = "matplotlib", specifier = ">=3.8" },
     { name = "numpy", specifier = ">=1.26" },
     { name = "pandas", specifier = ">=2.1" },
+    { name = "preshed", specifier = ">=3.0.11,!=3.0.14" },
     { name = "scipy", specifier = ">=1.11" },
     { name = "spacy", specifier = ">=3.8.15,<4" },
 ]
