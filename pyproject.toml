@@ -153,8 +153,9 @@ warn_unused_configs = true
 warn_unused_ignores = true
 
 [tool.pytest.ini_options]
-addopts = "-v --strict-markers --strict-config --doctest-modules"
+addopts = "-v --strict-markers --strict-config --doctest-modules -m 'not examples'"
 testpaths = ["tests", "anyts"]
+markers = ["examples: the examples of the documentation pages, run apart for their time"]
 doctest_optionflags = ["NORMALIZE_WHITESPACE", "ELLIPSIS"]
 
 [tool.coverage.run]

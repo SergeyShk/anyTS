@@ -1,4 +1,4 @@
-.PHONY: help uv deps lock lint ruff format mypy test test-cov clean clean-build clean-pyc clean-test build publish publish-test docs-build docs-serve docs-deploy
+.PHONY: help uv deps lock lint ruff format mypy test test-cov test-examples clean clean-build clean-pyc clean-test build publish publish-test docs-build docs-serve docs-deploy
 .DEFAULT_GOAL := help
 APP_PATH := anyts
 TESTS_PATH := tests
@@ -44,6 +44,9 @@ test: deps ## Run the tests
 
 test-cov: deps ## Run the tests with a coverage threshold
 	uv run pytest --cov $(APP_PATH)
+
+test-examples: deps ## Run the examples of the docs against their results
+	uv run pytest -m examples tests/test_docs_examples.py
 
 clean: clean-build clean-pyc clean-test ## Remove all artifacts
 	rm -f .coverage coverage.xml

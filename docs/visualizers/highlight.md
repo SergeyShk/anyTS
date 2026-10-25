@@ -326,9 +326,13 @@ The layer `alliteration`: the runs of `calc_alliteration_runs` inside every sent
 | :-------- | :--- | :------ | :---------- |
 | `words` | `list[Word]` | - | Words with their positions |
 | `sents` | `list[Sent]` | - | Sentences with their positions |
+| `frequencies` | `dict[str, float]` | - | Consonants to look for with their frequencies, as in `calc_alliteration_runs` |
+| `threshold` | `float` | `0.001` | Probability threshold (`anyts.constants.ALLITERATION_THRESHOLD`) |
+| `stem` | `Callable[[str], list[str]]` | `list` | Sounds or letters of the stem of a word; the letters of the word by default |
+| `is_transparent` | `Callable[[str], bool]` | `None` | Whether a word neither breaks nor continues a run |
 | `note` | `Callable[[str], str]` | `None` | Note of a run by its consonant |
 
-The other arguments are those of `calc_alliteration_runs`; the frequencies and the threshold raise its errors.
+The frequencies and the threshold raise the errors of `calc_alliteration_runs`.
 <!-- --8<-- [end:find_alliteration] -->
 
 ## For library developers { #hooks }

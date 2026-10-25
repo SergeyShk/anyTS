@@ -20,13 +20,13 @@ Compares two corpora feature by feature. Each corpus is a table of the features 
     result = compare_features(short, long, labels=("short", "long"), n_bootstrap=200)
     result.loc[
         "length", ["mean_short", "mean_long", "median_diff", "ci_low", "ci_high", "cliff_delta"]
-    ].tolist()
+    ].round(2).tolist()
     ```
 
 === "Result"
 
     ```
-    [14.5, 32.0, -17.5, -20.5, -14.5, -1.0]
+    [14.5, 32.0, -17.5, -20.5, -14.99, -1.0]
     ```
 
 ## Parameters

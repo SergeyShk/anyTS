@@ -262,3 +262,94 @@ def test_signatures_match_the_code():
             )
             found += 1
     assert found
+
+
+PARAMETER_TABLE = "| Parameter | Type | Default | Description |"
+TABLE_ROW = re.compile(r"^\|\s*`\*{0,2}(\w+)`\s*\|[^|]*\|\s*(.*?)\s*\|")
+# Parameters a section leaves to its prose: the core functions take join_hyphens besides the
+# parameters the libraries share
+UNTABULATED = {"sentence_lengths_plot": {"join_hyphens"}}
+
+
+# A key of a family of measures that links to the card of its function
+MEASURE_KEY = re.compile(r"^\| \[`(\w+)`\]\(#\1\)", re.MULTILINE)
+
+
+def parameter_tables(page: Path) -> list[tuple[str | None, str, list[tuple[str, str]]]]:
+    """Parameter tables of a page: the named section they are in, the callable of the signature
+    block above them, and the names and defaults of their rows"""
+    tables = []
+    lines = page.read_text(encoding="utf-8").split("\n")
+    section, signed = None, ""
+    for index, line in enumerate(lines):
+        for kind, name in MARKER.findall(line):
+            section = name if kind == "start" else None
+        if line == "``` {.python .signature}":
+            signed = lines[index + 1].partition("(")[0]
+        if line.strip() != PARAMETER_TABLE:
+            continue
+        rows = []
+        for row in lines[index + 2 :]:
+            if not row.startswith("|"):
+                break
+            match = TABLE_ROW.match(row)
+            assert match, (
+                f"{page.relative_to(DOCS)}: a row of a parameter table without a name: {row}"
+            )
+            rows.append((match[1], match[2].strip("`")))
+        tables.append((section, signed, rows))
+    return tables
+
+
+def written_default(written: str, value: object) -> bool:
+    """Whether a table writes a default: as a signature block does, in other quotes, or as the
+    name of a constant that holds it"""
+    if written in (default_text(value), default_text(value).replace("'", '"')):
+        return True
+    return any(
+        written in vars(module) and written.isupper() and vars(module)[written] == value
+        for module in MODULES
+    )
+
+
+def test_parameter_tables_match_the_code():
+    # The tables of a callable: those of its section and of its sections -parameters and -hooks,
+    # in order, a method by the section Class-method; a table outside the sections belongs to the
+    # signature block above it, the table of a family of measures to each function it links
+    documented: dict[tuple[Path, str, bool], tuple[object, list[tuple[str, str]]]] = {}
+    for page in PAGES:
+        texts = sections(page)
+        for section, signed, rows in parameter_tables(page):
+            if section is None:
+                bases = [signed]
+            elif section.endswith("-measures"):
+                bases = [f"calc_{key}" for key in MEASURE_KEY.findall(texts[section])]
+            else:
+                bases = [re.sub(r"-(parameters|hooks)$", "", section)]
+            assert bases, f"{page.relative_to(DOCS)}: {section} links no measures"
+            for base in bases:
+                name, _, method = base.partition("-")
+                target = page_target(page, name)
+                if method:
+                    target = getattr(target, method, None)
+                where = f"{page.relative_to(DOCS)}: {section or base}"
+                assert callable(target), f"{where} names no callable"
+                key = (page, base, section is not None)
+                documented.setdefault(key, (target, []))[1].extend(rows)
+    assert documented
+    for (page, base, in_section), (target, rows) in documented.items():
+        # The sections of a component leave the pipeline and the name to the libraries
+        params = [
+            param
+            for param in inspect.signature(target).parameters.values()
+            if param.name != "self"
+            and not (in_section and base.endswith("Component") and param.name in ("nlp", "name"))
+            and param.name not in UNTABULATED.get(base, ())
+        ]
+        where = f"{page.relative_to(DOCS)}: {base}"
+        assert [name for name, _ in rows] == [param.name for param in params], where
+        for (name, written), param in zip(rows, params, strict=True):
+            if param.default is param.empty:
+                assert written == "-", f"{where}: {name} has no default"
+            else:
+                assert written_default(written, param.default), f"{where}: {name} = {written}"
