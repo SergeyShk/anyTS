@@ -366,7 +366,9 @@ def rolling_delta(
         the windows of every reference text; where the nearest reference changes
         along the text, so does the style. Scaled by their own windows, the
         centroids of the references balance each other: the cosine distances of
-        a window to them average 1, and with two references they add up to 2
+        a window to them, weighted by the windows of the references and the
+        lengths of their centroids, average 1, and with two references they add
+        up to 2
 
     Arguments:
         reference (dict[str, list[str]]): Units of the reference texts by name

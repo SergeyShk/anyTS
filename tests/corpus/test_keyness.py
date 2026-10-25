@@ -425,6 +425,11 @@ def test_keyness_of_ngrams():
     for corpora in ((targets, reference), (target, bigrams)):
         with pytest.raises(ParameterError, match=r"^The n-grams need the words of the corpora"):
             keyness(*corpora, n=2)
+    # A list of tokens or numbers is no list of texts
+    doc = spacy.blank("en")("the black cat")
+    for corpus, name in ((list(doc), "Token"), ([1, 2], "int")):
+        with pytest.raises(SourceTypeError, match=f"^The words must be strings, not {name}$"):
+            keyness(corpus, reference)
     # The n-grams of a corpus of several texts do not run across them
     letters = [["dear", "anna", "yours", "ivan"]] * 3
     found = keyness(letters, ["dear", "bob"] * 6, n=2)

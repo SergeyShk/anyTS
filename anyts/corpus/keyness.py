@@ -155,8 +155,8 @@ def keyness(
     if isinstance(reference, FrequencyReference):
         if n > 1:
             raise ParameterError(
-                "A FrequencyReference holds words: the n-grams need a list of words "
-                "or a mapping of n-gram frequencies"
+                "A FrequencyReference holds words: the n-grams need lists of words, "
+                "and frequencies of n-grams go with n=1"
             )
         _check_reference(reference)
         counts_target = _count(units, key=reference.key, keep=reference.keep)
@@ -228,13 +228,19 @@ def _ngrams(
         if n > 1:
             raise ParameterError(_FREQUENCIES_OF_NGRAMS.format(n=n))
         return words
-    if all(isinstance(word, str) for word in words):
+    if not _holds_texts(words):
         if n == 1:
             return cast(Sequence[str], words)
         texts: Iterable[Sequence[str]] = [list(cast(Sequence[str], words))]
     else:
         texts = (list(text) for text in words)
     return ["_".join(text[i : i + n]) for text in texts for i in range(len(text) - n + 1)]
+
+
+def _holds_texts(words: Iterable[object]) -> bool:
+    """Whether a corpus is a list of texts: one of its items is a sequence of its own, not a
+    word or a spaCy token"""
+    return any(isinstance(item, Iterable) and not isinstance(item, str) for item in words)
 
 
 def _reference_frequency(counts: Mapping[str, float], word: str, missing: float) -> float:
@@ -254,7 +260,7 @@ def _check_words_or_counts(words: Iterable[object]) -> None:
         check_counts(words)
         return
     check_sequence(words)
-    if all(isinstance(word, str) for word in words):
+    if not _holds_texts(words):
         check_words(words)
         return
     for text in words:

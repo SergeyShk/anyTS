@@ -221,3 +221,9 @@ def test_pair_of_two_nodes_counted_once():
         for c in collocations(words, window=2, node="wine", min_freq=1, side="left")
     }
     assert left == {("wine", "wine"): 2, ("red", "wine"): 1}
+
+
+def test_equal_scores_go_by_frequency():
+    # Dice of b c and of c a are both 2/3, one of them a rounding error above
+    found = collocations(["b", "b", "b", "c", "c", "c", "a", "a"], window=3, measure="dice")
+    assert [(c.left, c.right, c.freq_pair) for c in found[:2]] == [("b", "c", 6), ("c", "a", 5)]

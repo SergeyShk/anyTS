@@ -307,6 +307,9 @@ def test_rolling_delta_with_statistics():
         rolling_delta(two, text, 8, 8, statistics={"S": corpus["A"][:16]})
     with pytest.raises(SourceTypeError, match="must be a mapping"):
         rolling_delta(two, text, 8, 2, statistics=[corpus["A"]])
+    # A unit only in the rest of a reference shorter than a window is in no window
+    tail = rolling_delta({"A": [*text[:16], "zz"], "B": text[16:32]}, text, 8, 8, None)
+    assert tail.equals(rolling_delta({"A": text[:16], "B": text[16:32]}, text, 8, 8, None))
     # No unit in every window
     with pytest.raises(SourceError, match=r"^No unit is left after culling$"):
         rolling_delta(
