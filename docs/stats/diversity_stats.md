@@ -830,13 +830,13 @@ $$
     ``` python
     from anyts.diversity_stats import calc_orlov_z
 
-    calc_orlov_z("the cat saw the dog and the dog saw a bird near the old tree".split())
+    round(calc_orlov_z("the cat saw the dog and the dog saw a bird near the old tree".split()), 2)
     ```
 
 === "Result"
 
     ```
-    59.99999999999961
+    60.0
     ```
 
 </div>

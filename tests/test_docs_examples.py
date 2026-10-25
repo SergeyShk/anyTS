@@ -5,6 +5,8 @@ import contextlib
 import io
 import pprint
 import re
+import subprocess
+import sys
 from collections.abc import Callable
 from pathlib import Path
 
@@ -74,39 +76,68 @@ def run(code: str, namespace: dict[str, object]) -> list[tuple[str, object]]:
 
 
 def shown(outputs: list[tuple[str, object]], form: Callable[[object], str]) -> str:
-    """The outputs as a Result block writes them, the values in a form, without whitespace"""
-    text = "".join(form(item) if kind == "value" else str(item) for kind, item in outputs)
-    return re.sub(r"\s+", "", text)
+    """The outputs as a Result block writes them, one after another, the values in a form"""
+    text = "\n".join(form(item) if kind == "value" else str(item) for kind, item in outputs)
+    return spaced(text)
+
+
+def spaced(text: str) -> str:
+    """A text with each run of whitespace as one space"""
+    return re.sub(r"\s+", " ", text).strip()
 
 
 def matches(outputs: list[tuple[str, object]], expected: str) -> bool:
-    """Whether the outputs give the Result, whatever the whitespace and the form of the values"""
-    wanted = re.sub(r"\s+", "", TRACEBACK.sub("", expected))
-    forms = (repr, str, lambda value: pprint.pformat(value, sort_dicts=False))
+    """Whether the outputs give the Result, whatever the breaks of the lines and the form of the
+    values"""
+    wanted = spaced(TRACEBACK.sub("", expected))
+    forms = (repr, lambda value: pprint.pformat(value, sort_dicts=False))
     return any(shown(outputs, form) == wanted for form in forms)
 
 
-PAGES = sorted(page for page in DOCS.rglob("*.md") if '=== "Code"' in page.read_text())
-
-
-@pytest.mark.examples
-@pytest.mark.parametrize("page", PAGES, ids=lambda page: str(page.relative_to(DOCS)))
-def test_examples_give_their_results(page, tmp_path, monkeypatch):
+def check(page: Path) -> None:
+    """Runs the Python blocks of a page one after another, as a reader does, and compares the
+    outputs of each Code block with its Result"""
     matplotlib.use("Agg")
-    import matplotlib.pyplot as plt
-
-    monkeypatch.chdir(tmp_path)
     namespace: dict[str, object] = {"__name__": "__main__"}
     items = blocks(page.read_text(encoding="utf-8"))
     for index, (kind, language, body, line) in enumerate(items):
-        if language != "python" or kind == "result":
+        where = f"{page.relative_to(DOCS)}:{line}"
+        if kind == "result":
+            assert index and items[index - 1][:2] == ("code", "python"), (
+                f"{where}: a Result without a Python Code block"
+            )
+            continue
+        if language != "python":
             continue
         outputs = run(body, namespace)
-        where = f"{page.relative_to(DOCS)}:{line}"
         result = items[index + 1] if index + 1 < len(items) else None
         if kind == "code" and result is not None and result[0] == "result":
             assert matches(outputs, result[2]), f"{where}: {outputs}"
         else:
             errors = [item for item_kind, item in outputs if item_kind == "error"]
             assert not errors, f"{where}: {errors}"
-    plt.close("all")
+
+
+PAGES = sorted(
+    page
+    for page in DOCS.rglob("*.md")
+    if any(info == "python" for _, info, _, _ in blocks(page.read_text(encoding="utf-8")))
+)
+
+
+@pytest.mark.examples
+@pytest.mark.parametrize("page", PAGES, ids=lambda page: str(page.relative_to(DOCS)))
+def test_examples_give_their_results(page, tmp_path):
+    # A page runs in an interpreter of its own, without the modules the tests have imported
+    completed = subprocess.run(
+        [sys.executable, __file__, str(page)],
+        capture_output=True,
+        check=False,
+        cwd=tmp_path,
+        encoding="utf-8",
+    )
+    assert completed.returncode == 0, completed.stderr
+
+
+if __name__ == "__main__":
+    check(Path(sys.argv[1]))
