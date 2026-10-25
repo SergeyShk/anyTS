@@ -2439,7 +2439,7 @@ True
 <h2 id="class-components">Components of the classes of statistics<a class="headerlink" href="#class-components" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:class-components] -->
 <p>Each class of statistics of the core has a component that takes its parameters in the config of the pipe, checks them at <code>add_pipe</code> and passes them to the class; a language library subclasses it, sets its subclass of the statistics as <code>stats_class</code> and registers it under its prefix:</p>
-<div class="highlight"><pre><span></span><code><span class="nd">@Language</span><span class="o">.</span><span class="n">factory</span><span class="p">(</span><span class="s2">"&lt;prefix&gt;_phon"</span><span class="p">)</span>
+<div class="fragment highlight"><pre><span></span><code><span class="nd">@Language</span><span class="o">.</span><span class="n">factory</span><span class="p">(</span><span class="s2">"&lt;prefix&gt;_phon"</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">PhonStatsComponent</span><span class="p">(</span><span class="n">anyts</span><span class="o">.</span><span class="n">components</span><span class="o">.</span><span class="n">PhonStatsComponent</span><span class="p">):</span>
     <span class="n">stats_class</span> <span class="o">=</span> <span class="n">PhonStats</span>  <span class="c1"># the subclass of the library</span>
 </code></pre></div>

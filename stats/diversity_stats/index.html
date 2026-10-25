@@ -4230,11 +4230,11 @@ V = \frac{Z}{\ln(pZ)} \cdot \frac{N}{N - Z} \cdot \ln \frac{N}{Z}
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts.diversity_stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">calc_orlov_z</span>
 
-<span class="n">calc_orlov_z</span><span class="p">(</span><span class="s2">"the cat saw the dog and the dog saw a bird near the old tree"</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+<span class="nb">round</span><span class="p">(</span><span class="n">calc_orlov_z</span><span class="p">(</span><span class="s2">"the cat saw the dog and the dog saw a bird near the old tree"</span><span class="o">.</span><span class="n">split</span><span class="p">()),</span> <span class="mi">2</span><span class="p">)</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code>59.99999999999961
+<div class="highlight"><pre><span></span><code>60.0
 </code></pre></div>
 </div>
 </div>

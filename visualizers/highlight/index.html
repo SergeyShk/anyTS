@@ -2927,6 +2927,30 @@
 <td style="text-align: left;">Sentences with their positions</td>
 </tr>
 <tr>
+<td style="text-align: left;"><code>frequencies</code></td>
+<td style="text-align: left;"><code>dict[str, float]</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Consonants to look for with their frequencies, as in <code>calc_alliteration_runs</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>threshold</code></td>
+<td style="text-align: left;"><code>float</code></td>
+<td style="text-align: left;"><code>0.001</code></td>
+<td style="text-align: left;">Probability threshold (<code>anyts.constants.ALLITERATION_THRESHOLD</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>stem</code></td>
+<td style="text-align: left;"><code>Callable[[str], list[str]]</code></td>
+<td style="text-align: left;"><code>list</code></td>
+<td style="text-align: left;">Sounds or letters of the stem of a word; the letters of the word by default</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>is_transparent</code></td>
+<td style="text-align: left;"><code>Callable[[str], bool]</code></td>
+<td style="text-align: left;"><code>None</code></td>
+<td style="text-align: left;">Whether a word neither breaks nor continues a run</td>
+</tr>
+<tr>
 <td style="text-align: left;"><code>note</code></td>
 <td style="text-align: left;"><code>Callable[[str], str]</code></td>
 <td style="text-align: left;"><code>None</code></td>
@@ -2934,7 +2958,7 @@
 </tr>
 </tbody>
 </table>
-<p>The other arguments are those of <code>calc_alliteration_runs</code>; the frequencies and the threshold raise its errors.</p>
+<p>The frequencies and the threshold raise the errors of <code>calc_alliteration_runs</code>.</p>
 <!-- --8<-- [end:find_alliteration] -->
 
 <h2 id="hooks">For library developers<a class="headerlink" href="#hooks" title="Permanent link">&para;</a></h2>

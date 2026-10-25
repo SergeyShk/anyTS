@@ -2141,11 +2141,11 @@
 <span class="n">result</span> <span class="o">=</span> <span class="n">compare_features</span><span class="p">(</span><span class="n">short</span><span class="p">,</span> <span class="n">long</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="p">(</span><span class="s2">"short"</span><span class="p">,</span> <span class="s2">"long"</span><span class="p">),</span> <span class="n">n_bootstrap</span><span class="o">=</span><span class="mi">200</span><span class="p">)</span>
 <span class="n">result</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span>
     <span class="s2">"length"</span><span class="p">,</span> <span class="p">[</span><span class="s2">"mean_short"</span><span class="p">,</span> <span class="s2">"mean_long"</span><span class="p">,</span> <span class="s2">"median_diff"</span><span class="p">,</span> <span class="s2">"ci_low"</span><span class="p">,</span> <span class="s2">"ci_high"</span><span class="p">,</span> <span class="s2">"cliff_delta"</span><span class="p">]</span>
-<span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+<span class="p">]</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code>[14.5, 32.0, -17.5, -20.5, -14.5, -1.0]
+<div class="highlight"><pre><span></span><code>[14.5, 32.0, -17.5, -20.5, -14.99, -1.0]
 </code></pre></div>
 </div>
 </div>
