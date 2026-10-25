@@ -47,10 +47,12 @@ def test_formulas_over_the_basic_statistics(stats):
     letters = sum(n * count for n, count in bs.c_letters.items())
     by_syllables = lambda least: sum(c for n, c in bs.c_syllables.items() if n >= least)  # noqa: E731
     hard, two = by_syllables(3), by_syllables(2)
-    easy = by_syllables(1) - hard
+    # A word without syllables (2026) is short: monosyllabic and easy, as in textstat
+    assert bs.c_syllables.get(0)
+    easy = words - hard
     mini = sum(c for n, c in bs.c_letters.items() if 1 <= n <= 3)
     long = sum(c for n, c in bs.c_letters.items() if n >= 7)
-    mono = bs.n_monosyllable_words
+    mono = words - two
     assert stats.forcast == 20 - mono * 150 / words / 10
     score = (easy + 3 * hard) / sents
     assert stats.linsear_write == (score / 2 if score > 20 else (score - 2) / 2)

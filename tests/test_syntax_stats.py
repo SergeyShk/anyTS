@@ -1254,6 +1254,48 @@ def test_phrases_of_predicates_without_a_verb():
         assert SyntaxStats(parse(words, heads, deps, pos=pos)).n_verb_phrases == 1
 
 
+def test_verb_phrases_of_a_periphrasis():
+    """An infinitive of one predicate with its head is no verb phrase of its own, nor its
+    infinitive conjunct; a finite conjunct is"""
+
+    class Modal(SyntaxStats):
+        def is_infinitive_periphrasis(self, token):
+            return token.head.lower_ == "must"
+
+    inf, fin = "VerbForm=Inf", "VerbForm=Fin"
+    # he must leave and stay / he must leave and stays
+    for last, morph, phrases in (("stay", inf, (3, 1)), ("stays", fin, (3, 2))):
+        doc = parse(
+            ["he", "must", "leave", "and", last],
+            [1, 1, 1, 4, 2],
+            ["nsubj", "ROOT", "xcomp", "cc", "conj"],
+            morphs=["", fin, inf, "", morph],
+            pos=["PRON", "VERB", "VERB", "CCONJ", "VERB"],
+        )
+        assert (SyntaxStats(doc).n_verb_phrases, Modal(doc).n_verb_phrases) == phrases
+    # he must leave, with the infinitive attached to the modal as a conjunct
+    doc = parse(
+        ["he", "must", "leave"],
+        [1, 1, 1],
+        ["nsubj", "ROOT", "conj"],
+        morphs=["", fin, inf],
+        pos=["PRON", "VERB", "VERB"],
+    )
+    assert (SyntaxStats(doc).n_verb_phrases, Modal(doc).n_verb_phrases) == (2, 1)
+    # A root marked as a conjunct of itself ends the walk up the conjuncts
+    doc = parse(["leave"], [0], ["conj"], morphs=[inf], pos=["VERB"])
+    assert Modal(doc).n_verb_phrases == 1
+    # to leave is a must: an infinitive subject of a modal word
+    doc = parse(
+        ["to", "leave", "must"],
+        [1, 2, 2],
+        ["mark", "csubj", "ROOT"],
+        morphs=["", inf, ""],
+        pos=["PART", "VERB", "NOUN"],
+    )
+    assert (SyntaxStats(doc).n_verb_phrases, Modal(doc).n_verb_phrases) == (2, 1)
+
+
 def test_coordinated_nominal_clauses():
     # he said that she came and that he left: both clauses are nominal ones
     doc = parse(

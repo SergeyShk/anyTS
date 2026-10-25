@@ -124,13 +124,12 @@ class UnadaptedReadabilityStats(Stats):
 
     @property
     def forcast(self) -> float:
-        return calc_forcast(self.bs.n_monosyllable_words, self.bs.n_words)
+        return calc_forcast(_short_words(self.bs), self.bs.n_words)
 
     @property
     def linsear_write(self) -> float:
         n_hard = self.bs.count_words_by_syllables(self.complex_syl_factor)
-        n_easy = self.bs.count_words_by_syllables(1) - n_hard
-        return calc_linsear_write(n_easy, n_hard, self.bs.n_sents)
+        return calc_linsear_write(self.bs.n_words - n_hard, n_hard, self.bs.n_sents)
 
     @property
     def powers_sumner_kearl(self) -> float:
@@ -149,7 +148,7 @@ class UnadaptedReadabilityStats(Stats):
         return calc_wiener_sachtextformel(
             self.bs.count_words_by_syllables(self.complex_syl_factor),
             self.bs.count_words_by_letters(self.long_word_letter_factor),
-            self.bs.n_monosyllable_words,
+            _short_words(self.bs),
             self.bs.n_words,
             self.bs.n_sents,
             variant,
@@ -229,6 +228,12 @@ def calc_forcast(n_monosyllable_words: int, n_words: int) -> float:
     if n_monosyllable_words > n_words:
         raise ParameterError("The monosyllabic words cannot outnumber the words")
     return safe_divide(20 * n_words - 15 * n_monosyllable_words, n_words, nan)
+
+
+def _short_words(bs: BasicStats) -> int:
+    """Words of at most one syllable: a word without vowels (a preposition of one consonant)
+    counts as monosyllabic"""
+    return bs.n_words - bs.count_words_by_syllables(2)
 
 
 def _check_counts(*counts: tuple[int, str]) -> None:

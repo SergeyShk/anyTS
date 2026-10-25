@@ -61,7 +61,7 @@ Raises:
 | Attribute | Type | Description |
 | :-------- | :--- | :---------- |
 | `words` | `tuple[str]` | Words of the text |
-| `tags` | `tuple[str]` | Features of every word in the CoNLL-U format (`Case=Nom\|Number=Plur`), `_` for a word without them |
+| `tags` | `tuple[str]` | Features of every word in the CoNLL-U format (`Case=Nom|Number=Plur`), `_` for a word without them |
 | `pos` | `tuple[str / None]` | Part of speech of every word |
 | `animacy`, `aspect`, ..., `voice` | `tuple[str / None]` | Value of a statistic for every word, `None` for a word without the feature |
 <!-- --8<-- [end:MorphStats-attributes] -->

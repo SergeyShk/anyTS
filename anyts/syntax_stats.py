@@ -399,7 +399,9 @@ class SyntaxStats(Stats):
             "n_verb_phrases": sum(
                 1
                 for i in predicates
-                if i in word_of and base_dep(word_of[i]) not in AUXILIARY_DEPS | {"auxpass"}
+                if i in word_of
+                and base_dep(word_of[i]) not in AUXILIARY_DEPS | {"auxpass"}
+                and not self._in_periphrasis(word_of[i])
             ),
         }
 
@@ -555,9 +557,9 @@ class SyntaxStats(Stats):
 
         Description:
             A periphrasis of a modal or phasal verb with an infinitive (can
-            leave, begins to leave) is one clause; the check gets an infinitive
-            under xcomp, an infinitive conjunct and an infinitive subject (csubj)
-            of a modal word (is_clause_head); none by default
+            leave, begins to leave) is one clause and one verb phrase of L2SCA; the
+            check gets an infinitive under xcomp, an infinitive conjunct and an
+            infinitive subject (csubj) of a modal word (is_clause_head); none by default
 
         Arguments:
             token (Token): Token
@@ -565,6 +567,20 @@ class SyntaxStats(Stats):
         Returns:
             bool: Result of the check
         """
+        return False
+
+    def _in_periphrasis(self, token: Token) -> bool:
+        """Whether an infinitive makes one predicate with its head (is_infinitive_periphrasis),
+        itself or through the infinitive conjuncts above it, as is_clause_head asks"""
+        seen = set()
+        while token.i not in seen and predicate_form(token, self.auxiliary_form) == "Inf":
+            dep = base_dep(token)
+            if dep in ("xcomp", "csubj", "conj") and self.is_infinitive_periphrasis(token):
+                return True
+            if dep != "conj":
+                return False
+            seen.add(token.i)
+            token = token.head
         return False
 
     def auxiliary_form(self, token: Token) -> str:

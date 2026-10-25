@@ -5,7 +5,7 @@ UnadaptedReadabilityStats(source, sents_extractor=None, words_extractor=None)
 ```
 
 <!-- --8<-- [start:UnadaptedReadabilityStats] -->
-Readability formulas made for English, German or Italian, computed from the basic statistics of a text with the coefficients they were published with (Linsear Write in the form of textstat), without a calibration for its language. Their values compare texts of one language with each other; they are no grade levels of another language. The data source is a text, a `Doc` object of [spaCy](https://github.com/explosion/spaCy) or a ready `BasicStats` object, as for `ReadabilityStats`.
+Readability formulas made for English, German or Italian, computed from the basic statistics of a text with the coefficients they were published with (Linsear Write in the form of textstat), without a calibration for its language. Their values compare texts of one language with each other; they are no grade levels of another language. A word without syllables (a number, a preposition of one consonant) counts as monosyllabic in FORCAST and the Wiener Sachtextformeln and as easy in Linsear Write, as in textstat. The data source is a text, a `Doc` object of [spaCy](https://github.com/explosion/spaCy) or a ready `BasicStats` object, as for `ReadabilityStats`.
 
 Raises:
 
@@ -136,7 +136,7 @@ A count that is not an integer or is negative, and more monosyllabic words than 
 calc_linsear_write(n_easy_words, n_hard_words, n_sents)
 ```
 
-The grade of Linsear Write in the form of textstat; the Lensear Write Formula of O'Hayre (1966) is another one, of the monosyllabic words and the sentences of a sample of 100 words. An easy word, of one or two syllables, weighs 1 and a hard one 3; their sum per sentence $r$ is halved above 20, and otherwise loses 2 before it is halved. It is computed over the whole text rather than a sample of 100 words; `nan` without sentences.
+The grade of Linsear Write in the form of textstat; the Lensear Write Formula of O'Hayre (1966) is another one, of the monosyllabic words and the sentences of a sample of 100 words. An easy word, of at most two syllables, weighs 1 and a hard one 3; their sum per sentence $r$ is halved above 20, and otherwise loses 2 before it is halved. It is computed over the whole text rather than a sample of 100 words; `nan` without sentences.
 
 $$
 r = \frac{\textrm{Easy words} + 3 \times \textrm{Hard words}}{\textrm{Sentences}}, \quad \textrm{LW} = \begin{cases} r / 2 & r > 20 \\ (r - 2) / 2 & r \le 20 \end{cases}

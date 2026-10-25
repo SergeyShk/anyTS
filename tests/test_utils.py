@@ -46,6 +46,7 @@ from anyts.utils import (
     joins_previous,
     safe_divide,
     safe_mean,
+    set_sent_starts,
     shannon_entropy,
     split_doc_units,
 )
@@ -813,3 +814,36 @@ def test_check_bool(value):
 def test_messages_are_read_only():
     with pytest.raises(TypeError):
         MESSAGES["no_words"] = "No words"  # type: ignore[index]
+
+
+def test_set_sent_starts():
+    """The offsets of a segmenter give the sentences; the whitespace stays before a start"""
+    nlp = spacy.blank("en")
+    nlp.add_pipe("sentencizer")
+    text = "Mr. Smith came.  Dr. Who\nleft. Bye"
+    doc = set_sent_starts(nlp.make_doc(text), [0, 15, 17, 100])
+    # 15 is whitespace: the start goes to the next word; 100 is past the end
+    assert [sent.text for sent in nlp(doc).sents] == ["Mr. Smith came.  ", "Dr. Who\nleft. Bye"]
+    assert set_sent_starts(nlp.make_doc(""), [0]).text == ""
+    # The whitespace at the start of a text goes with the first sentence
+    doc = set_sent_starts(nlp.make_doc("\n\nIt rains. It pours."), [2, 12])
+    assert [sent.text for sent in nlp(doc).sents] == ["\n\nIt rains.", "It pours."]
+    parsed = Doc(
+        nlp.vocab, words=["It", "rains", "."], heads=[1, 1, 1], deps=["nsubj", "ROOT", "punct"]
+    )
+    assert set_sent_starts(parsed, [0, 3]) is parsed
+    assert [token.is_sent_start for token in parsed] == [True, False, False]
+
+
+@pytest.mark.parametrize(
+    ("starts", "error"),
+    [
+        ("0", SourceTypeError),
+        (5, SourceTypeError),
+        ([1.5], ParameterError),
+        ([-1], ParameterError),
+    ],
+)
+def test_set_sent_starts_errors(starts, error):
+    with pytest.raises(error):
+        set_sent_starts(spacy.blank("en")("It rains."), starts)

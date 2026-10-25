@@ -163,21 +163,36 @@ class MorphStats(Stats):
         messages = self.messages
         found = self.analyze(source)
         words = tuple(found) if isinstance(found, Iterable) else (found,)
+        names = tuple(self.feature_names.values())
+        # A mapping of features shared by the words of one form is checked and read once
+        read: dict[int, tuple[str, tuple[str | None, ...]]] = {}
+        rows = []
         for word in words:
-            wrong = _wrong_field(word)
+            wrong = _wrong_word(word)
+            key = id(word.features) if not wrong else 0
+            if not wrong and key not in read:
+                features = word.features
+                wrong = _wrong_features(features)
+                if not wrong:
+                    read[key] = (
+                        _conllu_features(features),
+                        tuple(features.get(name) or None for name in names),
+                    )
             if wrong:
                 raise SourceTypeError(
                     messages["hook_morph_words"].format(
                         hook="analyze", cls=type(self).__name__, type=wrong
                     )
                 )
+            rows.append(read[key])
         if not words:
             raise SourceError(messages["no_words"])
         self.words = tuple(word.word for word in words)
-        self.tags = tuple(_conllu_features(word.features) for word in words)
+        self.tags = tuple(tag for tag, _ in rows)
         self.pos = tuple(word.pos or None for word in words)
-        for stat, name in self.feature_names.items():
-            setattr(self, stat, tuple(word.features.get(name) or None for word in words))
+        columns = zip(*(values for _, values in rows), strict=True) if names else ()
+        for stat, values in zip(self.feature_names, columns, strict=True):
+            setattr(self, stat, values)
 
     def analyze(self, source: str | Doc) -> Iterable[MorphWord]:
         """
@@ -346,24 +361,28 @@ class MorphStats(Stats):
         return stats or names
 
 
-def _wrong_field(word: object) -> str:
-    """What makes a result of analyze no MorphWord of strings: its type, or the field of
-    another type; an empty string for a right one"""
+def _wrong_word(word: object) -> str:
+    """What makes a result of analyze no MorphWord with a string word and part of speech: its
+    type, or the field of another type; an empty string for a right one"""
     if not isinstance(word, MorphWord):
         return type(word).__name__
-    for field, value, right in (
-        ("word", word.word, isinstance(word.word, str)),
-        ("pos", word.pos, word.pos is None or isinstance(word.pos, str)),
-        (
-            "features",
-            word.features,
-            isinstance(word.features, Mapping)
-            and all(isinstance(item, str) for pair in word.features.items() for item in pair),
-        ),
-    ):
-        if not right:
-            return f"MorphWord({field}={value!r})"
+    text: object = word.word
+    pos: object = word.pos
+    if not isinstance(text, str):
+        return f"MorphWord(word={text!r})"
+    if pos is not None and not isinstance(pos, str):
+        return f"MorphWord(pos={pos!r})"
     return ""
+
+
+def _wrong_features(features: object) -> str:
+    """The field features of a MorphWord if it is no mapping of strings; an empty string
+    for a right one"""
+    if isinstance(features, Mapping) and all(
+        isinstance(item, str) for pair in features.items() for item in pair
+    ):
+        return ""
+    return f"MorphWord(features={features!r})"
 
 
 def _conllu_features(features: Mapping[str, str]) -> str:

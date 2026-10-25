@@ -171,8 +171,14 @@ def keyness(
         size_reference = float(sum(counts_reference.values()))
         missing = 0.0
     size_target = float(sum(counts_target.values()))
-    if not size_target or not size_reference:
-        raise SourceError("The data source has no words")
+    if not size_target:
+        raise SourceError(_empty_reason(target, units, n))
+    if not size_reference:
+        raise SourceError(
+            "The data source has no words"
+            if isinstance(reference, FrequencyReference)
+            else _empty_reason(reference, counts_reference, n)
+        )
     calc = _MEASURES[measure]
     rows = []
     # A negative keyword needs a frequency of its own in the reference: that of a missing key
@@ -235,6 +241,27 @@ def _ngrams(
     else:
         texts = (list(text) for text in words)
     return ["_".join(text[i : i + n]) for text in texts for i in range(len(text) - n + 1)]
+
+
+def _empty_reason(
+    corpus: Sequence[str] | Sequence[Sequence[str]] | Mapping[str, float],
+    units: Sequence[str] | Mapping[str, float],
+    n: int,
+) -> str:
+    """Why a corpus gives no frequencies: the units a reference does not keep, texts
+    shorter than n words, or no words at all"""
+    if _has_units(units):
+        return "The data source has no words the reference keeps"
+    if n > 1 and _has_units(_ngrams(corpus, 1)):
+        return f"The data source has no n-grams: its texts are shorter than {n} words"
+    return "The data source has no words"
+
+
+def _has_units(units: Sequence[str] | Mapping[str, float]) -> bool:
+    """Whether a list of units or a mapping of their frequencies holds any"""
+    if isinstance(units, Mapping):
+        return any(count > 0 for count in units.values())
+    return len(units) > 0
 
 
 def _holds_texts(words: Iterable[object]) -> bool:

@@ -112,7 +112,7 @@ With `normalize=True` the object has the normalized statistics too, of the type 
 <!-- --8<-- [end:BasicStats-get_stats] -->
 
 <!-- --8<-- [start:BasicStats-print_stats] -->
-`print_stats()` prints a table with the counts of `stats_desc`, their descriptions and the headers from `stats_headers`.
+`print_stats()` prints a table with the statistics of `stats_desc`, their descriptions and the headers from `stats_headers`.
 <!-- --8<-- [end:BasicStats-print_stats] -->
 
 === "Code"

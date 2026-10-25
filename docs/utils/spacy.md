@@ -445,6 +445,42 @@ Finds the words of a `Doc` that start a paragraph: the words are those of `iter_
     [2]
     ```
 
+## Sentences by their starts { #set_sent_starts }
+
+<!-- --8<-- [start:set_sent_starts] -->
+``` {.python .signature}
+set_sent_starts(doc, starts)
+```
+
+Sets the sentences of a `Doc` by the character offsets of their starts, those of the segmenter of a language library: the first token at or after every offset that is not whitespace starts a sentence, and every other token does not, so that the parser, `senter` or `sentencizer` that runs after it keeps these sentences instead of placing its own; the whitespace stays with the sentence before it, and the whitespace at the start of a text with the first sentence. A parsed document passes untouched, since spaCy keeps its sentences. A document made by `nlp.make_doc` goes through the pipeline as `nlp(doc)`.
+
+| Parameter | Type | Default | Description |
+| :-------- | :--- | :------ | :---------- |
+| `doc` | `Doc` | - | Doc object |
+| `starts` | `list[int]` | - | Character offsets of the starts of the sentences |
+
+Offsets that are not a collection raise `SourceTypeError`, and an offset that is not an integer or is negative `ParameterError`.
+<!-- --8<-- [end:set_sent_starts] -->
+
+=== "Code"
+
+    ``` python
+    import spacy
+
+    from anyts.utils import set_sent_starts
+
+    nlp = spacy.blank("en")
+    nlp.add_pipe("sentencizer")
+    doc = set_sent_starts(nlp.make_doc("Mr. Smith came. Dr. Who left."), [0, 16])
+    [sent.text for sent in nlp(doc).sents]
+    ```
+
+=== "Result"
+
+    ```
+    ['Mr. Smith came.', 'Dr. Who left.']
+    ```
+
 ## Tokenizer rules { #add_tokenizer_rules }
 
 <!-- --8<-- [start:add_tokenizer_rules] -->
