@@ -667,6 +667,15 @@ def test_paragraphs_between_blank_lines():
     assert CohesionStats(paragraph_doc("\n")).n_paragraphs == 1
     assert CohesionStats(paragraph_doc("\r\n")).n_paragraphs == 1
     assert CohesionStats(paragraph_doc("\u2029")).n_paragraphs == 2
+    # Whitespace after the last word starts nothing
+    trailing = Doc(
+        VOCAB,
+        words=["Rain", ".", "\n\n"],
+        spaces=[False, False, False],
+        pos=["NOUN", "PUNCT", "SPACE"],
+        lemmas=["rain", ".", "\n\n"],
+    )
+    assert CohesionStats(trailing).n_paragraphs == 1
     inside = paragraph_doc()
     inside[5].is_sent_start = False
     assert CohesionStats(inside).n_paragraphs == 2

@@ -1144,6 +1144,47 @@ def test_coordinated_predicates_share_a_t_unit():
         assert (stats.n_t_units, stats.n_coordinate_phrases) == (2, 0)
 
 
+def test_coordinated_predicates_agree():
+    # llegamos y nos esperabas: another person in the ending is another subject
+    pos = ["VERB", "CCONJ", "PRON", "VERB"]
+    for morphs, t_units in (
+        (["Person=1|Number=Plur", "", "", "Person=2|Number=Sing"], 2),
+        (["Person=3|Number=Sing", "", "", "Person=3|Number=Sing"], 1),
+        # A participle takes the person of its auxiliary: hemos llegado y nos esperabas
+        (["VerbForm=Part", "", "", "Person=2|Number=Sing"], 1),
+        # The past of Russian: пришёл и ушла
+        (["Gender=Masc|Number=Sing", "", "", "Gender=Fem|Number=Sing"], 2),
+    ):
+        doc = parse(
+            ["llegamos", "y", "nos", "esperabas"],
+            [0, 3, 3, 0],
+            ["ROOT", "cc", "obj", "conj"],
+            morphs,
+            pos=pos,
+        )
+        assert SyntaxStats(doc).n_t_units == t_units
+    auxiliary = parse(
+        ["hemos", "llegado", "y", "esperabas"],
+        [1, 1, 3, 1],
+        ["aux", "ROOT", "cc", "conj"],
+        ["Person=1|Number=Plur", "VerbForm=Part", "", "Person=2|Number=Sing"],
+        pos=["AUX", "VERB", "CCONJ", "VERB"],
+    )
+    assert SyntaxStats(auxiliary).n_t_units == 2
+
+
+def test_existential_there_is_a_subject():
+    # It was late and there was no bus: ClearNLP labels there expl and bus attr
+    doc = parse(
+        ["It", "was", "late", "and", "there", "was", "no", "bus"],
+        [1, 1, 1, 1, 5, 1, 7, 5],
+        ["nsubj", "ROOT", "acomp", "cc", "expl", "conj", "det", "attr"],
+        pos=["PRON", "AUX", "ADJ", "CCONJ", "PRON", "VERB", "DET", "NOUN"],
+    )
+    stats = SyntaxStats(doc)
+    assert (stats.n_t_units, stats.n_coordinate_phrases) == (2, 0)
+
+
 def test_long_chains_of_clauses():
     # Every clause the complement of the one before: one T-unit, in linear time
     n = 3000

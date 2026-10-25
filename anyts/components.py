@@ -40,6 +40,9 @@ _EXTENSIONS: set[str] = set()
 
 Stats = TypeVar("Stats")
 
+# The characters that end a line in BLANK_LINE, the paragraph separator among them
+_LINE_BREAKS = frozenset("\n\r\x85\u2028\u2029")
+
 
 class StatsComponent:
     """
@@ -506,7 +509,7 @@ class SyntaxStatsComponent(StatsComponent):
 
     Description:
         Puts an object of stats_class (SyntaxStats) into doc._.<name>; needs a
-        parser before it
+        parser and the parts of speech before it
     """
 
     stats_class: ClassVar[type[Any] | None] = SyntaxStats
@@ -638,7 +641,7 @@ def start_sents_after_blank_lines(doc: Doc) -> Doc:
         if token.is_space:
             spaces.append(token.i)
             # A space after an opening mark (—\u00a0¡) keeps it with the word, a line break does not
-            leading = leading and "\n" not in token.text
+            leading = leading and _LINE_BREAKS.isdisjoint(token.text)
             if leading:
                 starts[token.i] = -1
             continue

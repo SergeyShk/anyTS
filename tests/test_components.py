@@ -295,6 +295,10 @@ def test_blank_lines_keep_the_opening_marks_with_the_first_word(nlp):
         ("Bueno", False),
         ("»", None),
     ]
+    # Every line break after an opening mark leaves the next word to the parser
+    for line_break in ("\n", "\r", "\u2028", "\x85"):
+        doc = start_sents_after_blank_lines(nlp(f"Fin:\n\n«{line_break}Bueno"))
+        assert doc[-1].text == "Bueno" and doc[-1].is_sent_start is None, repr(line_break)
     # A paragraph of marks alone leaves the next paragraph to its own blank line
     doc = start_sents_after_blank_lines(nlp("Uno.\n\n* * *\n\nDos"))
     assert [token.text for token in doc if token.is_sent_start] == ["Uno", "*", "Dos"]

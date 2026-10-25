@@ -124,7 +124,7 @@ Raises:
 ## Metrics
 
 <!-- --8<-- [start:CohesionStats-metrics] -->
-Every metric is an attribute of the object, computed when it is created; `get_stats` gives those of `stats_desc`, all but `mood_repetition` by default. The functions of the cards take a sentence as the collection of its elements - lemmas of nouns, arguments or content words, values of a feature of its verbs - and see no language.
+Every metric is an attribute of the object, computed when it is created - the overlaps with the next sentences and paragraphs on first use; `get_stats` gives those of `stats_desc`, all but `mood_repetition` by default. The functions of the cards take a sentence as the collection of its elements - lemmas of nouns, arguments or content words, values of a feature of its verbs - and see no language.
 
 | Metric | Measures | Range | Higher means |
 | :----- | :------- | :---- | :----------- |

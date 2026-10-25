@@ -197,7 +197,7 @@ SyntaxStatsComponent(nlp, name)
 ```
 
 <!-- --8<-- [start:SyntaxStatsComponent] -->
-`SyntaxStatsComponent` puts the syntactic statistics into the extension; they need a parser before it.
+`SyntaxStatsComponent` puts the syntactic statistics into the extension; they need a parser and the parts of speech before it.
 <!-- --8<-- [end:SyntaxStatsComponent] -->
 
 ### Cohesion statistics { #CohesionStatsComponent }

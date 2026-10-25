@@ -85,7 +85,7 @@ Raises:
 <!-- --8<-- [start:SyntaxStats-parameters] -->
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
-| `source` | `Doc` | - | Data source: a `Doc` with a dependency parse, or what `parse` takes |
+| `source` | `Doc` | - | Data source: a `Doc` with a dependency parse and parts of speech, or what `parse` takes |
 <!-- --8<-- [end:SyntaxStats-parameters] -->
 
 ## Attributes
@@ -116,7 +116,7 @@ Raises:
 ## Metrics
 
 <!-- --8<-- [start:SyntaxStats-metrics] -->
-Every metric is an attribute of the object, computed when it is created, and `get_stats` gives them all. The measures of a sentence (the longest dependency, the depth, the nodes per leaf) are averaged over the sentences; the constructions are given per sentence.
+Every metric is an attribute of the object, computed when it is created - the units of L2SCA, the prepositional chains and the similarity of sentences on first use - and `get_stats` gives them all. The measures of a sentence (the longest dependency, the depth, the nodes per leaf) are averaged over the sentences; the constructions are given per sentence.
 
 | Metric | Measures | Range | Higher means |
 | :----- | :------- | :---- | :----------- |
@@ -382,7 +382,7 @@ A value that is not a `Token` and a check or a form of an auxiliary that is not 
 <!-- --8<-- [start:SyntaxStats-l2sca] -->
 The indices of the L2 Syntactic Complexity Analyzer (L2SCA) that the other metrics do not give, on Universal Dependencies. MLC and C/S are `mean_clause_len` and `clauses_per_sent`; MLS and DC/C come from the counts, `n_words / n_sents` and `n_subordinate_clauses / n_clauses`.
 
-- A T-unit is a main clause with the clauses that depend on it: the head of a sentence and every clause head joined to it through `conj` or `parataxis` (`anyts.constants.MAIN_CLAUSE_DEPS`), so *I came, and he left* holds two; a conjunct of a subordinate clause is none. A conjunct without a subject of its own (*I came and left*) is a predicate sharing the T-unit of the clause it is coordinated to, as in L2SCA. A T-unit is complex with a subordinate clause (`is_subordinate_clause_head`) whose nearest T-unit above is it.
+- A T-unit is a main clause with the clauses that depend on it: the head of a sentence and every clause head joined to it through `conj` or `parataxis` (`anyts.constants.MAIN_CLAUSE_DEPS`), so *I came, and he left* holds two; a conjunct of a subordinate clause is none. A conjunct without a subject of its own (*I came and left*) is a predicate sharing the T-unit of the clause it is coordinated to, as in L2SCA, unless its person, number or gender, or those of its auxiliary, differ from those of that clause: in a language that drops its subjects the ending names another one (*llegamos al puerto y nos esperabas*). An existential *there* (`expl` of ClearNLP) is a subject. A T-unit is complex with a subordinate clause (`is_subordinate_clause_head`) whose nearest T-unit above is it.
 - A verb phrase is a predicate (`is_predicate`) that is no auxiliary or copula: a verb, an auxiliary used as a predicate (*there **is** trouble*), a word with a subject or a copula.
 - A coordinate phrase is a coordination with a conjunct that is no clause head (*the man and the woman*, *is big and nice*) or a predicate without a subject of its own (*came and left*), counted once by its first conjunct; a coordination of clauses with their own subjects counts as clauses.
 - The clauses are those of `is_clause_head`, as in the other metrics: a predicate sharing a subject and an infinitive clause count as clauses, while L2SCA counts finite clauses with a subject, so C/T, C/S and CN/C run higher and MLC lower than in L2SCA.
@@ -559,6 +559,8 @@ The dependency triples of the words of a sentence (`get_words`), in their order:
 | :-------- | :--- | :------ | :---------- |
 | `tokens` | `Doc` / `Span` / `list[Token]` | - | Sequence of tokens |
 | `join_hyphens` | `bool` | `False` | Take a hyphenated word for one word |
+
+Tokens that are not a `Doc`, a `Span` or a list of `Token` objects raise `SourceTypeError`.
 <!-- --8<-- [end:dependency_triples] -->
 
 <!-- --8<-- [start:calc_edit_distance] -->
@@ -837,7 +839,7 @@ A language library subclasses `SyntaxStats`. The defaults read Universal Depende
 | `auxiliary_form(token)` | method | Verb form the checks of the clauses read for an auxiliary or a copula without `VerbForm` (`predicate_form`); by default an empty string, which skips it |
 | `is_subordinate_clause_head(token)` | method | Whether a clause head heads a subordinate clause, asked only of the words of `is_clause_head`; by default `is_subordinate_clause_head` of the module over the hooks `is_clause_head` and `auxiliary_form` |
 | `is_infinitive_clause_head(token)` | method | Whether a clause head heads an infinitive clause under a verb (*wants to leave*), counted apart from the subordinate ones; by default `is_infinitive_clause_head` of the module over the hooks `is_clause_head` and `auxiliary_form` |
-| `is_prep_complement(token)` | method | Whether a word is a link of a prepositional chain; by default `is_prep_complement` of the module with `join_hyphens` of the class |
+| `is_prep_complement(token)` | method | Whether a word is a link of a prepositional chain; by default `is_prep_complement` of the module with `join_hyphens` of the class. It gets the words of `sents` on first use: tokens of a copy of the `Doc` without its user data and tensor, on a blank vocabulary after pickling, so no extension of a token |
 | `is_participle_clause(token)` | method | Whether a word heads a participial clause; by default a participle that is not the head of the sentence, has no auxiliary or copula and has a dependent (`calc_valency`) |
 | `is_passive(token)` | method | Whether a word is a passive verb form; by default `is_passive` of the module with `join_hyphens` of the class |
 | `is_agentless(token)` | method | Whether a passive form has no agent; by default the hook `is_passive` without an agent (`has_agent` of the module) |

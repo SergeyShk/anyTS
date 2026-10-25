@@ -56,6 +56,8 @@ _Function = TypeVar("_Function", bound=Callable[..., Any])
 # Relations of the subject of a clause: a subtype counts as its base one, and ClearNLP marks
 # the passive in the label
 _SUBJECT_DEPS = SUBJECT_DEPS | {"csubjpass", "nsubjpass"}
+# Features of a verb that agree with its subject
+_AGREEMENT_FEATURES = ("Person", "Number", "Gender")
 
 
 def _takes_token(function: _Function) -> _Function:
@@ -96,8 +98,8 @@ class SyntaxStats(Stats):
         https://dialogue-conf.org/media/4302/ivanovvv.pdf
 
     Arguments:
-        source (Doc): Data source (a Doc object with a dependency parse, or what
-            parse makes one of)
+        source (Doc): Data source (a Doc object with a dependency parse and parts of
+            speech, or what parse makes one of)
 
     Attributes:
         sents (tuple[tuple[Token]]): Words of every sentence with words
@@ -382,7 +384,7 @@ class SyntaxStats(Stats):
                 for first, conjuncts in coordinations.items()
                 if first not in clause_ids
                 or any(
-                    token.i not in clause_ids or not _has_subject(token, join_hyphens)
+                    token.i not in clause_ids or _shares_subject(token, join_hyphens)
                     for token in conjuncts
                 )
             ),
@@ -520,7 +522,7 @@ class SyntaxStats(Stats):
             source (Doc): Data source
 
         Returns:
-            Doc: Doc with a dependency parse
+            Doc: Doc with a dependency parse and parts of speech
 
         Raises:
             SourceTypeError: If the source is not a Doc object
@@ -619,7 +621,10 @@ class SyntaxStats(Stats):
         Checking whether a word is a link of a prepositional chain
 
         Description:
-            is_prep_complement of the module with join_hyphens of the class by default
+            is_prep_complement of the module with join_hyphens of the class by
+            default. The chains are computed on first use, from the words of sents:
+            the tokens of a copy of the Doc without its user data and tensor, on a
+            blank vocabulary after pickling
 
         Arguments:
             token (Token): Token
@@ -759,7 +764,7 @@ def _t_unit_heads(heads: Sequence[Token], join_hyphens: bool) -> list[Token]:
         token
         for token in heads
         if _is_main_clause(token, ids, join_hyphens, known)
-        and (base_dep(token) != "conj" or _has_subject(token, join_hyphens))
+        and not _shares_subject(token, join_hyphens)
     ]
 
 
@@ -793,9 +798,33 @@ def _is_main_clause(
     return outcome
 
 
-def _has_subject(token: Token, join_hyphens: bool) -> bool:
-    """Whether a word has a subject among its dependents"""
-    return any(base_dep(child) in _SUBJECT_DEPS for child in get_children(token, join_hyphens))
+def _shares_subject(token: Token, join_hyphens: bool) -> bool:
+    """Whether a conjunct is a predicate sharing the subject of the clause it is coordinated
+    to: no subject of its own, and no person, number or gender of its own either, which in a
+    language that drops its subjects tell another one (llegamos y nos esperabas)"""
+    if base_dep(token) != "conj":
+        return False
+    if any(
+        base_dep(child) in _SUBJECT_DEPS or child.dep_ == "expl"
+        for child in get_children(token, join_hyphens)
+    ):
+        return False
+    head = _chain_parent(token, join_hyphens)
+    if head is None:
+        return True
+    own, other = _agreement(token), _agreement(head)
+    return all(own[feature] == other[feature] for feature in own.keys() & other.keys())
+
+
+def _agreement(token: Token) -> dict[str, list[str]]:
+    """Person, number and gender of a predicate, those of its auxiliary or copula where the
+    word has none (hemos llegado)"""
+    found = {feature: token.morph.get(feature, []) for feature in _AGREEMENT_FEATURES}
+    for child in token.children:
+        if base_dep(child) in AUXILIARY_DEPS:
+            for feature in _AGREEMENT_FEATURES:
+                found[feature] = found[feature] or child.morph.get(feature, [])
+    return {feature: values for feature, values in found.items() if values}
 
 
 def _t_units_of(
