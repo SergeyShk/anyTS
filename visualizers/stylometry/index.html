@@ -2331,7 +2331,7 @@
 <td style="text-align: left;"><code>bins</code></td>
 <td style="text-align: left;"><code>int</code></td>
 <td style="text-align: left;"><code>20</code></td>
-<td style="text-align: left;">Number of the bins</td>
+<td style="text-align: left;">Number of the bins, at most 1000</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>ax</code></td>
@@ -2347,7 +2347,7 @@
 </tr>
 </tbody>
 </table>
-<p>The matrix raises the errors of <code>dendrogram_plot</code>; authors that are not a mapping raise <code>SourceTypeError</code>, and a text without an author, no two texts by one author or all of them by one author <code>SourceError</code>. A <code>bins</code> that is not an integer of at least one, labels that <code>merge_labels</code> refuses and an <code>ax</code> that is not a matplotlib <code>Axes</code> raise <code>ParameterError</code>.</p>
+<p>The matrix raises the errors of <code>dendrogram_plot</code>; authors that are not a mapping raise <code>SourceTypeError</code>, and a text without an author, no two texts by one author or all of them by one author <code>SourceError</code>. A <code>bins</code> that is not an integer from 1 to 1000, labels that <code>merge_labels</code> refuses and an <code>ax</code> that is not a matplotlib <code>Axes</code> raise <code>ParameterError</code>.</p>
 <!-- --8<-- [end:delta_histogram_plot] -->
 
 <h2 id="rolling_delta_plot">Rolling Delta<a class="headerlink" href="#rolling_delta_plot" title="Permanent link">&para;</a></h2>
