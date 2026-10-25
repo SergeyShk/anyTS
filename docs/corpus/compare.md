@@ -5,7 +5,7 @@
 compare_features(table_a, table_b, labels=('A', 'B'), n_bootstrap=1000, seed=0)
 ```
 
-Compares two corpora feature by feature. Each corpus is a table of the features of its windows, parts of the texts of about equal size, so the features do not depend on text length. The result has one row per column, by descending absolute Cliff's delta, the features without statistics last. The bootstrap resamples whole texts by the index level `text`; without it every row is a text of its own. A column missing from one table gives `nan`.
+Compares two corpora feature by feature. Each corpus is a table of the features of its windows, parts of the texts of about equal size, so the features do not depend on text length. The result has one row per column, by descending absolute Cliff's delta, the features without statistics last. The bootstrap resamples whole texts by the index level `text`; without it every row is a text of its own. Every feature has a generator of its own, from the seed and the name of the feature, so its interval does not change with the other columns. A column missing from one table gives `nan`.
 <!-- --8<-- [end:compare_features] -->
 
 === "Code"

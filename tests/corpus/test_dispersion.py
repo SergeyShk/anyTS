@@ -199,3 +199,11 @@ def test_dispersion_of_an_array():
     result = dispersion(np.array(["lamp", "quill", "lamp", "lark"]), parts=2, word="lamp")[0]
     assert type(result.word) is str
     assert result == dispersion(["lamp", "quill", "lamp", "lark"], parts=2, word="lamp")[0]
+
+
+def test_juilland_d_of_a_word_in_one_part_is_zero():
+    # Parts of unequal sizes leave a rounding error below 0 in the formula
+    assert dispersion(["x"] + ["a"] * 6, parts=[5, 1, 1], word="x")[0].juilland_d == 0.0
+    from anyts.corpus.dispersion import calc_juilland_d
+
+    assert calc_juilland_d([1, 0, 0], [5, 1, 1]) == 0.0

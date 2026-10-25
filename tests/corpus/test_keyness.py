@@ -381,6 +381,23 @@ def test_frequency_reference_checks_its_fields(fields, error, message):
         keyness(["cat", "dog", "cat"], reference)
 
 
+@pytest.mark.parametrize("positive", ["yes", 0.5, None, 1])
+def test_positive_must_be_a_bool(positive):
+    with pytest.raises(ParameterError, match=r"^The choice of the positive keywords must be"):
+        keyness(["cat", "cat"], ["dog"], positive=positive)
+    with pytest.raises(ParameterError, match=r"^The choice of the positive keywords must be"):
+        check_keyness_params(positive=positive)
+
+
+def test_equal_scores_go_by_frequency():
+    # 3 of 12 against 1 of 12 and 9 of 12 against 3 of 12: %DIFF 200 for both, one of them
+    # a rounding error above
+    target = ["x"] * 3 + ["y"] * 9
+    reference = ["x"] + ["y"] * 3 + ["g"] * 8
+    found = keyness(target, reference, measure="diff")
+    assert [(k.word, k.freq_target) for k in found] == [("y", 9), ("x", 3)]
+
+
 def test_keyness_of_ngrams():
     target = ["the", "black", "cat", "sleeps", "and", "the", "black", "cat", "eats"]
     reference = ["the", "white", "cat", "sleeps", "and", "the", "white", "cat", "eats"]
@@ -401,11 +418,31 @@ def test_keyness_of_ngrams():
         "the_white": 2,
         "white_cat": 2,
     }
-    # A mapping is taken as it is, its keys the units already, as the n-grams of WordsExtractor
-    bigrams = WordsExtractor(ngram_range=(2, 2)).extract(" ".join(reference))
-    assert keyness(target, Counter(bigrams), n=2) == keyness(target, reference, n=2)
-    counts = {"black_cat": 2, "the_cat": 1}
-    assert [k.word for k in keyness(counts, reference, n=2)][:1] == ["black_cat"]
+    # Frequencies of n-grams go with n=1, as the n-grams of WordsExtractor
+    bigrams = Counter(WordsExtractor(ngram_range=(2, 2)).extract(" ".join(reference)))
+    targets = Counter(WordsExtractor(ngram_range=(2, 2)).extract(" ".join(target)))
+    assert keyness(targets, bigrams) == keyness(target, reference, n=2)
+    for corpora in ((targets, reference), (target, bigrams)):
+        with pytest.raises(ParameterError, match=r"^The n-grams need the words of the corpora"):
+            keyness(*corpora, n=2)
+    # A list of tokens or numbers is no list of texts
+    doc = spacy.blank("en")("the black cat")
+    for corpus, name in ((list(doc), "Token"), ([1, 2], "int")):
+        with pytest.raises(SourceTypeError, match=f"^The words must be strings, not {name}$"):
+            keyness(corpus, reference)
+    # The n-grams of a corpus of several texts do not run across them
+    letters = [["dear", "anna", "yours", "ivan"]] * 3
+    found = keyness(letters, ["dear", "bob"] * 6, n=2)
+    assert {k.word: k.freq_target for k in found} == {
+        "anna_yours": 3,
+        "dear_anna": 3,
+        "yours_ivan": 3,
+    }
+    joined = keyness([word for letter in letters for word in letter], ["dear", "bob"] * 6, n=2)
+    assert "ivan_dear" in {k.word for k in joined}
+    assert keyness(letters, ["dear", "bob"] * 6) == keyness(
+        [word for letter in letters for word in letter], ["dear", "bob"] * 6
+    )
     for n in (0, -1):
         with pytest.raises(ParameterError, match=r"^The length of the n-grams must be at least 1"):
             keyness(target, reference, n=n)

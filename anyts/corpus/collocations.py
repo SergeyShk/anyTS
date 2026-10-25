@@ -104,11 +104,7 @@ def collocations(
     calc = _MEASURES[measure]
     n_words = len(words)
     frequencies = Counter(words)
-    pairs: Counter[tuple[str, str]] = Counter()
-    for index, left in enumerate(words):
-        for right in words[index + 1 : index + 1 + window]:
-            if _holds_node(left, right, node, side):
-                pairs[left, right] += 1
+    pairs = _count_pairs(words, window, node, side)
     found = [
         Collocation(
             left,
@@ -121,10 +117,11 @@ def collocations(
         for (left, right), freq_pair in pairs.items()
         if freq_pair >= min_freq
     ]
+    # A score equal to 12 significant digits is a tie that the frequency decides
     found.sort(
         key=lambda collocation: (
             isnan(collocation.score),
-            -(0.0 if isnan(collocation.score) else collocation.score),
+            -(0.0 if isnan(collocation.score) else float(f"{collocation.score:.12g}")),
             -collocation.freq_pair,
             collocation.left,
             collocation.right,
@@ -133,15 +130,27 @@ def collocations(
     return found[:top_n] if top_n else found
 
 
-def _holds_node(left: str, right: str, node: str | None, side: str | None) -> bool:
-    """Whether a pair holds the node on the side asked for; every pair without a node"""
+def _count_pairs(
+    words: Sequence[str], window: int, node: str | None, side: str | None
+) -> Counter[tuple[str, str]]:
+    """Pairs of the words within the window; with a node, those around its occurrences on the
+    side asked for, a pair of two nodes once"""
+    pairs: Counter[tuple[str, str]] = Counter()
     if node is None:
-        return True
-    if side == "left":
-        return right == node
-    if side == "right":
-        return left == node
-    return node in (left, right)
+        for index, left in enumerate(words):
+            for right in words[index + 1 : index + 1 + window]:
+                pairs[left, right] += 1
+        return pairs
+    for index in (index for index, word in enumerate(words) if word == node):
+        if side != "left":
+            for right in words[index + 1 : index + 1 + window]:
+                pairs[node, right] += 1
+        if side != "right":
+            for left in words[max(0, index - window) : index]:
+                # Without a side the pair of two nodes is counted at the first of them
+                if left != node or side == "left":
+                    pairs[left, node] += 1
+    return pairs
 
 
 def calc_mi(freq_a: int, freq_b: int, freq_ab: float, n: int) -> float:

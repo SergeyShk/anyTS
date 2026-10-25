@@ -166,7 +166,8 @@ def _cell_measures(
     mean = by_word(relative) / n_parts
     variance = np.maximum(by_word(relative**2) / n_parts - mean**2, 0)
     with np.errstate(divide="ignore", invalid="ignore"):
-        juilland = 1 - np.sqrt(variance) / mean / sqrt(n_parts - 1)
+        # A word in one part of unequal sizes comes a rounding error below 0
+        juilland = np.maximum(1 - np.sqrt(variance) / mean / sqrt(n_parts - 1), 0.0)
         probabilities = relative / by_word(relative)[rows]
         carroll = -by_word(probabilities * np.log2(probabilities)) / log2(n_parts) + 0.0
         rosengren = by_word(np.sqrt(cell_shares * values)) ** 2 / totals
@@ -258,7 +259,7 @@ def calc_juilland_d(frequencies: Sequence[int], sizes: Sequence[int]) -> float:
         return nan
     relative = counts / np.asarray(sizes, dtype=float)
     variation = relative.std() / relative.mean()
-    return float(1 - variation / sqrt(len(sizes) - 1))
+    return max(float(1 - variation / sqrt(len(sizes) - 1)), 0.0)
 
 
 def calc_carroll_d2(frequencies: Sequence[int], sizes: Sequence[int]) -> float:

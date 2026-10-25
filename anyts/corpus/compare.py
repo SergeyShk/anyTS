@@ -1,3 +1,4 @@
+import zlib
 from collections.abc import Collection, Iterable, Iterator, Mapping, Sequence, Set
 from itertools import pairwise
 from math import isnan, nan, sqrt
@@ -59,7 +60,9 @@ def compare_features(
         statistics last. The test and the effect sizes take the windows as
         independent, so with few texts the p-values are too small. The
         bootstrap resamples whole texts by the index level text, or single rows
-        without it. A column missing from one of the tables gives nan
+        without it, with a generator of every feature from the seed and the name
+        of the feature: its interval does not depend on the other columns. A
+        column missing from one of the tables gives nan
 
     References:
         https://doi.org/10.1037/0033-2909.114.3.494
@@ -85,11 +88,12 @@ def compare_features(
     check_comparison_params(labels, n_bootstrap, seed)
     for table in (table_a, table_b):
         _check_table(table)
-    rng = np.random.default_rng(seed)
+    base = seed if isinstance(seed, Integral) else np.random.default_rng(seed).integers(2**63)
     rows = {}
     for name in table_a.columns.union(table_b.columns, sort=False):
         values_a, texts_a = _column(table_a, name)
         values_b, texts_b = _column(table_b, name)
+        rng = np.random.default_rng([int(base), zlib.crc32(str(name).encode())])
         rows[name] = compare_values(values_a, values_b, n_bootstrap, rng, texts_a, texts_b)
     result = pd.DataFrame.from_dict(rows, orient="index", columns=list(COMPARISON_COLUMNS))
     result["p_holm"] = holm_correction(result["p_value"].to_numpy(dtype=float))

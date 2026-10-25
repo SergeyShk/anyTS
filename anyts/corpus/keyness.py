@@ -2,16 +2,27 @@ from collections import Counter
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from math import inf, isfinite, isnan, log, log2, nan
 from numbers import Real
-from typing import Any, NamedTuple
+from typing import Any, NamedTuple, cast
 
 import numpy as np
 from scipy.stats import chi2 as chi2_distribution
 
 from ..constants import KEYNESS_MEASURES
 from ..exceptions import ParameterError, SourceError, SourceTypeError
-from ..utils import check_callable, check_counts, check_integer, check_number, check_words
+from ..utils import (
+    check_bool,
+    check_callable,
+    check_counts,
+    check_integer,
+    check_number,
+    check_sequence,
+    check_words,
+)
 
 _ZERO_ADJUSTMENT = 0.5
+_FREQUENCIES_OF_NGRAMS = (
+    "The n-grams need the words of the corpora: frequencies of n-grams go with n=1, not n={n}"
+)
 
 
 class FrequencyReference(NamedTuple):
@@ -49,8 +60,9 @@ class Keyword(NamedTuple):
         word (str): Word
         freq_target (int): Frequency in the target corpus
         freq_reference (float): Frequency in the reference corpus
-        ipm_target (float): Frequency in the target corpus per million words
-        ipm_reference (float): Frequency in the reference corpus per million words
+        ipm_target (float): Frequency in the target corpus per million words, or n-grams
+        ipm_reference (float): Frequency in the reference corpus per million words, or
+            n-grams
         g2 (float): Log-likelihood G² signed by its direction
         p_value (float): p-value of G² by the chi-square distribution with one
             degree of freedom
@@ -70,8 +82,8 @@ class Keyword(NamedTuple):
 
 
 def keyness(
-    target: Sequence[str] | Mapping[str, int],
-    reference: Sequence[str] | Mapping[str, float] | FrequencyReference,
+    target: Sequence[str] | Sequence[Sequence[str]] | Mapping[str, int],
+    reference: Sequence[str] | Sequence[Sequence[str]] | Mapping[str, float] | FrequencyReference,
     measure: str = "log_likelihood",
     min_freq: int = 1,
     positive: bool = True,
@@ -89,8 +101,9 @@ def keyness(
         the reference. A zero frequency is replaced with 0.5 for %DIFF, Log
         Ratio and the odds ratio (Hardie 2014). The size of a mapping of
         frequencies is their sum; a FrequencyReference has a size of its own.
-        Positive keywords are more frequent in the target corpus, negative ones
-        in the reference
+        A corpus of several texts is a list of their lists of words, so that an
+        n-gram does not run across two texts. Positive keywords are more
+        frequent in the target corpus, negative ones in the reference
 
     References:
         https://ucrel.lancs.ac.uk/llwizard.html
@@ -98,31 +111,32 @@ def keyness(
         http://cass.lancs.ac.uk/log-ratio-an-informal-introduction/
 
     Arguments:
-        target (list[str]|dict[str, int]): Words of the target corpus or their
+        target (list[str]|list[list[str]]|dict[str, int]): Words of the target
+            corpus - one text or a list of texts - or their frequencies
+        reference (list[str]|list[list[str]]|dict[str, float]|FrequencyReference):
+            Words of the reference corpus, their frequencies or a reference by
             frequencies
-        reference (list[str]|dict[str, float]|FrequencyReference): Words of the
-            reference corpus, their frequencies or a reference by frequencies
         measure (str): Measure of KEYNESS_MEASURES for score and the sorting
         min_freq (int): Minimum frequency of a keyword in its own corpus
         positive (bool): Positive keywords (True) or negative ones (False)
         top_n (int): Number of keywords; None - all of them
-        n (int): Length of the n-grams made of a list of words, joined by
-            underscores as the n-grams of WordsExtractor; 1 - the words; a mapping
-            of frequencies is taken as it is
+        n (int): Length of the n-grams of the words of every text, joined by
+            underscores as the n-grams of WordsExtractor; 1 - the words
 
     Returns:
         list[Keyword]: Keywords by descending keyness, then by descending
             frequency and alphabetically; words of an undefined measure last
 
     Raises:
-        SourceTypeError: If the words are not a list of strings (check_words)
-            or a counter (check_counts), a frequency of the target corpus is
-            not a whole number, or key or keep of a FrequencyReference is not
-            callable
+        SourceTypeError: If a corpus is not a list of strings (check_words), a
+            list of such lists or a counter (check_counts), a frequency of the
+            target corpus is not a whole number, or key or keep of a
+            FrequencyReference is not callable
         ParameterError: If the measure is unknown, top_n or n is below one,
-            min_freq or n is not an integer, n is above one with a
-            FrequencyReference, or the size or the frequency of a missing key of a
-            FrequencyReference is not a finite number or is negative
+            min_freq or n is not an integer, positive is not a bool, n is above
+            one with frequencies or a FrequencyReference, or the size or the
+            frequency of a missing key of a FrequencyReference is not a finite
+            number or is negative
         SourceError: If one of the corpora is empty or shorter than n words, or a
             frequency of the reference is negative, nan or infinite
 
@@ -133,7 +147,7 @@ def keyness(
         >>> [(k.word, round(k.g2, 2)) for k in keyness(target, reference)]
         [('cat', 2.77)]
     """
-    check_keyness_params(measure, min_freq, top_n, n=n)
+    check_keyness_params(measure, min_freq, top_n, n=n, positive=positive)
     _check_target(target)
     units = _ngrams(target, n)
     counts_reference: Mapping[str, float]
@@ -141,8 +155,8 @@ def keyness(
     if isinstance(reference, FrequencyReference):
         if n > 1:
             raise ParameterError(
-                "A FrequencyReference holds words: the n-grams need a list of words "
-                "or a mapping of n-gram frequencies"
+                "A FrequencyReference holds words: the n-grams need lists of words, "
+                "and frequencies of n-grams go with n=1"
             )
         _check_reference(reference)
         counts_target = _count(units, key=reference.key, keep=reference.keep)
@@ -193,10 +207,11 @@ def keyness(
         for row, p_value in zip(rows, p_values, strict=True)
     ]
     sign = -1 if positive else 1
+    # A score equal to 12 significant digits is a tie that the frequency decides
     keywords.sort(
         key=lambda keyword: (
             isnan(keyword.score),
-            sign * (0.0 if isnan(keyword.score) else keyword.score),
+            sign * (0.0 if isnan(keyword.score) else float(f"{keyword.score:.12g}")),
             -(keyword.freq_target if positive else keyword.freq_reference),
             keyword.word,
         )
@@ -205,13 +220,28 @@ def keyness(
 
 
 def _ngrams(
-    words: Sequence[str] | Mapping[str, float], n: int
+    words: Sequence[str] | Sequence[Sequence[str]] | Mapping[str, float], n: int
 ) -> Sequence[str] | Mapping[str, float]:
-    """The n-grams of a list of words joined by underscores; a mapping or n = 1 as it is"""
-    if n == 1 or isinstance(words, Mapping):
+    """The n-grams of the words of every text joined by underscores, in one list; a mapping as
+    it is, but for n above 1"""
+    if isinstance(words, Mapping):
+        if n > 1:
+            raise ParameterError(_FREQUENCIES_OF_NGRAMS.format(n=n))
         return words
-    words = list(words)
-    return ["_".join(words[i : i + n]) for i in range(len(words) - n + 1)]
+    if not _holds_texts(words):
+        if n == 1:
+            return cast(Sequence[str], words)
+        texts: Iterable[Sequence[str]] = [list(cast(Sequence[str], words))]
+    else:
+        texts = (list(text) for text in words)
+    return ["_".join(text[i : i + n]) for text in texts for i in range(len(text) - n + 1)]
+
+
+def _holds_texts(words: Iterable[object]) -> bool:
+    """Whether a corpus is a list of texts by its first item, a sequence of its own rather than
+    a word or a spaCy token; the checks of the words refuse a list of both"""
+    first = next(iter(words), None)
+    return not isinstance(first, str) and isinstance(first, Iterable)
 
 
 def _reference_frequency(counts: Mapping[str, float], word: str, missing: float) -> float:
@@ -225,11 +255,17 @@ def _reference_frequency(counts: Mapping[str, float], word: str, missing: float)
 
 
 def _check_words_or_counts(words: Iterable[object]) -> None:
-    """Checking the words of a corpus given as a list (check_words) or a counter (check_counts)"""
+    """Checking the words of a corpus given as a list (check_words), a list of such lists or a
+    counter (check_counts)"""
     if isinstance(words, Mapping):
         check_counts(words)
-    else:
+        return
+    check_sequence(words)
+    if not _holds_texts(words):
         check_words(words)
+        return
+    for text in words:
+        check_words(cast(Iterable[object], text), "words of a text")
 
 
 def _check_reference(reference: FrequencyReference) -> None:
@@ -281,8 +317,9 @@ def check_keyness_params(
     measure: str = "log_likelihood",
     min_freq: int = 1,
     top_n: int | None = None,
-    target: Sequence[str] | Mapping[str, int] | None = None,
+    target: Sequence[str] | Sequence[Sequence[str]] | Mapping[str, int] | None = None,
     n: int = 1,
+    positive: bool = True,
 ) -> None:
     """
     Checking the parameters of keyness
@@ -295,15 +332,18 @@ def check_keyness_params(
         measure (str): Measure of KEYNESS_MEASURES
         min_freq (int): Minimum frequency of a keyword in its own corpus
         top_n (int): Number of keywords; None - all of them
-        target (list[str]|dict[str, int]): Words of the target corpus or their
-            frequencies; None - not checked
+        target (list[str]|list[list[str]]|dict[str, int]): Words of the target
+            corpus - one text or a list of texts - or their frequencies; None - not
+            checked
         n (int): Length of the n-grams
+        positive (bool): Positive keywords (True) or negative ones (False)
 
     Raises:
         ParameterError: If the measure is unknown, the minimum frequency, the
-            number of keywords or n is not an integer, or the number or n is below one
-        SourceTypeError: If the target corpus is not a list of strings or
-            a mapping of strings to whole frequencies
+            number of keywords or n is not an integer, the number or n is below
+            one, or positive is not a bool
+        SourceTypeError: If the target corpus is not a list of strings, a list of
+            such lists or a mapping of strings to whole frequencies
         SourceError: If a frequency of the target corpus is negative, nan or infinite
 
     Example:
@@ -323,6 +363,7 @@ def check_keyness_params(
     check_integer(n, "length of the n-grams")
     if n < 1:
         raise ParameterError(f"The length of the n-grams must be at least 1, not {n}")
+    check_bool(positive, "choice of the positive keywords")
     if target is not None:
         _check_target(target)
 

@@ -281,6 +281,42 @@ def test_rolling_delta():
         assert np.allclose(rolled.to_numpy(), profiles.to_numpy())
 
 
+def test_rolling_delta_with_statistics():
+    text = corpus["A"] + corpus["B"]
+    two = {"A": corpus["A"], "B": corpus["B"]}
+    # Scaled by their own windows, the cosine distances to two references add up to 2
+    alone = rolling_delta(two, text, window=8, step=2, n_mfw=None, variant="cosine")
+    assert np.allclose(alone["A"] + alone["B"], 2)
+    # Statistics of other texts free them, and allow a single reference
+    other = {name: units[::-1] for name, units in corpus.items()}
+    scaled = rolling_delta(two, text, 8, 2, None, "cosine", statistics={**corpus, **other})
+    assert not np.allclose(scaled["A"] + scaled["B"], 2)
+    single = rolling_delta({"A": corpus["A"]}, text, 8, 2, None, "cosine", statistics=corpus)
+    assert list(single.columns) == ["A"] and np.isfinite(single.to_numpy()).all()
+    # The statistics of the references themselves give the same distances
+    for variant in DELTA_VARIANTS:
+        assert np.allclose(
+            rolling_delta(two, text, 8, 2, 6, variant, statistics=two),
+            rolling_delta(two, text, 8, 2, 6, variant),
+        )
+    with pytest.raises(
+        SourceError, match=r"^One of the statistics texts is shorter than a window$"
+    ):
+        rolling_delta(two, text, 8, 2, statistics={"S": corpus["A"][:7]})
+    with pytest.raises(SourceError, match=r"at least three windows$"):
+        rolling_delta(two, text, 8, 8, statistics={"S": corpus["A"][:16]})
+    with pytest.raises(SourceTypeError, match="must be a mapping"):
+        rolling_delta(two, text, 8, 2, statistics=[corpus["A"]])
+    # A unit only in the rest of a reference shorter than a window is in no window
+    tail = rolling_delta({"A": [*text[:16], "zz"], "B": text[16:32]}, text, 8, 8, None)
+    assert tail.equals(rolling_delta({"A": text[:16], "B": text[16:32]}, text, 8, 8, None))
+    # No unit in every window
+    with pytest.raises(SourceError, match=r"^No unit is left after culling$"):
+        rolling_delta(
+            {"A": list("abcdefgh"), "B": list("ijklmnop")}, list("abcd"), 4, 4, culling=1.0
+        )
+
+
 def test_rolling_delta_errors():
     text = corpus["A"]
     with pytest.raises(ParameterError, match=r"^Unknown variant of Delta: manhattan$"):

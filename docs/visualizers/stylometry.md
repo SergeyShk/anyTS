@@ -72,11 +72,11 @@ The histograms of the distances of the pairs of texts by one author and of the p
 | :-------- | :--- | :------ | :---------- |
 | `distances` | `DataFrame` | - | Symmetric matrix of distances with the names of the texts in the rows and the columns, in any order |
 | `authors` | `dict[str, str]` | - | Authors of the texts by the names of the texts |
-| `bins` | `int` | `20` | Number of the bins |
+| `bins` | `int` | `20` | Number of the bins, at most 1000 |
 | `ax` | `Axes` | `None` | Axes for the plot |
 | `labels` | `dict[str, str]` | `None` | Labels over the defaults: `title`, `xlabel`, `ylabel` and the legend `within`, `between` |
 
-The matrix raises the errors of `dendrogram_plot`; authors that are not a mapping raise `SourceTypeError`, and a text without an author, no two texts by one author or all of them by one author `SourceError`. A `bins` that is not an integer of at least one, labels that `merge_labels` refuses and an `ax` that is not a matplotlib `Axes` raise `ParameterError`.
+The matrix raises the errors of `dendrogram_plot`; authors that are not a mapping raise `SourceTypeError`, and a text without an author, no two texts by one author or all of them by one author `SourceError`. A `bins` that is not an integer from 1 to 1000, labels that `merge_labels` refuses and an `ax` that is not a matplotlib `Axes` raise `ParameterError`.
 <!-- --8<-- [end:delta_histogram_plot] -->
 
 ## Rolling Delta { #rolling_delta_plot }

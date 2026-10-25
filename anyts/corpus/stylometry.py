@@ -76,13 +76,7 @@ def frequency_table(
         check_words(units, "units of a text")
     if any(len(units) == 0 for units in corpus.values()):
         raise SourceError("The corpus holds a text without units")
-    check_number(culling, "share of texts for culling")
-    if not 0 <= culling <= 1:
-        raise ParameterError("The share of texts for culling must lie between 0 and 1")
-    if n_mfw is not None:
-        check_integer(n_mfw, "number of the most frequent units")
-    if n_mfw is not None and n_mfw < 1:
-        raise ParameterError("The number of the most frequent units must be greater than 0")
+    _check_selection(n_mfw, culling)
     rows = {
         name: {unit: count / len(units) for unit, count in Counter(units).items()}
         for name, units in corpus.items()
@@ -105,6 +99,17 @@ def frequency_table(
         raise SourceError("No unit is left after culling")
     columns = {unit: [row.get(unit, 0.0) for row in rows.values()] for unit in selected}
     return pd.DataFrame(columns, index=list(rows))
+
+
+def _check_selection(n_mfw: object, culling: object) -> None:
+    """Checking the number of the most frequent units and the share for culling"""
+    check_number(culling, "share of texts for culling")
+    if not 0 <= culling <= 1:  # type: ignore[operator]  # a number after check_number
+        raise ParameterError("The share of texts for culling must lie between 0 and 1")
+    if n_mfw is not None:
+        check_integer(n_mfw, "number of the most frequent units")
+    if n_mfw is not None and n_mfw < 1:  # type: ignore[operator]  # an integer after check_integer
+        raise ParameterError("The number of the most frequent units must be greater than 0")
 
 
 def _check_mapping(corpus: object, what: str) -> None:
@@ -346,6 +351,7 @@ def rolling_delta(
     n_mfw: int | None = 100,
     variant: str = "burrows",
     culling: float = 0.0,
+    statistics: Mapping[str, Sequence[str]] | None = None,
 ) -> pd.DataFrame:
     """
     Computing the distances by Delta from the windows of a text to reference texts
@@ -355,10 +361,14 @@ def rolling_delta(
         window units every step units, the rest shorter than a window dropped,
         as in stylo rolling.delta; the most frequent units, the culling and the
         mean and deviation of the z-scores come from the windows of the
-        reference texts. The distance by the variant of Delta goes from every
-        window of the text to the centroid of the windows of every reference
-        text; where the nearest reference changes along the text, so does the
-        style
+        reference texts or of a separate set statistics. The distance by the
+        variant of Delta goes from every window of the text to the centroid of
+        the windows of every reference text; where the nearest reference changes
+        along the text, so does the style. Scaled by their own windows, the
+        centroids of the references balance each other: the cosine distances of
+        a window to them, weighted by the windows of the references and the
+        lengths of their centroids, average 1, and with two references they add
+        up to 2
 
     Arguments:
         reference (dict[str, list[str]]): Units of the reference texts by name
@@ -368,18 +378,23 @@ def rolling_delta(
         n_mfw (int): Number of the most frequent units; None - all of them
         variant (str): Variant of Delta of DELTA_VARIANTS
         culling (float): Smallest share of the windows a unit occurs in
+        statistics (dict[str, list[str]]): Texts whose windows give the list of
+            units and the statistics of the scaling; None - the reference texts
 
     Returns:
         DataFrame: Distances, rows - the windows of the text by the position of
             their middle, columns - the reference texts
 
     Raises:
-        ParameterError: If the variant is unknown, the size of a window or the
-            step is below one, the step exceeds the window or n_mfw is below one
-        SourceError: If there are fewer than two reference texts, a text is
-            shorter than a window or the reference texts have fewer than three windows
-        SourceTypeError: If the reference corpus is not a mapping or the units
-            of a text are not a list of strings (check_words)
+        ParameterError: If the variant is unknown, the size of a window, the step
+            or n_mfw is not an integer or is below one, the step exceeds the
+            window, or culling is not a number within [0, 1]
+        SourceError: If there are no reference texts, or fewer than two without
+            statistics, a text is shorter than a window, the texts of the
+            statistics have fewer than three windows or no unit is left after
+            culling
+        SourceTypeError: If a corpus is not a mapping or the units of a text are
+            not a list of strings (check_words)
 
     Example:
         >>> from anyts.corpus import rolling_delta
@@ -403,40 +418,128 @@ def rolling_delta(
             raise ParameterError(f"The {what} must be greater than 0")
     if step > window:
         raise ParameterError("The step must not exceed the size of a window")
+    _check_selection(n_mfw, culling)
     _check_corpus(reference, "reference")
-    if len(reference) < 2:
+    if statistics is None and len(reference) < 2:
         raise SourceError("The rolling Delta needs at least two reference texts")
     check_words(text, "units of the text")
-    if any(len(units) < window for units in reference.values()):
-        raise SourceError("One of the reference texts is shorter than a window")
+    if statistics is not None:
+        _check_corpus(statistics, "statistics")
+    for corpus, what in ((reference, "reference"), (statistics or {}, "statistics")):
+        if any(len(units) < window for units in corpus.values()):
+            raise SourceError(f"One of the {what} texts is shorter than a window")
     if len(text) < window:
         raise SourceError("The text is shorter than a window")
-    windows = [_windows(units, window, step) for units in reference.values()]
-    pooled = [units for parts in windows for units in parts]
-    if len(pooled) < 3:
+    basis = [
+        _sliceable(units) for units in (reference if statistics is None else statistics).values()
+    ]
+    if sum(len(_window_starts(len(units), window, step)) for units in basis) < 3:
         raise SourceError("The statistics of the scaling need at least three windows")
-    table = frequency_table(
-        {str(index): units for index, units in enumerate(pooled)}, n_mfw, culling
+    columns = _window_units(basis, window, step, n_mfw, culling)
+    table = np.vstack([_window_frequencies(units, columns, window, step) for units in basis])
+    mean = table.mean(axis=0)
+    constant = table.max(axis=0) == table.min(axis=0)
+    scale = np.where(constant, 1.0, table.std(axis=0, ddof=1))
+    centroids = [
+        _scaled(
+            _window_frequencies(_sliceable(units), columns, window, step), mean, scale, constant
+        ).mean(axis=0)
+        for units in reference.values()
+    ]
+    samples = _scaled(
+        _window_frequencies(_sliceable(text), columns, window, step), mean, scale, constant
     )
-    scaled = _scale(table, table)
-    centroids = []
-    start = 0
-    for parts in windows:
-        centroids.append(scaled[start : start + len(parts)].mean(axis=0))
-        start += len(parts)
-    samples = _windows(text, window, step)
-    frequencies = _relative_frequencies(
-        {str(index): units for index, units in enumerate(samples)}, table.columns
-    )
-    distances = _delta_distances(_scale(frequencies, table), np.array(centroids), variant)
+    distances = _delta_distances(samples, np.array(centroids), variant)
     middles = [index * step + window // 2 for index in range(len(samples))]
     return pd.DataFrame(distances, index=middles, columns=list(reference))
 
 
-def _windows(units: Sequence[str], window: int, step: int) -> list[Sequence[str]]:
-    """Windows of window units every step units, without the rest shorter than a window"""
-    units = _sliceable(units)
-    return [units[start : start + window] for start in range(0, len(units) - window + 1, step)]
+def _window_starts(length: int, window: int, step: int) -> range:
+    """Starts of the windows of a text, without the rest shorter than a window"""
+    return range(0, length - window + 1, step)
+
+
+def _window_units(
+    texts: Sequence[Sequence[str]], window: int, step: int, n_mfw: int | None, culling: float
+) -> list[str]:
+    """
+    The most frequent units of the windows of texts, as frequency_table of the windows gives
+    them, without counting every window: the sum of the frequencies of a unit over the windows
+    is the number of its occurrences weighted by the windows that cover them, and the windows
+    with a unit are the union of the windows around its occurrences
+    """
+    ids: dict[str, int] = {}
+    weights = np.zeros(0)
+    windows_with = np.zeros(0, dtype=np.int64)
+    for units in texts:
+        codes = np.fromiter(
+            (ids.setdefault(unit, len(ids)) for unit in units), dtype=np.int64, count=len(units)
+        )
+        last = len(_window_starts(len(units), window, step)) - 1
+        positions = np.arange(len(units))
+        # The windows around a position: from the first that reaches it to the last that starts before it
+        first = -(-np.maximum(positions - window + 1, 0) // step)
+        final = np.minimum(positions // step, last)
+        covered = np.maximum(final - first + 1, 0)
+        weights = _grown(weights, len(ids)) + np.bincount(
+            codes, weights=covered, minlength=len(ids)
+        )
+        if culling:
+            order = np.lexsort((positions, codes))
+            sorted_codes, lows, highs = codes[order], first[order], final[order]
+            same = np.concatenate([[False], sorted_codes[1:] == sorted_codes[:-1]])
+            previous = np.where(same, np.concatenate([[-1], highs[:-1]]), -1)
+            fresh = np.maximum(highs - np.maximum(lows, previous + 1) + 1, 0)
+            windows_with = _grown(windows_with, len(ids)) + np.bincount(
+                sorted_codes, weights=fresh, minlength=len(ids)
+            ).astype(np.int64)
+    n_windows = sum(len(_window_starts(len(units), window, step)) for units in texts)
+    names = list(ids)
+    kept = [
+        code
+        for code in range(len(names))
+        if weights[code] > 0 and (not culling or windows_with[code] / n_windows >= culling)
+    ]
+    # The mean frequencies share the denominator: equal weights are equal means
+    kept.sort(key=lambda code: (-weights[code], names[code]))
+    if n_mfw:
+        kept = kept[:n_mfw]
+    if not kept:
+        raise SourceError("No unit is left after culling")
+    return [names[code] for code in kept]
+
+
+def _grown(values: np.ndarray, size: int) -> np.ndarray:
+    """Values padded with zeros to a size"""
+    return np.concatenate([values, np.zeros(size - values.size, dtype=values.dtype)])
+
+
+def _window_frequencies(
+    units: Sequence[str], columns: Sequence[str], window: int, step: int
+) -> np.ndarray:
+    """Relative frequencies of the given units in the windows of a text, rows - the windows"""
+    positions: dict[str, list[int]] = {unit: [] for unit in columns}
+    for index, unit in enumerate(units):
+        found = positions.get(unit)
+        if found is not None:
+            found.append(index)
+    starts = np.array(_window_starts(len(units), window, step))
+    counts = np.empty((starts.size, len(columns)))
+    for column, unit in enumerate(columns):
+        occurrences = np.array(positions[unit])
+        counts[:, column] = np.searchsorted(occurrences, starts + window) - np.searchsorted(
+            occurrences, starts
+        )
+    return counts / window
+
+
+def _scaled(
+    frequencies: np.ndarray, mean: np.ndarray, scale: np.ndarray, constant: np.ndarray
+) -> np.ndarray:
+    """Z-scores of frequencies by the means and deviations of the columns, 0 in a constant one"""
+    scaled: np.ndarray = (frequencies - mean) / scale
+    scaled[:, constant] = 0.0
+    return scaled
 
 
 def zeta(
