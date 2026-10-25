@@ -767,6 +767,36 @@ def test_find_unit_marks():
     assert find_unit_marks([]) == frozenset()
 
 
+def test_find_paragraph_starts():
+    from anyts.utils import find_paragraph_starts
+
+    words = ["Notes", "It", "rains", "We", "stay"]
+    for gap in ("\n\n", "\n \t\n", "\r\n\r\n", "\r\r", "\u2029", "\u2028\u2028", "\n\u200b\n"):
+        text = f"Notes{gap}It rains.{gap}We stay"
+        assert find_paragraph_starts(text, words) == {1, 3}, repr(gap)
+    # A line break alone, or a word the text does not hold, starts no paragraph
+    assert find_paragraph_starts("Notes\nIt rains.\r\nWe stay", words) == frozenset()
+    assert find_paragraph_starts("Notes\n\nIt rains.", ["Notes", "snows", "It"]) == {2}
+    assert find_paragraph_starts("", []) == frozenset()
+    with pytest.raises(SourceTypeError):
+        find_paragraph_starts(5, words)
+    with pytest.raises(SourceTypeError):
+        find_paragraph_starts("Notes", "Notes")
+
+
+def test_find_unit_paragraph_starts():
+    from anyts.utils import find_unit_paragraph_starts, iter_doc_units
+
+    nlp = spacy.blank("en")
+    for gap in ("\n\n", "\r\n \r\n", "\u2029"):
+        doc = nlp(f"Notes{gap}It rains.{gap}We stay, «{gap}home")
+        units = list(iter_doc_units(doc))
+        assert [unit[0].text for unit in units] == ["Notes", "It", "rains", "We", "stay", "home"]
+        assert find_unit_paragraph_starts(units) == {1, 3, 5}, repr(gap)
+    assert find_unit_paragraph_starts(list(iter_doc_units(nlp("It rains.\nWe stay")))) == set()
+    assert find_unit_paragraph_starts([]) == frozenset()
+
+
 def test_is_token(nlp):
     doc = nlp("The cat")
     assert is_token(doc[0]) and not is_token(doc[:1]) and not is_token("The")

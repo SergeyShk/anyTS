@@ -4,6 +4,7 @@ import math
 import re
 import sys
 import unicodedata
+from bisect import bisect_right
 from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, Sequence, Set, Sized
 from functools import lru_cache
 from importlib import import_module
@@ -31,6 +32,11 @@ _PUNCTUATION_CATEGORIES = frozenset(
 
 # A signed number with separators and an optional percent sign: -5, 1990-1995, 1,500.50, 10%
 NUMBER_PATTERN = re.compile(r"[+\-−]?\d+(?:[.,:/-]\d+)*%?")
+# A blank line: two line breaks with whitespace alone between them, the zero-width space
+# and the byte order mark counting as whitespace there, or a paragraph separator
+BLANK_LINE = re.compile(
+    r"(?>\r\n|[\n\r\x85\u2028])[\s\u200b\ufeff]*(?:\r\n|[\n\r\x85\u2028])|\u2029"
+)
 
 
 @lru_cache(maxsize=1 << 16)
@@ -160,7 +166,16 @@ def find_marks(text: str, words: Sequence[str]) -> frozenset[int]:
     """
     check_word(text, "text")
     check_words(words)
-    marks = set()
+    return frozenset(
+        position
+        for position, start, end in _word_gaps(text, words)
+        if _is_mark_gap(text[start:end])
+    )
+
+
+def _word_gaps(text: str, words: Sequence[str]) -> Iterator[tuple[int, int, int]]:
+    """Position of every word found in a text after the first one, with the bounds of the text
+    between it and the word found before it"""
     cursor = 0
     for position, word in enumerate(words):
         following = words[position + 1] if position + 1 < len(words) else ""
@@ -170,10 +185,9 @@ def find_marks(text: str, words: Sequence[str]) -> frozenset[int]:
             start = text.find(word, start + 1)
         if start == -1:
             continue
-        if position and _is_mark_gap(text[cursor:start]):
-            marks.add(position)
+        if position:
+            yield position, cursor, start
         cursor = start + len(word)
-    return frozenset(marks)
 
 
 def _stands_apart(text: str, start: int, end: int, cursor: int, following: str) -> bool:
@@ -198,6 +212,40 @@ def _is_quote(char: str) -> bool:
     """Whether a character is a quote or an apostrophe: an initial or a final quote of
     Unicode, a straight or a low one"""
     return unicodedata.category(char) in ("Pi", "Pf") or char in "\"'„‚"
+
+
+def find_paragraph_starts(text: str, words: Sequence[str]) -> frozenset[int]:
+    """
+    Finding the words of a text that start a paragraph
+
+    Description:
+        The words are found in the text in their order, as in find_marks; a word
+        that a blank line (BLANK_LINE) separates from the word before gets its
+        position. A word the text does not hold is passed over
+
+    Arguments:
+        text (str): Text
+        words (list[str]): Words of the text in their order
+
+    Returns:
+        frozenset[int]: Positions of the words a blank line stands before
+
+    Raises:
+        SourceTypeError: If the text is not a string or the words are not a list
+            of strings
+
+    Example:
+        >>> from anyts.utils import find_paragraph_starts
+        >>> sorted(find_paragraph_starts("It rains.\\n\\nWe stay home.", ["It", "rains", "We", "stay", "home"]))
+        [2]
+    """
+    check_word(text, "text")
+    check_words(words)
+    return frozenset(
+        position
+        for position, start, end in _word_gaps(text, words)
+        if BLANK_LINE.search(text, start, end)
+    )
 
 
 def in_order(words: Collection[str]) -> tuple[str, ...]:
@@ -701,6 +749,50 @@ def find_unit_marks(units: Sequence[Sequence[Token]]) -> frozenset[int]:
         if _is_mark_gap(last.whitespace_ + "".join(token.text_with_ws for token in between)):
             marks.add(position)
     return frozenset(marks)
+
+
+def find_unit_paragraph_starts(units: Sequence[Sequence[Token]]) -> frozenset[int]:
+    """
+    Finding the words of a Doc that start a paragraph
+
+    Description:
+        The words are those of iter_doc_units over the whole Doc, across its
+        sentences; a word that a blank line (BLANK_LINE) separates from the word
+        before gets its position, inside a sentence too
+
+    Arguments:
+        units (list[list[Token]]): Tokens of every word of a Doc in order
+
+    Returns:
+        frozenset[int]: Positions of the words a blank line stands before
+
+    Example:
+        >>> import spacy
+        >>> from anyts.utils import find_unit_paragraph_starts, iter_doc_units
+        >>> doc = spacy.blank("en")("It rains.\\n\\nWe stay home.")
+        >>> sorted(find_unit_paragraph_starts(list(iter_doc_units(doc))))
+        [2]
+    """
+    if not units:
+        return frozenset()
+    from spacy.attrs import IS_SPACE
+
+    doc = units[0][0].doc
+    # The whitespace after a token is one space at most, a line break is a token of its own:
+    # only a gap with a whitespace token can hold a blank line
+    spaces = doc.to_array(IS_SPACE).nonzero()[0].tolist()
+    firsts = [unit[0].i for unit in units]
+    gaps = {bisect_right(firsts, space) for space in spaces} - {0, len(units)}
+    return frozenset(
+        position
+        for position in gaps
+        if BLANK_LINE.search(
+            "".join(
+                token.text_with_ws
+                for token in doc[units[position - 1][-1].i + 1 : firsts[position]]
+            )
+        )
+    )
 
 
 def add_tokenizer_rules(

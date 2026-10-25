@@ -11,6 +11,7 @@ from typing import Any, ClassVar
 
 from .constants import MESSAGES
 from .exceptions import ParameterError, SourceTypeError
+from .utils import BLANK_LINE as BLANK_LINE
 from .utils import NUMBER_PATTERN as NUMBER_PATTERN
 from .utils import (
     check_bool,
@@ -25,7 +26,6 @@ from .utils import (
 
 Tokenizer = Pattern[str] | Callable[[str], Iterable[str]]
 _SENTENCE_BOUNDARY = re.compile(r"(?<=[.!?…])\s+|(?<=[.!?…][\"'»”’)\]])\s+")
-BLANK_LINE = re.compile(r"\n\s*\n")
 
 
 def _iter_words(text: str) -> Iterator[tuple[int, int, str]]:

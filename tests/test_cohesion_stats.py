@@ -665,6 +665,17 @@ def test_paragraphs_between_blank_lines():
     # A line break alone starts no paragraph; a blank line inside a sentence does, as when a
     # parser joins a heading to the next sentence
     assert CohesionStats(paragraph_doc("\n")).n_paragraphs == 1
+    assert CohesionStats(paragraph_doc("\r\n")).n_paragraphs == 1
+    assert CohesionStats(paragraph_doc("\u2029")).n_paragraphs == 2
+    # Whitespace after the last word starts nothing
+    trailing = Doc(
+        VOCAB,
+        words=["Rain", ".", "\n\n"],
+        spaces=[False, False, False],
+        pos=["NOUN", "PUNCT", "SPACE"],
+        lemmas=["rain", ".", "\n\n"],
+    )
+    assert CohesionStats(trailing).n_paragraphs == 1
     inside = paragraph_doc()
     inside[5].is_sent_start = False
     assert CohesionStats(inside).n_paragraphs == 2
@@ -699,6 +710,40 @@ def test_paragraphs_of_a_library():
     stats = Marked(text_doc())
     # cat, cat and dog: the first paragraph shares its noun with the second, which does not
     assert stats.n_paragraphs == 3 and stats.noun_overlap_para == 0.5
+
+    def word(text, noun=True, paragraph_start=False):
+        pos = "NOUN" if noun else "VERB"
+        return CohesionWord(
+            text, text, pos, noun, False, False, noun, True, paragraph_start=paragraph_start
+        )
+
+    class Opened(CohesionStats):
+        def analyze(self, source):
+            # A start at the very first word opens no second paragraph
+            return [
+                [word("cat", paragraph_start=True), word("ran", noun=False)],
+                [
+                    word("cat", paragraph_start=True),
+                    word("fat", noun=False),
+                    word("sat", noun=False, paragraph_start=True),
+                ],
+                [word("dog", paragraph_start=True), word("cat")],
+            ]
+
+    stats = Opened(text_doc())
+    # cat ran | cat fat | sat | dog cat: the nouns of the parts, the rest among the content words
+    assert stats.n_paragraphs == 4
+    assert stats._paragraphs["noun"] == [{"cat"}, {"cat"}, set(), {"dog", "cat"}]
+    assert stats._paragraphs["content"] == [
+        {"cat", "ran"},
+        {"cat", "fat"},
+        {"sat"},
+        {"dog", "cat"},
+    ]
+    # cat of the first part is in the second; the cat of the second is not in the third
+    assert stats.noun_overlap_para == 1 / 2 and stats.content_overlap_para == 1 / 5
+    # The same sentences in one paragraph give the overlap of their sentences
+    assert stats.noun_overlap_2_sent == 1.0
     assert CohesionWord("a", "a", None, False, False, False, False, False).paragraph_start is False
 
 

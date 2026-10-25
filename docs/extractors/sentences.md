@@ -117,7 +117,7 @@ A text that is not a string raises `SourceTypeError`, and so does an `iter_sents
 split_paragraphs(text)
 ```
 
-The paragraphs of a text: its parts between blank lines (`BLANK_LINE`), stripped of whitespace at their edges; a part of whitespace alone is none. Their words give the sizes of the parts of `dispersion` by paragraph; a paragraph without words, such as a scene break of asterisks, is still one. A text that is not a string raises `SourceTypeError`.
+The paragraphs of a text: its parts between blank lines, stripped of whitespace at their edges; a part of whitespace alone is none. A blank line (`BLANK_LINE`) is two line breaks - `\n`, `\r\n`, `\r`, U+0085 or U+2028 - with whitespace alone between them, the zero-width space and the byte order mark counting as whitespace there, or a paragraph separator U+2029; it also ends the sentences of `SentsExtractor` and the paragraphs of `CohesionStats`. Their words give the sizes of the parts of `dispersion` by paragraph; a paragraph without words, such as a scene break of asterisks, is still one. A text that is not a string raises `SourceTypeError`.
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
