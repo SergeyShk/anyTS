@@ -152,17 +152,18 @@ A text that is not a string and words that are not a list of strings raise `Sour
 
 <!-- --8<-- [start:find_paragraph_starts] -->
 ``` {.python .signature}
-find_paragraph_starts(text, words)
+find_paragraph_starts(text, words, blank_lines=False)
 ```
 
-Finds the words of a text that start a paragraph: the words are found in the text in their order, as by `find_marks`, and a word that a blank line (`BLANK_LINE`) separates from the word before gets its position. A word the text does not hold is passed over. A library that builds the words of `CohesionStats` from a string sets their `paragraph_start` by these positions.
+Finds the words of a text that start a paragraph: the words are found in the text in their order, as by `find_marks`, and a word that a line break (`LINE_BREAK`: `\n`, `\r\n`, `\r`, U+0085, U+2028 or the paragraph separator U+2029) separates from the word before gets its position, or a blank line (`BLANK_LINE`) with `blank_lines`, for a text whose lines are wrapped inside its paragraphs. A word the text does not hold is passed over. A library that builds the words of `CohesionStats` from a string sets their `paragraph_start` by these positions.
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
 | `text` | `str` | - | Text |
 | `words` | `list[str]` | - | Words of the text in their order |
+| `blank_lines` | `bool` | `False` | Start the paragraphs after the blank lines alone |
 
-A text that is not a string and words that are not a list of strings raise `SourceTypeError`.
+A text that is not a string and words that are not a list of strings raise `SourceTypeError`, a `blank_lines` that is not a `bool` - `ParameterError`.
 <!-- --8<-- [end:find_paragraph_starts] -->
 
 === "Code"
@@ -170,11 +171,13 @@ A text that is not a string and words that are not a list of strings raise `Sour
     ``` python
     from anyts.utils import find_paragraph_starts
 
-    sorted(find_paragraph_starts("It rains.\n\nWe stay home.", ["It", "rains", "We", "stay", "home"]))
+    text = "It rains.\nWe stay\nhome.\n\nIt stops."
+    words = ["It", "rains", "We", "stay", "home", "It", "stops"]
+    sorted(find_paragraph_starts(text, words)), sorted(find_paragraph_starts(text, words, True))
     ```
 
 === "Result"
 
     ```
-    [2]
+    ([2, 4, 5], [5])
     ```

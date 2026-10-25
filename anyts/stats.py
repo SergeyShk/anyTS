@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
 from .constants import MESSAGES
 from .exceptions import ParameterError, UnknownStatError
-from .utils import check_messages, check_number
+from .utils import check_bool, check_messages, check_number
 
 if TYPE_CHECKING:
     from pandas import DataFrame
@@ -88,7 +88,11 @@ class Stats:
 
         Returns:
             dict[str, Any]: Copy of the statistics of stat_names
+
+        Raises:
+            ParameterError: If flat is not a bool
         """
+        check_bool(flat, "flat")
         stats = {stat: getattr(self, stat) for stat in self.stat_names()}
         return _flatten(stats) if flat else _copy(stats)
 

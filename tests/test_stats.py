@@ -74,6 +74,12 @@ def test_get_stats_flat(sizes):
     }
 
 
+def test_get_stats_flat_is_a_bool(sizes):
+    # A name of a statistic is no flat
+    with pytest.raises(ParameterError, match=r"^The flat must be a bool, not str$"):
+        sizes.get_stats("n_words")
+
+
 def test_to_dataframe(sizes):
     frame = sizes.to_dataframe()
     assert isinstance(frame, pd.DataFrame)

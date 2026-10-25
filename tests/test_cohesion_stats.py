@@ -655,18 +655,22 @@ def paragraph_doc(gap="\n\n"):
     return Doc(VOCAB, words=words, spaces=spaces, pos=pos, lemmas=lemmas, sent_starts=starts)
 
 
-def test_paragraphs_between_blank_lines():
+def test_paragraphs():
     stats = CohesionStats(paragraph_doc())
-    assert stats.n_paragraphs == 2
+    assert stats.n_paragraphs == 2 and not stats.blank_lines
     # The cat of the first paragraph is repeated in the second, the verbs are not
     assert (stats.noun_overlap_para, stats.content_overlap_para) == (1.0, 0.5)
     first = [word.paragraph_start for sent in stats.analyze(paragraph_doc()) for word in sent[:1]]
     assert first == [False, True, False]
-    # A line break alone starts no paragraph; a blank line inside a sentence does, as when a
-    # parser joins a heading to the next sentence
-    assert CohesionStats(paragraph_doc("\n")).n_paragraphs == 1
-    assert CohesionStats(paragraph_doc("\r\n")).n_paragraphs == 1
-    assert CohesionStats(paragraph_doc("\u2029")).n_paragraphs == 2
+    # A paragraph is a line, or a part between blank lines with blank_lines; a break inside a
+    # sentence starts one too, as when a parser joins a heading to the next sentence
+    for gap in ("\n", "\r\n", "\u2028"):
+        assert CohesionStats(paragraph_doc(gap)).n_paragraphs == 2, repr(gap)
+        assert CohesionStats(paragraph_doc(gap), blank_lines=True).n_paragraphs == 1, repr(gap)
+    for gap in ("\n\n", "\u2029"):
+        assert CohesionStats(paragraph_doc(gap), blank_lines=True).n_paragraphs == 2, repr(gap)
+    with pytest.raises(ParameterError, match=r"^The blank_lines must be a bool, not str$"):
+        CohesionStats(paragraph_doc(), blank_lines="yes")
     # Whitespace after the last word starts nothing
     trailing = Doc(
         VOCAB,
@@ -689,6 +693,46 @@ def test_paragraphs_between_blank_lines():
     ]
     # The sentences of an extractor over the text keep the paragraphs
     assert CohesionStats(paragraph_doc(), sents_extractor=SentsExtractor()).n_paragraphs == 2
+
+
+def test_paragraphs_without_content_words():
+    # 1 <\n> The cat slept . <\n> The cat ate . <\n> 2: the numbers of the lines join the
+    # paragraphs after them, the last one the paragraph before it
+    words = ["1", "\n", "The", "cat", "slept", ".", "\n", "The", "cat", "ate", ".", "\n", "2"]
+    pos = ["NUM", "SPACE", *["DET", "NOUN", "VERB", "PUNCT", "SPACE"] * 2, "NUM"]
+    doc = Doc(
+        VOCAB,
+        words=words,
+        spaces=[
+            False,
+            False,
+            True,
+            True,
+            False,
+            False,
+            False,
+            True,
+            True,
+            False,
+            False,
+            False,
+            False,
+        ],
+        pos=pos,
+        lemmas=[word.lower() for word in words],
+        sent_starts=[i in (0, 7, 12) for i in range(len(words))],
+    )
+    stats = CohesionStats(doc)
+    assert stats.n_paragraphs == 2
+    assert (stats.noun_overlap_para, stats.content_overlap_para) == (1.0, 0.5)
+    only = Doc(
+        VOCAB,
+        words=["1", "\n", "2"],
+        spaces=[False] * 3,
+        pos=["NUM", "SPACE", "NUM"],
+        lemmas=["1", "\n", "2"],
+    )
+    assert CohesionStats(only).n_paragraphs == 1
 
 
 def test_paragraphs_of_a_library():
@@ -1067,6 +1111,17 @@ def test_own_analysis():
         (text_doc()[:2], {}, SourceTypeError, MESSAGES["source_span"]),
         (None, {"sents_extractor": "x"}, SourceTypeError, MESSAGES["sents_extractor_type"]),
         (text_doc(pos=False), {}, SourceError, MESSAGES["no_pos"]),
+        (
+            Doc(
+                VOCAB,
+                words=["cats", "\n\n", "sleep"],
+                pos=["", "SPACE", ""],
+                lemmas=["cat", "", "sleep"],
+            ),
+            {},
+            SourceError,
+            MESSAGES["no_pos"],
+        ),
         (text_doc(lemmas=False), {}, SourceError, MESSAGES["no_lemmas"]),
         (
             Doc(VOCAB, words=[".", "!"], pos=["PUNCT", "PUNCT"], lemmas=[".", "!"]),

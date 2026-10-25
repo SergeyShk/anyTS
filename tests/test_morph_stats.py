@@ -75,6 +75,9 @@ def test_get_stats(stats):
     # The counts are copies
     values["pos"]["DET"] = 5
     assert stats.get_stats("pos")["pos"]["DET"] == 1
+    for key in ("filter_none", "flat"):
+        with pytest.raises(ParameterError, match=rf"^The {key} must be a bool, not str$"):
+            stats.get_stats(**{key: "no"})
 
 
 def test_frame_and_describe(stats):
@@ -215,6 +218,11 @@ def test_a_feature_without_value_is_none():
         ("The cats", SourceTypeError, MESSAGES["source_type"].format(type="str")),
         (make_doc()[:2], SourceTypeError, MESSAGES["source_span"]),
         (make_doc(pos=False), SourceError, MESSAGES["no_pos"]),
+        (
+            Doc(VOCAB, words=["cats", "\n\n", "sleep"], pos=["", "SPACE", ""]),
+            SourceError,
+            MESSAGES["no_pos"],
+        ),
         (Doc(VOCAB, words=[".", "!"], pos=["PUNCT", "PUNCT"]), SourceError, MESSAGES["no_words"]),
     ],
 )

@@ -34,6 +34,7 @@ from .utils import (
     check_sequence,
     check_words,
     has_feature,
+    has_pos,
     has_sents,
     is_doc,
     is_finite_verb,
@@ -111,9 +112,11 @@ class SyntaxStats(Stats):
         n_clauses (int): Number of clauses
         n_subordinate_clauses (int): Number of subordinate clauses
         n_complex_sents (int): Number of sentences with a subordinate clause
-        n_infinitive_clauses (int): Number of infinitive clauses under a verb
+        n_infinitive_clauses (int): Number of infinitive clauses
         n_t_units, n_complex_t_units (int): Numbers of the T-units and of those with a
             subordinate clause
+        n_l2sca_clauses (int): Number of the clauses of L2SCA - clauses besides the
+            predicates sharing a subject and the infinitive clauses
         n_verb_phrases, n_coordinate_phrases, n_complex_nominals (int): Numbers of the verb
             phrases, of the coordinate phrases and of the complex nominals
         n_nouns (int): Number of nouns
@@ -149,7 +152,7 @@ class SyntaxStats(Stats):
         mean_clause_len (float): Mean length of a clause in words
         subordinate_clauses_per_sent (float): Subordinate clauses per sentence
         p_complex_sents (float): Share of sentences with a subordinate clause
-        infinitive_clauses_per_sent (float): Infinitive clauses under a verb per sentence
+        infinitive_clauses_per_sent (float): Infinitive clauses per sentence
         t_units_per_sent (float): T-units per sentence
         mean_t_unit_len (float): Mean length of a T-unit in words
         clauses_per_t_unit (float): Clauses per T-unit
@@ -196,13 +199,17 @@ class SyntaxStats(Stats):
         requires_lemmas (bool): Whether the source must carry lemmas
         negation_words (frozenset[str]): Words of negation besides Polarity=Neg, in
             lower case
+        subordinating_marks (frozenset[str]): Subordinating conjunctions in lower case,
+            with the words of their fixed expression after a space, that make a conjunct
+            or a parataxis they mark a subordinate clause, an infinitive clause with an
+            infinitive (is_subordinate_clause_head, is_infinitive_clause_head)
         stats_desc (dict[str, str]): Statistics of get_stats and their descriptions for
             print_stats
 
     Raises:
         SourceTypeError: If the source is not a Doc object or parse does not return
-            one; when a class is defined, if its negation_words are not a collection
-            of strings
+            one; when a class is defined, if its negation_words or subordinating_marks
+            are not a collection of strings
         SourceError: If the source has no dependency parse, no parts of speech, no
             lemmas when requires_lemmas, or no words
     """
@@ -210,12 +217,14 @@ class SyntaxStats(Stats):
     join_hyphens: ClassVar[bool] = False
     requires_lemmas: ClassVar[bool] = False
     negation_words: ClassVar[frozenset[str]] = frozenset()
+    subordinating_marks: ClassVar[frozenset[str]] = frozenset()
 
     stats_desc: ClassVar[Mapping[str, str]] = SYNTAX_STATS_DESC
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
         check_words(cls.negation_words, "negation_words", ordered=False)
+        check_words(cls.subordinating_marks, "subordinating_marks", ordered=False)
 
     def __init__(self, source: Doc):
         messages = self.messages
@@ -228,7 +237,7 @@ class SyntaxStats(Stats):
             )
         if not doc.has_annotation("DEP") or not has_sents(doc):
             raise SourceError(messages["no_parse"])
-        if not doc.has_annotation("POS"):
+        if not has_pos(doc):
             raise SourceError(messages["no_pos"])
         if self.requires_lemmas and not doc.has_annotation("LEMMA"):
             raise SourceError(messages["no_lemmas"])
@@ -269,9 +278,10 @@ class SyntaxStats(Stats):
         ]
         self.n_subordinate_clauses = sum(map(len, subordinate))
         self.n_complex_sents = sum(1 for sent in subordinate if sent)
-        self.n_infinitive_clauses = sum(
-            1 for sent in heads for token in sent if self.is_infinitive_clause_head(token)
-        )
+        infinitive = [
+            token.i for sent in heads for token in sent if self.is_infinitive_clause_head(token)
+        ]
+        self.n_infinitive_clauses = len(infinitive)
         nouns = [token for token in words if token.pos_ in ("NOUN", "PROPN")]
         self.n_nouns = len(nouns)
         participle_clauses = [
@@ -299,6 +309,7 @@ class SyntaxStats(Stats):
         self._spans = tuple((span.start, span.end) for span in spans)
         self._clause_heads = tuple(tuple(token.i for token in sent) for sent in heads)
         self._subordinate_heads = tuple(tuple(token.i for token in sent) for sent in subordinate)
+        self._infinitive_heads = frozenset(infinitive)
 
         self.mean_dependency_distance = safe_mean(all_distances)
         self.std_dependency_distance = pstdev(all_distances) if all_distances else nan
@@ -356,28 +367,46 @@ class SyntaxStats(Stats):
         words = [token for sent in self.sents for token in sent]
         heads = [[doc[i] for i in sent] for sent in self._clause_heads]
         clause_ids = {token.i for sent in heads for token in sent}
+        marks = self.subordinating_marks
+        # A conjunct or a parataxis with a subordinating mark heads a subordinate or an infinitive
+        # clause: no T-unit nor a clause under it, no member of the coordination it hangs on
+        marked = {
+            token.i
+            for sent in heads
+            for token in sent
+            if marks and base_dep(token) in MAIN_CLAUSE_DEPS and _has_mark(token, marks)
+        }
         n_t_units = n_complex_t_units = 0
         for sent, subordinate in zip(heads, self._subordinate_heads, strict=True):
-            units = {token.i for token in _t_unit_heads(sent, join_hyphens)}
+            units = {token.i for token in _t_unit_heads(sent, join_hyphens, marked)}
             n_t_units += len(units)
             n_complex_t_units += len(
                 _t_units_of([doc[i] for i in subordinate], units, join_hyphens) - {None}
             )
-        firsts = _first_conjuncts(words, join_hyphens)
+        firsts = _first_conjuncts(words, join_hyphens, marked)
         coordinations: dict[int, list[Token]] = {}
         for token in words:
             first = firsts[token.i]
-            if base_dep(token) == "conj" and first is not None:
+            if base_dep(token) == "conj" and first is not None and token.i not in marked:
                 coordinations.setdefault(first.i, []).append(token)
         nouns = [token for token in words if token.pos_ in ("NOUN", "PROPN")]
         modified = _heads_of(words, COMPLEX_NOMINAL_DEPS, join_hyphens)
         word_of = {token.i: token for token in words}
-        predicates = {token.i for token in words if token.pos_ in ("VERB", "AUX")} | _heads_of(
-            words, SUBJECT_DEPS | {"cop"}, join_hyphens
-        )
+        predicates = {
+            token.i
+            for token in words
+            if token.pos_ in ("VERB", "AUX") and not self._is_attributive(token, firsts)
+        } | _heads_of(words, SUBJECT_DEPS | {"cop"}, join_hyphens)
         return {
             "n_t_units": n_t_units,
             "n_complex_t_units": n_complex_t_units,
+            "n_l2sca_clauses": sum(
+                1
+                for sent in heads
+                for token in sent
+                if (token.i in marked or not _shares_subject(token, join_hyphens))
+                and token.i not in self._infinitive_heads
+            ),
             # A coordination of phrases, or of predicates sharing a subject
             "n_coordinate_phrases": sum(
                 1
@@ -401,9 +430,22 @@ class SyntaxStats(Stats):
                 for i in predicates
                 if i in word_of
                 and base_dep(word_of[i]) not in AUXILIARY_DEPS | {"auxpass"}
-                and not self._in_periphrasis(word_of[i])
+                and not _in_periphrasis(
+                    word_of[i], self.is_infinitive_periphrasis, self.auxiliary_form
+                )
             ),
         }
+
+    def _is_attributive(self, token: Token, firsts: Mapping[int, Token | None]) -> bool:
+        """Whether a non-finite verb form is an attribute of a noun: under amod or acl, or
+        coordinated to one, without an auxiliary or a copula, which L2SCA takes for a part of
+        the noun phrase; one with a subject of its own stays a predicate (is_predicate)"""
+        if predicate_form(token, self.auxiliary_form) not in NONFINITE_CLAUSE_FORMS:
+            return False
+        first = firsts[token.i]
+        return base_dep(first if first is not None else token) in ("acl", "amod") and not any(
+            base_dep(child) in AUXILIARY_DEPS for child in token.children
+        )
 
     @property
     def n_t_units(self) -> int:
@@ -426,6 +468,10 @@ class SyntaxStats(Stats):
         return self._l2sca["n_complex_nominals"]
 
     @property
+    def n_l2sca_clauses(self) -> int:
+        return self._l2sca["n_l2sca_clauses"]
+
+    @property
     def t_units_per_sent(self) -> float:
         return self.n_t_units / self.n_sents
 
@@ -435,7 +481,7 @@ class SyntaxStats(Stats):
 
     @property
     def clauses_per_t_unit(self) -> float:
-        return safe_divide(self.n_clauses, self.n_t_units, nan)
+        return safe_divide(self.n_l2sca_clauses, self.n_t_units, nan)
 
     @property
     def p_complex_t_units(self) -> float:
@@ -447,11 +493,11 @@ class SyntaxStats(Stats):
 
     @property
     def coordinate_phrases_per_clause(self) -> float:
-        return safe_divide(self.n_coordinate_phrases, self.n_clauses, nan)
+        return safe_divide(self.n_coordinate_phrases, self.n_l2sca_clauses, nan)
 
     @property
     def complex_nominals_per_clause(self) -> float:
-        return safe_divide(self.n_complex_nominals, self.n_clauses, nan)
+        return safe_divide(self.n_complex_nominals, self.n_l2sca_clauses, nan)
 
     @cached_property
     def _prep_chains(self) -> list[int]:
@@ -569,20 +615,6 @@ class SyntaxStats(Stats):
         """
         return False
 
-    def _in_periphrasis(self, token: Token) -> bool:
-        """Whether an infinitive makes one predicate with its head (is_infinitive_periphrasis),
-        itself or through the infinitive conjuncts above it, as is_clause_head asks"""
-        seen = set()
-        while token.i not in seen and predicate_form(token, self.auxiliary_form) == "Inf":
-            dep = base_dep(token)
-            if dep in ("xcomp", "csubj", "conj") and self.is_infinitive_periphrasis(token):
-                return True
-            if dep != "conj":
-                return False
-            seen.add(token.i)
-            token = token.head
-        return False
-
     def auxiliary_form(self, token: Token) -> str:
         """
         Getting the verb form of an auxiliary without the feature VerbForm
@@ -606,7 +638,7 @@ class SyntaxStats(Stats):
 
         Description:
             is_subordinate_clause_head of the module over the hooks is_clause_head
-            and auxiliary_form
+            and auxiliary_form, with subordinating_marks of the class
 
         Arguments:
             token (Token): Token
@@ -614,15 +646,17 @@ class SyntaxStats(Stats):
         Returns:
             bool: Result of the check
         """
-        return is_subordinate_clause_head(token, self.is_clause_head, self.auxiliary_form)
+        return is_subordinate_clause_head(
+            token, self.is_clause_head, self.auxiliary_form, self.subordinating_marks
+        )
 
     def is_infinitive_clause_head(self, token: Token) -> bool:
         """
-        Checking whether a word heads an infinitive clause under a verb
+        Checking whether a word heads an infinitive clause
 
         Description:
             is_infinitive_clause_head of the module over the hooks is_clause_head
-            and auxiliary_form
+            and auxiliary_form, with subordinating_marks of the class
 
         Arguments:
             token (Token): Token
@@ -630,7 +664,9 @@ class SyntaxStats(Stats):
         Returns:
             bool: Result of the check
         """
-        return is_infinitive_clause_head(token, self.is_clause_head, self.auxiliary_form)
+        return is_infinitive_clause_head(
+            token, self.is_clause_head, self.auxiliary_form, self.subordinating_marks
+        )
 
     def is_prep_complement(self, token: Token) -> bool:
         """
@@ -770,30 +806,39 @@ def _word_triple(token: Token) -> tuple[str, str, str]:
     return ("", "root", token.pos_)
 
 
-def _t_unit_heads(heads: Sequence[Token], join_hyphens: bool) -> list[Token]:
+def _t_unit_heads(
+    heads: Sequence[Token], join_hyphens: bool, marked: Collection[int]
+) -> list[Token]:
     """Clause heads of a sentence that head a T-unit: the head of the sentence and the main
     clauses joined to it through conj or parataxis, but for a conjunct without a subject of its
-    own, a predicate of the clause it is coordinated to"""
+    own, a predicate of the clause it is coordinated to; a marked clause head is no main clause"""
     ids = {token.i for token in heads}
     known: dict[int, bool] = {}
     return [
         token
         for token in heads
-        if _is_main_clause(token, ids, join_hyphens, known)
+        if _is_main_clause(token, ids, join_hyphens, known, marked)
         and not _shares_subject(token, join_hyphens)
     ]
 
 
 def _is_main_clause(
-    token: Token, ids: Collection[int], join_hyphens: bool, known: dict[int, bool]
+    token: Token,
+    ids: Collection[int],
+    join_hyphens: bool,
+    known: dict[int, bool],
+    marked: Collection[int],
 ) -> bool:
-    """Whether a clause head reaches the head of the sentence through main clauses alone; known
-    keeps the answers for the clause heads on the way"""
+    """Whether a clause head reaches the head of the sentence through main clauses alone, none
+    of them marked; known keeps the answers for the clause heads on the way"""
     path: list[int] = []
     on_path: set[int] = set()
     while token.i not in known:
         path.append(token.i)
         on_path.add(token.i)
+        if token.i in marked:
+            outcome = False
+            break
         if is_root(token):
             outcome = True
             break
@@ -868,9 +913,11 @@ def _t_units_of(
     return found
 
 
-def _first_conjuncts(words: Iterable[Token], join_hyphens: bool) -> dict[int, Token | None]:
+def _first_conjuncts(
+    words: Iterable[Token], join_hyphens: bool, starts: Collection[int] = ()
+) -> dict[int, Token | None]:
     """First conjunct of the coordination of every word by its position, the word itself out
-    of one; None through a punctuation mark or a loop of conjuncts"""
+    of one or at one of starts; None through a punctuation mark or a loop of conjuncts"""
     known: dict[int, Token | None] = {}
     for token in words:
         path: list[int] = []
@@ -880,7 +927,7 @@ def _first_conjuncts(words: Iterable[Token], join_hyphens: bool) -> dict[int, To
             if word.i in known:
                 first = known[word.i]
                 break
-            if base_dep(word) != "conj":
+            if base_dep(word) != "conj" or word.i in starts:
                 first = known[word.i] = word
                 break
             path.append(word.i)
@@ -1629,7 +1676,8 @@ def _completed_word(
 ) -> Token | None:
     """
     Word an infinitive complement completes, up its non-finite complements and the
-    infinitives of a periphrasis a model attaches as conj or csubj; None in a loop
+    infinitives of a periphrasis a model attaches as conj or csubj, an infinitive conjunct
+    of a periphrasis among them (is ready to come and help us live); None in a loop
     """
     seen = {token.i}
     word = token.head
@@ -1638,8 +1686,7 @@ def _completed_word(
         or (
             is_infinitive_periphrasis is not None
             and base_dep(word) in ("conj", "csubj")
-            and predicate_form(word, auxiliary_form) == "Inf"
-            and is_infinitive_periphrasis(word)
+            and _in_periphrasis(word, is_infinitive_periphrasis, auxiliary_form)
         )
     ):
         seen.add(word.i)
@@ -1652,22 +1699,44 @@ def _completed_word(
     return None if above.i == token.i else word
 
 
+def _in_periphrasis(
+    token: Token,
+    is_infinitive_periphrasis: Callable[[Token], bool],
+    auxiliary_form: Callable[[Token], str] | None,
+) -> bool:
+    """Whether an infinitive makes one predicate with its head (is_infinitive_periphrasis),
+    itself or through the infinitive conjuncts above it, as is_clause_head asks"""
+    seen = set()
+    while token.i not in seen and predicate_form(token, auxiliary_form) == "Inf":
+        dep = base_dep(token)
+        if dep in ("xcomp", "csubj", "conj") and is_infinitive_periphrasis(token):
+            return True
+        if dep != "conj":
+            return False
+        seen.add(token.i)
+        token = token.head
+    return False
+
+
 @_takes_token
 def is_subordinate_clause_head(
     token: Token,
     is_clause_head: Callable[[Token], bool] | None = None,
     auxiliary_form: Callable[[Token], str] | None = None,
+    subordinating_marks: Collection[str] = (),
 ) -> bool:
     """
     Checking whether a word heads a subordinate clause
 
     Description:
-        The head of a clause by is_clause_head with a relation of
-        SUBORDINATE_CLAUSE_DEPS (ccomp, advcl, acl, csubj and their subtypes),
-        or under xcomp with a finite predicate (a complement a model attaches
-        as xcomp), or a conjunct of one: the relation of the first word up its
-        chain of conjuncts decides. An infinitive under xcomp heads an
-        infinitive clause (is_infinitive_clause_head), not a subordinate one
+        The head of a clause by is_clause_head whose predicate (predicate_form) is
+        no infinitive, with a relation of SUBORDINATE_CLAUSE_DEPS (ccomp, advcl,
+        acl, csubj and their subtypes) or xcomp (a complement a model attaches as
+        xcomp), or a conjunct of one: the relation of the first word up its chain
+        of conjuncts decides. A conjunct or a parataxis marked by one of
+        subordinating_marks is a subordinate clause, since a model may attach a
+        clause of because as conj. An infinitive heads an infinitive clause
+        (is_infinitive_clause_head), not a subordinate one
 
     Arguments:
         token (Token): Token
@@ -1675,29 +1744,23 @@ def is_subordinate_clause_head(
             is_clause_head of the module with the hooks of this check
         auxiliary_form (callable): Verb form of an auxiliary without the feature
             VerbForm (predicate_form); none by default
+        subordinating_marks (list[str]): Subordinating conjunctions in lower case, with
+            the words of their fixed expression after a space; none by default
 
     Returns:
         bool: Result of the check
 
     Raises:
-        SourceTypeError: If the token is not a Token, or is_clause_head or auxiliary_form
-            is not callable
+        SourceTypeError: If the token is not a Token, is_clause_head or auxiliary_form
+            is not callable, or subordinating_marks is not a collection of strings
     """
-    if auxiliary_form is not None:
-        check_callable(auxiliary_form, "verb form of an auxiliary")
-    if is_clause_head is None:
-        is_clause_head = _clause_head_check(None, auxiliary_form)
-    check_callable(is_clause_head, "check of a clause head")
+    is_clause_head = _clause_head_hooks(is_clause_head, auxiliary_form, subordinating_marks)
     if is_root(token) or not is_clause_head(token):
         return False
-    seen = set()
-    while base_dep(token) == "conj" and token.i not in seen:
-        seen.add(token.i)
-        token = token.head
-    dep = base_dep(token)
-    if dep == "xcomp":
-        return predicate_form(token, auxiliary_form) != "Inf"
-    return not is_root(token) and dep in SUBORDINATE_CLAUSE_DEPS
+    word, dep = _clause_relation(token, subordinating_marks)
+    if predicate_form(word, auxiliary_form) == "Inf":
+        return False
+    return dep == "xcomp" or (not is_root(word) and dep in SUBORDINATE_CLAUSE_DEPS)
 
 
 @_takes_token
@@ -1705,16 +1768,20 @@ def is_infinitive_clause_head(
     token: Token,
     is_clause_head: Callable[[Token], bool] | None = None,
     auxiliary_form: Callable[[Token], str] | None = None,
+    subordinating_marks: Collection[str] = (),
 ) -> bool:
     """
-    Checking whether a word heads an infinitive clause under a verb
+    Checking whether a word heads an infinitive clause
 
     Description:
         The head of a clause by is_clause_head whose predicate is an infinitive
-        under xcomp (wants to leave, asked him to leave), or a conjunct of one:
-        the first word up its chain of conjuncts decides. Such a clause is
-        counted apart from the subordinate ones, as grammars of many languages
-        take it for a part of a simple sentence
+        under xcomp or a relation of SUBORDINATE_CLAUSE_DEPS (wants to leave, asked
+        him to leave, came to help, it is hard to say), or a conjunct of one: the
+        first word up its chain of conjuncts decides, as in
+        is_subordinate_clause_head; an infinitive under conj or parataxis marked by
+        one of subordinating_marks heads one too (came , in order to help). Such a
+        clause is counted apart from the subordinate ones, as grammars of many
+        languages take it for a part of a simple sentence
 
     Arguments:
         token (Token): Token
@@ -1722,26 +1789,70 @@ def is_infinitive_clause_head(
             is_clause_head of the module with the hooks of this check
         auxiliary_form (callable): Verb form of an auxiliary without the feature
             VerbForm (predicate_form); none by default
+        subordinating_marks (list[str]): Subordinating conjunctions in lower case, with
+            the words of their fixed expression after a space; none by default
 
     Returns:
         bool: Result of the check
 
     Raises:
-        SourceTypeError: If the token is not a Token, or is_clause_head or auxiliary_form
-            is not callable
+        SourceTypeError: If the token is not a Token, is_clause_head or auxiliary_form
+            is not callable, or subordinating_marks is not a collection of strings
     """
+    is_clause_head = _clause_head_hooks(is_clause_head, auxiliary_form, subordinating_marks)
+    if is_root(token) or not is_clause_head(token):
+        return False
+    word, dep = _clause_relation(token, subordinating_marks)
+    return predicate_form(word, auxiliary_form) == "Inf" and (
+        dep == "xcomp" or dep in SUBORDINATE_CLAUSE_DEPS
+    )
+
+
+def _clause_head_hooks(
+    is_clause_head: Callable[[Token], bool] | None,
+    auxiliary_form: Callable[[Token], str] | None,
+    subordinating_marks: Collection[str],
+) -> Callable[[Token], bool]:
+    """Checked hooks of the checks of the kind of a clause, the check of a clause head of the
+    module by default"""
     if auxiliary_form is not None:
         check_callable(auxiliary_form, "verb form of an auxiliary")
+    check_words(subordinating_marks, "subordinating_marks", ordered=False)
     if is_clause_head is None:
         is_clause_head = _clause_head_check(None, auxiliary_form)
     check_callable(is_clause_head, "check of a clause head")
-    if is_root(token) or not is_clause_head(token):
-        return False
+    return is_clause_head
+
+
+def _clause_relation(token: Token, subordinating_marks: Collection[str]) -> tuple[Token, str]:
+    """First word up the chain of conjuncts of a clause head and its relation, advcl for a
+    conjunct or a parataxis with a subordinating mark"""
     seen = set()
-    while base_dep(token) == "conj" and token.i not in seen:
+    while True:
+        dep = base_dep(token)
+        if (
+            dep in MAIN_CLAUSE_DEPS
+            and subordinating_marks
+            and _has_mark(token, subordinating_marks)
+        ):
+            return token, "advcl"
+        if dep != "conj" or token.i in seen:
+            return token, dep
         seen.add(token.i)
         token = token.head
-    return base_dep(token) == "xcomp" and predicate_form(token, auxiliary_form) == "Inf"
+
+
+def _has_mark(token: Token, marks: Collection[str]) -> bool:
+    """Whether a word has a mark of the marks, with the words of its fixed expression"""
+    return any(
+        base_dep(child) == "mark"
+        and " ".join(
+            word.text.lower()
+            for word in (child, *(fixed for fixed in child.children if base_dep(fixed) == "fixed"))
+        )
+        in marks
+        for child in token.children
+    )
 
 
 @_takes_token
@@ -1841,12 +1952,13 @@ def is_prep_complement(token: Token, join_hyphens: bool = False) -> bool:
 
     Description:
         A word with the relation nmod or obl or a subtype of them
-        (PREP_COMPLEMENT_DEPS), or a predicate with a copula out of a relative
-        clause (acl), that has a dependent of the relation case that is an
-        adposition or a word with a fixed adposition (in front of): the house of
-        the father, went to the house, was in the house. A noun in a case
-        without a preposition is none. The links of a prepositional chain
-        (calc_modifier_chains)
+        (PREP_COMPLEMENT_DEPS), or a predicate with a copula or a subject of its
+        own out of a relative clause (acl), that has a dependent of the relation
+        case that is an adposition or a word with a fixed adposition (in front
+        of): the house of the father, went to the house, was in the house, and a
+        nominal predicate of a language that drops the copula of the present
+        tense. A noun in a case without a preposition is none. The links of a
+        prepositional chain (calc_modifier_chains)
 
     Arguments:
         token (Token): Token
@@ -1877,7 +1989,7 @@ def is_prep_complement(token: Token, join_hyphens: bool = False) -> bool:
         return False
     children = _dependents(token, join_hyphens)
     if relation not in PREP_COMPLEMENT_DEPS and not any(
-        base_dep(child) == "cop" for child in children
+        base_dep(child) == "cop" or base_dep(child) in _SUBJECT_DEPS for child in children
     ):
         return False
     return any(base_dep(child) == "case" and _is_adposition(child) for child in children)

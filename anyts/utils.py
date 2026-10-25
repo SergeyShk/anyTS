@@ -38,6 +38,8 @@ NUMBER_PATTERN = re.compile(r"[+\-−]?\d+(?:[.,:/-]\d+)*%?")
 BLANK_LINE = re.compile(
     r"(?>\r\n|[\n\r\x85\u2028])[\s\u200b\ufeff]*(?:\r\n|[\n\r\x85\u2028])|\u2029"
 )
+# A line break of Unicode, the paragraph separator among them
+LINE_BREAK = re.compile(r"\r\n|[\n\r\x85\u2028\u2029]")
 
 
 @lru_cache(maxsize=1 << 16)
@@ -215,37 +217,47 @@ def _is_quote(char: str) -> bool:
     return unicodedata.category(char) in ("Pi", "Pf") or char in "\"'„‚"
 
 
-def find_paragraph_starts(text: str, words: Sequence[str]) -> frozenset[int]:
+def find_paragraph_starts(
+    text: str, words: Sequence[str], blank_lines: bool = False
+) -> frozenset[int]:
     """
     Finding the words of a text that start a paragraph
 
     Description:
         The words are found in the text in their order, as in find_marks; a word
-        that a blank line (BLANK_LINE) separates from the word before gets its
-        position. A word the text does not hold is passed over
+        that a line break (LINE_BREAK) separates from the word before gets its
+        position, or a blank line (BLANK_LINE) with blank_lines, for a text whose
+        lines are wrapped inside its paragraphs. A word the text does not hold
+        is passed over
 
     Arguments:
         text (str): Text
         words (list[str]): Words of the text in their order
+        blank_lines (bool): Start the paragraphs after the blank lines alone
 
     Returns:
-        frozenset[int]: Positions of the words a blank line stands before
+        frozenset[int]: Positions of the words a paragraph starts at
 
     Raises:
         SourceTypeError: If the text is not a string or the words are not a list
             of strings
+        ParameterError: If blank_lines is not a bool
 
     Example:
         >>> from anyts.utils import find_paragraph_starts
-        >>> sorted(find_paragraph_starts("It rains.\\n\\nWe stay home.", ["It", "rains", "We", "stay", "home"]))
-        [2]
+        >>> text = "It rains.\\nWe stay\\nhome.\\n\\nIt stops."
+        >>> words = ["It", "rains", "We", "stay", "home", "It", "stops"]
+        >>> sorted(find_paragraph_starts(text, words)), sorted(find_paragraph_starts(text, words, True))
+        ([2, 4, 5], [5])
     """
     check_word(text, "text")
     check_words(words)
+    check_bool(blank_lines, "blank_lines")
+    pattern = BLANK_LINE if blank_lines else LINE_BREAK
     return frozenset(
         position
         for position, start, end in _word_gaps(text, words)
-        if BLANK_LINE.search(text, start, end)
+        if pattern.search(text, start, end)
     )
 
 
@@ -487,6 +499,39 @@ def has_sents(doc: Doc) -> bool:
         False
     """
     return doc.has_annotation("SENT_START", require_complete=True)
+
+
+def has_pos(doc: Doc) -> bool:
+    """
+    Checking whether the words of a Doc carry parts of speech
+
+    Description:
+        A word (is_word) with a part of speech is enough; the whitespace tokens
+        do not count, as the attribute ruler of a pipeline without its tagger or
+        morphologizer marks them SPACE all the same. A Doc without words is
+        checked by has_annotation
+
+    Arguments:
+        doc (Doc): Doc object
+
+    Returns:
+        bool: Result of the check
+
+    Example:
+        >>> import spacy
+        >>> from anyts.utils import has_pos
+        >>> doc = spacy.blank("en")("The cat sleeps.\\n\\nThe dog eats.")
+        >>> doc[4].pos_ = "SPACE"
+        >>> doc.has_annotation("POS"), has_pos(doc)
+        (True, False)
+    """
+    words = False
+    for token in doc:
+        if is_word(token):
+            if token.pos_:
+                return True
+            words = True
+    return not words and doc.has_annotation("POS")
 
 
 def is_word(token: Token) -> bool:
@@ -752,42 +797,52 @@ def find_unit_marks(units: Sequence[Sequence[Token]]) -> frozenset[int]:
     return frozenset(marks)
 
 
-def find_unit_paragraph_starts(units: Sequence[Sequence[Token]]) -> frozenset[int]:
+def find_unit_paragraph_starts(
+    units: Sequence[Sequence[Token]], blank_lines: bool = False
+) -> frozenset[int]:
     """
     Finding the words of a Doc that start a paragraph
 
     Description:
         The words are those of iter_doc_units over the whole Doc, across its
-        sentences; a word that a blank line (BLANK_LINE) separates from the word
-        before gets its position, inside a sentence too
+        sentences; a word that a line break (LINE_BREAK) separates from the word
+        before gets its position, inside a sentence too, or a blank line
+        (BLANK_LINE) with blank_lines, as in find_paragraph_starts
 
     Arguments:
         units (list[list[Token]]): Tokens of every word of a Doc in order
+        blank_lines (bool): Start the paragraphs after the blank lines alone
 
     Returns:
-        frozenset[int]: Positions of the words a blank line stands before
+        frozenset[int]: Positions of the words a paragraph starts at
+
+    Raises:
+        ParameterError: If blank_lines is not a bool
 
     Example:
         >>> import spacy
         >>> from anyts.utils import find_unit_paragraph_starts, iter_doc_units
-        >>> doc = spacy.blank("en")("It rains.\\n\\nWe stay home.")
-        >>> sorted(find_unit_paragraph_starts(list(iter_doc_units(doc))))
-        [2]
+        >>> doc = spacy.blank("en")("It rains.\\nWe stay home.\\n\\nIt stops.")
+        >>> units = list(iter_doc_units(doc))
+        >>> sorted(find_unit_paragraph_starts(units)), sorted(find_unit_paragraph_starts(units, True))
+        ([2, 5], [5])
     """
+    check_bool(blank_lines, "blank_lines")
     if not units:
         return frozenset()
     from spacy.attrs import IS_SPACE
 
     doc = units[0][0].doc
     # The whitespace after a token is one space at most, a line break is a token of its own:
-    # only a gap with a whitespace token can hold a blank line
+    # only a gap with a whitespace token can hold one
     spaces = doc.to_array(IS_SPACE).nonzero()[0].tolist()
     firsts = [unit[0].i for unit in units]
     gaps = {bisect_right(firsts, space) for space in spaces} - {0, len(units)}
+    pattern = BLANK_LINE if blank_lines else LINE_BREAK
     return frozenset(
         position
         for position in gaps
-        if BLANK_LINE.search(
+        if pattern.search(
             "".join(
                 token.text_with_ws
                 for token in doc[units[position - 1][-1].i + 1 : firsts[position]]

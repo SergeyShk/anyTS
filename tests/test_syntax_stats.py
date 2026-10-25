@@ -609,12 +609,14 @@ def test_syntax_stats_metrics():
         # T-units: sold; said, with left that shares its subject and the subordinate want
         "t_units_per_sent": 1.0,
         "mean_t_unit_len": 9.0,
-        "clauses_per_t_unit": 2.5,
+        # Clauses of L2SCA: sold, said and want, without left and the infinitive leave
+        "clauses_per_t_unit": 1.5,
         "p_complex_t_units": 0.5,
-        "verb_phrases_per_t_unit": 3.0,
+        # sold, said, want, leave and left: the participle built is an attribute of house
+        "verb_phrases_per_t_unit": 2.5,
         # said and left: predicates with one subject; house with built, and want under ccomp
-        "coordinate_phrases_per_clause": 0.2,
-        "complex_nominals_per_clause": 0.4,
+        "coordinate_phrases_per_clause": 1 / 3,
+        "complex_nominals_per_clause": 2 / 3,
         "modifiers_per_noun": 1.0,
         # by workers is one complement with a preposition, no chain
         "prep_chains_per_sent": 0.0,
@@ -1022,6 +1024,17 @@ def test_prepositional_complements_of_several_words_and_of_a_copula():
     assert SyntaxStats(doc).n_prep_chains == 0
 
 
+def test_prepositional_chain_of_a_predicate_without_a_copula():
+    # he in the house of the mayor: a language that drops the copula of the present tense
+    doc = parse(
+        ["he", "in", "the", "house", "of", "the", "mayor"],
+        [3, 3, 3, 3, 6, 6, 3],
+        ["nsubj", "case", "det", "ROOT", "case", "det", "nmod"],
+        pos=["PRON", "ADP", "DET", "NOUN", "ADP", "DET", "NOUN"],
+    )
+    assert is_prep_complement(doc[3]) and SyntaxStats(doc).max_prep_chain_len == 2
+
+
 def test_prepositional_complement_of_a_hyphenated_word():
     # lives in north-west of the city: in hangs on north, the relation obl on west
     doc = parse(
@@ -1090,6 +1103,208 @@ def test_coordinated_subordinate_clauses_make_no_t_unit():
     )
     stats = SyntaxStats(doc)
     assert (stats.n_t_units, stats.n_complex_t_units) == (1, 1)
+
+
+def test_clauses_of_l2sca():
+    fin, inf = "VerbForm=Fin", "VerbForm=Inf"
+    # he took the bucket and went for water: one clause of L2SCA with a coordinate phrase
+    stats = SyntaxStats(
+        parse(
+            ["he", "took", "the", "bucket", "and", "went", "for", "water"],
+            [1, 1, 3, 1, 5, 1, 7, 5],
+            ["nsubj", "ROOT", "det", "obj", "cc", "conj", "case", "obl"],
+            ["", fin, "", "", "", fin, "", ""],
+            pos=["PRON", "VERB", "DET", "NOUN", "CCONJ", "VERB", "ADP", "NOUN"],
+        )
+    )
+    assert (stats.n_clauses, stats.n_l2sca_clauses, stats.n_t_units) == (2, 1, 1)
+    assert stats.clauses_per_t_unit == 1.0 and stats.coordinate_phrases_per_clause == 1.0
+    # he wants to leave: the infinitive clause is no clause of L2SCA
+    stats = SyntaxStats(
+        parse(
+            ["he", "wants", "to", "leave"],
+            [1, 1, 3, 1],
+            ["nsubj", "ROOT", "mark", "xcomp"],
+            ["", fin, "", inf],
+            pos=["PRON", "VERB", "PART", "VERB"],
+        )
+    )
+    assert (stats.n_clauses, stats.n_l2sca_clauses, stats.clauses_per_t_unit) == (2, 1, 1.0)
+
+
+def test_attributive_participles_are_no_verb_phrases():
+    part = "VerbForm=Part"
+    # the singing and dancing bird sang: the participles are attributes of the noun
+    doc = parse(
+        ["the", "singing", "and", "dancing", "bird", "sang"],
+        [4, 4, 3, 1, 5, 5],
+        ["det", "amod", "cc", "conj", "nsubj", "ROOT"],
+        ["", part, "", part, "", "VerbForm=Fin"],
+        pos=["DET", "VERB", "CCONJ", "VERB", "NOUN", "VERB"],
+    )
+    assert SyntaxStats(doc).n_verb_phrases == 1
+    # the house built and the house being built: an auxiliary makes a verb phrase of it
+    for words, heads, deps, morphs, pos, phrases in (
+        (
+            ["the", "house", "built"],
+            [1, 1, 1],
+            ["det", "ROOT", "acl"],
+            ["", "", part],
+            ["DET", "NOUN", "VERB"],
+            0,
+        ),
+        (
+            ["the", "house", "being", "built"],
+            [1, 1, 3, 1],
+            ["det", "ROOT", "aux", "acl"],
+            ["", "", "VerbForm=Ger", part],
+            ["DET", "NOUN", "AUX", "VERB"],
+            1,
+        ),
+    ):
+        assert SyntaxStats(parse(words, heads, deps, morphs, pos=pos)).n_verb_phrases == phrases
+    # дом , который построен: a participle with a subject of its own is a predicate
+    doc = parse(
+        ["дом", ",", "который", "построен"],
+        [0, 3, 3, 0],
+        ["ROOT", "punct", "nsubj:pass", "acl:relcl"],
+        ["", "", "", part],
+        pos=["NOUN", "PUNCT", "PRON", "VERB"],
+    )
+    assert SyntaxStats(doc).n_verb_phrases == 1
+    # slamming the door: a converb under advcl is a verb phrase
+    doc = parse(
+        ["slamming", "the", "door", "he", "left"],
+        [4, 2, 0, 4, 4],
+        ["advcl", "det", "obj", "nsubj", "ROOT"],
+        ["VerbForm=Ger", "", "", "", "VerbForm=Fin"],
+        pos=["VERB", "DET", "NOUN", "PRON", "VERB"],
+    )
+    assert SyntaxStats(doc).n_verb_phrases == 2
+
+
+class Marked(SyntaxStats):
+    subordinating_marks: ClassVar[frozenset[str]] = frozenset({"for", "so that"})
+
+
+def test_subordinating_marks():
+    fin = "VerbForm=Fin"
+    # he left , for he was tired and she slept: the model attaches the clause of for as conj
+    doc = parse(
+        ["he", "left", ",", "for", "he", "was", "tired", "and", "she", "slept"],
+        [1, 1, 6, 6, 6, 6, 1, 9, 9, 6],
+        ["nsubj", "ROOT", "punct", "mark", "nsubj", "cop", "conj", "cc", "nsubj", "conj"],
+        ["", fin, "", "", "", fin, "", "", "", fin],
+        pos=["PRON", "VERB", "PUNCT", "SCONJ", "PRON", "AUX", "ADJ", "CCONJ", "PRON", "VERB"],
+    )
+    stats = SyntaxStats(doc)
+    assert (stats.n_t_units, stats.n_subordinate_clauses, stats.n_complex_t_units) == (3, 0, 0)
+    stats = Marked(doc)
+    assert (stats.n_t_units, stats.n_subordinate_clauses, stats.n_complex_t_units) == (1, 2, 1)
+    assert is_subordinate_clause_head(doc[9], subordinating_marks={"for"})
+    assert not is_subordinate_clause_head(doc[9], subordinating_marks={"because"})
+    # he left , for tired: a marked conjunct sharing the subject is a clause, no coordination
+    doc = parse(
+        ["he", "left", ",", "for", "tired"],
+        [1, 1, 4, 4, 1],
+        ["nsubj", "ROOT", "punct", "mark", "conj"],
+        ["", fin, "", "", fin],
+        pos=["PRON", "VERB", "PUNCT", "SCONJ", "VERB"],
+    )
+    for cls, counts in ((SyntaxStats, (1, 1, 0)), (Marked, (2, 0, 1))):
+        stats = cls(doc)
+        assert (
+            stats.n_l2sca_clauses,
+            stats.n_coordinate_phrases,
+            stats.n_subordinate_clauses,
+        ) == counts
+    # we left , so that they slept: a parataxis with a mark of a fixed expression
+    doc = parse(
+        ["we", "left", ",", "so", "that", "they", "slept"],
+        [1, 1, 6, 6, 3, 6, 1],
+        ["nsubj", "ROOT", "punct", "mark", "fixed", "nsubj", "parataxis"],
+        ["", fin, "", "", "", "", fin],
+        pos=["PRON", "VERB", "PUNCT", "ADV", "SCONJ", "PRON", "VERB"],
+    )
+    assert (SyntaxStats(doc).n_subordinate_clauses, Marked(doc).n_subordinate_clauses) == (0, 1)
+    assert (SyntaxStats(doc).n_t_units, Marked(doc).n_t_units) == (2, 1)
+    # we came , for work: a marked infinitive is an infinitive clause and no T-unit
+    doc = parse(
+        ["we", "came", ",", "for", "work"],
+        [1, 1, 4, 4, 1],
+        ["nsubj", "ROOT", "punct", "mark", "parataxis"],
+        ["", fin, "", "", "VerbForm=Inf"],
+        pos=["PRON", "VERB", "PUNCT", "SCONJ", "VERB"],
+    )
+    stats = Marked(doc)
+    assert (stats.n_t_units, stats.n_l2sca_clauses, stats.n_infinitive_clauses) == (1, 1, 1)
+    assert stats.clauses_per_t_unit == 1.0 and stats.n_subordinate_clauses == 0
+    # he left and ran , for he was tired and slept: two coordinations, left and tired
+    doc = parse(
+        ["he", "left", "and", "ran", ",", "for", "he", "was", "tired", "and", "slept"],
+        [1, 1, 3, 1, 8, 8, 8, 8, 1, 10, 8],
+        ["nsubj", "ROOT", "cc", "conj", "punct", "mark", "nsubj", "cop", "conj", "cc", "conj"],
+        ["", fin, "", fin, "", "", "", fin, "", "", fin],
+        pos=[
+            "PRON",
+            "VERB",
+            "CCONJ",
+            "VERB",
+            "PUNCT",
+            "SCONJ",
+            "PRON",
+            "AUX",
+            "ADJ",
+            "CCONJ",
+            "VERB",
+        ],
+    )
+    assert (SyntaxStats(doc).n_coordinate_phrases, Marked(doc).n_coordinate_phrases) == (1, 2)
+    # he left , for he was tired , she said: a clause under a subordinate one is no T-unit
+    doc = parse(
+        ["he", "left", ",", "for", "he", "was", "tired", ",", "she", "said"],
+        [1, 1, 6, 6, 6, 6, 1, 9, 9, 6],
+        ["nsubj", "ROOT", "punct", "mark", "nsubj", "cop", "conj", "punct", "nsubj", "parataxis"],
+        ["", fin, "", "", "", fin, "", "", "", fin],
+        pos=["PRON", "VERB", "PUNCT", "SCONJ", "PRON", "AUX", "ADJ", "PUNCT", "PRON", "VERB"],
+    )
+    assert (SyntaxStats(doc).n_t_units, Marked(doc).n_t_units) == (3, 1)
+    with pytest.raises(SourceTypeError):
+        is_subordinate_clause_head(doc[6], subordinating_marks="so that")
+    with pytest.raises(SourceTypeError):
+        is_infinitive_clause_head(doc[6], subordinating_marks=[1])
+    with pytest.raises(SourceTypeError):
+
+        class Wrong(SyntaxStats):
+            subordinating_marks: ClassVar = frozenset({1})
+
+
+def test_infinitive_clauses_of_the_subordinate_relations():
+    fin, inf = "VerbForm=Fin", "VerbForm=Inf"
+    # he came to help, to read is to live: infinitive clauses, not subordinate ones
+    for words, heads, deps, morphs, pos in (
+        (
+            ["he", "came", "to", "help"],
+            [1, 1, 3, 1],
+            ["nsubj", "ROOT", "mark", "advcl"],
+            ["", fin, "", inf],
+            ["PRON", "VERB", "PART", "VERB"],
+        ),
+        (
+            ["to", "read", "is", "to", "live"],
+            [1, 4, 4, 4, 4],
+            ["mark", "csubj", "cop", "mark", "ROOT"],
+            ["", inf, fin, "", inf],
+            ["PART", "VERB", "AUX", "PART", "VERB"],
+        ),
+    ):
+        stats = SyntaxStats(parse(words, heads, deps, morphs, pos=pos))
+        assert (stats.n_clauses, stats.n_subordinate_clauses, stats.n_infinitive_clauses) == (
+            2,
+            0,
+            1,
+        )
+        assert stats.p_complex_sents == 0.0 and stats.p_complex_t_units == 0.0
 
 
 def test_t_units_without_a_word_at_the_root():
@@ -1439,6 +1654,17 @@ def test_parts_of_speech_required():
     )
     with pytest.raises(SourceError, match=f"^{MESSAGES['no_pos']}$"):
         SyntaxStats(bare)
+    # The SPACE of the whitespace alone, which the attribute ruler sets without a tagger
+    spaced = Doc(
+        VOCAB,
+        words=["The", "house", "\n\n", "stands"],
+        spaces=[True, False, False, False],
+        heads=[1, 3, 3, 3],
+        deps=["det", "nsubj", "dep", "ROOT"],
+        pos=["", "", "SPACE", ""],
+    )
+    with pytest.raises(SourceError, match=f"^{MESSAGES['no_pos']}$"):
+        SyntaxStats(spaced)
 
 
 def test_similarity_of_one_sentence(house):
@@ -1833,6 +2059,29 @@ def test_infinitive_clause_under_a_periphrasis_attached_as_conj_or_csubj(verb, d
     assert is_clause_head(doc[3], is_infinitive_periphrasis=periphrasis)
 
 
+def test_infinitive_under_a_conjunct_of_a_periphrasis():
+    # we are ready to come and help you live: help shares the periphrasis of come, live is
+    # an infinitive clause of its own
+    fin, inf = "VerbForm=Fin", "VerbForm=Inf"
+    doc = parse(
+        ["we", "are", "ready", "to", "come", "and", "help", "you", "live"],
+        [2, 2, 2, 4, 2, 6, 4, 6, 6],
+        ["nsubj", "cop", "ROOT", "mark", "xcomp", "cc", "conj", "obj", "xcomp"],
+        ["", fin, "", "", inf, "", inf, "", inf],
+        pos=["PRON", "AUX", "ADJ", "PART", "VERB", "CCONJ", "VERB", "PRON", "VERB"],
+    )
+
+    def periphrasis(token):
+        return token.head.text == "ready"
+
+    def is_head(token):
+        return is_clause_head(token, is_infinitive_periphrasis=periphrasis)
+
+    assert [token.text for token in doc if is_head(token)] == ["ready", "live"]
+    assert is_infinitive_clause(doc[8], periphrasis)
+    assert [token.text for token in doc if is_infinitive_clause_head(token, is_head)] == ["live"]
+
+
 def is_has(token):
     return token.head.text == "has"
 
@@ -1953,11 +2202,11 @@ def test_infinitive_subject_of_a_modal_word(periphrasis, heads_of_clauses):
         return is_clause_head(token, is_infinitive_periphrasis=periphrasis)
 
     assert [token.text for token in doc if is_head(token)] == heads_of_clauses
-    # An infinitive subject that is a clause stays a subordinate one
-    assert [token.text for token in doc if is_subordinate_clause_head(token, is_head)] == (
+    # An infinitive subject that is a clause is an infinitive clause, not a subordinate one
+    assert not any(is_subordinate_clause_head(token, is_head) for token in doc)
+    assert [token.text for token in doc if is_infinitive_clause_head(token, is_head)] == (
         heads_of_clauses[1:]
     )
-    assert not any(is_infinitive_clause_head(token, is_head) for token in doc)
 
 
 def test_infinitive_clause_head_by_a_hook():

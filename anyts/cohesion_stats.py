@@ -25,12 +25,14 @@ from .exceptions import ParameterError, SourceError, SourceTypeError
 from .extractors import SentsExtractor
 from .stats import Stats
 from .utils import (
+    check_bool,
     check_integer,
     check_messages,
     check_sequence,
     check_words,
     find_unit_marks,
     find_unit_paragraph_starts,
+    has_pos,
     has_sents,
     is_doc,
     iter_doc_units,
@@ -501,8 +503,8 @@ class CohesionWord(NamedTuple):
         connector_blocked (bool): Whether no connector starts at the word, by a rule of
             the language that reads more than the words and their parts of speech, such
             as its parse (word_info of a library)
-        paragraph_start (bool): Whether a blank line stands between the word and the one
-            before it, the start of a paragraph
+        paragraph_start (bool): Whether a line break stands between the word and the one
+            before it (a blank line with blank_lines), the start of a paragraph
     """
 
     word: str
@@ -547,14 +549,19 @@ class CohesionStats(Stats):
             boundaries is split by sents_extractor_class()
         connectors (dict[str, tuple[str, str]]): Class and kind by connector;
             load_connectors() by default
+        blank_lines (bool): Start the paragraphs after the blank lines alone, for a text
+            whose lines are wrapped inside its paragraphs; after every line break by
+            default
 
     Attributes:
         sents_extractor (SentsExtractor|None): Sentence extraction tool given
+        blank_lines (bool): Whether the paragraphs start after the blank lines alone
         words (tuple[tuple[str, ...], ...]): Words of every sentence with words
         lemmas (tuple[tuple[str, ...], ...]): Lemmas of every sentence with words
         n_sents (int): Number of sentences with words
-        n_paragraphs (int): Number of paragraphs - parts of the text between blank lines
-            that hold words
+        n_paragraphs (int): Number of paragraphs - lines of the text (parts between blank
+            lines with blank_lines) with content words; a line without them, such as the
+            number of a chapter, joins the next one
         n_words (int): Number of words
         n_nouns (int): Number of nouns
         n_pronouns (int): Number of pronouns
@@ -663,11 +670,14 @@ class CohesionStats(Stats):
         source: Doc,
         sents_extractor: SentsExtractor | None = None,
         connectors: Mapping[str, tuple[str, str]] | None = None,
+        blank_lines: bool = False,
     ):
         messages = self.messages
         if sents_extractor is not None and not isinstance(sents_extractor, SentsExtractor):
             raise SourceTypeError(messages["sents_extractor_type"])
+        check_bool(blank_lines, "blank_lines")
         self.sents_extractor = sents_extractor
+        self.blank_lines = blank_lines
         matcher = (
             self.connector_matcher()
             if connectors is None
@@ -717,12 +727,6 @@ class CohesionStats(Stats):
         # The elements of the overlaps with the next segments, computed on first use
         self._segments = {"noun": nouns, "argument": arguments, "content": content_sets}
         self._paragraph_breaks = _paragraph_breaks(sents)
-        self.n_paragraphs = 1 + sum(
-            1
-            for index, words in self._paragraph_breaks
-            for position, word in enumerate(words or [None])
-            if index + position and (word is None or word[-1])
-        )
         self.p_pronouns = self.n_pronouns / self.n_words
         self.pronoun_noun_ratio = safe_divide(self.n_pronouns, self.n_nouns, nan)
         self.p_demonstratives = self.n_demonstratives / self.n_words
@@ -772,10 +776,15 @@ class CohesionStats(Stats):
         for name in matcher.kinds:
             setattr(self, f"connectors_{name}", kinds[name] * per_1000)
 
+    @property
+    def n_paragraphs(self) -> int:
+        return len(self._paragraphs["content"])
+
     @cached_property
     def _paragraphs(self) -> dict[str, list[set[str]]]:
         """Elements of every paragraph by the name of a flag of the words: the union of the sets of
-        its sentences, a sentence a paragraph starts inside of split by its words"""
+        its sentences, a sentence a paragraph starts inside of split by its words, and a
+        paragraph without content words joined to the next one"""
         paragraphs: dict[str, list[set[str]]] = {name: [set()] for name in self._segments}
         breaks = dict(self._paragraph_breaks)
         for index in range(self.n_sents):
@@ -796,7 +805,22 @@ class CohesionStats(Stats):
                 for parts, flag in zip(paragraphs.values(), flags, strict=True):
                     if flag:
                         parts[-1].add(lemma)
-        return paragraphs
+        joined: dict[str, list[set[str]]] = {name: [] for name in paragraphs}
+        pending: dict[str, set[str]] = {name: set() for name in paragraphs}
+        for index, content in enumerate(paragraphs["content"]):
+            for name, parts in paragraphs.items():
+                pending[name] |= parts[index]
+            if content:
+                for name in paragraphs:
+                    joined[name].append(pending[name])
+                    pending[name] = set()
+        # The lines after the last content word join the last paragraph
+        for name, parts in joined.items():
+            if parts:
+                parts[-1] |= pending[name]
+            else:
+                parts.append(pending[name])
+        return joined
 
     @cached_property
     def noun_overlap_2_sent(self) -> float:
@@ -844,13 +868,16 @@ class CohesionStats(Stats):
         messages = self.messages
         if not is_doc(source):
             raise source_type_error(messages, source)
-        if not source.has_annotation("POS"):
+        if not has_pos(source):
             raise SourceError(messages["no_pos"])
         if not source.has_annotation("LEMMA"):
             raise SourceError(messages["no_lemmas"])
         sents = self.doc_units(source)
         units = [unit for sent in sents for unit in sent]
-        starts = {units[position][0].i for position in find_unit_paragraph_starts(units)}
+        starts = {
+            units[position][0].i
+            for position in find_unit_paragraph_starts(units, self.blank_lines)
+        }
         return [
             [
                 self._marked(self.word_info(unit), position in marks, unit[0].i in starts)
@@ -862,8 +889,8 @@ class CohesionStats(Stats):
 
     @staticmethod
     def _marked(word: object, break_before: bool, paragraph_start: bool) -> Any:
-        """A word of word_info with a punctuation mark or a blank line before it; another result
-        as it is, for the check of analyze"""
+        """A word of word_info with a punctuation mark or a paragraph start before it, another
+        result as it is, for the check of analyze"""
         if (break_before or paragraph_start) and isinstance(word, CohesionWord):
             return word._replace(
                 break_before=word.break_before or break_before,

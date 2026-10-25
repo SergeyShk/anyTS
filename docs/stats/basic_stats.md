@@ -94,8 +94,8 @@ The thresholds of the core are `COMPLEX_SYL_FACTOR = 3` and `LONG_WORD_LETTER_FA
 | `n_spaces` | `int` | Number of spaces of Unicode (category Zs), such as the no-break space, and tabs | `p_spaces` |
 | `n_syllables` | `int` | Number of syllables | - |
 | `n_punctuations` | `int` | Number of punctuation marks | `p_punctuations` |
-| `letters_entropy` | `float` | Shannon entropy in bits of the word lengths in letters, of `c_letters`: 0 when the words have one length | - |
-| `syllables_entropy` | `float` | Shannon entropy in bits of the word lengths in syllables, of `c_syllables` | - |
+| `letters_entropy` | `float` | Shannon entropy in bits of the word lengths in letters, of `c_letters`: 0 when the words have one length; the estimate by the shares runs lower on a short text, by tenths of a bit on tens of words | - |
+| `syllables_entropy` | `float` | Shannon entropy in bits of the word lengths in syllables, of `c_syllables`, with the same bias | - |
 | `c_punctuations` | `dict[str, int]` | Distribution of punctuation marks by type ([`count_punctuations`](#count_punctuations)) | - |
 
 With `normalize=True` the object has the normalized statistics too, of the type `float`: the counts of the words divided by the number of words, those of the characters by the number of characters.

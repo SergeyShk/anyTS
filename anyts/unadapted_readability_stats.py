@@ -421,7 +421,8 @@ def calc_dickes_steiwer(n_letters: int, n_words: int, n_sents: int, n_types: int
         and Vanecek (1984) give it, over the letters per word, the words per
         sentence and the type-token ratio, without syllables; higher is easier
         235.95993 − 73.021·ln(letters / words + 1) − 12.56438·ln(words / sentences + 1)
-        − 50.03293·types / words
+        − 50.03293·types / words. The ratio falls with the length of a text, so
+        the values compare texts of one length
 
     Arguments:
         n_letters (int): Number of the letters of the words
@@ -527,7 +528,8 @@ def calc_strain_index(n_syllables: int, n_sents: int) -> float:
 
     Description:
         Nathaniel (2009): the syllables of three sentences over 10, here the
-        syllables of three sentences on average over the text
+        syllables of three sentences on average over the text, which makes it
+        0.3 times the index of Fucks
 
     Arguments:
         n_syllables (int): Number of syllables

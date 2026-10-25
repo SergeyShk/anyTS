@@ -87,7 +87,7 @@ Every statistic is a tuple of the values of the words, and `get_stats` counts th
 ## Methods
 
 <!-- --8<-- [start:MorphStats-get_stats] -->
-`get_stats(*stats, filter_none=False, flat=False)` gives the number of the words by value of every statistic selected, all of them by default, in the order of the first occurrences; `None` counts the words without the feature, and `filter_none` leaves them out. With `flat` the keys are `statistic_value`, such as `pos_NOUN`, without the words that lack the feature, as in `to_dataframe`. An unknown statistic raises `UnknownStatError`.
+`get_stats(*stats, filter_none=False, flat=False)` gives the number of the words by value of every statistic selected, all of them by default, in the order of the first occurrences; `None` counts the words without the feature, and `filter_none` leaves them out. With `flat` the keys are `statistic_value`, such as `pos_NOUN`, without the words that lack the feature, as in `to_dataframe`. An unknown statistic raises `UnknownStatError`, a `filter_none` or a `flat` that is not a `bool` - `ParameterError`.
 <!-- --8<-- [end:MorphStats-get_stats] -->
 
 <!-- --8<-- [start:MorphStats-explain_text] -->
