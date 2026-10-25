@@ -2358,9 +2358,9 @@
 </div>
 <h2 id="find_paragraph_starts">Paragraph starts between the words of a text<a class="headerlink" href="#find_paragraph_starts" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:find_paragraph_starts] -->
-<div class="signature highlight"><pre><span></span><code><span class="n">find_paragraph_starts</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">words</span><span class="p">)</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">find_paragraph_starts</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">words</span><span class="p">,</span> <span class="n">blank_lines</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 </code></pre></div>
-<p>Finds the words of a text that start a paragraph: the words are found in the text in their order, as by <code>find_marks</code>, and a word that a blank line (<code>BLANK_LINE</code>) separates from the word before gets its position. A word the text does not hold is passed over. A library that builds the words of <code>CohesionStats</code> from a string sets their <code>paragraph_start</code> by these positions.</p>
+<p>Finds the words of a text that start a paragraph: the words are found in the text in their order, as by <code>find_marks</code>, and a word that a line break (<code>LINE_BREAK</code>: <code>\n</code>, <code>\r\n</code>, <code>\r</code>, U+0085, U+2028 or the paragraph separator U+2029) separates from the word before gets its position, or a blank line (<code>BLANK_LINE</code>) with <code>blank_lines</code>, for a text whose lines are wrapped inside its paragraphs. A word the text does not hold is passed over. A library that builds the words of <code>CohesionStats</code> from a string sets their <code>paragraph_start</code> by these positions.</p>
 <table>
 <thead>
 <tr>
@@ -2383,9 +2383,15 @@
 <td style="text-align: left;">-</td>
 <td style="text-align: left;">Words of the text in their order</td>
 </tr>
+<tr>
+<td style="text-align: left;"><code>blank_lines</code></td>
+<td style="text-align: left;"><code>bool</code></td>
+<td style="text-align: left;"><code>False</code></td>
+<td style="text-align: left;">Start the paragraphs after the blank lines alone</td>
+</tr>
 </tbody>
 </table>
-<p>A text that is not a string and words that are not a list of strings raise <code>SourceTypeError</code>.</p>
+<p>A text that is not a string and words that are not a list of strings raise <code>SourceTypeError</code>, a <code>blank_lines</code> that is not a <code>bool</code> - <code>ParameterError</code>.</p>
 <!-- --8<-- [end:find_paragraph_starts] -->
 
 <div class="tabbed-set tabbed-alternate" data-tabs="6:2"><input checked="checked" id="__tabbed_6_1" name="__tabbed_6" type="radio" /><input id="__tabbed_6_2" name="__tabbed_6" type="radio" /><div class="tabbed-labels"><label for="__tabbed_6_1">Code</label><label for="__tabbed_6_2">Result</label></div>
@@ -2393,11 +2399,13 @@
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">find_paragraph_starts</span>
 
-<span class="nb">sorted</span><span class="p">(</span><span class="n">find_paragraph_starts</span><span class="p">(</span><span class="s2">"It rains.</span><span class="se">\n\n</span><span class="s2">We stay home."</span><span class="p">,</span> <span class="p">[</span><span class="s2">"It"</span><span class="p">,</span> <span class="s2">"rains"</span><span class="p">,</span> <span class="s2">"We"</span><span class="p">,</span> <span class="s2">"stay"</span><span class="p">,</span> <span class="s2">"home"</span><span class="p">]))</span>
+<span class="n">text</span> <span class="o">=</span> <span class="s2">"It rains.</span><span class="se">\n</span><span class="s2">We stay</span><span class="se">\n</span><span class="s2">home.</span><span class="se">\n\n</span><span class="s2">It stops."</span>
+<span class="n">words</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"It"</span><span class="p">,</span> <span class="s2">"rains"</span><span class="p">,</span> <span class="s2">"We"</span><span class="p">,</span> <span class="s2">"stay"</span><span class="p">,</span> <span class="s2">"home"</span><span class="p">,</span> <span class="s2">"It"</span><span class="p">,</span> <span class="s2">"stops"</span><span class="p">]</span>
+<span class="nb">sorted</span><span class="p">(</span><span class="n">find_paragraph_starts</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">words</span><span class="p">)),</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">find_paragraph_starts</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">words</span><span class="p">,</span> <span class="kc">True</span><span class="p">))</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code>[2]
+<div class="highlight"><pre><span></span><code>([2, 4, 5], [5])
 </code></pre></div>
 </div>
 </div>

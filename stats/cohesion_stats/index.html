@@ -2333,7 +2333,7 @@
 
 
 <h1 id="cohesion-statistics">Cohesion statistics<a class="headerlink" href="#cohesion-statistics" title="Permanent link">&para;</a></h1>
-<div class="signature highlight"><pre><span></span><code><span class="n">CohesionStats</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">sents_extractor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">connectors</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">CohesionStats</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">sents_extractor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">connectors</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">blank_lines</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 </code></pre></div>
 <!-- --8<-- [start:CohesionStats] -->
 <p>The cohesion statistics of a text in the manner of Coh-Metrix: the overlap of the sentences, the givenness, the temporal cohesion and the connectors of a dictionary. The sentences are compared by lemmas. The data source is a <code>Doc</code> object of <a href="https://github.com/explosion/spaCy">spaCy</a> with the parts of speech and the lemmas, split into sentences by its boundaries, or by the sentence extractor over its text when one is given or the <code>Doc</code> has none. The overlaps with the next sentences and paragraphs are computed on first use, so a subclass whose <code>stats_desc</code> does not name them does not pay for them.</p>
@@ -2341,7 +2341,7 @@
 <ul>
 <li><code>SourceTypeError</code> - an extractor of another type, a source that is not a <code>Doc</code>, connectors that are not a dictionary of phrases and pairs of strings;</li>
 <li><code>SourceError</code> - a source without parts of speech, lemmas or words;</li>
-<li><code>ParameterError</code> - an unknown class or kind of a connector.</li>
+<li><code>ParameterError</code> - an unknown class or kind of a connector, a <code>blank_lines</code> that is not a <code>bool</code>.</li>
 </ul>
 <!-- --8<-- [end:CohesionStats] -->
 
@@ -2444,6 +2444,12 @@ Secondary connectors per 1000 words                                |  142.86
 <td style="text-align: left;"><code>None</code></td>
 <td style="text-align: left;">Class and kind by connector; those of <code>load_connectors</code> by default</td>
 </tr>
+<tr>
+<td style="text-align: left;"><code>blank_lines</code></td>
+<td style="text-align: left;"><code>bool</code></td>
+<td style="text-align: left;"><code>False</code></td>
+<td style="text-align: left;">Start the paragraphs after the blank lines alone, for a text whose lines are wrapped inside its paragraphs; after every line break by default</td>
+</tr>
 </tbody>
 </table>
 <!-- --8<-- [end:CohesionStats-parameters] -->
@@ -2470,9 +2476,14 @@ Secondary connectors per 1000 words                                |  142.86
 <td style="text-align: left;">Numbers of the sentences with words and of the words</td>
 </tr>
 <tr>
+<td style="text-align: left;"><code>blank_lines</code></td>
+<td style="text-align: left;"><code>bool</code></td>
+<td style="text-align: left;">Whether the paragraphs start after the blank lines alone</td>
+</tr>
+<tr>
 <td style="text-align: left;"><code>n_paragraphs</code></td>
 <td style="text-align: left;"><code>int</code></td>
-<td style="text-align: left;">Number of the paragraphs, the parts of the text between blank lines that hold words</td>
+<td style="text-align: left;">Number of the paragraphs, the lines of the text with content words (the parts between blank lines with <code>blank_lines</code>)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>n_nouns</code>, <code>n_pronouns</code>, <code>n_demonstratives</code>, <code>n_content_words</code></td>
@@ -2793,7 +2804,7 @@ Secondary connectors per 1000 words                                |  142.86
 <h3 id="forward_overlap">Overlap with the next sentences and paragraphs<a class="headerlink" href="#forward_overlap" title="Permanent link">&para;</a></h3>
 <p class="metric-meta"><code>noun_overlap_2_sent</code> · <code>argument_overlap_2_sent</code> · <code>content_overlap_2_sent</code> · <code>noun_overlap_para</code> · <code>argument_overlap_para</code> · <code>content_overlap_para</code> · <a href="https://doi.org/10.3758/s13428-015-0651-7">TAACO</a></p>
 <!-- --8<-- [start:CohesionStats-forward_overlap] -->
-<p>The adjacent overlap of TAACO, by the lemmas of the nouns, of the arguments and of the content words: the share of the distinct lemmas of a sentence repeated in one of the next two sentences (<code>adjacent_overlap_2_*_sent</code>), and of a paragraph repeated in the next paragraph (<code>adjacent_overlap_*_para</code>), over all the sentences or paragraphs that have them (<code>calc_forward_overlap</code>). Unlike the binary overlap, a pair of segments counts by the share of the lemmas they share. A paragraph is a part of the text between blank lines that holds words; a word that carries <code>paragraph_start</code> opens one, inside a sentence too, as when a parser joins a heading to the next sentence. TAACO takes every line for a paragraph: a text with a paragraph on every line and no blank lines is one paragraph here, and its <code>*_para</code> are <code>nan</code>.</p>
+<p>The adjacent overlap of TAACO, by the lemmas of the nouns, of the arguments and of the content words: the share of the distinct lemmas of a sentence repeated in one of the next two sentences (<code>adjacent_overlap_2_*_sent</code>), and of a paragraph repeated in the next paragraph (<code>adjacent_overlap_*_para</code>), over all the sentences or paragraphs that have them (<code>calc_forward_overlap</code>). Unlike the binary overlap, a pair of segments counts by the share of the lemmas they share. A paragraph is a line of the text, as in TAACO, or a part between blank lines with <code>blank_lines</code>, for a text whose lines are wrapped inside its paragraphs; a word that carries <code>paragraph_start</code> opens one, inside a sentence too, as when a parser joins a heading to the next sentence. A paragraph without content words, such as the number of a chapter, joins the next one, the last such the one before it.</p>
 <!-- --8<-- [end:CohesionStats-forward_overlap] -->
 <!-- --8<-- [start:calc_forward_overlap] -->
 <div class="signature highlight"><pre><span></span><code><span class="n">calc_forward_overlap</span><span class="p">(</span><span class="n">sets</span><span class="p">,</span> <span class="n">span</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
@@ -3123,7 +3134,7 @@ Secondary connectors per 1000 words                                |  142.86
 <tr>
 <td style="text-align: left;"><code>analyze(source)</code></td>
 <td style="text-align: left;">method</td>
-<td style="text-align: left;">Words of the sentences of a source as <code>CohesionWord</code>: the word, its lemma, its part of speech, whether it is a noun, a pronoun, a demonstrative, an argument and a content word, its tense, mood and aspect, whether a punctuation mark stands before it (<code>break_before</code>, which the rules of the connectors do not read through), whether no connector starts at it (<code>connector_blocked</code>, by a rule of the parse such as an <em>if</em> of an indirect question) and whether a blank line stands before it (<code>paragraph_start</code>); by default those of a <code>Doc</code>, sentence by sentence (<code>doc_units</code>), with the features of <code>word_info</code>; the default marks the words after a blank line of the <code>Doc</code> (<code>find_unit_paragraph_starts</code>); a library that reads a string or a <code>Doc</code> without these annotations overrides it, <code>find_paragraph_starts</code> giving the paragraph starts of a string</td>
+<td style="text-align: left;">Words of the sentences of a source as <code>CohesionWord</code>: the word, its lemma, its part of speech, whether it is a noun, a pronoun, a demonstrative, an argument and a content word, its tense, mood and aspect, whether a punctuation mark stands before it (<code>break_before</code>, which the rules of the connectors do not read through), whether no connector starts at it (<code>connector_blocked</code>, by a rule of the parse such as an <em>if</em> of an indirect question) and whether a paragraph starts at it (<code>paragraph_start</code>); by default those of a <code>Doc</code>, sentence by sentence (<code>doc_units</code>), with the features of <code>word_info</code>; the default marks the words after a line break of the <code>Doc</code>, or after a blank line with <code>blank_lines</code> (<code>find_unit_paragraph_starts</code>); a library that reads a string or a <code>Doc</code> without these annotations overrides it, <code>find_paragraph_starts</code> with <code>blank_lines</code> giving the paragraph starts of a string</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>doc_units(doc)</code></td>

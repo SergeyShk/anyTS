@@ -2298,7 +2298,7 @@
 
 <h2 id="methods">Methods<a class="headerlink" href="#methods" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:MorphStats-get_stats] -->
-<p><code>get_stats(*stats, filter_none=False, flat=False)</code> gives the number of the words by value of every statistic selected, all of them by default, in the order of the first occurrences; <code>None</code> counts the words without the feature, and <code>filter_none</code> leaves them out. With <code>flat</code> the keys are <code>statistic_value</code>, such as <code>pos_NOUN</code>, without the words that lack the feature, as in <code>to_dataframe</code>. An unknown statistic raises <code>UnknownStatError</code>.</p>
+<p><code>get_stats(*stats, filter_none=False, flat=False)</code> gives the number of the words by value of every statistic selected, all of them by default, in the order of the first occurrences; <code>None</code> counts the words without the feature, and <code>filter_none</code> leaves them out. With <code>flat</code> the keys are <code>statistic_value</code>, such as <code>pos_NOUN</code>, without the words that lack the feature, as in <code>to_dataframe</code>. An unknown statistic raises <code>UnknownStatError</code>, a <code>filter_none</code> or a <code>flat</code> that is not a <code>bool</code> - <code>ParameterError</code>.</p>
 <!-- --8<-- [end:MorphStats-get_stats] -->
 
 <!-- --8<-- [start:MorphStats-explain_text] -->
