@@ -132,10 +132,12 @@ The corpora, `n_mfw` and `culling` raise the errors of `frequency_table`; fewer 
 
 <!-- --8<-- [start:rolling_delta] -->
 ``` {.python .signature}
-rolling_delta(reference, text, window=5000, step=1000, n_mfw=100, variant='burrows', culling=0.0)
+rolling_delta(reference, text, window=5000, step=1000, n_mfw=100, variant='burrows', culling=0.0, statistics=None)
 ```
 
-Delta along a text, after `rolling.delta` of stylo: the reference texts and the text under test are cut into windows of `window` units every `step` units, the rest shorter than a window dropped. The most frequent units, the culling and the statistics of the z-scores come from the windows of the reference texts, and every window of the text is compared by the variant of Delta with the centroid of the windows of every reference text. The result is the distances from the windows (rows, by the position of their middle in units) to the references (columns); where the nearest reference changes along the text, so does the style - another author of a part of a text written together, a borrowed passage. Unlike stylo, which sums the differences of the raw frequencies, the distances are those of `delta_profiles` over z-scores.
+Delta along a text, after `rolling.delta` of stylo: the reference texts and the text under test are cut into windows of `window` units every `step` units, the rest shorter than a window dropped. The most frequent units, the culling and the statistics of the z-scores come from the windows of the reference texts, or of a separate set `statistics`, and every window of the text is compared by the variant of Delta with the centroid of the windows of every reference text. The result is the distances from the windows (rows, by the position of their middle in units) to the references (columns); where the nearest reference changes along the text, so does the style - another author of a part of a text written together, a borrowed passage. Unlike stylo, which sums the differences of the raw frequencies, the distances are those of `delta_profiles` over z-scores.
+
+Scaled by their own windows, the centroids of the references balance each other, and Cosine Delta loses its sense: the cosine distances of a window to the references average 1 (weighted by their windows and the lengths of their centroids), with two references they add up to 2 and the lines are mirrored, so a passage of a third author looks halfway between them. With few references, Cosine Delta needs `statistics` of more texts - other authors, other works; Burrows's and Eder's Delta are not bound so. With `statistics` a single reference is enough.
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
@@ -145,9 +147,10 @@ Delta along a text, after `rolling.delta` of stylo: the reference texts and the 
 | `step` | `int` | `1000` | Distance between the starts of the windows in units |
 | `n_mfw` | `int` | `100` | Number of the most frequent units; `None` - all of them |
 | `variant` | `str` | `'burrows'` | Variant of Delta of `anyts.constants.DELTA_VARIANTS` |
-| `culling` | `float` | `0.0` | Smallest share of the windows of the reference texts a unit occurs in |
+| `culling` | `float` | `0.0` | Smallest share of the windows a unit occurs in |
+| `statistics` | `dict[str, list[str]]` | `None` | Texts whose windows give the units and the statistics of the scaling; `None` - the reference texts |
 
-A reference corpus that is not a mapping of lists of strings and units of the text that are not a list of strings raise `SourceTypeError`; fewer than two reference texts, a text without units or shorter than a window and fewer than three windows of the reference texts raise `SourceError`. An unknown variant, a `window` or a `step` that is not an integer of at least one, a `step` greater than the window and the `n_mfw` and `culling` that `frequency_table` refuses raise `ParameterError`.
+A corpus that is not a mapping of lists of strings and units of the text that are not a list of strings raise `SourceTypeError`. No reference texts, fewer than two without `statistics`, a text without units or shorter than a window, fewer than three windows of the statistics and no unit left after culling raise `SourceError`. An unknown variant, a `window`, a `step` or an `n_mfw` that is not an integer of at least one, a `step` greater than the window and a `culling` that is not a number within [0, 1] raise `ParameterError`.
 <!-- --8<-- [end:rolling_delta] -->
 
 === "Code"

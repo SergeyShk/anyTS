@@ -206,3 +206,18 @@ def test_collocates_on_one_side_of_the_node():
         collocations(words, node="wine", side="up")
     with pytest.raises(ParameterError, match=r"^A side needs a node$"):
         collocations(words, side="left")
+
+
+def test_pair_of_two_nodes_counted_once():
+    words = ["wine", "wine", "red", "wine"]
+    both = {
+        (c.left, c.right): c.freq_pair
+        for c in collocations(words, window=2, node="wine", min_freq=1)
+    }
+    # Within two words: wine wine twice, wine red twice, red wine once
+    assert both == {("wine", "wine"): 2, ("wine", "red"): 2, ("red", "wine"): 1}
+    left = {
+        (c.left, c.right): c.freq_pair
+        for c in collocations(words, window=2, node="wine", min_freq=1, side="left")
+    }
+    assert left == {("wine", "wine"): 2, ("red", "wine"): 1}

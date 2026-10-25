@@ -14,6 +14,8 @@ from ..exceptions import ParameterError, SourceError, SourceTypeError
 from ..utils import check_integer, merge_labels
 from ._axes import check_axes
 
+# Most bins of a histogram: matplotlib draws a patch for every one
+_MAX_BINS = 1000
 # Methods of scipy.cluster.hierarchy.linkage
 _LINKAGE_METHODS = frozenset(
     ("average", "centroid", "complete", "median", "single", "ward", "weighted")
@@ -239,7 +241,7 @@ def delta_histogram_plot(
         distances (DataFrame): Symmetric matrix of distances with the names of the texts
             in the rows and the columns, in any order
         authors (dict[str, str]): Authors of the texts by the names of the texts
-        bins (int): Number of the bins
+        bins (int): Number of the bins, at most 1000
         ax (Axes): Axes for the plot; if not given, a new figure is created
         labels (dict[str, str]): Labels over VISUALIZER_LABELS["delta_histogram_plot"]
 
@@ -251,13 +253,15 @@ def delta_histogram_plot(
             authors are not a mapping
         SourceError: If the matrix fails the checks of dendrogram_plot, a text has
             no author, no two texts have one author or all of them have one
-        ParameterError: If the number of the bins is below one, the labels are set
+        ParameterError: If the number of the bins is not from 1 to 1000, the labels are set
             incorrectly (merge_labels) or ax is not a matplotlib Axes (check_axes)
     """
     captions = merge_labels(VISUALIZER_LABELS["delta_histogram_plot"], labels)
     check_integer(bins, "number of bins")
     if bins < 1:
         raise ParameterError("The number of bins must be greater than 0")
+    if bins > _MAX_BINS:
+        raise ParameterError(f"The number of bins must be at most {_MAX_BINS}, not {bins}")
     values = _distance_matrix(distances, "the histogram of the distances")
     if not isinstance(authors, Mapping):
         raise SourceTypeError(
@@ -342,12 +346,16 @@ def rolling_delta_plot(
     check_axes(ax)
     if ax is None:
         _, ax = plt.subplots(figsize=(10, 5))
-    for index, name in enumerate(distances.columns):
-        ax.plot(positions, values[:, index], marker=".", label=str(name))
+    names = [str(name) for name in distances.columns]
+    lines = [
+        ax.plot(positions, values[:, index], marker=".", label=name)[0]
+        for index, name in enumerate(names)
+    ]
     ax.set_xlabel(captions["xlabel"])
     ax.set_ylabel(captions["ylabel"])
     ax.set_title(captions["title"])
-    ax.legend()
+    # The names go to the legend as they are: a label of matplotlib that starts with _ is hidden
+    ax.legend(lines, names)
     return ax
 
 
@@ -404,14 +412,16 @@ def zeta_scatter_plot(
     check_axes(ax)
     if ax is None:
         _, ax = plt.subplots(figsize=(7, 6))
-    codes, names = pd.factorize(segments["corpus"], use_na_sentinel=False)
-    for code, name in enumerate(names):
-        selected = codes == code
-        ax.scatter(shares[selected, 0], shares[selected, 1], label=str(name))
+    codes, corpora = pd.factorize(segments["corpus"], use_na_sentinel=False)
+    names = [str(name) for name in corpora]
+    points = [
+        ax.scatter(shares[codes == code, 0], shares[codes == code, 1], label=name)
+        for code, name in enumerate(names)
+    ]
     ax.set_xlabel(captions["xlabel"])
     ax.set_ylabel(captions["ylabel"])
     ax.set_title(captions["title"])
-    ax.legend()
+    ax.legend(points, names)
     return ax
 
 
@@ -449,12 +459,14 @@ def mendenhall_plot(
     check_axes(ax)
     if ax is None:
         _, ax = plt.subplots()
-    for name, curve in curves.items():
+    names = [str(name) for name in curves]
+    lines = []
+    for name, curve in zip(names, curves.values(), strict=True):
         lengths = range(1, max(curve) + 1)
         shares = [curve.get(length, 0.0) for length in lengths]
-        ax.plot(list(lengths), shares, marker=".", label=str(name))
+        lines.append(ax.plot(list(lengths), shares, marker=".", label=name)[0])
     ax.set_xlabel(captions["xlabel"])
     ax.set_ylabel(captions["ylabel"])
     ax.set_title(captions["title"])
-    ax.legend()
+    ax.legend(lines, names)
     return ax

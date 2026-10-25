@@ -52,7 +52,7 @@ wheels = [
 
 [[package]]
 name = "anyts"
-version = "0.4.0.dev11"
+version = "0.4.0.dev12"
 source = { editable = "." }
 dependencies = [
     { name = "graphviz" },

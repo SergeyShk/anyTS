@@ -261,6 +261,24 @@ def test_compare_features_seed_and_errors():
     assert list(named.columns[:4]) == ["mean_x", "mean_y", "median_x", "median_y"]
 
 
+def test_compare_features_intervals_of_a_feature_alone():
+    rng = np.random.default_rng(3)
+    index = pd.MultiIndex.from_arrays(
+        [np.repeat(range(6), 5), np.tile(range(5), 6)], names=["text", "window"]
+    )
+    a = pd.DataFrame({"x": rng.normal(size=30), "y": rng.normal(size=30)}, index=index)
+    b = pd.DataFrame({"x": rng.normal(1, size=30), "y": rng.normal(size=30)}, index=index)
+    both = compare_features(a, b, n_bootstrap=200)
+    alone = compare_features(a[["y"]], b[["y"]], n_bootstrap=200)
+    reordered = compare_features(a[["y", "x"]], b[["y", "x"]], n_bootstrap=200)
+    for other in (alone, reordered):
+        assert other.loc["y", ["ci_low", "ci_high"]].equals(both.loc["y", ["ci_low", "ci_high"]])
+    # A generator gives the same intervals for the same state
+    assert compare_features(a, b, n_bootstrap=200, seed=np.random.default_rng(5)).equals(
+        compare_features(a, b, n_bootstrap=200, seed=np.random.default_rng(5))
+    )
+
+
 @pytest.mark.parametrize(
     "kwargs",
     [

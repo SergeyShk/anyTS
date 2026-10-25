@@ -160,6 +160,10 @@ def test_delta_histogram_plot_errors():
             delta_histogram_plot(PAIRS, authors)
     with pytest.raises(ParameterError, match=r"^The number of bins must be greater than 0$"):
         delta_histogram_plot(PAIRS, AUTHORS, bins=0)
+    with pytest.raises(
+        ParameterError, match=r"^The number of bins must be at most 1000, not 1001$"
+    ):
+        delta_histogram_plot(PAIRS, AUTHORS, bins=1001)
     with pytest.raises(ParameterError, match=r"^The number of bins must be an integer"):
         delta_histogram_plot(PAIRS, AUTHORS, bins=5.0)
     with pytest.raises(
@@ -344,4 +348,19 @@ def test_distance_matrix_rounding_error():
     offsets = np.asarray(mds_plot(noisy).collections[0].get_offsets())
     assert np.linalg.norm(offsets[0] - offsets[1]) == pytest.approx(3)
     assert _heights(dendrogram_plot(noisy, method="single")) == {0, 3, 4}
+    plt.close("all")
+
+
+def test_legends_keep_names_with_an_underscore():
+    # matplotlib hides a label that starts with an underscore unless it is given to the legend
+    distances = pd.DataFrame({"_draft": [0.4, 0.9], "final": [1.1, 0.3]}, index=[2500, 3500])
+    segments = pd.DataFrame(
+        {"corpus": ["_1", "_2"], "preferred": [0.5, 0.1], "avoided": [0.1, 0.5]}
+    )
+    for ax, names in (
+        (rolling_delta_plot(distances), ["_draft", "final"]),
+        (zeta_scatter_plot(segments), ["_1", "_2"]),
+        (mendenhall_plot({"_a": ["ab"], "b": ["abc"]}), ["_a", "b"]),
+    ):
+        assert [text.get_text() for text in ax.get_legend().get_texts()] == names
     plt.close("all")
