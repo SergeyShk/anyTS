@@ -140,6 +140,7 @@ class Lemmas(Syntax):
 
 VOCAB = spacy.blank("xx").vocab
 PARSED = Doc(VOCAB, words=["Yes"], heads=[0], deps=["ROOT"])
+TAGGED_PARSE = Doc(VOCAB, words=["Yes"], heads=[0], deps=["ROOT"], pos=["INTJ"])
 TAGGED = Doc(VOCAB, words=["Yes"], pos=["INTJ"])
 
 
@@ -321,7 +322,8 @@ CASES = [
     ("source_type", SourceTypeError, lambda: Syntax("Yes")),
     ("source_span", SourceTypeError, lambda: Syntax(PARSED[:1])),
     ("no_parse", SourceError, lambda: Syntax(Doc(VOCAB, words=["Yes"]))),
-    ("no_lemmas", SourceError, lambda: Lemmas(PARSED)),
+    ("no_pos", SourceError, lambda: Syntax(PARSED)),
+    ("no_lemmas", SourceError, lambda: Lemmas(TAGGED_PARSE)),
     ("source_type", SourceTypeError, lambda: Cohesion("Yes")),
     ("source_span", SourceTypeError, lambda: Cohesion(PARSED[:1])),
     ("source_type", SourceTypeError, lambda: Morph("Yes")),
@@ -481,7 +483,11 @@ CASES = [
         ParameterError,
         lambda: type("Bad", (Cohesion,), {"temporal_features": ("voice",)}),
     ),
-    ("no_words", SourceError, lambda: Syntax(Doc(VOCAB, words=["."], heads=[0], deps=["ROOT"]))),
+    (
+        "no_words",
+        SourceError,
+        lambda: Syntax(Doc(VOCAB, words=["."], heads=[0], deps=["ROOT"], pos=["PUNCT"])),
+    ),
     (
         "phon_classes",
         ParameterError,

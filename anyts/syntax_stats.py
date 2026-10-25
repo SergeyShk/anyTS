@@ -3,7 +3,7 @@ from __future__ import annotations
 import zlib
 from collections import Counter
 from collections.abc import Callable, Collection, Hashable, Iterable, Mapping, Sequence
-from functools import cache, partial, wraps
+from functools import cache, cached_property, partial, wraps
 from itertools import pairwise
 from math import nan
 from statistics import fmean, pstdev
@@ -38,6 +38,7 @@ from .utils import (
     is_doc,
     is_finite_verb,
     is_infinitive,
+    is_span,
     is_token,
     is_word,
     joins_previous,
@@ -51,6 +52,10 @@ if TYPE_CHECKING:
     from spacy.vocab import Vocab
 
 _Function = TypeVar("_Function", bound=Callable[..., Any])
+
+# Relations of the subject of a clause: a subtype counts as its base one, and ClearNLP marks
+# the passive in the label
+_SUBJECT_DEPS = SUBJECT_DEPS | {"csubjpass", "nsubjpass"}
 
 
 def _takes_token(function: _Function) -> _Function:
@@ -82,7 +87,8 @@ class SyntaxStats(Stats):
         A language library subclasses the class and sets its hooks; the
         defaults read Universal Dependencies and the relations it shares with
         ClearNLP. The subclass adds the statistics of its own constructions
-        from sents.
+        from sents. The units of L2SCA, the prepositional chains and the
+        similarity of sentences are computed from sents on first use.
         get_stats, to_dataframe, print_stats and describe come from Stats
 
     References:
@@ -195,8 +201,8 @@ class SyntaxStats(Stats):
         SourceTypeError: If the source is not a Doc object or parse does not return
             one; when a class is defined, if its negation_words are not a collection
             of strings
-        SourceError: If the source has no dependency parse, no lemmas when
-            requires_lemmas, or no words
+        SourceError: If the source has no dependency parse, no parts of speech, no
+            lemmas when requires_lemmas, or no words
     """
 
     join_hyphens: ClassVar[bool] = False
@@ -220,6 +226,8 @@ class SyntaxStats(Stats):
             )
         if not doc.has_annotation("DEP") or not has_sents(doc):
             raise SourceError(messages["no_parse"])
+        if not doc.has_annotation("POS"):
+            raise SourceError(messages["no_pos"])
         if self.requires_lemmas and not doc.has_annotation("LEMMA"):
             raise SourceError(messages["no_lemmas"])
         join_hyphens = self.join_hyphens
@@ -264,12 +272,6 @@ class SyntaxStats(Stats):
         )
         nouns = [token for token in words if token.pos_ in ("NOUN", "PROPN")]
         self.n_nouns = len(nouns)
-        prep_chains = [
-            length
-            for span in spans
-            for length in calc_modifier_chains(span, self.is_prep_complement, join_hyphens)
-        ]
-        self.n_prep_chains = len(prep_chains)
         participle_clauses = [
             subtree_len(token, join_hyphens) for token in words if self.is_participle_clause(token)
         ]
@@ -291,41 +293,10 @@ class SyntaxStats(Stats):
         self.n_preverbal_subjects = sum(1 for token in subjects if token.i < token.head.i)
         self.n_nominal_objects = len(objects)
         self.n_preverbal_objects = sum(1 for token in objects if token.i < token.head.i)
-        t_units = [_t_unit_heads(sent, join_hyphens) for sent in heads]
-        self.n_t_units = sum(map(len, t_units))
-        self.n_complex_t_units = sum(
-            len(
-                {_t_unit_of(token, {unit.i for unit in units}, join_hyphens) for token in sent}
-                - {None}
-            )
-            for units, sent in zip(t_units, subordinate, strict=True)
-        )
-        clause_ids = {token.i for sent in heads for token in sent}
-        word_of = {token.i: token for token in words}
-        firsts = {token.i: _first_conjunct(token, join_hyphens) for token in words}
-        coordinations: dict[int, list[int]] = {}
-        for token in words:
-            first = firsts[token.i]
-            if base_dep(token) == "conj" and first is not None:
-                coordinations.setdefault(first.i, [first.i]).append(token.i)
-        self.n_coordinate_phrases = sum(
-            1 for members in coordinations.values() if any(i not in clause_ids for i in members)
-        )
-        modified = _heads_of(words, COMPLEX_NOMINAL_DEPS, join_hyphens)
-        self.n_complex_nominals = sum(1 for token in nouns if token.i in modified) + sum(
-            1
-            for sent in heads
-            for token in sent
-            if (first := firsts[token.i]) is not None and base_dep(first) in NOMINAL_CLAUSE_DEPS
-        )
-        predicates = {token.i for token in words if token.pos_ in ("VERB", "AUX")} | _heads_of(
-            words, SUBJECT_DEPS | {"cop"}, join_hyphens
-        )
-        self.n_verb_phrases = sum(
-            1
-            for i in predicates
-            if i in word_of and base_dep(word_of[i]) not in AUXILIARY_DEPS | {"auxpass"}
-        )
+        # The units of the statistics computed on first use
+        self._spans = tuple((span.start, span.end) for span in spans)
+        self._clause_heads = tuple(tuple(token.i for token in sent) for sent in heads)
+        self._subordinate_heads = tuple(tuple(token.i for token in sent) for sent in subordinate)
 
         self.mean_dependency_distance = safe_mean(all_distances)
         self.std_dependency_distance = pstdev(all_distances) if all_distances else nan
@@ -357,22 +328,9 @@ class SyntaxStats(Stats):
         self.subordinate_clauses_per_sent = self.n_subordinate_clauses / self.n_sents
         self.p_complex_sents = self.n_complex_sents / self.n_sents
         self.infinitive_clauses_per_sent = self.n_infinitive_clauses / self.n_sents
-        self.t_units_per_sent = self.n_t_units / self.n_sents
-        self.mean_t_unit_len = safe_divide(self.n_words, self.n_t_units, nan)
-        self.clauses_per_t_unit = safe_divide(self.n_clauses, self.n_t_units, nan)
-        self.p_complex_t_units = safe_divide(self.n_complex_t_units, self.n_t_units, nan)
-        self.verb_phrases_per_t_unit = safe_divide(self.n_verb_phrases, self.n_t_units, nan)
-        self.coordinate_phrases_per_clause = safe_divide(
-            self.n_coordinate_phrases, self.n_clauses, nan
-        )
-        self.complex_nominals_per_clause = safe_divide(
-            self.n_complex_nominals, self.n_clauses, nan
-        )
         self.modifiers_per_noun = safe_divide(
             sum(count_noun_modifiers(token, join_hyphens) for token in nouns), self.n_nouns, nan
         )
-        self.prep_chains_per_sent = self.n_prep_chains / self.n_sents
-        self.max_prep_chain_len = max(prep_chains, default=0)
         self.participle_clauses_per_sent = self.n_participle_clauses / self.n_sents
         self.mean_participle_clause_len = safe_mean(participle_clauses)
         self.p_passive = safe_divide(self.n_passive, self.n_verbs, nan)
@@ -386,19 +344,144 @@ class SyntaxStats(Stats):
         self.p_preverbal_objects = safe_divide(
             self.n_preverbal_objects, self.n_nominal_objects, nan
         )
-        # Without the parts of speech the sequences would differ only by their lengths
-        tagged = doc.has_annotation("POS")
-        self.pos_edit_distance = (
-            calc_edit_distance([[token.pos_ for token in sent] for sent in sents])
-            if tagged
-            else nan
-        )
-        self.syntax_similarity = (
-            calc_multiset_similarity([[_word_triple(token) for token in sent] for sent in sents])
-            if tagged
-            else nan
-        )
         self.noun_verb_ratio = safe_divide(self.n_nouns, self.n_verbs, nan)
+
+    @cached_property
+    def _l2sca(self) -> dict[str, int]:
+        """Numbers of the units of L2SCA"""
+        join_hyphens = self.join_hyphens
+        doc = self.sents[0][0].doc
+        words = [token for sent in self.sents for token in sent]
+        heads = [[doc[i] for i in sent] for sent in self._clause_heads]
+        clause_ids = {token.i for sent in heads for token in sent}
+        n_t_units = n_complex_t_units = 0
+        for sent, subordinate in zip(heads, self._subordinate_heads, strict=True):
+            units = {token.i for token in _t_unit_heads(sent, join_hyphens)}
+            n_t_units += len(units)
+            n_complex_t_units += len(
+                _t_units_of([doc[i] for i in subordinate], units, join_hyphens) - {None}
+            )
+        firsts = _first_conjuncts(words, join_hyphens)
+        coordinations: dict[int, list[Token]] = {}
+        for token in words:
+            first = firsts[token.i]
+            if base_dep(token) == "conj" and first is not None:
+                coordinations.setdefault(first.i, []).append(token)
+        nouns = [token for token in words if token.pos_ in ("NOUN", "PROPN")]
+        modified = _heads_of(words, COMPLEX_NOMINAL_DEPS, join_hyphens)
+        word_of = {token.i: token for token in words}
+        predicates = {token.i for token in words if token.pos_ in ("VERB", "AUX")} | _heads_of(
+            words, SUBJECT_DEPS | {"cop"}, join_hyphens
+        )
+        return {
+            "n_t_units": n_t_units,
+            "n_complex_t_units": n_complex_t_units,
+            # A coordination of phrases, or of predicates sharing a subject
+            "n_coordinate_phrases": sum(
+                1
+                for first, conjuncts in coordinations.items()
+                if first not in clause_ids
+                or any(
+                    token.i not in clause_ids or not _has_subject(token, join_hyphens)
+                    for token in conjuncts
+                )
+            ),
+            "n_complex_nominals": sum(1 for token in nouns if token.i in modified)
+            + sum(
+                1
+                for sent in heads
+                for token in sent
+                if (first := firsts[token.i]) is not None
+                and base_dep(first) in NOMINAL_CLAUSE_DEPS
+            ),
+            "n_verb_phrases": sum(
+                1
+                for i in predicates
+                if i in word_of and base_dep(word_of[i]) not in AUXILIARY_DEPS | {"auxpass"}
+            ),
+        }
+
+    @property
+    def n_t_units(self) -> int:
+        return self._l2sca["n_t_units"]
+
+    @property
+    def n_complex_t_units(self) -> int:
+        return self._l2sca["n_complex_t_units"]
+
+    @property
+    def n_verb_phrases(self) -> int:
+        return self._l2sca["n_verb_phrases"]
+
+    @property
+    def n_coordinate_phrases(self) -> int:
+        return self._l2sca["n_coordinate_phrases"]
+
+    @property
+    def n_complex_nominals(self) -> int:
+        return self._l2sca["n_complex_nominals"]
+
+    @property
+    def t_units_per_sent(self) -> float:
+        return self.n_t_units / self.n_sents
+
+    @property
+    def mean_t_unit_len(self) -> float:
+        return safe_divide(self.n_words, self.n_t_units, nan)
+
+    @property
+    def clauses_per_t_unit(self) -> float:
+        return safe_divide(self.n_clauses, self.n_t_units, nan)
+
+    @property
+    def p_complex_t_units(self) -> float:
+        return safe_divide(self.n_complex_t_units, self.n_t_units, nan)
+
+    @property
+    def verb_phrases_per_t_unit(self) -> float:
+        return safe_divide(self.n_verb_phrases, self.n_t_units, nan)
+
+    @property
+    def coordinate_phrases_per_clause(self) -> float:
+        return safe_divide(self.n_coordinate_phrases, self.n_clauses, nan)
+
+    @property
+    def complex_nominals_per_clause(self) -> float:
+        return safe_divide(self.n_complex_nominals, self.n_clauses, nan)
+
+    @cached_property
+    def _prep_chains(self) -> list[int]:
+        """Lengths of the prepositional chains"""
+        doc = self.sents[0][0].doc
+        return [
+            length
+            for start, end in self._spans
+            for length in calc_modifier_chains(
+                doc[start:end], self.is_prep_complement, self.join_hyphens
+            )
+        ]
+
+    @property
+    def n_prep_chains(self) -> int:
+        return len(self._prep_chains)
+
+    @property
+    def prep_chains_per_sent(self) -> float:
+        return self.n_prep_chains / self.n_sents
+
+    @property
+    def max_prep_chain_len(self) -> int:
+        return max(self._prep_chains, default=0)
+
+    @cached_property
+    def pos_edit_distance(self) -> float:
+        return _mean_edit_distance([[token.pos_ for token in sent] for sent in self.sents])
+
+    @cached_property
+    def syntax_similarity(self) -> float:
+        return _mean_multiset_similarity(
+            [Counter(_word_triple(token) for token in sent) for sent in self.sents]
+        )
 
     def __getstate__(self) -> dict[str, Any]:
         """State for pickle and copy: spaCy pickles no token, so sents goes as the compressed
@@ -668,51 +751,105 @@ def _word_triple(token: Token) -> tuple[str, str, str]:
 
 def _t_unit_heads(heads: Sequence[Token], join_hyphens: bool) -> list[Token]:
     """Clause heads of a sentence that head a T-unit: the head of the sentence and the main
-    clauses joined to it through conj or parataxis"""
+    clauses joined to it through conj or parataxis, but for a conjunct without a subject of its
+    own, a predicate of the clause it is coordinated to"""
     ids = {token.i for token in heads}
-    return [token for token in heads if _is_main_clause(token, ids, join_hyphens)]
+    known: dict[int, bool] = {}
+    return [
+        token
+        for token in heads
+        if _is_main_clause(token, ids, join_hyphens, known)
+        and (base_dep(token) != "conj" or _has_subject(token, join_hyphens))
+    ]
 
 
-def _is_main_clause(token: Token, ids: Collection[int], join_hyphens: bool) -> bool:
-    """Whether a clause head reaches the head of the sentence through main clauses alone"""
-    seen = {token.i}
-    while not is_root(token):
+def _is_main_clause(
+    token: Token, ids: Collection[int], join_hyphens: bool, known: dict[int, bool]
+) -> bool:
+    """Whether a clause head reaches the head of the sentence through main clauses alone; known
+    keeps the answers for the clause heads on the way"""
+    path: list[int] = []
+    on_path: set[int] = set()
+    while token.i not in known:
+        path.append(token.i)
+        on_path.add(token.i)
+        if is_root(token):
+            outcome = True
+            break
         parent = _chain_parent(token, join_hyphens)
         if (
             base_dep(token) not in MAIN_CLAUSE_DEPS
             or parent is None
             or parent.i not in ids
-            or parent.i in seen
+            or parent.i in on_path
         ):
-            return False
-        seen.add(parent.i)
+            outcome = False
+            break
         token = parent
-    return True
+    else:
+        outcome = known[token.i]
+    for i in path:
+        known[i] = outcome
+    return outcome
 
 
-def _t_unit_of(token: Token, units: Collection[int], join_hyphens: bool) -> int | None:
-    """Position of the head of the T-unit a clause belongs to, the nearest one above it"""
-    seen = {token.i}
-    parent = _chain_parent(token, join_hyphens)
-    while parent is not None and parent.i not in seen:
-        if parent.i in units:
-            return parent.i
-        seen.add(parent.i)
-        parent = _chain_parent(parent, join_hyphens)
-    return None
+def _has_subject(token: Token, join_hyphens: bool) -> bool:
+    """Whether a word has a subject among its dependents"""
+    return any(base_dep(child) in _SUBJECT_DEPS for child in get_children(token, join_hyphens))
 
 
-def _first_conjunct(token: Token, join_hyphens: bool) -> Token | None:
-    """First conjunct of the coordination of a word, the word itself out of one; None through a
-    punctuation mark or a loop of conjuncts"""
-    seen = {token.i}
-    while base_dep(token) == "conj":
+def _t_units_of(
+    tokens: Iterable[Token], units: Collection[int], join_hyphens: bool
+) -> set[int | None]:
+    """Positions of the heads of the T-units the clauses belong to, the nearest ones above
+    them; None for a clause under none"""
+    known: dict[int, int | None] = {}
+    found = set()
+    for token in tokens:
+        path, seen = [], {token.i}
+        unit = None
         parent = _chain_parent(token, join_hyphens)
-        if parent is None or parent.i in seen:
-            return None
-        seen.add(parent.i)
-        token = parent
-    return token
+        while parent is not None and parent.i not in seen:
+            if parent.i in known:
+                unit = known[parent.i]
+                break
+            if parent.i in units:
+                unit = parent.i
+                break
+            path.append(parent.i)
+            seen.add(parent.i)
+            parent = _chain_parent(parent, join_hyphens)
+        for i in path:
+            known[i] = unit
+        found.add(unit)
+    return found
+
+
+def _first_conjuncts(words: Iterable[Token], join_hyphens: bool) -> dict[int, Token | None]:
+    """First conjunct of the coordination of every word by its position, the word itself out
+    of one; None through a punctuation mark or a loop of conjuncts"""
+    known: dict[int, Token | None] = {}
+    for token in words:
+        path: list[int] = []
+        on_path: set[int] = set()
+        word = token
+        while True:
+            if word.i in known:
+                first = known[word.i]
+                break
+            if base_dep(word) != "conj":
+                first = known[word.i] = word
+                break
+            path.append(word.i)
+            on_path.add(word.i)
+            parent = _chain_parent(word, join_hyphens)
+            if parent is None or parent.i in on_path:
+                first = None
+                break
+            word = parent
+        for i in path:
+            known[i] = first
+    return known
 
 
 def _heads_of(words: Iterable[Token], relations: Collection[str], join_hyphens: bool) -> set[int]:
@@ -723,6 +860,56 @@ def _heads_of(words: Iterable[Token], relations: Collection[str], join_hyphens: 
         if base_dep(token) in relations
         and (parent := _chain_parent(token, join_hyphens)) is not None
     }
+
+
+def _mean_edit_distance(sents: Sequence[Sequence[Hashable]]) -> float:
+    """Mean edit distance of the adjacent sentences, without the checks"""
+    return safe_mean(
+        [
+            safe_divide(_edit_distance(first, second), max(len(first), len(second)), 0.0)
+            for first, second in pairwise(sents)
+        ]
+    )
+
+
+def _edit_distance(first: Sequence[Hashable], second: Sequence[Hashable]) -> int:
+    """Levenshtein distance of two sequences by the bit-parallel algorithm of Myers in the
+    form of Hyyrö, the longer one as the pattern"""
+    if len(first) < len(second):
+        first, second = second, first
+    size = len(first)
+    if not len(second):
+        return size
+    full = (1 << size) - 1
+    last = 1 << (size - 1)
+    masks: dict[Hashable, int] = {}
+    for i, item in enumerate(first):
+        masks[item] = masks.get(item, 0) | (1 << i)
+    plus, minus, score = full, 0, size
+    for item in second:
+        match = masks.get(item, 0) | minus
+        diagonal = (((match & plus) + plus) ^ plus) | match
+        up = minus | (~(diagonal | plus) & full)
+        down = plus & diagonal
+        if up & last:
+            score += 1
+        elif down & last:
+            score -= 1
+        shifted = ((up << 1) | 1) & full
+        minus = shifted & diagonal
+        plus = ((down << 1) & full) | (~(shifted | diagonal) & full)
+    return score
+
+
+def _mean_multiset_similarity(counts: Sequence[Counter[Hashable]]) -> float:
+    """Mean similarity of the multisets of the adjacent sentences, without the checks"""
+    return safe_mean([_multiset_similarity(first, second) for first, second in pairwise(counts)])
+
+
+def _multiset_similarity(first: Counter[Hashable], second: Counter[Hashable]) -> float:
+    """Weighted Jaccard similarity of two multisets, 1 for two empty ones"""
+    union = sum((first | second).values())
+    return sum((first & second).values()) / union if union else 1.0
 
 
 def get_words(tokens: Iterable[Token], join_hyphens: bool = False) -> list[Token]:
@@ -830,7 +1017,13 @@ def base_dep(token: Token) -> str:
     Returns:
         str: Base relation
     """
-    return token.dep_.split(":")[0]
+    return _base_relation(token.dep_)
+
+
+@cache
+def _base_relation(relation: str) -> str:
+    """A relation without its subtype, once for every label"""
+    return relation.split(":")[0]
 
 
 def get_children(token: Token, join_hyphens: bool = False) -> list[Token]:
@@ -1682,6 +1875,9 @@ def dependency_triples(
     Returns:
         list[tuple[str, str, str]]: Triples in the order of the words
 
+    Raises:
+        SourceTypeError: If the tokens are not a Doc, a Span or a list of Token objects
+
     Example:
         >>> import spacy
         >>> from spacy.tokens import Doc
@@ -1696,6 +1892,10 @@ def dependency_triples(
         >>> dependency_triples(doc)
         [('NOUN', 'det', 'DET'), ('NOUN', 'amod', 'ADJ'), ('', 'root', 'NOUN')]
     """
+    if not (is_doc(tokens) or is_span(tokens)):
+        check_sequence(tokens, "tokens")
+        if not all(is_token(token) for token in tokens):
+            raise SourceTypeError("The tokens must be a Doc, a Span or a list of Token objects")
     return [_word_triple(token) for token in get_words(tokens, join_hyphens)]
 
 
@@ -1717,7 +1917,8 @@ def calc_edit_distance(sents: Sequence[Sequence[Hashable]]) -> float:
         float: Mean distance, nan for fewer than two sentences
 
     Raises:
-        SourceTypeError: If the sentences are not a list of lists (check_sequence)
+        SourceTypeError: If the sentences are not a list of lists (check_sequence) or
+            an item cannot be hashed
 
     Example:
         >>> from anyts.syntax_stats import calc_edit_distance
@@ -1727,41 +1928,20 @@ def calc_edit_distance(sents: Sequence[Sequence[Hashable]]) -> float:
     check_sequence(sents, "sentences")
     for sent in sents:
         check_sequence(sent, "items of a sentence")
-    return safe_mean(
-        [
-            safe_divide(_edit_distance(first, second), max(len(first), len(second)), 0.0)
-            for first, second in pairwise(sents)
-        ]
-    )
+    _check_hashable(sents)
+    return _mean_edit_distance(sents)
 
 
-def _edit_distance(first: Sequence[Hashable], second: Sequence[Hashable]) -> int:
-    """Levenshtein distance of two sequences by the bit-parallel algorithm of Myers in the
-    form of Hyyrö, the longer one as the pattern"""
-    if len(first) < len(second):
-        first, second = second, first
-    size = len(first)
-    if not len(second):
-        return size
-    full = (1 << size) - 1
-    last = 1 << (size - 1)
-    masks: dict[Hashable, int] = {}
-    for i, item in enumerate(first):
-        masks[item] = masks.get(item, 0) | (1 << i)
-    plus, minus, score = full, 0, size
-    for item in second:
-        match = masks.get(item, 0) | minus
-        diagonal = (((match & plus) + plus) ^ plus) | match
-        up = minus | (~(diagonal | plus) & full)
-        down = plus & diagonal
-        if up & last:
-            score += 1
-        elif down & last:
-            score -= 1
-        shifted = ((up << 1) | 1) & full
-        minus = shifted & diagonal
-        plus = ((down << 1) & full) | (~(shifted | diagonal) & full)
-    return score
+def _check_hashable(sents: Iterable[Iterable[object]]) -> None:
+    """Checking that the items of the sentences can be compared as keys"""
+    for sent in sents:
+        for item in sent:
+            try:
+                hash(item)
+            except TypeError:
+                raise SourceTypeError(
+                    f"The items of a sentence must be hashable, not {type(item).__name__}"
+                ) from None
 
 
 def calc_multiset_similarity(sents: Sequence[Iterable[Hashable]]) -> float:
@@ -1786,6 +1966,7 @@ def calc_multiset_similarity(sents: Sequence[Iterable[Hashable]]) -> float:
 
     Raises:
         SourceTypeError: If the sentences are not a list of collections (check_sequence)
+            or an item cannot be hashed
 
     Example:
         >>> from anyts.syntax_stats import calc_multiset_similarity
@@ -1795,14 +1976,8 @@ def calc_multiset_similarity(sents: Sequence[Iterable[Hashable]]) -> float:
     check_sequence(sents, "sentences")
     for sent in sents:
         check_sequence(sent, "items of a sentence", ordered=False)
-    counts = [Counter(iter(sent)) for sent in sents]
-    return safe_mean([_multiset_similarity(first, second) for first, second in pairwise(counts)])
-
-
-def _multiset_similarity(first: Counter[Hashable], second: Counter[Hashable]) -> float:
-    """Weighted Jaccard similarity of two multisets, 1 for two empty ones"""
-    union = sum((first | second).values())
-    return sum((first & second).values()) / union if union else 1.0
+    _check_hashable(sents)
+    return _mean_multiset_similarity([Counter(iter(sent)) for sent in sents])
 
 
 def calc_modifier_chains(
@@ -1860,12 +2035,16 @@ def _chain_parent(token: Token, join_hyphens: bool) -> Token | None:
 
 
 def _chain_len(token: Token, is_modifier: Callable[[Token], bool], join_hyphens: bool) -> int:
-    """Number of the modifiers in the longest branch of a chain from a token"""
-    return 1 + max(
-        (
-            _chain_len(child, is_modifier, join_hyphens)
-            for child in get_children(token, join_hyphens)
-            if is_modifier(child)
-        ),
-        default=0,
-    )
+    """Number of the modifiers in the longest branch of a chain from a token, without recursion
+    for a chain of any depth"""
+    longest = 0
+    stack = [(token, 1)]
+    seen = {token.i}
+    while stack:
+        word, depth = stack.pop()
+        longest = max(longest, depth)
+        for child in get_children(word, join_hyphens):
+            if child.i not in seen and is_modifier(child):
+                seen.add(child.i)
+                stack.append((child, depth + 1))
+    return longest

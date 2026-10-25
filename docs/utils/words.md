@@ -147,3 +147,34 @@ A text that is not a string and words that are not a list of strings raise `Sour
     ```
     [1, 4]
     ```
+
+## Paragraph starts between the words of a text { #find_paragraph_starts }
+
+<!-- --8<-- [start:find_paragraph_starts] -->
+``` {.python .signature}
+find_paragraph_starts(text, words)
+```
+
+Finds the words of a text that start a paragraph: the words are found in the text in their order, as by `find_marks`, and a word that a blank line (`BLANK_LINE`) separates from the word before gets its position. A word the text does not hold is passed over. A library that builds the words of `CohesionStats` from a string sets their `paragraph_start` by these positions.
+
+| Parameter | Type | Default | Description |
+| :-------- | :--- | :------ | :---------- |
+| `text` | `str` | - | Text |
+| `words` | `list[str]` | - | Words of the text in their order |
+
+A text that is not a string and words that are not a list of strings raise `SourceTypeError`.
+<!-- --8<-- [end:find_paragraph_starts] -->
+
+=== "Code"
+
+    ``` python
+    from anyts.utils import find_paragraph_starts
+
+    sorted(find_paragraph_starts("It rains.\n\nWe stay home.", ["It", "rains", "We", "stay", "home"]))
+    ```
+
+=== "Result"
+
+    ```
+    [2]
+    ```

@@ -598,5 +598,11 @@ def test_split_paragraphs():
     # A blank line may hold whitespace and end with a carriage return
     assert split_paragraphs("One\n \nTwo") == ["One", "Two"]
     assert split_paragraphs("One\r\n\t\r\nTwo") == ["One", "Two"]
+    # The other line breaks of Unicode, a paragraph separator, invisible characters on a blank line
+    for gap in ("\r\r", "\u2029", "\u2028\u2028", "\x85\x85", "\n\u200b\n", "\n\ufeff\n"):
+        assert split_paragraphs(f"One{gap}Two") == ["One", "Two"], repr(gap)
+    for gap in ("\r\n", "\r", "\u2028", "\x85"):
+        assert split_paragraphs(f"One{gap}Two") == [f"One{gap}Two"], repr(gap)
+    assert SentsExtractor().extract("Notes\u2029It rains") == ("Notes", "It rains")
     with pytest.raises(SourceTypeError, match=r"^A text string is expected, not int$"):
         split_paragraphs(5)

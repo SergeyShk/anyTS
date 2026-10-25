@@ -414,6 +414,37 @@ Finds the punctuation marks between the words of a sentence of a `Doc`: the word
     [1, 4]
     ```
 
+## Paragraph starts of a Doc { #find_unit_paragraph_starts }
+
+<!-- --8<-- [start:find_unit_paragraph_starts] -->
+``` {.python .signature}
+find_unit_paragraph_starts(units)
+```
+
+Finds the words of a `Doc` that start a paragraph: the words are those of `iter_doc_units` over the whole `Doc`, across its sentences, and a word that a blank line (`BLANK_LINE`) separates from the word before gets its position, inside a sentence too, as `find_paragraph_starts` does for a text. `CohesionStats` sets the `paragraph_start` of its words by these positions.
+
+| Parameter | Type | Default | Description |
+| :-------- | :--- | :------ | :---------- |
+| `units` | `list[list[Token]]` | - | Tokens of every word of a `Doc` in order |
+<!-- --8<-- [end:find_unit_paragraph_starts] -->
+
+=== "Code"
+
+    ``` python
+    import spacy
+
+    from anyts.utils import find_unit_paragraph_starts, iter_doc_units
+
+    doc = spacy.blank("en")("It rains.\n\nWe stay home.")
+    sorted(find_unit_paragraph_starts(list(iter_doc_units(doc))))
+    ```
+
+=== "Result"
+
+    ```
+    [2]
+    ```
+
 ## Tokenizer rules { #add_tokenizer_rules }
 
 <!-- --8<-- [start:add_tokenizer_rules] -->

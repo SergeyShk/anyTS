@@ -61,6 +61,7 @@ def house():
         ["The", "white", "house", ",", "is", "nice", "%"],
         [2, 2, 5, 2, 5, 5, 5],
         ["det", "amod", "nsubj", "punct", "cop", "ROOT", "punct"],
+        pos=["DET", "ADJ", "NOUN", "PUNCT", "AUX", "ADJ", "PUNCT"],
     )
 
 
@@ -605,14 +606,14 @@ def test_syntax_stats_metrics():
         "subordinate_clauses_per_sent": 0.5,
         "p_complex_sents": 0.5,
         "infinitive_clauses_per_sent": 0.5,
-        # T-units: sold; said and left. The second holds the subordinate want
-        "t_units_per_sent": 1.5,
-        "mean_t_unit_len": 6.0,
-        "clauses_per_t_unit": 5 / 3,
-        "p_complex_t_units": 1 / 3,
-        "verb_phrases_per_t_unit": 2.0,
-        # No coordinate phrase: said and left are clauses; house with built, and want under ccomp
-        "coordinate_phrases_per_clause": 0.0,
+        # T-units: sold; said, with left that shares its subject and the subordinate want
+        "t_units_per_sent": 1.0,
+        "mean_t_unit_len": 9.0,
+        "clauses_per_t_unit": 2.5,
+        "p_complex_t_units": 0.5,
+        "verb_phrases_per_t_unit": 3.0,
+        # said and left: predicates with one subject; house with built, and want under ccomp
+        "coordinate_phrases_per_clause": 0.2,
         "complex_nominals_per_clause": 0.4,
         "modifiers_per_noun": 1.0,
         # by workers is one complement with a preposition, no chain
@@ -643,7 +644,7 @@ def test_syntax_stats_without_constructions(house):
         assert isnan(getattr(stats, name))
     assert isnan(stats.p_passive) and isnan(stats.p_agentless_passive)
     assert isnan(stats.noun_verb_ratio)
-    one_word = SyntaxStats(parse(["Yes", "."], [0, 0], ["ROOT", "punct"]))
+    one_word = SyntaxStats(parse(["Yes", "."], [0, 0], ["ROOT", "punct"], pos=["INTJ", "PUNCT"]))
     assert isnan(one_word.mean_dependency_distance) and isnan(one_word.max_dependency_distance)
     assert isnan(one_word.std_dependency_distance) and isnan(one_word.p_adjacent_dependencies)
     assert one_word.tree_depth == 0 and one_word.nodes_per_leaf == 1.0
@@ -840,7 +841,12 @@ def test_hyphenated_words_in_the_statistics():
     [
         ("The house", SourceTypeError, MESSAGES["source_type"].format(type="str")),
         (Doc(VOCAB, words=["The", "house"]), SourceError, MESSAGES["no_parse"]),
-        (parse([",", "."], [1, 1], ["punct", "ROOT"]), SourceError, MESSAGES["no_words"]),
+        (parse(["The", "house"], [1, 1], ["det", "ROOT"]), SourceError, MESSAGES["no_pos"]),
+        (
+            parse([",", "."], [1, 1], ["punct", "ROOT"], pos=["PUNCT", "PUNCT"]),
+            SourceError,
+            MESSAGES["no_words"],
+        ),
     ],
 )
 def test_syntax_stats_errors(source, error, message):
@@ -852,7 +858,7 @@ def test_lemmas_required():
     class Lemmas(SyntaxStats):
         requires_lemmas = True
 
-    doc = parse(["Yes"], [0], ["ROOT"])
+    doc = parse(["Yes"], [0], ["ROOT"], pos=["INTJ"])
     assert SyntaxStats(doc).n_words == 1
     with pytest.raises(SourceError, match=f"^{MESSAGES['no_lemmas']}$"):
         Lemmas(doc)
@@ -1114,6 +1120,72 @@ def test_t_units_through_broken_links():
     assert SyntaxStats(loop).n_complex_t_units == 0
 
 
+def test_coordinated_predicates_share_a_t_unit():
+    # I came and left: one T-unit with a coordinate verb phrase, as in L2SCA
+    stats = SyntaxStats(
+        parse(
+            ["I", "came", "and", "left", "because", "it", "rained"],
+            [1, 1, 3, 1, 6, 6, 3],
+            ["nsubj", "ROOT", "cc", "conj", "mark", "nsubj", "advcl"],
+            pos=["PRON", "VERB", "CCONJ", "VERB", "SCONJ", "PRON", "VERB"],
+        )
+    )
+    assert (stats.n_clauses, stats.n_t_units, stats.n_coordinate_phrases) == (3, 1, 1)
+    # The subordinate clause of left belongs to the T-unit of came
+    assert stats.n_complex_t_units == 1
+    # I came and he left: two T-units; a passive subject of ClearNLP is a subject too
+    for words, deps in (
+        (["I", "came", "and", "he", "left"], ["nsubj", "ROOT", "cc", "nsubj", "conj"]),
+        (["I", "came", "and", "he", "left"], ["nsubj", "ROOT", "cc", "nsubjpass", "conj"]),
+    ):
+        stats = SyntaxStats(
+            parse(words, [1, 1, 4, 4, 1], deps, pos=["PRON", "VERB", "CCONJ", "PRON", "VERB"])
+        )
+        assert (stats.n_t_units, stats.n_coordinate_phrases) == (2, 0)
+
+
+def test_long_chains_of_clauses():
+    # Every clause the complement of the one before: one T-unit, in linear time
+    n = 3000
+    doc = parse(
+        ["said"] * n,
+        [0, *range(n - 1)],
+        ["ROOT"] + ["ccomp"] * (n - 1),
+        pos=["VERB"] * n,
+    )
+    stats = SyntaxStats(doc)
+    assert (stats.n_t_units, stats.n_complex_t_units) == (1, 1)
+
+
+def test_deep_prepositional_chain():
+    # use of water of water ...: a chain deeper than the limit of recursion
+    n = 5000
+    words, heads, deps, pos = ["use"], [0], ["ROOT"], ["NOUN"]
+    for _ in range(n):
+        noun = len(words) - 1
+        words += ["of", "water"]
+        heads += [len(words) - 1, noun]
+        deps += ["case", "nmod"]
+        pos += ["ADP", "NOUN"]
+    stats = SyntaxStats(parse(words, heads, deps, pos=pos))
+    assert (stats.n_prep_chains, stats.max_prep_chain_len) == (1, n)
+
+
+def test_new_statistics_on_first_use():
+    class Earlier(SyntaxStats):
+        stats_desc: ClassVar = {
+            key: SYNTAX_STATS_DESC[key] for key in ("tree_depth", "clauses_per_sent")
+        }
+
+    stats = Earlier(two_sents())
+    stats.get_stats()
+    lazy = {"_l2sca", "_prep_chains", "pos_edit_distance", "syntax_similarity"}
+    # A class that does not name the statistics does not compute them
+    assert not lazy & set(vars(stats))
+    assert stats.t_units_per_sent == 1.0 and stats.max_prep_chain_len == 0
+    assert {"_l2sca", "_prep_chains"} <= set(vars(stats))
+
+
 def test_phrases_of_predicates_without_a_verb():
     # the house is big and nice: the nominal predicate heads a clause, its conjunct does not
     doc = parse(
@@ -1270,7 +1342,8 @@ def test_triples_through_punctuation_and_hyphens():
     assert len(dependency_triples(hyphen)) == 4
 
 
-def test_similarity_without_parts_of_speech():
+def test_parts_of_speech_required():
+    # The units of L2SCA, the chains and the similarity read the parts of speech
     doc = two_sents()
     bare = Doc(
         VOCAB,
@@ -1278,13 +1351,37 @@ def test_similarity_without_parts_of_speech():
         heads=[token.head.i for token in doc],
         deps=[token.dep_ for token in doc],
     )
-    stats = SyntaxStats(bare)
-    assert isnan(stats.pos_edit_distance) and isnan(stats.syntax_similarity)
+    with pytest.raises(SourceError, match=f"^{MESSAGES['no_pos']}$"):
+        SyntaxStats(bare)
 
 
 def test_similarity_of_one_sentence(house):
     stats = SyntaxStats(house)
     assert isnan(stats.pos_edit_distance) and isnan(stats.syntax_similarity)
+
+
+def test_items_must_be_hashable():
+    with pytest.raises(
+        SourceTypeError, match=r"^The items of a sentence must be hashable, not list$"
+    ):
+        calc_edit_distance([[["a"]], [["b"]]])
+    with pytest.raises(SourceTypeError, match=r"must be hashable, not set$"):
+        calc_multiset_similarity([[{"a"}], [{"b"}]])
+
+
+@pytest.mark.parametrize("tokens", [None, "the cat", [1, 2], 5])
+def test_dependency_triples_need_tokens(tokens):
+    with pytest.raises(SourceTypeError):
+        dependency_triples(tokens)
+
+
+def test_dependency_triples_of_spans_and_lists():
+    doc = two_sents()
+    assert (
+        dependency_triples(doc[:8])
+        == dependency_triples(list(doc[:8]))
+        == [dependency_triples(doc)[i] for i in range(7)]
+    )
 
 
 def test_modifier_chains_skip_punctuation():

@@ -5,12 +5,12 @@ SyntaxStats(source)
 ```
 
 <!-- --8<-- [start:SyntaxStats] -->
-The syntactic statistics of a text by its dependency tree ([Ivanov, Solnyshkina and Solovyev 2018](https://dialogue-conf.org/media/4302/ivanovvv.pdf)): the measures of the tree and of the syntactic constructions. The data source is a `Doc` object of [spaCy](https://github.com/explosion/spaCy) with a dependency parse. Punctuation, symbols and whitespace are no nodes of the tree, and the distances are counted in positions of words.
+The syntactic statistics of a text by its dependency tree ([Ivanov, Solnyshkina and Solovyev 2018](https://dialogue-conf.org/media/4302/ivanovvv.pdf)): the measures of the tree and of the syntactic constructions. The data source is a `Doc` object of [spaCy](https://github.com/explosion/spaCy) with a dependency parse and parts of speech. Punctuation, symbols and whitespace are no nodes of the tree, and the distances are counted in positions of words. The units of L2SCA, the prepositional chains and the similarity of sentences are computed on first use, so a subclass whose `stats_desc` does not name them does not pay for them.
 
 Raises:
 
 - `SourceTypeError` - a source that is not a `Doc`;
-- `SourceError` - a source without a dependency parse (relations and sentence boundaries), without lemmas when the class requires them, or without words.
+- `SourceError` - a source without a dependency parse (relations and sentence boundaries), without parts of speech, without lemmas when the class requires them, or without words.
 <!-- --8<-- [end:SyntaxStats] -->
 
 === "Code"
@@ -156,8 +156,8 @@ Every metric is an attribute of the object, computed when it is created, and `ge
 | [`split_predicates_per_sent`](#constructions) | Split predicates per sentence | 0 and above | More split predicates |
 | [`p_preverbal_subjects`](#word_order) | Share of the nominal subjects before their head | 0-1, `nan` without nominal subjects | Fewer inverted subjects |
 | [`p_preverbal_objects`](#word_order) | Share of the nominal direct objects before their head | 0-1, `nan` without nominal objects | More fronted objects |
-| [`pos_edit_distance`](#similarity) | Mean edit distance of the parts of speech of adjacent sentences over the longer one | 0-1, `nan` for one sentence or without parts of speech | Less alike sentences |
-| [`syntax_similarity`](#similarity) | Mean similarity of the dependency triples of adjacent sentences | 0-1, `nan` for one sentence or without parts of speech | More alike sentences |
+| [`pos_edit_distance`](#similarity) | Mean edit distance of the parts of speech of adjacent sentences over the longer one | 0-1, `nan` for one sentence | Less alike sentences |
+| [`syntax_similarity`](#similarity) | Mean similarity of the dependency triples of adjacent sentences | 0-1, `nan` for one sentence | More alike sentences |
 | [`noun_verb_ratio`](#noun_verb_ratio) | Ratio of the nouns to the verb forms | 0 and above, `nan` without verb forms | A more nominal style |
 <!-- --8<-- [end:SyntaxStats-metrics] -->
 
@@ -382,9 +382,10 @@ A value that is not a `Token` and a check or a form of an auxiliary that is not 
 <!-- --8<-- [start:SyntaxStats-l2sca] -->
 The indices of the L2 Syntactic Complexity Analyzer (L2SCA) that the other metrics do not give, on Universal Dependencies. MLC and C/S are `mean_clause_len` and `clauses_per_sent`; MLS and DC/C come from the counts, `n_words / n_sents` and `n_subordinate_clauses / n_clauses`.
 
-- A T-unit is a main clause with the clauses that depend on it: the head of a sentence and every clause head joined to it through `conj` or `parataxis` (`anyts.constants.MAIN_CLAUSE_DEPS`), so *I came, and he left* holds two; a conjunct of a subordinate clause is none. A T-unit is complex with a subordinate clause (`is_subordinate_clause_head`) whose nearest T-unit above is it.
+- A T-unit is a main clause with the clauses that depend on it: the head of a sentence and every clause head joined to it through `conj` or `parataxis` (`anyts.constants.MAIN_CLAUSE_DEPS`), so *I came, and he left* holds two; a conjunct of a subordinate clause is none. A conjunct without a subject of its own (*I came and left*) is a predicate sharing the T-unit of the clause it is coordinated to, as in L2SCA. A T-unit is complex with a subordinate clause (`is_subordinate_clause_head`) whose nearest T-unit above is it.
 - A verb phrase is a predicate (`is_predicate`) that is no auxiliary or copula: a verb, an auxiliary used as a predicate (*there **is** trouble*), a word with a subject or a copula.
-- A coordinate phrase is a coordination with a conjunct that is no clause head (*the man and the woman*, *is big and nice*), counted once by its first conjunct; a coordination of clause heads counts as clauses.
+- A coordinate phrase is a coordination with a conjunct that is no clause head (*the man and the woman*, *is big and nice*) or a predicate without a subject of its own (*came and left*), counted once by its first conjunct; a coordination of clauses with their own subjects counts as clauses.
+- The clauses are those of `is_clause_head`, as in the other metrics: a predicate sharing a subject and an infinitive clause count as clauses, while L2SCA counts finite clauses with a subject, so C/T, C/S and CN/C run higher and MLC lower than in L2SCA.
 - A complex nominal is a noun with a modifier of `anyts.constants.COMPLEX_NOMINAL_DEPS` (an adjective, a complement, a relative or participial clause, an apposition, a possessive), or a nominal clause, a clause head of `anyts.constants.NOMINAL_CLAUSE_DEPS` or a conjunct of one.
 
 $$
@@ -539,7 +540,7 @@ $$
 { .metric-meta }
 
 <!-- --8<-- [start:SyntaxStats-similarity] -->
-How alike the structures of two adjacent sentences are, averaged over the $S - 1$ pairs. `pos_edit_distance` is the edit distance of the parts of speech $P_s$ of the words of the sentences (SYNMEDpos of Coh-Metrix) over the length $n$ of the longer sentence of the pair, `calc_edit_distance`. `syntax_similarity` is the similarity of the multisets of the dependency triples $T$ of the two sentences (`dependency_triples`, `calc_multiset_similarity`), in the manner of SYNSTRUT of Coh-Metrix, which compares the nodes of phrase-structure trees. Both are `nan` for a `Doc` without parts of speech.
+How alike the structures of two adjacent sentences are, averaged over the $S - 1$ pairs. `pos_edit_distance` is the edit distance of the parts of speech $P_s$ of the words of the sentences (SYNMEDpos of Coh-Metrix) over the length $n$ of the longer sentence of the pair, `calc_edit_distance`. `syntax_similarity` is the similarity of the multisets of the dependency triples $T$ of the two sentences (`dependency_triples`, `calc_multiset_similarity`), in the manner of SYNSTRUT of Coh-Metrix, which compares the nodes of phrase-structure trees.
 
 $$
 \frac{1}{S - 1} \sum_{s=1}^{S-1} \frac{\textrm{lev}(P_s, P_{s+1})}{\max(n_s, n_{s+1})}, \quad
@@ -571,7 +572,7 @@ The mean edit distance of the items of adjacent sentences: the Levenshtein dista
 | :-------- | :--- | :------ | :---------- |
 | `sents` | `list[list]` | - | Items of every sentence, such as its parts of speech |
 
-Sentences that are not a list of lists raise `SourceTypeError`.
+Sentences that are not a list of lists, or items that cannot be hashed, raise `SourceTypeError`.
 <!-- --8<-- [end:calc_edit_distance] -->
 
 <!-- --8<-- [start:calc_multiset_similarity] -->
@@ -585,7 +586,7 @@ The mean similarity of the multisets of the items of adjacent sentences: the wei
 | :-------- | :--- | :------ | :---------- |
 | `sents` | `list[list]` | - | Items of every sentence, such as its dependency triples |
 
-Sentences that are not a list of collections raise `SourceTypeError`.
+Sentences that are not a list of collections, or items that cannot be hashed, raise `SourceTypeError`.
 <!-- --8<-- [end:calc_multiset_similarity] -->
 
 === "Code"
