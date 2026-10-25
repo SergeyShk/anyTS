@@ -244,6 +244,17 @@ def test_analyze_must_give_words(result):
         hooked(None)
 
 
+def test_wrong_field_of_a_word_is_named():
+    hooked = type(
+        "Hooked", (MorphStats,), {"analyze": lambda self, source: [MorphWord("cats", 92, {})]}
+    )
+    with pytest.raises(
+        SourceTypeError,
+        match=r"^The analyze of Hooked must return MorphWord objects, not MorphWord\(pos=92\)$",
+    ):
+        hooked(None)
+
+
 @pytest.mark.parametrize(
     ("attributes", "key"),
     [

@@ -38,9 +38,9 @@ class UnadaptedReadabilityStats(Stats):
     Description:
         Formulas made for English, German or Italian, computed from the basic
         statistics of a text as they were published (Linsear Write as textstat
-        computes it), without a calibration for its language: their values compare texts of one language, not grade
-        levels of another. A language library subclasses the class and sets
-        basic_stats_class.
+        computes it), without a calibration for its language: their values
+        compare texts of one language, not grade levels of another. A language
+        library subclasses the class and sets basic_stats_class.
         get_stats, to_dataframe, print_stats and describe come from Stats
 
     Arguments:
@@ -84,6 +84,9 @@ class UnadaptedReadabilityStats(Stats):
             the basic statistics are of another class, an extractor is of another type,
             or a class without basic_stats_class is given a string or a Doc
         SourceError: If the source has no words or no sentences
+        ParameterError: When a class is defined, if a factor is not an integer of
+            at least one or basic_stats_class is neither a subclass of BasicStats
+            nor None
     """
 
     basic_stats_class: ClassVar[type[BasicStats] | None] = None

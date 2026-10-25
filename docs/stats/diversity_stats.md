@@ -410,7 +410,7 @@ A `min_len` that is not a non-negative integer and a `threshold` that is not a n
 calc_mamtld(text, min_len=10, threshold=0.72, step=1)
 ```
 
-A moving-window modification of MTLD after MTLD-MA of koRpus: a factor starts at every position of the text, and the value is the mean length of the completed factors over a forward and a backward pass. koRpus makes the forward pass only, closes a factor at TTR strictly below the threshold and drops factors shorter than the minimum length instead of extending them. With a `step` of k a factor starts at every k-th position from either end, as `MTLDMA.steps` of koRpus, and the computation takes about k times less. If no factor completes, the value is `nan`. The metric is unstable on short texts.
+A moving-window modification of MTLD after MTLD-MA of koRpus: a factor starts at every position of the text, and the value is the mean length of the completed factors over a forward and a backward pass. koRpus makes the forward pass only, closes a factor at TTR strictly below the threshold and drops factors shorter than the minimum length instead of extending them. With a `step` of k a factor starts at every k-th position from either end, as `MTLDMA.steps` of koRpus, and only these factors are computed: a step of 10 is several times faster. If no factor completes, the value is `nan`. The metric is unstable on short texts.
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
@@ -1076,7 +1076,7 @@ Fits Heaps' law over the vocabulary growth curve of a list of words, as `calc_he
 calc_burstiness(text, min_freq=5)
 ```
 
-How a lexeme comes in bursts rather than spread over the text, by the burstiness of Kim and Jo, which corrects that of Goh and Barabási for a finite number $n$ of events, averaged over the lexemes of `min_freq` occurrences or more (`BURSTINESS_MIN_FREQ`). For the $n$ occurrences of a lexeme, $r$ is the coefficient of variation of their $n$ intervals, the one from the last to the first around the end of the text included. The value is −1 for occurrences at equal intervals, the one around the end included (*a x a x* is −1, *a x a x a* about −0.69), near 0 for a rare lexeme at random places and up to 1 for occurrences in bursts; `nan` without such lexemes.
+How a lexeme comes in bursts rather than spread over the text, by the burstiness of Kim and Jo, which corrects that of Goh and Barabási for a finite number $n$ of events, averaged over the lexemes of `min_freq` occurrences or more (`BURSTINESS_MIN_FREQ`). For the $n$ occurrences of a lexeme, $r$ is the coefficient of variation of their $n$ intervals, the one from the last to the first around the end of the text included. The value is −1 for occurrences at equal intervals, the one around the end included (*a x a x a x a x a x* is −1, *a x a x a x a x a* about −0.69), near 0 for a rare lexeme at random places and up to 1 for occurrences in bursts; `nan` without such lexemes.
 
 $$
 A_n = \frac{\sqrt{n + 1} \cdot r - \sqrt{n - 1}}{(\sqrt{n + 1} - 2) \cdot r + \sqrt{n - 1}}

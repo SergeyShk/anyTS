@@ -74,11 +74,13 @@ class MorphStats(Stats):
 
     Raises:
         SourceTypeError: If the source is not a Doc (analyze) or analyze does not give
-            MorphWord objects
+            MorphWord objects of a string, a string or None and a mapping of strings
         SourceError: If the source has no parts of speech (analyze) or no words
-        ParameterError: When a class is defined, if feature_names is not a mapping of
-            strings, stats_desc does not name pos and the statistics of feature_names,
-            or values_desc is not a mapping of statistics to mappings of strings
+        ParameterError: When a class is defined, if feature_names does not map
+            identifiers other than pos, tags, words and the names of the class to
+            the names of features, stats_desc does not name pos and the statistics
+            of feature_names, or values_desc is not a mapping of statistics to
+            mappings of strings
 
     Example:
         >>> import spacy
@@ -316,7 +318,12 @@ class MorphStats(Stats):
         return {}
 
     def print_markers(self) -> None:
-        """Printing the markers of get_markers with the descriptions of markers_desc"""
+        """
+        Printing the markers of get_markers with the descriptions of markers_desc
+
+        Raises:
+            SourceTypeError: If get_markers gives no value of a marker of markers_desc
+        """
         markers = self.get_markers()
         missing = [marker for marker in self.markers_desc if marker not in markers]
         if missing:
@@ -355,7 +362,7 @@ def _wrong_field(word: object) -> str:
         ),
     ):
         if not right:
-            return f"MorphWord with the {field} {value!r}"
+            return f"MorphWord({field}={value!r})"
     return ""
 
 
