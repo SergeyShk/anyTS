@@ -1163,14 +1163,17 @@ def test_coordinated_predicates_agree():
             pos=pos,
         )
         assert SyntaxStats(doc).n_t_units == t_units
-    auxiliary = parse(
-        ["hemos", "llegado", "y", "esperabas"],
-        [1, 1, 3, 1],
-        ["aux", "ROOT", "cc", "conj"],
-        ["Person=1|Number=Plur", "VerbForm=Part", "", "Person=2|Number=Sing"],
-        pos=["AUX", "VERB", "CCONJ", "VERB"],
-    )
-    assert SyntaxStats(auxiliary).n_t_units == 2
+    # The auxiliary or copula agrees with the subject, not the participle or the noun of
+    # the predicate with their own number and gender: hemos llegado y comemos
+    for second, t_units in (("Person=1|Number=Plur", 1), ("Person=2|Number=Sing", 2)):
+        auxiliary = parse(
+            ["hemos", "llegado", "y", "comemos"],
+            [1, 1, 3, 1],
+            ["aux", "ROOT", "cc", "conj"],
+            ["Person=1|Number=Plur", "Gender=Masc|Number=Sing|VerbForm=Part", "", second],
+            pos=["AUX", "VERB", "CCONJ", "VERB"],
+        )
+        assert SyntaxStats(auxiliary).n_t_units == t_units
 
 
 def test_existential_there_is_a_subject():

@@ -815,14 +815,14 @@ def _shares_subject(token: Token, join_hyphens: bool) -> bool:
 
 
 def _agreement(token: Token) -> dict[str, list[str]]:
-    """Person, number and gender of a predicate, those of its auxiliary or copula where the
-    word has none (hemos llegado)"""
-    found = {feature: token.morph.get(feature, []) for feature in _AGREEMENT_FEATURES}
-    for child in token.children:
-        if base_dep(child) in AUXILIARY_DEPS:
-            for feature in _AGREEMENT_FEATURES:
-                found[feature] = found[feature] or child.morph.get(feature, [])
-    return {feature: values for feature, values in found.items() if values}
+    """Person, number and gender of a predicate: those of its first auxiliary or copula that
+    has them, which agree with the subject where a participle or a noun has its own (hemos
+    llegado, es un equipo), else those of the word"""
+    for word in [*(child for child in token.children if base_dep(child) in AUXILIARY_DEPS), token]:
+        found = {feature: word.morph.get(feature, []) for feature in _AGREEMENT_FEATURES}
+        if any(found.values()):
+            return {feature: values for feature, values in found.items() if values}
+    return {}
 
 
 def _t_units_of(
