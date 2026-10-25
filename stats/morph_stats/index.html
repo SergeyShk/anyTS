@@ -2362,7 +2362,7 @@ Personal                      |    1
 <tr>
 <td style="text-align: left;"><code>feature_names</code></td>
 <td style="text-align: left;">class attribute</td>
-<td style="text-align: left;">Feature of Universal Dependencies by statistic, <code>MORPH_FEATURES</code> by default; a statistic other than <code>pos</code></td>
+<td style="text-align: left;">Feature of Universal Dependencies by statistic, <code>MORPH_FEATURES</code> by default; a statistic is an identifier other than <code>pos</code>, <code>tags</code>, <code>words</code> and the names of the class, since it becomes an attribute of the object</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>stats_desc</code></td>
@@ -2396,7 +2396,7 @@ Personal                      |    1
 </tr>
 </tbody>
 </table>
-<p>The parameters of a library - its model of a string, its word extractor - go to the constructor of its subclass, which keeps them for its <code>analyze</code>. When a class is defined, a <code>feature_names</code> that is not a mapping of strings or names <code>pos</code>, a <code>stats_desc</code> that does not name <code>pos</code> and the statistics of <code>feature_names</code>, and a <code>values_desc</code> that is not a mapping of statistics to mappings of strings raise <code>ParameterError</code>; an <code>analyze</code> that does not give <code>MorphWord</code> objects raises <code>SourceTypeError</code>.</p>
+<p>The parameters of a library - its model of a string, its word extractor - go to the constructor of its subclass, which keeps them for its <code>analyze</code>. When a class is defined, a <code>feature_names</code> that is not a mapping of such statistics to the names of features, a <code>stats_desc</code> that does not name <code>pos</code> and the statistics of <code>feature_names</code>, and a <code>values_desc</code> that is not a mapping of statistics to mappings of strings raise <code>ParameterError</code>; an <code>analyze</code> that does not give <code>MorphWord</code> objects of a string, a string or <code>None</code> and a mapping of strings, and a <code>get_markers</code> that gives no value of a marker of <code>markers_desc</code> to <code>print_markers</code>, raise <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:MorphStats-hooks] -->
 </details>
 <!-- --8<-- [start:MorphWord] -->
