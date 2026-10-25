@@ -351,9 +351,11 @@ MESSAGES: Mapping[str, str] = MappingProxyType(
         ),
         "connector_type": "A Connector is expected, not {type}",
         "morph_features": (
-            "The feature_names of {cls} must map the statistics other than pos to their "
-            "features, all of them strings, not {value}"
+            "The feature_names of {cls} must map the names of new statistics, identifiers "
+            "other than pos, tags, words and the names of the class, to the names of their "
+            "features, not {value}"
         ),
+        "morph_markers": "The get_markers of {cls} gives no values of the markers {markers}",
         "morph_stats_desc": (
             "The stats_desc of {cls} must name pos and the statistics of feature_names, "
             "not {stats}"

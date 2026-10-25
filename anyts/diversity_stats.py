@@ -887,8 +887,8 @@ def _mtld_factor_lengths(
         repeats = np.cumsum(repeated[::-1])[::-1]
     reach = fits[np.minimum(repeats, fits.size - 1)]
     lengths = np.zeros(n_words, dtype=np.int64)
-    for block_start in range(0, n_words, _MTLD_BLOCK_SIZE):
-        pending = np.arange(block_start, min(block_start + _MTLD_BLOCK_SIZE, n_words))
+    for block_start in range(0, n_words, _MTLD_BLOCK_SIZE * step):
+        pending = np.arange(block_start, min(block_start + _MTLD_BLOCK_SIZE * step, n_words), step)
         limits = np.minimum(reach[pending], n_words if wrap else n_words - pending)
         reachable = limits >= max(min_len, 1)
         pending = pending[reachable]
@@ -1728,8 +1728,9 @@ def calc_burstiness(text: Sequence[str], min_freq: int = BURSTINESS_MIN_FREQ) ->
         lexeme r is the coefficient of variation of their n intervals, the one
         from the last to the first around the end of the text included, and
         A = (√(n+1)·r − √(n−1)) / ((√(n+1) − 2)·r + √(n−1)):
-        −1 for occurrences at equal intervals, near 0 for a rare lexeme at random
-        places, up to 1 for occurrences in bursts
+        −1 for occurrences at equal intervals, the one around the end included,
+        near 0 for a rare lexeme at random places, up to 1 for occurrences in
+        bursts
 
     References:
         https://doi.org/10.1103/PhysRevE.94.032311 (Kim and Jo 2016)

@@ -141,7 +141,7 @@ A language library subclasses `MorphStats`. By default the words and their featu
 | Hook | Kind | Description |
 | :--- | :--- | :---------- |
 | `analyze(source)` | method | Words of a source as `MorphWord`: the word, its part of speech and its features of Universal Dependencies by name; by default those of a `Doc` with the parts of speech (`iter_doc_tokens`), with `token.pos_` and `token.morph`; a library that reads a string or a `Doc` without them overrides it |
-| `feature_names` | class attribute | Feature of Universal Dependencies by statistic, `MORPH_FEATURES` by default; a statistic other than `pos` |
+| `feature_names` | class attribute | Feature of Universal Dependencies by statistic, `MORPH_FEATURES` by default; a statistic is an identifier other than `pos`, `tags`, `words` and the names of the class, since it becomes an attribute of the object |
 | `stats_desc` | class attribute | `pos` and the statistics of `feature_names` with their names, in the order of `get_stats`; `MORPH_STATS_DESC` by default |
 | `values_desc` | class attribute | Descriptions of the values by statistic for `print_stats`, `MORPH_VALUES_DESC` by default; a value without one is printed as it is |
 | `unknown_value` | class attribute | Description of the words without the feature in `print_stats`, `"Unknown"` by default |
@@ -149,7 +149,7 @@ A language library subclasses `MorphStats`. By default the words and their featu
 | `markers_desc`, `markers_headers` | class attributes | Markers of `get_markers` with their descriptions, headers of the columns for `print_markers` |
 | `messages` | class attribute | Messages of the errors by key; `MESSAGES` by default |
 
-The parameters of a library - its model of a string, its word extractor - go to the constructor of its subclass, which keeps them for its `analyze`. When a class is defined, a `feature_names` that is not a mapping of strings or names `pos`, a `stats_desc` that does not name `pos` and the statistics of `feature_names`, and a `values_desc` that is not a mapping of statistics to mappings of strings raise `ParameterError`; an `analyze` that does not give `MorphWord` objects raises `SourceTypeError`.
+The parameters of a library - its model of a string, its word extractor - go to the constructor of its subclass, which keeps them for its `analyze`. When a class is defined, a `feature_names` that is not a mapping of such statistics to the names of features, a `stats_desc` that does not name `pos` and the statistics of `feature_names`, and a `values_desc` that is not a mapping of statistics to mappings of strings raise `ParameterError`; an `analyze` that does not give `MorphWord` objects of a string, a string or `None` and a mapping of strings, and a `get_markers` that gives no value of a marker of `markers_desc` to `print_markers`, raise `SourceTypeError`.
 <!-- --8<-- [end:MorphStats-hooks] -->
 
 </details>

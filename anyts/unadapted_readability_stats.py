@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from math import log, nan
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from .basic_stats import BasicStats
 from .constants import (
@@ -37,10 +37,10 @@ class UnadaptedReadabilityStats(Stats):
 
     Description:
         Formulas made for English, German or Italian, computed from the basic
-        statistics of a text as they were published, without a calibration for
-        its language: their values compare texts of one language, not grade
-        levels of another. A language library subclasses the class and sets
-        basic_stats_class.
+        statistics of a text as they were published (Linsear Write as textstat
+        computes it), without a calibration for its language: their values
+        compare texts of one language, not grade levels of another. A language
+        library subclasses the class and sets basic_stats_class.
         get_stats, to_dataframe, print_stats and describe come from Stats
 
     Arguments:
@@ -84,6 +84,9 @@ class UnadaptedReadabilityStats(Stats):
             the basic statistics are of another class, an extractor is of another type,
             or a class without basic_stats_class is given a string or a Doc
         SourceError: If the source has no words or no sentences
+        ParameterError: When a class is defined, if a factor is not an integer of
+            at least one or basic_stats_class is neither a subclass of BasicStats
+            nor None
     """
 
     basic_stats_class: ClassVar[type[BasicStats] | None] = None
@@ -92,6 +95,22 @@ class UnadaptedReadabilityStats(Stats):
     mini_word_letters: ClassVar[int] = EFLAW_MINI_WORD_LETTERS
     stats_desc: ClassVar[Mapping[str, str]] = UNADAPTED_READABILITY_STATS_DESC
     stats_headers: ClassVar[tuple[str, str]] = ("Metric", "Value")
+
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        super().__init_subclass__(**kwargs)
+        for attribute in ("complex_syl_factor", "long_word_letter_factor", "mini_word_letters"):
+            value = getattr(cls, attribute)
+            check_integer(value, f"{attribute} of {cls.__name__}")
+            if value < 1:
+                raise ParameterError(
+                    f"The {attribute} of {cls.__name__} must be greater than 0, not {value}"
+                )
+        basic = cls.basic_stats_class
+        if basic is not None and not (isinstance(basic, type) and issubclass(basic, BasicStats)):
+            raise ParameterError(
+                f"The basic_stats_class of {cls.__name__} must be a subclass of BasicStats "
+                f"or None, not {basic!r}"
+            )
 
     def __init__(
         self,
@@ -194,12 +213,30 @@ def calc_forcast(n_monosyllable_words: int, n_words: int) -> float:
     Returns:
         float: Grade level, nan without words
 
+    Raises:
+        ParameterError: If a count is not an integer or is negative, or there
+            are more monosyllabic words than words
+
     Example:
         >>> from anyts.unadapted_readability_stats import calc_forcast
         >>> calc_forcast(100, 150)
         10.0
     """
+    _check_counts(
+        (n_monosyllable_words, "number of monosyllabic words"),
+        (n_words, "number of words"),
+    )
+    if n_monosyllable_words > n_words:
+        raise ParameterError("The monosyllabic words cannot outnumber the words")
     return safe_divide(20 * n_words - 15 * n_monosyllable_words, n_words, nan)
+
+
+def _check_counts(*counts: tuple[int, str]) -> None:
+    """Checking that the counts of a formula are integers, not negative"""
+    for count, what in counts:
+        check_integer(count, what)
+        if count < 0:
+            raise ParameterError(f"The {what} cannot be negative")
 
 
 def calc_linsear_write(n_easy_words: int, n_hard_words: int, n_sents: int) -> float:
@@ -207,10 +244,11 @@ def calc_linsear_write(n_easy_words: int, n_hard_words: int, n_sents: int) -> fl
     Computing the Linsear Write grade
 
     Description:
-        O'Hayre (1966): an easy word, of one or two syllables, weighs 1, a hard
-        one of three syllables or more weighs 3; their sum over the sentences,
-        halved above 20, else less 2 and halved. Over the whole text, not over a
-        sample of 100 words
+        In the form of textstat, not the Lensear Write Formula of O'Hayre (1966)
+        of the monosyllabic words and the sentences: an easy word, of one or two
+        syllables, weighs 1, a hard one of three syllables or more weighs 3;
+        their sum over the sentences, halved above 20, else less 2 and halved.
+        Over the whole text, not over a sample of 100 words
 
     Arguments:
         n_easy_words (int): Number of the words of one or two syllables
@@ -220,11 +258,19 @@ def calc_linsear_write(n_easy_words: int, n_hard_words: int, n_sents: int) -> fl
     Returns:
         float: Grade level, nan without sentences
 
+    Raises:
+        ParameterError: If a count is not an integer or is negative
+
     Example:
         >>> from anyts.unadapted_readability_stats import calc_linsear_write
         >>> calc_linsear_write(80, 20, 5)
         14.0
     """
+    _check_counts(
+        (n_easy_words, "number of easy words"),
+        (n_hard_words, "number of hard words"),
+        (n_sents, "number of sentences"),
+    )
     score = safe_divide(n_easy_words + 3 * n_hard_words, n_sents, nan)
     return score / 2 if score > 20 else (score - 2) / 2
 
@@ -245,11 +291,19 @@ def calc_powers_sumner_kearl(n_syllables: int, n_words: int, n_sents: int) -> fl
     Returns:
         float: Grade level, nan without words or sentences
 
+    Raises:
+        ParameterError: If a count is not an integer or is negative
+
     Example:
         >>> from anyts.unadapted_readability_stats import calc_powers_sumner_kearl
         >>> round(calc_powers_sumner_kearl(130, 100, 10), 4)
         4.4901
     """
+    _check_counts(
+        (n_syllables, "number of syllables"),
+        (n_words, "number of words"),
+        (n_sents, "number of sentences"),
+    )
     if not n_words or not n_sents:
         return nan
     return 0.0778 * n_words / n_sents + 4.55 * n_syllables / n_words - 2.2029
@@ -272,11 +326,19 @@ def calc_eflaw(n_mini_words: int, n_words: int, n_sents: int) -> float:
     Returns:
         float: Score, nan without sentences
 
+    Raises:
+        ParameterError: If a count is not an integer or is negative
+
     Example:
         >>> from anyts.unadapted_readability_stats import calc_eflaw
         >>> calc_eflaw(40, 100, 5)
         28.0
     """
+    _check_counts(
+        (n_mini_words, "number of mini words"),
+        (n_words, "number of words"),
+        (n_sents, "number of sentences"),
+    )
     return safe_divide(n_words + n_mini_words, n_sents, nan)
 
 
@@ -313,7 +375,8 @@ def calc_wiener_sachtextformel(
         float: Grade, nan without words or sentences
 
     Raises:
-        ParameterError: If the variant is not an integer from 1 to 4
+        ParameterError: If a count is not an integer or is negative, or the variant is
+            not an integer from 1 to 4
 
     Example:
         >>> from anyts.unadapted_readability_stats import calc_wiener_sachtextformel
@@ -325,6 +388,13 @@ def calc_wiener_sachtextformel(
         raise ParameterError(
             f"The variant of the Wiener Sachtextformel must be from 1 to 4, not {variant}"
         )
+    _check_counts(
+        (n_complex, "number of complex words"),
+        (n_long_words, "number of long words"),
+        (n_monosyllable_words, "number of monosyllabic words"),
+        (n_words, "number of words"),
+        (n_sents, "number of sentences"),
+    )
     if not n_words or not n_sents:
         return nan
     ms, sl, iw, es, constant = _WIENER_COEFFICIENTS[variant]
@@ -357,11 +427,20 @@ def calc_dickes_steiwer(n_letters: int, n_words: int, n_sents: int, n_types: int
     Returns:
         float: Index, nan without words or sentences
 
+    Raises:
+        ParameterError: If a count is not an integer or is negative
+
     Example:
         >>> from anyts.unadapted_readability_stats import calc_dickes_steiwer
         >>> round(calc_dickes_steiwer(500, 100, 8, 60), 2)
         42.4
     """
+    _check_counts(
+        (n_letters, "number of letters"),
+        (n_words, "number of words"),
+        (n_sents, "number of sentences"),
+        (n_types, "number of distinct words"),
+    )
     if not n_words or not n_sents:
         return nan
     return (
@@ -390,11 +469,19 @@ def calc_gulpease(n_letters: int, n_words: int, n_sents: int) -> float:
     Returns:
         float: Index, nan without words
 
+    Raises:
+        ParameterError: If a count is not an integer or is negative
+
     Example:
         >>> from anyts.unadapted_readability_stats import calc_gulpease
         >>> calc_gulpease(500, 100, 8)
         63.0
     """
+    _check_counts(
+        (n_letters, "number of letters"),
+        (n_words, "number of words"),
+        (n_sents, "number of sentences"),
+    )
     return safe_divide(89 * n_words + 300 * n_sents - 10 * n_letters, n_words, nan)
 
 
@@ -414,11 +501,18 @@ def calc_fucks(n_syllables: int, n_sents: int) -> float:
     Returns:
         float: Index, nan without sentences
 
+    Raises:
+        ParameterError: If a count is not an integer or is negative
+
     Example:
         >>> from anyts.unadapted_readability_stats import calc_fucks
         >>> calc_fucks(150, 10)
         15.0
     """
+    _check_counts(
+        (n_syllables, "number of syllables"),
+        (n_sents, "number of sentences"),
+    )
     return safe_divide(n_syllables, n_sents, nan)
 
 
@@ -437,11 +531,18 @@ def calc_strain_index(n_syllables: int, n_sents: int) -> float:
     Returns:
         float: Index, nan without sentences
 
+    Raises:
+        ParameterError: If a count is not an integer or is negative
+
     Example:
         >>> from anyts.unadapted_readability_stats import calc_strain_index
         >>> calc_strain_index(150, 10)
         4.5
     """
+    _check_counts(
+        (n_syllables, "number of syllables"),
+        (n_sents, "number of sentences"),
+    )
     return safe_divide(3 * n_syllables, 10 * n_sents, nan)
 
 
@@ -462,11 +563,19 @@ def calc_elf(n_syllables: int, n_syllabic_words: int, n_sents: int) -> float:
     Returns:
         float: Score, nan without sentences
 
+    Raises:
+        ParameterError: If a count is not an integer or is negative
+
     Example:
         >>> from anyts.unadapted_readability_stats import calc_elf
         >>> calc_elf(150, 100, 10)
         5.0
     """
+    _check_counts(
+        (n_syllables, "number of syllables"),
+        (n_syllabic_words, "number of words with syllables"),
+        (n_sents, "number of sentences"),
+    )
     return safe_divide(n_syllables - n_syllabic_words, n_sents, nan)
 
 
@@ -486,9 +595,16 @@ def calc_wheeler_smith(n_polysyllable_words: int, n_sents: int) -> float:
     Returns:
         float: Index, nan without sentences
 
+    Raises:
+        ParameterError: If a count is not an integer or is negative
+
     Example:
         >>> from anyts.unadapted_readability_stats import calc_wheeler_smith
         >>> calc_wheeler_smith(40, 10)
         40.0
     """
+    _check_counts(
+        (n_polysyllable_words, "number of polysyllabic words"),
+        (n_sents, "number of sentences"),
+    )
     return safe_divide(10 * n_polysyllable_words, n_sents, nan)

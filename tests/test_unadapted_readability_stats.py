@@ -119,6 +119,63 @@ def test_wiener_variants(variant):
         calc_wiener_sachtextformel(20, 30, 50, 100, 8, variant)
 
 
+@pytest.mark.parametrize(
+    "call",
+    [
+        lambda: calc_forcast(-1, 10),
+        lambda: calc_forcast(1.5, 10),
+        lambda: calc_forcast("100", 150),
+        lambda: calc_linsear_write(1, True, 1),
+        lambda: calc_powers_sumner_kearl(1, 1, -1),
+        lambda: calc_eflaw(None, 1, 1),
+        lambda: calc_wiener_sachtextformel(-1, 0, 0, 10, 1),
+        lambda: calc_dickes_steiwer(-500, 100, 8, 60),
+        lambda: calc_gulpease(1, -1, 1),
+        lambda: calc_fucks(1, -1),
+        lambda: calc_strain_index(-1, 1),
+        lambda: calc_elf(1, -1, 1),
+        lambda: calc_wheeler_smith(-1, 1),
+    ],
+)
+def test_counts_are_checked(call):
+    with pytest.raises(
+        ParameterError, match=r"^The number of .+ (cannot be negative|must be an integer)"
+    ):
+        call()
+
+
+def test_forcast_needs_no_more_monosyllables_than_words():
+    with pytest.raises(
+        ParameterError, match=r"^The monosyllabic words cannot outnumber the words$"
+    ):
+        calc_forcast(200, 150)
+    assert calc_forcast(150, 150) == 5.0
+
+
+@pytest.mark.parametrize(
+    ("attributes", "message"),
+    [
+        (
+            {"complex_syl_factor": 0},
+            r"^The complex_syl_factor of Bad must be greater than 0, not 0$",
+        ),
+        (
+            {"mini_word_letters": "3"},
+            r"^The mini_word_letters of Bad must be an integer, not str$",
+        ),
+        ({"long_word_letter_factor": 7.0}, r"must be an integer, not float$"),
+        ({"basic_stats_class": "BasicStats"}, r"^The basic_stats_class of Bad must be a subclass"),
+        (
+            {"basic_stats_class": int},
+            r"must be a subclass of BasicStats or None, not <class 'int'>$",
+        ),
+    ],
+)
+def test_hooks_checked_at_class_definition(attributes, message):
+    with pytest.raises(ParameterError, match=message):
+        type("Bad", (UnadaptedReadabilityStats,), attributes)
+
+
 def test_sources():
     stats = Unadapted(TEXT)
     # The basic statistics of a text may be reused

@@ -361,24 +361,27 @@ def test_mamtld(ds):
     assert calc_mamtld(riddle) == 12.0
 
 
-def test_mamtld_step():
-    # Every factor of a step of one, every k-th factor from either end with a step k
+def first_factors(text):
+    """The length of the first factor of MTLD at every start, 0 for one that does not close"""
+    lengths = []
+    for start in range(len(text)):
+        types, length = set(), 0
+        for pos in range(start, len(text)):
+            types.add(text[pos])
+            if len(types) / (pos - start + 1) <= 0.72 and pos - start + 1 >= 10:
+                length = pos - start + 1
+                break
+        lengths.append(length)
+    return lengths
+
+
+@pytest.mark.parametrize("block_size", [diversity_stats._MTLD_BLOCK_SIZE, 16])
+def test_mamtld_step(block_size, monkeypatch):
+    # Every factor of a step of one, every k-th factor from either end with a step k; small
+    # blocks let the starts of a step span several of them
+    monkeypatch.setattr(diversity_stats, "_MTLD_BLOCK_SIZE", block_size)
     assert calc_mamtld(riddle, step=1) == calc_mamtld(riddle)
     words = list(riddle) * 4
-
-    def first_factors(text):
-        # The length of the first factor at every start, 0 for one that does not close
-        lengths = []
-        for start in range(len(text)):
-            types, length = set(), 0
-            for pos in range(start, len(text)):
-                types.add(text[pos])
-                if len(types) / (pos - start + 1) <= 0.72 and pos - start + 1 >= 10:
-                    length = pos - start + 1
-                    break
-            lengths.append(length)
-        return lengths
-
     for step in (2, 3, 7):
         starts = first_factors(words)[::step] + first_factors(words[::-1])[::step]
         lengths = [length for length in starts if length]

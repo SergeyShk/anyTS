@@ -268,8 +268,6 @@ class BasicStats(Stats, metaclass=ABCMeta):
         syllables_per_word = tuple(self.count_syllables(word) for word in words)
         self.c_letters = dict(sorted(Counter(letters_per_word).items()))
         self.c_syllables = dict(sorted(Counter(syllables_per_word).items()))
-        self.letters_entropy = shannon_entropy(self.c_letters)
-        self.syllables_entropy = shannon_entropy(self.c_syllables)
         self.n_sents = sum(1 for sent in sents if has_words(sent))
         self.n_words = len(words)
         self.n_unique_words = len({word.lower() for word in words})
@@ -300,6 +298,14 @@ class BasicStats(Stats, metaclass=ABCMeta):
             self.p_letters = self.n_letters / self.n_chars
             self.p_spaces = self.n_spaces / self.n_chars
             self.p_punctuations = self.n_punctuations / self.n_chars
+
+    @property
+    def letters_entropy(self) -> float:
+        return shannon_entropy(self.c_letters)
+
+    @property
+    def syllables_entropy(self) -> float:
+        return shannon_entropy(self.c_syllables)
 
     @abstractmethod
     def count_syllables(self, word: str) -> int:

@@ -5,7 +5,7 @@ UnadaptedReadabilityStats(source, sents_extractor=None, words_extractor=None)
 ```
 
 <!-- --8<-- [start:UnadaptedReadabilityStats] -->
-Readability formulas made for English, German or Italian, computed from the basic statistics of a text with the coefficients they were published with, without a calibration for its language. Their values compare texts of one language with each other; they are no grade levels of another language. The data source is a text, a `Doc` object of [spaCy](https://github.com/explosion/spaCy) or a ready `BasicStats` object, as for `ReadabilityStats`.
+Readability formulas made for English, German or Italian, computed from the basic statistics of a text with the coefficients they were published with (Linsear Write in the form of textstat), without a calibration for its language. Their values compare texts of one language with each other; they are no grade levels of another language. The data source is a text, a `Doc` object of [spaCy](https://github.com/explosion/spaCy) or a ready `BasicStats` object, as for `ReadabilityStats`.
 
 Raises:
 
@@ -118,6 +118,8 @@ $$
 | :-------- | :--- | :------ | :---------- |
 | `n_monosyllable_words` | `int` | - | Number of monosyllabic words |
 | `n_words` | `int` | - | Number of words |
+
+A count that is not an integer or is negative, and more monosyllabic words than words, raise `ParameterError`.
 <!-- --8<-- [end:calc_forcast] -->
 
 </div>
@@ -134,7 +136,7 @@ $$
 calc_linsear_write(n_easy_words, n_hard_words, n_sents)
 ```
 
-The grade of O'Hayre (1966): an easy word, of one or two syllables, weighs 1 and a hard one 3; their sum per sentence $r$ is halved above 20, and otherwise loses 2 before it is halved. It is computed over the whole text rather than a sample of 100 words; `nan` without sentences.
+The grade of Linsear Write in the form of textstat; the Lensear Write Formula of O'Hayre (1966) is another one, of the monosyllabic words and the sentences of a sample of 100 words. An easy word, of one or two syllables, weighs 1 and a hard one 3; their sum per sentence $r$ is halved above 20, and otherwise loses 2 before it is halved. It is computed over the whole text rather than a sample of 100 words; `nan` without sentences.
 
 $$
 r = \frac{\textrm{Easy words} + 3 \times \textrm{Hard words}}{\textrm{Sentences}}, \quad \textrm{LW} = \begin{cases} r / 2 & r > 20 \\ (r - 2) / 2 & r \le 20 \end{cases}
@@ -145,6 +147,8 @@ $$
 | `n_easy_words` | `int` | - | Number of the words of one or two syllables |
 | `n_hard_words` | `int` | - | Number of the words of three syllables or more |
 | `n_sents` | `int` | - | Number of sentences |
+
+A count that is not an integer or is negative raises `ParameterError`.
 <!-- --8<-- [end:calc_linsear_write] -->
 
 </div>
@@ -172,6 +176,8 @@ $$
 | `n_syllables` | `int` | - | Number of syllables |
 | `n_words` | `int` | - | Number of words |
 | `n_sents` | `int` | - | Number of sentences |
+
+A count that is not an integer or is negative raises `ParameterError`.
 <!-- --8<-- [end:calc_powers_sumner_kearl] -->
 
 </div>
@@ -199,6 +205,8 @@ $$
 | `n_mini_words` | `int` | - | Number of the words of one to three letters |
 | `n_words` | `int` | - | Number of words |
 | `n_sents` | `int` | - | Number of sentences |
+
+A count that is not an integer or is negative raises `ParameterError`.
 <!-- --8<-- [end:calc_eflaw] -->
 
 </div>
@@ -229,6 +237,8 @@ $$
 | `n_words` | `int` | - | Number of words |
 | `n_sents` | `int` | - | Number of sentences |
 | `variant` | `int` | `1` | Variant of the formula, from 1 to 4 |
+
+A count that is not an integer or is negative raises `ParameterError`.
 <!-- --8<-- [end:calc_wiener_sachtextformel] -->
 
 </div>
@@ -257,6 +267,8 @@ $$
 | `n_words` | `int` | - | Number of words |
 | `n_sents` | `int` | - | Number of sentences |
 | `n_types` | `int` | - | Number of the distinct words |
+
+A count that is not an integer or is negative raises `ParameterError`.
 <!-- --8<-- [end:calc_dickes_steiwer] -->
 
 </div>
@@ -284,6 +296,8 @@ $$
 | `n_letters` | `int` | - | Number of the letters of the words |
 | `n_words` | `int` | - | Number of words |
 | `n_sents` | `int` | - | Number of sentences |
+
+A count that is not an integer or is negative raises `ParameterError`.
 <!-- --8<-- [end:calc_gulpease] -->
 
 </div>
@@ -310,6 +324,8 @@ $$
 | :-------- | :--- | :------ | :---------- |
 | `n_syllables` | `int` | - | Number of syllables |
 | `n_sents` | `int` | - | Number of sentences |
+
+A count that is not an integer or is negative raises `ParameterError`.
 <!-- --8<-- [end:calc_fucks] -->
 
 </div>
@@ -336,6 +352,8 @@ $$
 | :-------- | :--- | :------ | :---------- |
 | `n_syllables` | `int` | - | Number of syllables |
 | `n_sents` | `int` | - | Number of sentences |
+
+A count that is not an integer or is negative raises `ParameterError`.
 <!-- --8<-- [end:calc_strain_index] -->
 
 </div>
@@ -363,6 +381,8 @@ $$
 | `n_syllables` | `int` | - | Number of syllables |
 | `n_syllabic_words` | `int` | - | Number of the words of one syllable or more |
 | `n_sents` | `int` | - | Number of sentences |
+
+A count that is not an integer or is negative raises `ParameterError`.
 <!-- --8<-- [end:calc_elf] -->
 
 </div>
@@ -389,6 +409,8 @@ $$
 | :-------- | :--- | :------ | :---------- |
 | `n_polysyllable_words` | `int` | - | Number of the words of two syllables or more |
 | `n_sents` | `int` | - | Number of sentences |
+
+A count that is not an integer or is negative raises `ParameterError`.
 <!-- --8<-- [end:calc_wheeler_smith] -->
 
 </div>
@@ -411,6 +433,8 @@ A language library subclasses `UnadaptedReadabilityStats`:
 | `complex_syl_factor`, `long_word_letter_factor`, `mini_word_letters` | class attributes | Least syllables of a hard word (3), least letters of a long word (7), most letters of a mini word of EFLAW (`EFLAW_MINI_WORD_LETTERS`, 3) |
 | `stats_desc`, `stats_headers` | class attributes | Metrics of `get_stats` with their descriptions (`UNADAPTED_READABILITY_STATS_DESC` by default), headers of the columns for `print_stats` |
 | `messages` | class attribute | Messages of the errors by key; `MESSAGES` by default |
+
+When a subclass is defined, a `basic_stats_class` that is neither a subclass of `BasicStats` nor `None` and a factor that is not an integer of at least one raise `ParameterError`.
 <!-- --8<-- [end:UnadaptedReadabilityStats-hooks] -->
 
 </details>
