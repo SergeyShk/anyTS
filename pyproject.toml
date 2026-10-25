@@ -63,8 +63,9 @@ packages = ["anyts"]
 include = ["/anyts", "/README.md", "/LICENSE.txt"]
 
 [tool.uv]
-# preshed 3.0.14 breaks the tokenizer of spaCy 3.8.16; uv resolution only, not package metadata
-constraint-dependencies = ["preshed<3.0.14"]
+# preshed 3.0.14 breaks the tokenizer of spaCy 3.8.15 and 3.8.16; uv resolution only, not
+# package metadata
+constraint-dependencies = ["preshed!=3.0.14"]
 
 [[tool.uv.index]]
 name = "testpypi"

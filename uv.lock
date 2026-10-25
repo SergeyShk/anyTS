@@ -17,7 +17,7 @@ resolution-markers = [
 ]
 
 [manifest]
-constraints = [{ name = "preshed", specifier = "<3.0.14" }]
+constraints = [{ name = "preshed", specifier = "!=3.0.14" }]
 
 [[package]]
 name = "annotated-doc"
