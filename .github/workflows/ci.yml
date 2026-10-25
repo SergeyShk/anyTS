@@ -74,6 +74,21 @@ jobs:
       - name: Run tests
         run: uv run --no-sync pytest
 
+  examples:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v10.2.0
+        with:
+          enable-cache: true
+          python-version: "3.13"
+      - name: Install dependencies
+        run: uv sync --locked --no-default-groups --group test
+      - name: Run the examples of the docs
+        run: uv run --no-sync pytest -m examples tests/test_docs_examples.py
+
   docs:
     runs-on: ubuntu-latest
     steps:

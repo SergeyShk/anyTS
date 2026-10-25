@@ -75,7 +75,7 @@ The name of the pipe is the name of the extension: `nlp.add_pipe(factory, name="
 <!-- --8<-- [start:class-components] -->
 Each class of statistics of the core has a component that takes its parameters in the config of the pipe, checks them at `add_pipe` and passes them to the class; a language library subclasses it, sets its subclass of the statistics as `stats_class` and registers it under its prefix:
 
-``` python
+``` {.python .fragment}
 @Language.factory("<prefix>_phon")
 class PhonStatsComponent(anyts.components.PhonStatsComponent):
     stats_class = PhonStats  # the subclass of the library

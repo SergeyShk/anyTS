@@ -19,7 +19,7 @@ Turns a package into a `LazyPackage`: every name of the mapping `modules` is imp
 A name that is not a string or a mapping that is not one of strings to strings raises `SourceTypeError`; a name that is not that of an imported package, a lazy name that is not an identifier and a module that is not a dotted name of identifiers raise `ParameterError`.
 <!-- --8<-- [end:make_lazy] -->
 
-``` python
+``` {.python .fragment}
 # The __init__ of a package
 from typing import TYPE_CHECKING
 
