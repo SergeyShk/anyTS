@@ -46,7 +46,7 @@ Or with [uv](https://docs.astral.sh/uv/):
 uv add anyts
 ```
 
-The dependencies are numpy, pandas, scipy, spaCy, matplotlib and graphviz; no trained spaCy model is needed. Rendering the word tree and the network of collocations also needs the executables of [Graphviz](https://graphviz.org/download/).
+The dependencies are numpy, pandas, scipy, spaCy, preshed (other than 3.0.14), matplotlib and graphviz; no trained spaCy model is needed. Rendering the word tree and the network of collocations also needs the executables of [Graphviz](https://graphviz.org/download/).
 
 ## Quick start
 
