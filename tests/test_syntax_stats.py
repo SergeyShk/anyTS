@@ -1273,6 +1273,18 @@ def test_verb_phrases_of_a_periphrasis():
             pos=["PRON", "VERB", "VERB", "CCONJ", "VERB"],
         )
         assert (SyntaxStats(doc).n_verb_phrases, Modal(doc).n_verb_phrases) == phrases
+    # he must leave, with the infinitive attached to the modal as a conjunct
+    doc = parse(
+        ["he", "must", "leave"],
+        [1, 1, 1],
+        ["nsubj", "ROOT", "conj"],
+        morphs=["", fin, inf],
+        pos=["PRON", "VERB", "VERB"],
+    )
+    assert (SyntaxStats(doc).n_verb_phrases, Modal(doc).n_verb_phrases) == (2, 1)
+    # A root marked as a conjunct of itself ends the walk up the conjuncts
+    doc = parse(["leave"], [0], ["conj"], morphs=[inf], pos=["VERB"])
+    assert Modal(doc).n_verb_phrases == 1
     # to leave is a must: an infinitive subject of a modal word
     doc = parse(
         ["to", "leave", "must"],

@@ -571,16 +571,17 @@ class SyntaxStats(Stats):
 
     def _in_periphrasis(self, token: Token) -> bool:
         """Whether an infinitive makes one predicate with its head (is_infinitive_periphrasis),
-        itself or as a conjunct of such an infinitive"""
-        if predicate_form(token, self.auxiliary_form) != "Inf":
-            return False
-        while base_dep(token) == "conj" and token.head is not token:
+        itself or through the infinitive conjuncts above it, as is_clause_head asks"""
+        seen = set()
+        while token.i not in seen and predicate_form(token, self.auxiliary_form) == "Inf":
+            dep = base_dep(token)
+            if dep in ("xcomp", "csubj", "conj") and self.is_infinitive_periphrasis(token):
+                return True
+            if dep != "conj":
+                return False
+            seen.add(token.i)
             token = token.head
-        return (
-            base_dep(token) in ("xcomp", "csubj")
-            and predicate_form(token, self.auxiliary_form) == "Inf"
-            and self.is_infinitive_periphrasis(token)
-        )
+        return False
 
     def auxiliary_form(self, token: Token) -> str:
         """

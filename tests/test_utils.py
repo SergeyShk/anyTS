@@ -825,6 +825,9 @@ def test_set_sent_starts():
     # 15 is whitespace: the start goes to the next word; 100 is past the end
     assert [sent.text for sent in nlp(doc).sents] == ["Mr. Smith came.  ", "Dr. Who\nleft. Bye"]
     assert set_sent_starts(nlp.make_doc(""), [0]).text == ""
+    # The whitespace at the start of a text goes with the first sentence
+    doc = set_sent_starts(nlp.make_doc("\n\nIt rains. It pours."), [2, 12])
+    assert [sent.text for sent in nlp(doc).sents] == ["\n\nIt rains.", "It pours."]
     parsed = Doc(
         nlp.vocab, words=["It", "rains", "."], heads=[1, 1, 1], deps=["nsubj", "ROOT", "punct"]
     )

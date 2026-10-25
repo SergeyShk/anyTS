@@ -804,8 +804,9 @@ def set_sent_starts(doc: Doc, starts: Iterable[int]) -> Doc:
         The first token at or after every offset that is not whitespace starts a
         sentence, and every other token does not, so that the parser, senter or
         sentencizer that runs after it keeps the sentences of a segmenter of the
-        library; the whitespace stays with the sentence before it. A parsed
-        document passes untouched, since spaCy keeps its sentences
+        library; the whitespace stays with the sentence before it, and that at the
+        start of the text with the first one. A parsed document passes untouched,
+        since spaCy keeps its sentences
 
     Arguments:
         doc (Doc): Doc object
@@ -815,8 +816,8 @@ def set_sent_starts(doc: Doc, starts: Iterable[int]) -> Doc:
         Doc: The document
 
     Raises:
-        SourceTypeError: If the offsets are not a collection of integers
-        ParameterError: If an offset is negative
+        SourceTypeError: If the offsets are not a collection
+        ParameterError: If an offset is not an integer or is negative
 
     Example:
         >>> import spacy
@@ -828,9 +829,7 @@ def set_sent_starts(doc: Doc, starts: Iterable[int]) -> Doc:
         ['Mr. Smith came.', 'Dr. Who left.']
     """
     if isinstance(starts, (str, bytes)) or not isinstance(starts, Iterable):
-        raise SourceTypeError(
-            f"The starts must be a collection of integers, not {type(starts).__name__}"
-        )
+        raise SourceTypeError(f"The starts must be a collection, not {type(starts).__name__}")
     offsets = list(starts)
     for offset in offsets:
         check_integer(offset, "start of a sentence")
@@ -847,7 +846,8 @@ def set_sent_starts(doc: Doc, starts: Iterable[int]) -> Doc:
     flags[0] = 1
     for offset in offsets:
         position = bisect_left(begins, offset)
-        if position < len(words):
+        # The first word continues the sentence of the whitespace before it
+        if 0 < position < len(words):
             flags[words[position]] = 1
     # Written at once: every assignment of is_sent_start makes spaCy scan the whole document
     doc.from_array(

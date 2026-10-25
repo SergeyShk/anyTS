@@ -452,14 +452,14 @@ Finds the words of a `Doc` that start a paragraph: the words are those of `iter_
 set_sent_starts(doc, starts)
 ```
 
-Sets the sentences of a `Doc` by the character offsets of their starts, those of the segmenter of a language library: the first token at or after every offset that is not whitespace starts a sentence, and every other token does not, so that the parser, `senter` or `sentencizer` that runs after it keeps these sentences instead of placing its own; the whitespace stays with the sentence before it. A parsed document passes untouched, since spaCy keeps its sentences. A document made by `nlp.make_doc` goes through the pipeline as `nlp(doc)`.
+Sets the sentences of a `Doc` by the character offsets of their starts, those of the segmenter of a language library: the first token at or after every offset that is not whitespace starts a sentence, and every other token does not, so that the parser, `senter` or `sentencizer` that runs after it keeps these sentences instead of placing its own; the whitespace stays with the sentence before it, and the whitespace at the start of a text with the first sentence. A parsed document passes untouched, since spaCy keeps its sentences. A document made by `nlp.make_doc` goes through the pipeline as `nlp(doc)`.
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
 | `doc` | `Doc` | - | Doc object |
 | `starts` | `list[int]` | - | Character offsets of the starts of the sentences |
 
-Offsets that are not a collection of integers raise `SourceTypeError`, and a negative offset `ParameterError`.
+Offsets that are not a collection raise `SourceTypeError`, and an offset that is not an integer or is negative `ParameterError`.
 <!-- --8<-- [end:set_sent_starts] -->
 
 === "Code"
