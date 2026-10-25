@@ -238,9 +238,10 @@ def _ngrams(
 
 
 def _holds_texts(words: Iterable[object]) -> bool:
-    """Whether a corpus is a list of texts: one of its items is a sequence of its own, not a
-    word or a spaCy token"""
-    return any(isinstance(item, Iterable) and not isinstance(item, str) for item in words)
+    """Whether a corpus is a list of texts by its first item, a sequence of its own rather than
+    a word or a spaCy token; the checks of the words refuse a list of both"""
+    first = next(iter(words), None)
+    return not isinstance(first, str) and isinstance(first, Iterable)
 
 
 def _reference_frequency(counts: Mapping[str, float], word: str, missing: float) -> float:
