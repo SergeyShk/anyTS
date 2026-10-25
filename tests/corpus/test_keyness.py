@@ -458,3 +458,11 @@ def test_keyness_of_ngrams():
     # Fewer words than n leave no n-grams
     with pytest.raises(SourceError):
         keyness(["cat"], reference, n=2)
+
+
+def test_ngrams_of_texts_shorter_than_n():
+    """Texts shorter than n give no n-grams: the error names them, not missing words"""
+    with pytest.raises(
+        SourceError, match=r"^The data source has no n-grams: its texts are shorter than 3 words$"
+    ):
+        keyness(["the", "cat"], ["the", "cat"], n=3)

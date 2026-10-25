@@ -172,7 +172,11 @@ def keyness(
         missing = 0.0
     size_target = float(sum(counts_target.values()))
     if not size_target or not size_reference:
-        raise SourceError("The data source has no words")
+        raise SourceError(
+            "The data source has no words"
+            if n == 1
+            else f"The data source has no n-grams: its texts are shorter than {n} words"
+        )
     calc = _MEASURES[measure]
     rows = []
     # A negative keyword needs a frequency of its own in the reference: that of a missing key

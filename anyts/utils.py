@@ -4,7 +4,7 @@ import math
 import re
 import sys
 import unicodedata
-from bisect import bisect_right
+from bisect import bisect_left, bisect_right
 from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, Sequence, Set, Sized
 from functools import lru_cache
 from importlib import import_module
@@ -14,7 +14,7 @@ from re import Pattern
 from statistics import StatisticsError, fmean
 from string import Formatter
 from types import ModuleType
-from typing import TYPE_CHECKING, Any, TypeGuard
+from typing import TYPE_CHECKING, Any, TypeGuard, cast
 
 from .constants import MESSAGES
 from .exceptions import ParameterError, SourceError, SourceTypeError
@@ -22,6 +22,7 @@ from .exceptions import ParameterError, SourceError, SourceTypeError
 if TYPE_CHECKING:
     from spacy.language import Language
     from spacy.tokens import Doc, Span, Token
+    from thinc.types import Ints2d
 
     from .extractors import SentsExtractor
 
@@ -793,6 +794,66 @@ def find_unit_paragraph_starts(units: Sequence[Sequence[Token]]) -> frozenset[in
             )
         )
     )
+
+
+def set_sent_starts(doc: Doc, starts: Iterable[int]) -> Doc:
+    """
+    Setting the sentences of a Doc by the character offsets of their starts
+
+    Description:
+        The first token at or after every offset that is not whitespace starts a
+        sentence, and every other token does not, so that the parser, senter or
+        sentencizer that runs after it keeps the sentences of a segmenter of the
+        library; the whitespace stays with the sentence before it. A parsed
+        document passes untouched, since spaCy keeps its sentences
+
+    Arguments:
+        doc (Doc): Doc object
+        starts (list[int]): Character offsets of the starts of the sentences
+
+    Returns:
+        Doc: The document
+
+    Raises:
+        SourceTypeError: If the offsets are not a collection of integers
+        ParameterError: If an offset is negative
+
+    Example:
+        >>> import spacy
+        >>> from anyts.utils import set_sent_starts
+        >>> nlp = spacy.blank("en")
+        >>> _ = nlp.add_pipe("sentencizer")
+        >>> doc = set_sent_starts(nlp.make_doc("Mr. Smith came. Dr. Who left."), [0, 16])
+        >>> [sent.text for sent in nlp(doc).sents]
+        ['Mr. Smith came.', 'Dr. Who left.']
+    """
+    if isinstance(starts, (str, bytes)) or not isinstance(starts, Iterable):
+        raise SourceTypeError(
+            f"The starts must be a collection of integers, not {type(starts).__name__}"
+        )
+    offsets = list(starts)
+    for offset in offsets:
+        check_integer(offset, "start of a sentence")
+        if offset < 0:
+            raise ParameterError(f"A start of a sentence cannot be negative, not {offset}")
+    if not len(doc) or doc.has_annotation("DEP"):
+        return doc
+    import numpy
+    from spacy.attrs import SENT_START
+
+    words = [token.i for token in doc if not token.is_space]
+    begins = [doc[i].idx for i in words]
+    flags = [-1] * len(doc)
+    flags[0] = 1
+    for offset in offsets:
+        position = bisect_left(begins, offset)
+        if position < len(words):
+            flags[words[position]] = 1
+    # Written at once: every assignment of is_sent_start makes spaCy scan the whole document
+    doc.from_array(
+        [SENT_START], cast("Ints2d", numpy.array(flags, dtype="int64").astype("uint64"))
+    )
+    return doc
 
 
 def add_tokenizer_rules(

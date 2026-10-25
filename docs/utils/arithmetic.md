@@ -90,7 +90,11 @@ A negative, `nan` or infinite count raises `SourceError`.
 
     from anyts.utils import shannon_entropy
 
-    shannon_entropy({"a": 2, "b": 2}), shannon_entropy(Counter(["the", "cat", "the"])), shannon_entropy({})
+    (
+        shannon_entropy({"a": 2, "b": 2}),
+        shannon_entropy(Counter(["the", "cat", "the"])),
+        shannon_entropy({}),
+    )
     ```
 
 === "Result"

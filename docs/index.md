@@ -195,8 +195,12 @@ The corpus measures take lists of words:
     ``` python
     from anyts.corpus import keyness
 
-    cats = WordsExtractor(lowercase=True).extract("The cat sat on the mat. The cat saw a bird. The cat slept.")
-    dogs = WordsExtractor(lowercase=True).extract("The dog sat on the log. The dog saw a cat. The dog barked.")
+    cats = WordsExtractor(lowercase=True).extract(
+        "The cat sat on the mat. The cat saw a bird. The cat slept."
+    )
+    dogs = WordsExtractor(lowercase=True).extract(
+        "The dog sat on the log. The dog saw a cat. The dog barked."
+    )
     [(keyword.word, round(keyword.log_ratio, 2)) for keyword in keyness(cats, dogs, min_freq=2)]
     ```
 
