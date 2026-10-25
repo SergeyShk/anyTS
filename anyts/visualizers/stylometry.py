@@ -1,5 +1,6 @@
 from collections.abc import Mapping, Sequence
 from itertools import combinations
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -354,9 +355,16 @@ def rolling_delta_plot(
     ax.set_xlabel(captions["xlabel"])
     ax.set_ylabel(captions["ylabel"])
     ax.set_title(captions["title"])
-    # The names go to the legend as they are: a label of matplotlib that starts with _ is hidden
-    ax.legend(lines, names)
+    _legend(ax, lines, names)
     return ax
+
+
+def _legend(ax: Axes, handles: Sequence[Any], names: Sequence[str]) -> None:
+    """A legend with the names as they are: matplotlib hides a label that starts with an
+    underscore, so the legend is made with a zero-width space before it and given the name"""
+    legend = ax.legend(handles, [f"\u200b{name}" for name in names])
+    for text, name in zip(legend.get_texts(), names, strict=True):
+        text.set_text(name)
 
 
 def zeta_scatter_plot(
@@ -421,7 +429,7 @@ def zeta_scatter_plot(
     ax.set_xlabel(captions["xlabel"])
     ax.set_ylabel(captions["ylabel"])
     ax.set_title(captions["title"])
-    ax.legend(points, names)
+    _legend(ax, points, names)
     return ax
 
 
@@ -468,5 +476,5 @@ def mendenhall_plot(
     ax.set_xlabel(captions["xlabel"])
     ax.set_ylabel(captions["ylabel"])
     ax.set_title(captions["title"])
-    ax.legend(lines, names)
+    _legend(ax, lines, names)
     return ax
