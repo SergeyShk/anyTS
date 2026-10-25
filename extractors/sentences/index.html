@@ -2311,7 +2311,7 @@
 <!-- --8<-- [start:split_paragraphs] -->
 <div class="signature highlight"><pre><span></span><code><span class="n">split_paragraphs</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
 </code></pre></div>
-<p>The paragraphs of a text: its parts between blank lines (<code>BLANK_LINE</code>), stripped of whitespace at their edges; a part of whitespace alone is none. Their words give the sizes of the parts of <code>dispersion</code> by paragraph; a paragraph without words, such as a scene break of asterisks, is still one. A text that is not a string raises <code>SourceTypeError</code>.</p>
+<p>The paragraphs of a text: its parts between blank lines, stripped of whitespace at their edges; a part of whitespace alone is none. A blank line (<code>BLANK_LINE</code>) is two line breaks - <code>\n</code>, <code>\r\n</code>, <code>\r</code>, U+0085 or U+2028 - with whitespace alone between them, the zero-width space and the byte order mark counting as whitespace there, or a paragraph separator U+2029; it also ends the sentences of <code>SentsExtractor</code> and the paragraphs of <code>CohesionStats</code>. Their words give the sizes of the parts of <code>dispersion</code> by paragraph; a paragraph without words, such as a scene break of asterisks, is still one. A text that is not a string raises <code>SourceTypeError</code>.</p>
 <table>
 <thead>
 <tr>

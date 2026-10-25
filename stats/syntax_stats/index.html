@@ -2710,11 +2710,11 @@
 <div class="signature highlight"><pre><span></span><code><span class="n">SyntaxStats</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
 </code></pre></div>
 <!-- --8<-- [start:SyntaxStats] -->
-<p>The syntactic statistics of a text by its dependency tree (<a href="https://dialogue-conf.org/media/4302/ivanovvv.pdf">Ivanov, Solnyshkina and Solovyev 2018</a>): the measures of the tree and of the syntactic constructions. The data source is a <code>Doc</code> object of <a href="https://github.com/explosion/spaCy">spaCy</a> with a dependency parse. Punctuation, symbols and whitespace are no nodes of the tree, and the distances are counted in positions of words.</p>
+<p>The syntactic statistics of a text by its dependency tree (<a href="https://dialogue-conf.org/media/4302/ivanovvv.pdf">Ivanov, Solnyshkina and Solovyev 2018</a>): the measures of the tree and of the syntactic constructions. The data source is a <code>Doc</code> object of <a href="https://github.com/explosion/spaCy">spaCy</a> with a dependency parse and parts of speech. Punctuation, symbols and whitespace are no nodes of the tree, and the distances are counted in positions of words. The units of L2SCA, the prepositional chains and the similarity of sentences are computed on first use, so a subclass whose <code>stats_desc</code> does not name them does not pay for them.</p>
 <p>Raises:</p>
 <ul>
 <li><code>SourceTypeError</code> - a source that is not a <code>Doc</code>;</li>
-<li><code>SourceError</code> - a source without a dependency parse (relations and sentence boundaries), without lemmas when the class requires them, or without words.</li>
+<li><code>SourceError</code> - a source without a dependency parse (relations and sentence boundaries), without parts of speech, without lemmas when the class requires them, or without words.</li>
 </ul>
 <!-- --8<-- [end:SyntaxStats] -->
 
@@ -2801,7 +2801,7 @@ Ratio of nouns to verbs                                    |   0.50
 <td style="text-align: left;"><code>source</code></td>
 <td style="text-align: left;"><code>Doc</code></td>
 <td style="text-align: left;">-</td>
-<td style="text-align: left;">Data source: a <code>Doc</code> with a dependency parse, or what <code>parse</code> takes</td>
+<td style="text-align: left;">Data source: a <code>Doc</code> with a dependency parse and parts of speech, or what <code>parse</code> takes</td>
 </tr>
 </tbody>
 </table>
@@ -2914,7 +2914,7 @@ Ratio of nouns to verbs                                    |   0.50
 
 <h2 id="metrics">Metrics<a class="headerlink" href="#metrics" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:SyntaxStats-metrics] -->
-<p>Every metric is an attribute of the object, computed when it is created, and <code>get_stats</code> gives them all. The measures of a sentence (the longest dependency, the depth, the nodes per leaf) are averaged over the sentences; the constructions are given per sentence.</p>
+<p>Every metric is an attribute of the object, computed when it is created - the units of L2SCA, the prepositional chains and the similarity of sentences on first use - and <code>get_stats</code> gives them all. The measures of a sentence (the longest dependency, the depth, the nodes per leaf) are averaged over the sentences; the constructions are given per sentence.</p>
 <table>
 <thead>
 <tr>
@@ -3144,13 +3144,13 @@ Ratio of nouns to verbs                                    |   0.50
 <tr>
 <td style="text-align: left;"><a href="#similarity"><code>pos_edit_distance</code></a></td>
 <td style="text-align: left;">Mean edit distance of the parts of speech of adjacent sentences over the longer one</td>
-<td style="text-align: left;">0-1, <code>nan</code> for one sentence or without parts of speech</td>
+<td style="text-align: left;">0-1, <code>nan</code> for one sentence</td>
 <td style="text-align: left;">Less alike sentences</td>
 </tr>
 <tr>
 <td style="text-align: left;"><a href="#similarity"><code>syntax_similarity</code></a></td>
 <td style="text-align: left;">Mean similarity of the dependency triples of adjacent sentences</td>
-<td style="text-align: left;">0-1, <code>nan</code> for one sentence or without parts of speech</td>
+<td style="text-align: left;">0-1, <code>nan</code> for one sentence</td>
 <td style="text-align: left;">More alike sentences</td>
 </tr>
 <tr>
@@ -3486,9 +3486,10 @@ Ratio of nouns to verbs                                    |   0.50
 <!-- --8<-- [start:SyntaxStats-l2sca] -->
 <p>The indices of the L2 Syntactic Complexity Analyzer (L2SCA) that the other metrics do not give, on Universal Dependencies. MLC and C/S are <code>mean_clause_len</code> and <code>clauses_per_sent</code>; MLS and DC/C come from the counts, <code>n_words / n_sents</code> and <code>n_subordinate_clauses / n_clauses</code>.</p>
 <ul>
-<li>A T-unit is a main clause with the clauses that depend on it: the head of a sentence and every clause head joined to it through <code>conj</code> or <code>parataxis</code> (<code>anyts.constants.MAIN_CLAUSE_DEPS</code>), so <em>I came, and he left</em> holds two; a conjunct of a subordinate clause is none. A T-unit is complex with a subordinate clause (<code>is_subordinate_clause_head</code>) whose nearest T-unit above is it.</li>
+<li>A T-unit is a main clause with the clauses that depend on it: the head of a sentence and every clause head joined to it through <code>conj</code> or <code>parataxis</code> (<code>anyts.constants.MAIN_CLAUSE_DEPS</code>), so <em>I came, and he left</em> holds two; a conjunct of a subordinate clause is none. A conjunct without a subject of its own (<em>I came and left</em>) is a predicate sharing the T-unit of the clause it is coordinated to, as in L2SCA, unless its person, number or gender - those of its auxiliary or copula, its own without one - differ from those of that clause: in a language that drops its subjects the ending names another one (<em>llegamos al puerto y nos esperabas</em>). An existential <em>there</em> (<code>expl</code> of ClearNLP) is a subject. A T-unit is complex with a subordinate clause (<code>is_subordinate_clause_head</code>) whose nearest T-unit above is it.</li>
 <li>A verb phrase is a predicate (<code>is_predicate</code>) that is no auxiliary or copula: a verb, an auxiliary used as a predicate (<em>there </em><em>is</em><em> trouble</em>), a word with a subject or a copula.</li>
-<li>A coordinate phrase is a coordination with a conjunct that is no clause head (<em>the man and the woman</em>, <em>is big and nice</em>), counted once by its first conjunct; a coordination of clause heads counts as clauses.</li>
+<li>A coordinate phrase is a coordination with a conjunct that is no clause head (<em>the man and the woman</em>, <em>is big and nice</em>) or a predicate without a subject of its own (<em>came and left</em>), counted once by its first conjunct; a coordination of clauses with their own subjects counts as clauses.</li>
+<li>The clauses are those of <code>is_clause_head</code>, as in the other metrics: a predicate sharing a subject and an infinitive clause count as clauses, while L2SCA counts finite clauses with a subject, so C/T, C/S and CN/C run higher and MLC lower than in L2SCA.</li>
 <li>A complex nominal is a noun with a modifier of <code>anyts.constants.COMPLEX_NOMINAL_DEPS</code> (an adjective, a complement, a relative or participial clause, an apposition, a possessive), or a nominal clause, a clause head of <code>anyts.constants.NOMINAL_CLAUSE_DEPS</code> or a conjunct of one.</li>
 </ul>
 <div class="arithmatex">\[
@@ -3642,7 +3643,7 @@ Ratio of nouns to verbs                                    |   0.50
 <h3 id="similarity">Similarity of adjacent sentences<a class="headerlink" href="#similarity" title="Permanent link">&para;</a></h3>
 <p class="metric-meta"><code>pos_edit_distance</code> · <code>syntax_similarity</code> · <a href="https://doi.org/10.1017/CBO9780511894664">Coh-Metrix</a></p>
 <!-- --8<-- [start:SyntaxStats-similarity] -->
-<p>How alike the structures of two adjacent sentences are, averaged over the <span class="arithmatex">\(S - 1\)</span> pairs. <code>pos_edit_distance</code> is the edit distance of the parts of speech <span class="arithmatex">\(P_s\)</span> of the words of the sentences (SYNMEDpos of Coh-Metrix) over the length <span class="arithmatex">\(n\)</span> of the longer sentence of the pair, <code>calc_edit_distance</code>. <code>syntax_similarity</code> is the similarity of the multisets of the dependency triples <span class="arithmatex">\(T\)</span> of the two sentences (<code>dependency_triples</code>, <code>calc_multiset_similarity</code>), in the manner of SYNSTRUT of Coh-Metrix, which compares the nodes of phrase-structure trees. Both are <code>nan</code> for a <code>Doc</code> without parts of speech.</p>
+<p>How alike the structures of two adjacent sentences are, averaged over the <span class="arithmatex">\(S - 1\)</span> pairs. <code>pos_edit_distance</code> is the edit distance of the parts of speech <span class="arithmatex">\(P_s\)</span> of the words of the sentences (SYNMEDpos of Coh-Metrix) over the length <span class="arithmatex">\(n\)</span> of the longer sentence of the pair, <code>calc_edit_distance</code>. <code>syntax_similarity</code> is the similarity of the multisets of the dependency triples <span class="arithmatex">\(T\)</span> of the two sentences (<code>dependency_triples</code>, <code>calc_multiset_similarity</code>), in the manner of SYNSTRUT of Coh-Metrix, which compares the nodes of phrase-structure trees.</p>
 <div class="arithmatex">\[
 \frac{1}{S - 1} \sum_{s=1}^{S-1} \frac{\textrm{lev}(P_s, P_{s+1})}{\max(n_s, n_{s+1})}, \quad
 \frac{1}{S - 1} \sum_{s=1}^{S-1} \frac{|T_s \cap T_{s+1}|}{|T_s \cup T_{s+1}|}
@@ -3676,6 +3677,7 @@ Ratio of nouns to verbs                                    |   0.50
 </tr>
 </tbody>
 </table>
+<p>Tokens that are not a <code>Doc</code>, a <code>Span</code> or a list of <code>Token</code> objects raise <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:dependency_triples] -->
 <!-- --8<-- [start:calc_edit_distance] -->
 <div class="signature highlight"><pre><span></span><code><span class="n">calc_edit_distance</span><span class="p">(</span><span class="n">sents</span><span class="p">)</span>
@@ -3699,7 +3701,7 @@ Ratio of nouns to verbs                                    |   0.50
 </tr>
 </tbody>
 </table>
-<p>Sentences that are not a list of lists raise <code>SourceTypeError</code>.</p>
+<p>Sentences that are not a list of lists, or items that cannot be hashed, raise <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:calc_edit_distance] -->
 <!-- --8<-- [start:calc_multiset_similarity] -->
 <div class="signature highlight"><pre><span></span><code><span class="n">calc_multiset_similarity</span><span class="p">(</span><span class="n">sents</span><span class="p">)</span>
@@ -3723,7 +3725,7 @@ Ratio of nouns to verbs                                    |   0.50
 </tr>
 </tbody>
 </table>
-<p>Sentences that are not a list of collections raise <code>SourceTypeError</code>.</p>
+<p>Sentences that are not a list of collections, or items that cannot be hashed, raise <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:calc_multiset_similarity] -->
 <div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Code</label><label for="__tabbed_2_2">Result</label></div>
 <div class="tabbed-content">
@@ -4091,7 +4093,7 @@ Ratio of nouns to verbs                                    |   0.50
 <tr>
 <td style="text-align: left;"><code>is_prep_complement(token)</code></td>
 <td style="text-align: left;">method</td>
-<td style="text-align: left;">Whether a word is a link of a prepositional chain; by default <code>is_prep_complement</code> of the module with <code>join_hyphens</code> of the class</td>
+<td style="text-align: left;">Whether a word is a link of a prepositional chain; by default <code>is_prep_complement</code> of the module with <code>join_hyphens</code> of the class. It gets the words of <code>sents</code> on first use: tokens of a copy of the <code>Doc</code> without its user data and tensor, on a blank vocabulary after pickling, so no extension of a token</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>is_participle_clause(token)</code></td>

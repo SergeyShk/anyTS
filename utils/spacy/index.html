@@ -1960,6 +1960,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#find_unit_paragraph_starts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Paragraph starts of a Doc
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#add_tokenizer_rules" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2239,6 +2250,17 @@
     <span class="md-ellipsis">
       
         Marks between the words of a sentence
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#find_unit_paragraph_starts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Paragraph starts of a Doc
       
     </span>
   </a>
@@ -2889,6 +2911,48 @@ True
 </div>
 </div>
 </div>
+<h2 id="find_unit_paragraph_starts">Paragraph starts of a Doc<a class="headerlink" href="#find_unit_paragraph_starts" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:find_unit_paragraph_starts] -->
+<div class="signature highlight"><pre><span></span><code><span class="n">find_unit_paragraph_starts</span><span class="p">(</span><span class="n">units</span><span class="p">)</span>
+</code></pre></div>
+<p>Finds the words of a <code>Doc</code> that start a paragraph: the words are those of <code>iter_doc_units</code> over the whole <code>Doc</code>, across its sentences, and a word that a blank line (<code>BLANK_LINE</code>) separates from the word before gets its position, inside a sentence too, as <code>find_paragraph_starts</code> does for a text. <code>CohesionStats</code> sets the <code>paragraph_start</code> of its words by these positions.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Parameter</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Default</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>units</code></td>
+<td style="text-align: left;"><code>list[list[Token]]</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Tokens of every word of a <code>Doc</code> in order</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:find_unit_paragraph_starts] -->
+
+<div class="tabbed-set tabbed-alternate" data-tabs="12:2"><input checked="checked" id="__tabbed_12_1" name="__tabbed_12" type="radio" /><input id="__tabbed_12_2" name="__tabbed_12" type="radio" /><div class="tabbed-labels"><label for="__tabbed_12_1">Code</label><label for="__tabbed_12_2">Result</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">spacy</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">anyts.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">find_unit_paragraph_starts</span><span class="p">,</span> <span class="n">iter_doc_units</span>
+
+<span class="n">doc</span> <span class="o">=</span> <span class="n">spacy</span><span class="o">.</span><span class="n">blank</span><span class="p">(</span><span class="s2">"en"</span><span class="p">)(</span><span class="s2">"It rains.</span><span class="se">\n\n</span><span class="s2">We stay home."</span><span class="p">)</span>
+<span class="nb">sorted</span><span class="p">(</span><span class="n">find_unit_paragraph_starts</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">iter_doc_units</span><span class="p">(</span><span class="n">doc</span><span class="p">))))</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>[2]
+</code></pre></div>
+</div>
+</div>
+</div>
 <h2 id="add_tokenizer_rules">Tokenizer rules<a class="headerlink" href="#add_tokenizer_rules" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:add_tokenizer_rules] -->
 <div class="signature highlight"><pre><span></span><code><span class="n">add_tokenizer_rules</span><span class="p">(</span><span class="n">nlp</span><span class="p">,</span> <span class="n">prefixes</span><span class="o">=</span><span class="p">(),</span> <span class="n">suffixes</span><span class="o">=</span><span class="p">(),</span> <span class="n">infixes</span><span class="o">=</span><span class="p">(),</span> <span class="n">abbreviations</span><span class="o">=</span><span class="p">())</span>
@@ -2939,7 +3003,7 @@ True
 <p>Rules that are not lists of strings and abbreviations that are not a collection of strings raise <code>SourceTypeError</code>, a rule that is not a regular expression that can be joined to others <code>ParameterError</code>.</p>
 <!-- --8<-- [end:add_tokenizer_rules] -->
 
-<div class="tabbed-set tabbed-alternate" data-tabs="12:2"><input checked="checked" id="__tabbed_12_1" name="__tabbed_12" type="radio" /><input id="__tabbed_12_2" name="__tabbed_12" type="radio" /><div class="tabbed-labels"><label for="__tabbed_12_1">Code</label><label for="__tabbed_12_2">Result</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="13:2"><input checked="checked" id="__tabbed_13_1" name="__tabbed_13" type="radio" /><input id="__tabbed_13_2" name="__tabbed_13" type="radio" /><div class="tabbed-labels"><label for="__tabbed_13_1">Code</label><label for="__tabbed_13_2">Result</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">spacy</span>
