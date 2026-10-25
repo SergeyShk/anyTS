@@ -361,7 +361,7 @@ A value that is not a `Token`, a check or a form of an auxiliary that is not cal
 is_infinitive_clause_head(token, is_clause_head=None, auxiliary_form=None, subordinating_marks=())
 ```
 
-Checks whether a word heads an infinitive clause: a clause head by the check `is_clause_head` whose predicate is an infinitive under `xcomp` or a relation of `SUBORDINATE_CLAUSE_DEPS` (*wants to leave*, *asked him to leave*, *came to help*, *it is hard to say*), or a conjunct of one, the first word up its chain of conjuncts deciding as in `is_subordinate_clause_head`. Such a clause is counted apart from the subordinate ones, as grammars of many languages take it for a part of a simple sentence.
+Checks whether a word heads an infinitive clause: a clause head by the check `is_clause_head` whose predicate is an infinitive under `xcomp` or a relation of `SUBORDINATE_CLAUSE_DEPS` (*wants to leave*, *asked him to leave*, *came to help*, *it is hard to say*), or a conjunct of one, the first word up its chain of conjuncts deciding as in `is_subordinate_clause_head`; an infinitive under `conj` or `parataxis` marked by one of `subordinating_marks` heads one too (*came , in order to help*). Such a clause is counted apart from the subordinate ones, as grammars of many languages take it for a part of a simple sentence.
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
@@ -849,7 +849,7 @@ A language library subclasses `SyntaxStats`. The defaults read Universal Depende
 | `is_negation(token)` | method | Whether a word is a word of negation; by default `Polarity=Neg` or a word of `negation_words`, a conjunction excluded |
 | `find_split_predicates(words)` | method | Pairs of a light verb and the noun that carries its meaning (`to make a decision`); none by default |
 | `negation_words` | class attribute | Words of negation besides `Polarity=Neg`, in lower case; none by default |
-| `subordinating_marks` | class attribute | Subordinating conjunctions in lower case, the words of a fixed expression after a space, that make a conjunct or a parataxis they mark a subordinate clause (*because*, *so that*); none by default |
+| `subordinating_marks` | class attribute | Subordinating conjunctions in lower case, the words of a fixed expression after a space, that make a conjunct or a parataxis they mark a subordinate clause (*because*, *so that*), an infinitive clause with an infinitive; none by default |
 | `join_hyphens` | class attribute | Take a word the tokenizer split at its hyphens for one word, in the tree and in the default hooks |
 | `requires_lemmas` | class attribute | Whether the source must carry lemmas, for hooks that read them |
 | `stats_desc`, `stats_headers` | class attributes | Statistics of `get_stats` with their descriptions (`SYNTAX_STATS_DESC` by default), headers of the columns for `print_stats` |

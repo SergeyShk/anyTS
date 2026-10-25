@@ -201,7 +201,8 @@ class SyntaxStats(Stats):
             lower case
         subordinating_marks (frozenset[str]): Subordinating conjunctions in lower case,
             with the words of their fixed expression after a space, that make a conjunct
-            or a parataxis they mark a subordinate clause (is_subordinate_clause_head)
+            or a parataxis they mark a subordinate clause, an infinitive clause with an
+            infinitive (is_subordinate_clause_head, is_infinitive_clause_head)
         stats_desc (dict[str, str]): Statistics of get_stats and their descriptions for
             print_stats
 
@@ -1777,9 +1778,10 @@ def is_infinitive_clause_head(
         under xcomp or a relation of SUBORDINATE_CLAUSE_DEPS (wants to leave, asked
         him to leave, came to help, it is hard to say), or a conjunct of one: the
         first word up its chain of conjuncts decides, as in
-        is_subordinate_clause_head. Such a clause is counted apart from the
-        subordinate ones, as grammars of many languages take it for a part of a
-        simple sentence
+        is_subordinate_clause_head; an infinitive under conj or parataxis marked by
+        one of subordinating_marks heads one too (came , in order to help). Such a
+        clause is counted apart from the subordinate ones, as grammars of many
+        languages take it for a part of a simple sentence
 
     Arguments:
         token (Token): Token
