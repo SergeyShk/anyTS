@@ -810,9 +810,7 @@ def _shares_subject(token: Token, join_hyphens: bool) -> bool:
     ):
         return False
     head = _chain_parent(token, join_hyphens)
-    if head is None:
-        return True
-    own, other = _agreement(token), _agreement(head)
+    own, other = _agreement(token), _agreement(head) if head is not None else {}
     return all(own[feature] == other[feature] for feature in own.keys() & other.keys())
 
 
