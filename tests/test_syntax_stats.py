@@ -1163,6 +1163,15 @@ def test_attributive_participles_are_no_verb_phrases():
         ),
     ):
         assert SyntaxStats(parse(words, heads, deps, morphs, pos=pos)).n_verb_phrases == phrases
+    # дом , который построен: a participle with a subject of its own is a predicate
+    doc = parse(
+        ["дом", ",", "который", "построен"],
+        [0, 3, 3, 0],
+        ["ROOT", "punct", "nsubj:pass", "acl:relcl"],
+        ["", "", "", part],
+        pos=["NOUN", "PUNCT", "PRON", "VERB"],
+    )
+    assert SyntaxStats(doc).n_verb_phrases == 1
     # slamming the door: a converb under advcl is a verb phrase
     doc = parse(
         ["slamming", "the", "door", "he", "left"],
@@ -1219,6 +1228,47 @@ def test_subordinating_marks():
     )
     assert (SyntaxStats(doc).n_subordinate_clauses, Marked(doc).n_subordinate_clauses) == (0, 1)
     assert (SyntaxStats(doc).n_t_units, Marked(doc).n_t_units) == (2, 1)
+    # we came , for work: a marked infinitive is an infinitive clause and no T-unit
+    doc = parse(
+        ["we", "came", ",", "for", "work"],
+        [1, 1, 4, 4, 1],
+        ["nsubj", "ROOT", "punct", "mark", "parataxis"],
+        ["", fin, "", "", "VerbForm=Inf"],
+        pos=["PRON", "VERB", "PUNCT", "SCONJ", "VERB"],
+    )
+    stats = Marked(doc)
+    assert (stats.n_t_units, stats.n_l2sca_clauses, stats.n_infinitive_clauses) == (1, 1, 1)
+    assert stats.clauses_per_t_unit == 1.0 and stats.n_subordinate_clauses == 0
+    # he left and ran , for he was tired and slept: two coordinations, left and tired
+    doc = parse(
+        ["he", "left", "and", "ran", ",", "for", "he", "was", "tired", "and", "slept"],
+        [1, 1, 3, 1, 8, 8, 8, 8, 1, 10, 8],
+        ["nsubj", "ROOT", "cc", "conj", "punct", "mark", "nsubj", "cop", "conj", "cc", "conj"],
+        ["", fin, "", fin, "", "", "", fin, "", "", fin],
+        pos=[
+            "PRON",
+            "VERB",
+            "CCONJ",
+            "VERB",
+            "PUNCT",
+            "SCONJ",
+            "PRON",
+            "AUX",
+            "ADJ",
+            "CCONJ",
+            "VERB",
+        ],
+    )
+    assert (SyntaxStats(doc).n_coordinate_phrases, Marked(doc).n_coordinate_phrases) == (1, 2)
+    # he left , for he was tired , she said: a clause under a subordinate one is no T-unit
+    doc = parse(
+        ["he", "left", ",", "for", "he", "was", "tired", ",", "she", "said"],
+        [1, 1, 6, 6, 6, 6, 1, 9, 9, 6],
+        ["nsubj", "ROOT", "punct", "mark", "nsubj", "cop", "conj", "punct", "nsubj", "parataxis"],
+        ["", fin, "", "", "", fin, "", "", "", fin],
+        pos=["PRON", "VERB", "PUNCT", "SCONJ", "PRON", "AUX", "ADJ", "PUNCT", "PRON", "VERB"],
+    )
+    assert (SyntaxStats(doc).n_t_units, Marked(doc).n_t_units) == (3, 1)
     with pytest.raises(SourceTypeError):
         is_subordinate_clause_head(doc[6], subordinating_marks="so that")
     with pytest.raises(SourceTypeError):

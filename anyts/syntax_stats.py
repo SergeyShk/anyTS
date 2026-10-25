@@ -277,9 +277,10 @@ class SyntaxStats(Stats):
         ]
         self.n_subordinate_clauses = sum(map(len, subordinate))
         self.n_complex_sents = sum(1 for sent in subordinate if sent)
-        self.n_infinitive_clauses = sum(
-            1 for sent in heads for token in sent if self.is_infinitive_clause_head(token)
-        )
+        infinitive = [
+            token.i for sent in heads for token in sent if self.is_infinitive_clause_head(token)
+        ]
+        self.n_infinitive_clauses = len(infinitive)
         nouns = [token for token in words if token.pos_ in ("NOUN", "PROPN")]
         self.n_nouns = len(nouns)
         participle_clauses = [
@@ -307,6 +308,7 @@ class SyntaxStats(Stats):
         self._spans = tuple((span.start, span.end) for span in spans)
         self._clause_heads = tuple(tuple(token.i for token in sent) for sent in heads)
         self._subordinate_heads = tuple(tuple(token.i for token in sent) for sent in subordinate)
+        self._infinitive_heads = frozenset(infinitive)
 
         self.mean_dependency_distance = safe_mean(all_distances)
         self.std_dependency_distance = pstdev(all_distances) if all_distances else nan
@@ -364,23 +366,23 @@ class SyntaxStats(Stats):
         words = [token for sent in self.sents for token in sent]
         heads = [[doc[i] for i in sent] for sent in self._clause_heads]
         clause_ids = {token.i for sent in heads for token in sent}
-        n_t_units = n_complex_t_units = 0
-        for sent, subordinate in zip(heads, self._subordinate_heads, strict=True):
-            # A conjunct or a parataxis with a subordinating mark is a subordinate clause
-            units = {token.i for token in _t_unit_heads(sent, join_hyphens)} - set(subordinate)
-            n_t_units += len(units)
-            n_complex_t_units += len(
-                _t_units_of([doc[i] for i in subordinate], units, join_hyphens) - {None}
-            )
         marks = self.subordinating_marks
-        # A conjunct with a subordinating mark is a subordinate clause, no member of a coordination
+        # A conjunct or a parataxis with a subordinating mark heads a subordinate or an infinitive
+        # clause: no T-unit nor a clause under it, no member of the coordination it hangs on
         marked = {
             token.i
             for sent in heads
             for token in sent
-            if marks and base_dep(token) == "conj" and _has_mark(token, marks)
+            if marks and base_dep(token) in MAIN_CLAUSE_DEPS and _has_mark(token, marks)
         }
-        firsts = _first_conjuncts(words, join_hyphens)
+        n_t_units = n_complex_t_units = 0
+        for sent, subordinate in zip(heads, self._subordinate_heads, strict=True):
+            units = {token.i for token in _t_unit_heads(sent, join_hyphens, marked)}
+            n_t_units += len(units)
+            n_complex_t_units += len(
+                _t_units_of([doc[i] for i in subordinate], units, join_hyphens) - {None}
+            )
+        firsts = _first_conjuncts(words, join_hyphens, marked)
         coordinations: dict[int, list[Token]] = {}
         for token in words:
             first = firsts[token.i]
@@ -402,7 +404,7 @@ class SyntaxStats(Stats):
                 for sent in heads
                 for token in sent
                 if (token.i in marked or not _shares_subject(token, join_hyphens))
-                and not self.is_infinitive_clause_head(token)
+                and token.i not in self._infinitive_heads
             ),
             # A coordination of phrases, or of predicates sharing a subject
             "n_coordinate_phrases": sum(
@@ -434,9 +436,9 @@ class SyntaxStats(Stats):
         }
 
     def _is_attributive(self, token: Token, firsts: Mapping[int, Token | None]) -> bool:
-        """Whether a non-finite verb form is an attribute of a noun, its coordination under
-        amod or acl, without an auxiliary or a copula: L2SCA takes it for a part of the noun
-        phrase, not for a verb phrase"""
+        """Whether a non-finite verb form is an attribute of a noun: under amod or acl, or
+        coordinated to one, without an auxiliary or a copula, which L2SCA takes for a part of
+        the noun phrase; one with a subject of its own stays a predicate (is_predicate)"""
         if predicate_form(token, self.auxiliary_form) not in NONFINITE_CLAUSE_FORMS:
             return False
         first = firsts[token.i]
@@ -803,30 +805,39 @@ def _word_triple(token: Token) -> tuple[str, str, str]:
     return ("", "root", token.pos_)
 
 
-def _t_unit_heads(heads: Sequence[Token], join_hyphens: bool) -> list[Token]:
+def _t_unit_heads(
+    heads: Sequence[Token], join_hyphens: bool, marked: Collection[int]
+) -> list[Token]:
     """Clause heads of a sentence that head a T-unit: the head of the sentence and the main
     clauses joined to it through conj or parataxis, but for a conjunct without a subject of its
-    own, a predicate of the clause it is coordinated to"""
+    own, a predicate of the clause it is coordinated to; a marked clause head is no main clause"""
     ids = {token.i for token in heads}
     known: dict[int, bool] = {}
     return [
         token
         for token in heads
-        if _is_main_clause(token, ids, join_hyphens, known)
+        if _is_main_clause(token, ids, join_hyphens, known, marked)
         and not _shares_subject(token, join_hyphens)
     ]
 
 
 def _is_main_clause(
-    token: Token, ids: Collection[int], join_hyphens: bool, known: dict[int, bool]
+    token: Token,
+    ids: Collection[int],
+    join_hyphens: bool,
+    known: dict[int, bool],
+    marked: Collection[int],
 ) -> bool:
-    """Whether a clause head reaches the head of the sentence through main clauses alone; known
-    keeps the answers for the clause heads on the way"""
+    """Whether a clause head reaches the head of the sentence through main clauses alone, none
+    of them marked; known keeps the answers for the clause heads on the way"""
     path: list[int] = []
     on_path: set[int] = set()
     while token.i not in known:
         path.append(token.i)
         on_path.add(token.i)
+        if token.i in marked:
+            outcome = False
+            break
         if is_root(token):
             outcome = True
             break
@@ -901,9 +912,11 @@ def _t_units_of(
     return found
 
 
-def _first_conjuncts(words: Iterable[Token], join_hyphens: bool) -> dict[int, Token | None]:
+def _first_conjuncts(
+    words: Iterable[Token], join_hyphens: bool, starts: Collection[int] = ()
+) -> dict[int, Token | None]:
     """First conjunct of the coordination of every word by its position, the word itself out
-    of one; None through a punctuation mark or a loop of conjuncts"""
+    of one or at one of starts; None through a punctuation mark or a loop of conjuncts"""
     known: dict[int, Token | None] = {}
     for token in words:
         path: list[int] = []
@@ -913,7 +926,7 @@ def _first_conjuncts(words: Iterable[Token], join_hyphens: bool) -> dict[int, To
             if word.i in known:
                 first = known[word.i]
                 break
-            if base_dep(word) != "conj":
+            if base_dep(word) != "conj" or word.i in starts:
                 first = known[word.i] = word
                 break
             path.append(word.i)
@@ -1715,8 +1728,8 @@ def is_subordinate_clause_head(
     Checking whether a word heads a subordinate clause
 
     Description:
-        The head of a clause by is_clause_head with a finite predicate
-        (predicate_form) and a relation of SUBORDINATE_CLAUSE_DEPS (ccomp, advcl,
+        The head of a clause by is_clause_head whose predicate (predicate_form) is
+        no infinitive, with a relation of SUBORDINATE_CLAUSE_DEPS (ccomp, advcl,
         acl, csubj and their subtypes) or xcomp (a complement a model attaches as
         xcomp), or a conjunct of one: the relation of the first word up its chain
         of conjuncts decides. A conjunct or a parataxis marked by one of

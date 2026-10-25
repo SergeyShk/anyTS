@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, NamedTuple
 from .constants import MORPH_FEATURES, MORPH_STATS_DESC, MORPH_VALUES_DESC
 from .exceptions import ParameterError, SourceError, SourceTypeError, UnknownStatError
 from .stats import Stats, _print_table
-from .utils import has_pos, is_doc, iter_doc_tokens, source_type_error
+from .utils import check_bool, has_pos, is_doc, iter_doc_tokens, source_type_error
 
 if TYPE_CHECKING:
     from spacy.tokens import Doc
@@ -242,7 +242,10 @@ class MorphStats(Stats):
 
         Raises:
             UnknownStatError: If a statistic is unknown
+            ParameterError: If filter_none or flat is not a bool
         """
+        check_bool(filter_none, "filter_none")
+        check_bool(flat, "flat")
         stats: dict[str, dict[str | None, int]] = {}
         for stat in self._checked_stats(args):
             counts = dict(Counter(getattr(self, stat)))
