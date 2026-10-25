@@ -24,6 +24,7 @@ from ..utils import (
     check_word,
     check_words,
     find_phrases,
+    has_pos,
     has_sents,
     in_order,
     is_doc,
@@ -236,7 +237,7 @@ class HighlightedText:
             layer
             for layer in self.layers_desc
             if all(
-                doc is not None and doc.has_annotation(annotation)
+                doc is not None and _has_annotation(doc, annotation)
                 for annotation in self.layer_annotations.get(layer, ())
             )
         ]
@@ -504,12 +505,12 @@ def get_doc_words(doc: Doc) -> list[Word]:
     Returns:
         list[Word]: Words with their positions
     """
-    has_pos, has_lemma = doc.has_annotation("POS"), doc.has_annotation("LEMMA")
+    pos, lemma = has_pos(doc), doc.has_annotation("LEMMA")
     return [
         Word(
             *_unit_word([token]),
-            token.pos_ if has_pos else None,
-            token.lemma_ if has_lemma else None,
+            token.pos_ if pos else None,
+            token.lemma_ if lemma else None,
         )
         for token in iter_doc_tokens(doc)
     ]
@@ -691,6 +692,11 @@ def _check_hooks(*hooks: tuple[object, str]) -> None:
     for hook, what in hooks:
         if hook is not None:
             check_callable(hook, what)
+
+
+def _has_annotation(doc: Doc, annotation: str) -> bool:
+    """Whether a Doc carries an annotation, the parts of speech by its words (has_pos)"""
+    return has_pos(doc) if annotation == "POS" else doc.has_annotation(annotation)
 
 
 def _plural(n: int, noun: str) -> str:

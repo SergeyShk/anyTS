@@ -109,6 +109,38 @@ Checks whether a `Doc` has its sentence boundaries: they count when every token 
     True
     ```
 
+## Parts of speech of the words { #has_pos }
+
+<!-- --8<-- [start:has_pos] -->
+``` {.python .signature}
+has_pos(doc)
+```
+
+Checks whether the words of a `Doc` carry parts of speech: one word (`is_word`) with a part of speech is enough. The whitespace tokens do not count, as the attribute ruler of a pipeline without its tagger or morphologizer marks them `SPACE` all the same, which `doc.has_annotation("POS")` takes for parts of speech; a `Doc` without words is checked by its annotation. The statistics and the highlighting check the parts of speech by it.
+
+| Parameter | Type | Default | Description |
+| :-------- | :--- | :------ | :---------- |
+| `doc` | `Doc` | - | Doc object |
+<!-- --8<-- [end:has_pos] -->
+
+=== "Code"
+
+    ``` python
+    import spacy
+
+    from anyts.utils import has_pos
+
+    doc = spacy.blank("en")("The cat sleeps.\n\nThe dog eats.")
+    doc[4].pos_ = "SPACE"
+    doc.has_annotation("POS"), has_pos(doc)
+    ```
+
+=== "Result"
+
+    ```
+    (True, False)
+    ```
+
 ## Words among the tokens { #is_word }
 
 <!-- --8<-- [start:is_word] -->
@@ -418,14 +450,15 @@ Finds the punctuation marks between the words of a sentence of a `Doc`: the word
 
 <!-- --8<-- [start:find_unit_paragraph_starts] -->
 ``` {.python .signature}
-find_unit_paragraph_starts(units)
+find_unit_paragraph_starts(units, blank_lines=False)
 ```
 
-Finds the words of a `Doc` that start a paragraph: the words are those of `iter_doc_units` over the whole `Doc`, across its sentences, and a word that a blank line (`BLANK_LINE`) separates from the word before gets its position, inside a sentence too, as `find_paragraph_starts` does for a text. `CohesionStats` sets the `paragraph_start` of its words by these positions.
+Finds the words of a `Doc` that start a paragraph: the words are those of `iter_doc_units` over the whole `Doc`, across its sentences, and a word that a line break (`LINE_BREAK`) separates from the word before gets its position, inside a sentence too, or a blank line (`BLANK_LINE`) with `blank_lines`, as `find_paragraph_starts` does for a text. `CohesionStats` sets the `paragraph_start` of its words by these positions. A `blank_lines` that is not a `bool` raises `ParameterError`.
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
 | `units` | `list[list[Token]]` | - | Tokens of every word of a `Doc` in order |
+| `blank_lines` | `bool` | `False` | Start the paragraphs after the blank lines alone |
 <!-- --8<-- [end:find_unit_paragraph_starts] -->
 
 === "Code"
@@ -435,14 +468,15 @@ Finds the words of a `Doc` that start a paragraph: the words are those of `iter_
 
     from anyts.utils import find_unit_paragraph_starts, iter_doc_units
 
-    doc = spacy.blank("en")("It rains.\n\nWe stay home.")
-    sorted(find_unit_paragraph_starts(list(iter_doc_units(doc))))
+    doc = spacy.blank("en")("It rains.\nWe stay home.\n\nIt stops.")
+    units = list(iter_doc_units(doc))
+    sorted(find_unit_paragraph_starts(units)), sorted(find_unit_paragraph_starts(units, True))
     ```
 
 === "Result"
 
     ```
-    [2]
+    ([2, 5], [5])
     ```
 
 ## Sentences by their starts { #set_sent_starts }

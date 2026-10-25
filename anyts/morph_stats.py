@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, NamedTuple
 from .constants import MORPH_FEATURES, MORPH_STATS_DESC, MORPH_VALUES_DESC
 from .exceptions import ParameterError, SourceError, SourceTypeError, UnknownStatError
 from .stats import Stats, _print_table
-from .utils import is_doc, iter_doc_tokens, source_type_error
+from .utils import has_pos, is_doc, iter_doc_tokens, source_type_error
 
 if TYPE_CHECKING:
     from spacy.tokens import Doc
@@ -216,7 +216,7 @@ class MorphStats(Stats):
         messages = self.messages
         if not is_doc(source):
             raise source_type_error(messages, source)
-        if not source.has_annotation("POS"):
+        if not has_pos(source):
             raise SourceError(messages["no_pos"])
         return [
             MorphWord(token.text, token.pos_ or None, token.morph.to_dict())

@@ -1,7 +1,7 @@
 # Cohesion statistics
 
 ``` {.python .signature}
-CohesionStats(source, sents_extractor=None, connectors=None)
+CohesionStats(source, sents_extractor=None, connectors=None, blank_lines=False)
 ```
 
 <!-- --8<-- [start:CohesionStats] -->
@@ -11,7 +11,7 @@ Raises:
 
 - `SourceTypeError` - an extractor of another type, a source that is not a `Doc`, connectors that are not a dictionary of phrases and pairs of strings;
 - `SourceError` - a source without parts of speech, lemmas or words;
-- `ParameterError` - an unknown class or kind of a connector.
+- `ParameterError` - an unknown class or kind of a connector, a `blank_lines` that is not a `bool`.
 <!-- --8<-- [end:CohesionStats] -->
 
 === "Code"
@@ -91,6 +91,7 @@ Raises:
 | `source` | `Doc` | - | Data source: a `Doc` with the parts of speech and the lemmas, or what `analyze` reads |
 | `sents_extractor` | `SentsExtractor` | `None` | Sentence extraction tool; given here, it splits a `Doc` by its text whatever its boundaries |
 | `connectors` | `dict[str, tuple[str, str]]` | `None` | Class and kind by connector; those of `load_connectors` by default |
+| `blank_lines` | `bool` | `False` | Start the paragraphs after the blank lines alone, for a text whose lines are wrapped inside its paragraphs; after every line break by default |
 <!-- --8<-- [end:CohesionStats-parameters] -->
 
 ## Attributes
@@ -100,7 +101,8 @@ Raises:
 | :-------- | :--- | :---------- |
 | `words`, `lemmas` | `tuple[tuple[str]]` | Words and lemmas of every sentence with words |
 | `n_sents`, `n_words` | `int` | Numbers of the sentences with words and of the words |
-| `n_paragraphs` | `int` | Number of the paragraphs, the parts of the text between blank lines that hold words |
+| `blank_lines` | `bool` | Whether the paragraphs start after the blank lines alone |
+| `n_paragraphs` | `int` | Number of the paragraphs, the lines of the text with content words (the parts between blank lines with `blank_lines`) |
 | `n_nouns`, `n_pronouns`, `n_demonstratives`, `n_content_words` | `int` | Numbers of the words by kind |
 | `n_given` | `int` | Number of the content words whose lemma was used before |
 | `n_connectors`, `connector_spans`, `c_connectors` | `int`, `tuple[Connector]`, `dict[str, int]` | Number of the connectors, their occurrences and their number by connector |
@@ -233,7 +235,7 @@ $$
 { .metric-meta }
 
 <!-- --8<-- [start:CohesionStats-forward_overlap] -->
-The adjacent overlap of TAACO, by the lemmas of the nouns, of the arguments and of the content words: the share of the distinct lemmas of a sentence repeated in one of the next two sentences (`adjacent_overlap_2_*_sent`), and of a paragraph repeated in the next paragraph (`adjacent_overlap_*_para`), over all the sentences or paragraphs that have them (`calc_forward_overlap`). Unlike the binary overlap, a pair of segments counts by the share of the lemmas they share. A paragraph is a part of the text between blank lines that holds words; a word that carries `paragraph_start` opens one, inside a sentence too, as when a parser joins a heading to the next sentence. TAACO takes every line for a paragraph: a text with a paragraph on every line and no blank lines is one paragraph here, and its `*_para` are `nan`.
+The adjacent overlap of TAACO, by the lemmas of the nouns, of the arguments and of the content words: the share of the distinct lemmas of a sentence repeated in one of the next two sentences (`adjacent_overlap_2_*_sent`), and of a paragraph repeated in the next paragraph (`adjacent_overlap_*_para`), over all the sentences or paragraphs that have them (`calc_forward_overlap`). Unlike the binary overlap, a pair of segments counts by the share of the lemmas they share. A paragraph is a line of the text, as in TAACO, or a part between blank lines with `blank_lines`, for a text whose lines are wrapped inside its paragraphs; a word that carries `paragraph_start` opens one, inside a sentence too, as when a parser joins a heading to the next sentence. A paragraph without content words, such as the number of a chapter, joins the next one, the last such the one before it.
 <!-- --8<-- [end:CohesionStats-forward_overlap] -->
 
 <!-- --8<-- [start:calc_forward_overlap] -->
@@ -492,7 +494,7 @@ A language library subclasses `CohesionStats`. By default the words and their fe
 
 | Hook | Kind | Description |
 | :--- | :--- | :---------- |
-| `analyze(source)` | method | Words of the sentences of a source as `CohesionWord`: the word, its lemma, its part of speech, whether it is a noun, a pronoun, a demonstrative, an argument and a content word, its tense, mood and aspect, whether a punctuation mark stands before it (`break_before`, which the rules of the connectors do not read through), whether no connector starts at it (`connector_blocked`, by a rule of the parse such as an *if* of an indirect question) and whether a blank line stands before it (`paragraph_start`); by default those of a `Doc`, sentence by sentence (`doc_units`), with the features of `word_info`; the default marks the words after a blank line of the `Doc` (`find_unit_paragraph_starts`); a library that reads a string or a `Doc` without these annotations overrides it, `find_paragraph_starts` giving the paragraph starts of a string |
+| `analyze(source)` | method | Words of the sentences of a source as `CohesionWord`: the word, its lemma, its part of speech, whether it is a noun, a pronoun, a demonstrative, an argument and a content word, its tense, mood and aspect, whether a punctuation mark stands before it (`break_before`, which the rules of the connectors do not read through), whether no connector starts at it (`connector_blocked`, by a rule of the parse such as an *if* of an indirect question) and whether a paragraph starts at it (`paragraph_start`); by default those of a `Doc`, sentence by sentence (`doc_units`), with the features of `word_info`; the default marks the words after a line break of the `Doc`, or after a blank line with `blank_lines` (`find_unit_paragraph_starts`); a library that reads a string or a `Doc` without these annotations overrides it, `find_paragraph_starts` with `blank_lines` giving the paragraph starts of a string |
 | `doc_units(doc)` | method | Words of the sentences of a `Doc` as lists of tokens: by its boundaries, or by the extractor over its text (`split_doc_units` of `anyts.utils`) |
 | `word_info(unit)` | method | Features of a word of a `Doc`; by default a noun is `NOUN` or `PROPN`, a pronoun `PRON` or a possessive, demonstrative or personal determiner, a demonstrative carries `PronType=Dem`, an argument is `NOUN`, `PROPN` or `PRON`, a content word one of `anyts.constants.CONTENT_UD_POS` and no demonstrative, and the tense, the mood and the aspect are the features `Tense`, `Mood` and `Aspect`; a library sets `connector_blocked` where its parse rules a connector out |
 | `load_connectors()` | class method | Dictionary of the connectors of the language, class and kind by connector; empty by default |

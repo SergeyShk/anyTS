@@ -29,6 +29,7 @@ from anyts.utils import (
     count_words_by_spans,
     find_phrases,
     has_feature,
+    has_pos,
     has_sents,
     has_words,
     in_order,
@@ -169,6 +170,21 @@ def test_has_sents(nlp):
     assert not has_sents(partial)
     full = Doc(nlp.vocab, words=["The", "cat", "Dogs"], sent_starts=[True, False, True])
     assert has_sents(full)
+
+
+def test_has_pos(nlp):
+    # A pipeline without its morphologizer marks the whitespace tokens SPACE all the same
+    doc = nlp("The cat sleeps.\n\nThe dog eats.")
+    assert not has_pos(doc)
+    doc[4].pos_ = "SPACE"
+    assert doc.has_annotation("POS") and not has_pos(doc)
+    doc[6].pos_ = "NOUN"
+    assert has_pos(doc)
+    # A Doc without words is checked by its annotation
+    marks = nlp("!\n?")
+    assert not has_pos(marks)
+    marks[0].pos_ = "PUNCT"
+    assert has_pos(marks)
 
 
 def test_is_language(nlp):
@@ -775,14 +791,21 @@ def test_find_paragraph_starts():
     for gap in ("\n\n", "\n \t\n", "\r\n\r\n", "\r\r", "\u2029", "\u2028\u2028", "\n\u200b\n"):
         text = f"Notes{gap}It rains.{gap}We stay"
         assert find_paragraph_starts(text, words) == {1, 3}, repr(gap)
-    # A line break alone, or a word the text does not hold, starts no paragraph
-    assert find_paragraph_starts("Notes\nIt rains.\r\nWe stay", words) == frozenset()
+        assert find_paragraph_starts(text, words, blank_lines=True) == {1, 3}, repr(gap)
+    # A line break alone starts a paragraph unless blank_lines asks for a blank line
+    for gap in ("\n", "\r\n", "\r", "\x85", "\u2028"):
+        text = f"Notes{gap}It rains.{gap}We stay"
+        assert find_paragraph_starts(text, words) == {1, 3}, repr(gap)
+        assert find_paragraph_starts(text, words, blank_lines=True) == frozenset(), repr(gap)
+    # A word the text does not hold starts no paragraph
     assert find_paragraph_starts("Notes\n\nIt rains.", ["Notes", "snows", "It"]) == {2}
     assert find_paragraph_starts("", []) == frozenset()
     with pytest.raises(SourceTypeError):
         find_paragraph_starts(5, words)
     with pytest.raises(SourceTypeError):
         find_paragraph_starts("Notes", "Notes")
+    with pytest.raises(ParameterError, match=r"^The blank_lines must be a bool, not int$"):
+        find_paragraph_starts("Notes", ["Notes"], 1)
 
 
 def test_find_unit_paragraph_starts():
@@ -794,8 +817,13 @@ def test_find_unit_paragraph_starts():
         units = list(iter_doc_units(doc))
         assert [unit[0].text for unit in units] == ["Notes", "It", "rains", "We", "stay", "home"]
         assert find_unit_paragraph_starts(units) == {1, 3, 5}, repr(gap)
-    assert find_unit_paragraph_starts(list(iter_doc_units(nlp("It rains.\nWe stay")))) == set()
+        assert find_unit_paragraph_starts(units, blank_lines=True) == {1, 3, 5}, repr(gap)
+    units = list(iter_doc_units(nlp("It rains.\nWe stay")))
+    assert find_unit_paragraph_starts(units) == {2}
+    assert find_unit_paragraph_starts(units, blank_lines=True) == frozenset()
     assert find_unit_paragraph_starts([]) == frozenset()
+    with pytest.raises(ParameterError, match=r"^The blank_lines must be a bool, not str$"):
+        find_unit_paragraph_starts([], "no")
 
 
 def test_is_token(nlp):

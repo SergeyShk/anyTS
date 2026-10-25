@@ -814,7 +814,7 @@ $$
 calc_orlov_z(text)
 ```
 
-The text length at which the law of Zipf fits the vocabulary best (Orlov 1983): the solution $Z$ for $N$ words, $V$ lexemes and the share $p$ of the most frequent lexeme. The right side has a minimum over $Z$, and $Z$ is the solution above it; it is `nan` when $V$ lies at or below that minimum or when every word is a lexeme of its own, and `inf` when $V$ comes so close to $N$ that $Z$ overflows a float. With Yule's K, Z separated the authors best among the measures Tweedie and Baayen compared.
+The text length at which the law of Zipf fits the vocabulary best (Orlov 1983): the solution $Z$ for $N$ words, $V$ lexemes and the share $p$ of the most frequent lexeme. The right side has a minimum over $Z$, and $Z$ is the solution above it; it is `nan` when $V$ lies at or below that minimum or when every word is a lexeme of its own, and `inf` when $V$ comes so close to $N$ that $Z$ overflows a float. With Yule's K, Z separated the authors best among the measures Tweedie and Baayen compared. On a text shorter than about ten thousand words Z is unstable and grows with the length, and its values span orders of magnitude: texts of one length are compared, or by its logarithm.
 
 $$
 V = \frac{Z}{\ln(pZ)} \cdot \frac{N}{N - Z} \cdot \ln \frac{N}{Z}
@@ -1076,7 +1076,7 @@ Fits Heaps' law over the vocabulary growth curve of a list of words, as `calc_he
 calc_burstiness(text, min_freq=5)
 ```
 
-How a lexeme comes in bursts rather than spread over the text, by the burstiness of Kim and Jo, which corrects that of Goh and Barabási for a finite number $n$ of events, averaged over the lexemes of `min_freq` occurrences or more (`BURSTINESS_MIN_FREQ`). For the $n$ occurrences of a lexeme, $r$ is the coefficient of variation of their $n$ intervals, the one from the last to the first around the end of the text included. The value is −1 for occurrences at equal intervals, the one around the end included (*a x a x a x a x a x* is −1, *a x a x a x a x a* about −0.69), near 0 for a rare lexeme at random places and up to 1 for occurrences in bursts; `nan` without such lexemes.
+How a lexeme comes in bursts rather than spread over the text, by the burstiness of Kim and Jo, which corrects that of Goh and Barabási for a finite number $n$ of events, averaged over the lexemes of `min_freq` occurrences or more (`BURSTINESS_MIN_FREQ`). For the $n$ occurrences of a lexeme, $r$ is the coefficient of variation of their $n$ intervals, the one from the last to the first around the end of the text included. The value is −1 for occurrences at equal intervals, the one around the end included (*a x a x a x a x a x* is −1, *a x a x a x a x a* about −0.69), near 0 for a rare lexeme at random places and up to 1 for occurrences in bursts; `nan` without such lexemes. On a short text or a window the lexemes of `min_freq` occurrences are mostly function words, and the value grows with the length of the text.
 
 $$
 A_n = \frac{\sqrt{n + 1} \cdot r - \sqrt{n - 1}}{(\sqrt{n + 1} - 2) \cdot r + \sqrt{n - 1}}

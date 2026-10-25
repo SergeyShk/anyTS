@@ -255,7 +255,7 @@ A count that is not an integer or is negative raises `ParameterError`.
 calc_dickes_steiwer(n_letters, n_words, n_sents, n_types)
 ```
 
-The short formula of Dickes and Steiwer (1977) for German, as Bamberger and Vanecek (1984) give it, over the letters per word, the words per sentence and the type-token ratio, without syllables; higher is easier. `nan` without words or sentences.
+The short formula of Dickes and Steiwer (1977) for German, as Bamberger and Vanecek (1984) give it, over the letters per word, the words per sentence and the type-token ratio, without syllables; higher is easier. `nan` without words or sentences. The ratio falls with the length of a text, so the values compare texts of one length.
 
 $$
 \textrm{DS} = 235.95993 - 73.021 \ln\left(\frac{\textrm{Letters}}{\textrm{Words}} + 1\right) - 12.56438 \ln\left(\frac{\textrm{Words}}{\textrm{Sentences}} + 1\right) - 50.03293 \cdot \textrm{TTR}
@@ -342,7 +342,7 @@ A count that is not an integer or is negative raises `ParameterError`.
 calc_strain_index(n_syllables, n_sents)
 ```
 
-The index of Nathaniel (2009): the syllables of three sentences over 10, here those of three sentences on average over the whole text; `nan` without sentences.
+The index of Nathaniel (2009): the syllables of three sentences over 10, here those of three sentences on average over the whole text, which makes it 0.3 times the index of Fucks; `nan` without sentences.
 
 $$
 \textrm{Strain} = \frac{3 \times \textrm{Syllables}}{10 \times \textrm{Sentences}}

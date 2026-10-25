@@ -215,6 +215,11 @@ def test_a_feature_without_value_is_none():
         ("The cats", SourceTypeError, MESSAGES["source_type"].format(type="str")),
         (make_doc()[:2], SourceTypeError, MESSAGES["source_span"]),
         (make_doc(pos=False), SourceError, MESSAGES["no_pos"]),
+        (
+            Doc(VOCAB, words=["cats", "\n\n", "sleep"], pos=["", "SPACE", ""]),
+            SourceError,
+            MESSAGES["no_pos"],
+        ),
         (Doc(VOCAB, words=[".", "!"], pos=["PUNCT", "PUNCT"]), SourceError, MESSAGES["no_words"]),
     ],
 )

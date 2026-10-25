@@ -131,6 +131,16 @@ def test_doc_without_the_annotations():
     assert Marks(blank, layers="all").layers == ("long_sents", "stopwords")
 
 
+def test_doc_with_the_parts_of_speech_of_the_whitespace_alone():
+    # The attribute ruler of a pipeline without its tagger marks the whitespace SPACE
+    doc = spacy.blank("xx")("The old cat sleeps.\n\nA bird sings.")
+    doc[5].pos_ = "SPACE"
+    for token in doc:
+        token.lemma_ = token.lower_
+    assert doc.has_annotation("POS") and "nouns" not in Marks(doc, layers="all").layers
+    assert all(word.pos is None for word in get_doc_words(doc))
+
+
 def test_doc_with_partial_boundaries():
     """The starts after the blank lines alone leave the sentences to the text"""
     paragraphs = f"{text}\n\n{text}"

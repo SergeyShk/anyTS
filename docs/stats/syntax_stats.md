@@ -55,7 +55,7 @@ Raises:
     Mean length of a clause (words)                            |   5.00
     Subordinate clauses per sentence                           |   1.00
     Share of sentences with a subordinate clause               |   1.00
-    Infinitive clauses under a verb per sentence               |   0.00
+    Infinitive clauses per sentence                            |   0.00
     T-units per sentence                                       |   1.00
     Mean length of a T-unit (words)                            |  10.00
     Clauses per T-unit                                         |   2.00
@@ -98,8 +98,9 @@ Raises:
 | `n_leaves`, `n_subtrees` | `int` | Numbers of the words without and with dependent words |
 | `n_coordination_chains` | `int` | Number of the coordination chains |
 | `n_clauses`, `n_subordinate_clauses`, `n_complex_sents` | `int` | Numbers of the clauses, of the subordinate clauses and of the sentences with one |
-| `n_infinitive_clauses` | `int` | Number of the infinitive clauses under a verb |
+| `n_infinitive_clauses` | `int` | Number of the infinitive clauses |
 | `n_t_units`, `n_complex_t_units` | `int` | Numbers of the T-units and of those with a subordinate clause |
+| `n_l2sca_clauses` | `int` | Number of the clauses of L2SCA, without the predicates sharing a subject and the infinitive clauses |
 | `n_verb_phrases`, `n_coordinate_phrases`, `n_complex_nominals` | `int` | Numbers of the verb phrases, of the coordinate phrases and of the complex nominals |
 | `n_nouns`, `n_verbs` | `int` | Numbers of the nouns (`NOUN`, `PROPN`) and of the verb forms (`VERB`) |
 | `n_prep_chains` | `int` | Number of the prepositional chains |
@@ -136,7 +137,7 @@ Every metric is an attribute of the object, computed when it is created - the un
 | [`mean_clause_len`](#clauses) | Mean length of a clause in words | 1 and above, `nan` without clauses | Longer clauses |
 | [`subordinate_clauses_per_sent`](#subordinate_clauses) | Subordinate clauses per sentence | 0 and above | More subordination |
 | [`p_complex_sents`](#subordinate_clauses) | Share of the sentences with a subordinate clause | 0-1 | More complex sentences |
-| [`infinitive_clauses_per_sent`](#infinitive_clauses) | Infinitive clauses under a verb per sentence (*wants to leave*), which are not subordinate | 0 and above | More infinitive complements |
+| [`infinitive_clauses_per_sent`](#infinitive_clauses) | Infinitive clauses per sentence (*wants to leave*, *came to help*), which are not subordinate | 0 and above | More infinitive clauses |
 | [`t_units_per_sent`](#l2sca) | T-units per sentence (T/S) | 0 and above | More main clauses in a sentence |
 | [`mean_t_unit_len`](#l2sca) | Mean length of a T-unit in words (MLT) | 1 and above, `nan` without T-units | Longer T-units |
 | [`clauses_per_t_unit`](#l2sca) | Clauses per T-unit (C/T) | 1 and above, `nan` without T-units | More subordination |
@@ -331,18 +332,19 @@ A value that is not a `Token` and a check or a form of an auxiliary that is not 
 
 <!-- --8<-- [start:is_subordinate_clause_head] -->
 ``` {.python .signature}
-is_subordinate_clause_head(token, is_clause_head=None, auxiliary_form=None)
+is_subordinate_clause_head(token, is_clause_head=None, auxiliary_form=None, subordinating_marks=())
 ```
 
-Checks whether a word heads a subordinate clause: a clause head by the check `is_clause_head` with `ccomp`, `advcl`, `acl` or `csubj` (`SUBORDINATE_CLAUSE_DEPS`), or under `xcomp` with a finite predicate (a complement a model attaches as `xcomp`), or a conjunct of one, by the relation of the first word up its chain of conjuncts. An infinitive under `xcomp` heads an infinitive clause, counted apart.
+Checks whether a word heads a subordinate clause: a clause head by the check `is_clause_head` with a finite predicate and `ccomp`, `advcl`, `acl` or `csubj` (`SUBORDINATE_CLAUSE_DEPS`), or `xcomp` (a complement a model attaches as `xcomp`), or a conjunct of one, by the relation of the first word up its chain of conjuncts. A conjunct or a parataxis with a mark of `subordinating_marks` heads a subordinate clause, since a model may attach a clause of *because* as `conj`. An infinitive heads an infinitive clause, counted apart.
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
 | `token` | `Token` | - | Token |
 | `is_clause_head` | `Callable[[Token], bool]` | `None` | Whether a word heads a clause; `is_clause_head` of the module with the hooks of this check if not given |
 | `auxiliary_form` | `Callable[[Token], str]` | `None` | Verb form of an auxiliary without `VerbForm` (`predicate_form`); none by default |
+| `subordinating_marks` | `Collection[str]` | `()` | Subordinating conjunctions in lower case, the words of a fixed expression after a space; none by default |
 
-A value that is not a `Token` and a check or a form of an auxiliary that is not callable raise `SourceTypeError`.
+A value that is not a `Token`, a check or a form of an auxiliary that is not callable and marks that are not a collection of strings raise `SourceTypeError`.
 <!-- --8<-- [end:is_subordinate_clause_head] -->
 
 </div>
@@ -356,18 +358,19 @@ A value that is not a `Token` and a check or a form of an auxiliary that is not 
 
 <!-- --8<-- [start:is_infinitive_clause_head] -->
 ``` {.python .signature}
-is_infinitive_clause_head(token, is_clause_head=None, auxiliary_form=None)
+is_infinitive_clause_head(token, is_clause_head=None, auxiliary_form=None, subordinating_marks=())
 ```
 
-Checks whether a word heads an infinitive clause under a verb: a clause head by the check `is_clause_head` whose predicate is an infinitive under `xcomp` (*wants to leave*, *asked him to leave*), or a conjunct of one. Such a clause is counted apart from the subordinate ones, as grammars of many languages take it for a part of a simple sentence.
+Checks whether a word heads an infinitive clause: a clause head by the check `is_clause_head` whose predicate is an infinitive under `xcomp` or a relation of `SUBORDINATE_CLAUSE_DEPS` (*wants to leave*, *asked him to leave*, *came to help*, *it is hard to say*), or a conjunct of one, the first word up its chain of conjuncts deciding as in `is_subordinate_clause_head`. Such a clause is counted apart from the subordinate ones, as grammars of many languages take it for a part of a simple sentence.
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
 | `token` | `Token` | - | Token |
 | `is_clause_head` | `Callable[[Token], bool]` | `None` | Whether a word heads a clause; `is_clause_head` of the module with the hooks of this check if not given |
 | `auxiliary_form` | `Callable[[Token], str]` | `None` | Verb form of an auxiliary without `VerbForm` (`predicate_form`); none by default |
+| `subordinating_marks` | `Collection[str]` | `()` | Subordinating conjunctions in lower case, the words of a fixed expression after a space; none by default |
 
-A value that is not a `Token` and a check or a form of an auxiliary that is not callable raise `SourceTypeError`.
+A value that is not a `Token`, a check or a form of an auxiliary that is not callable and marks that are not a collection of strings raise `SourceTypeError`.
 <!-- --8<-- [end:is_infinitive_clause_head] -->
 
 </div>
@@ -380,19 +383,19 @@ A value that is not a `Token` and a check or a form of an auxiliary that is not 
 { .metric-meta }
 
 <!-- --8<-- [start:SyntaxStats-l2sca] -->
-The indices of the L2 Syntactic Complexity Analyzer (L2SCA) that the other metrics do not give, on Universal Dependencies. MLC and C/S are `mean_clause_len` and `clauses_per_sent`; MLS and DC/C come from the counts, `n_words / n_sents` and `n_subordinate_clauses / n_clauses`.
+The indices of the L2 Syntactic Complexity Analyzer (L2SCA) that the other metrics do not give, on Universal Dependencies. MLC and C/S are `mean_clause_len` and `clauses_per_sent`; MLS and DC/C come from the counts, `n_words / n_sents` and `n_subordinate_clauses / n_l2sca_clauses`.
 
-- A T-unit is a main clause with the clauses that depend on it: the head of a sentence and every clause head joined to it through `conj` or `parataxis` (`anyts.constants.MAIN_CLAUSE_DEPS`), so *I came, and he left* holds two; a conjunct of a subordinate clause is none. A conjunct without a subject of its own (*I came and left*) is a predicate sharing the T-unit of the clause it is coordinated to, as in L2SCA, unless its person, number or gender - those of its auxiliary or copula, its own without one - differ from those of that clause: in a language that drops its subjects the ending names another one (*llegamos al puerto y nos esperabas*). An existential *there* (`expl` of ClearNLP) is a subject. A T-unit is complex with a subordinate clause (`is_subordinate_clause_head`) whose nearest T-unit above is it.
-- A verb phrase is a predicate (`is_predicate`) that is no auxiliary or copula: a verb, an auxiliary used as a predicate (*there **is** trouble*), a word with a subject or a copula; an infinitive that makes one predicate with its head (`is_infinitive_periphrasis`), and its infinitive conjunct, is part of the verb phrase of the head.
+- A T-unit is a main clause with the clauses that depend on it: the head of a sentence and every clause head joined to it through `conj` or `parataxis` (`anyts.constants.MAIN_CLAUSE_DEPS`), so *I came, and he left* holds two; a conjunct of a subordinate clause is none. A conjunct without a subject of its own (*I came and left*) is a predicate sharing the T-unit of the clause it is coordinated to, as in L2SCA, unless its person, number or gender - those of its auxiliary or copula, its own without one - differ from those of that clause: in a language that drops its subjects the ending names another one (*llegamos al puerto y nos esperabas*). An existential *there* (`expl` of ClearNLP) is a subject. A conjunct or a parataxis with a subordinating mark (`subordinating_marks`) is a subordinate clause, not a T-unit. A T-unit is complex with a subordinate clause (`is_subordinate_clause_head`) whose nearest T-unit above is it.
+- A verb phrase is a predicate (`is_predicate`) that is no auxiliary or copula: a verb, an auxiliary used as a predicate (*there **is** trouble*), a word with a subject or a copula; an infinitive that makes one predicate with its head (`is_infinitive_periphrasis`), and its infinitive conjunct, is part of the verb phrase of the head. A participle or another non-finite form under `amod` or `acl`, or coordinated to one, without an auxiliary or a copula is an attribute of its noun (*the house built by workers*), as in L2SCA, not a verb phrase.
 - A coordinate phrase is a coordination with a conjunct that is no clause head (*the man and the woman*, *is big and nice*) or a predicate without a subject of its own (*came and left*), counted once by its first conjunct; a coordination of clauses with their own subjects counts as clauses.
-- The clauses are those of `is_clause_head`, as in the other metrics: a predicate sharing a subject and an infinitive clause count as clauses, while L2SCA counts finite clauses with a subject, so C/T, C/S and CN/C run higher and MLC lower than in L2SCA.
+- The clauses of C/T, CP/C and CN/C are those of L2SCA (`n_l2sca_clauses`): the clauses of `is_clause_head` without the predicates sharing a subject (*came and left*) and the infinitive clauses, as L2SCA counts finite clauses with a subject. C/S and MLC keep the clauses of the other metrics, so C/S runs higher and MLC lower than in L2SCA.
 - A complex nominal is a noun with a modifier of `anyts.constants.COMPLEX_NOMINAL_DEPS` (an adjective, a complement, a relative or participial clause, an apposition, a possessive), or a nominal clause, a clause head of `anyts.constants.NOMINAL_CLAUSE_DEPS` or a conjunct of one.
 
 $$
 \textrm{MLT} = \frac{\textrm{Words}}{\textrm{T-units}}, \quad
-\textrm{C/T} = \frac{\textrm{Clauses}}{\textrm{T-units}}, \quad
+\textrm{C/T} = \frac{\textrm{Clauses of L2SCA}}{\textrm{T-units}}, \quad
 \textrm{CT/T} = \frac{\textrm{Complex T-units}}{\textrm{T-units}}, \quad
-\textrm{CN/C} = \frac{\textrm{Complex nominals}}{\textrm{Clauses}}
+\textrm{CN/C} = \frac{\textrm{Complex nominals}}{\textrm{Clauses of L2SCA}}
 $$
 <!-- --8<-- [end:SyntaxStats-l2sca] -->
 
@@ -436,7 +439,7 @@ A prepositional chain is two or more nested complements with a preposition, each
 is_prep_complement(token, join_hyphens=False)
 ```
 
-Checks whether a word is a complement with a preposition: a word with the relation `nmod` or `obl` or a subtype of them (`anyts.constants.PREP_COMPLEMENT_DEPS`), or a predicate with a copula out of a relative clause (`acl`), that has a dependent of the relation `case` that is an adposition (`ADP`) or begins one of several words (`fixed`: *in front of*). A noun in a case without a preposition and a possessive marker are none.
+Checks whether a word is a complement with a preposition: a word with the relation `nmod` or `obl` or a subtype of them (`anyts.constants.PREP_COMPLEMENT_DEPS`), or a predicate with a copula or a subject of its own out of a relative clause (`acl`), such as a nominal predicate of a language that drops the copula of the present tense, that has a dependent of the relation `case` that is an adposition (`ADP`) or begins one of several words (`fixed`: *in front of*). A noun in a case without a preposition and a possessive marker are none.
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
@@ -540,7 +543,7 @@ $$
 { .metric-meta }
 
 <!-- --8<-- [start:SyntaxStats-similarity] -->
-How alike the structures of two adjacent sentences are, averaged over the $S - 1$ pairs. `pos_edit_distance` is the edit distance of the parts of speech $P_s$ of the words of the sentences (SYNMEDpos of Coh-Metrix) over the length $n$ of the longer sentence of the pair, `calc_edit_distance`. `syntax_similarity` is the similarity of the multisets of the dependency triples $T$ of the two sentences (`dependency_triples`, `calc_multiset_similarity`), in the manner of SYNSTRUT of Coh-Metrix, which compares the nodes of phrase-structure trees.
+How alike the structures of two adjacent sentences are, averaged over the $S - 1$ pairs. `pos_edit_distance` is the edit distance of the parts of speech $P_s$ of the words of the sentences (SYNMEDpos of Coh-Metrix) over the length $n$ of the longer sentence of the pair, `calc_edit_distance`. `syntax_similarity` is the similarity of the multisets of the dependency triples $T$ of the two sentences (`dependency_triples`, `calc_multiset_similarity`), in the manner of SYNSTRUT of Coh-Metrix, which compares the nodes of phrase-structure trees. Neither sees the order of the words, and the similarity of the triples grows with the length of the sentences.
 
 $$
 \frac{1}{S - 1} \sum_{s=1}^{S-1} \frac{\textrm{lev}(P_s, P_{s+1})}{\max(n_s, n_{s+1})}, \quad
@@ -837,8 +840,8 @@ A language library subclasses `SyntaxStats`. The defaults read Universal Depende
 | `is_clause_head(token)` | method | Whether a word heads a clause; by default `is_clause_head` of the module with `join_hyphens` of the class and the hooks `is_infinitive_periphrasis` and `auxiliary_form` |
 | `is_infinitive_periphrasis(token)` | method | Whether an infinitive under `xcomp`, an infinitive conjunct or an infinitive subject (`csubj`) of a modal word makes one predicate with its head, a modal or phasal verb (*can leave*, *begins to leave*): one clause and one verb phrase; none by default |
 | `auxiliary_form(token)` | method | Verb form the checks of the clauses read for an auxiliary or a copula without `VerbForm` (`predicate_form`); by default an empty string, which skips it |
-| `is_subordinate_clause_head(token)` | method | Whether a clause head heads a subordinate clause, asked only of the words of `is_clause_head`; by default `is_subordinate_clause_head` of the module over the hooks `is_clause_head` and `auxiliary_form` |
-| `is_infinitive_clause_head(token)` | method | Whether a clause head heads an infinitive clause under a verb (*wants to leave*), counted apart from the subordinate ones; by default `is_infinitive_clause_head` of the module over the hooks `is_clause_head` and `auxiliary_form` |
+| `is_subordinate_clause_head(token)` | method | Whether a clause head heads a subordinate clause, asked only of the words of `is_clause_head`; by default `is_subordinate_clause_head` of the module over the hooks `is_clause_head` and `auxiliary_form`, with `subordinating_marks` of the class |
+| `is_infinitive_clause_head(token)` | method | Whether a clause head heads an infinitive clause (*wants to leave*, *came to help*), counted apart from the subordinate ones; by default `is_infinitive_clause_head` of the module over the hooks `is_clause_head` and `auxiliary_form`, with `subordinating_marks` of the class |
 | `is_prep_complement(token)` | method | Whether a word is a link of a prepositional chain; by default `is_prep_complement` of the module with `join_hyphens` of the class. It gets the words of `sents` on first use: tokens of a copy of the `Doc` without its user data and tensor, on a blank vocabulary after pickling, so no extension of a token |
 | `is_participle_clause(token)` | method | Whether a word heads a participial clause; by default a participle that is not the head of the sentence, has no auxiliary or copula and has a dependent (`calc_valency`) |
 | `is_passive(token)` | method | Whether a word is a passive verb form; by default `is_passive` of the module with `join_hyphens` of the class |
@@ -846,6 +849,7 @@ A language library subclasses `SyntaxStats`. The defaults read Universal Depende
 | `is_negation(token)` | method | Whether a word is a word of negation; by default `Polarity=Neg` or a word of `negation_words`, a conjunction excluded |
 | `find_split_predicates(words)` | method | Pairs of a light verb and the noun that carries its meaning (`to make a decision`); none by default |
 | `negation_words` | class attribute | Words of negation besides `Polarity=Neg`, in lower case; none by default |
+| `subordinating_marks` | class attribute | Subordinating conjunctions in lower case, the words of a fixed expression after a space, that make a conjunct or a parataxis they mark a subordinate clause (*because*, *so that*); none by default |
 | `join_hyphens` | class attribute | Take a word the tokenizer split at its hyphens for one word, in the tree and in the default hooks |
 | `requires_lemmas` | class attribute | Whether the source must carry lemmas, for hooks that read them |
 | `stats_desc`, `stats_headers` | class attributes | Statistics of `get_stats` with their descriptions (`SYNTAX_STATS_DESC` by default), headers of the columns for `print_stats` |
