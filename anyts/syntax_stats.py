@@ -186,6 +186,7 @@ class SyntaxStats(Stats):
         auxiliary_form: Verb form of an auxiliary without the feature VerbForm
         is_subordinate_clause_head: Whether a clause head heads a subordinate clause
         is_infinitive_clause_head: Whether a clause head heads an infinitive clause
+        is_subordinating_mark: Whether a mark is a subordinating conjunction
         is_prep_complement: Whether a word is a link of a prepositional chain
         is_participle_clause: Whether a word heads a participial clause
         is_passive: Whether a word is a passive verb form
@@ -202,7 +203,7 @@ class SyntaxStats(Stats):
         subordinating_marks (frozenset[str]): Subordinating conjunctions in lower case,
             with the words of their fixed expression after a space, that make a conjunct
             or a parataxis they mark a subordinate clause, an infinitive clause with an
-            infinitive (is_subordinate_clause_head, is_infinitive_clause_head)
+            infinitive (is_subordinating_mark)
         stats_desc (dict[str, str]): Statistics of get_stats and their descriptions for
             print_stats
 
@@ -367,14 +368,13 @@ class SyntaxStats(Stats):
         words = [token for sent in self.sents for token in sent]
         heads = [[doc[i] for i in sent] for sent in self._clause_heads]
         clause_ids = {token.i for sent in heads for token in sent}
-        marks = self.subordinating_marks
         # A conjunct or a parataxis with a subordinating mark heads a subordinate or an infinitive
         # clause: no T-unit nor a clause under it, no member of the coordination it hangs on
         marked = {
             token.i
             for sent in heads
             for token in sent
-            if marks and base_dep(token) in MAIN_CLAUSE_DEPS and _has_mark(token, marks)
+            if base_dep(token) in MAIN_CLAUSE_DEPS and _has_mark(token, self.is_subordinating_mark)
         }
         n_t_units = n_complex_t_units = 0
         for sent, subordinate in zip(heads, self._subordinate_heads, strict=True):
@@ -637,8 +637,8 @@ class SyntaxStats(Stats):
         Checking whether a word heads a subordinate clause
 
         Description:
-            is_subordinate_clause_head of the module over the hooks is_clause_head
-            and auxiliary_form, with subordinating_marks of the class
+            is_subordinate_clause_head of the module over the hooks is_clause_head,
+            auxiliary_form and is_subordinating_mark
 
         Arguments:
             token (Token): Token
@@ -647,7 +647,10 @@ class SyntaxStats(Stats):
             bool: Result of the check
         """
         return is_subordinate_clause_head(
-            token, self.is_clause_head, self.auxiliary_form, self.subordinating_marks
+            token,
+            self.is_clause_head,
+            self.auxiliary_form,
+            is_subordinating_mark=self.is_subordinating_mark,
         )
 
     def is_infinitive_clause_head(self, token: Token) -> bool:
@@ -655,8 +658,8 @@ class SyntaxStats(Stats):
         Checking whether a word heads an infinitive clause
 
         Description:
-            is_infinitive_clause_head of the module over the hooks is_clause_head
-            and auxiliary_form, with subordinating_marks of the class
+            is_infinitive_clause_head of the module over the hooks is_clause_head,
+            auxiliary_form and is_subordinating_mark
 
         Arguments:
             token (Token): Token
@@ -665,8 +668,30 @@ class SyntaxStats(Stats):
             bool: Result of the check
         """
         return is_infinitive_clause_head(
-            token, self.is_clause_head, self.auxiliary_form, self.subordinating_marks
+            token,
+            self.is_clause_head,
+            self.auxiliary_form,
+            is_subordinating_mark=self.is_subordinating_mark,
         )
+
+    def is_subordinating_mark(self, token: Token) -> bool:
+        """
+        Checking whether a mark is a subordinating conjunction
+
+        Description:
+            The check a dependent mark of a conjunct or a parataxis passes to make
+            it a subordinate clause, or an infinitive one with an infinitive (a
+            model may attach a clause of because as conj): is_subordinating_mark of
+            the module with subordinating_marks of the class by default; a library
+            reads the context of a word that is a conjunction and a pronoun
+
+        Arguments:
+            token (Token): Token with the relation mark
+
+        Returns:
+            bool: Result of the check
+        """
+        return _is_subordinating_mark(token, self.subordinating_marks)
 
     def is_prep_complement(self, token: Token) -> bool:
         """
@@ -1724,19 +1749,22 @@ def is_subordinate_clause_head(
     is_clause_head: Callable[[Token], bool] | None = None,
     auxiliary_form: Callable[[Token], str] | None = None,
     subordinating_marks: Collection[str] = (),
+    is_subordinating_mark: Callable[[Token], bool] | None = None,
 ) -> bool:
     """
     Checking whether a word heads a subordinate clause
 
     Description:
-        The head of a clause by is_clause_head whose predicate (predicate_form) is
-        no infinitive, with a relation of SUBORDINATE_CLAUSE_DEPS (ccomp, advcl,
-        acl, csubj and their subtypes) or xcomp (a complement a model attaches as
-        xcomp), or a conjunct of one: the relation of the first word up its chain
-        of conjuncts decides. A conjunct or a parataxis marked by one of
-        subordinating_marks is a subordinate clause, since a model may attach a
-        clause of because as conj. An infinitive heads an infinitive clause
-        (is_infinitive_clause_head), not a subordinate one
+        The head of a clause by is_clause_head with a relation of
+        SUBORDINATE_CLAUSE_DEPS (ccomp, advcl, acl, csubj and their subtypes) or
+        xcomp (a complement a model attaches as xcomp), or a conjunct of one: the
+        relation of the first word up its chain of conjuncts decides, and neither
+        the predicate of that word nor its own (predicate_form) is an infinitive.
+        An infinitive heads an infinitive clause (is_infinitive_clause_head). A
+        conjunct or a parataxis with a subordinating mark (is_subordinating_mark)
+        is a subordinate clause, since a model may attach a clause of because as
+        conj; its own conjuncts are not, as a model attaches the predicates of the
+        main clause to it as well
 
     Arguments:
         token (Token): Token
@@ -1746,19 +1774,25 @@ def is_subordinate_clause_head(
             VerbForm (predicate_form); none by default
         subordinating_marks (list[str]): Subordinating conjunctions in lower case, with
             the words of their fixed expression after a space; none by default
+        is_subordinating_mark (callable): Whether a mark is a subordinating
+            conjunction; is_subordinating_mark of the module with subordinating_marks
+            if not given
 
     Returns:
         bool: Result of the check
 
     Raises:
-        SourceTypeError: If the token is not a Token, is_clause_head or auxiliary_form
-            is not callable, or subordinating_marks is not a collection of strings
+        SourceTypeError: If the token is not a Token, is_clause_head, auxiliary_form
+            or is_subordinating_mark is not callable, or subordinating_marks is not a
+            collection of strings
     """
-    is_clause_head = _clause_head_hooks(is_clause_head, auxiliary_form, subordinating_marks)
+    is_clause_head, is_marked = _clause_kind_hooks(
+        is_clause_head, auxiliary_form, subordinating_marks, is_subordinating_mark
+    )
     if is_root(token) or not is_clause_head(token):
         return False
-    word, dep = _clause_relation(token, subordinating_marks)
-    if predicate_form(word, auxiliary_form) == "Inf":
+    word, dep = _clause_relation(token, is_marked)
+    if "Inf" in (predicate_form(word, auxiliary_form), predicate_form(token, auxiliary_form)):
         return False
     return dep == "xcomp" or (not is_root(word) and dep in SUBORDINATE_CLAUSE_DEPS)
 
@@ -1769,19 +1803,20 @@ def is_infinitive_clause_head(
     is_clause_head: Callable[[Token], bool] | None = None,
     auxiliary_form: Callable[[Token], str] | None = None,
     subordinating_marks: Collection[str] = (),
+    is_subordinating_mark: Callable[[Token], bool] | None = None,
 ) -> bool:
     """
     Checking whether a word heads an infinitive clause
 
     Description:
-        The head of a clause by is_clause_head whose predicate is an infinitive
-        under xcomp or a relation of SUBORDINATE_CLAUSE_DEPS (wants to leave, asked
-        him to leave, came to help, it is hard to say), or a conjunct of one: the
-        first word up its chain of conjuncts decides, as in
-        is_subordinate_clause_head; an infinitive under conj or parataxis marked by
-        one of subordinating_marks heads one too (came , in order to help). Such a
-        clause is counted apart from the subordinate ones, as grammars of many
-        languages take it for a part of a simple sentence
+        The head of a clause by is_clause_head whose own predicate is an
+        infinitive, under xcomp or a relation of SUBORDINATE_CLAUSE_DEPS (wants to
+        leave, asked him to leave, came to help, it is hard to say) or a conjunct of
+        one: the relation of the first word up its chain of conjuncts decides, as in
+        is_subordinate_clause_head; an infinitive under conj or parataxis with a
+        subordinating mark heads one too (came , in order to help). Such a clause is
+        counted apart from the subordinate ones, as grammars of many languages take
+        it for a part of a simple sentence
 
     Arguments:
         token (Token): Token
@@ -1791,68 +1826,114 @@ def is_infinitive_clause_head(
             VerbForm (predicate_form); none by default
         subordinating_marks (list[str]): Subordinating conjunctions in lower case, with
             the words of their fixed expression after a space; none by default
+        is_subordinating_mark (callable): Whether a mark is a subordinating
+            conjunction; is_subordinating_mark of the module with subordinating_marks
+            if not given
 
     Returns:
         bool: Result of the check
 
     Raises:
-        SourceTypeError: If the token is not a Token, is_clause_head or auxiliary_form
-            is not callable, or subordinating_marks is not a collection of strings
+        SourceTypeError: If the token is not a Token, is_clause_head, auxiliary_form
+            or is_subordinating_mark is not callable, or subordinating_marks is not a
+            collection of strings
     """
-    is_clause_head = _clause_head_hooks(is_clause_head, auxiliary_form, subordinating_marks)
+    is_clause_head, is_marked = _clause_kind_hooks(
+        is_clause_head, auxiliary_form, subordinating_marks, is_subordinating_mark
+    )
     if is_root(token) or not is_clause_head(token):
         return False
-    word, dep = _clause_relation(token, subordinating_marks)
-    return predicate_form(word, auxiliary_form) == "Inf" and (
+    _, dep = _clause_relation(token, is_marked)
+    return predicate_form(token, auxiliary_form) == "Inf" and (
         dep == "xcomp" or dep in SUBORDINATE_CLAUSE_DEPS
     )
 
 
-def _clause_head_hooks(
+def _clause_kind_hooks(
     is_clause_head: Callable[[Token], bool] | None,
     auxiliary_form: Callable[[Token], str] | None,
     subordinating_marks: Collection[str],
-) -> Callable[[Token], bool]:
-    """Checked hooks of the checks of the kind of a clause, the check of a clause head of the
-    module by default"""
+    is_subordinating_mark: Callable[[Token], bool] | None,
+) -> tuple[Callable[[Token], bool], Callable[[Token], bool]]:
+    """Checked hooks of the checks of the kind of a clause: the check of a clause head, the
+    one of the module by default, and the check of a subordinating mark"""
     if auxiliary_form is not None:
         check_callable(auxiliary_form, "verb form of an auxiliary")
     check_words(subordinating_marks, "subordinating_marks", ordered=False)
+    if is_subordinating_mark is None:
+        is_subordinating_mark = partial(_is_subordinating_mark, marks=subordinating_marks)
+    check_callable(is_subordinating_mark, "check of a subordinating mark")
     if is_clause_head is None:
         is_clause_head = _clause_head_check(None, auxiliary_form)
     check_callable(is_clause_head, "check of a clause head")
-    return is_clause_head
+    return is_clause_head, is_subordinating_mark
 
 
-def _clause_relation(token: Token, subordinating_marks: Collection[str]) -> tuple[Token, str]:
+def _clause_relation(
+    token: Token, is_subordinating_mark: Callable[[Token], bool]
+) -> tuple[Token, str]:
     """First word up the chain of conjuncts of a clause head and its relation, advcl for a
-    conjunct or a parataxis with a subordinating mark"""
+    conjunct or a parataxis with a subordinating mark of its own"""
+    if base_dep(token) in MAIN_CLAUSE_DEPS and _has_mark(token, is_subordinating_mark):
+        return token, "advcl"
     seen = set()
-    while True:
-        dep = base_dep(token)
-        if (
-            dep in MAIN_CLAUSE_DEPS
-            and subordinating_marks
-            and _has_mark(token, subordinating_marks)
-        ):
-            return token, "advcl"
-        if dep != "conj" or token.i in seen:
-            return token, dep
+    while base_dep(token) == "conj" and token.i not in seen:
         seen.add(token.i)
         token = token.head
+    return token, base_dep(token)
 
 
-def _has_mark(token: Token, marks: Collection[str]) -> bool:
-    """Whether a word has a mark of the marks, with the words of its fixed expression"""
+def _has_mark(token: Token, is_subordinating_mark: Callable[[Token], bool]) -> bool:
+    """Whether a word has a dependent mark that is a subordinating conjunction"""
     return any(
-        base_dep(child) == "mark"
-        and " ".join(
-            word.text.lower()
-            for word in (child, *(fixed for fixed in child.children if base_dep(fixed) == "fixed"))
-        )
-        in marks
-        for child in token.children
+        base_dep(child) == "mark" and is_subordinating_mark(child) for child in token.children
     )
+
+
+@_takes_token
+def is_subordinating_mark(token: Token, subordinating_marks: Collection[str] = ()) -> bool:
+    """
+    Checking whether a mark is a subordinating conjunction
+
+    Description:
+        A word with the relation mark whose text in lower case, with the words of
+        its fixed expression after a space (so that), is one of subordinating_marks
+
+    Arguments:
+        token (Token): Token
+        subordinating_marks (list[str]): Subordinating conjunctions in lower case, with
+            the words of their fixed expression after a space; none by default
+
+    Returns:
+        bool: Result of the check
+
+    Raises:
+        SourceTypeError: If the token is not a Token or subordinating_marks is not a
+            collection of strings
+
+    Example:
+        >>> import spacy
+        >>> from spacy.tokens import Doc
+        >>> from anyts.syntax_stats import is_subordinating_mark
+        >>> doc = Doc(
+        ...     spacy.blank("en").vocab,
+        ...     words=["left", "so", "that", "we", "slept"],
+        ...     heads=[0, 4, 1, 4, 0],
+        ...     deps=["ROOT", "mark", "fixed", "nsubj", "parataxis"],
+        ... )
+        >>> is_subordinating_mark(doc[1], {"so that"}), is_subordinating_mark(doc[1], {"so"})
+        (True, False)
+    """
+    check_words(subordinating_marks, "subordinating_marks", ordered=False)
+    return _is_subordinating_mark(token, subordinating_marks)
+
+
+def _is_subordinating_mark(token: Token, marks: Collection[str]) -> bool:
+    """is_subordinating_mark with checked marks"""
+    if not marks or base_dep(token) != "mark":
+        return False
+    fixed = (child for child in token.children if base_dep(child) == "fixed")
+    return " ".join(word.text.lower() for word in (token, *fixed)) in marks
 
 
 @_takes_token

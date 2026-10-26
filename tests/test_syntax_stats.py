@@ -33,6 +33,7 @@ from anyts.syntax_stats import (
     is_prep_complement,
     is_root,
     is_subordinate_clause_head,
+    is_subordinating_mark,
     predicate_form,
     subtree_len,
 )
@@ -1199,10 +1200,23 @@ def test_subordinating_marks():
     )
     stats = SyntaxStats(doc)
     assert (stats.n_t_units, stats.n_subordinate_clauses, stats.n_complex_t_units) == (3, 0, 0)
+    # The conjunct slept of the marked clause is no subordinate clause, as a model hangs the
+    # predicates of the main clause on it too, nor a T-unit under it
     stats = Marked(doc)
-    assert (stats.n_t_units, stats.n_subordinate_clauses, stats.n_complex_t_units) == (1, 2, 1)
-    assert is_subordinate_clause_head(doc[9], subordinating_marks={"for"})
-    assert not is_subordinate_clause_head(doc[9], subordinating_marks={"because"})
+    assert (stats.n_t_units, stats.n_subordinate_clauses, stats.n_complex_t_units) == (1, 1, 1)
+    assert is_subordinate_clause_head(doc[6], subordinating_marks={"for"})
+    assert not is_subordinate_clause_head(doc[6], subordinating_marks={"because"})
+    assert not is_subordinate_clause_head(doc[9], subordinating_marks={"for"})
+    # A check of the mark token instead of the set
+    assert is_subordinate_clause_head(doc[6], is_subordinating_mark=lambda mark: mark.i == 3)
+    assert not is_subordinate_clause_head(doc[6], is_subordinating_mark=lambda mark: False)
+
+    class Contextual(Marked):
+        def is_subordinating_mark(self, token):
+            return super().is_subordinating_mark(token) and token.head.text != "tired"
+
+    stats = Contextual(doc)
+    assert (stats.n_t_units, stats.n_subordinate_clauses) == (3, 0)
     # he left , for tired: a marked conjunct sharing the subject is a clause, no coordination
     doc = parse(
         ["he", "left", ",", "for", "tired"],
@@ -1239,6 +1253,17 @@ def test_subordinating_marks():
     stats = Marked(doc)
     assert (stats.n_t_units, stats.n_l2sca_clauses, stats.n_infinitive_clauses) == (1, 1, 1)
     assert stats.clauses_per_t_unit == 1.0 and stats.n_subordinate_clauses == 0
+    # we came , for work and slept: the finite conjunct of the marked infinitive is neither an
+    # infinitive clause nor a subordinate one
+    doc = parse(
+        ["we", "came", ",", "for", "work", "and", "slept"],
+        [1, 1, 4, 4, 1, 6, 4],
+        ["nsubj", "ROOT", "punct", "mark", "parataxis", "cc", "conj"],
+        ["", fin, "", "", "VerbForm=Inf", "", fin],
+        pos=["PRON", "VERB", "PUNCT", "SCONJ", "VERB", "CCONJ", "VERB"],
+    )
+    stats = Marked(doc)
+    assert (stats.n_infinitive_clauses, stats.n_subordinate_clauses) == (1, 0)
     # he left and ran , for he was tired and slept: two coordinations, left and tired
     doc = parse(
         ["he", "left", "and", "ran", ",", "for", "he", "was", "tired", "and", "slept"],
@@ -1270,6 +1295,10 @@ def test_subordinating_marks():
     )
     assert (SyntaxStats(doc).n_t_units, Marked(doc).n_t_units) == (3, 1)
     with pytest.raises(SourceTypeError):
+        is_subordinating_mark(doc[3], "so that")
+    with pytest.raises(SourceTypeError):
+        is_subordinate_clause_head(doc[6], is_subordinating_mark="so that")
+    with pytest.raises(SourceTypeError):
         is_subordinate_clause_head(doc[6], subordinating_marks="so that")
     with pytest.raises(SourceTypeError):
         is_infinitive_clause_head(doc[6], subordinating_marks=[1])
@@ -1277,6 +1306,34 @@ def test_subordinating_marks():
 
         class Wrong(SyntaxStats):
             subordinating_marks: ClassVar = frozenset({1})
+
+
+def test_is_subordinating_mark():
+    # we left , so that they slept: the mark with the words of its fixed expression
+    doc = parse(
+        ["we", "left", ",", "so", "that", "they", "slept"],
+        [1, 1, 6, 6, 3, 6, 1],
+        ["nsubj", "ROOT", "punct", "mark", "fixed", "nsubj", "parataxis"],
+        pos=["PRON", "VERB", "PUNCT", "ADV", "SCONJ", "PRON", "VERB"],
+    )
+    assert is_subordinating_mark(doc[3], {"so that"}) and not is_subordinating_mark(doc[3], {"so"})
+    # A word of another relation and no marks are none
+    assert not is_subordinating_mark(doc[4], {"that"}) and not is_subordinating_mark(doc[3])
+
+
+def test_finite_conjunct_of_an_infinitive_clause():
+    # he wants to leave and leaves: a model attaches the finite verb to the infinitive, which
+    # makes it neither an infinitive clause nor a subordinate one
+    fin, inf = "VerbForm=Fin", "VerbForm=Inf"
+    doc = parse(
+        ["he", "wants", "to", "leave", "and", "leaves"],
+        [1, 1, 3, 1, 5, 3],
+        ["nsubj", "ROOT", "mark", "xcomp", "cc", "conj"],
+        ["", fin, "", inf, "", fin],
+        pos=["PRON", "VERB", "PART", "VERB", "CCONJ", "VERB"],
+    )
+    assert is_infinitive_clause_head(doc[3]) and not is_infinitive_clause_head(doc[5])
+    assert not is_subordinate_clause_head(doc[5])
 
 
 def test_infinitive_clauses_of_the_subordinate_relations():

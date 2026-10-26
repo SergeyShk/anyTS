@@ -332,10 +332,10 @@ A value that is not a `Token` and a check or a form of an auxiliary that is not 
 
 <!-- --8<-- [start:is_subordinate_clause_head] -->
 ``` {.python .signature}
-is_subordinate_clause_head(token, is_clause_head=None, auxiliary_form=None, subordinating_marks=())
+is_subordinate_clause_head(token, is_clause_head=None, auxiliary_form=None, subordinating_marks=(), is_subordinating_mark=None)
 ```
 
-Checks whether a word heads a subordinate clause: a clause head by the check `is_clause_head` whose predicate is no infinitive, with `ccomp`, `advcl`, `acl` or `csubj` (`SUBORDINATE_CLAUSE_DEPS`), or `xcomp` (a complement a model attaches as `xcomp`), or a conjunct of one, by the relation of the first word up its chain of conjuncts. A conjunct or a parataxis with a mark of `subordinating_marks` heads a subordinate clause, since a model may attach a clause of *because* as `conj`. An infinitive heads an infinitive clause, counted apart.
+Checks whether a word heads a subordinate clause: a clause head by the check `is_clause_head` with `ccomp`, `advcl`, `acl` or `csubj` (`SUBORDINATE_CLAUSE_DEPS`), or `xcomp` (a complement a model attaches as `xcomp`), or a conjunct of one, by the relation of the first word up its chain of conjuncts; neither the predicate of that word nor its own is an infinitive, which heads an infinitive clause, counted apart. A conjunct or a parataxis with a subordinating mark (`is_subordinating_mark`) heads a subordinate clause, since a model may attach a clause of *because* as `conj`; its own conjuncts do not, as a model attaches the predicates of the main clause to it as well.
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
@@ -343,9 +343,25 @@ Checks whether a word heads a subordinate clause: a clause head by the check `is
 | `is_clause_head` | `Callable[[Token], bool]` | `None` | Whether a word heads a clause; `is_clause_head` of the module with the hooks of this check if not given |
 | `auxiliary_form` | `Callable[[Token], str]` | `None` | Verb form of an auxiliary without `VerbForm` (`predicate_form`); none by default |
 | `subordinating_marks` | `Collection[str]` | `()` | Subordinating conjunctions in lower case, the words of a fixed expression after a space; none by default |
+| `is_subordinating_mark` | `Callable[[Token], bool]` | `None` | Whether a mark is a subordinating conjunction; `is_subordinating_mark` of the module with `subordinating_marks` if not given |
 
 A value that is not a `Token`, a check or a form of an auxiliary that is not callable and marks that are not a collection of strings raise `SourceTypeError`.
 <!-- --8<-- [end:is_subordinate_clause_head] -->
+
+<!-- --8<-- [start:is_subordinating_mark] -->
+``` {.python .signature}
+is_subordinating_mark(token, subordinating_marks=())
+```
+
+Checks whether a mark is a subordinating conjunction: a word with the relation `mark` whose text in lower case, with the words of its fixed expression after a space (*so that*), is one of `subordinating_marks`. The default of the hook `SyntaxStats.is_subordinating_mark`, which a library overrides to read the context of a word that is a conjunction and a pronoun.
+
+| Parameter | Type | Default | Description |
+| :-------- | :--- | :------ | :---------- |
+| `token` | `Token` | - | Token |
+| `subordinating_marks` | `Collection[str]` | `()` | Subordinating conjunctions in lower case, the words of a fixed expression after a space; none by default |
+
+A value that is not a `Token` and marks that are not a collection of strings raise `SourceTypeError`.
+<!-- --8<-- [end:is_subordinating_mark] -->
 
 </div>
 
@@ -358,10 +374,10 @@ A value that is not a `Token`, a check or a form of an auxiliary that is not cal
 
 <!-- --8<-- [start:is_infinitive_clause_head] -->
 ``` {.python .signature}
-is_infinitive_clause_head(token, is_clause_head=None, auxiliary_form=None, subordinating_marks=())
+is_infinitive_clause_head(token, is_clause_head=None, auxiliary_form=None, subordinating_marks=(), is_subordinating_mark=None)
 ```
 
-Checks whether a word heads an infinitive clause: a clause head by the check `is_clause_head` whose predicate is an infinitive under `xcomp` or a relation of `SUBORDINATE_CLAUSE_DEPS` (*wants to leave*, *asked him to leave*, *came to help*, *it is hard to say*), or a conjunct of one, the first word up its chain of conjuncts deciding as in `is_subordinate_clause_head`; an infinitive under `conj` or `parataxis` marked by one of `subordinating_marks` heads one too (*came , in order to help*). Such a clause is counted apart from the subordinate ones, as grammars of many languages take it for a part of a simple sentence.
+Checks whether a word heads an infinitive clause: a clause head by the check `is_clause_head` whose own predicate is an infinitive, under `xcomp` or a relation of `SUBORDINATE_CLAUSE_DEPS` (*wants to leave*, *asked him to leave*, *came to help*, *it is hard to say*) or a conjunct of one, the first word up its chain of conjuncts deciding as in `is_subordinate_clause_head`; an infinitive under `conj` or `parataxis` with a subordinating mark heads one too (*came , in order to help*). Such a clause is counted apart from the subordinate ones, as grammars of many languages take it for a part of a simple sentence.
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
@@ -369,6 +385,7 @@ Checks whether a word heads an infinitive clause: a clause head by the check `is
 | `is_clause_head` | `Callable[[Token], bool]` | `None` | Whether a word heads a clause; `is_clause_head` of the module with the hooks of this check if not given |
 | `auxiliary_form` | `Callable[[Token], str]` | `None` | Verb form of an auxiliary without `VerbForm` (`predicate_form`); none by default |
 | `subordinating_marks` | `Collection[str]` | `()` | Subordinating conjunctions in lower case, the words of a fixed expression after a space; none by default |
+| `is_subordinating_mark` | `Callable[[Token], bool]` | `None` | Whether a mark is a subordinating conjunction; `is_subordinating_mark` of the module with `subordinating_marks` if not given |
 
 A value that is not a `Token`, a check or a form of an auxiliary that is not callable and marks that are not a collection of strings raise `SourceTypeError`.
 <!-- --8<-- [end:is_infinitive_clause_head] -->
@@ -385,7 +402,7 @@ A value that is not a `Token`, a check or a form of an auxiliary that is not cal
 <!-- --8<-- [start:SyntaxStats-l2sca] -->
 The indices of the L2 Syntactic Complexity Analyzer (L2SCA) that the other metrics do not give, on Universal Dependencies. MLC and C/S are `mean_clause_len` and `clauses_per_sent`; MLS and DC/C come from the counts, `n_words / n_sents` and `n_subordinate_clauses / n_clauses`.
 
-- A T-unit is a main clause with the clauses that depend on it: the head of a sentence and every clause head joined to it through `conj` or `parataxis` (`anyts.constants.MAIN_CLAUSE_DEPS`), so *I came, and he left* holds two; a conjunct of a subordinate clause is none. A conjunct without a subject of its own (*I came and left*) is a predicate sharing the T-unit of the clause it is coordinated to, as in L2SCA, unless its person, number or gender - those of its auxiliary or copula, its own without one - differ from those of that clause: in a language that drops its subjects the ending names another one (*llegamos al puerto y nos esperabas*). An existential *there* (`expl` of ClearNLP) is a subject. A conjunct or a parataxis with a subordinating mark (`subordinating_marks`) heads a subordinate or an infinitive clause, which is no T-unit, nor is a clause under it. A T-unit is complex with a subordinate clause (`is_subordinate_clause_head`) whose nearest T-unit above is it.
+- A T-unit is a main clause with the clauses that depend on it: the head of a sentence and every clause head joined to it through `conj` or `parataxis` (`anyts.constants.MAIN_CLAUSE_DEPS`), so *I came, and he left* holds two; a conjunct of a subordinate clause is none. A conjunct without a subject of its own (*I came and left*) is a predicate sharing the T-unit of the clause it is coordinated to, as in L2SCA, unless its person, number or gender - those of its auxiliary or copula, its own without one - differ from those of that clause: in a language that drops its subjects the ending names another one (*llegamos al puerto y nos esperabas*). An existential *there* (`expl` of ClearNLP) is a subject. A conjunct or a parataxis with a subordinating mark (`is_subordinating_mark`) heads a subordinate or an infinitive clause, which is no T-unit, nor is a clause under it. A T-unit is complex with a subordinate clause (`is_subordinate_clause_head`) whose nearest T-unit above is it.
 - A verb phrase is a predicate (`is_predicate`) that is no auxiliary or copula: a verb, an auxiliary used as a predicate (*there **is** trouble*), a word with a subject or a copula; an infinitive that makes one predicate with its head (`is_infinitive_periphrasis`), and its infinitive conjunct, is part of the verb phrase of the head. A participle or another non-finite form under `amod` or `acl`, or coordinated to one, without an auxiliary, a copula or a subject of its own is an attribute of its noun (*the house built by workers*), as in L2SCA, not a verb phrase.
 - A coordinate phrase is a coordination with a conjunct that is no clause head (*the man and the woman*, *is big and nice*) or a predicate without a subject of its own (*came and left*), counted once by its first conjunct; a coordination of clauses with their own subjects counts as clauses.
 - The clauses of C/T, CP/C and CN/C are those of L2SCA (`n_l2sca_clauses`): the clauses of `is_clause_head` without the predicates sharing a subject (*came and left*) and the infinitive clauses, as L2SCA counts finite clauses with a subject. C/S and MLC keep the clauses of the other metrics, so C/S runs higher and MLC lower than in L2SCA.
@@ -840,8 +857,9 @@ A language library subclasses `SyntaxStats`. The defaults read Universal Depende
 | `is_clause_head(token)` | method | Whether a word heads a clause; by default `is_clause_head` of the module with `join_hyphens` of the class and the hooks `is_infinitive_periphrasis` and `auxiliary_form` |
 | `is_infinitive_periphrasis(token)` | method | Whether an infinitive under `xcomp`, an infinitive conjunct or an infinitive subject (`csubj`) of a modal word makes one predicate with its head, a modal or phasal verb (*can leave*, *begins to leave*): one clause and one verb phrase; none by default |
 | `auxiliary_form(token)` | method | Verb form the checks of the clauses read for an auxiliary or a copula without `VerbForm` (`predicate_form`); by default an empty string, which skips it |
-| `is_subordinate_clause_head(token)` | method | Whether a clause head heads a subordinate clause, asked only of the words of `is_clause_head`; by default `is_subordinate_clause_head` of the module over the hooks `is_clause_head` and `auxiliary_form`, with `subordinating_marks` of the class |
-| `is_infinitive_clause_head(token)` | method | Whether a clause head heads an infinitive clause (*wants to leave*, *came to help*), counted apart from the subordinate ones; by default `is_infinitive_clause_head` of the module over the hooks `is_clause_head` and `auxiliary_form`, with `subordinating_marks` of the class |
+| `is_subordinate_clause_head(token)` | method | Whether a clause head heads a subordinate clause, asked only of the words of `is_clause_head`; by default `is_subordinate_clause_head` of the module over the hooks `is_clause_head`, `auxiliary_form` and `is_subordinating_mark` |
+| `is_infinitive_clause_head(token)` | method | Whether a clause head heads an infinitive clause (*wants to leave*, *came to help*), counted apart from the subordinate ones; by default `is_infinitive_clause_head` of the module over the hooks `is_clause_head`, `auxiliary_form` and `is_subordinating_mark` |
+| `is_subordinating_mark(token)` | method | Whether a mark of a conjunct or a parataxis is a subordinating conjunction, which makes it a subordinate clause (an infinitive one with an infinitive); by default `is_subordinating_mark` of the module with `subordinating_marks`; a library reads the context of a word that is a conjunction and a pronoun |
 | `is_prep_complement(token)` | method | Whether a word is a link of a prepositional chain; by default `is_prep_complement` of the module with `join_hyphens` of the class. It gets the words of `sents` on first use: tokens of a copy of the `Doc` without its user data and tensor, on a blank vocabulary after pickling, so no extension of a token |
 | `is_participle_clause(token)` | method | Whether a word heads a participial clause; by default a participle that is not the head of the sentence, has no auxiliary or copula and has a dependent (`calc_valency`) |
 | `is_passive(token)` | method | Whether a word is a passive verb form; by default `is_passive` of the module with `join_hyphens` of the class |
@@ -849,7 +867,7 @@ A language library subclasses `SyntaxStats`. The defaults read Universal Depende
 | `is_negation(token)` | method | Whether a word is a word of negation; by default `Polarity=Neg` or a word of `negation_words`, a conjunction excluded |
 | `find_split_predicates(words)` | method | Pairs of a light verb and the noun that carries its meaning (`to make a decision`); none by default |
 | `negation_words` | class attribute | Words of negation besides `Polarity=Neg`, in lower case; none by default |
-| `subordinating_marks` | class attribute | Subordinating conjunctions in lower case, the words of a fixed expression after a space, that make a conjunct or a parataxis they mark a subordinate clause (*because*, *so that*), an infinitive clause with an infinitive; none by default |
+| `subordinating_marks` | class attribute | Subordinating conjunctions in lower case, the words of a fixed expression after a space, for the hook `is_subordinating_mark` (*because*, *so that*); none by default |
 | `join_hyphens` | class attribute | Take a word the tokenizer split at its hyphens for one word, in the tree and in the default hooks |
 | `requires_lemmas` | class attribute | Whether the source must carry lemmas, for hooks that read them |
 | `stats_desc`, `stats_headers` | class attributes | Statistics of `get_stats` with their descriptions (`SYNTAX_STATS_DESC` by default), headers of the columns for `print_stats` |
