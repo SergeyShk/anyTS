@@ -1384,6 +1384,45 @@ def test_finite_conjunct_of_an_infinitive_clause():
     assert (stats.n_t_units, stats.n_l2sca_clauses, stats.clauses_per_t_unit) == (2, 2, 1.0)
     assert not stats.is_infinitive_clause_head(doc[6])
     assert not stats.is_subordinate_clause_head(doc[6])
+    # I know that he wants to leave and she leaves: under a subordinate clause it is one too
+    doc = parse(
+        ["I", "know", "that", "he", "wants", "to", "leave", "and", "she", "leaves"],
+        [1, 1, 4, 4, 1, 6, 4, 9, 9, 6],
+        ["nsubj", "ROOT", "mark", "nsubj", "ccomp", "mark", "xcomp", "cc", "nsubj", "conj"],
+        ["", fin, "", "", fin, "", inf, "", "", fin],
+        pos=["PRON", "VERB", "SCONJ", "PRON", "VERB", "PART", "VERB", "CCONJ", "PRON", "VERB"],
+    )
+    stats = SyntaxStats(doc)
+    assert (stats.n_t_units, stats.n_subordinate_clauses, stats.n_infinitive_clauses) == (1, 2, 1)
+    # he wants to try to leave and she leaves: the clause the chain of infinitives completes
+    doc = parse(
+        ["he", "wants", "to", "try", "to", "leave", "and", "she", "leaves"],
+        [1, 1, 3, 1, 5, 3, 8, 8, 5],
+        ["nsubj", "ROOT", "mark", "xcomp", "mark", "xcomp", "cc", "nsubj", "conj"],
+        ["", fin, "", inf, "", inf, "", "", fin],
+        pos=["PRON", "VERB", "PART", "VERB", "PART", "VERB", "CCONJ", "PRON", "VERB"],
+    )
+    stats = SyntaxStats(doc)
+    assert (stats.n_t_units, stats.n_subordinate_clauses) == (2, 0)
+    # he came to try to leave and she left: an infinitive completes the chain, which makes no
+    # subordinate clause of the conjunct
+    doc = parse(
+        ["he", "came", "to", "try", "to", "leave", "and", "she", "left"],
+        [1, 1, 3, 1, 5, 3, 8, 8, 5],
+        ["nsubj", "ROOT", "mark", "advcl", "mark", "xcomp", "cc", "nsubj", "conj"],
+        ["", fin, "", inf, "", inf, "", "", fin],
+        pos=["PRON", "VERB", "PART", "VERB", "PART", "VERB", "CCONJ", "PRON", "VERB"],
+    )
+    assert not is_subordinate_clause_head(doc[8])
+    # A loop of the words above the infinitive leaves the conjunct without a kind
+    loop = parse(
+        ["leave", "and", "she", "leaves"],
+        [0, 3, 3, 0],
+        ["xcomp", "cc", "nsubj", "conj"],
+        [inf, "", "", fin],
+        pos=["VERB", "CCONJ", "PRON", "VERB"],
+    )
+    assert not is_subordinate_clause_head(loop[3], lambda token: True)
 
 
 def test_infinitive_clauses_of_the_subordinate_relations():

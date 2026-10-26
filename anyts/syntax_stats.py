@@ -378,9 +378,9 @@ class SyntaxStats(Stats):
         }
         firsts = _first_conjuncts(words, join_hyphens, marked)
         # A finite conjunct with a subject of its own of an infinitive clause, a predicate a model
-        # attaches to the infinitive, joins the clause the infinitive depends on
+        # attaches to the infinitive, joins the clause the infinitive completes
         reattached = {
-            token.i: first.head
+            token.i: owner
             for sent in heads
             for token in sent
             if base_dep(token) == "conj"
@@ -388,6 +388,7 @@ class SyntaxStats(Stats):
             and first.i in self._infinitive_heads
             and token.i not in self._infinitive_heads
             and not _shares_subject(token, join_hyphens)
+            and (owner := _completed_word(first, None, self.auxiliary_form)) is not None
         }
         n_t_units = n_complex_t_units = 0
         for sent, subordinate in zip(heads, self._subordinate_heads, strict=True):
@@ -1775,8 +1776,10 @@ def is_subordinate_clause_head(
         SUBORDINATE_CLAUSE_DEPS (ccomp, advcl, acl, csubj and their subtypes) or
         xcomp (a complement a model attaches as xcomp), or a conjunct of one: the
         relation of the first word up its chain of conjuncts decides, and neither
-        the predicate of that word nor its own (predicate_form) is an infinitive.
-        An infinitive heads an infinitive clause (is_infinitive_clause_head). A
+        the predicate of that word nor its own (predicate_form) is an infinitive;
+        a finite conjunct with a subject of its own of an infinitive takes the kind
+        of the clause the infinitive completes. An infinitive heads an infinitive
+        clause (is_infinitive_clause_head). A
         conjunct or a parataxis with a subordinating mark (is_subordinating_mark)
         is a subordinate clause, since a model may attach a clause of because as
         conj, and so are its conjuncts with a subject of its own; those sharing the
@@ -1809,8 +1812,19 @@ def is_subordinate_clause_head(
     if is_root(token) or not is_clause_head(token):
         return False
     word, dep = _clause_relation(token, is_marked, auxiliary_form)
-    if "Inf" in (predicate_form(word, auxiliary_form), predicate_form(token, auxiliary_form)):
+    if predicate_form(token, auxiliary_form) == "Inf":
         return False
+    if predicate_form(word, auxiliary_form) == "Inf":
+        # A finite conjunct with a subject of its own, which a model attaches to an infinitive,
+        # takes the kind of the clause the infinitive completes
+        owner = (
+            None if _shares_subject(token, False) else _completed_word(word, None, auxiliary_form)
+        )
+        if owner is None:
+            return False
+        word, dep = _clause_relation(owner, is_marked, auxiliary_form)
+        if predicate_form(word, auxiliary_form) == "Inf":
+            return False
     return dep == "xcomp" or (not is_root(word) and dep in SUBORDINATE_CLAUSE_DEPS)
 
 
