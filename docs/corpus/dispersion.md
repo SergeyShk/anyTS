@@ -7,7 +7,7 @@ dispersion(words, parts=10, word=None, min_freq=1)
 
 The dispersion of a word is how evenly it is spread over the parts of a text or of a corpus. Frequency does not tell a word occurring once in every chapter from one gathered in a single chapter; the measures of dispersion ([Gries 2008](https://www.stgries.info/research/2008_STG_Dispersion_IJCL.pdf), [2020](https://www.stgries.info/research/2020_STG_Dispersion_PHCL.pdf)) complement it.
 
-`parts` is the number of parts of about equal size or the sizes of the parts in order (sentences, paragraphs, chapters, documents of a corpus), adding up to the number of words; `split_paragraphs` of `anyts.extractors` gives the paragraphs of a text, whose words make the sizes; the paragraphs without words, such as a scene break of asterisks, are dropped first, since a part needs a word. Six measures are computed from the frequencies of every word by part; Gries recommends DP as the main one.
+`parts` is the number of parts of about equal size or the sizes of the parts in order (sentences, paragraphs, chapters, documents of a corpus), adding up to the number of words; `split_paragraphs` of `anyts.extractors` gives the paragraphs of a text between blank lines, whose words make the sizes (for a text with a paragraph on every line, its lines are the paragraphs, as in `CohesionStats`); the paragraphs without words, such as a scene break of asterisks, are dropped first, since a part needs a word. Six measures are computed from the frequencies of every word by part; Gries recommends DP as the main one.
 
 Words are compared as they are: case and lemmatization belong to the word extractor.
 <!-- --8<-- [end:dispersion] -->

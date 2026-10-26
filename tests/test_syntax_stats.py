@@ -33,6 +33,7 @@ from anyts.syntax_stats import (
     is_prep_complement,
     is_root,
     is_subordinate_clause_head,
+    is_subordinating_mark,
     predicate_form,
     subtree_len,
 )
@@ -1199,10 +1200,41 @@ def test_subordinating_marks():
     )
     stats = SyntaxStats(doc)
     assert (stats.n_t_units, stats.n_subordinate_clauses, stats.n_complex_t_units) == (3, 0, 0)
+    # slept, a conjunct with a subject of its own, belongs to the marked clause
     stats = Marked(doc)
     assert (stats.n_t_units, stats.n_subordinate_clauses, stats.n_complex_t_units) == (1, 2, 1)
+    assert is_subordinate_clause_head(doc[6], subordinating_marks={"for"})
+    assert not is_subordinate_clause_head(doc[6], subordinating_marks={"because"})
     assert is_subordinate_clause_head(doc[9], subordinating_marks={"for"})
-    assert not is_subordinate_clause_head(doc[9], subordinating_marks={"because"})
+    # he left , for he was tired and cried: a conjunct sharing the subject may be a predicate of
+    # the main clause, which a model attaches to the marked one too
+    shared = parse(
+        ["he", "left", ",", "for", "he", "was", "tired", "and", "cried"],
+        [1, 1, 6, 6, 6, 6, 1, 8, 6],
+        ["nsubj", "ROOT", "punct", "mark", "nsubj", "cop", "conj", "cc", "conj"],
+        ["", fin, "", "", "", fin, "", "", fin],
+        pos=["PRON", "VERB", "PUNCT", "SCONJ", "PRON", "AUX", "ADJ", "CCONJ", "VERB"],
+    )
+    assert not is_subordinate_clause_head(shared[8], subordinating_marks={"for"})
+    assert Marked(shared).n_subordinate_clauses == 1
+
+    class HookOnly(SyntaxStats):
+        def is_subordinating_mark(self, token):
+            return token.lower_ == "for"
+
+    # The hook alone, without subordinating_marks, marks the clause for every count
+    stats = HookOnly(doc)
+    assert (stats.n_t_units, stats.n_subordinate_clauses, stats.n_complex_t_units) == (1, 2, 1)
+    # A check of the mark token instead of the set
+    assert is_subordinate_clause_head(doc[6], is_subordinating_mark=lambda mark: mark.i == 3)
+    assert not is_subordinate_clause_head(doc[6], is_subordinating_mark=lambda mark: False)
+
+    class Contextual(Marked):
+        def is_subordinating_mark(self, token):
+            return super().is_subordinating_mark(token) and token.head.text != "tired"
+
+    stats = Contextual(doc)
+    assert (stats.n_t_units, stats.n_subordinate_clauses) == (3, 0)
     # he left , for tired: a marked conjunct sharing the subject is a clause, no coordination
     doc = parse(
         ["he", "left", ",", "for", "tired"],
@@ -1239,6 +1271,26 @@ def test_subordinating_marks():
     stats = Marked(doc)
     assert (stats.n_t_units, stats.n_l2sca_clauses, stats.n_infinitive_clauses) == (1, 1, 1)
     assert stats.clauses_per_t_unit == 1.0 and stats.n_subordinate_clauses == 0
+    # we came , for work and slept: the finite conjunct of the marked infinitive is neither an
+    # infinitive clause nor a subordinate one
+    doc = parse(
+        ["we", "came", ",", "for", "work", "and", "slept"],
+        [1, 1, 4, 4, 1, 6, 4],
+        ["nsubj", "ROOT", "punct", "mark", "parataxis", "cc", "conj"],
+        ["", fin, "", "", "VerbForm=Inf", "", fin],
+        pos=["PRON", "VERB", "PUNCT", "SCONJ", "VERB", "CCONJ", "VERB"],
+    )
+    stats = Marked(doc)
+    assert (stats.n_infinitive_clauses, stats.n_subordinate_clauses) == (1, 0)
+    # we came , for work and rest: an infinitive conjunct belongs to the marked infinitive
+    doc = parse(
+        ["we", "came", ",", "for", "work", "and", "rest"],
+        [1, 1, 4, 4, 1, 6, 4],
+        ["nsubj", "ROOT", "punct", "mark", "parataxis", "cc", "conj"],
+        ["", fin, "", "", "VerbForm=Inf", "", "VerbForm=Inf"],
+        pos=["PRON", "VERB", "PUNCT", "SCONJ", "VERB", "CCONJ", "VERB"],
+    )
+    assert Marked(doc).n_infinitive_clauses == 2
     # he left and ran , for he was tired and slept: two coordinations, left and tired
     doc = parse(
         ["he", "left", "and", "ran", ",", "for", "he", "was", "tired", "and", "slept"],
@@ -1270,6 +1322,10 @@ def test_subordinating_marks():
     )
     assert (SyntaxStats(doc).n_t_units, Marked(doc).n_t_units) == (3, 1)
     with pytest.raises(SourceTypeError):
+        is_subordinating_mark(doc[3], "so that")
+    with pytest.raises(SourceTypeError):
+        is_subordinate_clause_head(doc[6], is_subordinating_mark="so that")
+    with pytest.raises(SourceTypeError):
         is_subordinate_clause_head(doc[6], subordinating_marks="so that")
     with pytest.raises(SourceTypeError):
         is_infinitive_clause_head(doc[6], subordinating_marks=[1])
@@ -1277,6 +1333,141 @@ def test_subordinating_marks():
 
         class Wrong(SyntaxStats):
             subordinating_marks: ClassVar = frozenset({1})
+
+
+def test_is_subordinating_mark():
+    # we left , so that they slept: the mark with the words of its fixed expression
+    doc = parse(
+        ["we", "left", ",", "so", "that", "they", "slept"],
+        [1, 1, 6, 6, 3, 6, 1],
+        ["nsubj", "ROOT", "punct", "mark", "fixed", "nsubj", "parataxis"],
+        pos=["PRON", "VERB", "PUNCT", "ADV", "SCONJ", "PRON", "VERB"],
+    )
+    assert is_subordinating_mark(doc[3], {"so that"}) and not is_subordinating_mark(doc[3], {"so"})
+    # A word of another relation and no marks are none
+    assert not is_subordinating_mark(doc[4], {"that"}) and not is_subordinating_mark(doc[3])
+
+
+def test_finite_conjunct_of_an_infinitive_clause():
+    # he wants to leave and leaves: a model attaches the finite verb to the infinitive, which
+    # makes it neither an infinitive clause nor a subordinate one
+    fin, inf = "VerbForm=Fin", "VerbForm=Inf"
+    doc = parse(
+        ["he", "wants", "to", "leave", "and", "leaves"],
+        [1, 1, 3, 1, 5, 3],
+        ["nsubj", "ROOT", "mark", "xcomp", "cc", "conj"],
+        ["", fin, "", inf, "", fin],
+        pos=["PRON", "VERB", "PART", "VERB", "CCONJ", "VERB"],
+    )
+    assert is_infinitive_clause_head(doc[3]) and not is_infinitive_clause_head(doc[5])
+    assert not is_subordinate_clause_head(doc[5])
+    # I know that he left and stay: an infinitive conjunct of a finite subordinate clause is an
+    # infinitive clause, not a subordinate one
+    doc = parse(
+        ["I", "know", "that", "he", "left", "and", "stay"],
+        [1, 1, 4, 4, 1, 6, 4],
+        ["nsubj", "ROOT", "mark", "nsubj", "ccomp", "cc", "conj"],
+        ["", fin, "", "", fin, "", inf],
+        pos=["PRON", "VERB", "SCONJ", "PRON", "VERB", "CCONJ", "VERB"],
+    )
+    assert is_infinitive_clause_head(doc[6]) and not is_subordinate_clause_head(doc[6])
+    # he came to help and she stayed: a finite conjunct with a subject of its own of the
+    # infinitive joins the clause of came, a T-unit of its own
+    doc = parse(
+        ["he", "came", "to", "help", "and", "she", "stayed"],
+        [1, 1, 3, 1, 6, 6, 3],
+        ["nsubj", "ROOT", "mark", "advcl", "cc", "nsubj", "conj"],
+        ["", fin, "", inf, "", "", fin],
+        pos=["PRON", "VERB", "PART", "VERB", "CCONJ", "PRON", "VERB"],
+    )
+    stats = SyntaxStats(doc)
+    assert (stats.n_t_units, stats.n_l2sca_clauses, stats.clauses_per_t_unit) == (2, 2, 1.0)
+    assert not stats.is_infinitive_clause_head(doc[6])
+    assert not stats.is_subordinate_clause_head(doc[6])
+    # I know that he wants to leave and she leaves: under a subordinate clause it is one too
+    doc = parse(
+        ["I", "know", "that", "he", "wants", "to", "leave", "and", "she", "leaves"],
+        [1, 1, 4, 4, 1, 6, 4, 9, 9, 6],
+        ["nsubj", "ROOT", "mark", "nsubj", "ccomp", "mark", "xcomp", "cc", "nsubj", "conj"],
+        ["", fin, "", "", fin, "", inf, "", "", fin],
+        pos=["PRON", "VERB", "SCONJ", "PRON", "VERB", "PART", "VERB", "CCONJ", "PRON", "VERB"],
+    )
+    stats = SyntaxStats(doc)
+    assert (stats.n_t_units, stats.n_subordinate_clauses, stats.n_infinitive_clauses) == (1, 2, 1)
+    # he wants to try to leave and she leaves: the clause the chain of infinitives completes
+    doc = parse(
+        ["he", "wants", "to", "try", "to", "leave", "and", "she", "leaves"],
+        [1, 1, 3, 1, 5, 3, 8, 8, 5],
+        ["nsubj", "ROOT", "mark", "xcomp", "mark", "xcomp", "cc", "nsubj", "conj"],
+        ["", fin, "", inf, "", inf, "", "", fin],
+        pos=["PRON", "VERB", "PART", "VERB", "PART", "VERB", "CCONJ", "PRON", "VERB"],
+    )
+    stats = SyntaxStats(doc)
+    assert (stats.n_t_units, stats.n_subordinate_clauses) == (2, 0)
+    # he came to try to leave and she left: the chain of infinitives up to the finite came
+    doc = parse(
+        ["he", "came", "to", "try", "to", "leave", "and", "she", "left"],
+        [1, 1, 3, 1, 5, 3, 8, 8, 5],
+        ["nsubj", "ROOT", "mark", "advcl", "mark", "xcomp", "cc", "nsubj", "conj"],
+        ["", fin, "", inf, "", inf, "", "", fin],
+        pos=["PRON", "VERB", "PART", "VERB", "PART", "VERB", "CCONJ", "PRON", "VERB"],
+    )
+    stats = SyntaxStats(doc)
+    assert not stats.is_subordinate_clause_head(doc[8]) and stats.n_t_units == 2
+    # I know that he came to try to leave and she left: under a subordinate clause
+    doc = parse(
+        ["I", "know", "that", "he", "came", "to", "try", "to", "leave", "and", "she", "left"],
+        [1, 1, 4, 4, 1, 6, 4, 8, 6, 11, 11, 8],
+        [
+            "nsubj",
+            "ROOT",
+            "mark",
+            "nsubj",
+            "ccomp",
+            "mark",
+            "advcl",
+            "mark",
+            "xcomp",
+            "cc",
+            "nsubj",
+            "conj",
+        ],
+        ["", fin, "", "", fin, "", inf, "", inf, "", "", fin],
+        pos=[
+            "PRON",
+            "VERB",
+            "SCONJ",
+            "PRON",
+            "VERB",
+            "PART",
+            "VERB",
+            "PART",
+            "VERB",
+            "CCONJ",
+            "PRON",
+            "VERB",
+        ],
+    )
+    stats = SyntaxStats(doc)
+    assert (stats.n_t_units, stats.n_subordinate_clauses) == (1, 2)
+    # A loop of infinitives above the conjunct leaves it without a kind
+    cycle = parse(
+        ["go", "leave", "and", "she", "leaves"],
+        [1, 0, 4, 4, 1],
+        ["xcomp", "xcomp", "cc", "nsubj", "conj"],
+        [inf, inf, "", "", fin],
+        pos=["VERB", "VERB", "CCONJ", "PRON", "VERB"],
+    )
+    assert not is_subordinate_clause_head(cycle[4], lambda token: True)
+    # A loop of the words above the infinitive leaves the conjunct without a kind
+    loop = parse(
+        ["leave", "and", "she", "leaves"],
+        [0, 3, 3, 0],
+        ["xcomp", "cc", "nsubj", "conj"],
+        [inf, "", "", fin],
+        pos=["VERB", "CCONJ", "PRON", "VERB"],
+    )
+    assert not is_subordinate_clause_head(loop[3], lambda token: True)
 
 
 def test_infinitive_clauses_of_the_subordinate_relations():
