@@ -3409,9 +3409,9 @@ Ratio of nouns to verbs                                    |   0.50
 <h3 id="subordinate_clauses">Subordinate clauses<a class="headerlink" href="#subordinate_clauses" title="Permanent link">&para;</a></h3>
 <p class="metric-meta"><code>subordinate_clauses_per_sent</code> · <code>p_complex_sents</code></p>
 <!-- --8<-- [start:is_subordinate_clause_head] -->
-<div class="signature highlight"><pre><span></span><code><span class="n">is_subordinate_clause_head</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="n">is_clause_head</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">auxiliary_form</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">subordinating_marks</span><span class="o">=</span><span class="p">())</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">is_subordinate_clause_head</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="n">is_clause_head</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">auxiliary_form</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">subordinating_marks</span><span class="o">=</span><span class="p">(),</span> <span class="n">is_subordinating_mark</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
-<p>Checks whether a word heads a subordinate clause: a clause head by the check <code>is_clause_head</code> whose predicate is no infinitive, with <code>ccomp</code>, <code>advcl</code>, <code>acl</code> or <code>csubj</code> (<code>SUBORDINATE_CLAUSE_DEPS</code>), or <code>xcomp</code> (a complement a model attaches as <code>xcomp</code>), or a conjunct of one, by the relation of the first word up its chain of conjuncts. A conjunct or a parataxis with a mark of <code>subordinating_marks</code> heads a subordinate clause, since a model may attach a clause of <em>because</em> as <code>conj</code>. An infinitive heads an infinitive clause, counted apart.</p>
+<p>Checks whether a word heads a subordinate clause: a clause head by the check <code>is_clause_head</code> with <code>ccomp</code>, <code>advcl</code>, <code>acl</code> or <code>csubj</code> (<code>SUBORDINATE_CLAUSE_DEPS</code>), or <code>xcomp</code> (a complement a model attaches as <code>xcomp</code>), or a conjunct of one, by the relation of the first word up its chain of conjuncts; neither the predicate of that word nor its own is an infinitive, which heads an infinitive clause, counted apart, and a finite conjunct with a subject of its own of an infinitive takes the kind of the clause of the first word above the infinitives that is none. A conjunct or a parataxis with a subordinating mark (<code>is_subordinating_mark</code>) heads a subordinate clause, since a model may attach a clause of <em>because</em> as <code>conj</code>, and so do its conjuncts with a subject of their own; those sharing its subject do not, as a model attaches the predicates of the main clause to it as well.</p>
 <table>
 <thead>
 <tr>
@@ -3439,6 +3439,42 @@ Ratio of nouns to verbs                                    |   0.50
 <td style="text-align: left;"><code>Callable[[Token], str]</code></td>
 <td style="text-align: left;"><code>None</code></td>
 <td style="text-align: left;">Verb form of an auxiliary without <code>VerbForm</code> (<code>predicate_form</code>); none by default</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>subordinating_marks</code></td>
+<td style="text-align: left;"><code>Collection[str]</code></td>
+<td style="text-align: left;"><code>()</code></td>
+<td style="text-align: left;">Subordinating conjunctions in lower case, the words of a fixed expression after a space; none by default</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>is_subordinating_mark</code></td>
+<td style="text-align: left;"><code>Callable[[Token], bool]</code></td>
+<td style="text-align: left;"><code>None</code></td>
+<td style="text-align: left;">Whether a mark is a subordinating conjunction; <code>is_subordinating_mark</code> of the module with <code>subordinating_marks</code> if not given</td>
+</tr>
+</tbody>
+</table>
+<p>A value that is not a <code>Token</code>, a check or a form of an auxiliary that is not callable and marks that are not a collection of strings raise <code>SourceTypeError</code>.</p>
+<!-- --8<-- [end:is_subordinate_clause_head] -->
+<!-- --8<-- [start:is_subordinating_mark] -->
+<div class="signature highlight"><pre><span></span><code><span class="n">is_subordinating_mark</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="n">subordinating_marks</span><span class="o">=</span><span class="p">())</span>
+</code></pre></div>
+<p>Checks whether a mark is a subordinating conjunction: a word with the relation <code>mark</code> whose text in lower case, with the words of its fixed expression after a space (<em>so that</em>), is one of <code>subordinating_marks</code>. The default of the hook <code>SyntaxStats.is_subordinating_mark</code>, which a library overrides to read the context of a word that is a conjunction and a pronoun.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Parameter</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Default</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>token</code></td>
+<td style="text-align: left;"><code>Token</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Token</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>subordinating_marks</code></td>
@@ -3448,16 +3484,16 @@ Ratio of nouns to verbs                                    |   0.50
 </tr>
 </tbody>
 </table>
-<p>A value that is not a <code>Token</code>, a check or a form of an auxiliary that is not callable and marks that are not a collection of strings raise <code>SourceTypeError</code>.</p>
-<!-- --8<-- [end:is_subordinate_clause_head] -->
+<p>A value that is not a <code>Token</code> and marks that are not a collection of strings raise <code>SourceTypeError</code>.</p>
+<!-- --8<-- [end:is_subordinating_mark] -->
 </div>
 <div class="metric-card">
 <h3 id="infinitive_clauses">Infinitive clauses<a class="headerlink" href="#infinitive_clauses" title="Permanent link">&para;</a></h3>
 <p class="metric-meta"><code>infinitive_clauses_per_sent</code></p>
 <!-- --8<-- [start:is_infinitive_clause_head] -->
-<div class="signature highlight"><pre><span></span><code><span class="n">is_infinitive_clause_head</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="n">is_clause_head</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">auxiliary_form</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">subordinating_marks</span><span class="o">=</span><span class="p">())</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">is_infinitive_clause_head</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="n">is_clause_head</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">auxiliary_form</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">subordinating_marks</span><span class="o">=</span><span class="p">(),</span> <span class="n">is_subordinating_mark</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
-<p>Checks whether a word heads an infinitive clause: a clause head by the check <code>is_clause_head</code> whose predicate is an infinitive under <code>xcomp</code> or a relation of <code>SUBORDINATE_CLAUSE_DEPS</code> (<em>wants to leave</em>, <em>asked him to leave</em>, <em>came to help</em>, <em>it is hard to say</em>), or a conjunct of one, the first word up its chain of conjuncts deciding as in <code>is_subordinate_clause_head</code>; an infinitive under <code>conj</code> or <code>parataxis</code> marked by one of <code>subordinating_marks</code> heads one too (<em>came , in order to help</em>). Such a clause is counted apart from the subordinate ones, as grammars of many languages take it for a part of a simple sentence.</p>
+<p>Checks whether a word heads an infinitive clause: a clause head by the check <code>is_clause_head</code> whose own predicate is an infinitive, under <code>xcomp</code> or a relation of <code>SUBORDINATE_CLAUSE_DEPS</code> (<em>wants to leave</em>, <em>asked him to leave</em>, <em>came to help</em>, <em>it is hard to say</em>) or a conjunct of one, the first word up its chain of conjuncts deciding as in <code>is_subordinate_clause_head</code>; an infinitive under <code>conj</code> or <code>parataxis</code> with a subordinating mark, or an infinitive conjunct of it, heads one too (<em>came , in order to help</em>). Such a clause is counted apart from the subordinate ones, as grammars of many languages take it for a part of a simple sentence.</p>
 <table>
 <thead>
 <tr>
@@ -3491,6 +3527,12 @@ Ratio of nouns to verbs                                    |   0.50
 <td style="text-align: left;"><code>Collection[str]</code></td>
 <td style="text-align: left;"><code>()</code></td>
 <td style="text-align: left;">Subordinating conjunctions in lower case, the words of a fixed expression after a space; none by default</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>is_subordinating_mark</code></td>
+<td style="text-align: left;"><code>Callable[[Token], bool]</code></td>
+<td style="text-align: left;"><code>None</code></td>
+<td style="text-align: left;">Whether a mark is a subordinating conjunction; <code>is_subordinating_mark</code> of the module with <code>subordinating_marks</code> if not given</td>
 </tr>
 </tbody>
 </table>
@@ -3503,7 +3545,7 @@ Ratio of nouns to verbs                                    |   0.50
 <!-- --8<-- [start:SyntaxStats-l2sca] -->
 <p>The indices of the L2 Syntactic Complexity Analyzer (L2SCA) that the other metrics do not give, on Universal Dependencies. MLC and C/S are <code>mean_clause_len</code> and <code>clauses_per_sent</code>; MLS and DC/C come from the counts, <code>n_words / n_sents</code> and <code>n_subordinate_clauses / n_clauses</code>.</p>
 <ul>
-<li>A T-unit is a main clause with the clauses that depend on it: the head of a sentence and every clause head joined to it through <code>conj</code> or <code>parataxis</code> (<code>anyts.constants.MAIN_CLAUSE_DEPS</code>), so <em>I came, and he left</em> holds two; a conjunct of a subordinate clause is none. A conjunct without a subject of its own (<em>I came and left</em>) is a predicate sharing the T-unit of the clause it is coordinated to, as in L2SCA, unless its person, number or gender - those of its auxiliary or copula, its own without one - differ from those of that clause: in a language that drops its subjects the ending names another one (<em>llegamos al puerto y nos esperabas</em>). An existential <em>there</em> (<code>expl</code> of ClearNLP) is a subject. A conjunct or a parataxis with a subordinating mark (<code>subordinating_marks</code>) heads a subordinate or an infinitive clause, which is no T-unit, nor is a clause under it. A T-unit is complex with a subordinate clause (<code>is_subordinate_clause_head</code>) whose nearest T-unit above is it.</li>
+<li>A T-unit is a main clause with the clauses that depend on it: the head of a sentence and every clause head joined to it through <code>conj</code> or <code>parataxis</code> (<code>anyts.constants.MAIN_CLAUSE_DEPS</code>), so <em>I came, and he left</em> holds two; a conjunct of a subordinate clause is none. A conjunct without a subject of its own (<em>I came and left</em>) is a predicate sharing the T-unit of the clause it is coordinated to, as in L2SCA, unless its person, number or gender - those of its auxiliary or copula, its own without one - differ from those of that clause: in a language that drops its subjects the ending names another one (<em>llegamos al puerto y nos esperabas</em>). An existential <em>there</em> (<code>expl</code> of ClearNLP) is a subject. A conjunct or a parataxis with a subordinating mark (<code>is_subordinating_mark</code>) heads a subordinate or an infinitive clause, which is no T-unit, nor is a clause under it. A finite conjunct with a subject of its own of an infinitive clause, a predicate a model attaches to the infinitive, joins the clause of the first word above the infinitives that is none (<em>he came to help and she stayed</em>: two T-units). A T-unit is complex with a subordinate clause (<code>is_subordinate_clause_head</code>) whose nearest T-unit above is it.</li>
 <li>A verb phrase is a predicate (<code>is_predicate</code>) that is no auxiliary or copula: a verb, an auxiliary used as a predicate (<em>there </em><em>is</em><em> trouble</em>), a word with a subject or a copula; an infinitive that makes one predicate with its head (<code>is_infinitive_periphrasis</code>), and its infinitive conjunct, is part of the verb phrase of the head. A participle or another non-finite form under <code>amod</code> or <code>acl</code>, or coordinated to one, without an auxiliary, a copula or a subject of its own is an attribute of its noun (<em>the house built by workers</em>), as in L2SCA, not a verb phrase.</li>
 <li>A coordinate phrase is a coordination with a conjunct that is no clause head (<em>the man and the woman</em>, <em>is big and nice</em>) or a predicate without a subject of its own (<em>came and left</em>), counted once by its first conjunct; a coordination of clauses with their own subjects counts as clauses.</li>
 <li>The clauses of C/T, CP/C and CN/C are those of L2SCA (<code>n_l2sca_clauses</code>): the clauses of <code>is_clause_head</code> without the predicates sharing a subject (<em>came and left</em>) and the infinitive clauses, as L2SCA counts finite clauses with a subject. C/S and MLC keep the clauses of the other metrics, so C/S runs higher and MLC lower than in L2SCA.</li>
@@ -4100,12 +4142,17 @@ Ratio of nouns to verbs                                    |   0.50
 <tr>
 <td style="text-align: left;"><code>is_subordinate_clause_head(token)</code></td>
 <td style="text-align: left;">method</td>
-<td style="text-align: left;">Whether a clause head heads a subordinate clause, asked only of the words of <code>is_clause_head</code>; by default <code>is_subordinate_clause_head</code> of the module over the hooks <code>is_clause_head</code> and <code>auxiliary_form</code>, with <code>subordinating_marks</code> of the class</td>
+<td style="text-align: left;">Whether a clause head heads a subordinate clause, asked only of the words of <code>is_clause_head</code>; by default <code>is_subordinate_clause_head</code> of the module over the hooks <code>is_clause_head</code>, <code>auxiliary_form</code> and <code>is_subordinating_mark</code></td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>is_infinitive_clause_head(token)</code></td>
 <td style="text-align: left;">method</td>
-<td style="text-align: left;">Whether a clause head heads an infinitive clause (<em>wants to leave</em>, <em>came to help</em>), counted apart from the subordinate ones; by default <code>is_infinitive_clause_head</code> of the module over the hooks <code>is_clause_head</code> and <code>auxiliary_form</code>, with <code>subordinating_marks</code> of the class</td>
+<td style="text-align: left;">Whether a clause head heads an infinitive clause (<em>wants to leave</em>, <em>came to help</em>), counted apart from the subordinate ones; by default <code>is_infinitive_clause_head</code> of the module over the hooks <code>is_clause_head</code>, <code>auxiliary_form</code> and <code>is_subordinating_mark</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>is_subordinating_mark(token)</code></td>
+<td style="text-align: left;">method</td>
+<td style="text-align: left;">Whether a mark of a conjunct or a parataxis is a subordinating conjunction, which makes it a subordinate clause (an infinitive one with an infinitive); by default <code>is_subordinating_mark</code> of the module with <code>subordinating_marks</code>; a library reads the context of a word that is a conjunction and a pronoun</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>is_prep_complement(token)</code></td>
@@ -4145,7 +4192,7 @@ Ratio of nouns to verbs                                    |   0.50
 <tr>
 <td style="text-align: left;"><code>subordinating_marks</code></td>
 <td style="text-align: left;">class attribute</td>
-<td style="text-align: left;">Subordinating conjunctions in lower case, the words of a fixed expression after a space, that make a conjunct or a parataxis they mark a subordinate clause (<em>because</em>, <em>so that</em>), an infinitive clause with an infinitive; none by default</td>
+<td style="text-align: left;">Subordinating conjunctions in lower case, the words of a fixed expression after a space, for the hook <code>is_subordinating_mark</code> (<em>because</em>, <em>so that</em>); none by default</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>join_hyphens</code></td>
