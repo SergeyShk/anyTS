@@ -1779,8 +1779,7 @@ def is_subordinate_clause_head(
         the predicate of that word nor its own (predicate_form) is an infinitive;
         a finite conjunct with a subject of its own of an infinitive takes the kind
         of the clause of the first word above the infinitives that is none. An
-        infinitive heads an infinitive
-        clause (is_infinitive_clause_head). A
+        infinitive heads an infinitive clause (is_infinitive_clause_head). A
         conjunct or a parataxis with a subordinating mark (is_subordinating_mark)
         is a subordinate clause, since a model may attach a clause of because as
         conj, and so are its conjuncts with a subject of its own; those sharing the
