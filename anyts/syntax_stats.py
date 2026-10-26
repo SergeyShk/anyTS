@@ -378,7 +378,7 @@ class SyntaxStats(Stats):
         }
         firsts = _first_conjuncts(words, join_hyphens, marked)
         # A finite conjunct with a subject of its own of an infinitive clause, a predicate a model
-        # attaches to the infinitive, joins the clause the infinitive completes
+        # attaches to the infinitive, joins the clause the chain of infinitives completes
         reattached = {
             token.i: owner
             for sent in heads
@@ -388,7 +388,7 @@ class SyntaxStats(Stats):
             and first.i in self._infinitive_heads
             and token.i not in self._infinitive_heads
             and not _shares_subject(token, join_hyphens)
-            and (owner := _completed_word(first, None, self.auxiliary_form)) is not None
+            and (owner := _infinitive_owner(first, self.auxiliary_form)) is not None
         }
         n_t_units = n_complex_t_units = 0
         for sent, subordinate in zip(heads, self._subordinate_heads, strict=True):
@@ -1778,7 +1778,8 @@ def is_subordinate_clause_head(
         relation of the first word up its chain of conjuncts decides, and neither
         the predicate of that word nor its own (predicate_form) is an infinitive;
         a finite conjunct with a subject of its own of an infinitive takes the kind
-        of the clause the infinitive completes. An infinitive heads an infinitive
+        of the clause of the first word above the infinitives that is none. An
+        infinitive heads an infinitive
         clause (is_infinitive_clause_head). A
         conjunct or a parataxis with a subordinating mark (is_subordinating_mark)
         is a subordinate clause, since a model may attach a clause of because as
@@ -1816,10 +1817,8 @@ def is_subordinate_clause_head(
         return False
     if predicate_form(word, auxiliary_form) == "Inf":
         # A finite conjunct with a subject of its own, which a model attaches to an infinitive,
-        # takes the kind of the clause the infinitive completes
-        owner = (
-            None if _shares_subject(token, False) else _completed_word(word, None, auxiliary_form)
-        )
+        # takes the kind of the clause the chain of infinitives completes
+        owner = None if _shares_subject(token, False) else _infinitive_owner(word, auxiliary_form)
         if owner is None:
             return False
         word, dep = _clause_relation(owner, is_marked, auxiliary_form)
@@ -1879,6 +1878,18 @@ def is_infinitive_clause_head(
     return predicate_form(token, auxiliary_form) == "Inf" and (
         dep == "xcomp" or dep in SUBORDINATE_CLAUSE_DEPS
     )
+
+
+def _infinitive_owner(word: Token, auxiliary_form: Callable[[Token], str] | None) -> Token | None:
+    """Word a chain of infinitives completes: the first word above an infinitive that is no
+    infinitive, or the head of the sentence; None in a loop"""
+    seen = {word.i}
+    while predicate_form(word, auxiliary_form) == "Inf" and not is_root(word):
+        word = word.head
+        if word.i in seen:
+            return None
+        seen.add(word.i)
+    return word
 
 
 def _clause_kind_hooks(
