@@ -376,14 +376,26 @@ class SyntaxStats(Stats):
             for token in sent
             if base_dep(token) in MAIN_CLAUSE_DEPS and _has_mark(token, self.is_subordinating_mark)
         }
+        firsts = _first_conjuncts(words, join_hyphens, marked)
+        # A finite conjunct with a subject of its own of an infinitive clause, a predicate a model
+        # attaches to the infinitive, joins the clause the infinitive depends on
+        reattached = {
+            token.i: first.head
+            for sent in heads
+            for token in sent
+            if base_dep(token) == "conj"
+            and (first := firsts[token.i]) is not None
+            and first.i in self._infinitive_heads
+            and token.i not in self._infinitive_heads
+            and not _shares_subject(token, join_hyphens)
+        }
         n_t_units = n_complex_t_units = 0
         for sent, subordinate in zip(heads, self._subordinate_heads, strict=True):
-            units = {token.i for token in _t_unit_heads(sent, join_hyphens, marked)}
+            units = {token.i for token in _t_unit_heads(sent, join_hyphens, marked, reattached)}
             n_t_units += len(units)
             n_complex_t_units += len(
                 _t_units_of([doc[i] for i in subordinate], units, join_hyphens) - {None}
             )
-        firsts = _first_conjuncts(words, join_hyphens, marked)
         coordinations: dict[int, list[Token]] = {}
         for token in words:
             first = firsts[token.i]
@@ -832,17 +844,21 @@ def _word_triple(token: Token) -> tuple[str, str, str]:
 
 
 def _t_unit_heads(
-    heads: Sequence[Token], join_hyphens: bool, marked: Collection[int]
+    heads: Sequence[Token],
+    join_hyphens: bool,
+    marked: Collection[int],
+    reattached: Mapping[int, Token],
 ) -> list[Token]:
     """Clause heads of a sentence that head a T-unit: the head of the sentence and the main
     clauses joined to it through conj or parataxis, but for a conjunct without a subject of its
-    own, a predicate of the clause it is coordinated to; a marked clause head is no main clause"""
+    own, a predicate of the clause it is coordinated to; a marked clause head is no main clause,
+    and a reattached one joins the clause of its word"""
     ids = {token.i for token in heads}
     known: dict[int, bool] = {}
     return [
         token
         for token in heads
-        if _is_main_clause(token, ids, join_hyphens, known, marked)
+        if _is_main_clause(token, ids, join_hyphens, known, marked, reattached)
         and not _shares_subject(token, join_hyphens)
     ]
 
@@ -853,6 +869,7 @@ def _is_main_clause(
     join_hyphens: bool,
     known: dict[int, bool],
     marked: Collection[int],
+    reattached: Mapping[int, Token],
 ) -> bool:
     """Whether a clause head reaches the head of the sentence through main clauses alone, none
     of them marked; known keeps the answers for the clause heads on the way"""
@@ -867,13 +884,12 @@ def _is_main_clause(
         if is_root(token):
             outcome = True
             break
-        parent = _chain_parent(token, join_hyphens)
-        if (
-            base_dep(token) not in MAIN_CLAUSE_DEPS
-            or parent is None
-            or parent.i not in ids
-            or parent.i in on_path
-        ):
+        parent = reattached.get(token.i)
+        if parent is None:
+            parent = _chain_parent(token, join_hyphens)
+            if base_dep(token) not in MAIN_CLAUSE_DEPS:
+                parent = None
+        if parent is None or parent.i not in ids or parent.i in on_path:
             outcome = False
             break
         token = parent
@@ -1763,8 +1779,9 @@ def is_subordinate_clause_head(
         An infinitive heads an infinitive clause (is_infinitive_clause_head). A
         conjunct or a parataxis with a subordinating mark (is_subordinating_mark)
         is a subordinate clause, since a model may attach a clause of because as
-        conj; its own conjuncts are not, as a model attaches the predicates of the
-        main clause to it as well
+        conj, and so are its conjuncts with a subject of its own; those sharing the
+        subject are not, as a model attaches the predicates of the main clause to it
+        as well
 
     Arguments:
         token (Token): Token
@@ -1791,7 +1808,7 @@ def is_subordinate_clause_head(
     )
     if is_root(token) or not is_clause_head(token):
         return False
-    word, dep = _clause_relation(token, is_marked)
+    word, dep = _clause_relation(token, is_marked, auxiliary_form)
     if "Inf" in (predicate_form(word, auxiliary_form), predicate_form(token, auxiliary_form)):
         return False
     return dep == "xcomp" or (not is_root(word) and dep in SUBORDINATE_CLAUSE_DEPS)
@@ -1814,7 +1831,8 @@ def is_infinitive_clause_head(
         leave, asked him to leave, came to help, it is hard to say) or a conjunct of
         one: the relation of the first word up its chain of conjuncts decides, as in
         is_subordinate_clause_head; an infinitive under conj or parataxis with a
-        subordinating mark heads one too (came , in order to help). Such a clause is
+        subordinating mark, or an infinitive conjunct of it, heads one too (came , in
+        order to help). Such a clause is
         counted apart from the subordinate ones, as grammars of many languages take
         it for a part of a simple sentence
 
@@ -1843,7 +1861,7 @@ def is_infinitive_clause_head(
     )
     if is_root(token) or not is_clause_head(token):
         return False
-    _, dep = _clause_relation(token, is_marked)
+    _, dep = _clause_relation(token, is_marked, auxiliary_form)
     return predicate_form(token, auxiliary_form) == "Inf" and (
         dep == "xcomp" or dep in SUBORDINATE_CLAUSE_DEPS
     )
@@ -1870,16 +1888,27 @@ def _clause_kind_hooks(
 
 
 def _clause_relation(
-    token: Token, is_subordinating_mark: Callable[[Token], bool]
+    token: Token,
+    is_subordinating_mark: Callable[[Token], bool],
+    auxiliary_form: Callable[[Token], str] | None,
 ) -> tuple[Token, str]:
     """First word up the chain of conjuncts of a clause head and its relation, advcl for a
-    conjunct or a parataxis with a subordinating mark of its own"""
+    conjunct or a parataxis with a subordinating mark, of its own or of a clause it is
+    coordinated to when it is an infinitive or has a subject of its own: a conjunct sharing the
+    subject may be a predicate of the main clause"""
     if base_dep(token) in MAIN_CLAUSE_DEPS and _has_mark(token, is_subordinating_mark):
         return token, "advcl"
+    inherits = predicate_form(token, auxiliary_form) == "Inf" or not _shares_subject(token, False)
     seen = set()
     while base_dep(token) == "conj" and token.i not in seen:
         seen.add(token.i)
         token = token.head
+        if (
+            inherits
+            and base_dep(token) in MAIN_CLAUSE_DEPS
+            and _has_mark(token, is_subordinating_mark)
+        ):
+            return token, "advcl"
     return token, base_dep(token)
 
 
