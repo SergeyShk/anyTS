@@ -412,6 +412,27 @@ def test_syntax_and_cohesion_components_on_their_core_classes(nlp):
     assert doc._.anyts_test_morph.pos == ("NOUN", "VERB", "NOUN", "VERB")
 
 
+def test_cohesion_component_with_blank_lines(nlp):
+    """A text wrapped inside its paragraphs: its lines are paragraphs, with blank_lines its parts
+    between blank lines"""
+    doc = Doc(
+        nlp.vocab,
+        words=["Cats", "sleep", "\n", "here", ".", "\n\n", "Cats", "eat", "."],
+        spaces=[True, False, False, False, False, False, True, False, False],
+        heads=[1, 1, 1, 1, 1, 7, 7, 7, 7],
+        deps=["nsubj", "ROOT", "dep", "advmod", "punct", "dep", "nsubj", "ROOT", "punct"],
+        pos=["NOUN", "VERB", "SPACE", "ADV", "PUNCT", "SPACE", "NOUN", "VERB", "PUNCT"],
+        lemmas=["cat", "sleep", "\n", "here", ".", "\n\n", "cat", "eat", "."],
+    )
+    CohesionStatsComponent(nlp, "anyts_test_cohesion")(doc)
+    assert doc._.anyts_test_cohesion.n_paragraphs == 3
+    CohesionStatsComponent(nlp, "anyts_test_cohesion", blank_lines=True)(doc)
+    stats = doc._.anyts_test_cohesion
+    assert (stats.blank_lines, stats.n_paragraphs, stats.noun_overlap_para) == (True, 2, 1.0)
+    with pytest.raises(ParameterError, match="blank_lines"):
+        CohesionStatsComponent(nlp, "anyts_test_cohesion", blank_lines=1)
+
+
 def test_readability_component(nlp):
     nlp.add_pipe("anyts_test_basic", name="basic")
     nlp.add_pipe("anyts_test_readability", name="default")

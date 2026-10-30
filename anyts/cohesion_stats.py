@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from collections import Counter
 from collections.abc import Collection, Iterable, Mapping, Sequence
-from functools import cached_property
 from itertools import pairwise
 from math import fsum, nan
 from operator import attrgetter
@@ -724,9 +723,15 @@ class CohesionStats(Stats):
         self.content_overlap_all = content_overlap.all
         self.content_overlap_prop_adjacent = content_overlap.prop_adjacent
         self.content_overlap_prop_all = content_overlap.prop_all
-        # The elements of the overlaps with the next segments, computed on first use
-        self._segments = {"noun": nouns, "argument": arguments, "content": content_sets}
-        self._paragraph_breaks = _paragraph_breaks(sents)
+        segments = {"noun": nouns, "argument": arguments, "content": content_sets}
+        paragraphs = _paragraph_sets(segments, _paragraph_breaks(sents))
+        self.n_paragraphs = len(paragraphs["content"])
+        self.noun_overlap_2_sent = _forward_overlap(nouns, 2)
+        self.argument_overlap_2_sent = _forward_overlap(arguments, 2)
+        self.content_overlap_2_sent = _forward_overlap(content_sets, 2)
+        self.noun_overlap_para = _forward_overlap(paragraphs["noun"], 1)
+        self.argument_overlap_para = _forward_overlap(paragraphs["argument"], 1)
+        self.content_overlap_para = _forward_overlap(paragraphs["content"], 1)
         self.p_pronouns = self.n_pronouns / self.n_words
         self.pronoun_noun_ratio = safe_divide(self.n_pronouns, self.n_nouns, nan)
         self.p_demonstratives = self.n_demonstratives / self.n_words
@@ -775,76 +780,6 @@ class CohesionStats(Stats):
             setattr(self, f"connectors_{name}", classes[name] * per_1000)
         for name in matcher.kinds:
             setattr(self, f"connectors_{name}", kinds[name] * per_1000)
-
-    @property
-    def n_paragraphs(self) -> int:
-        return len(self._paragraphs["content"])
-
-    @cached_property
-    def _paragraphs(self) -> dict[str, list[set[str]]]:
-        """Elements of every paragraph by the name of a flag of the words: the union of the sets of
-        its sentences, a sentence a paragraph starts inside of split by its words, and a
-        paragraph without content words joined to the next one"""
-        paragraphs: dict[str, list[set[str]]] = {name: [set()] for name in self._segments}
-        breaks = dict(self._paragraph_breaks)
-        for index in range(self.n_sents):
-            words = breaks.get(index, ())
-            if words is None:
-                if index:
-                    for parts in paragraphs.values():
-                        parts.append(set())
-                words = ()
-            if not words:
-                for name, sets in self._segments.items():
-                    paragraphs[name][-1].update(sets[index])
-                continue
-            for position, (lemma, *flags, paragraph_start) in enumerate(words):
-                if paragraph_start and index + position:
-                    for parts in paragraphs.values():
-                        parts.append(set())
-                for parts, flag in zip(paragraphs.values(), flags, strict=True):
-                    if flag:
-                        parts[-1].add(lemma)
-        joined: dict[str, list[set[str]]] = {name: [] for name in paragraphs}
-        pending: dict[str, set[str]] = {name: set() for name in paragraphs}
-        for index, content in enumerate(paragraphs["content"]):
-            for name, parts in paragraphs.items():
-                pending[name] |= parts[index]
-            if content:
-                for name in paragraphs:
-                    joined[name].append(pending[name])
-                    pending[name] = set()
-        # The lines after the last content word join the last paragraph
-        for name, parts in joined.items():
-            if parts:
-                parts[-1] |= pending[name]
-            else:
-                parts.append(pending[name])
-        return joined
-
-    @cached_property
-    def noun_overlap_2_sent(self) -> float:
-        return _forward_overlap(self._segments["noun"], 2)
-
-    @cached_property
-    def argument_overlap_2_sent(self) -> float:
-        return _forward_overlap(self._segments["argument"], 2)
-
-    @cached_property
-    def content_overlap_2_sent(self) -> float:
-        return _forward_overlap(self._segments["content"], 2)
-
-    @cached_property
-    def noun_overlap_para(self) -> float:
-        return _forward_overlap(self._paragraphs["noun"], 1)
-
-    @cached_property
-    def argument_overlap_para(self) -> float:
-        return _forward_overlap(self._paragraphs["argument"], 1)
-
-    @cached_property
-    def content_overlap_para(self) -> float:
-        return _forward_overlap(self._paragraphs["content"], 1)
 
     def analyze(self, source: Doc) -> Iterable[Sequence[CohesionWord]]:
         """
@@ -995,6 +930,51 @@ class CohesionStats(Stats):
             matcher = cls.connector_matcher_class(cls.load_connectors())
             cls._connector_matcher = matcher
         return matcher
+
+
+def _paragraph_sets(
+    segments: Mapping[str, Sequence[Collection[str]]],
+    breaks: Sequence[tuple[int, tuple[tuple[str, bool, bool, bool, bool], ...] | None]],
+) -> dict[str, list[set[str]]]:
+    """Elements of every paragraph by the name of a flag of the words: the union of the sets of
+    its sentences, a sentence a paragraph starts inside of split by its words, and a
+    paragraph without content words joined to the next one"""
+    paragraphs: dict[str, list[set[str]]] = {name: [set()] for name in segments}
+    starts = dict(breaks)
+    for index in range(len(segments["content"])):
+        words = starts.get(index, ())
+        if words is None:
+            if index:
+                for parts in paragraphs.values():
+                    parts.append(set())
+            words = ()
+        if not words:
+            for name, sets in segments.items():
+                paragraphs[name][-1].update(sets[index])
+            continue
+        for position, (lemma, *flags, paragraph_start) in enumerate(words):
+            if paragraph_start and index + position:
+                for parts in paragraphs.values():
+                    parts.append(set())
+            for parts, flag in zip(paragraphs.values(), flags, strict=True):
+                if flag:
+                    parts[-1].add(lemma)
+    joined: dict[str, list[set[str]]] = {name: [] for name in paragraphs}
+    pending: dict[str, set[str]] = {name: set() for name in paragraphs}
+    for index, content in enumerate(paragraphs["content"]):
+        for name, parts in paragraphs.items():
+            pending[name] |= parts[index]
+        if content:
+            for name in paragraphs:
+                joined[name].append(pending[name])
+                pending[name] = set()
+    # The lines after the last content word join the last paragraph
+    for name, parts in joined.items():
+        if parts:
+            parts[-1] |= pending[name]
+        else:
+            parts.append(pending[name])
+    return joined
 
 
 def _paragraph_breaks(

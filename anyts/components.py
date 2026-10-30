@@ -28,7 +28,7 @@ from .style_stats import StyleStats
 from .style_stats import check_params as check_style_params
 from .syntax_stats import SyntaxStats
 from .unadapted_readability_stats import UnadaptedReadabilityStats
-from .utils import check_messages, check_words, has_words, is_number, iter_doc_words
+from .utils import check_bool, check_messages, check_words, has_words, is_number, iter_doc_words
 
 if TYPE_CHECKING:
     from spacy.language import Language
@@ -522,9 +522,25 @@ class CohesionStatsComponent(StatsComponent):
     Description:
         Puts an object of stats_class (CohesionStats) into doc._.<name>; the
         class of the core needs the parts of speech and the lemmas before it
+
+    Arguments:
+        nlp (Language): Pipeline
+        name (str): Name of the component in the pipeline
+        blank_lines (bool): Start the paragraphs after the blank lines alone, for a text
+            whose lines are wrapped inside its paragraphs; after every line break by
+            default
+
+    Raises:
+        ParameterError: If blank_lines is not a bool
     """
 
     stats_class: ClassVar[type[Any] | None] = CohesionStats
+    stats_params: ClassVar[tuple[str, ...]] = ("blank_lines",)
+
+    def __init__(self, nlp: Language, name: str, blank_lines: bool = False):
+        check_bool(blank_lines, "blank_lines")
+        self.blank_lines = blank_lines
+        super().__init__(nlp, name)
 
 
 class MorphStatsComponent(StatsComponent):

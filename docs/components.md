@@ -203,11 +203,15 @@ SyntaxStatsComponent(nlp, name)
 ### Cohesion statistics { #CohesionStatsComponent }
 
 ``` {.python .signature}
-CohesionStatsComponent(nlp, name)
+CohesionStatsComponent(nlp, name, blank_lines=False)
 ```
 
 <!-- --8<-- [start:CohesionStatsComponent] -->
-`CohesionStatsComponent` puts the cohesion statistics into the extension; by default they need the parts of speech and the lemmas before it.
+`CohesionStatsComponent` puts the cohesion statistics into the extension; by default they need the parts of speech and the lemmas before it. With `blank_lines` the paragraphs start after the blank lines alone, as in `CohesionStats`, for a text whose lines are wrapped inside its paragraphs.
+
+Raises:
+
+- `ParameterError` - a `blank_lines` that is not a `bool`.
 <!-- --8<-- [end:CohesionStatsComponent] -->
 
 ### Morphological statistics { #MorphStatsComponent }

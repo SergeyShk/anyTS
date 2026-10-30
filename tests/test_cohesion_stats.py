@@ -21,6 +21,8 @@ from anyts.cohesion_stats import (
     ConnectorMatcher,
     Overlap,
     _count_sharing_pairs,
+    _paragraph_breaks,
+    _paragraph_sets,
     _sum_dice,
     calc_forward_overlap,
     calc_overlap,
@@ -777,13 +779,13 @@ def test_paragraphs_of_a_library():
     stats = Opened(text_doc())
     # cat ran | cat fat | sat | dog cat: the nouns of the parts, the rest among the content words
     assert stats.n_paragraphs == 4
-    assert stats._paragraphs["noun"] == [{"cat"}, {"cat"}, set(), {"dog", "cat"}]
-    assert stats._paragraphs["content"] == [
-        {"cat", "ran"},
-        {"cat", "fat"},
-        {"sat"},
-        {"dog", "cat"},
-    ]
+    sents = [list(sent) for sent in stats.analyze(None)]
+    nouns = [frozenset(word.lemma for word in sent if word.noun) for sent in sents]
+    content = [frozenset(word.lemma for word in sent if word.content) for sent in sents]
+    segments = {"noun": nouns, "argument": nouns, "content": content}
+    paragraphs = _paragraph_sets(segments, _paragraph_breaks(sents))
+    assert paragraphs["noun"] == [{"cat"}, {"cat"}, set(), {"dog", "cat"}]
+    assert paragraphs["content"] == [{"cat", "ran"}, {"cat", "fat"}, {"sat"}, {"dog", "cat"}]
     # cat of the first part is in the second; the cat of the second is not in the third
     assert stats.noun_overlap_para == 1 / 2 and stats.content_overlap_para == 1 / 5
     # The same sentences in one paragraph give the overlap of their sentences
