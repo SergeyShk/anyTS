@@ -524,8 +524,8 @@ class CohesionStatsComponent(StatsComponent):
         class of the core needs the parts of speech and the lemmas before it
 
     Arguments:
-        nlp (Language): Pipeline
-        name (str): Name of the component in the pipeline
+        nlp (Language): Pipeline the component is added to
+        name (str): Name of the component in the pipeline and of the extension
         blank_lines (bool): Start the paragraphs after the blank lines alone, for a text
             whose lines are wrapped inside its paragraphs; after every line break by
             default

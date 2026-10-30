@@ -737,6 +737,17 @@ def test_paragraphs_without_content_words():
     assert CohesionStats(only).n_paragraphs == 1
 
 
+def test_pickle_and_copy():
+    """The object keeps its metrics and none of the sets they are computed from"""
+    import copy
+    import pickle
+
+    stats = CohesionStats(text_doc())
+    assert [name for name in vars(stats) if name.startswith("_")] == []
+    for clone in (pickle.loads(pickle.dumps(stats)), copy.copy(stats), copy.deepcopy(stats)):
+        assert repr(clone.get_stats()) == repr(stats.get_stats())
+
+
 def test_paragraphs_of_a_library():
     class Marked(CohesionStats):
         def analyze(self, source):

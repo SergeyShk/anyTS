@@ -533,8 +533,7 @@ class CohesionStats(Stats):
         words. The sentences are compared by lemmas.
         A language library subclasses the class and sets its hooks; by default
         the source is a Doc with the parts of speech and the lemmas, read by
-        Universal Dependencies, and there are no connectors. The overlaps with
-        the next sentences and paragraphs are computed on first use.
+        Universal Dependencies, and there are no connectors.
         get_stats, to_dataframe, print_stats and describe come from Stats
 
     References:
