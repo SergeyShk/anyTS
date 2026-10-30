@@ -51,6 +51,19 @@ def test_words_and_features(stats):
     assert list(stats.stat_names()) == ["pos", *MORPH_FEATURES]
 
 
+def test_words_of_one_analysis_share_the_features():
+    doc = Doc(
+        VOCAB,
+        words=["cats", "and", "dogs"],
+        pos=["NOUN", "CCONJ", "NOUN"],
+        morphs=["Number=Plur", "", "Number=Plur"],
+    )
+    cats, conjunction, dogs = MorphStats(doc).analyze(doc)
+    assert cats.features is dogs.features
+    assert cats.features == {"Number": "Plur"}
+    assert conjunction.features == {}
+
+
 def test_get_stats(stats):
     values = stats.get_stats()
     assert list(values) == list(MORPH_STATS_DESC)

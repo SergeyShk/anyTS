@@ -10,7 +10,7 @@ from .stats import Stats, _print_table
 from .utils import check_bool, has_pos, is_doc, iter_doc_tokens, source_type_error
 
 if TYPE_CHECKING:
-    from spacy.tokens import Doc
+    from spacy.tokens import Doc, MorphAnalysis
 
 
 class MorphWord(NamedTuple):
@@ -200,8 +200,9 @@ class MorphStats(Stats):
 
         Description:
             The words of a Doc with the parts of speech (iter_doc_tokens), with
-            token.pos_ and the features of token.morph; a library that reads a
-            string or a Doc without these annotations overrides it
+            token.pos_ and the features of token.morph, one dictionary for the
+            words of one analysis; a library that reads a string or a Doc without
+            these annotations overrides it
 
         Arguments:
             source (str|Doc): Data source
@@ -218,10 +219,14 @@ class MorphStats(Stats):
             raise source_type_error(messages, source)
         if not has_pos(source):
             raise SourceError(messages["no_pos"])
-        return [
-            MorphWord(token.text, token.pos_ or None, token.morph.to_dict())
-            for token in iter_doc_tokens(source)
-        ]
+        features: dict[MorphAnalysis, dict[str, str]] = {}
+        words = []
+        for token in iter_doc_tokens(source):
+            morph = token.morph
+            if (found := features.get(morph)) is None:
+                found = features[morph] = morph.to_dict()
+            words.append(MorphWord(token.text, token.pos_ or None, found))
+        return words
 
     def get_stats(  # type: ignore[override]
         self, *args: str, filter_none: bool = False, flat: bool = False
