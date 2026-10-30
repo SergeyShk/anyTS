@@ -560,7 +560,7 @@ $$
 { .metric-meta }
 
 <!-- --8<-- [start:SyntaxStats-similarity] -->
-How alike the structures of two adjacent sentences are, averaged over the $S - 1$ pairs. `pos_edit_distance` is the edit distance of the parts of speech $P_s$ of the words of the sentences (SYNMEDpos of Coh-Metrix) over the length $n$ of the longer sentence of the pair, `calc_edit_distance`. `syntax_similarity` is the similarity of the multisets of the dependency triples $T$ of the two sentences (`dependency_triples`, `calc_multiset_similarity`), in the manner of SYNSTRUT of Coh-Metrix, which compares the nodes of phrase-structure trees. Neither sees the order of the words, and the similarity of the triples grows with the length of the sentences.
+How alike the structures of two adjacent sentences are, averaged over the $S - 1$ pairs. `pos_edit_distance` is the edit distance of the parts of speech $P_s$ of the words of the sentences (SYNMEDpos of Coh-Metrix) over the length $n$ of the longer sentence of the pair, `calc_edit_distance`. `syntax_similarity` is the similarity of the multisets of the dependency triples $T$ of the two sentences (`dependency_triples`, `calc_multiset_similarity`), in the manner of SYNSTRUT of Coh-Metrix, which compares the nodes of phrase-structure trees. Neither sees the order of the subject and the object: a sentence with its object first and one with its subject first are alike when their parts of speech come in the same order (a distance of 0, a similarity of 1). The similarity of the triples grows with the length of the sentences.
 
 $$
 \frac{1}{S - 1} \sum_{s=1}^{S-1} \frac{\textrm{lev}(P_s, P_{s+1})}{\max(n_s, n_{s+1})}, \quad
