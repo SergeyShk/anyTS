@@ -2336,7 +2336,7 @@
 <div class="signature highlight"><pre><span></span><code><span class="n">CohesionStats</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">sents_extractor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">connectors</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">blank_lines</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 </code></pre></div>
 <!-- --8<-- [start:CohesionStats] -->
-<p>The cohesion statistics of a text in the manner of Coh-Metrix: the overlap of the sentences, the givenness, the temporal cohesion and the connectors of a dictionary. The sentences are compared by lemmas. The data source is a <code>Doc</code> object of <a href="https://github.com/explosion/spaCy">spaCy</a> with the parts of speech and the lemmas, split into sentences by its boundaries, or by the sentence extractor over its text when one is given or the <code>Doc</code> has none. The overlaps with the next sentences and paragraphs are computed on first use, so a subclass whose <code>stats_desc</code> does not name them does not pay for them.</p>
+<p>The cohesion statistics of a text in the manner of Coh-Metrix: the overlap of the sentences, the givenness, the temporal cohesion and the connectors of a dictionary. The sentences are compared by lemmas. The data source is a <code>Doc</code> object of <a href="https://github.com/explosion/spaCy">spaCy</a> with the parts of speech and the lemmas, split into sentences by its boundaries, or by the sentence extractor over its text when one is given or the <code>Doc</code> has none.</p>
 <p>Raises:</p>
 <ul>
 <li><code>SourceTypeError</code> - an extractor of another type, a source that is not a <code>Doc</code>, connectors that are not a dictionary of phrases and pairs of strings;</li>
@@ -2525,7 +2525,7 @@ Secondary connectors per 1000 words                                |  142.86
 </div>
 <h2 id="metrics">Metrics<a class="headerlink" href="#metrics" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:CohesionStats-metrics] -->
-<p>Every metric is an attribute of the object, computed when it is created - the overlaps with the next sentences and paragraphs on first use; <code>get_stats</code> gives those of <code>stats_desc</code>, all but <code>mood_repetition</code> by default. The functions of the cards take a sentence as the collection of its elements - lemmas of nouns, arguments or content words, values of a feature of its verbs - and see no language.</p>
+<p>Every metric is an attribute of the object, computed when it is created; <code>get_stats</code> gives those of <code>stats_desc</code>, all but <code>mood_repetition</code> by default. The functions of the cards take a sentence as the collection of its elements - lemmas of nouns, arguments or content words, values of a feature of its verbs - and see no language.</p>
 <table>
 <thead>
 <tr>

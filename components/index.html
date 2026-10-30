@@ -2637,10 +2637,14 @@ True
 <!-- --8<-- [end:SyntaxStatsComponent] -->
 
 <h3 id="CohesionStatsComponent">Cohesion statistics<a class="headerlink" href="#CohesionStatsComponent" title="Permanent link">&para;</a></h3>
-<div class="signature highlight"><pre><span></span><code><span class="n">CohesionStatsComponent</span><span class="p">(</span><span class="n">nlp</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">CohesionStatsComponent</span><span class="p">(</span><span class="n">nlp</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">blank_lines</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 </code></pre></div>
 <!-- --8<-- [start:CohesionStatsComponent] -->
-<p><code>CohesionStatsComponent</code> puts the cohesion statistics into the extension; by default they need the parts of speech and the lemmas before it.</p>
+<p><code>CohesionStatsComponent</code> puts the cohesion statistics into the extension; by default they need the parts of speech and the lemmas before it. With <code>blank_lines</code> the paragraphs start after the blank lines alone, as in <code>CohesionStats</code>, for a text whose lines are wrapped inside its paragraphs.</p>
+<p>Raises:</p>
+<ul>
+<li><code>ParameterError</code> - a <code>blank_lines</code> that is not a <code>bool</code>.</li>
+</ul>
 <!-- --8<-- [end:CohesionStatsComponent] -->
 
 <h3 id="MorphStatsComponent">Morphological statistics<a class="headerlink" href="#MorphStatsComponent" title="Permanent link">&para;</a></h3>
