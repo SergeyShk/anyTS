@@ -2357,7 +2357,7 @@ Personal                      |    1
 <tr>
 <td style="text-align: left;"><code>analyze(source)</code></td>
 <td style="text-align: left;">method</td>
-<td style="text-align: left;">Words of a source as <code>MorphWord</code>: the word, its part of speech and its features of Universal Dependencies by name; by default those of a <code>Doc</code> with the parts of speech (<code>iter_doc_tokens</code>), with <code>token.pos_</code> and <code>token.morph</code>; a library that reads a string or a <code>Doc</code> without them overrides it</td>
+<td style="text-align: left;">Words of a source as <code>MorphWord</code>: the word, its part of speech and its features of Universal Dependencies by name; by default those of a <code>Doc</code> with the parts of speech (<code>iter_doc_tokens</code>), with <code>token.pos_</code> and <code>token.morph</code>, one dictionary for the words of one analysis; a library that reads a string or a <code>Doc</code> without them overrides it. The object checks and reads a mapping of features once for all the words that share it, so an override that gives the words of one form one mapping is faster</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>feature_names</code></td>
