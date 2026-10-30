@@ -5,7 +5,7 @@ CohesionStats(source, sents_extractor=None, connectors=None, blank_lines=False)
 ```
 
 <!-- --8<-- [start:CohesionStats] -->
-The cohesion statistics of a text in the manner of Coh-Metrix: the overlap of the sentences, the givenness, the temporal cohesion and the connectors of a dictionary. The sentences are compared by lemmas. The data source is a `Doc` object of [spaCy](https://github.com/explosion/spaCy) with the parts of speech and the lemmas, split into sentences by its boundaries, or by the sentence extractor over its text when one is given or the `Doc` has none. The overlaps with the next sentences and paragraphs are computed on first use, so a subclass whose `stats_desc` does not name them does not pay for them.
+The cohesion statistics of a text in the manner of Coh-Metrix: the overlap of the sentences, the givenness, the temporal cohesion and the connectors of a dictionary. The sentences are compared by lemmas. The data source is a `Doc` object of [spaCy](https://github.com/explosion/spaCy) with the parts of speech and the lemmas, split into sentences by its boundaries, or by the sentence extractor over its text when one is given or the `Doc` has none.
 
 Raises:
 
@@ -126,7 +126,7 @@ Raises:
 ## Metrics
 
 <!-- --8<-- [start:CohesionStats-metrics] -->
-Every metric is an attribute of the object, computed when it is created - the overlaps with the next sentences and paragraphs on first use; `get_stats` gives those of `stats_desc`, all but `mood_repetition` by default. The functions of the cards take a sentence as the collection of its elements - lemmas of nouns, arguments or content words, values of a feature of its verbs - and see no language.
+Every metric is an attribute of the object, computed when it is created; `get_stats` gives those of `stats_desc`, all but `mood_repetition` by default. The functions of the cards take a sentence as the collection of its elements - lemmas of nouns, arguments or content words, values of a feature of its verbs - and see no language.
 
 | Metric | Measures | Range | Higher means |
 | :----- | :------- | :---- | :----------- |
