@@ -399,7 +399,7 @@ A count that is not an integer or is negative raises `ParameterError`.
 calc_wheeler_smith(n_polysyllable_words, n_sents)
 ```
 
-The index of Wheeler and Smith (1954) for primary school texts: the mean sentence length times the share of the words of two syllables or more, times 10, which makes 10 such words per sentence; it reads sentences where the original reads units ended by any final mark. `nan` without sentences.
+The index of Wheeler and Smith (1954) for primary school texts: the mean sentence length times the share of the words of two syllables or more, times 10: ten times the number of such words per sentence; it reads sentences where the original reads units ended by any final mark. `nan` without sentences.
 
 $$
 \textrm{WS} = 10 \times \textrm{ASL} \times \frac{\textrm{Words of two syllables or more}}{\textrm{Words}}

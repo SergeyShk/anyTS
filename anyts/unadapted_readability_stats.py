@@ -592,8 +592,8 @@ def calc_wheeler_smith(n_polysyllable_words: int, n_sents: int) -> float:
 
     Description:
         Wheeler and Smith (1954), for primary school texts: the mean sentence
-        length times the share of the words of two syllables or more, times 10,
-        that is 10 such words per sentence
+        length times the share of the words of two syllables or more, times 10:
+        ten times the number of such words per sentence
 
     Arguments:
         n_polysyllable_words (int): Number of the words of two syllables or more

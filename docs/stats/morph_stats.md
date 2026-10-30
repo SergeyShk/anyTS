@@ -140,7 +140,7 @@ A language library subclasses `MorphStats`. By default the words and their featu
 
 | Hook | Kind | Description |
 | :--- | :--- | :---------- |
-| `analyze(source)` | method | Words of a source as `MorphWord`: the word, its part of speech and its features of Universal Dependencies by name; by default those of a `Doc` with the parts of speech (`iter_doc_tokens`), with `token.pos_` and `token.morph`; a library that reads a string or a `Doc` without them overrides it |
+| `analyze(source)` | method | Words of a source as `MorphWord`: the word, its part of speech and its features of Universal Dependencies by name; by default those of a `Doc` with the parts of speech (`iter_doc_tokens`), with `token.pos_` and `token.morph`, one dictionary for the words of one analysis; a library that reads a string or a `Doc` without them overrides it. The object checks and reads a mapping of features once for all the words that share it, so an override that gives the words of one form one mapping is faster |
 | `feature_names` | class attribute | Feature of Universal Dependencies by statistic, `MORPH_FEATURES` by default; a statistic is an identifier other than `pos`, `tags`, `words` and the names of the class, since it becomes an attribute of the object |
 | `stats_desc` | class attribute | `pos` and the statistics of `feature_names` with their names, in the order of `get_stats`; `MORPH_STATS_DESC` by default |
 | `values_desc` | class attribute | Descriptions of the values by statistic for `print_stats`, `MORPH_VALUES_DESC` by default; a value without one is printed as it is |
