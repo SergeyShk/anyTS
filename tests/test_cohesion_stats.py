@@ -287,6 +287,8 @@ def test_find_by_the_normalized_forms():
     assert texts(matcher.find(["HOWEVER", "Summing", "UP"])) == ["however", "Summing up"]
     assert texts(matcher.find(["e", "g", "water"])) == ["e.g."]
     assert texts(matcher.find(["e.g.", "water"])) == ["e.g."]
+    assert texts(matcher.find(["e.", "g.", "water"])) == ["e.g."]
+    assert matcher.find(["e.", "water"]) == []
     assert matcher.find(["and"], sent_index=3)[0].sent == 3
 
     class Apostrophes(ConnectorMatcher):

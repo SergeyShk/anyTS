@@ -428,7 +428,7 @@ ConnectorMatcher(connectors)
 ```
 
 <!-- --8<-- [start:ConnectorMatcher] -->
-The search of the connectors (discourse markers: *because*, *however*, *on the other hand*) of a dictionary in the sentences of a text. The dictionary gives the class of every connector - causal, adversative, concessive, temporal, additive, conditional or reformulative (`CONNECTOR_CLASSES`) - and its kind, primary or secondary (`CONNECTOR_KINDS`). A connector is matched by the normalized forms of its words, the longest one at every position, without overlaps; a period or a hyphen inside a connector may be split off by the tokenizer (*e.g.* as `e`, `g`). An occurrence is a `Connector`: the number of the sentence `sent`, the positions `start` and `end` of its words, the connector `text` as the dictionary writes it, its class `cls` and kind `kind`.
+The search of the connectors (discourse markers: *because*, *however*, *on the other hand*) of a dictionary in the sentences of a text. The dictionary gives the class of every connector - causal, adversative, concessive, temporal, additive, conditional or reformulative (`CONNECTOR_CLASSES`) - and its kind, primary or secondary (`CONNECTOR_KINDS`). A connector is matched by the normalized forms of its words, the longest one at every position, without overlaps; a period or a hyphen inside a connector may be split off by the tokenizer (*e.g.* as `e`, `g`), and the period of an abbreviation may stay with each of its parts, as in the tokens of UD (`e.`, `g.`). An occurrence is a `Connector`: the number of the sentence `sent`, the positions `start` and `end` of its words, the connector `text` as the dictionary writes it, its class `cls` and kind `kind`.
 
 Raises:
 

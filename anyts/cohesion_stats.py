@@ -93,7 +93,9 @@ class ConnectorMatcher:
     Description:
         A connector is matched by the normalized forms of its words (normalize),
         the longest one at every position, without overlaps; a period or a
-        hyphen inside a connector may be split off by the tokenizer (e.g.).
+        hyphen inside a connector may be split off by the tokenizer (e.g. as
+        e, g), and the period of an abbreviation may stay with each of its
+        parts, as in the tokens of UD (e., g.).
         The context rules of a language are class attributes, empty by default
         apart from the parts of speech of a one-word connector (pos_tags)
 
@@ -234,7 +236,9 @@ class ConnectorMatcher:
                 raise ParameterError(self.messages["connector_class"].format(cls=cls, kind=kind))
             key = " ".join(self.normalize(connector).split())
             split = " ".join(key.replace("-", " ").replace(".", " ").split())
-            for variant in (key, split):
+            # Tokens of UD keep the period of an abbreviation: "e.g." as "e." and "g."
+            dotted = " ".join(key.replace(".", ". ").split())
+            for variant in (key, split, dotted):
                 if variant:
                     self._entries[variant] = (connector, key, cls, kind)
                     pattern = tuple(variant.split())

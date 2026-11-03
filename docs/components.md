@@ -93,7 +93,7 @@ The class of the core is the default of `stats_class`. Where it cannot read a `D
 | [`StyleStatsComponent`](#StyleStatsComponent) | `StyleStats` | `stopwords`, `top_n`, `nausea_stopwords`, `cliches` |
 | [`PhonStatsComponent`](#PhonStatsComponent) | `PhonStats` | `window_len` |
 | [`SyntaxStatsComponent`](#SyntaxStatsComponent) | `SyntaxStats` | - |
-| [`CohesionStatsComponent`](#CohesionStatsComponent) | `CohesionStats` | - |
+| [`CohesionStatsComponent`](#CohesionStatsComponent) | `CohesionStats` | `blank_lines` |
 | [`MorphStatsComponent`](#MorphStatsComponent) | `MorphStats` | - |
 | [`UnadaptedReadabilityStatsComponent`](#UnadaptedReadabilityStatsComponent) | `UnadaptedReadabilityStats` | `basic` |
 
