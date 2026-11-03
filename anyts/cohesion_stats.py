@@ -236,10 +236,11 @@ class ConnectorMatcher:
                 raise ParameterError(self.messages["connector_class"].format(cls=cls, kind=kind))
             key = " ".join(self.normalize(connector).split())
             split = " ".join(key.replace("-", " ").replace(".", " ").split())
-            # Tokens of UD keep the period of an abbreviation: "e.g." as "e." and "g."
+            # Tokens of UD may keep the period of each part of an abbreviation (e., g.)
             dotted = " ".join(key.replace(".", ". ").split())
             for variant in (key, split, dotted):
-                if variant:
+                # A spelling of the dictionary wins over a variant of another spelling
+                if variant and (variant == key or variant not in self._entries):
                     self._entries[variant] = (connector, key, cls, kind)
                     pattern = tuple(variant.split())
                     patterns.setdefault(pattern[0], set()).add(pattern)
