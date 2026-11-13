@@ -32,7 +32,7 @@ make test-cov    # pytest: tests and docstring examples (doctest), 100% coverage
 make docs-build  # mkdocs build --strict, if the documentation changed
 ```
 
-CI runs the same on Python 3.11-3.14 (Linux) and on Windows and macOS for one Python version.
+CI runs the same on Python 3.11-3.15 (Linux) and on Windows and macOS for one Python version.
 
 ## What a pull request is expected to contain
 
