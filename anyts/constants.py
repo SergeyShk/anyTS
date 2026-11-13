@@ -230,6 +230,7 @@ MESSAGES: Mapping[str, str] = MappingProxyType(
         "source_type": "The data source cannot be of type {type}",
         "source_span": "The data source cannot be a Span: pass span.as_doc()",
         "no_words": "The data source has no words",
+        "document_tokens": "The tokens of the data source cannot make a document: {error}",
         "no_sentences": "The data source has no sentences",
         "sents_extractor_type": "The sentence extractor must be a SentsExtractor",
         "words_extractor_type": "The word extractor must be a WordsExtractor",

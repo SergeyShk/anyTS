@@ -14,6 +14,7 @@ from .exceptions import ParameterError, SourceTypeError
 from .utils import BLANK_LINE as BLANK_LINE
 from .utils import NUMBER_PATTERN as NUMBER_PATTERN
 from .utils import (
+    _separators,
     check_bool,
     check_callable,
     check_integer,
@@ -246,14 +247,7 @@ class SentsExtractor(Extractor):
         Returns:
             iterable[str]: Sentences
         """
-        pieces = _SENTENCE_BOUNDARY.split(text)
-        sents = pieces[:1]
-        for separator, piece in zip(_SENTENCE_BOUNDARY.findall(text), pieces[1:], strict=True):
-            if has_words(piece) and has_words(sents[-1]):
-                sents.append(piece)
-            else:
-                sents[-1] += separator + piece
-        return sents
+        return [text[start:end] for start, end in _sentence_spans(text)]
 
     def extract(self, text: str) -> tuple[str, ...]:
         """
@@ -281,6 +275,25 @@ class SentsExtractor(Extractor):
             sents = (sent for sent in sents if len(sent) <= self.max_len)
         self.sents = tuple(sents)
         return self.sents
+
+
+def _sentence_spans(text: str) -> list[tuple[int, int]]:
+    """Bounds of the sentences of the default rule of SentsExtractor.sentenize, unstripped"""
+    bounds = [match.span() for match in _SENTENCE_BOUNDARY.finditer(text)]
+    starts = [0, *(end for _, end in bounds)]
+    ends = [*(start for start, _ in bounds), len(text)]
+    spans = []
+    start, end = starts[0], ends[0]
+    words = has_words(text[start:end])
+    for piece_start, piece_end in zip(starts[1:], ends[1:], strict=True):
+        piece_words = has_words(text[piece_start:piece_end])
+        if piece_words and words:
+            spans.append((start, end))
+            start = piece_start
+        words = words or piece_words
+        end = piece_end
+    spans.append((start, end))
+    return spans
 
 
 def _check_length_bounds(
@@ -408,7 +421,9 @@ def split_paragraphs(text: str) -> list[str]:
 
     Description:
         The parts of the text between blank lines (BLANK_LINE), stripped of
-        whitespace at their edges; a part of whitespace alone is no paragraph
+        whitespace, control characters and invisible separators at their
+        edges, as the paragraphs of anySeg; a part of nothing else is no
+        paragraph
 
     Arguments:
         text (str): Text string
@@ -426,7 +441,8 @@ def split_paragraphs(text: str) -> list[str]:
     """
     if not isinstance(text, str):
         raise SourceTypeError(MESSAGES["text_type"].format(type=type(text).__name__))
-    return [part.strip() for part in BLANK_LINE.split(text) if part.strip()]
+    separators = _separators()
+    return [part for part in (part.strip(separators) for part in BLANK_LINE.split(text)) if part]
 
 
 class WordsExtractor(Extractor):

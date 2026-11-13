@@ -142,6 +142,10 @@ VOCAB = spacy.blank("xx").vocab
 PARSED = Doc(VOCAB, words=["Yes"], heads=[0], deps=["ROOT"])
 TAGGED_PARSE = Doc(VOCAB, words=["Yes"], heads=[0], deps=["ROOT"], pos=["INTJ"])
 TAGGED = Doc(VOCAB, words=["Yes"], pos=["INTJ"])
+# A token merged over a blank line, which no document can hold
+MERGED = Doc(VOCAB, words=["Yes", "\n\n", "no"], spaces=[False, False, False])
+with MERGED.retokenize() as retokenizer:
+    retokenizer.merge(MERGED[0:3])
 
 
 class Layers(HighlightedText):
@@ -229,6 +233,7 @@ WORDS = TEXT.split()
 # One case for every raise site of the classes, a key raised at several sites several times
 CASES = [
     ("source_type", SourceTypeError, lambda: Stats(5)),
+    ("document_tokens", SourceError, lambda: Stats(MERGED)),
     ("source_span", SourceTypeError, lambda: Stats(spacy.blank("en")(TEXT)[:2])),
     ("no_words", SourceError, lambda: Stats("?!")),
     ("no_words", SourceError, lambda: Diversity([])),

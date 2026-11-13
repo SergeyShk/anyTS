@@ -34,13 +34,29 @@ _PUNCTUATION_CATEGORIES = frozenset(
 
 # A signed number with separators and an optional percent sign: -5, 1990-1995, 1,500.50, 10%
 NUMBER_PATTERN = re.compile(r"[+\-−]?\d+(?:[.,:/-]\d+)*%?")
-# A blank line: two line breaks with whitespace alone between them, the zero-width space
-# and the byte order mark counting as whitespace there, or a paragraph separator
-BLANK_LINE = re.compile(
-    r"(?>\r\n|[\n\r\x85\u2028])[\s\u200b\ufeff]*(?:\r\n|[\n\r\x85\u2028])|\u2029"
-)
+# A line break of Unicode, the vertical tab and the form feed among them, as in anySeg
+_BREAK = r"\r\n|[\n\r\x0b\x0c\x85\u2028]"
+# What a blank line may hold besides its breaks: whitespace, control characters and the
+# invisible separators of anySeg (the soft hyphen, zero-width characters, the byte order mark)
+_BLANK = r"[^\S\n\r\x0b\x0c\x85\u2028\u2029]|[\x00-\x08\x0e-\x1f\x7f-\x84\x86-\x9f\u00ad\u200b-\u200d\u2060\ufeff]"
+# A blank line: two line breaks with nothing but blank characters between them, or a
+# paragraph separator - a paragraph break of anySeg
+BLANK_LINE = re.compile(rf"(?>{_BREAK})(?:{_BLANK})*(?:{_BREAK})|\u2029")
 # A line break of Unicode, the paragraph separator among them
-LINE_BREAK = re.compile(r"\r\n|[\n\r\x85\u2028\u2029]")
+LINE_BREAK = re.compile(rf"{_BREAK}|\u2029")
+
+
+@lru_cache(maxsize=1)
+def _separators() -> str:
+    """Characters between the tokens of anySeg: whitespace, control and invisible characters"""
+    return (
+        "".join(
+            char
+            for char in map(chr, range(0x3001))
+            if char.isspace() or unicodedata.category(char) == "Cc"
+        )
+        + "\u00ad\u200b\u200c\u200d\u2060\ufeff"
+    )
 
 
 @lru_cache(maxsize=1 << 16)

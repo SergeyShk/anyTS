@@ -1,3 +1,4 @@
+import random
 import re
 
 import pytest
@@ -7,7 +8,8 @@ from spacy.tokens import Doc
 from anyts.components import start_sents_after_blank_lines
 from anyts.constants import MESSAGES
 from anyts.document import document_words, to_document
-from anyts.exceptions import SourceTypeError
+from anyts.exceptions import SourceError, SourceTypeError
+from anyts.extractors import split_paragraphs
 from anyts.utils import is_document
 
 TEXT = "The cat sat. It slept!\n\nThe end"
@@ -178,3 +180,47 @@ def test_document_words():
     assert document_words(to_document("?! ...")) == ()
     with pytest.raises(SourceTypeError, match="cannot be of type str"):
         document_words(TEXT)
+
+
+def test_blank_lines():
+    """A blank line ends a paragraph of the document, as BLANK_LINE and split_paragraphs have it"""
+    text = "The page ends in the middle of a\n\x0csentence that goes on."
+    assert sentences(to_document(text)) == [
+        "The page ends in the middle of a",
+        "sentence that goes on.",
+    ]
+    nlp = spacy.blank("en")
+    nlp.add_pipe("sentencizer")
+    document = to_document(nlp("Title of the text\n\nThe body goes on. It ends."))
+    assert sentences(document) == ["Title of the text", "The body goes on.", "It ends."]
+    generator = random.Random(0)
+    alphabet = (
+        "ab .\n\r\x0b\x0c\x85\u2028\u2029\u00ad\u2060\u200b\u200c\u200d\ufeff\t \x01\x7f\xa0"
+    )
+    for _ in range(2000):
+        text = "".join(generator.choice(alphabet) for _ in range(generator.randint(0, 12)))
+        paragraphs = [paragraph.text for paragraph in to_document(text).paragraphs]
+        assert paragraphs == split_paragraphs(text), repr(text)
+
+
+def test_words_of_no_class():
+    """A token of private use or unassigned characters is no word"""
+    document = to_document("\uf0b7 First item.\n\uf0b7 Second item \u0378 x\ue000")
+    assert tokens(document)[:3] == ["\uf0b7", "First", "item"]
+    assert document_words(document) == ("First", "item", "Second", "item", "x")
+
+
+def test_tokens_over_a_blank_line():
+    doc = spacy.blank("en")("Mr. John\n\nSmith came home.")
+    with doc.retokenize() as retokenizer:
+        retokenizer.merge(doc[1:4])
+    with pytest.raises(
+        SourceError, match="cannot make a document: token 1: runs over a paragraph"
+    ):
+        to_document(doc)
+    own = {**MESSAGES, "document_tokens": "Own {error}"}
+    with pytest.raises(SourceError, match=r"^Own token 1"):
+        to_document(doc, messages=own)
+    text = "One two. Three four.\n\nFive six."
+    with pytest.raises(SourceTypeError, match="tokens a document can hold: token 4: runs over"):
+        to_document(text, tokenize=lambda t: [(14, 24, t[14:24])])
