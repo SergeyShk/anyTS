@@ -257,16 +257,18 @@ class SentsExtractor(Extractor):
             text (str): Text string
 
         Returns:
-            sents (tuple[str]): Tuple of extracted sentences, stripped, without empty ones
+            sents (tuple[str]): Tuple of extracted sentences without the separators at their
+                edges (whitespace, control and invisible characters), without empty ones
 
         Raises:
             SourceTypeError: If the text is not a string or the tokenizer is set incorrectly
         """
         _check_text(text, self.messages)
+        separators = _separators()
         sents = (
             sent
             for part in BLANK_LINE.split(text)
-            for sent in map(str.strip, self._tokenize(part, self.sentenize))
+            for sent in (sent.strip(separators) for sent in self._tokenize(part, self.sentenize))
             if sent
         )
         if self.min_len > 0:

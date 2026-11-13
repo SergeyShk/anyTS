@@ -36,7 +36,7 @@ Raises:
 | `max_len` | `int` | `0` | Maximum length of an extracted sentence in characters, `0` for no bound |
 
 !!! note "Note"
-    A regular expression as the tokenizer is a separator for `re.split`. A blank line - a line break, optional whitespace and another line break - ends a sentence of any tokenizer: the text is split at blank lines first and every part goes to the tokenizer, so a heading or a paragraph without a final mark is a sentence of its own, and so is a part without words, such as a line of asterisks, which the statistics leave out. The sentences are stripped of whitespace at the edges before the length bounds, and empty ones are dropped.
+    A regular expression as the tokenizer is a separator for `re.split`. A blank line (`BLANK_LINE`) ends a sentence of any tokenizer: the text is split at blank lines first and every part goes to the tokenizer, so a heading or a paragraph without a final mark is a sentence of its own, and so is a part without words, such as a line of asterisks, which the statistics leave out. The sentences are stripped of whitespace, control characters and invisible separators (the soft hyphen, zero-width characters, the byte order mark) at the edges before the length bounds, and empty ones are dropped.
 <!-- --8<-- [end:SentsExtractor-parameters] -->
 
 <!-- --8<-- [start:SentsExtractor-pipeline] -->

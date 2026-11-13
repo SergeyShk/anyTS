@@ -39,9 +39,9 @@ _BREAK = r"\r\n|[\n\r\x0b\x0c\x85\u2028]"
 # What a blank line may hold besides its breaks: whitespace, control characters and the
 # invisible separators of anySeg (the soft hyphen, zero-width characters, the byte order mark)
 _BLANK = r"[^\S\n\r\x0b\x0c\x85\u2028\u2029]|[\x00-\x08\x0e-\x1f\x7f-\x84\x86-\x9f\u00ad\u200b-\u200d\u2060\ufeff]"
-# A blank line: two line breaks with nothing but blank characters between them, or a
-# paragraph separator - a paragraph break of anySeg
-BLANK_LINE = re.compile(rf"(?>{_BREAK})(?:{_BLANK})*(?:{_BREAK})|\u2029")
+# Blank lines: a line break and the breaks after it with nothing but blank characters
+# between them, or a paragraph separator - a paragraph break of anySeg
+BLANK_LINE = re.compile(rf"(?>{_BREAK}|\u2029)(?:(?:{_BLANK})*(?>{_BREAK}|\u2029))+|\u2029")
 # A line break of Unicode, the paragraph separator among them
 LINE_BREAK = re.compile(rf"{_BREAK}|\u2029")
 

@@ -229,14 +229,15 @@ def _sent_starts(text: str, starts: list[int], sentenize: Spans | None) -> list[
 
 def _iter_sents(text: str) -> Iterator[tuple[int, int, str]]:
     """Sentences of SentsExtractor with their positions, every part between blank lines apart"""
+    separators = _separators()
     bounds = [0, *(bound for match in BLANK_LINE.finditer(text) for bound in match.span())]
     for part_start, part_end in zip(bounds[::2], [*bounds[1::2], len(text)], strict=True):
         part = text[part_start:part_end]
         for start, end in _sentence_spans(part):
             sent = part[start:end]
-            stripped = sent.strip()
+            stripped = sent.strip(separators)
             if stripped:
-                first = part_start + start + len(sent) - len(sent.lstrip())
+                first = part_start + start + len(sent) - len(sent.lstrip(separators))
                 yield first, first + len(stripped), stripped
 
 
