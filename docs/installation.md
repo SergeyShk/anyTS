@@ -3,8 +3,7 @@
 ## Requirements
 
 *   `python` 3.11 or newer
-*   `spaCy` 3.8.15 or newer within 3
-*   `preshed` 3.0.11 or newer, other than 3.0.14 - a dependency of spaCy whose 3.0.14 breaks its tokenizer
+*   `spaCy` 3.8.17 or newer within 3
 *   `numpy`, `scipy`, `pandas`
 *   `matplotlib`, `graphviz` - for the visualizers
 
