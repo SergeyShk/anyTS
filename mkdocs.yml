@@ -7,6 +7,7 @@ nav:
     - Home:
       - About: index.md
       - Installation: installation.md
+      - Document model: document.md
       - Exceptions: exceptions.md
       - Authors: authors.md
     - Extraction:

@@ -5,11 +5,11 @@ PhonStats(source, words_extractor=None, window_len=3)
 ```
 
 <!-- --8<-- [start:PhonStats] -->
-The phonetic statistics of a text: its sounds by class, their clusters, sequences and repetitions, and its syllables. A sound is a letter of a word by default, or a sound of its transcription when a library gives one. The data source is a text or a `Doc` object of [spaCy](https://github.com/explosion/spaCy); the words are taken in lower case, and an extractor passed explicitly is used on the text of a `Doc`.
+The phonetic statistics of a text: its sounds by class, their clusters, sequences and repetitions, and its syllables. A sound is a letter of a word by default, or a sound of its transcription when a library gives one. The data source is a text, a `Doc` object of [spaCy](https://github.com/explosion/spaCy) or a `Document` of [anySeg](https://github.com/SergeyShk/anySeg); the words are those of its [document](https://sergeyshk.github.io/anyTS/document/) in lower case (`doc_words`), or those of an extractor passed explicitly, used on the text.
 
 Raises:
 
-- `SourceTypeError` - a source that is neither a string nor a `Doc`, an extractor of another type;
+- `SourceTypeError` - a source that is neither a string, a `Doc` nor a `Document`, a `parse` that returns no `Document`, an extractor of another type;
 - `SourceError` - a source without words;
 - `ParameterError` - a window that is not an integer of at least 2.
 <!-- --8<-- [end:PhonStats] -->
@@ -61,8 +61,8 @@ Raises:
 <!-- --8<-- [start:PhonStats-parameters] -->
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
-| `source` | `str` / `Doc` | - | Data source |
-| `words_extractor` | `WordsExtractor` | `None` | Word extraction tool; used for a `Doc` too, on its text |
+| `source` | `str` / `Doc` / `Document` | - | Data source |
+| `words_extractor` | `WordsExtractor` | `None` | Word extraction tool, used on the text in place of the words of the document |
 | `window_len` | `int` | `3` | Window in words of the alliteration and the assonance (`PHON_WINDOW_LEN`) |
 <!-- --8<-- [end:PhonStats-parameters] -->
 
@@ -319,8 +319,8 @@ A language library subclasses `PhonStats`:
 | `syllabify(word)` | method | Syllables of a word as it writes them; an abstract method |
 | `syllable_sounds(word)` | method | Sounds of every syllable of a word; the transcription of every syllable of `syllabify` by default |
 | `word_hiatus(word)` | method | Number of the hiatuses of a word; its runs of vowels by `count_hiatus` with `glides` by default, or for instance the vowels at the boundaries of its syllables |
-| `doc_words(doc)` | method | Words of a `Doc`; those of `iter_doc_words` in lower case by default |
-| `words_extractor_class`, `join_hyphens` | class attributes | Word extractor of a string, joining of the hyphenated words of a `Doc` |
+| `doc_words(document)` | method | Words of a document in lower case; those of `document_words` by default, overridden to normalize the forms of the words of a language |
+| `parse(source)` | method | Document of the source, from `Stats` |
 | `stats_desc`, `stats_headers` | class attributes | Statistics of `get_stats` with their descriptions (`anyts.constants.PHON_STATS_DESC` by default), headers of the columns for `print_stats` |
 | `messages` | class attribute | Messages of the errors by key; `MESSAGES` by default |
 

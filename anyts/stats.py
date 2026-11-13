@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from collections.abc import Iterable, Mapping
 from itertools import pairwise
 from math import isfinite
@@ -5,11 +7,13 @@ from numbers import Real
 from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
 from .constants import MESSAGES
-from .exceptions import ParameterError, UnknownStatError
-from .utils import check_bool, check_messages, check_number
+from .exceptions import ParameterError, SourceTypeError, UnknownStatError
+from .utils import check_bool, check_messages, check_number, is_document
 
 if TYPE_CHECKING:
+    from anyseg import Document
     from pandas import DataFrame
+    from spacy.tokens import Doc
 
 Band = TypeVar("Band")
 
@@ -23,6 +27,7 @@ class Stats:
         statistics in stats_desc, each an attribute or a property of the object
 
     Methods:
+        parse: Document of a data source
         stat_names: Names of the statistics of get_stats
         get_stats: Getting the computed statistics
         to_dataframe: Getting the computed statistics as a one-row frame
@@ -69,6 +74,41 @@ class Stats:
         check_messages(cls.messages)
         _check_scales(cls.level_scales, f"level_scales of {cls.__name__}")
 
+    def parse(self, source: str | Doc | Document) -> Document:
+        """
+        Getting the document of a data source
+
+        Description:
+            to_document by default: a Document as it is, a Doc with its tokens,
+            columns and sentences, a string split into words of \\w, punctuation
+            marks and the sentences of SentsExtractor. A language library
+            overrides it to segment and annotate a string in its language
+
+        Arguments:
+            source (str|Doc|Document): Data source
+
+        Returns:
+            Document: Document of anySeg
+
+        Raises:
+            SourceTypeError: If the source is neither a string, a Doc nor a Document
+                object
+        """
+        from .document import to_document
+
+        return to_document(source, messages=self.messages)
+
+    def _document(self, source: str | Doc | Document) -> Document:
+        """Document of parse, checked to be a Document"""
+        document = self.parse(source)
+        if not is_document(document):
+            raise SourceTypeError(
+                self.messages["hook_document"].format(
+                    hook="parse", cls=type(self).__name__, type=type(document).__name__
+                )
+            )
+        return document
+
     def stat_names(self) -> tuple[str, ...]:
         """
         Getting the names of the statistics of get_stats
@@ -96,7 +136,7 @@ class Stats:
         stats = {stat: getattr(self, stat) for stat in self.stat_names()}
         return _flatten(stats) if flat else _copy(stats)
 
-    def to_dataframe(self) -> "DataFrame":
+    def to_dataframe(self) -> DataFrame:
         """
         Getting the computed statistics as a one-row frame
 

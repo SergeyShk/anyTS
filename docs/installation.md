@@ -4,6 +4,7 @@
 
 *   `python` 3.11 or newer
 *   `spaCy` 3.8.17 or newer within 3
+*   `anyseg` 0.3 - the document model
 *   `numpy`, `scipy`, `pandas`
 *   `matplotlib`, `graphviz` - for the visualizers
 

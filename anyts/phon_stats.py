@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 import numpy as np
 
 from .constants import MESSAGES, PHON_STATS_DESC, PHON_WINDOW_LEN
+from .document import _source_text, document_words
 from .exceptions import ParameterError, SourceError, SourceTypeError
 from .extractors import WordsExtractor
 from .stats import Stats
@@ -17,14 +18,12 @@ from .utils import (
     check_integer,
     check_sequence,
     check_words,
-    is_doc,
-    iter_doc_words,
     safe_divide,
     shannon_entropy,
-    source_type_error,
 )
 
 if TYPE_CHECKING:
+    from anyseg import Document
     from spacy.tokens import Doc
 
 
@@ -59,9 +58,9 @@ class PhonStats(Stats, metaclass=ABCMeta):
         get_stats, to_dataframe, print_stats and describe come from Stats
 
     Arguments:
-        source (str|Doc): Data source (a string or a Doc object)
-        words_extractor (WordsExtractor): Word extraction tool; used for a Doc too, on
-            its text
+        source (str|Doc|Document): Data source (a string, a Doc or a Document object)
+        words_extractor (WordsExtractor): Word extraction tool, used on the text in place
+            of the words of the document
         window_len (int): Window in words of the alliteration and the assonance
 
     Attributes:
@@ -85,15 +84,13 @@ class PhonStats(Stats, metaclass=ABCMeta):
         mean_syllable_len (float): Mean length of a syllable in sounds of the classes
 
     Methods:
-        doc_words: Words of a Doc
+        doc_words: Words of a document in lower case
         transcribe: Sounds of a word
         syllabify: Syllables of a word
         syllable_sounds: Sounds of every syllable of a word
         word_hiatus: Number of the hiatuses of a word
 
     Class attributes:
-        words_extractor_class (type[WordsExtractor]): Word extractor of a string
-        join_hyphens (bool): Join the parts of the hyphenated words of a Doc
         vowels, sonorants, voiced, voiceless (frozenset[str]): Classes of the sounds: the
             vowels, the sonorants and the voiced and voiceless obstruents, disjoint
         skipped (frozenset[str]): Sounds that keep a consonant cluster whole, in no class
@@ -102,17 +99,15 @@ class PhonStats(Stats, metaclass=ABCMeta):
             print_stats
 
     Raises:
-        SourceTypeError: If the source is neither a string nor a Doc object, the
-            extractor is of another type, or syllabify or transcribe does not return
-            strings; when a class is defined, if its classes of sounds are not
-            collections of strings
+        SourceTypeError: If the source is neither a string, a Doc nor a Document object,
+            parse does not return a Document, the extractor is of another type, or
+            syllabify or transcribe does not return strings; when a class is defined, if
+            its classes of sounds are not collections of strings
         SourceError: If the source has no words
         ParameterError: If the window is not an integer or is below 2; when a class is
             defined, if its classes of sounds or skipped overlap
     """
 
-    words_extractor_class: ClassVar[type[WordsExtractor]] = WordsExtractor
-    join_hyphens: ClassVar[bool] = False
     vowels: ClassVar[frozenset[str]] = frozenset()
     sonorants: ClassVar[frozenset[str]] = frozenset()
     voiced: ClassVar[frozenset[str]] = frozenset()
@@ -137,7 +132,7 @@ class PhonStats(Stats, metaclass=ABCMeta):
 
     def __init__(
         self,
-        source: str | Doc,
+        source: str | Doc | Document,
         words_extractor: WordsExtractor | None = None,
         window_len: int = PHON_WINDOW_LEN,
     ):
@@ -145,15 +140,12 @@ class PhonStats(Stats, metaclass=ABCMeta):
         if words_extractor is not None and not isinstance(words_extractor, WordsExtractor):
             raise SourceTypeError(messages["words_extractor_type"])
         check_params(window_len, messages=messages)
-        if is_doc(source) and words_extractor is not None:
-            source = source.text
-        if is_doc(source):
-            words = self.doc_words(source)
-        elif isinstance(source, str):
-            extractor = words_extractor or self.words_extractor_class(lowercase=True)
-            words = tuple(word.lower() for word in extractor.extract(source))
+        if words_extractor is not None:
+            words = tuple(
+                word.lower() for word in words_extractor.extract(_source_text(source, messages))
+            )
         else:
-            raise source_type_error(messages, source)
+            words = self.doc_words(self._document(source))
         if not words:
             raise SourceError(messages["no_words"])
         self.words = words
@@ -241,21 +233,21 @@ class PhonStats(Stats, metaclass=ABCMeta):
             )
         )
 
-    def doc_words(self, doc: Doc) -> tuple[str, ...]:
+    def doc_words(self, document: Document) -> tuple[str, ...]:
         """
-        Getting the words of a Doc
+        Getting the words of a document in lower case
 
         Description:
-            The words of iter_doc_words in lower case, with the hyphenated words
-            joined by join_hyphens
+            The words of document_words in lower case; a language library
+            overrides it to normalize the forms of its words
 
         Arguments:
-            doc (Doc): Doc object
+            document (Document): Document of anySeg
 
         Returns:
             tuple[str]: Words
         """
-        return tuple(text.lower() for _, _, text in iter_doc_words(doc, self.join_hyphens))
+        return tuple(word.lower() for word in document_words(document))
 
     def transcribe(self, word: str) -> Sequence[str]:
         """

@@ -356,6 +356,21 @@ CASES = [
     ),
     ("no_stats_class", ParameterError, lambda: BareComponent(spacy.blank("en"), "own_bare")),
     (
+        "hook_document",
+        SourceTypeError,
+        lambda: hooked(Stats, parse=lambda self, source: "Yes")(TEXT),
+    ),
+    (
+        "hook_document",
+        SourceTypeError,
+        lambda: hooked(Style, parse=lambda self, source: "Yes")(TEXT),
+    ),
+    (
+        "hook_document",
+        SourceTypeError,
+        lambda: hooked(Phon, parse=lambda self, source: "Yes")(TEXT),
+    ),
+    (
         "hook_doc",
         SourceTypeError,
         lambda: hooked(Syntax, parse=lambda self, source: "Yes")(PARSED),

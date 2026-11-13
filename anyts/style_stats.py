@@ -6,6 +6,7 @@ from math import nan, sqrt
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from .constants import MESSAGES, NAUSEA_TOP_N, STYLE_STATS_DESC
+from .document import document_words
 from .exceptions import ParameterError, SourceError, SourceTypeError
 from .extractors import WordsExtractor
 from .stats import Stats
@@ -15,13 +16,11 @@ from .utils import (
     check_words,
     find_phrases,
     in_order,
-    is_doc,
-    iter_doc_words,
     safe_divide,
-    source_type_error,
 )
 
 if TYPE_CHECKING:
+    from anyseg import Document
     from spacy.tokens import Doc
 
 Expander = Callable[[Sequence[str], Collection[str]], Mapping[str, str]]
@@ -54,14 +53,13 @@ class StyleStats(Stats):
         taken (see the functions). A language library subclasses the class and
         sets its hooks: the lists of phrases, the stopwords, the spelling of
         phrases, the nouns and the norms of the services (level_scales)
-        A string gives the words of the word extractor, in lower case by
-        default; a Doc gives its tokens (doc_words), or the words of an
-        extractor given on its text. The markers are counted on the word forms
-        in lower case (forms), whatever the extractor.
+        The words are those of the document of parse in lower case (doc_words),
+        or those of an extractor given on its text. The markers are counted on
+        the words of the document (forms), whatever the extractor.
         get_stats, to_dataframe, print_stats and describe come from Stats
 
     Arguments:
-        source (str|Doc): Data source (a string or a Doc object)
+        source (str|Doc|Document): Data source (a string, a Doc or a Document object)
         words_extractor (WordsExtractor): Word extraction tool
         stopwords (list[str]): Words of water; without them is_water_word decides
         top_n (int): Number of the most frequent words of the academic nausea and the
@@ -89,7 +87,7 @@ class StyleStats(Stats):
 
     Methods:
         normalize: Normalized form of a word
-        doc_words: Words of a Doc
+        doc_words: Words of a document in lower case
         is_stopword: Whether a word is a stopword of the academic nausea
         is_water_word: Whether a word is water
         is_parenthetical: Whether a word is a parenthetical expression by itself
@@ -101,9 +99,6 @@ class StyleStats(Stats):
         markers: Markers of the officialese found in the text
 
     Class attributes:
-        words_extractor_class (type[WordsExtractor]): Word extractor of a string and of
-            the forms
-        join_hyphens (bool): Join the parts of the hyphenated words of a Doc
         compound_prepositions_list (tuple[str]): Compound prepositions
         parentheticals_list (tuple[str]): Parenthetical expressions
         cliches_list (tuple[str]): Cliches
@@ -111,15 +106,14 @@ class StyleStats(Stats):
             print_stats
 
     Raises:
-        SourceTypeError: If the source is neither a string nor a Doc object, the
-            extractor is of another type or a list is not a list of strings; when a
-            class is defined, if a list of its phrases is not a list of strings
+        SourceTypeError: If the source is neither a string, a Doc nor a Document object,
+            parse does not return a Document, the extractor is of another type or a list
+            is not a list of strings; when a class is defined, if a list of its phrases is
+            not a list of strings
         SourceError: If the source has no words
         ParameterError: If top_n is not an integer or is below one
     """
 
-    words_extractor_class: ClassVar[type[WordsExtractor]] = WordsExtractor
-    join_hyphens: ClassVar[bool] = False
     compound_prepositions_list: ClassVar[tuple[str, ...]] = ()
     parentheticals_list: ClassVar[tuple[str, ...]] = ()
     cliches_list: tuple[str, ...] = ()
@@ -133,7 +127,7 @@ class StyleStats(Stats):
 
     def __init__(
         self,
-        source: str | Doc,
+        source: str | Doc | Document,
         words_extractor: WordsExtractor | None = None,
         stopwords: Collection[str] | None = None,
         top_n: int = NAUSEA_TOP_N,
@@ -151,16 +145,9 @@ class StyleStats(Stats):
         ):
             if words is not None:
                 check_words(words, what, ordered=False)
-        if is_doc(source) and words_extractor is not None:
-            source = source.text
-        if is_doc(source):
-            self.words = self.doc_words(source)
-            self.forms = self.words
-        elif isinstance(source, str):
-            self.forms = self.words_extractor_class(lowercase=True).extract(source)
-            self.words = words_extractor.extract(source) if words_extractor else self.forms
-        else:
-            raise source_type_error(messages, source)
+        document = self._document(source)
+        self.forms = self.doc_words(document)
+        self.words = words_extractor.extract(document.text) if words_extractor else self.forms
         if not self.words:
             raise SourceError(messages["no_words"])
         self.stopwords = in_order(stopwords) if stopwords is not None else None
@@ -188,21 +175,21 @@ class StyleStats(Stats):
         """
         return word.lower()
 
-    def doc_words(self, doc: Doc) -> tuple[str, ...]:
+    def doc_words(self, document: Document) -> tuple[str, ...]:
         """
-        Getting the words of a Doc
+        Getting the words of a document in lower case
 
         Description:
-            The words of iter_doc_words in lower case, with the hyphenated words
-            joined by join_hyphens
+            The words of document_words in lower case; a language library
+            overrides it to normalize the forms of its words
 
         Arguments:
-            doc (Doc): Doc object
+            document (Document): Document of anySeg
 
         Returns:
             tuple[str]: Words
         """
-        return tuple(text.lower() for _, _, text in iter_doc_words(doc, self.join_hyphens))
+        return tuple(word.lower() for word in document_words(document))
 
     def is_stopword(self, word: str) -> bool:
         """

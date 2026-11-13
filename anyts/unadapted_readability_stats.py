@@ -17,6 +17,7 @@ from .stats import Stats
 from .utils import check_integer, safe_divide
 
 if TYPE_CHECKING:
+    from anyseg import Document
     from spacy.tokens import Doc
 
     from .extractors import SentsExtractor, WordsExtractor
@@ -44,8 +45,8 @@ class UnadaptedReadabilityStats(Stats):
         get_stats, to_dataframe, print_stats and describe come from Stats
 
     Arguments:
-        source (str|Doc|BasicStats): Data source - a string, a Doc object or
-            a ready object of basic_stats_class to reuse
+        source (str|Doc|Document|BasicStats): Data source - a string, a Doc or a
+            Document object, or a ready object of basic_stats_class to reuse
         sents_extractor (SentsExtractor): Sentence extraction tool, not used for
             ready basic statistics
         words_extractor (WordsExtractor): Word extraction tool, not used for ready
@@ -67,7 +68,7 @@ class UnadaptedReadabilityStats(Stats):
         wheeler_smith (float): Wheeler-Smith index
 
     Class attributes:
-        basic_stats_class (type[BasicStats]): Basic statistics of a string or a Doc;
+        basic_stats_class (type[BasicStats]): Basic statistics of a string, a Doc or a Document;
             without it the source must be a BasicStats object
         complex_syl_factor (int): Minimum number of syllables of a hard word
             (SMOG_COMPLEX_SYL_FACTOR)
@@ -80,9 +81,10 @@ class UnadaptedReadabilityStats(Stats):
         stats_headers (tuple[str, str]): Headers of the columns for print_stats
 
     Raises:
-        SourceTypeError: If the source is neither a string, a Doc nor a BasicStats object,
-            the basic statistics are of another class, an extractor is of another type,
-            or a class without basic_stats_class is given a string or a Doc
+        SourceTypeError: If the source is neither a string, a Doc, a Document nor a
+            BasicStats object, the basic statistics are of another class, an extractor
+            is of another type, or a class without basic_stats_class is given another
+            source
         SourceError: If the source has no words or no sentences
         ParameterError: When a class is defined, if a factor is not an integer of
             at least one or basic_stats_class is neither a subclass of BasicStats
@@ -114,7 +116,7 @@ class UnadaptedReadabilityStats(Stats):
 
     def __init__(
         self,
-        source: str | Doc | BasicStats,
+        source: str | Doc | Document | BasicStats,
         sents_extractor: SentsExtractor | None = None,
         words_extractor: WordsExtractor | None = None,
     ):

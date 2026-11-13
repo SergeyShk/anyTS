@@ -571,7 +571,7 @@ class SyntaxStats(Stats):
             doc = Doc(_blank_vocab(lang)).from_bytes(zlib.decompress(data))
             self.sents = tuple(tuple(doc[i] for i in sent) for sent in positions)
 
-    def parse(self, source: Doc) -> Doc:
+    def parse(self, source: Doc) -> Doc:  # type: ignore[override]
         """
         Getting the Doc of a source
 

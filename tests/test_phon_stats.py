@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import pytest
 import spacy
+from anyseg import Document
 
 from anyts.constants import MESSAGES, PHON_STATS_DESC
 from anyts.exceptions import ParameterError, SourceError, SourceTypeError
@@ -168,10 +169,8 @@ def test_source_of_a_doc_and_an_extractor():
     doc = spacy.blank("en")("The well-known poet")
     assert English(doc).words == ("the", "well", "known", "poet")
 
-    class Joined(English):
-        join_hyphens = True
-
-    assert Joined(doc).words == ("the", "well-known", "poet")
+    joined = Document.from_tokens(doc.text, [0, 4, 15], [3, 14, 19])
+    assert English(joined).words == ("the", "well-known", "poet")
     extractor = WordsExtractor(stopwords=["the"])
     assert English(doc, words_extractor=extractor).words == ("well", "known", "poet")
     assert English("The poet", words_extractor=extractor).words == ("poet",)
@@ -188,6 +187,7 @@ def test_text_without_sounds():
     ("kwargs", "error"),
     [
         ({"source": 5}, SourceTypeError),
+        ({"source": 5, "words_extractor": WordsExtractor()}, SourceTypeError),
         ({"source": "?!"}, SourceError),
         ({"source": TEXT, "words_extractor": 5}, SourceTypeError),
         ({"source": TEXT, "window_len": 1}, ParameterError),

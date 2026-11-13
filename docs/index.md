@@ -6,6 +6,14 @@
 
 <div class="grid cards" markdown>
 
+-   :material-file-document-outline:{ .lg .middle } __Document model__
+
+    ---
+
+    Read a string, a spaCy `Doc` or a `Document` of [anySeg](https://github.com/SergeyShk/anySeg) as one document of tokens, words, sentences and paragraphs; a language library segments and annotates a string in its language
+
+    [:octicons-arrow-right-24: Document model](document.md)
+
 -   :material-scissors-cutting:{ .lg .middle } __Extraction__
 
     ---

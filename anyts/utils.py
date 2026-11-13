@@ -20,6 +20,7 @@ from .constants import MESSAGES
 from .exceptions import ParameterError, SourceError, SourceTypeError
 
 if TYPE_CHECKING:
+    from anyseg import Document
     from spacy.language import Language
     from spacy.tokens import Doc, Span, Token
     from thinc.types import Ints2d
@@ -467,6 +468,31 @@ def is_language(value: object) -> TypeGuard[Language]:
     """
     language = getattr(sys.modules.get("spacy.language"), "Language", None)
     return language is not None and isinstance(value, language)
+
+
+def is_document(value: object) -> TypeGuard[Document]:
+    """
+    Checking whether a value is a Document object of anySeg
+
+    Description:
+        The check does not import anySeg, as is_doc: a Document exists only
+        once anySeg is loaded, so before that every value gives False
+
+    Arguments:
+        value (object): Value to check
+
+    Returns:
+        bool: Result of the check
+
+    Example:
+        >>> from anyseg import Document
+        >>> from anyts.utils import is_document
+        >>> document = Document.from_tokens("The cat", [0, 4], [3, 7])
+        >>> is_document(document), is_document("The cat")
+        (True, False)
+    """
+    document = getattr(sys.modules.get("anyseg"), "Document", None)
+    return document is not None and isinstance(value, document)
 
 
 def has_sents(doc: Doc) -> bool:

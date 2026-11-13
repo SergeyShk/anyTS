@@ -15,6 +15,7 @@ from anyts import (
     constants,
     datasets,
     diversity_stats,
+    document,
     exceptions,
     extractors,
     lexical_stats,
@@ -122,6 +123,7 @@ def test_public_api_has_sections():
     required = {
         "exceptions",
         *public_names(utils),
+        *public_names(document),
         *public_names(extractors),
         *public_names(diversity_stats),
         *public_names(cohesion_stats),
