@@ -539,6 +539,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../document/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Document model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../exceptions/" class="md-nav__link">
         
   
@@ -2380,10 +2408,10 @@
 <div class="signature highlight"><pre><span></span><code><span class="n">UnadaptedReadabilityStats</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">sents_extractor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">words_extractor</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 <!-- --8<-- [start:UnadaptedReadabilityStats] -->
-<p>Readability formulas made for English, German or Italian, computed from the basic statistics of a text with the coefficients they were published with (Linsear Write in the form of textstat), without a calibration for its language. Their values compare texts of one language with each other; they are no grade levels of another language. A word without syllables (a number, a preposition of one consonant) counts as monosyllabic in FORCAST and the Wiener Sachtextformeln and as easy in Linsear Write, as in textstat. The data source is a text, a <code>Doc</code> object of <a href="https://github.com/explosion/spaCy">spaCy</a> or a ready <code>BasicStats</code> object, as for <code>ReadabilityStats</code>.</p>
+<p>Readability formulas made for English, German or Italian, computed from the basic statistics of a text with the coefficients they were published with (Linsear Write in the form of textstat), without a calibration for its language. Their values compare texts of one language with each other; they are no grade levels of another language. A word without syllables (a number, a preposition of one consonant) counts as monosyllabic in FORCAST and the Wiener Sachtextformeln and as easy in Linsear Write, as in textstat. The data source is a text, a <code>Doc</code> object of <a href="https://github.com/explosion/spaCy">spaCy</a>, a <code>Document</code> of <a href="https://github.com/SergeyShk/anySeg">anySeg</a> or a ready <code>BasicStats</code> object, as for <code>ReadabilityStats</code>.</p>
 <p>Raises:</p>
 <ul>
-<li><code>SourceTypeError</code> - a source that is neither a string, a <code>Doc</code> nor a <code>BasicStats</code> object, basic statistics of another class, an extractor of another type, a string or a <code>Doc</code> for a class without <code>basic_stats_class</code>;</li>
+<li><code>SourceTypeError</code> - a source that is neither a string, a <code>Doc</code>, a <code>Document</code> nor a <code>BasicStats</code> object, basic statistics of another class, an extractor of another type, a source other than basic statistics for a class without <code>basic_stats_class</code>;</li>
 <li><code>SourceError</code> - a source without words or without sentences.</li>
 </ul>
 <!-- --8<-- [end:UnadaptedReadabilityStats] -->
@@ -2447,9 +2475,9 @@ Wheeler-Smith index          |  20.00
 <tbody>
 <tr>
 <td style="text-align: left;"><code>source</code></td>
-<td style="text-align: left;"><code>str</code> / <code>Doc</code> / <code>BasicStats</code></td>
+<td style="text-align: left;"><code>str</code> / <code>Doc</code> / <code>Document</code> / <code>BasicStats</code></td>
 <td style="text-align: left;">-</td>
-<td style="text-align: left;">Data source</td>
+<td style="text-align: left;">Data source (a string, a Doc or a Document object, or ready basic statistics)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>sents_extractor</code></td>
@@ -3062,7 +3090,7 @@ r = \frac{\textrm{Easy words} + 3 \times \textrm{Hard words}}{\textrm{Sentences}
 <tr>
 <td style="text-align: left;"><code>basic_stats_class</code></td>
 <td style="text-align: left;">class attribute</td>
-<td style="text-align: left;">Basic statistics of a string or a <code>Doc</code>, the class with the syllables of the language; without it the source must be a <code>BasicStats</code> object</td>
+<td style="text-align: left;">Basic statistics of a string, a <code>Doc</code> or a <code>Document</code>, the class with the syllables of the language; without it the source must be a <code>BasicStats</code> object</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>complex_syl_factor</code>, <code>long_word_letter_factor</code>, <code>mini_word_letters</code></td>

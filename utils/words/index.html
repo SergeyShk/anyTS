@@ -539,6 +539,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../document/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Document model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../exceptions/" class="md-nav__link">
         
   
@@ -2360,7 +2388,7 @@
 <!-- --8<-- [start:find_paragraph_starts] -->
 <div class="signature highlight"><pre><span></span><code><span class="n">find_paragraph_starts</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">words</span><span class="p">,</span> <span class="n">blank_lines</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 </code></pre></div>
-<p>Finds the words of a text that start a paragraph: the words are found in the text in their order, as by <code>find_marks</code>, and a word that a line break (<code>LINE_BREAK</code>: <code>\n</code>, <code>\r\n</code>, <code>\r</code>, U+0085, U+2028 or the paragraph separator U+2029) separates from the word before gets its position, or a blank line (<code>BLANK_LINE</code>) with <code>blank_lines</code>, for a text whose lines are wrapped inside its paragraphs. A word the text does not hold is passed over. A library that builds the words of <code>CohesionStats</code> from a string sets their <code>paragraph_start</code> by these positions.</p>
+<p>Finds the words of a text that start a paragraph: the words are found in the text in their order, as by <code>find_marks</code>, and a word that a line break (<code>LINE_BREAK</code>: <code>\n</code>, <code>\r\n</code>, <code>\r</code>, the vertical tab, the form feed, U+0085, U+2028 or the paragraph separator U+2029) separates from the word before gets its position, or a blank line (<code>BLANK_LINE</code>) with <code>blank_lines</code>, for a text whose lines are wrapped inside its paragraphs. A word the text does not hold is passed over. A library that builds the words of <code>CohesionStats</code> from a string sets their <code>paragraph_start</code> by these positions.</p>
 <table>
 <thead>
 <tr>

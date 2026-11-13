@@ -539,6 +539,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../document/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Document model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../exceptions/" class="md-nav__link">
         
   
@@ -2148,11 +2176,11 @@
 <div class="signature highlight"><pre><span></span><code><span class="n">BasicStats</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">sents_extractor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">words_extractor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">complex_syl_factor</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">long_word_letter_factor</span><span class="o">=</span><span class="mi">7</span><span class="p">)</span>
 </code></pre></div>
 <!-- --8<-- [start:BasicStats] -->
-<p>The basic statistics of a text: the counts of its sentences, words, characters, syllables and punctuation marks and the distributions of its words. The data source is a text or a <code>Doc</code> object of <a href="https://github.com/explosion/spaCy">spaCy</a>. Letters are counted by <code>str.isalpha</code>, so digits, hyphens and marks inside a word are not letters.</p>
-<p>The words and the sentences of a string come from the extractors. A <code>Doc</code> gives its tokens as words, without punctuation marks and symbols such as <code>€</code> or <code>%</code>, and its boundaries as sentences, or those of the sentence extractor when it has none or only partial ones (<code>has_sents</code>); an extractor given is used on its text instead. A blank line ends a sentence of a string and of a <code>Doc</code> without boundaries; a <code>Doc</code> with boundaries does so when its pipeline has <code>start_sents_after_blank_lines</code> (registered by a language library under its own name) before the parser, <code>senter</code> or <code>sentencizer</code>. A sentence without words, such as punctuation alone, is not counted.</p>
+<p>The basic statistics of a text: the counts of its sentences, words, characters, syllables and punctuation marks and the distributions of its words. The data source is a text, a <code>Doc</code> object of <a href="https://github.com/explosion/spaCy">spaCy</a> or a <code>Document</code> of <a href="https://github.com/SergeyShk/anySeg">anySeg</a>. Letters are counted by <code>str.isalpha</code>, so digits, hyphens and marks inside a word are not letters.</p>
+<p>The words and the sentences come from the <a href="https://sergeyshk.github.io/anyTS/document/">document</a> of the source (<code>parse</code>): its tokens without punctuation marks and symbols such as <code>€</code> or <code>%</code> (<code>doc_words</code>) and its sentences; an extractor given is used on the text instead. A <code>Doc</code> keeps its sentence starts, and one with none or only partial ones (<code>has_sents</code>) gets those of <code>parse</code>. A blank line ends a sentence of every source, since it ends a paragraph of the document. A sentence without words, such as punctuation alone, is not counted.</p>
 <p>Raises:</p>
 <ul>
-<li><code>SourceTypeError</code> - a source that is neither a string nor a <code>Doc</code>, an extractor of another type;</li>
+<li><code>SourceTypeError</code> - a source that is neither a string, a <code>Doc</code> nor a <code>Document</code>, a <code>parse</code> that returns no <code>Document</code>, an extractor of another type;</li>
 <li><code>SourceError</code> - a source without words;</li>
 <li><code>ParameterError</code> - a threshold that is not an integer of at least one, a <code>normalize</code> that is not a <code>bool</code>.</li>
 </ul>
@@ -2212,21 +2240,21 @@ Entropy of the word lengths in syllables (bits) |   0.50
 <tbody>
 <tr>
 <td style="text-align: left;"><code>source</code></td>
-<td style="text-align: left;"><code>str</code> / <code>Doc</code></td>
+<td style="text-align: left;"><code>str</code> / <code>Doc</code> / <code>Document</code></td>
 <td style="text-align: left;">-</td>
-<td style="text-align: left;">Data source (a string or a Doc object)</td>
+<td style="text-align: left;">Data source</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>sents_extractor</code></td>
 <td style="text-align: left;"><code>SentsExtractor</code></td>
 <td style="text-align: left;"><code>None</code></td>
-<td style="text-align: left;">Sentence extraction tool; used for a Doc too, on its text</td>
+<td style="text-align: left;">Sentence extraction tool, used on the text in place of the sentences of the document</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>words_extractor</code></td>
 <td style="text-align: left;"><code>WordsExtractor</code></td>
 <td style="text-align: left;"><code>None</code></td>
-<td style="text-align: left;">Word extraction tool; used for a Doc too, on its text</td>
+<td style="text-align: left;">Word extraction tool, used on the text in place of the words of the document</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>normalize</code></td>
@@ -2527,14 +2555,9 @@ Entropy of the word lengths in syllables (bits) |   0.50
 <td style="text-align: left;">The syllables of a word; abstract</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>sents_extractor_class</code>, <code>words_extractor_class</code></td>
-<td style="text-align: left;">class attributes</td>
-<td style="text-align: left;">The extractors used when none is given; <code>SentsExtractor</code> and <code>WordsExtractor</code> by default</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>join_hyphens</code></td>
-<td style="text-align: left;">class attribute</td>
-<td style="text-align: left;">Join the parts of the hyphenated words of a <code>Doc</code> (<code>iter_doc_words</code>); <code>False</code> by default</td>
+<td style="text-align: left;"><code>doc_words(document)</code></td>
+<td style="text-align: left;">method</td>
+<td style="text-align: left;">The words of a document; <code>document_words</code> by default, overridden to normalize the forms of the words of a language</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>count_punctuations(text)</code></td>
@@ -2548,7 +2571,7 @@ Entropy of the word lengths in syllables (bits) |   0.50
 </tr>
 </tbody>
 </table>
-<p>The other hooks, <code>stats_headers</code>, <code>level_scales</code> and <code>messages</code>, come from <code>Stats</code>. The thresholds of the complex and the long words are parameters; a library sets its own defaults in its <code>__init__</code> and passes them on.</p>
+<p>The other hooks, <code>parse</code>, <code>stats_headers</code>, <code>level_scales</code> and <code>messages</code>, come from <code>Stats</code>. The thresholds of the complex and the long words are parameters; a library sets its own defaults in its <code>__init__</code> and passes them on.</p>
 <!-- --8<-- [end:BasicStats-hooks] -->
 </details>
 

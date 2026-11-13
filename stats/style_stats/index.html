@@ -539,6 +539,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../document/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Document model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../exceptions/" class="md-nav__link">
         
   
@@ -2336,11 +2364,11 @@
 <div class="signature highlight"><pre><span></span><code><span class="n">StyleStats</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">words_extractor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">stopwords</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">top_n</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">cliches</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">nausea_stopwords</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 <!-- --8<-- [start:StyleStats] -->
-<p>The style metrics of a text: the SEO metrics of Advego and Text.ru and the markers of the officialese style. The services publish no formulas, so the common definitions are taken. The data source is a text or a <code>Doc</code> object of <a href="https://github.com/explosion/spaCy">spaCy</a>.</p>
-<p>The SEO metrics are counted on the words of the word extractor, in lower case by default, or on the tokens of a <code>Doc</code>; an extractor passed explicitly is used on the text of a <code>Doc</code>. The markers are counted on the word forms in lower case (<code>forms</code>), whatever the extractor.</p>
+<p>The style metrics of a text: the SEO metrics of Advego and Text.ru and the markers of the officialese style. The services publish no formulas, so the common definitions are taken. The data source is a text, a <code>Doc</code> object of <a href="https://github.com/explosion/spaCy">spaCy</a> or a <code>Document</code> of <a href="https://github.com/SergeyShk/anySeg">anySeg</a>.</p>
+<p>The SEO metrics are counted on the words of the <a href="https://sergeyshk.github.io/anyTS/document/">document</a> of the source in lower case (<code>doc_words</code>), or on those of an extractor passed explicitly, used on the text. The markers are counted on the words of the document (<code>forms</code>), whatever the extractor.</p>
 <p>Raises:</p>
 <ul>
-<li><code>SourceTypeError</code> - a source that is neither a string nor a <code>Doc</code>, an extractor of another type, a list that is not a list of strings;</li>
+<li><code>SourceTypeError</code> - a source that is neither a string, a <code>Doc</code> nor a <code>Document</code>, a <code>parse</code> that returns no <code>Document</code>, an extractor of another type, a list that is not a list of strings;</li>
 <li><code>SourceError</code> - a source without words;</li>
 <li><code>ParameterError</code> - a <code>top_n</code> that is not an integer of at least one.</li>
 </ul>
@@ -2394,7 +2422,7 @@ Officialese cliches (per 100 words)       |   7.69
 <tbody>
 <tr>
 <td style="text-align: left;"><code>source</code></td>
-<td style="text-align: left;"><code>str</code> / <code>Doc</code></td>
+<td style="text-align: left;"><code>str</code> / <code>Doc</code> / <code>Document</code></td>
 <td style="text-align: left;">-</td>
 <td style="text-align: left;">Data source</td>
 </tr>
@@ -2402,7 +2430,7 @@ Officialese cliches (per 100 words)       |   7.69
 <td style="text-align: left;"><code>words_extractor</code></td>
 <td style="text-align: left;"><code>WordsExtractor</code></td>
 <td style="text-align: left;"><code>None</code></td>
-<td style="text-align: left;">Word extraction tool; used for a <code>Doc</code> too, on its text</td>
+<td style="text-align: left;">Word extraction tool, used on the text in place of the words of the document</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>stopwords</code></td>
@@ -2987,16 +3015,6 @@ Officialese cliches (per 100 words)       |   7.69
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><code>words_extractor_class</code></td>
-<td style="text-align: left;">class attribute</td>
-<td style="text-align: left;">Word extractor of a string and of the forms; <code>WordsExtractor</code> by default</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>join_hyphens</code></td>
-<td style="text-align: left;">class attribute</td>
-<td style="text-align: left;">Join the parts of the hyphenated words of a <code>Doc</code></td>
-</tr>
-<tr>
 <td style="text-align: left;"><code>compound_prepositions_list</code>, <code>parentheticals_list</code>, <code>cliches_list</code></td>
 <td style="text-align: left;">class attributes</td>
 <td style="text-align: left;">Compound prepositions, parenthetical expressions and cliches, checked as lists of strings when the class is defined; the parameter <code>cliches</code> replaces the last</td>
@@ -3007,9 +3025,9 @@ Officialese cliches (per 100 words)       |   7.69
 <td style="text-align: left;">Normalized form of a word or a phrase, by which the lists and the keywords are compared; the lower case by default</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>doc_words(doc)</code></td>
+<td style="text-align: left;"><code>doc_words(document)</code></td>
 <td style="text-align: left;">method</td>
-<td style="text-align: left;">Words of a <code>Doc</code>; the words of <code>iter_doc_words</code> in lower case by default</td>
+<td style="text-align: left;">Words of a document in lower case; those of <code>document_words</code> by default, overridden to normalize the forms of the words of a language</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>is_stopword(word)</code></td>
@@ -3050,6 +3068,11 @@ Officialese cliches (per 100 words)       |   7.69
 <td style="text-align: left;"><code>stats_desc</code>, <code>stats_headers</code></td>
 <td style="text-align: left;">class attributes</td>
 <td style="text-align: left;">Metrics of <code>get_stats</code> with their descriptions (<code>anyts.constants.STYLE_STATS_DESC</code> by default), headers of the columns for <code>print_stats</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>parse(source)</code></td>
+<td style="text-align: left;">method</td>
+<td style="text-align: left;">Document of the source, from <code>Stats</code></td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>messages</code></td>

@@ -539,6 +539,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../document/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Document model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../exceptions/" class="md-nav__link">
         
   
@@ -2203,7 +2231,7 @@
 </table>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>A regular expression as the tokenizer is a separator for <code>re.split</code>. A blank line - a line break, optional whitespace and another line break - ends a sentence of any tokenizer: the text is split at blank lines first and every part goes to the tokenizer, so a heading or a paragraph without a final mark is a sentence of its own, and so is a part without words, such as a line of asterisks, which the statistics leave out. The sentences are stripped of whitespace at the edges before the length bounds, and empty ones are dropped.</p>
+<p>A regular expression as the tokenizer is a separator for <code>re.split</code>. A blank line (<code>BLANK_LINE</code>) ends a sentence of any tokenizer: the text is split at blank lines first and every part goes to the tokenizer, so a heading or a paragraph without a final mark is a sentence of its own, and so is a part without words, such as a line of asterisks, which the statistics leave out. The sentences are stripped of whitespace, control characters and invisible separators (the soft hyphen, zero-width characters, the byte order mark) at the edges before the length bounds, and empty ones are dropped.</p>
 </div>
 <!-- --8<-- [end:SentsExtractor-parameters] -->
 
@@ -2311,7 +2339,7 @@
 <!-- --8<-- [start:split_paragraphs] -->
 <div class="signature highlight"><pre><span></span><code><span class="n">split_paragraphs</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
 </code></pre></div>
-<p>The paragraphs of a text: its parts between blank lines, stripped of whitespace at their edges; a part of whitespace alone is none. A blank line (<code>BLANK_LINE</code>) is two line breaks - <code>\n</code>, <code>\r\n</code>, <code>\r</code>, U+0085 or U+2028 - with whitespace alone between them, the zero-width space and the byte order mark counting as whitespace there, or a paragraph separator U+2029; it also ends the sentences of <code>SentsExtractor</code> and the paragraphs of <code>CohesionStats</code> with <code>blank_lines</code>. Their words give the sizes of the parts of <code>dispersion</code> by paragraph; a paragraph without words, such as a scene break of asterisks, is still one. A text that is not a string raises <code>SourceTypeError</code>.</p>
+<p>The paragraphs of a text: its parts between blank lines, stripped of whitespace, control characters and invisible separators (the soft hyphen, zero-width characters, the byte order mark) at their edges; a part of nothing else is none. A blank line (<code>BLANK_LINE</code>) is two line breaks - <code>\n</code>, <code>\r\n</code>, <code>\r</code>, the vertical tab, the form feed, U+0085 or U+2028 - with nothing but such characters between them, or a paragraph separator U+2029: a paragraph break of anySeg, so these are the paragraphs of a <a href="https://sergeyshk.github.io/anyTS/document/">document</a> too; it also ends the sentences of <code>SentsExtractor</code> and the paragraphs of <code>CohesionStats</code> with <code>blank_lines</code>. Their words give the sizes of the parts of <code>dispersion</code> by paragraph; a paragraph without words, such as a scene break of asterisks, is still one. A text that is not a string raises <code>SourceTypeError</code>.</p>
 <table>
 <thead>
 <tr>
