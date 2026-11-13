@@ -16,6 +16,7 @@ from .constants import (
     PUNCTUATION_TYPES,
     SPACES,
 )
+from .document import _source_text, document_words
 from .exceptions import ParameterError, SourceError, SourceTypeError
 from .extractors import SentsExtractor, WordsExtractor
 from .stats import Stats
@@ -24,16 +25,13 @@ from .utils import (
     check_integer,
     check_words,
     count_letters,
-    has_sents,
     has_words,
-    is_doc,
-    iter_doc_words,
     shannon_entropy,
-    source_type_error,
 )
 
 if TYPE_CHECKING:
-    from spacy.tokens import Doc, Span
+    from anyseg import Document
+    from spacy.tokens import Doc
 
 _NORMALIZED_STATS = (
     "p_unique_words",
@@ -144,15 +142,13 @@ class BasicStats(Stats, metaclass=ABCMeta):
         Counts of the sentences, words, characters, syllables and punctuation
         marks of a text. A language library implements count_syllables and
         may override count_punctuations and the class attributes
-        The words and the sentences of a string come from the extractors. A Doc
-        gives its tokens as words and its boundaries as sentences, or those of
-        the sentence extractor when it has none or only partial ones
-        (has_sents); an extractor given is used on its text instead. A sentence
-        counts when it holds a word
+        The words and the sentences come from the document of parse: its words
+        (doc_words) and its sentences; an extractor given is used on the text
+        instead. A sentence counts when it holds a word
         The other methods come from Stats
 
     Arguments:
-        source (str|Doc): Data source (a string or a Doc object)
+        source (str|Doc|Document): Data source (a string, a Doc or a Document object)
         sents_extractor (SentsExtractor): Sentence extraction tool
         words_extractor (WordsExtractor): Word extraction tool
         normalize (bool): Compute the normalized statistics
@@ -192,6 +188,7 @@ class BasicStats(Stats, metaclass=ABCMeta):
         p_punctuations (float): Normalized number of punctuation marks
 
     Methods:
+        doc_words: Words of a document
         count_syllables: Counting the syllables of a word
         count_punctuations: Counting the punctuation marks of a text by type
         count_words_by_syllables: Number of words with at least the given number of syllables
@@ -199,27 +196,21 @@ class BasicStats(Stats, metaclass=ABCMeta):
         stat_names: Names of the statistics of get_stats
 
     Class attributes:
-        sents_extractor_class (type[SentsExtractor]): Sentence extractor used when none is given
-        words_extractor_class (type[WordsExtractor]): Word extractor used when none is given
-        join_hyphens (bool): Join the parts of the hyphenated words of a Doc
         stats_desc (dict[str, str]): Counts of get_stats and their descriptions for print_stats
 
     Raises:
-        SourceTypeError: If the source is neither a string nor a Doc object, or an extractor
-            is of another type
+        SourceTypeError: If the source is neither a string, a Doc nor a Document object,
+            parse does not return a Document, or an extractor is of another type
         SourceError: If the source has no words
         ParameterError: If a factor is not an integer or is below one, or normalize is
             not a bool
     """
 
-    sents_extractor_class: ClassVar[type[SentsExtractor]] = SentsExtractor
-    words_extractor_class: ClassVar[type[WordsExtractor]] = WordsExtractor
-    join_hyphens: ClassVar[bool] = False
     stats_desc: ClassVar[Mapping[str, str]] = BASIC_STATS_DESC
 
     def __init__(
         self,
-        source: str | Doc,
+        source: str | Doc | Document,
         sents_extractor: SentsExtractor | None = None,
         words_extractor: WordsExtractor | None = None,
         normalize: bool = False,
@@ -239,25 +230,23 @@ class BasicStats(Stats, metaclass=ABCMeta):
             "minimum number of letters in a long word",
             messages["long_word_letter_factor"],
         )
-        sents: Iterable[Span] | Iterable[str]
-        if is_doc(source):
-            text = source.text
-            if sents_extractor is not None:
-                sents = sents_extractor.extract(text)
-            elif has_sents(source):
-                sents = source.sents
-            else:
-                sents = self.sents_extractor_class().extract(text)
-            if words_extractor is not None:
-                words = words_extractor.extract(text)
-            else:
-                words = tuple(word for _, _, word in iter_doc_words(source, self.join_hyphens))
-        elif isinstance(source, str):
-            text = source
-            sents = (sents_extractor or self.sents_extractor_class()).extract(text)
-            words = (words_extractor or self.words_extractor_class()).extract(text)
+        sents: Iterable[str]
+        if sents_extractor is not None and words_extractor is not None:
+            text = _source_text(source, messages)
+            sents, words = sents_extractor.extract(text), words_extractor.extract(text)
         else:
-            raise source_type_error(messages, source)
+            document = self._document(source)
+            text = document.text
+            sents = (
+                sents_extractor.extract(text)
+                if sents_extractor is not None
+                else [sentence.text for sentence in document.sentences]
+            )
+            words = (
+                words_extractor.extract(text)
+                if words_extractor is not None
+                else self.doc_words(document)
+            )
         if not words:
             raise SourceError(messages["no_words"])
 
@@ -306,6 +295,22 @@ class BasicStats(Stats, metaclass=ABCMeta):
     @property
     def syllables_entropy(self) -> float:
         return shannon_entropy(self.c_syllables)
+
+    def doc_words(self, document: Document) -> tuple[str, ...]:
+        """
+        Getting the words of a document
+
+        Description:
+            document_words by default; a language library overrides it to
+            normalize the forms of its words
+
+        Arguments:
+            document (Document): Document of anySeg
+
+        Returns:
+            tuple[str]: Words
+        """
+        return document_words(document)
 
     @abstractmethod
     def count_syllables(self, word: str) -> int:

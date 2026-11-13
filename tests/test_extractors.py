@@ -13,6 +13,7 @@ import spacy
 from anyts import CharNgramsExtractor, SentsExtractor, WordsExtractor
 from anyts.exceptions import ParameterError, SourceTypeError
 from anyts.extractors import (
+    BLANK_LINE,
     NUMBER_PATTERN,
     Extractor,
     FixedSentsExtractor,
@@ -599,10 +600,24 @@ def test_split_paragraphs():
     assert split_paragraphs("One\n \nTwo") == ["One", "Two"]
     assert split_paragraphs("One\r\n\t\r\nTwo") == ["One", "Two"]
     # The other line breaks of Unicode, a paragraph separator, invisible characters on a blank line
-    for gap in ("\r\r", "\u2029", "\u2028\u2028", "\x85\x85", "\n\u200b\n", "\n\ufeff\n"):
+    # as anySeg has them: the vertical tab and the form feed break a line, the separators of
+    # anySeg (soft hyphen, joiners, control characters) leave a line blank
+    for gap in (
+        *("\r\r", "\u2029", "\u2028\u2028", "\x85\x85", "\n\u200b\n", "\n\ufeff\n"),
+        *("\n\x0c", "\x0b\x0b", "\n\u00ad\n", "\n\u2060\u200d\x01\n", "\x0c\x0c"),
+    ):
         assert split_paragraphs(f"One{gap}Two") == ["One", "Two"], repr(gap)
-    for gap in ("\r\n", "\r", "\u2028", "\x85"):
+    for gap in ("\r\n", "\r", "\u2028", "\x85", "\x0c", "\x0b"):
         assert split_paragraphs(f"One{gap}Two") == [f"One{gap}Two"], repr(gap)
+    # One match takes a run of blank lines, a line of separators alone among them
+    text = "First paragraph.\n\n\u200b\n\n\ufeff\n\u2029Second paragraph."
+    assert [match.group() for match in BLANK_LINE.finditer(text)] == [
+        "\n\n\u200b\n\n\ufeff\n\u2029"
+    ]
+    assert SentsExtractor().extract(text) == ("First paragraph.", "Second paragraph.")
+    assert SentsExtractor().extract("\ufeffOne.\n\n\u00ad\u2060Two\u200b") == ("One.", "Two")
+    # A paragraph is stripped of the separators at its edges and is none without anything else
+    assert split_paragraphs("\ufeffOne\u200b\n\n\u00ad\u2060") == ["One"]
     assert SentsExtractor().extract("Notes\u2029It rains") == ("Notes", "It rains")
     with pytest.raises(SourceTypeError, match=r"^A text string is expected, not int$"):
         split_paragraphs(5)

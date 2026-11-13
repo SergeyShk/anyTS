@@ -90,6 +90,7 @@ A class of statistics subclasses `Stats`:
 
 | Hook | Kind | Description |
 | :--- | :--- | :---------- |
+| `parse(source)` | method | Document of anySeg of a string, a `Doc` or a `Document` ([`to_document`](https://sergeyshk.github.io/anyTS/document/#to_document) by default); a library overrides it to segment and annotate a string in its language. The classes that read a text take their words and sentences from it |
 | `stats_desc` | class attribute | Statistics of the class with their descriptions; each is an attribute or a property of the object |
 | `stat_names()` | method | Names of the statistics of `get_stats`; the keys of `stats_desc` by default |
 | `stats_headers` | class attribute | Headers of the columns for `print_stats`; `("Statistic", "Value")` by default |

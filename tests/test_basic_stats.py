@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import pytest
 import spacy
+from anyseg import Document
 
 from anyts import SentsExtractor, WordsExtractor
 from anyts.basic_stats import (
@@ -19,6 +20,7 @@ from anyts.basic_stats import (
 )
 from anyts.components import start_sents_after_blank_lines
 from anyts.constants import BASIC_STATS_DESC, PUNCTUATION_TYPES, SPACES
+from anyts.document import to_document
 from anyts.exceptions import ParameterError, SourceError, SourceTypeError, UnknownStatError
 
 VOWELS = re.compile(r"[aeiouy]+", re.IGNORECASE)
@@ -177,27 +179,49 @@ def test_custom_extractors():
     assert (bs.n_sents, bs.n_words) == (2, 4)
 
 
-def test_extractor_classes_and_hyphens():
-    class Parts(SentsExtractor):
-        def sentenize(self, text):
-            return text.split(";")
+def semicolons(text):
+    """Sentences of a text at its semicolons"""
+    return [
+        (m.start(), m.end(), m.group()) for m in re.finditer(r"[^;]+", text) if m.group().strip()
+    ]
 
-    class Words(WordsExtractor):
-        def __init__(self):
-            super().__init__(stopwords=["one"])
 
-    class Joined(Stats):
-        sents_extractor_class = Parts
-        words_extractor_class = Words
-        join_hyphens = True
+class Hooked(Stats):
+    """A library that segments a string in parse and drops a word in doc_words"""
 
-    assert (Joined("one two; three").n_sents, Joined("one two; three").n_words) == (2, 2)
+    def parse(self, source):
+        return to_document(source, sentenize=semicolons)
+
+    def doc_words(self, document):
+        return tuple(word for word in super().doc_words(document) if word != "one")
+
+
+def test_parse_and_doc_words():
+    assert (Hooked("one two; three").n_sents, Hooked("one two; three").n_words) == (2, 2)
     assert (Stats("one two; three").n_sents, Stats("one two; three").n_words) == (1, 3)
-    # A Doc without sentence boundaries takes its sentences from the class, its words from tokens
+    # A Doc without sentence starts gets those of parse, its words come from doc_words
     blank = spacy.blank("xx")("one two; three")
-    assert (Joined(blank).n_sents, Joined(blank).n_words) == (2, 3)
-    doc = spacy.blank("xx")("A well-known cat.")
-    assert (Stats(doc).n_words, Joined(doc).n_words) == (4, 3)
+    assert (Hooked(blank).n_sents, Hooked(blank).n_words) == (2, 2)
+    # The tokens of the document decide the words: a hyphenated token is one word
+    document = Document.from_tokens("A well-known cat.", [0, 2, 13, 16], [1, 12, 16, 17])
+    assert Stats(document).n_words == 3
+    assert Stats("A well-known cat.").n_words == 4
+
+
+def test_document_source(bs):
+    assert Stats(to_document(TEXT), normalize=True).get_stats() == bs.get_stats()
+
+
+def test_parse_must_return_a_document():
+    class Broken(Stats):
+        def parse(self, source):
+            return source
+
+    with pytest.raises(SourceTypeError, match="parse of Broken must return a Document, not str"):
+        Broken(TEXT)
+    # Both extractors given: the text alone is read, without parse
+    stats = Broken(TEXT, sents_extractor=SentsExtractor(), words_extractor=WordsExtractor())
+    assert stats.n_words == Stats(TEXT).n_words
 
 
 def test_doc_without_sentence_boundaries(bs):

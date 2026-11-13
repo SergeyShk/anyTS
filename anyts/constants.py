@@ -230,6 +230,7 @@ MESSAGES: Mapping[str, str] = MappingProxyType(
         "source_type": "The data source cannot be of type {type}",
         "source_span": "The data source cannot be a Span: pass span.as_doc()",
         "no_words": "The data source has no words",
+        "document_tokens": "The tokens of the data source cannot make a document: {error}",
         "no_sentences": "The data source has no sentences",
         "sents_extractor_type": "The sentence extractor must be a SentsExtractor",
         "words_extractor_type": "The word extractor must be a WordsExtractor",
@@ -318,6 +319,7 @@ MESSAGES: Mapping[str, str] = MappingProxyType(
         "tokenizer_iterable": "The tokenizer must return an iterable object",
         "tokenizer_strings": "The tokenizer must return strings, not {type}",
         "hook_doc": "The {hook} of {cls} must return a Doc, not {type}",
+        "hook_document": "The {hook} of {cls} must return a Document, not {type}",
         "hook_lexical_words": "The {hook} of {cls} must return LexicalWord objects, not {type}",
         "hook_cohesion_words": (
             "The {hook} of {cls} must return sentences of CohesionWord objects, not {type}"

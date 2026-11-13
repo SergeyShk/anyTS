@@ -5,13 +5,13 @@ ReadabilityStats(source, sents_extractor=None, words_extractor=None, preset='ori
 ```
 
 <!-- --8<-- [start:ReadabilityStats] -->
-The [readability](https://en.wikipedia.org/wiki/Readability) metrics of a text from its basic statistics: the mean sentence length in words, the mean word length in syllables or letters, the share of polysyllabic and of long words and the variability of word length. The data source is a text, a `Doc` object of [spaCy](https://github.com/explosion/spaCy) or ready basic statistics, which are reused as they are; the extractors are passed on to the basic statistics of a text or a `Doc`. The formulas count only the letters of the counted words, so a word extractor that drops words does not lengthen the mean word.
+The [readability](https://en.wikipedia.org/wiki/Readability) metrics of a text from its basic statistics: the mean sentence length in words, the mean word length in syllables or letters, the share of polysyllabic and of long words and the variability of word length. The data source is a text, a `Doc` object of [spaCy](https://github.com/explosion/spaCy), a `Document` of [anySeg](https://github.com/SergeyShk/anySeg) or ready basic statistics, which are reused as they are; the extractors are passed on to the basic statistics of the other sources. The formulas count only the letters of the counted words, so a word extractor that drops words does not lengthen the mean word.
 
 The metrics are properties computed on each access, so a change of the `coefficients` of an object applies at once.
 
 Raises:
 
-- `SourceTypeError` - a source that is neither a string, a `Doc` nor basic statistics, basic statistics of a class other than those of the library, an extractor of another type, a string or a `Doc` to a class without `basic_stats_class`;
+- `SourceTypeError` - a source that is neither a string, a `Doc`, a `Document` nor basic statistics, basic statistics of a class other than those of the library, an extractor of another type, a source other than basic statistics to a class without `basic_stats_class`;
 - `SourceError` - a source without words or sentences;
 - `ParameterError` - an unknown preset or one that is not a string.
 <!-- --8<-- [end:ReadabilityStats] -->
@@ -62,7 +62,7 @@ A subclass with the basic statistics of a language - here the syllables are the 
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
-| `source` | `str` / `Doc` / `BasicStats` | - | Data source (a string, a Doc object or ready basic statistics) |
+| `source` | `str` / `Doc` / `Document` / `BasicStats` | - | Data source (a string, a Doc or a Document object, or ready basic statistics) |
 | `sents_extractor` | `SentsExtractor` | `None` | Sentence extraction tool |
 | `words_extractor` | `WordsExtractor` | `None` | Word extraction tool |
 | `preset` | `str` | `'original'` | Coefficient preset |
@@ -591,7 +591,7 @@ A language library subclasses `ReadabilityStats`:
 
 | Hook | Kind | Description |
 | :--- | :--- | :---------- |
-| `basic_stats_class` | class attribute | Its subclass of `BasicStats` for a string or a `Doc`; without it the source must be a `BasicStats` object |
+| `basic_stats_class` | class attribute | Its subclass of `BasicStats` for a string, a `Doc` or a `Document`; without it the source must be a `BasicStats` object |
 | `presets` | class attribute | Coefficients of the formulas by preset; a formula missing from a preset takes the defaults of its function |
 | `grade_stats` | class attribute | Grade formulas of the consensus grade; `anyts.constants.READABILITY_GRADE_STATS` by default |
 | `stats_desc`, `stats_headers` | class attributes | Metrics of `get_stats` with their descriptions (`READABILITY_STATS_DESC` by default), headers of the columns for `print_stats` |

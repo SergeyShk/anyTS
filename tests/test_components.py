@@ -318,6 +318,13 @@ def test_blank_lines_keep_the_opening_marks_with_the_first_word(nlp):
     ]
 
 
+def test_blank_lines_line_breaks_after_an_opening_mark(nlp):
+    """A form feed, as any line break, ends the space that keeps an opening mark with its word"""
+    for gap in ("\n", "\x0c"):
+        doc = start_sents_after_blank_lines(nlp(f"Notes\n\n\u2014 {gap} The cat sleeps."))
+        assert next(token for token in doc if token.text == "The").is_sent_start is None, repr(gap)
+
+
 def test_blank_lines_of_a_parsed_document(nlp):
     """A parsed document, passed through the pipeline again, keeps its sentences"""
     doc = Doc(nlp.vocab, words=["One", "two"], heads=[1, 1], deps=["dep", "ROOT"])

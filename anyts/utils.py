@@ -20,6 +20,7 @@ from .constants import MESSAGES
 from .exceptions import ParameterError, SourceError, SourceTypeError
 
 if TYPE_CHECKING:
+    from anyseg import Document
     from spacy.language import Language
     from spacy.tokens import Doc, Span, Token
     from thinc.types import Ints2d
@@ -33,13 +34,29 @@ _PUNCTUATION_CATEGORIES = frozenset(
 
 # A signed number with separators and an optional percent sign: -5, 1990-1995, 1,500.50, 10%
 NUMBER_PATTERN = re.compile(r"[+\-−]?\d+(?:[.,:/-]\d+)*%?")
-# A blank line: two line breaks with whitespace alone between them, the zero-width space
-# and the byte order mark counting as whitespace there, or a paragraph separator
-BLANK_LINE = re.compile(
-    r"(?>\r\n|[\n\r\x85\u2028])[\s\u200b\ufeff]*(?:\r\n|[\n\r\x85\u2028])|\u2029"
-)
+# A line break of Unicode, the vertical tab and the form feed among them, as in anySeg
+_BREAK = r"\r\n|[\n\r\x0b\x0c\x85\u2028]"
+# What a blank line may hold besides its breaks: whitespace, control characters and the
+# invisible separators of anySeg (the soft hyphen, zero-width characters, the byte order mark)
+_BLANK = r"[^\S\n\r\x0b\x0c\x85\u2028\u2029]|[\x00-\x08\x0e-\x1f\x7f-\x84\x86-\x9f\u00ad\u200b-\u200d\u2060\ufeff]"
+# Blank lines: a line break and the breaks after it with nothing but blank characters
+# between them, or a paragraph separator - a paragraph break of anySeg
+BLANK_LINE = re.compile(rf"(?>{_BREAK}|\u2029)(?:(?:{_BLANK})*(?>{_BREAK}|\u2029))+|\u2029")
 # A line break of Unicode, the paragraph separator among them
-LINE_BREAK = re.compile(r"\r\n|[\n\r\x85\u2028\u2029]")
+LINE_BREAK = re.compile(rf"{_BREAK}|\u2029")
+
+
+@lru_cache(maxsize=1)
+def _separators() -> str:
+    """Characters between the tokens of anySeg: whitespace, control and invisible characters"""
+    return (
+        "".join(
+            char
+            for char in map(chr, range(0x3001))
+            if char.isspace() or unicodedata.category(char) == "Cc"
+        )
+        + "\u00ad\u200b\u200c\u200d\u2060\ufeff"
+    )
 
 
 @lru_cache(maxsize=1 << 16)
@@ -467,6 +484,31 @@ def is_language(value: object) -> TypeGuard[Language]:
     """
     language = getattr(sys.modules.get("spacy.language"), "Language", None)
     return language is not None and isinstance(value, language)
+
+
+def is_document(value: object) -> TypeGuard[Document]:
+    """
+    Checking whether a value is a Document object of anySeg
+
+    Description:
+        The check does not import anySeg, as is_doc: a Document exists only
+        once anySeg is loaded, so before that every value gives False
+
+    Arguments:
+        value (object): Value to check
+
+    Returns:
+        bool: Result of the check
+
+    Example:
+        >>> from anyseg import Document
+        >>> from anyts.utils import is_document
+        >>> document = Document.from_tokens("The cat", [0, 4], [3, 7])
+        >>> is_document(document), is_document("The cat")
+        (True, False)
+    """
+    document = getattr(sys.modules.get("anyseg"), "Document", None)
+    return document is not None and isinstance(value, document)
 
 
 def has_sents(doc: Doc) -> bool:

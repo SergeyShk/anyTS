@@ -12,6 +12,7 @@
 
 ## Features
 
+* **[Document model](https://sergeyshk.github.io/anyTS/document/)** - a string, a spaCy `Doc` and a `Document` of [anySeg](https://github.com/SergeyShk/anySeg) give one document of tokens, words, sentences and paragraphs, which the statistics read; a language library segments and annotates a string in its language
 * **[Extraction](https://sergeyshk.github.io/anyTS/extractors/sentences/)** - sentence, word and character N-gram extractors whose tokenizer, lemmatizer and number pattern are hooks a language library overrides
 * **[Statistics interface](https://sergeyshk.github.io/anyTS/stats/stats/)** - the base of every class of statistics: a dictionary of the statistics, nested or flat, a pandas frame, a printed table and the reading of a statistic by its scale
 * **[Basic statistics](https://sergeyshk.github.io/anyTS/stats/basic_stats/)** - sentences, words, syllables, letters, long and complex words, punctuation marks by type, with the syllables of a language library
@@ -46,7 +47,7 @@ Or with [uv](https://docs.astral.sh/uv/):
 uv add anyts
 ```
 
-The dependencies are numpy, pandas, scipy, spaCy, matplotlib and graphviz; no trained spaCy model is needed. Rendering the word tree and the network of collocations also needs the executables of [Graphviz](https://graphviz.org/download/).
+The dependencies are anySeg, numpy, pandas, scipy, spaCy, matplotlib and graphviz; no trained spaCy model is needed. Rendering the word tree and the network of collocations also needs the executables of [Graphviz](https://graphviz.org/download/).
 
 ## Quick start
 

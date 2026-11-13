@@ -5,13 +5,13 @@ BasicStats(source, sents_extractor=None, words_extractor=None, normalize=False, 
 ```
 
 <!-- --8<-- [start:BasicStats] -->
-The basic statistics of a text: the counts of its sentences, words, characters, syllables and punctuation marks and the distributions of its words. The data source is a text or a `Doc` object of [spaCy](https://github.com/explosion/spaCy). Letters are counted by `str.isalpha`, so digits, hyphens and marks inside a word are not letters.
+The basic statistics of a text: the counts of its sentences, words, characters, syllables and punctuation marks and the distributions of its words. The data source is a text, a `Doc` object of [spaCy](https://github.com/explosion/spaCy) or a `Document` of [anySeg](https://github.com/SergeyShk/anySeg). Letters are counted by `str.isalpha`, so digits, hyphens and marks inside a word are not letters.
 
-The words and the sentences of a string come from the extractors. A `Doc` gives its tokens as words, without punctuation marks and symbols such as `€` or `%`, and its boundaries as sentences, or those of the sentence extractor when it has none or only partial ones (`has_sents`); an extractor given is used on its text instead. A blank line ends a sentence of a string and of a `Doc` without boundaries; a `Doc` with boundaries does so when its pipeline has `start_sents_after_blank_lines` (registered by a language library under its own name) before the parser, `senter` or `sentencizer`. A sentence without words, such as punctuation alone, is not counted.
+The words and the sentences come from the [document](https://sergeyshk.github.io/anyTS/document/) of the source (`parse`): its tokens without punctuation marks and symbols such as `€` or `%` (`doc_words`) and its sentences; an extractor given is used on the text instead. A `Doc` keeps its sentence starts, and one with none or only partial ones (`has_sents`) gets those of `parse`. A blank line ends a sentence of every source, since it ends a paragraph of the document. A sentence without words, such as punctuation alone, is not counted.
 
 Raises:
 
-- `SourceTypeError` - a source that is neither a string nor a `Doc`, an extractor of another type;
+- `SourceTypeError` - a source that is neither a string, a `Doc` nor a `Document`, a `parse` that returns no `Document`, an extractor of another type;
 - `SourceError` - a source without words;
 - `ParameterError` - a threshold that is not an integer of at least one, a `normalize` that is not a `bool`.
 <!-- --8<-- [end:BasicStats] -->
@@ -62,9 +62,9 @@ A subclass with the syllables of a language - here the groups of vowels, a rough
 <!-- --8<-- [start:BasicStats-parameters] -->
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
-| `source` | `str` / `Doc` | - | Data source (a string or a Doc object) |
-| `sents_extractor` | `SentsExtractor` | `None` | Sentence extraction tool; used for a Doc too, on its text |
-| `words_extractor` | `WordsExtractor` | `None` | Word extraction tool; used for a Doc too, on its text |
+| `source` | `str` / `Doc` / `Document` | - | Data source |
+| `sents_extractor` | `SentsExtractor` | `None` | Sentence extraction tool, used on the text in place of the sentences of the document |
+| `words_extractor` | `WordsExtractor` | `None` | Word extraction tool, used on the text in place of the words of the document |
 | `normalize` | `bool` | `False` | Compute normalized statistics |
 | `complex_syl_factor` | `int` | `COMPLEX_SYL_FACTOR` | Minimum number of syllables in a complex word |
 | `long_word_letter_factor` | `int` | `LONG_WORD_LETTER_FACTOR` | Minimum number of letters in a long word |
@@ -210,12 +210,11 @@ A language library subclasses `BasicStats`:
 | Hook | Kind | Description |
 | :--- | :--- | :---------- |
 | `count_syllables(word)` | method | The syllables of a word; abstract |
-| `sents_extractor_class`, `words_extractor_class` | class attributes | The extractors used when none is given; `SentsExtractor` and `WordsExtractor` by default |
-| `join_hyphens` | class attribute | Join the parts of the hyphenated words of a `Doc` (`iter_doc_words`); `False` by default |
+| `doc_words(document)` | method | The words of a document; `document_words` by default, overridden to normalize the forms of the words of a language |
 | `count_punctuations(text)` | method | The punctuation marks by type; `count_punctuations` of the module by default |
 | `stats_desc` | class attribute | The counts of `get_stats` with their descriptions for `print_stats`; `anyts.constants.BASIC_STATS_DESC` by default |
 
-The other hooks, `stats_headers`, `level_scales` and `messages`, come from `Stats`. The thresholds of the complex and the long words are parameters; a library sets its own defaults in its `__init__` and passes them on.
+The other hooks, `parse`, `stats_headers`, `level_scales` and `messages`, come from `Stats`. The thresholds of the complex and the long words are parameters; a library sets its own defaults in its `__init__` and passes them on.
 <!-- --8<-- [end:BasicStats-hooks] -->
 
 </details>

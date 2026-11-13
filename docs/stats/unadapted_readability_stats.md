@@ -5,11 +5,11 @@ UnadaptedReadabilityStats(source, sents_extractor=None, words_extractor=None)
 ```
 
 <!-- --8<-- [start:UnadaptedReadabilityStats] -->
-Readability formulas made for English, German or Italian, computed from the basic statistics of a text with the coefficients they were published with (Linsear Write in the form of textstat), without a calibration for its language. Their values compare texts of one language with each other; they are no grade levels of another language. A word without syllables (a number, a preposition of one consonant) counts as monosyllabic in FORCAST and the Wiener Sachtextformeln and as easy in Linsear Write, as in textstat. The data source is a text, a `Doc` object of [spaCy](https://github.com/explosion/spaCy) or a ready `BasicStats` object, as for `ReadabilityStats`.
+Readability formulas made for English, German or Italian, computed from the basic statistics of a text with the coefficients they were published with (Linsear Write in the form of textstat), without a calibration for its language. Their values compare texts of one language with each other; they are no grade levels of another language. A word without syllables (a number, a preposition of one consonant) counts as monosyllabic in FORCAST and the Wiener Sachtextformeln and as easy in Linsear Write, as in textstat. The data source is a text, a `Doc` object of [spaCy](https://github.com/explosion/spaCy), a `Document` of [anySeg](https://github.com/SergeyShk/anySeg) or a ready `BasicStats` object, as for `ReadabilityStats`.
 
 Raises:
 
-- `SourceTypeError` - a source that is neither a string, a `Doc` nor a `BasicStats` object, basic statistics of another class, an extractor of another type, a string or a `Doc` for a class without `basic_stats_class`;
+- `SourceTypeError` - a source that is neither a string, a `Doc`, a `Document` nor a `BasicStats` object, basic statistics of another class, an extractor of another type, a source other than basic statistics for a class without `basic_stats_class`;
 - `SourceError` - a source without words or without sentences.
 <!-- --8<-- [end:UnadaptedReadabilityStats] -->
 
@@ -63,7 +63,7 @@ Raises:
 <!-- --8<-- [start:UnadaptedReadabilityStats-parameters] -->
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
-| `source` | `str` / `Doc` / `BasicStats` | - | Data source |
+| `source` | `str` / `Doc` / `Document` / `BasicStats` | - | Data source (a string, a Doc or a Document object, or ready basic statistics) |
 | `sents_extractor` | `SentsExtractor` | `None` | Sentence extraction tool, not used for ready basic statistics |
 | `words_extractor` | `WordsExtractor` | `None` | Word extraction tool, not used for ready basic statistics |
 <!-- --8<-- [end:UnadaptedReadabilityStats-parameters] -->
@@ -429,7 +429,7 @@ A language library subclasses `UnadaptedReadabilityStats`:
 
 | Hook | Kind | Description |
 | :--- | :--- | :---------- |
-| `basic_stats_class` | class attribute | Basic statistics of a string or a `Doc`, the class with the syllables of the language; without it the source must be a `BasicStats` object |
+| `basic_stats_class` | class attribute | Basic statistics of a string, a `Doc` or a `Document`, the class with the syllables of the language; without it the source must be a `BasicStats` object |
 | `complex_syl_factor`, `long_word_letter_factor`, `mini_word_letters` | class attributes | Least syllables of a hard word (3), least letters of a long word (7), most letters of a mini word of EFLAW (`EFLAW_MINI_WORD_LETTERS`, 3) |
 | `stats_desc`, `stats_headers` | class attributes | Metrics of `get_stats` with their descriptions (`UNADAPTED_READABILITY_STATS_DESC` by default), headers of the columns for `print_stats` |
 | `messages` | class attribute | Messages of the errors by key; `MESSAGES` by default |

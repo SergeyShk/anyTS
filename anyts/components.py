@@ -41,7 +41,7 @@ _EXTENSIONS: set[str] = set()
 Stats = TypeVar("Stats")
 
 # The characters that end a line in BLANK_LINE, the paragraph separator among them
-_LINE_BREAKS = frozenset("\n\r\x85\u2028\u2029")
+_LINE_BREAKS = frozenset("\n\r\x0b\x0c\x85\u2028\u2029")
 
 
 class StatsComponent:
