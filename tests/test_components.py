@@ -185,7 +185,6 @@ def test_stats_class_or_compute_is_required(nlp):
     # An abstract class of statistics is none either, and diversity has no default
     for component in (
         BasicStatsComponent,
-        LexicalStatsComponent,
         PhonStatsComponent,
         DiversityStatsComponent,
     ):
@@ -417,6 +416,45 @@ def test_syntax_and_cohesion_components_on_their_core_classes(nlp):
     assert doc._.anyts_test_syntax.n_sents == 2
     assert doc._.anyts_test_cohesion.noun_overlap_adjacent == 1.0
     assert doc._.anyts_test_morph.pos == ("NOUN", "VERB", "NOUN", "VERB")
+
+
+def test_documents_without_words(nlp):
+    """A document whose tokens hold no letter or digit gets no statistics, as the class has no words"""
+    doc = Doc(nlp.vocab, words=["\uf0b7", "\x07"], pos=["X", "X"])
+    MorphStatsComponent(nlp, "anyts_test_morph")(doc)
+    assert doc._.anyts_test_morph is None
+
+
+def test_lexical_component_of_the_core(nlp):
+    class Frequencies:
+        min_ipm = 0.5
+
+        def lookup(self, lemma):
+            return None
+
+        def ipm(self, lemma):
+            return self.min_ipm
+
+    class Lexical(LexicalStatsComponent):
+        freq_dict = Frequencies()
+
+    doc = Doc(
+        nlp.vocab,
+        words=["Cats", "sleep", "2"],
+        pos=["NOUN", "VERB", "NUM"],
+        lemmas=["cat", "sleep", "2"],
+    )
+    Lexical(nlp, "anyts_test_lexical")(doc)
+    assert doc._.anyts_test_lexical.lemmas == ("cat", "sleep")
+    lexical = Lexical(nlp, "anyts_test_lexical")
+    assert lexical.accepts(Doc(nlp.vocab, words=["\uf0b7", "2"])) is False
+    # A number keeps no invisible separator at its edges, as in the document
+    numbers = Doc(nlp.vocab, words=["2020\u200b", "\u00ad100", "2020\u2060"])
+    assert lexical.accepts(numbers) is False
+    with pytest.raises(
+        ParameterError, match=r"^LexicalStats has no frequency dictionary of its own"
+    ):
+        LexicalStatsComponent(nlp, "anyts_test_bare")
 
 
 def test_cohesion_component_with_blank_lines(nlp):

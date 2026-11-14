@@ -1,18 +1,18 @@
 from __future__ import annotations
 
-from abc import ABCMeta, abstractmethod
 from collections.abc import Iterable, Mapping, Sequence
 from functools import cached_property
 from math import log2, log10, nan
 from numbers import Integral
 from typing import TYPE_CHECKING, Any, ClassVar, NamedTuple, Protocol
 
-from .constants import FREQUENCY_BANDS, LEXICAL_STATS_DESC
+from .constants import CONTENT_UD_POS, FREQUENCY_BANDS, LEXICAL_STATS_DESC
 from .exceptions import ParameterError, SourceError, SourceTypeError
 from .stats import Stats
-from .utils import check_words, safe_divide, safe_mean
+from .utils import check_words, has_words, is_number, safe_divide, safe_mean
 
 if TYPE_CHECKING:
+    from anyseg import Document
     from spacy.tokens import Doc
 
 
@@ -55,7 +55,7 @@ class LexicalWord(NamedTuple):
     content: bool
 
 
-class LexicalStats(Stats, metaclass=ABCMeta):
+class LexicalStats(Stats):
     """
     Base of the lexical sophistication statistics of a text
 
@@ -63,14 +63,15 @@ class LexicalStats(Stats, metaclass=ABCMeta):
         Lexical sophistication in the manner of TAALES - how rare the words of a
         text are: statistics by a frequency dictionary and its unigram model,
         the shares of the frequency bands of a list of the most frequent lemmas
-        and the lexical density. A language library subclasses the class,
-        implements analyze and sets the dictionary, the keys of the words and
-        the ranks of the lemmas. The statistics by the dictionary are computed
+        and the lexical density. A language library subclasses the class and
+        sets the dictionary, the keys of the words and the ranks of the lemmas;
+        the words, their lemmas and the content words are those of the document
+        of parse by default (analyze). The statistics by the dictionary are computed
         when first read; a band beyond top_size is nan.
         get_stats, to_dataframe, print_stats and describe come from Stats
 
     Arguments:
-        source (str|Doc): Data source (a string or a Doc object)
+        source (str|Doc|Document): Data source (a string, a Doc or a Document object)
         freq_dict (FrequencyDictionary): Frequency dictionary; freq_dict_class() by
             default
 
@@ -116,15 +117,17 @@ class LexicalStats(Stats, metaclass=ABCMeta):
 
     Raises:
         SourceTypeError: If the dictionary is not of freq_dict_class (without it, has no
-            lookup and ipm), the class has none and no dictionary is given, or analyze
-            does not give LexicalWord objects
-        SourceError: If the source has no words
+            lookup and ipm), the class has none and no dictionary is given, the source
+            is neither a string, a Doc nor a Document object, parse does not return a
+            Document, or analyze does not give LexicalWord objects
+        SourceError: If the words of the source have no parts of speech or there are
+            no words
     """
 
     freq_dict_class: ClassVar[type[Any] | None] = None
     stats_desc: ClassVar[Mapping[str, str]] = LEXICAL_STATS_DESC
 
-    def __init__(self, source: str | Doc, freq_dict: FrequencyDictionary | None = None):
+    def __init__(self, source: str | Doc | Document, freq_dict: FrequencyDictionary | None = None):
         messages = self.messages
         expected = self.freq_dict_class
         if freq_dict is not None and not (
@@ -135,6 +138,12 @@ class LexicalStats(Stats, metaclass=ABCMeta):
         ):
             name = expected.__name__ if expected is not None else "FrequencyDictionary"
             raise SourceTypeError(messages["freq_dict_type"].format(expected=name))
+        if freq_dict is None:
+            if expected is None:
+                raise SourceTypeError(
+                    messages["no_freq_dict_class"].format(cls=type(self).__name__)
+                )
+            freq_dict = expected()
         found = self.analyze(source)
         words = tuple(found) if isinstance(found, Iterable) else (found,)
         for word in words:
@@ -146,12 +155,6 @@ class LexicalStats(Stats, metaclass=ABCMeta):
                 )
         if not words:
             raise SourceError(messages["no_words"])
-        if freq_dict is None:
-            if expected is None:
-                raise SourceTypeError(
-                    messages["no_freq_dict_class"].format(cls=type(self).__name__)
-                )
-            freq_dict = expected()
         self.freq_dict = freq_dict
         self.words = tuple(word.word for word in words)
         self.lemmas = tuple(word.lemma for word in words)
@@ -168,22 +171,40 @@ class LexicalStats(Stats, metaclass=ABCMeta):
         self.p_top10000 = bands.get(10000, nan)
         self.p_beyond_top10000 = 1 - self.p_top10000
 
-    @abstractmethod
-    def analyze(self, source: str | Doc) -> Iterable[LexicalWord]:
+    def analyze(self, source: str | Doc | Document) -> Iterable[LexicalWord]:
         """
         Getting the words of a source with their lemmas and their kind
 
         Description:
-            Implemented by a language library; numbers (utils.is_number) are not
-            words. A source of another type raises SourceTypeError
+            The words of Universal Dependencies of the document of parse that
+            hold a letter or a digit and are no numbers (is_number), with the
+            lemma of the column lemma or the word itself, and content words by
+            the parts of speech of CONTENT_UD_POS (the column upos); a library
+            with its own lemmas or content words overrides it
 
         Arguments:
-            source (str|Doc): Data source
+            source (str|Doc|Document): Data source
 
         Returns:
             iterable[LexicalWord]: Word, lemma and whether it is a content word
+
+        Raises:
+            SourceTypeError: If the source is neither a string, a Doc nor a Document
+                object, or parse does not return a Document
+            SourceError: If the words of the source have no parts of speech
         """
-        raise NotImplementedError
+        document = self._document(source)
+        column = document.column
+        rows = [
+            row
+            for row in zip(column("form"), column("lemma"), column("upos"), strict=True)
+            if has_words(row[0]) and not is_number(row[0])
+        ]
+        if rows and not any(pos for _, _, pos in rows):
+            raise SourceError(self.messages["no_pos"])
+        return [
+            LexicalWord(form, lemma or form, pos in CONTENT_UD_POS) for form, lemma, pos in rows
+        ]
 
     def dictionary_keys(self) -> tuple[str, ...]:
         """

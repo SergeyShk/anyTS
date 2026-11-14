@@ -81,7 +81,7 @@ class PhonStatsComponent(anyts.components.PhonStatsComponent):
     stats_class = PhonStats  # the subclass of the library
 ```
 
-The class of the core is the default of `stats_class`. Where it cannot read a `Doc` - an abstract class (`BasicStats`, `LexicalStats`, `PhonStats`), `ReadabilityStats` and `UnadaptedReadabilityStats` without the `basic_stats_class` of a library, none at all (`DiversityStatsComponent`, the class of the core taking a list of words) - the component cannot be added until the library gives its class.
+The class of the core is the default of `stats_class`. Where it cannot read a `Doc` - an abstract class (`BasicStats`, `PhonStats`), `LexicalStats` without a dictionary of its own and no `freq_dict`, `ReadabilityStats` and `UnadaptedReadabilityStats` without the `basic_stats_class` of a library, none at all (`DiversityStatsComponent`, the class of the core taking a list of words) - the component cannot be added until the library gives its class.
 <!-- --8<-- [end:class-components] -->
 
 | Component | Class of statistics | Parameters |
@@ -151,7 +151,7 @@ LexicalStatsComponent(nlp, name)
 ```
 
 <!-- --8<-- [start:LexicalStatsComponent] -->
-`LexicalStatsComponent` puts the lexical sophistication statistics into the extension, with the frequency dictionary of its attribute `freq_dict`: `None` by default, for the dictionary of the class, and set by a library in the constructor of its component. A document gets the statistics when it has a word of `iter_doc_words` (with `join_hyphens`) other than a number of the method `is_number`, `anyts.utils.is_number` by default; a library gives the numbers its class leaves out, so a document of numbers alone passes untouched.
+`LexicalStatsComponent` puts the lexical sophistication statistics into the extension, with the frequency dictionary of its attribute `freq_dict`: `None` by default, for the dictionary of the class, and set by a library before the constructor of the core; a class without a dictionary of its own and no `freq_dict` raise `ParameterError` when the component is made. A document gets the statistics when it has a word of `iter_doc_words` (with `join_hyphens`) with a letter or a digit (`has_words`) other than a number of the method `is_number`, `anyts.utils.is_number` by default; a library gives the numbers its class leaves out, so a document of numbers alone passes untouched.
 <!-- --8<-- [end:LexicalStatsComponent] -->
 
 ### Style metrics { #StyleStatsComponent }

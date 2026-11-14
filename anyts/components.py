@@ -28,7 +28,15 @@ from .style_stats import StyleStats
 from .style_stats import check_params as check_style_params
 from .syntax_stats import SyntaxStats
 from .unadapted_readability_stats import UnadaptedReadabilityStats
-from .utils import check_bool, check_messages, check_words, has_words, is_number, iter_doc_words
+from .utils import (
+    _separators,
+    check_bool,
+    check_messages,
+    check_words,
+    has_words,
+    is_number,
+    iter_doc_words,
+)
 
 if TYPE_CHECKING:
     from spacy.language import Language
@@ -386,9 +394,10 @@ class LexicalStatsComponent(StatsComponent):
         Puts an object of stats_class, a subclass of LexicalStats of a language
         library, into doc._.<name>, with the frequency dictionary of the
         attribute freq_dict (None by default, for the dictionary of the class),
-        which a library sets in the constructor of its component. A document
-        gets the statistics when it has a word (iter_doc_words with
-        join_hyphens) other than a number (is_number)
+        which a library sets before the constructor of the core; a class without
+        a dictionary of its own and no freq_dict are refused when the component
+        is made. A document gets the statistics when it has a word (iter_doc_words
+        with join_hyphens, has_words) other than a number (is_number)
 
     Class attributes:
         join_hyphens (bool): Take a word the tokenizer split at its hyphens for one word
@@ -400,9 +409,23 @@ class LexicalStatsComponent(StatsComponent):
     freq_dict: Any = None
 
     def accepts(self, doc: Doc) -> bool:
+        separators = _separators()
         return any(
-            not self.is_number(word) for _, _, word in iter_doc_words(doc, self.join_hyphens)
+            has_words(word) and not self.is_number(word.strip(separators))
+            for _, _, word in iter_doc_words(doc, self.join_hyphens)
         )
+
+    def _stats_class(self) -> type[Any]:
+        stats_class = super()._stats_class()
+        if (
+            self.freq_dict is None
+            and issubclass(stats_class, LexicalStats)
+            and stats_class.freq_dict_class is None
+        ):
+            raise ParameterError(
+                self.messages["no_freq_dict_class"].format(cls=stats_class.__name__)
+            )
+        return stats_class
 
     def is_number(self, word: str) -> bool:
         """

@@ -146,6 +146,9 @@ def test_safe_divide():
         ("   ", False),
         ("\u200b \ufeff", False),
         ("\u200b a", True),
+        # Characters of no class: a bullet of private use, a control character
+        ("\uf0b7 \x07", False),
+        ("\uf0b7a", True),
         ("", False),
     ],
 )

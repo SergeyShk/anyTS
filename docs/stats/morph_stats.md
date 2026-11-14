@@ -5,12 +5,12 @@ MorphStats(source)
 ```
 
 <!-- --8<-- [start:MorphStats] -->
-The morphological statistics of a text: the part of speech and the features of [Universal Dependencies](https://universaldependencies.org/u/feat/) of every word, counted by value or given word by word. By default the data source is a `Doc` object of [spaCy](https://github.com/explosion/spaCy) with the parts of speech, read by `token.pos_` and `token.morph`; a language library reads a string or a `Doc` without them in its own way.
+The morphological statistics of a text: the part of speech and the features of [Universal Dependencies](https://universaldependencies.org/u/feat/) of every word, counted by value or given word by word. The data source is a text, a `Doc` object of [spaCy](https://github.com/explosion/spaCy) or a `Document` of [anySeg](https://github.com/SergeyShk/anySeg); the words are the words of Universal Dependencies of its [document](https://sergeyshk.github.io/anyTS/document/) with a letter or a digit (Spanish `del` gives `de` and `el`), and their parts of speech and features are its columns `upos` and `feats`. A language library annotates a string in its `parse`, or reads the features in its own `analyze`.
 
 Raises:
 
-- `SourceTypeError` - a source that is not a `Doc`, an `analyze` that does not give `MorphWord` objects;
-- `SourceError` - a source without parts of speech or without words.
+- `SourceTypeError` - a source that is neither a string, a `Doc` nor a `Document`, a `parse` that returns no `Document`, an `analyze` that does not give `MorphWord` objects;
+- `SourceError` - words without parts of speech, a source without words.
 <!-- --8<-- [end:MorphStats] -->
 
 === "Code"
@@ -52,7 +52,7 @@ Raises:
 <!-- --8<-- [start:MorphStats-parameters] -->
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
-| `source` | `str` / `Doc` | - | Data source: a `Doc` with the parts of speech, or what `analyze` takes |
+| `source` | `str` / `Doc` / `Document` | - | Data source |
 <!-- --8<-- [end:MorphStats-parameters] -->
 
 ## Attributes
@@ -136,11 +136,12 @@ The other methods - `to_dataframe` and `describe` - are those of the [statistics
 <summary>Language hooks of a subclass</summary>
 
 <!-- --8<-- [start:MorphStats-hooks] -->
-A language library subclasses `MorphStats`. By default the words and their features are read from a `Doc` by Universal Dependencies:
+A language library subclasses `MorphStats`. By default the words and their features are the columns of the document of `parse`, which the library sets to annotate a string:
 
 | Hook | Kind | Description |
 | :--- | :--- | :---------- |
-| `analyze(source)` | method | Words of a source as `MorphWord`: the word, its part of speech and its features of Universal Dependencies by name; by default those of a `Doc` with the parts of speech (`iter_doc_tokens`), with `token.pos_` and `token.morph`, one dictionary for the words of one analysis; a library that reads a string or a `Doc` without them overrides it. The object checks and reads a mapping of features once for all the words that share it, so an override that gives the words of one form one mapping is faster |
+| `analyze(source)` | method | Words of a source as `MorphWord`: the word, its part of speech and its features of Universal Dependencies by name; by default the words of Universal Dependencies of the document of `parse` with a letter or a digit, with the columns `upos` and `feats`, one dictionary for the words of one set of features; a library that reads the features another way overrides it. The object checks and reads a mapping of features once for all the words that share it, so an override that gives the words of one form one mapping is faster |
+| `parse(source)` | method | Document of the source, from `Stats`; a library sets it to annotate a string in its language |
 | `feature_names` | class attribute | Feature of Universal Dependencies by statistic, `MORPH_FEATURES` by default; a statistic is an identifier other than `pos`, `tags`, `words` and the names of the class, since it becomes an attribute of the object |
 | `stats_desc` | class attribute | `pos` and the statistics of `feature_names` with their names, in the order of `get_stats`; `MORPH_STATS_DESC` by default |
 | `values_desc` | class attribute | Descriptions of the values by statistic for `print_stats`, `MORPH_VALUES_DESC` by default; a value without one is printed as it is |
