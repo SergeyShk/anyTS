@@ -224,9 +224,13 @@ def run(data: Path) -> None:
 
 
 def _git(*args: str) -> str:
-    return subprocess.run(
-        ["git", "-C", str(ROOT), *args], check=True, capture_output=True, text=True
-    ).stdout.strip()
+    """Output of a git command; its failure ends the run with its message and code"""
+    done = subprocess.run(
+        ["git", "-C", str(ROOT), *args], check=False, stdout=subprocess.PIPE, text=True
+    )
+    if done.returncode:
+        raise SystemExit(done.returncode)
+    return done.stdout.strip()
 
 
 def _take(command: list[str], environment: dict[str, str] | None) -> None:
