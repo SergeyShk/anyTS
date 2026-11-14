@@ -418,6 +418,43 @@ def test_syntax_and_cohesion_components_on_their_core_classes(nlp):
     assert doc._.anyts_test_morph.pos == ("NOUN", "VERB", "NOUN", "VERB")
 
 
+def test_documents_without_words(nlp):
+    """A document whose tokens hold no letter or digit gets no statistics, as the class has no words"""
+    doc = Doc(nlp.vocab, words=["\uf0b7", "\x07"], pos=["X", "X"])
+    MorphStatsComponent(nlp, "anyts_test_morph")(doc)
+    assert doc._.anyts_test_morph is None
+
+
+def test_lexical_component_of_the_core(nlp):
+    class Frequencies:
+        min_ipm = 0.5
+
+        def lookup(self, lemma):
+            return None
+
+        def ipm(self, lemma):
+            return self.min_ipm
+
+    class Lexical(LexicalStatsComponent):
+        freq_dict = Frequencies()
+
+    doc = Doc(
+        nlp.vocab,
+        words=["Cats", "sleep", "2"],
+        pos=["NOUN", "VERB", "NUM"],
+        lemmas=["cat", "sleep", "2"],
+    )
+    Lexical(nlp, "anyts_test_lexical")(doc)
+    assert doc._.anyts_test_lexical.lemmas == ("cat", "sleep")
+    assert (
+        Lexical(nlp, "anyts_test_lexical").accepts(Doc(nlp.vocab, words=["\uf0b7", "2"])) is False
+    )
+    with pytest.raises(
+        ParameterError, match=r"^LexicalStats has no frequency dictionary of its own"
+    ):
+        LexicalStatsComponent(nlp, "anyts_test_bare")
+
+
 def test_cohesion_component_with_blank_lines(nlp):
     """A text wrapped inside its paragraphs: its lines are paragraphs, with blank_lines its parts
     between blank lines"""

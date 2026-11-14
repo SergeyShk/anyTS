@@ -346,3 +346,13 @@ def test_parse_of_a_library():
             return spanish_document() if source == "Vino del pueblo." else super().parse(source)
 
     assert Annotated("Vino del pueblo.").words == ("Vino", "de", "el", "pueblo")
+
+
+def test_features_out_of_the_format():
+    """A part of the features without a value is left out, as the empty features of CoNLL-U"""
+    document = Document.from_tokens("Cats sleep now", [0, 5, 11], [4, 10, 14])
+    document.set_columns(
+        upos=["NOUN", "VERB", "ADV"], feats=["Number=Plur||Typo", "_", "Degree=Pos|Typo"]
+    )
+    morph = MorphStats(document)
+    assert morph.tags == ("Number=Plur", "_", "Degree=Pos")

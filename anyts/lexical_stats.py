@@ -7,10 +7,9 @@ from numbers import Integral
 from typing import TYPE_CHECKING, Any, ClassVar, NamedTuple, Protocol
 
 from .constants import CONTENT_UD_POS, FREQUENCY_BANDS, LEXICAL_STATS_DESC
-from .document import _is_word
 from .exceptions import ParameterError, SourceError, SourceTypeError
 from .stats import Stats
-from .utils import check_words, is_number, safe_divide, safe_mean
+from .utils import check_words, has_words, is_number, safe_divide, safe_mean
 
 if TYPE_CHECKING:
     from anyseg import Document
@@ -139,6 +138,12 @@ class LexicalStats(Stats):
         ):
             name = expected.__name__ if expected is not None else "FrequencyDictionary"
             raise SourceTypeError(messages["freq_dict_type"].format(expected=name))
+        if freq_dict is None:
+            if expected is None:
+                raise SourceTypeError(
+                    messages["no_freq_dict_class"].format(cls=type(self).__name__)
+                )
+            freq_dict = expected()
         found = self.analyze(source)
         words = tuple(found) if isinstance(found, Iterable) else (found,)
         for word in words:
@@ -150,12 +155,6 @@ class LexicalStats(Stats):
                 )
         if not words:
             raise SourceError(messages["no_words"])
-        if freq_dict is None:
-            if expected is None:
-                raise SourceTypeError(
-                    messages["no_freq_dict_class"].format(cls=type(self).__name__)
-                )
-            freq_dict = expected()
         self.freq_dict = freq_dict
         self.words = tuple(word.word for word in words)
         self.lemmas = tuple(word.lemma for word in words)
@@ -199,7 +198,7 @@ class LexicalStats(Stats):
         rows = [
             row
             for row in zip(column("form"), column("lemma"), column("upos"), strict=True)
-            if _is_word(row[0]) and not is_number(row[0])
+            if has_words(row[0]) and not is_number(row[0])
         ]
         if rows and not any(pos for _, _, pos in rows):
             raise SourceError(self.messages["no_pos"])

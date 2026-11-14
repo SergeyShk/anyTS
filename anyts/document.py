@@ -15,6 +15,7 @@ from .utils import (
     _separators,
     check_callable,
     has_sents,
+    has_words,
     is_doc,
     is_document,
     source_type_error,
@@ -100,7 +101,7 @@ def document_words(document: Document) -> tuple[str, ...]:
     Getting the words of a document
 
     Description:
-        The tokens with a letter or a digit (str.isalnum), as written: no
+        The tokens with a letter or a digit (has_words), as written: no
         punctuation mark, symbol or character of no class, such as the bullet
         of private use in a text from a PDF, is a word. A multiword token is one
         word
@@ -128,13 +129,8 @@ def document_words(document: Document) -> tuple[str, ...]:
         for word in (
             text[start:end] for start, end in zip(tokens.starts, tokens.ends, strict=True)
         )
-        if _is_word(word)
+        if has_words(word)
     )
-
-
-def _is_word(form: str) -> bool:
-    """Whether a token or a word of a document is a word: it holds a letter or a digit"""
-    return any(map(str.isalnum, form))
 
 
 def _source_text(source: str | Doc | Document, messages: Mapping[str, str]) -> str:

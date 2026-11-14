@@ -5,10 +5,9 @@ from collections.abc import Iterable, Mapping
 from typing import TYPE_CHECKING, Any, ClassVar, NamedTuple
 
 from .constants import MORPH_FEATURES, MORPH_STATS_DESC, MORPH_VALUES_DESC
-from .document import _is_word
 from .exceptions import ParameterError, SourceError, SourceTypeError, UnknownStatError
 from .stats import Stats, _print_table
-from .utils import check_bool
+from .utils import check_bool, has_words
 
 if TYPE_CHECKING:
     from anyseg import Document
@@ -225,7 +224,7 @@ class MorphStats(Stats):
         rows = [
             row
             for row in zip(column("form"), column("upos"), column("feats"), strict=True)
-            if _is_word(row[0])
+            if has_words(row[0])
         ]
         if rows and not any(pos for _, pos, _ in rows):
             raise SourceError(self.messages["no_pos"])
@@ -379,8 +378,8 @@ class MorphStats(Stats):
 
 
 def _feature_dict(feats: str | None) -> dict[str, str]:
-    """Features of a word in the CoNLL-U format as a dictionary, empty for None"""
-    return dict(pair.split("=", 1) for pair in feats.split("|")) if feats else {}
+    """Features of a word in the CoNLL-U format as a dictionary, a part without a value left out"""
+    return dict(pair.split("=", 1) for pair in feats.split("|") if "=" in pair) if feats else {}
 
 
 def _wrong_word(word: object) -> str:

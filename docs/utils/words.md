@@ -96,7 +96,7 @@ Counts the letters of a word: the characters of any alphabet (`str.isalpha`), wi
 has_words(source)
 ```
 
-Checks whether a text, a `Doc` or a `Span` holds a word: an empty text or one of whitespace and the characters of `is_punctuation` alone holds none.
+Checks whether a text, a `Doc` or a `Span` holds a word - a letter or a digit (`str.isalnum`): an empty text or one of whitespace, punctuation marks, symbols and characters of no class alone, such as a bullet of private use from a PDF, holds none. The words of a [document](https://sergeyshk.github.io/anyTS/document/) follow the same rule.
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |

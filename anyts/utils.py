@@ -139,8 +139,9 @@ def has_words(source: str | Doc | Span) -> bool:
     Checking whether a text holds a word
 
     Description:
-        An empty text or one of whitespace and is_punctuation characters alone
-        (?!, ..., a zero-width space) holds no word
+        A word holds a letter or a digit (str.isalnum): a text of whitespace,
+        punctuation marks, symbols and characters of no class alone (?!, ..., a
+        zero-width space, a bullet of private use) holds none
 
     Arguments:
         source (str|Doc|Span): Text, Doc or Span object
@@ -150,11 +151,11 @@ def has_words(source: str | Doc | Span) -> bool:
 
     Example:
         >>> from anyts.utils import has_words
-        >>> has_words("The cat sleeps"), has_words("?!"), has_words("")
-        (True, False, False)
+        >>> has_words("The cat sleeps"), has_words("?!"), has_words("\\uf0b7"), has_words("")
+        (True, False, False, False)
     """
     text = source if isinstance(source, str) else source.text
-    return any(not char.isspace() and not is_punctuation(char) for char in text)
+    return any(map(str.isalnum, text))
 
 
 def find_marks(text: str, words: Sequence[str]) -> frozenset[int]:

@@ -13,6 +13,7 @@ from anyts.basic_stats import BasicStats
 from anyts.cohesion_stats import CohesionStats, ConnectorMatcher
 from anyts.components import (
     DiversityStatsComponent,
+    LexicalStatsComponent,
     PhonStatsComponent,
     ReadabilityStatsComponent,
     StatsComponent,
@@ -192,6 +193,11 @@ class BareComponent(StatsComponent):
     messages = OWN
 
 
+class OwnLexical(LexicalStatsComponent):
+    stats_class = Lexical
+    messages = OWN
+
+
 class Component(StatsComponent):
     messages = OWN
 
@@ -317,6 +323,7 @@ CASES = [
     ("top_n", ParameterError, lambda: Style(TEXT, top_n=0)),
     ("freq_dict_type", SourceTypeError, lambda: Checked(TEXT, freq_dict={})),
     ("no_freq_dict_class", SourceTypeError, lambda: Lexical(TEXT)),
+    ("no_freq_dict_class", ParameterError, lambda: OwnLexical(spacy.blank("en"), "own_lexical")),
     ("bands_type", ParameterError, lambda: Lexical(TEXT, Frequencies()).band_coverage(5)),
     ("band_bound", ParameterError, lambda: Lexical(TEXT, Frequencies()).band_coverage([0])),
     ("phon_window_len", ParameterError, lambda: Phon(TEXT, window_len=1)),
@@ -393,7 +400,7 @@ CASES = [
     (
         "hook_lexical_words",
         SourceTypeError,
-        lambda: hooked(Lexical, analyze=lambda self, s: None)(TEXT),
+        lambda: hooked(Lexical, analyze=lambda self, s: None)(TEXT, Frequencies()),
     ),
     (
         "hook_cohesion_words",
