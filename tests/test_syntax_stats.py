@@ -2402,6 +2402,7 @@ def test_copula_makes_a_predicate():
         has_agent,
         is_agentless,
         is_prep_complement,
+        is_root,
     ],
 )
 def test_checks_of_a_word(check):

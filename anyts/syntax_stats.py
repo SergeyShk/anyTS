@@ -959,6 +959,7 @@ def get_words(words: Iterable[TreeWord]) -> list[TreeWord]:
     return [word for word in words if _is_word(word)]
 
 
+@_takes_word
 def is_root(word: TreeWord) -> bool:
     """
     Checking whether a word is the head of its sentence
@@ -968,6 +969,9 @@ def is_root(word: TreeWord) -> bool:
 
     Returns:
         bool: Result of the check
+
+    Raises:
+        SourceTypeError: If the word is not a TreeWord, such as a spaCy Token
     """
     return word.head is None
 

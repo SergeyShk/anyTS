@@ -665,7 +665,7 @@ The words of a sequence of words of the tree in their order: those with a letter
 is_root(word)
 ```
 
-Checks whether a word is the head of its sentence: it has no head.
+Checks whether a word is the head of its sentence: it has no head. A value that is no `TreeWord`, such as a spaCy `Token`, raises `SourceTypeError`.
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
