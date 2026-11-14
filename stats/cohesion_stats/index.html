@@ -2364,10 +2364,10 @@
 <div class="signature highlight"><pre><span></span><code><span class="n">CohesionStats</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">sents_extractor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">connectors</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">blank_lines</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 </code></pre></div>
 <!-- --8<-- [start:CohesionStats] -->
-<p>The cohesion statistics of a text in the manner of Coh-Metrix: the overlap of the sentences, the givenness, the temporal cohesion and the connectors of a dictionary. The sentences are compared by lemmas. The data source is a <code>Doc</code> object of <a href="https://github.com/explosion/spaCy">spaCy</a> with the parts of speech and the lemmas, split into sentences by its boundaries, or by the sentence extractor over its text when one is given or the <code>Doc</code> has none.</p>
+<p>The cohesion statistics of a text in the manner of Coh-Metrix: the overlap of the sentences, the givenness, the temporal cohesion and the connectors of a dictionary. The sentences are compared by lemmas. The data source is a text, a <code>Doc</code> object of <a href="https://github.com/explosion/spaCy">spaCy</a> or a <code>Document</code> of <a href="https://github.com/SergeyShk/anySeg">anySeg</a> with parts of speech and lemmas; a language library annotates a string in its <code>parse</code>. The words are those of Universal Dependencies of its <a href="https://sergeyshk.github.io/anyTS/document/#get_tree">document</a> (<code>get_tree</code>) with a letter or a digit, split into sentences by the document, or by the sentence extractor over its text when one is given.</p>
 <p>Raises:</p>
 <ul>
-<li><code>SourceTypeError</code> - an extractor of another type, a source that is not a <code>Doc</code>, connectors that are not a dictionary of phrases and pairs of strings;</li>
+<li><code>SourceTypeError</code> - an extractor of another type, a source that is neither a string, a <code>Doc</code> nor a <code>Document</code>, a <code>parse</code> that returns no <code>Document</code>, connectors that are not a dictionary of phrases and pairs of strings;</li>
 <li><code>SourceError</code> - a source without parts of speech, lemmas or words;</li>
 <li><code>ParameterError</code> - an unknown class or kind of a connector, a <code>blank_lines</code> that is not a <code>bool</code>.</li>
 </ul>
@@ -2456,15 +2456,15 @@ Secondary connectors per 1000 words                                |  142.86
 <tbody>
 <tr>
 <td style="text-align: left;"><code>source</code></td>
-<td style="text-align: left;"><code>Doc</code></td>
+<td style="text-align: left;"><code>str</code> / <code>Doc</code> / <code>Document</code></td>
 <td style="text-align: left;">-</td>
-<td style="text-align: left;">Data source: a <code>Doc</code> with the parts of speech and the lemmas, or what <code>analyze</code> reads</td>
+<td style="text-align: left;">Data source with the parts of speech and the lemmas, a text that <code>parse</code> annotates, or what <code>analyze</code> reads</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>sents_extractor</code></td>
 <td style="text-align: left;"><code>SentsExtractor</code></td>
 <td style="text-align: left;"><code>None</code></td>
-<td style="text-align: left;">Sentence extraction tool; given here, it splits a <code>Doc</code> by its text whatever its boundaries</td>
+<td style="text-align: left;">Sentence extraction tool; given here, it splits the text in place of the sentences of the document, and the words outside its sentences are left out</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>connectors</code></td>
@@ -3149,7 +3149,7 @@ Secondary connectors per 1000 words                                |  142.86
 <details class="library-hooks">
 <summary>Language hooks of a subclass</summary>
 <!-- --8<-- [start:CohesionStats-hooks] -->
-<p>A language library subclasses <code>CohesionStats</code>. By default the words and their features are read from a <code>Doc</code> by Universal Dependencies, and there are no connectors:</p>
+<p>A language library subclasses <code>CohesionStats</code>. By default the words are the <code>TreeWord</code> objects of the tree of the document of <code>parse</code> (<code>get_tree</code>) with their features of Universal Dependencies, and there are no connectors:</p>
 <table>
 <thead>
 <tr>
@@ -3160,19 +3160,19 @@ Secondary connectors per 1000 words                                |  142.86
 </thead>
 <tbody>
 <tr>
+<td style="text-align: left;"><code>parse(source)</code></td>
+<td style="text-align: left;">method</td>
+<td style="text-align: left;">Document of the source, from <code>Stats</code>; a library sets it to annotate a string in its language</td>
+</tr>
+<tr>
 <td style="text-align: left;"><code>analyze(source)</code></td>
 <td style="text-align: left;">method</td>
-<td style="text-align: left;">Words of the sentences of a source as <code>CohesionWord</code>: the word, its lemma, its part of speech, whether it is a noun, a pronoun, a demonstrative, an argument and a content word, its tense, mood and aspect, whether a punctuation mark stands before it (<code>break_before</code>, which the rules of the connectors do not read through), whether no connector starts at it (<code>connector_blocked</code>, by a rule of the parse such as an <em>if</em> of an indirect question) and whether a paragraph starts at it (<code>paragraph_start</code>); by default those of a <code>Doc</code>, sentence by sentence (<code>doc_units</code>), with the features of <code>word_info</code>; the default marks the words after a line break of the <code>Doc</code>, or after a blank line with <code>blank_lines</code> (<code>find_unit_paragraph_starts</code>); a library that reads a string or a <code>Doc</code> without these annotations overrides it, <code>find_paragraph_starts</code> with <code>blank_lines</code> giving the paragraph starts of a string</td>
+<td style="text-align: left;">Words of the sentences of a source as <code>CohesionWord</code>: the word, its lemma, its part of speech, whether it is a noun, a pronoun, a demonstrative, an argument and a content word, its tense, mood and aspect, whether a punctuation mark stands before it (<code>break_before</code>, which the rules of the connectors do not read through), whether no connector starts at it (<code>connector_blocked</code>, by a rule of the parse such as an <em>if</em> of an indirect question) and whether a paragraph starts at it (<code>paragraph_start</code>); by default the words of the tree with a letter or a digit, sentence by sentence, with the features of <code>word_info</code>; the default marks the words after a punctuation mark in their sentence, except a quote, an apostrophe, an invisible separator and the hyphen that joins two parts of a word, and the words after a line break, or after a blank line with <code>blank_lines</code>, among the words of the sentences; a library that reads the words another way overrides it, <code>find_paragraph_starts</code> with <code>blank_lines</code> giving the paragraph starts of a string</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>doc_units(doc)</code></td>
+<td style="text-align: left;"><code>word_info(word)</code></td>
 <td style="text-align: left;">method</td>
-<td style="text-align: left;">Words of the sentences of a <code>Doc</code> as lists of tokens: by its boundaries, or by the extractor over its text (<code>split_doc_units</code> of <code>anyts.utils</code>)</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>word_info(unit)</code></td>
-<td style="text-align: left;">method</td>
-<td style="text-align: left;">Features of a word of a <code>Doc</code>; by default a noun is <code>NOUN</code> or <code>PROPN</code>, a pronoun <code>PRON</code> or a possessive, demonstrative or personal determiner, a demonstrative carries <code>PronType=Dem</code>, an argument is <code>NOUN</code>, <code>PROPN</code> or <code>PRON</code>, a content word one of <code>anyts.constants.CONTENT_UD_POS</code> and no demonstrative, and the tense, the mood and the aspect are the features <code>Tense</code>, <code>Mood</code> and <code>Aspect</code>; a library sets <code>connector_blocked</code> where its parse rules a connector out</td>
+<td style="text-align: left;">Features of a <code>TreeWord</code> of the tree; by default the lemma is that of the word in lower case, its form without one, a noun is <code>NOUN</code> or <code>PROPN</code>, a pronoun <code>PRON</code> or a possessive, demonstrative or personal determiner, a demonstrative carries <code>PronType=Dem</code>, an argument is <code>NOUN</code>, <code>PROPN</code> or <code>PRON</code>, a content word one of <code>anyts.constants.CONTENT_UD_POS</code> and no demonstrative, and the tense, the mood and the aspect are the features <code>Tense</code>, <code>Mood</code> and <code>Aspect</code>; a library sets <code>connector_blocked</code> where its parse rules a connector out</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>load_connectors()</code></td>
@@ -3195,11 +3195,6 @@ Secondary connectors per 1000 words                                |  142.86
 <td style="text-align: left;">Features of the verbs whose repetitions make the temporal cohesion: a tuple of one or more distinct ones of <code>tense</code>, <code>mood</code> and <code>aspect</code> (<code>TEMPORAL_FEATURES</code>), checked when the class is defined; <code>tense</code> and <code>aspect</code> by default, as in Coh-Metrix</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>sents_extractor_class</code>, <code>join_hyphens</code></td>
-<td style="text-align: left;">class attributes</td>
-<td style="text-align: left;">Sentence extractor of a <code>Doc</code> without boundaries, joining of the hyphenated words of a <code>Doc</code></td>
-</tr>
-<tr>
 <td style="text-align: left;"><code>stats_desc</code>, <code>stats_headers</code></td>
 <td style="text-align: left;">class attributes</td>
 <td style="text-align: left;">Statistics of <code>get_stats</code> with their descriptions (<code>COHESION_STATS_DESC</code> by default), headers of the columns for <code>print_stats</code></td>
@@ -3211,7 +3206,7 @@ Secondary connectors per 1000 words                                |  142.86
 </tr>
 </tbody>
 </table>
-<p>The parameters of a library - its model of a string, its word extractor - go to the constructor of its subclass, which keeps them for its <code>analyze</code>. An <code>analyze</code> that does not give sentences of <code>CohesionWord</code> objects raises <code>SourceTypeError</code>.</p>
+<p>The parameters of a library - its model of a string - go to the constructor of its subclass, which keeps them for its <code>parse</code> and <code>analyze</code>. An <code>analyze</code> that does not give sentences of <code>CohesionWord</code> objects raises <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:CohesionStats-hooks] -->
 </details>
 <details class="library-hooks">

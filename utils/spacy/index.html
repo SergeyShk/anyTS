@@ -2541,7 +2541,7 @@ True
 <!-- --8<-- [start:has_pos] -->
 <div class="signature highlight"><pre><span></span><code><span class="n">has_pos</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span>
 </code></pre></div>
-<p>Checks whether the words of a <code>Doc</code> carry parts of speech: one word (<code>is_word</code>) with a part of speech is enough. The whitespace tokens do not count, as the attribute ruler of a pipeline without its tagger or morphologizer marks them <code>SPACE</code> all the same, which <code>doc.has_annotation("POS")</code> takes for parts of speech; a <code>Doc</code> without words is checked by its annotation. The cohesion statistics check the parts of speech of a <code>Doc</code> by it.</p>
+<p>Checks whether the words of a <code>Doc</code> carry parts of speech: one word (<code>is_word</code>) with a part of speech is enough. The whitespace tokens do not count, as the attribute ruler of a pipeline without its tagger or morphologizer marks them <code>SPACE</code> all the same, which <code>doc.has_annotation("POS")</code> takes for parts of speech; a <code>Doc</code> without words is checked by its annotation.</p>
 <table>
 <thead>
 <tr>
@@ -2996,7 +2996,7 @@ True
 <!-- --8<-- [start:find_unit_marks] -->
 <div class="signature highlight"><pre><span></span><code><span class="n">find_unit_marks</span><span class="p">(</span><span class="n">units</span><span class="p">)</span>
 </code></pre></div>
-<p>Finds the punctuation marks between the words of a sentence of a <code>Doc</code>: the words are those of <code>iter_doc_units</code>, and a word with a character of <code>is_punctuation</code> between it and the word before gets its position, except a quote, an apostrophe and the hyphen that joins two parts of a word, as <code>find_marks</code> does for a text.</p>
+<p>Finds the punctuation marks between the words of a sentence of a <code>Doc</code>: the words are those of <code>iter_doc_units</code>, and a word with a character of <code>is_punctuation</code> between it and the word before gets its position, except a quote, an apostrophe, an invisible separator and the hyphen that joins two parts of a word, as <code>find_marks</code> does for a text.</p>
 <table>
 <thead>
 <tr>
@@ -3038,7 +3038,7 @@ True
 <!-- --8<-- [start:find_unit_paragraph_starts] -->
 <div class="signature highlight"><pre><span></span><code><span class="n">find_unit_paragraph_starts</span><span class="p">(</span><span class="n">units</span><span class="p">,</span> <span class="n">blank_lines</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 </code></pre></div>
-<p>Finds the words of a <code>Doc</code> that start a paragraph: the words are those of <code>iter_doc_units</code> over the whole <code>Doc</code>, across its sentences, and a word that a line break (<code>LINE_BREAK</code>) separates from the word before gets its position, inside a sentence too, or a blank line (<code>BLANK_LINE</code>) with <code>blank_lines</code>, as <code>find_paragraph_starts</code> does for a text. <code>CohesionStats</code> sets the <code>paragraph_start</code> of its words by these positions. A <code>blank_lines</code> that is not a <code>bool</code> raises <code>ParameterError</code>.</p>
+<p>Finds the words of a <code>Doc</code> that start a paragraph: the words are those of <code>iter_doc_units</code> over the whole <code>Doc</code>, across its sentences, and a word that a line break (<code>LINE_BREAK</code>) separates from the word before gets its position, inside a sentence too, or a blank line (<code>BLANK_LINE</code>) with <code>blank_lines</code>, as <code>find_paragraph_starts</code> does for a text. A <code>blank_lines</code> that is not a <code>bool</code> raises <code>ParameterError</code>.</p>
 <table>
 <thead>
 <tr>
