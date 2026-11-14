@@ -1,7 +1,8 @@
-.PHONY: help uv deps lock lint ruff format mypy test test-cov test-examples clean clean-build clean-pyc clean-test build publish publish-test docs-build docs-serve docs-deploy
+.PHONY: help uv deps lock lint ruff format mypy test test-cov test-examples bench clean clean-build clean-pyc clean-test build publish publish-test docs-build docs-serve docs-deploy
 .DEFAULT_GOAL := help
 APP_PATH := anyts
 TESTS_PATH := tests
+SCRIPTS_PATH := scripts
 
 help: ## Show the list of commands
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "%-20s %s\n", $$1, $$2}'
@@ -26,15 +27,15 @@ lint: ruff mypy ## Run all code checks
 
 ruff: deps ## Check and format the code with ruff
 ifeq ($(MODE), ci)
-	uv run ruff check $(APP_PATH) $(TESTS_PATH)
-	uv run ruff format $(APP_PATH) $(TESTS_PATH) --check
+	uv run ruff check $(APP_PATH) $(TESTS_PATH) $(SCRIPTS_PATH)
+	uv run ruff format $(APP_PATH) $(TESTS_PATH) $(SCRIPTS_PATH) --check
 else
-	uv run ruff check $(APP_PATH) $(TESTS_PATH) --fix
-	uv run ruff format $(APP_PATH) $(TESTS_PATH)
+	uv run ruff check $(APP_PATH) $(TESTS_PATH) $(SCRIPTS_PATH) --fix
+	uv run ruff format $(APP_PATH) $(TESTS_PATH) $(SCRIPTS_PATH)
 endif
 
 format: deps ## Format the code
-	uv run ruff format $(APP_PATH) $(TESTS_PATH)
+	uv run ruff format $(APP_PATH) $(TESTS_PATH) $(SCRIPTS_PATH)
 
 mypy: deps ## Check types with mypy
 	uv run mypy
@@ -47,6 +48,9 @@ test-cov: deps ## Run the tests with a coverage threshold
 
 test-examples: deps ## Run the examples of the docs against their results
 	uv run pytest -m examples tests/test_docs_examples.py
+
+bench: deps ## Compare the speed and memory of the classes with master on frozen documents
+	uv run python $(SCRIPTS_PATH)/bench.py run
 
 clean: clean-build clean-pyc clean-test ## Remove all artifacts
 	rm -f .coverage coverage.xml

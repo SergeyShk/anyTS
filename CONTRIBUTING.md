@@ -34,6 +34,8 @@ make docs-build  # mkdocs build --strict, if the documentation changed
 
 CI runs the same on Python 3.11-3.15 (Linux) and on Windows and macOS for one Python version.
 
+A change that may slow the statistics down is measured with `make bench`: the classes of this tree against those of the commit it starts from on `master`, the time of a run over the documents and the largest memory of one document. The documents are CoNLL-U files of annotated texts in the folder of the environment variable `BENCH_DATA` (`--data` of `scripts/bench.py`), by default `core_snapshot/bench-documents` next to the clone of the repository. A repeated run on the same code stays within 5 %.
+
 ## What a pull request is expected to contain
 
 - **One topic per pull request.** Unrelated changes go separately.
@@ -52,6 +54,7 @@ The pull request description answers two questions: what was done and why. If it
 - `anyts/` - the package.
 - `tests/` - tests mirroring the package.
 - `docs/` - MkDocs (Material) documentation, `mkdocs.yml` - navigation.
+- `scripts/` - development scripts: `bench.py` behind `make bench`.
 - `.github/workflows/` - CI (`ci.yml`), publishing (`publish.yml`), documentation (`docs.yml`).
 
 The version lives only in `pyproject.toml`; releases are made through GitHub Releases, changes are described in the release notes, there is no separate CHANGELOG file.
