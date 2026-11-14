@@ -1054,6 +1054,79 @@ def test_subordinating_marks():
     )
     assert not is_subordinate_clause_head(tree(shared)[8], subordinating_marks={"for"})
     assert Marked(shared).n_subordinate_clauses == 1
+    # he left , for he was tired , she slept: a conjunct with a subject of its own and without a
+    # conjunction of its own is a main clause a model attaches to the marked one
+    asyndetic = parse(
+        ["he", "left", ",", "for", "he", "was", "tired", ",", "she", "slept"],
+        [1, 1, 6, 6, 6, 6, 1, 9, 9, 6],
+        ["nsubj", "ROOT", "punct", "mark", "nsubj", "cop", "conj", "punct", "nsubj", "conj"],
+        ["", fin, "", "", "", fin, "", "", "", fin],
+        pos=["PRON", "VERB", "PUNCT", "SCONJ", "PRON", "AUX", "ADJ", "PUNCT", "PRON", "VERB"],
+    )
+    assert not is_subordinate_clause_head(tree(asyndetic)[9], subordinating_marks={"for"})
+    stats = Marked(asyndetic)
+    assert (stats.n_t_units, stats.n_subordinate_clauses, stats.n_complex_t_units) == (2, 1, 1)
+    # he left , for he was tired , she slept and they ate: ate is coordinated to slept, a main
+    # clause, so it takes no mark either
+    chain = parse(
+        [
+            "he",
+            "left",
+            ",",
+            "for",
+            "he",
+            "was",
+            "tired",
+            ",",
+            "she",
+            "slept",
+            "and",
+            "they",
+            "ate",
+        ],
+        [1, 1, 6, 6, 6, 6, 1, 9, 9, 6, 12, 12, 9],
+        [
+            *["nsubj", "ROOT", "punct", "mark", "nsubj", "cop", "conj", "punct", "nsubj"],
+            *["conj", "cc", "nsubj", "conj"],
+        ],
+        ["", fin, "", "", "", fin, "", "", "", fin, "", "", fin],
+        pos=[
+            *["PRON", "VERB", "PUNCT", "SCONJ", "PRON", "AUX", "ADJ", "PUNCT", "PRON", "VERB"],
+            *["CCONJ", "PRON", "VERB"],
+        ],
+    )
+    assert not is_subordinate_clause_head(tree(chain)[12], subordinating_marks={"for"})
+    stats = Marked(chain)
+    assert (stats.n_t_units, stats.n_subordinate_clauses, stats.n_complex_t_units) == (3, 1, 1)
+    # he said that I left , for I was tired , he slept: slept takes the kind of left, a nominal
+    # clause
+    nominal = parse(
+        ["he", "said", "that", "I", "left", ",", "for", "I", "was", "tired", ",", "he", "slept"],
+        [1, 1, 4, 4, 1, 9, 9, 9, 9, 4, 12, 12, 9],
+        [
+            *["nsubj", "ROOT", "mark", "nsubj", "ccomp", "punct", "mark", "nsubj", "cop", "conj"],
+            *["punct", "nsubj", "conj"],
+        ],
+        ["", fin, "", "", fin, "", "", "", fin, "", "", "", fin],
+        pos=[
+            *["PRON", "VERB", "SCONJ", "PRON", "VERB", "PUNCT", "SCONJ", "PRON", "AUX", "ADJ"],
+            *["PUNCT", "PRON", "VERB"],
+        ],
+    )
+    assert is_subordinate_clause_head(tree(nominal)[12], subordinating_marks={"for"})
+    stats = Marked(nominal)
+    assert (stats.n_t_units, stats.n_subordinate_clauses, stats.n_complex_nominals) == (1, 3, 2)
+    # he came , to help and she stayed, the infinitive attached to the comma: the clause stayed
+    # joins is none
+    comma = parse(
+        ["he", "came", ",", "to", "help", "and", "she", "stayed"],
+        [1, 1, 1, 4, 2, 7, 7, 4],
+        ["nsubj", "ROOT", "punct", "mark", "advcl", "cc", "nsubj", "conj"],
+        ["", fin, "", "", "VerbForm=Inf", "", "", fin],
+        pos=["PRON", "VERB", "PUNCT", "PART", "VERB", "CCONJ", "PRON", "VERB"],
+    )
+    stats = SyntaxStats(comma)
+    assert (stats.n_t_units, stats.n_complex_nominals) == (1, 0)
 
     class HookOnly(SyntaxStats):
         def is_subordinating_mark(self, word):
@@ -1553,6 +1626,35 @@ def test_verb_phrases_of_a_periphrasis():
         pos=["PART", "VERB", "NOUN"],
     )
     assert (SyntaxStats(doc).n_verb_phrases, Modal(doc).n_verb_phrases) == (2, 1)
+
+
+def test_coordinate_phrases_of_a_periphrasis():
+    """An infinitive of one predicate with its head is no member of a coordination when a model
+    attaches it as a conjunct; the infinitives of a periphrasis may be coordinated"""
+
+    class Modal(SyntaxStats):
+        def is_infinitive_periphrasis(self, word):
+            return word.head is not None and word.head.form.lower() == "must"
+
+    inf, fin = "VerbForm=Inf", "VerbForm=Fin"
+    # he must leave, with the infinitive attached to the modal as a conjunct
+    doc = parse(
+        ["he", "must", "leave"],
+        [1, 1, 1],
+        ["nsubj", "ROOT", "conj"],
+        morphs=["", fin, inf],
+        pos=["PRON", "VERB", "VERB"],
+    )
+    assert (SyntaxStats(doc).n_coordinate_phrases, Modal(doc).n_coordinate_phrases) == (1, 0)
+    # he must leave and stay
+    doc = parse(
+        ["he", "must", "leave", "and", "stay"],
+        [1, 1, 1, 4, 2],
+        ["nsubj", "ROOT", "xcomp", "cc", "conj"],
+        morphs=["", fin, inf, "", inf],
+        pos=["PRON", "VERB", "VERB", "CCONJ", "VERB"],
+    )
+    assert Modal(doc).n_coordinate_phrases == 1
 
 
 def test_coordinated_nominal_clauses():

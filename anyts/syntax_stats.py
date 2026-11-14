@@ -351,18 +351,16 @@ class SyntaxStats(Stats):
             if base_dep(word) in MAIN_CLAUSE_DEPS and _has_mark(word, self.is_subordinating_mark)
         }
         firsts = _first_conjuncts(words, marked)
-        # A finite conjunct with a subject of its own of an infinitive clause, a predicate a model
-        # attaches to the infinitive, joins the clause the chain of infinitives completes
+        infinitive_or_marked = self._infinitive_heads | marked
         reattached = {
             word.index: owner
             for sent in heads
             for word in sent
             if base_dep(word) == "conj"
             and (first := firsts[word.index]) is not None
-            and first.index in self._infinitive_heads
-            and word.index not in self._infinitive_heads
+            and word.index not in infinitive_or_marked
             and not _shares_subject(word)
-            and (owner := _infinitive_owner(first, self.auxiliary_form)) is not None
+            and (owner := self._reattached_to(word, first, marked)) is not None
         }
         n_t_units = n_complex_t_units = 0
         for sent, subordinate in zip(heads, self._subordinate_heads, strict=True):
@@ -372,7 +370,12 @@ class SyntaxStats(Stats):
         coordinations: dict[int, list[TreeWord]] = {}
         for word in words:
             first = firsts[word.index]
-            if base_dep(word) == "conj" and first is not None and word.index not in marked:
+            if (
+                base_dep(word) == "conj"
+                and first is not None
+                and word.index not in marked
+                and not self._is_periphrasis_conjunct(word)
+            ):
                 coordinations.setdefault(first.index, []).append(word)
         nouns = [word for word in words if word.upos in ("NOUN", "PROPN")]
         modified = _heads_of(words, COMPLEX_NOMINAL_DEPS)
@@ -404,7 +407,7 @@ class SyntaxStats(Stats):
                 1
                 for sent in heads
                 for word in sent
-                if (first := firsts[word.index]) is not None
+                if (first := firsts.get(reattached.get(word.index, word).index)) is not None
                 and base_dep(first) in NOMINAL_CLAUSE_DEPS
             ),
             "n_verb_phrases": sum(
@@ -417,6 +420,27 @@ class SyntaxStats(Stats):
                 )
             ),
         }
+
+    def _reattached_to(
+        self, word: TreeWord, first: TreeWord, marked: Collection[int]
+    ) -> TreeWord | None:
+        """Clause a finite conjunct with a subject of its own joins, a predicate a model attaches
+        to the first conjunct: the one the chain of infinitives completes for an infinitive
+        clause, the one a marked clause hangs on when the conjunct takes no mark of it
+        (_inherits_mark); None for another"""
+        if first.index in self._infinitive_heads:
+            return _infinitive_owner(first, self.auxiliary_form)
+        if first.index in marked and not _inherits_mark(word, self.auxiliary_form):
+            return _chain_parent(first)
+        return None
+
+    def _is_periphrasis_conjunct(self, word: TreeWord) -> bool:
+        """Whether an infinitive conjunct makes one predicate with its head by the language check,
+        a part of the verb phrase of the first conjunct a model attaches as conj (must leave),
+        no member of a coordination"""
+        return predicate_form(
+            word, self.auxiliary_form
+        ) == "Inf" and self.is_infinitive_periphrasis(word)
 
     def _is_attributive(self, word: TreeWord, firsts: Mapping[int, TreeWord | None]) -> bool:
         """Whether a non-finite verb form is an attribute of a noun: under amod or acl, or
@@ -534,9 +558,10 @@ class SyntaxStats(Stats):
 
         Description:
             A periphrasis of a modal or phasal verb with an infinitive (can
-            leave, begins to leave) is one clause and one verb phrase of L2SCA; the
-            check gets an infinitive under xcomp, an infinitive conjunct and an
-            infinitive subject (csubj) of a modal word (is_clause_head); none by default
+            leave, begins to leave) is one clause and one verb phrase of L2SCA, and
+            no coordinate phrase; the check gets an infinitive under xcomp, an
+            infinitive conjunct and an infinitive subject (csubj) of a modal word
+            (is_clause_head); none by default
 
         Arguments:
             word (TreeWord): Word of the tree
@@ -1545,9 +1570,9 @@ def is_subordinate_clause_head(
         infinitive heads an infinitive clause (is_infinitive_clause_head). A
         conjunct or a parataxis with a subordinating mark (is_subordinating_mark)
         is a subordinate clause, since a model may attach a clause of because as
-        conj, and so are its conjuncts with a subject of its own; those sharing the
-        subject are not, as a model attaches the predicates of the main clause to it
-        as well
+        conj, and so are its conjuncts with a subject and a coordinating conjunction
+        of their own; the others take the kind of the clause the marked one hangs
+        on, as a model attaches the predicates of that clause to it as well
 
     Arguments:
         word (TreeWord): Word of the tree
@@ -1682,11 +1707,11 @@ def _clause_relation(
 ) -> tuple[TreeWord, str]:
     """First word up the chain of conjuncts of a clause head and its relation, advcl for a
     conjunct or a parataxis with a subordinating mark, of its own or of a clause it is
-    coordinated to when it is an infinitive or has a subject of its own: a conjunct sharing the
-    subject may be a predicate of the main clause"""
+    coordinated to when it and every conjunct on the way take the mark (_inherits_mark) or
+    share the subject"""
     if base_dep(word) in MAIN_CLAUSE_DEPS and _has_mark(word, is_subordinating_mark):
         return word, "advcl"
-    inherits = predicate_form(word, auxiliary_form) == "Inf" or not _shares_subject(word)
+    inherits = _inherits_mark(word, auxiliary_form)
     seen = set()
     while base_dep(word) == "conj" and word.head is not None and word.index not in seen:
         seen.add(word.index)
@@ -1697,7 +1722,18 @@ def _clause_relation(
             and _has_mark(word, is_subordinating_mark)
         ):
             return word, "advcl"
+        inherits = inherits and (_shares_subject(word) or _inherits_mark(word, auxiliary_form))
     return word, base_dep(word)
+
+
+def _inherits_mark(word: TreeWord, auxiliary_form: Callable[[TreeWord], str] | None) -> bool:
+    """Whether a conjunct takes the subordinating mark of the clause it is coordinated to: an
+    infinitive, or a predicate with a subject and a coordinating conjunction of its own (because
+    he was tired and she slept); one sharing the subject or without a conjunction may be a
+    predicate of the main clause a model attaches to the marked one"""
+    return predicate_form(word, auxiliary_form) == "Inf" or (
+        not _shares_subject(word) and any(base_dep(child) == "cc" for child in word.children)
+    )
 
 
 def _has_mark(word: TreeWord, is_subordinating_mark: Callable[[TreeWord], bool]) -> bool:
