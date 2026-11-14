@@ -216,6 +216,16 @@ class TestSentsExtractor:
         )
         assert Whole().extract(text) == ("One, two", "three, four")
 
+    def test_closing_marks(self):
+        """A sentence ends after a final mark and any closing quotes and brackets"""
+        text = 'He said "stop.") Then he left. \u00abYes!\u00bb\u201d Fine.'
+        assert SentsExtractor().extract(text) == (
+            'He said "stop.")',
+            "Then he left.",
+            "\u00abYes!\u00bb\u201d",
+            "Fine.",
+        )
+
     def test_sentenize_hook(self):
         class LineSents(SentsExtractor):
             def sentenize(self, text):

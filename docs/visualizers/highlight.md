@@ -5,12 +5,12 @@ HighlightedText(source, layers=None)
 ```
 
 <!-- --8<-- [start:HighlightedText] -->
-Highlighting of a text by layers, in the manner of the style checkers: every layer marks the fragments of a text that a statistic counts - long sentences, complex words, the passive. The data source is a text or a `Doc` object of [spaCy](https://github.com/explosion/spaCy). The result shows in Jupyter as HTML with styles and a legend; `to_html` returns the markup, and `highlights` keeps the fragments for a rendering of one's own. Fragments of different layers may overlap.
+Highlighting of a text by layers, in the manner of the style checkers: every layer marks the fragments of a text that a statistic counts - long sentences, complex words, the passive. The data source is a text, a `Doc` object of [spaCy](https://github.com/explosion/spaCy) or a `Document` of [anySeg](https://github.com/SergeyShk/anySeg), read through its [document](https://sergeyshk.github.io/anyTS/document/). The result shows in Jupyter as HTML with styles and a legend; `to_html` returns the markup, and `highlights` keeps the fragments for a rendering of one's own. Fragments of different layers may overlap.
 
 Raises:
 
-- `SourceTypeError` - a source that is neither a string nor a `Doc`;
-- `SourceError` - a source without words;
+- `SourceTypeError` - a source that is neither a string, a `Doc` nor a `Document`, a `parse` that returns no `Document`;
+- `SourceError` - a source without words, a `Doc` with a token over a blank line;
 - `ParameterError` - layers that are not a name or a list of names, a layer that is unknown or one that needs an annotation the source lacks.
 <!-- --8<-- [end:HighlightedText] -->
 
@@ -28,7 +28,7 @@ A layer of the long sentences in a subclass.
         layer_styles = {"long_sents": "background: #fef9c3;"}
         css_prefix = "demo"
 
-        def find(self, layer, words, sents, doc):
+        def find(self, layer, words, sents, document):
             return [
                 Highlight(sent.start, sent.end, layer, f"{sent.n_words} words")
                 for sent in sents
@@ -51,7 +51,7 @@ A layer of the long sentences in a subclass.
 <!-- --8<-- [start:HighlightedText-parameters] -->
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
-| `source` | `str` / `Doc` | - | Data source (a string or a Doc object) |
+| `source` | `str` / `Doc` / `Document` | - | Data source |
 | `layers` | `list[str]` / `str` | `None` | Layers of the highlighting; if not given, the default layers the source allows; `"all"` - every layer allowed |
 <!-- --8<-- [end:HighlightedText-parameters] -->
 
@@ -130,18 +130,18 @@ A sentence with its position and number of words.
 
 <!-- --8<-- [start:get_doc_words] -->
 ``` {.python .signature}
-get_doc_words(doc)
+get_doc_words(document)
 ```
 
-The words of `iter_doc_tokens` with their positions, a byte order mark at the start of the text left out, with the part of speech and the lemma when the `Doc` has them.
+The words of a document with their positions: its tokens with a letter or a digit, with the part of speech and the lemma of their first word of Universal Dependencies when the document has them (Spanish `del` reads those of `de`).
 <!-- --8<-- [end:get_doc_words] -->
 
 <!-- --8<-- [start:iter_doc_sents] -->
 ``` {.python .signature}
-iter_doc_sents(doc)
+iter_doc_sents(document)
 ```
 
-The sentences of the boundaries of a `Doc` as triples of the start, the end and the text; the whitespace tokens at the edges of a sentence are left out, and a sentence of whitespace alone is skipped.
+The sentences of a document as triples of the start, the end and the text; a sentence spans its tokens, without the whitespace at its edges.
 <!-- --8<-- [end:iter_doc_sents] -->
 
 <!-- --8<-- [start:get_text_sents] -->
@@ -347,16 +347,16 @@ The core has no layers of its own: a language library subclasses `HighlightedTex
 | :--- | :--- | :---------- |
 | `layers_desc` | class attribute | The layers in the order of drawing with their names in the legend, `dict[str, str]` |
 | `default_layers` | class attribute | The layers on by default, among those the source allows, `tuple[str]` |
-| `layer_annotations` | class attribute | The annotations of a `Doc` a layer needs (`DEP`, `POS`, `LEMMA`...), `dict[str, tuple[str]]`; a layer without them is available for a string too |
+| `layer_annotations` | class attribute | The columns of the document a layer needs (`deprel`, `upos`, `lemma`, `feats`...), `dict[str, tuple[str]]`, checked when the class is defined; a layer without them is always available |
 | `layer_styles` | class attribute | The CSS declarations of every layer, `dict[str, str]`; the text of a layer with a background keeps a dark colour on it |
 | `css_prefix` | class attribute | The prefix of the CSS classes, `str` |
-| `find(layer, words, sents, doc)` | method | The fragments of a layer: a list of `Highlight` from the words and the sentences of the text and the `Doc` (`None` for a string) |
-| `iter_words(text)`, `iter_sents(text)` | methods | The words and the sentences of a string as triples of the start, the end and the text; by default those of the default tokenizers of `WordsExtractor` and `SentsExtractor` |
-| `doc_words(doc)` | method | The words of a `Doc`; by default `get_doc_words` |
-| `annotation_names` | class attribute | Names of the annotations in the message of a layer a source does not allow, `dict[str, str]`; English by default |
+| `find(layer, words, sents, document)` | method | The fragments of a layer: a list of `Highlight` from the words and the sentences of the text and its document |
+| `parse(source)` | method | Document of the source, `to_document` by default; a library sets it to segment and annotate a string in its language |
+| `doc_words(document)` | method | The words of the document; by default `get_doc_words` |
+| `annotation_names` | class attribute | Names of the columns in the message of a layer a source does not allow, `dict[str, str]`; English by default |
 | `messages` | class attribute | Messages of the errors by key; `MESSAGES` by default |
 
-The sentences of a `Doc` come from its boundaries, or from `iter_sents` over its text when it has none or partial ones (`has_sents`). `iter_sents` gets the parts of a text between blank lines one by one, so a blank line always ends a sentence; a sentence holds the words of `doc_words` or `iter_words` that start in it. `find` runs in `__init__`: a subclass stores its own parameters, checked by `check_params`, before calling the `__init__` of the base, and may find its layers with the finders of the layers. A fragment of another layer, an empty one or one outside the text raises `ParameterError`; a `find` that does not return `Highlight` objects, and an `iter_words` or an `iter_sents` whose triples are not ascending integer bounds inside the text with the text of each, `SourceTypeError`.
+The words and the sentences are those of the document of `parse` (`doc_words`, `iter_doc_sents`), so a blank line always ends a sentence; a sentence holds the words that start in it. `find` runs in `__init__`: a subclass stores its own parameters, checked by `check_params`, before calling the `__init__` of the base, and may find its layers with the finders of the layers. A fragment of another layer, an empty one or one outside the text raises `ParameterError`, and so does a layer that needs a column a document has not when the class is defined; a `find` that does not return `Highlight` objects and a `parse` that returns no `Document`, `SourceTypeError`.
 <!-- --8<-- [end:HighlightedText-hooks] -->
 
 In the core the layers are empty and `css_prefix` is `anyts`.

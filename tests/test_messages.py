@@ -151,7 +151,7 @@ with MERGED.retokenize() as retokenizer:
 
 class Layers(HighlightedText):
     layers_desc: ClassVar[dict[str, str]] = {"all": "all", "parsed": "parsed", "bare": "bare"}
-    layer_annotations: ClassVar[dict[str, tuple[str, ...]]] = {"parsed": ("DEP",), "bare": ()}
+    layer_annotations: ClassVar[dict[str, tuple[str, ...]]] = {"parsed": ("deprel",), "bare": ()}
     messages = OWN
 
     def find(self, layer, words, sents, doc):
@@ -447,8 +447,12 @@ CASES = [
     ("layer_annotations", ParameterError, lambda: Layers(TEXT, ["parsed"])),
     ("fragment_outside", ParameterError, lambda: Layers(TEXT, ["all"])),
     ("fragment_layer", ParameterError, lambda: OtherLayer(TEXT)),
-    ("hook_spans", SourceTypeError, lambda: hooked(Layers, iter_words=lambda self, t: [1])(TEXT)),
-    ("hook_spans", SourceTypeError, lambda: hooked(Layers, iter_sents=lambda self, t: 5)(TEXT)),
+    ("hook_document", SourceTypeError, lambda: hooked(Layers, parse=lambda self, s: s)(TEXT)),
+    (
+        "layer_columns",
+        ParameterError,
+        lambda: type("Columns", (Layers,), {"layer_annotations": {"parsed": ("DEP",)}}),
+    ),
     ("layer_unavailable", ParameterError, lambda: Layers._select_layers(["bare"], [])),
     (
         "long_sent_word_factor",

@@ -1,39 +1,34 @@
 from __future__ import annotations
 
+from bisect import bisect_right
 from collections.abc import Iterable, Iterator, Mapping
 from numbers import Integral
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.axes import Axes
 
 from ..constants import VISUALIZER_LABELS
+from ..document import to_document
 from ..exceptions import ParameterError, SourceError, SourceTypeError
 from ..extractors import SentsExtractor, WordsExtractor
-from ..utils import (
-    check_integer,
-    check_sequence,
-    has_sents,
-    is_doc,
-    iter_doc_words,
-    merge_labels,
-)
+from ..utils import check_integer, check_sequence, has_words, is_doc, is_document, merge_labels
 from ._axes import check_axes
 
 if TYPE_CHECKING:
+    from anyseg import Document
     from spacy.tokens import Doc
 
 
 def sentence_lengths_plot(
-    source: str | Doc | Iterable[int],
+    source: str | Doc | Document | Iterable[int],
     window: int = 10,
     inset: bool = True,
     ax: Axes | None = None,
     labels: Mapping[str, str] | None = None,
     sents_extractor: SentsExtractor | None = None,
     words_extractor: WordsExtractor | None = None,
-    join_hyphens: bool = False,
 ) -> Axes:
     """
     Plotting the curve of the lengths of the sentences
@@ -44,15 +39,14 @@ def sentence_lengths_plot(
         histogram of the lengths; the lengths come from sentence_lengths
 
     Arguments:
-        source (str|Doc|Iterable[int]): Text, Doc object or lengths of the
-            sentences (a list, a numpy array, a Series)
+        source (str|Doc|Document|Iterable[int]): Text, Doc or Document object or
+            lengths of the sentences (a list, a numpy array, a Series)
         window (int): Window of the moving average in sentences
         inset (bool): Show the inset with the histogram
         ax (Axes): Axes for the plot; if not given, a new figure is created
         labels (dict[str, str]): Labels over VISUALIZER_LABELS["sentence_lengths_plot"]
-        sents_extractor (SentsExtractor): Extractor of the sentences of a string
-        words_extractor (WordsExtractor): Extractor of the words of a sentence of a string
-        join_hyphens (bool): Join the parts of hyphenated words of a Doc (iter_doc_words)
+        sents_extractor (SentsExtractor): Extractor of the sentences of the text
+        words_extractor (WordsExtractor): Extractor of the words of a sentence of the text
 
     Returns:
         Axes: Axes with the plot
@@ -67,7 +61,7 @@ def sentence_lengths_plot(
     check_integer(window, "window")
     if window < 1:
         raise ParameterError("The window must be at least one")
-    lengths = sentence_lengths(source, sents_extractor, words_extractor, join_hyphens)
+    lengths = sentence_lengths(source, sents_extractor, words_extractor)
     if not lengths:
         raise SourceError("The data source has no sentences")
     check_axes(ax)
@@ -98,30 +92,27 @@ def sentence_lengths_plot(
 
 
 def sentence_lengths(
-    source: str | Doc | Iterable[int],
+    source: str | Doc | Document | Iterable[int],
     sents_extractor: SentsExtractor | None = None,
     words_extractor: WordsExtractor | None = None,
-    join_hyphens: bool = False,
 ) -> list[int]:
     """
     Extracting the lengths of the sentences in words
 
     Description:
-        A string is split into sentences by sents_extractor and every
-        sentence into words by words_extractor. A Doc is split by its sentence
-        boundaries, with the words of iter_doc_words and join_hyphens; without
-        them or with partial ones (has_sents) its text is split by the
-        extractors. Ready lengths (non-negative integers in a sequence or an
+        The sentences of the document of a text, a Doc or a Document
+        (to_document) with their words (document_words); with an extractor
+        given, the text is split into sentences by sents_extractor and every
+        sentence into words by words_extractor instead, the other one by
+        default. Ready lengths (non-negative integers in a sequence or an
         iterator) are used as they are. Sentences without words are skipped
 
     Arguments:
-        source (str|Doc|Iterable[int]): Text, Doc object or ready lengths
-        sents_extractor (SentsExtractor): Extractor of the sentences of a string;
-            SentsExtractor() by default
-        words_extractor (WordsExtractor): Extractor of the words of a sentence of a
-            string; WordsExtractor() by default
-        join_hyphens (bool): Join the parts of hyphenated words of a Doc with
-            sentence boundaries (iter_doc_words)
+        source (str|Doc|Document|Iterable[int]): Text, Doc or Document object or
+            ready lengths
+        sents_extractor (SentsExtractor): Extractor of the sentences of the text
+        words_extractor (WordsExtractor): Extractor of the words of a sentence of
+            the text
 
     Returns:
         list[int]: Lengths of the sentences in order
@@ -130,7 +121,8 @@ def sentence_lengths(
         SourceTypeError: If the data source or an extractor is set incorrectly (a
             table, a set, a mapping, bytes or an object without a length other than
             an iterator for the lengths, a length that is not an integer)
-        SourceError: If a length is negative
+        SourceError: If a length is negative, or a token of a Doc cannot be in a
+            document (to_document)
 
     Example:
         >>> from anyts.visualizers import sentence_lengths
@@ -141,20 +133,19 @@ def sentence_lengths(
         raise SourceTypeError("The sentence extractor must be a SentsExtractor")
     if words_extractor is not None and not isinstance(words_extractor, WordsExtractor):
         raise SourceTypeError("The word extractor must be a WordsExtractor")
-    if isinstance(source, str):
-        sents = (sents_extractor or SentsExtractor()).extract(source)
-        words = words_extractor or WordsExtractor()
-        lengths = [len(words.extract(sent)) for sent in sents]
+    if isinstance(source, str) or is_doc(source) or is_document(source):
+        if sents_extractor is None and words_extractor is None:
+            lengths = _document_lengths(to_document(source))
+        else:
+            text = source if isinstance(source, str) else source.text
+            sents = (sents_extractor or SentsExtractor()).extract(text)
+            words = words_extractor or WordsExtractor()
+            lengths = [len(words.extract(sent)) for sent in sents]
         return [length for length in lengths if length]
-    if is_doc(source):
-        if has_sents(source):
-            lengths = [sum(1 for _ in iter_doc_words(sent, join_hyphens)) for sent in source.sents]
-            return [length for length in lengths if length]
-        return sentence_lengths(source.text, sents_extractor, words_extractor)
     if isinstance(source, Iterator):
         source = list(source)
     check_sequence(source, "lengths of the sentences")
-    values: list[object] = list(source)
+    values: list[object] = list(cast("Iterable[object]", source))
     lengths = []
     for value in values:
         if isinstance(value, bool) or not isinstance(value, Integral):
@@ -162,4 +153,14 @@ def sentence_lengths(
         lengths.append(int(value))
     if any(length < 0 for length in lengths):
         raise SourceError("The lengths of the sentences must not be negative")
+    return lengths
+
+
+def _document_lengths(document: Document) -> list[int]:
+    """Number of the words (has_words) of every sentence of a document"""
+    starts = document.sentences.starts
+    lengths = [0] * len(starts)
+    for token in document.tokens:
+        if has_words(token.text):
+            lengths[bisect_right(starts, token.start) - 1] += 1
     return lengths

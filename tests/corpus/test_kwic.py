@@ -3,6 +3,7 @@ import unicodedata
 
 import pytest
 import spacy
+from anyseg import Document
 from spacy.tokens import Doc
 
 from anyts.components import start_sents_after_blank_lines
@@ -95,11 +96,36 @@ def test_kwic_of_a_doc_with_lemmas():
     # A word is found by its own form too
     assert [line.start for line in kwic(doc, "saw", by_lemma=True)] == [10, 16]
     assert kwic(doc.text, "see", by_lemma=True) == []
-    # The lemmatizer gets the tokens of a word of a Doc
+    # The lemmatizer gets the words of Universal Dependencies of a token, none for the keyword
     seen = []
-    kwic(doc, "saw", by_lemma=True, lemmatize=lambda word, tokens: seen.append(tokens) or [word])
+    kwic(doc, "saw", by_lemma=True, lemmatize=lambda word, words: seen.append(words) or [word])
     # the words of the text first, then the keyword
-    assert [len(tokens) for tokens in seen] == [1, 1, 1, 1, 1, 0]
+    assert [[word.lemma for word in words] for words in seen] == [
+        ["my"],
+        ["friend"],
+        ["see"],
+        ["a"],
+        ["saw"],
+        [],
+    ]
+
+
+def test_kwic_of_a_multiword_token():
+    """A multiword token is one word with its words of Universal Dependencies"""
+    document = Document.from_tokens(
+        "Vino del pueblo", [0, 5, 9], [4, 8, 15], words={1: ["de", "el"]}
+    )
+    document.set_columns(lemma=["venir", "de", "el", "pueblo"])
+    assert [line.keyword for line in kwic(document, "del pueblo")] == ["del pueblo"]
+    # Its lemmas are those of a lemmatizer: by default the word alone
+    assert kwic(document, "el", by_lemma=True) == []
+    found = kwic(
+        document,
+        "el",
+        by_lemma=True,
+        lemmatize=lambda word, words: [word, *(w.lemma for w in words)],
+    )
+    assert [line.keyword for line in found] == ["del"]
 
 
 def test_kwic_splits_the_keyword_like_the_text():
@@ -125,13 +151,15 @@ def test_kwic_fold():
     ]
 
 
-def test_kwic_join_hyphens():
-    doc = spacy.blank("xx")("A well-known cat and a well known dog.")
+def test_kwic_hyphenated_words():
+    """A hyphenated word is one word where the tokens of the document keep it whole"""
+    text = "A well-known cat and a well known dog."
+    doc = spacy.blank("xx")(text)
+    assert [line.keyword for line in kwic(doc, "well known")] == ["well-known", "well known"]
     assert kwic(doc, "well-known", tokenize=words_of(r"\w+(?:-\w+)*")) == []
-    assert kwic(doc, "well-known", tokenize=words_of(r"\w+(?:-\w+)*"), join_hyphens=True) == [
+    assert kwic(text, "well-known", tokenize=words_of(r"\w+(?:-\w+)*")) == [
         Concordance(2, 12, "A", "well-known", "cat and a well known")
     ]
-    assert [line.keyword for line in kwic(doc, "well known")] == ["well-known", "well known"]
 
 
 def test_kwic_of_a_wrong_source():
@@ -202,12 +230,12 @@ def test_kwic_byte_order_mark():
     assert kwic(spacy.blank("xx")(sample), "cat")[0].start == 1
 
 
-def test_kwic_join_hyphens_with_the_default_tokenizer():
+def test_kwic_hyphenated_words_of_a_tokenizer():
     sample = "Кто-то пришёл, и кто-то ушёл."
-    for source in (sample, spacy.blank("ru")(sample)):
-        found = kwic(source, "кто-то", join_hyphens=True)
-        assert [line.keyword for line in found] == ["Кто-то", "кто-то"]
-        assert kwic(source, "то", join_hyphens=True) == []
+    hyphenated = words_of(r"\w+(?:-\w+)*")
+    found = kwic(sample, "кто-то", tokenize=hyphenated)
+    assert [line.keyword for line in found] == ["Кто-то", "кто-то"]
+    assert kwic(sample, "то", tokenize=hyphenated) == []
     assert len(kwic(sample, "то")) == 2
 
 
@@ -309,6 +337,8 @@ def test_kwic_sentenize():
     assert len(kwic(dialogue, "waited then")) == 1
     by_lines = lambda text: [(0, 9, text[:9]), (10, len(text), text[10:])]  # noqa: E731
     assert kwic(dialogue, "waited then", sentenize=by_lines) == []
+    # A sentence ends after a run of closing marks too
+    assert kwic('He said "stop.") Then he left.', "stop then") == []
     # A paragraph ends a phrase whatever the sentences
     one = lambda text: [(0, len(text), text)]  # noqa: E731
     assert kwic("A line\n\nanother line", "line another", sentenize=one) == []

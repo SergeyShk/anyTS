@@ -2,31 +2,23 @@ from __future__ import annotations
 
 import re
 import unicodedata
-from bisect import bisect_left
+from bisect import bisect_right
 from collections.abc import Callable, Iterable, Sequence
 from typing import TYPE_CHECKING, NamedTuple
 
-from ..constants import MESSAGES
+from ..document import to_document
 from ..exceptions import ParameterError, SourceTypeError
-from ..extractors import BLANK_LINE, _check_spans, _iter_words
-from ..utils import (
-    _unit_word,
-    check_bool,
-    check_integer,
-    has_sents,
-    is_doc,
-    iter_doc_units,
-    source_type_error,
-)
+from ..utils import BLANK_LINE, check_bool, check_integer, has_words
 
 if TYPE_CHECKING:
-    from spacy.tokens import Doc, Token
+    from anyseg import Document, Word
+    from spacy.tokens import Doc
 
 Tokenizer = Callable[[str], Iterable[tuple[int, int, str]]]
 Sentenizer = Callable[[str], Iterable[tuple[int, int, str]]]
-Lemmatizer = Callable[[str, Sequence["Token"]], Iterable[str] | str]
+Lemmatizer = Callable[[str, Sequence["Word"]], Iterable[str] | str]
 
-# The end of a sentence: a final mark, closing marks and whitespace, or a blank line
+# The end of a sentence in a keyword: a final mark, closing marks and whitespace, or a blank line
 _BOUNDARY = re.compile(rf"[.!?…][\"'»”’)\]]*\s|{BLANK_LINE.pattern}")
 
 
@@ -50,7 +42,7 @@ class Concordance(NamedTuple):
 
 
 def kwic(
-    source: str | Doc,
+    source: str | Doc | Document,
     keyword: str,
     window: int = 5,
     by_lemma: bool = False,
@@ -58,52 +50,50 @@ def kwic(
     tokenize: Tokenizer | None = None,
     lemmatize: Lemmatizer | None = None,
     fold: Callable[[str], str] = str.lower,
-    join_hyphens: bool = False,
     sentenize: Sentenizer | None = None,
 ) -> list[Concordance]:
     """
     Building a KWIC concordance (keyword in context)
 
     Description:
-        Occurrences of a word or a phrase are found among the words of the text
-        by the word form or by the lemma, when a word shares a lemma with its
-        word of the keyword. The words of a string and of the keyword come from
-        tokenize, those of a Doc from its tokens (iter_doc_units); punctuation
-        and symbols are not words. Lemmas, and word forms with ignore_case, are
-        folded by fold; forms are compared in NFC, without soft hyphens. A
-        phrase does not cross the end of a paragraph or a sentence - a boundary
-        of a Doc anywhere between its words, or without boundaries or with
-        partial ones (has_sents) a sentence start of sentenize - unless the
-        keyword has such an end in the same place. The context is window words
-        on each side as written, punctuation included; whitespace collapses to
-        one space; occurrences do not overlap
+        Occurrences of a word or a phrase are found among the words of the
+        document of the text (to_document with tokenize and sentenize) by the
+        word form or by the lemma, when a word shares a lemma with its word of
+        the keyword; the keyword is split the same way. The words are the
+        tokens with a letter or a digit (document_words). Lemmas, and word
+        forms with ignore_case, are folded by fold; forms are compared in NFC,
+        without soft hyphens. A phrase does not cross the end of a sentence or
+        a paragraph of the document unless the keyword has such an end in the
+        same place, or a final mark before whitespace there, whatever the case
+        after it. The context is window words on each side as written,
+        punctuation included; whitespace collapses to one space; occurrences do
+        not overlap
 
     Arguments:
-        source (str|Doc): Text or Doc object
+        source (str|Doc|Document): Text, Doc or Document object
         keyword (str): Word or phrase
         window (int): Number of words of context on each side
         by_lemma (bool): Compare lemmas instead of word forms
         ignore_case (bool): Fold the word forms before comparing them
-        tokenize (callable): Words of a string as triples of the start, the end
-            and the text; a run of word characters by default
-        lemmatize (callable): Lemmas of a word, given its text and its tokens
-            in a Doc (none for a string and the keyword); a string is one lemma;
-            by default the word and, in a Doc with lemmas, the lemma of the model
+        tokenize (callable): Tokens of a string as triples of the start, the end
+            and the text; the default tokens of to_document by default
+        lemmatize (callable): Lemmas of a word, given its text and its words of
+            Universal Dependencies (Word objects of anySeg); a string is one
+            lemma; by default the word and, for a token of one word with a
+            lemma, that lemma
         fold (callable): Folding of a word form or a lemma before the comparison
-        join_hyphens (bool): Join the parts of hyphenated words of a Doc, and of
-            a string with the default tokenizer
         sentenize (callable): Sentences of a string, of the keyword and of the
-            text of a Doc without boundaries or with partial ones, as triples of
-            the start, the end and the text; by default a sentence ends at a
-            final mark before whitespace
+            text of a Doc without sentences, as triples of the start, the end and
+            the text; those of SentsExtractor by default
 
     Returns:
         list[Concordance]: Occurrences in the order of the text
 
     Raises:
-        SourceTypeError: If the source is neither a string nor a Doc object, the keyword
-            is not a string, a hook is not callable, tokenize does not give the words
-            of a string in order or sentenize its sentences inside it
+        SourceTypeError: If the source is neither a string, a Doc nor a Document
+            object, the keyword is not a string, a hook is not callable, or
+            tokenize or sentenize does not give triples of the text (to_document)
+        SourceError: If a token of a Doc cannot be in a document (to_document)
         ParameterError: If the keyword has no words, the window is not an integer or
             is negative, or by_lemma or ignore_case is not a bool
 
@@ -117,27 +107,16 @@ def kwic(
     """
     if not isinstance(keyword, str):
         raise SourceTypeError(f"The keyword must be a string, not {type(keyword).__name__}")
-    for hook, name in (
-        (tokenize, "tokenizer"),
-        (lemmatize, "lemmatizer"),
-        (sentenize, "sentence splitter"),
-    ):
-        if hook is not None and not callable(hook):
-            raise SourceTypeError(f"The {name} must be callable, not {type(hook).__name__}")
+    if lemmatize is not None and not callable(lemmatize):
+        raise SourceTypeError(f"The lemmatizer must be callable, not {type(lemmatize).__name__}")
     if not callable(fold):
         raise SourceTypeError(f"The folding must be callable, not {type(fold).__name__}")
-    split = (
-        _checked_tokenizer(tokenize)
-        if tokenize is not None
-        else (_iter_hyphenated_words if join_hyphens else _iter_words)
-    )
-    key_words = list(split(keyword))
+    key_words = _words(to_document(keyword, tokenize, sentenize))
     if not key_words:
         raise ParameterError("The keyword is not set")
-    key_starts = _sent_starts(keyword, sentenize)
     key_gaps = [
-        _boundary(keyword, key_words, (), None, None, index)
-        or _boundary(keyword, key_words, (), None, key_starts, index)
+        key_words[index].sentence != key_words[index - 1].sentence
+        or bool(_BOUNDARY.search(keyword, key_words[index - 1].end, key_words[index].start))
         for index in range(1, len(key_words))
     ]
     check_integer(window, "window")
@@ -145,33 +124,30 @@ def kwic(
     check_bool(ignore_case, "folding of the case")
     if window < 0:
         raise ParameterError("The window cannot be negative")
-    text, words, tokens = _source_words(source, split, join_hyphens)
-    doc = source if is_doc(source) and has_sents(source) else None
-    starts = _sent_starts(text, sentenize) if doc is None and not all(key_gaps) else None
+    document = to_document(source, tokenize, sentenize)
+    text = document.text
+    words = _words(document)
     lemmas = lemmatize or _lemmas
 
-    def readings(word: str, word_tokens: Sequence[Token]) -> set[str]:
-        word = _normalize(word)
+    def readings(word: _Word | _KeyWord) -> set[str]:
+        form = _normalize(word.text)
         if not by_lemma:
-            return {fold(word) if ignore_case else word}
-        found = lemmas(word, word_tokens)
+            return {fold(form) if ignore_case else form}
+        found = lemmas(form, word.words)
         if isinstance(found, str):
             return {fold(_normalize(found))}
         return {fold(_normalize(lemma)) for lemma in found}
 
     def crosses(index: int) -> bool:
-        """Whether the phrase starting at a word runs across a boundary the keyword lacks"""
+        """Whether the phrase starting at a word runs across a sentence end the keyword lacks"""
         return any(
-            _boundary(text, words, tokens, doc, starts, index + offset)
+            words[index + offset].sentence != words[index + offset - 1].sentence
             for offset, allowed in enumerate(key_gaps, 1)
             if not allowed
         )
 
-    met = [
-        readings(word, word_tokens)
-        for (_, _, word), word_tokens in zip(words, tokens, strict=True)
-    ]
-    target = [readings(word, ()) for _, _, word in key_words]
+    met = [readings(word) for word in words]
+    target = [readings(_KeyWord(word.text)) for word in key_words]
     found = []
     index = 0
     while index <= len(words) - len(target):
@@ -182,10 +158,10 @@ def kwic(
             index += 1
             continue
         last = index + len(target) - 1
-        start = words[index][0]
-        end = words[last][1]
-        left = text[words[max(index - window, 0)][0] : start] if window else ""
-        right = text[end : words[min(last + window, len(words) - 1)][1]] if window else ""
+        start = words[index].start
+        end = words[last].end
+        left = text[words[max(index - window, 0)].start : start] if window else ""
+        right = text[end : words[min(last + window, len(words) - 1)].end] if window else ""
         found.append(
             Concordance(
                 start,
@@ -199,60 +175,37 @@ def kwic(
     return found
 
 
-def _checked_tokenizer(tokenize: Tokenizer) -> Tokenizer:
-    """The tokenizer of a library with its words checked"""
-    return lambda text: _check_spans(tokenize(text), text, "tokenizer")
+class _Word(NamedTuple):
+    """Word of a document with its position, its sentence and its words of Universal Dependencies"""
+
+    start: int
+    end: int
+    text: str
+    sentence: int
+    words: Sequence[Word]
 
 
-def _source_words(
-    source: str | Doc, split: Tokenizer, join_hyphens: bool
-) -> tuple[str, list[tuple[int, int, str]], list[Sequence[Token]]]:
-    """Text of a source, its words with their positions and their tokens (none for a string)"""
-    if is_doc(source):
-        tokens = list(iter_doc_units(source, join_hyphens))
-        return source.text, [_unit_word(unit) for unit in tokens], list(tokens)
-    if isinstance(source, str):
-        words = list(split(source))
-        return source, words, [()] * len(words)
-    raise source_type_error(MESSAGES, source)
+class _KeyWord(NamedTuple):
+    """Word of the keyword, read by its form alone"""
+
+    text: str
+    words: Sequence[Word] = ()
 
 
-def _sent_starts(text: str, sentenize: Sentenizer | None) -> list[int] | None:
-    """Starts of the sentences of a text by sentenize in ascending order; None without it"""
-    if sentenize is None:
-        return None
-    spans = _check_spans(sentenize(text), text, "sentence splitter", ordered=False)
-    return sorted(start for start, _, _ in spans)
-
-
-def _boundary(
-    text: str,
-    words: Sequence[tuple[int, int, str]],
-    tokens: Sequence[Sequence[Token]],
-    doc: Doc | None,
-    starts: Sequence[int] | None,
-    index: int,
-) -> bool:
-    """
-    Whether a sentence or a paragraph ends before a word
-
-    Description:
-        By a sentence start of a Doc at any token from the one after the
-        previous word to the first token of the word (so a start on an opening
-        mark counts), or of sentenize between the two words, and by a paragraph
-        break; otherwise by a final mark before whitespace
-    """
-    end, start = words[index - 1][1], words[index][0]
-    gap = text[end:start]
-    if doc is not None:
-        first, last = tokens[index - 1][-1].i + 1, tokens[index][0].i
-        return bool(BLANK_LINE.search(gap)) or any(
-            doc[position].is_sent_start for position in range(first, last + 1)
+def _words(document: Document) -> list[_Word]:
+    """Words of a document: the tokens with a letter or a digit, with the index of their sentence"""
+    sentence_starts = document.sentences.starts
+    return [
+        _Word(
+            token.start,
+            token.end,
+            token.text,
+            bisect_right(sentence_starts, token.start) - 1,
+            token.words,
         )
-    if starts is None:
-        return bool(_BOUNDARY.search(gap))
-    position = bisect_left(starts, end)
-    return bool(BLANK_LINE.search(gap)) or (position < len(starts) and starts[position] <= start)
+        for token in document.tokens
+        if has_words(token.text)
+    ]
 
 
 def _normalize(word: str) -> str:
@@ -260,21 +213,9 @@ def _normalize(word: str) -> str:
     return unicodedata.normalize("NFC", word).replace("\u00ad", "")
 
 
-def _iter_hyphenated_words(text: str) -> list[tuple[int, int, str]]:
-    """Words of the default tokenizer, those joined by a hyphen without whitespace kept whole"""
-    words: list[tuple[int, int, str]] = []
-    for start, end, word in _iter_words(text):
-        if words and text[words[-1][1] : start] == "-":
-            first = words[-1][0]
-            words[-1] = (first, end, text[first:end])
-        else:
-            words.append((start, end, word))
-    return words
-
-
-def _lemmas(word: str, tokens: Sequence[Token]) -> tuple[str, ...]:
-    """The word itself and, for a word of one token of a Doc with lemmas, the lemma of the model"""
-    lemma = tokens[0].lemma_ if len(tokens) == 1 else ""
+def _lemmas(word: str, words: Sequence[Word]) -> tuple[str, ...]:
+    """The word itself and, for a token of one word with a lemma, that lemma"""
+    lemma = words[0].lemma if len(words) == 1 else None
     return (word, lemma) if lemma else (word,)
 
 
