@@ -3,6 +3,8 @@ from typing import ClassVar, NamedTuple
 
 import pytest
 import spacy
+from anyseg import Document
+from spacy.tokens import Doc
 
 from anyts.constants import LEXICAL_STATS_DESC, MESSAGES
 from anyts.exceptions import ParameterError, SourceError, SourceTypeError
@@ -166,9 +168,30 @@ def test_without_a_class_of_the_dictionary():
     assert Bare(TEXT, freq_dict=Dictionary()).coverage == 0.8
 
 
-def test_analyze_is_required():
-    with pytest.raises(TypeError, match="abstract"):
-        LexicalStats(TEXT)
+def test_default_analyze():
+    """The words of the document: no numbers, the lemmas of its column, content words by UPOS"""
+    doc = Doc(
+        spacy.blank("en").vocab,
+        words=["The", "cats", "sat", "in", "2020", "."],
+        lemmas=["the", "cat", "", "in", "2020", "."],
+        pos=["DET", "NOUN", "VERB", "ADP", "NUM", "PUNCT"],
+    )
+    stats = LexicalStats(doc, Dictionary())
+    assert stats.words == ("The", "cats", "sat", "in")
+    assert stats.lemmas == ("the", "cat", "sat", "in")
+    assert stats.n_content_words == 2
+    with pytest.raises(SourceError, match=r"^The data source has no parts of speech"):
+        LexicalStats(TEXT, Dictionary())
+    # The words of a multiword token are words of their own
+    document = Document.from_tokens(
+        "Vino del pueblo", [0, 5, 9], [4, 8, 15], words={1: ["de", "el"]}
+    )
+    document.set_columns(upos=["VERB", "ADP", "DET", "NOUN"], lemma=["venir", "de", "el", None])
+    stats = LexicalStats(document, Dictionary())
+    assert stats.words == ("Vino", "de", "el", "pueblo")
+    assert stats.lemmas == ("venir", "de", "el", "pueblo")
+    with pytest.raises(SourceError, match=r"^The data source has no words$"):
+        LexicalStats("2020 !", Dictionary())
 
 
 def test_surprisal_function():

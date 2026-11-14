@@ -128,8 +128,13 @@ def document_words(document: Document) -> tuple[str, ...]:
         for word in (
             text[start:end] for start, end in zip(tokens.starts, tokens.ends, strict=True)
         )
-        if any(map(str.isalnum, word))
+        if _is_word(word)
     )
+
+
+def _is_word(form: str) -> bool:
+    """Whether a token or a word of a document is a word: it holds a letter or a digit"""
+    return any(map(str.isalnum, form))
 
 
 def _source_text(source: str | Doc | Document, messages: Mapping[str, str]) -> str:

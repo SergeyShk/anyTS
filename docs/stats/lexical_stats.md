@@ -5,12 +5,12 @@ LexicalStats(source, freq_dict=None)
 ```
 
 <!-- --8<-- [start:LexicalStats] -->
-Lexical sophistication in the manner of TAALES (Kyle, Crossley and Berger, 2018) - how rare the words of a text are: statistics by a frequency dictionary and its unigram model, the shares of the frequency bands of a list of the most frequent lemmas and the lexical density. The statistics by the dictionary are computed when first read, so the bands and the lexical density need no dictionary data.
+Lexical sophistication in the manner of TAALES (Kyle, Crossley and Berger, 2018) - how rare the words of a text are: statistics by a frequency dictionary and its unigram model, the shares of the frequency bands of a list of the most frequent lemmas and the lexical density. The statistics by the dictionary are computed when first read, so the bands and the lexical density need no dictionary data. The data source is a text, a `Doc` object of [spaCy](https://github.com/explosion/spaCy) or a `Document` of [anySeg](https://github.com/SergeyShk/anySeg), read through its [document](https://sergeyshk.github.io/anyTS/document/): by default its words of Universal Dependencies without numbers, with their lemmas and parts of speech.
 
 Raises:
 
-- `SourceTypeError` - a dictionary of another class than that of the library or, without `freq_dict_class`, one without `lookup` and `ipm` or none at all; an `analyze` that does not give `LexicalWord` objects;
-- `SourceError` - a source without words.
+- `SourceTypeError` - a source that is neither a string, a `Doc` nor a `Document`, a `parse` that returns no `Document`, a dictionary of another class than that of the library or, without `freq_dict_class`, one without `lookup` and `ipm` or none at all; an `analyze` that does not give `LexicalWord` objects;
+- `SourceError` - words without parts of speech, a source without words.
 <!-- --8<-- [end:LexicalStats] -->
 
 === "Code"
@@ -80,7 +80,7 @@ Raises:
 <!-- --8<-- [start:LexicalStats-parameters] -->
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
-| `source` | `str` / `Doc` | - | Data source |
+| `source` | `str` / `Doc` / `Document` | - | Data source |
 | `freq_dict` | `FrequencyDictionary` | `None` | Frequency dictionary; `freq_dict_class()` by default |
 <!-- --8<-- [end:LexicalStats-parameters] -->
 
@@ -203,7 +203,8 @@ A language library subclasses `LexicalStats`:
 
 | Hook | Kind | Description |
 | :--- | :--- | :---------- |
-| `analyze(source)` | method | The words of a source as `LexicalWord`: the word, its lemma and whether it is a content word; an abstract method. Numbers (`is_number` of `anyts.utils`) are not words |
+| `analyze(source)` | method | The words of a source as `LexicalWord`: the word, its lemma and whether it is a content word. By default the words of Universal Dependencies of the document of `parse` with a letter or a digit, numbers (`is_number` of `anyts.utils`) left out, the lemma of the column `lemma` or the word itself, and the content words by the parts of speech of `CONTENT_UD_POS` (`ADJ`, `ADV`, `NOUN`, `PROPN`, `VERB`); a library with its own lemmas or content words overrides it |
+| `parse(source)` | method | Document of the source, from `Stats`; a library sets it to annotate a string in its language |
 | `freq_dict_class` | class attribute | Class of the frequency dictionary, made without arguments when none is given; a dictionary of another class is refused, and without the class a dictionary must be given |
 | `dictionary_keys()` | method | Keys of the words in the dictionary; the lemmas by default, or for instance a proper noun by its form |
 | `rank(lemma)` | method | Rank of a lemma in the list of the most frequent lemmas, `None` out of it; no list by default |

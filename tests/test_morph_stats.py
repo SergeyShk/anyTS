@@ -4,6 +4,7 @@ from typing import ClassVar
 
 import pytest
 import spacy
+from anyseg import Document
 from spacy.tokens import Doc
 
 from anyts.constants import MESSAGES, MORPH_FEATURES, MORPH_STATS_DESC, MORPH_VALUES_DESC
@@ -228,7 +229,8 @@ def test_a_feature_without_value_is_none():
 @pytest.mark.parametrize(
     ("source", "error", "message"),
     [
-        ("The cats", SourceTypeError, MESSAGES["source_type"].format(type="str")),
+        (5, SourceTypeError, MESSAGES["source_type"].format(type="int")),
+        ("The cats", SourceError, MESSAGES["no_pos"]),
         (make_doc()[:2], SourceTypeError, MESSAGES["source_span"]),
         (make_doc(pos=False), SourceError, MESSAGES["no_pos"]),
         (
@@ -314,3 +316,33 @@ def test_stats_desc_in_another_order():
     )
     assert list(reordered(make_doc()).get_stats()) == ["case", "pos", "number"]
     assert MORPH_VALUES_DESC["pos"]["NOUN"] == "Noun"
+
+
+def spanish_document():
+    """A document whose multiword token del holds the words de and el"""
+    document = Document.from_tokens(
+        "Vino del pueblo.", [0, 5, 9, 15], [4, 8, 15, 16], words={1: ["de", "el"]}
+    )
+    document.set_columns(
+        upos=["VERB", "ADP", "DET", "NOUN", "PUNCT"],
+        feats=["Mood=Ind", None, "Definite=Def|Gender=Masc", "Gender=Masc|Number=Sing", None],
+    )
+    return document
+
+
+def test_words_of_universal_dependencies():
+    morph = MorphStats(spanish_document())
+    assert morph.words == ("Vino", "de", "el", "pueblo")
+    assert morph.pos == ("VERB", "ADP", "DET", "NOUN")
+    assert morph.get_stats("gender", filter_none=True) == {"gender": {"Masc": 2}}
+    assert morph.tags[1] == "_"
+
+
+def test_parse_of_a_library():
+    """A library that annotates a string in parse needs no analyze of its own"""
+
+    class Annotated(MorphStats):
+        def parse(self, source):
+            return spanish_document() if source == "Vino del pueblo." else super().parse(source)
+
+    assert Annotated("Vino del pueblo.").words == ("Vino", "de", "el", "pueblo")

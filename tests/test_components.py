@@ -185,7 +185,6 @@ def test_stats_class_or_compute_is_required(nlp):
     # An abstract class of statistics is none either, and diversity has no default
     for component in (
         BasicStatsComponent,
-        LexicalStatsComponent,
         PhonStatsComponent,
         DiversityStatsComponent,
     ):

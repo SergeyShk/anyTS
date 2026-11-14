@@ -331,7 +331,7 @@ CASES = [
     ("no_lemmas", SourceError, lambda: Lemmas(TAGGED_PARSE)),
     ("source_type", SourceTypeError, lambda: Cohesion("Yes")),
     ("source_span", SourceTypeError, lambda: Cohesion(PARSED[:1])),
-    ("source_type", SourceTypeError, lambda: Morph("Yes")),
+    ("source_type", SourceTypeError, lambda: Morph(5)),
     ("source_span", SourceTypeError, lambda: Morph(PARSED[:1])),
     ("no_pos", SourceError, lambda: Morph(PARSED)),
     ("unknown_stat", UnknownStatError, lambda: Morph(TAGGED).get_stats("cases")),

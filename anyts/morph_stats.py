@@ -5,12 +5,14 @@ from collections.abc import Iterable, Mapping
 from typing import TYPE_CHECKING, Any, ClassVar, NamedTuple
 
 from .constants import MORPH_FEATURES, MORPH_STATS_DESC, MORPH_VALUES_DESC
+from .document import _is_word
 from .exceptions import ParameterError, SourceError, SourceTypeError, UnknownStatError
 from .stats import Stats, _print_table
-from .utils import check_bool, has_pos, is_doc, iter_doc_tokens, source_type_error
+from .utils import check_bool
 
 if TYPE_CHECKING:
-    from spacy.tokens import Doc, MorphAnalysis
+    from anyseg import Document
+    from spacy.tokens import Doc
 
 
 class MorphWord(NamedTuple):
@@ -36,13 +38,13 @@ class MorphStats(Stats):
     Description:
         The parts of speech and the features of Universal Dependencies of the
         words of a text, counted by value. A language library subclasses the
-        class and sets its hooks; by default the source is a Doc with the parts
-        of speech, read by token.pos_ and token.morph, and the statistics are
-        the features of MORPH_FEATURES.
+        class and sets its hooks; by default the words are those of the
+        document of parse with the columns upos and feats, and the statistics
+        are the features of MORPH_FEATURES.
         to_dataframe and describe come from Stats
 
     Arguments:
-        source (str|Doc): Data source (a Doc object, or what analyze reads)
+        source (str|Doc|Document): Data source (a string, a Doc or a Document object)
 
     Attributes:
         words (tuple[str]): Words
@@ -73,9 +75,11 @@ class MorphStats(Stats):
         markers_headers (tuple[str, str]): Headers of the columns for print_markers
 
     Raises:
-        SourceTypeError: If the source is not a Doc (analyze) or analyze does not give
+        SourceTypeError: If the source is neither a string, a Doc nor a Document
+            object, parse does not return a Document, or analyze does not give
             MorphWord objects of a string, a string or None and a mapping of strings
-        SourceError: If the source has no parts of speech (analyze) or no words
+        SourceError: If the words of the source have no parts of speech or there
+            are no words
         ParameterError: When a class is defined, if feature_names does not map
             identifiers other than pos, tags, words and the names of the class to
             the names of features, stats_desc does not name pos and the statistics
@@ -159,7 +163,7 @@ class MorphStats(Stats):
                 cls.messages["morph_values_desc"].format(cls=cls.__name__, value=repr(values))
             )
 
-    def __init__(self, source: str | Doc):
+    def __init__(self, source: str | Doc | Document):
         messages = self.messages
         found = self.analyze(source)
         words = tuple(found) if isinstance(found, Iterable) else (found,)
@@ -194,38 +198,43 @@ class MorphStats(Stats):
         for stat, values in zip(self.feature_names, columns, strict=True):
             setattr(self, stat, values)
 
-    def analyze(self, source: str | Doc) -> Iterable[MorphWord]:
+    def analyze(self, source: str | Doc | Document) -> Iterable[MorphWord]:
         """
         Getting the words of a source with their features
 
         Description:
-            The words of a Doc with the parts of speech (iter_doc_tokens), with
-            token.pos_ and the features of token.morph, one dictionary for the
-            words of one analysis; a library that reads a string or a Doc without
-            these annotations overrides it
+            The words of Universal Dependencies of the document of parse that
+            hold a letter or a digit, with their parts of speech and features
+            (the columns upos and feats), one dictionary for the words of one
+            set of features; a library that reads the features another way
+            overrides it
 
         Arguments:
-            source (str|Doc): Data source
+            source (str|Doc|Document): Data source
 
         Returns:
             iterable[MorphWord]: Words with their features
 
         Raises:
-            SourceTypeError: If the source is not a Doc object
-            SourceError: If the source has no parts of speech
+            SourceTypeError: If the source is neither a string, a Doc nor a Document
+                object, or parse does not return a Document
+            SourceError: If the words of the source have no parts of speech
         """
-        messages = self.messages
-        if not is_doc(source):
-            raise source_type_error(messages, source)
-        if not has_pos(source):
-            raise SourceError(messages["no_pos"])
-        features: dict[MorphAnalysis, dict[str, str]] = {}
+        document = self._document(source)
+        column = document.column
+        rows = [
+            row
+            for row in zip(column("form"), column("upos"), column("feats"), strict=True)
+            if _is_word(row[0])
+        ]
+        if rows and not any(pos for _, pos, _ in rows):
+            raise SourceError(self.messages["no_pos"])
+        features: dict[str | None, dict[str, str]] = {}
         words = []
-        for token in iter_doc_tokens(source):
-            morph = token.morph
-            if (found := features.get(morph)) is None:
-                found = features[morph] = morph.to_dict()
-            words.append(MorphWord(token.text, token.pos_ or None, found))
+        for form, pos, feats in rows:
+            if (found := features.get(feats)) is None:
+                found = features[feats] = _feature_dict(feats)
+            words.append(MorphWord(form, pos, found))
         return words
 
     def get_stats(  # type: ignore[override]
@@ -367,6 +376,11 @@ class MorphStats(Stats):
                     self.messages["unknown_stat"].format(stat=stat, stats=names)
                 )
         return stats or names
+
+
+def _feature_dict(feats: str | None) -> dict[str, str]:
+    """Features of a word in the CoNLL-U format as a dictionary, empty for None"""
+    return dict(pair.split("=", 1) for pair in feats.split("|")) if feats else {}
 
 
 def _wrong_word(word: object) -> str:
