@@ -2471,7 +2471,7 @@ True
 <span class="k">class</span><span class="w"> </span><span class="nc">PhonStatsComponent</span><span class="p">(</span><span class="n">anyts</span><span class="o">.</span><span class="n">components</span><span class="o">.</span><span class="n">PhonStatsComponent</span><span class="p">):</span>
     <span class="n">stats_class</span> <span class="o">=</span> <span class="n">PhonStats</span>  <span class="c1"># the subclass of the library</span>
 </code></pre></div>
-<p>The class of the core is the default of <code>stats_class</code>. Where it cannot read a <code>Doc</code> - an abstract class (<code>BasicStats</code>, <code>LexicalStats</code>, <code>PhonStats</code>), <code>ReadabilityStats</code> and <code>UnadaptedReadabilityStats</code> without the <code>basic_stats_class</code> of a library, none at all (<code>DiversityStatsComponent</code>, the class of the core taking a list of words) - the component cannot be added until the library gives its class.</p>
+<p>The class of the core is the default of <code>stats_class</code>. Where it cannot read a <code>Doc</code> - an abstract class (<code>BasicStats</code>, <code>PhonStats</code>), <code>LexicalStats</code> without a dictionary of its own and no <code>freq_dict</code>, <code>ReadabilityStats</code> and <code>UnadaptedReadabilityStats</code> without the <code>basic_stats_class</code> of a library, none at all (<code>DiversityStatsComponent</code>, the class of the core taking a list of words) - the component cannot be added until the library gives its class.</p>
 <!-- --8<-- [end:class-components] -->
 
 <table>
@@ -2595,7 +2595,7 @@ True
 <div class="signature highlight"><pre><span></span><code><span class="n">LexicalStatsComponent</span><span class="p">(</span><span class="n">nlp</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
 </code></pre></div>
 <!-- --8<-- [start:LexicalStatsComponent] -->
-<p><code>LexicalStatsComponent</code> puts the lexical sophistication statistics into the extension, with the frequency dictionary of its attribute <code>freq_dict</code>: <code>None</code> by default, for the dictionary of the class, and set by a library in the constructor of its component. A document gets the statistics when it has a word of <code>iter_doc_words</code> (with <code>join_hyphens</code>) other than a number of the method <code>is_number</code>, <code>anyts.utils.is_number</code> by default; a library gives the numbers its class leaves out, so a document of numbers alone passes untouched.</p>
+<p><code>LexicalStatsComponent</code> puts the lexical sophistication statistics into the extension, with the frequency dictionary of its attribute <code>freq_dict</code>: <code>None</code> by default, for the dictionary of the class, and set by a library before the constructor of the core; a class without a dictionary of its own and no <code>freq_dict</code> raise <code>ParameterError</code> when the component is made. A document gets the statistics when it has a word of <code>iter_doc_words</code> (with <code>join_hyphens</code>) with a letter or a digit (<code>has_words</code>) other than a number of the method <code>is_number</code>, <code>anyts.utils.is_number</code> by default; a library gives the numbers its class leaves out, so a document of numbers alone passes untouched.</p>
 <!-- --8<-- [end:LexicalStatsComponent] -->
 
 <h3 id="StyleStatsComponent">Style metrics<a class="headerlink" href="#StyleStatsComponent" title="Permanent link">&para;</a></h3>

@@ -2232,11 +2232,11 @@
 <div class="signature highlight"><pre><span></span><code><span class="n">LexicalStats</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">freq_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 <!-- --8<-- [start:LexicalStats] -->
-<p>Lexical sophistication in the manner of TAALES (Kyle, Crossley and Berger, 2018) - how rare the words of a text are: statistics by a frequency dictionary and its unigram model, the shares of the frequency bands of a list of the most frequent lemmas and the lexical density. The statistics by the dictionary are computed when first read, so the bands and the lexical density need no dictionary data.</p>
+<p>Lexical sophistication in the manner of TAALES (Kyle, Crossley and Berger, 2018) - how rare the words of a text are: statistics by a frequency dictionary and its unigram model, the shares of the frequency bands of a list of the most frequent lemmas and the lexical density. The statistics by the dictionary are computed when first read, so the bands and the lexical density need no dictionary data. The data source is a text, a <code>Doc</code> object of <a href="https://github.com/explosion/spaCy">spaCy</a> or a <code>Document</code> of <a href="https://github.com/SergeyShk/anySeg">anySeg</a>, read through its <a href="https://sergeyshk.github.io/anyTS/document/">document</a>: by default its words of Universal Dependencies without numbers, with their lemmas and parts of speech.</p>
 <p>Raises:</p>
 <ul>
-<li><code>SourceTypeError</code> - a dictionary of another class than that of the library or, without <code>freq_dict_class</code>, one without <code>lookup</code> and <code>ipm</code> or none at all; an <code>analyze</code> that does not give <code>LexicalWord</code> objects;</li>
-<li><code>SourceError</code> - a source without words.</li>
+<li><code>SourceTypeError</code> - a source that is neither a string, a <code>Doc</code> nor a <code>Document</code>, a <code>parse</code> that returns no <code>Document</code>, a dictionary of another class than that of the library or, without <code>freq_dict_class</code>, one without <code>lookup</code> and <code>ipm</code> or none at all; an <code>analyze</code> that does not give <code>LexicalWord</code> objects;</li>
+<li><code>SourceError</code> - words without parts of speech, a source without words.</li>
 </ul>
 <!-- --8<-- [end:LexicalStats] -->
 
@@ -2316,7 +2316,7 @@ Lexical density                                  |   0.60
 <tbody>
 <tr>
 <td style="text-align: left;"><code>source</code></td>
-<td style="text-align: left;"><code>str</code> / <code>Doc</code></td>
+<td style="text-align: left;"><code>str</code> / <code>Doc</code> / <code>Document</code></td>
 <td style="text-align: left;">-</td>
 <td style="text-align: left;">Data source</td>
 </tr>
@@ -2545,7 +2545,12 @@ Lexical density                                  |   0.60
 <tr>
 <td style="text-align: left;"><code>analyze(source)</code></td>
 <td style="text-align: left;">method</td>
-<td style="text-align: left;">The words of a source as <code>LexicalWord</code>: the word, its lemma and whether it is a content word; an abstract method. Numbers (<code>is_number</code> of <code>anyts.utils</code>) are not words</td>
+<td style="text-align: left;">The words of a source as <code>LexicalWord</code>: the word, its lemma and whether it is a content word. By default the words of Universal Dependencies of the document of <code>parse</code> with a letter or a digit, numbers (<code>is_number</code> of <code>anyts.utils</code>) left out, the lemma of the column <code>lemma</code> or the word itself, and the content words by the parts of speech of <code>CONTENT_UD_POS</code> (<code>ADJ</code>, <code>ADV</code>, <code>NOUN</code>, <code>PROPN</code>, <code>VERB</code>); a library with its own lemmas or content words overrides it</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>parse(source)</code></td>
+<td style="text-align: left;">method</td>
+<td style="text-align: left;">Document of the source, from <code>Stats</code>; a library sets it to annotate a string in its language</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>freq_dict_class</code></td>

@@ -2303,7 +2303,7 @@
 <!-- --8<-- [start:has_words] -->
 <div class="signature highlight"><pre><span></span><code><span class="n">has_words</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
 </code></pre></div>
-<p>Checks whether a text, a <code>Doc</code> or a <code>Span</code> holds a word: an empty text or one of whitespace and the characters of <code>is_punctuation</code> alone holds none.</p>
+<p>Checks whether a text, a <code>Doc</code> or a <code>Span</code> holds a word - a letter or a digit (<code>str.isalnum</code>): an empty text or one of whitespace, punctuation marks, symbols and characters of no class alone, such as a bullet of private use from a PDF, holds none. The words of a <a href="https://sergeyshk.github.io/anyTS/document/">document</a> follow the same rule.</p>
 <table>
 <thead>
 <tr>

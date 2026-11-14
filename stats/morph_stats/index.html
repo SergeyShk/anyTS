@@ -2154,11 +2154,11 @@
 <div class="signature highlight"><pre><span></span><code><span class="n">MorphStats</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
 </code></pre></div>
 <!-- --8<-- [start:MorphStats] -->
-<p>The morphological statistics of a text: the part of speech and the features of <a href="https://universaldependencies.org/u/feat/">Universal Dependencies</a> of every word, counted by value or given word by word. By default the data source is a <code>Doc</code> object of <a href="https://github.com/explosion/spaCy">spaCy</a> with the parts of speech, read by <code>token.pos_</code> and <code>token.morph</code>; a language library reads a string or a <code>Doc</code> without them in its own way.</p>
+<p>The morphological statistics of a text: the part of speech and the features of <a href="https://universaldependencies.org/u/feat/">Universal Dependencies</a> of every word, counted by value or given word by word. The data source is a text, a <code>Doc</code> object of <a href="https://github.com/explosion/spaCy">spaCy</a> or a <code>Document</code> of <a href="https://github.com/SergeyShk/anySeg">anySeg</a>; the words are the words of Universal Dependencies of its <a href="https://sergeyshk.github.io/anyTS/document/">document</a> with a letter or a digit (Spanish <code>del</code> gives <code>de</code> and <code>el</code>), and their parts of speech and features are its columns <code>upos</code> and <code>feats</code>. A language library annotates a string in its <code>parse</code>, or reads the features in its own <code>analyze</code>.</p>
 <p>Raises:</p>
 <ul>
-<li><code>SourceTypeError</code> - a source that is not a <code>Doc</code>, an <code>analyze</code> that does not give <code>MorphWord</code> objects;</li>
-<li><code>SourceError</code> - a source without parts of speech or without words.</li>
+<li><code>SourceTypeError</code> - a source that is neither a string, a <code>Doc</code> nor a <code>Document</code>, a <code>parse</code> that returns no <code>Document</code>, an <code>analyze</code> that does not give <code>MorphWord</code> objects;</li>
+<li><code>SourceError</code> - words without parts of speech, a source without words.</li>
 </ul>
 <!-- --8<-- [end:MorphStats] -->
 
@@ -2210,9 +2210,9 @@
 <tbody>
 <tr>
 <td style="text-align: left;"><code>source</code></td>
-<td style="text-align: left;"><code>str</code> / <code>Doc</code></td>
+<td style="text-align: left;"><code>str</code> / <code>Doc</code> / <code>Document</code></td>
 <td style="text-align: left;">-</td>
-<td style="text-align: left;">Data source: a <code>Doc</code> with the parts of speech, or what <code>analyze</code> takes</td>
+<td style="text-align: left;">Data source</td>
 </tr>
 </tbody>
 </table>
@@ -2372,7 +2372,7 @@ Personal                      |    1
 <details class="library-hooks">
 <summary>Language hooks of a subclass</summary>
 <!-- --8<-- [start:MorphStats-hooks] -->
-<p>A language library subclasses <code>MorphStats</code>. By default the words and their features are read from a <code>Doc</code> by Universal Dependencies:</p>
+<p>A language library subclasses <code>MorphStats</code>. By default the words and their features are the columns of the document of <code>parse</code>, which the library sets to annotate a string:</p>
 <table>
 <thead>
 <tr>
@@ -2385,7 +2385,12 @@ Personal                      |    1
 <tr>
 <td style="text-align: left;"><code>analyze(source)</code></td>
 <td style="text-align: left;">method</td>
-<td style="text-align: left;">Words of a source as <code>MorphWord</code>: the word, its part of speech and its features of Universal Dependencies by name; by default those of a <code>Doc</code> with the parts of speech (<code>iter_doc_tokens</code>), with <code>token.pos_</code> and <code>token.morph</code>, one dictionary for the words of one analysis; a library that reads a string or a <code>Doc</code> without them overrides it. The object checks and reads a mapping of features once for all the words that share it, so an override that gives the words of one form one mapping is faster</td>
+<td style="text-align: left;">Words of a source as <code>MorphWord</code>: the word, its part of speech and its features of Universal Dependencies by name; by default the words of Universal Dependencies of the document of <code>parse</code> with a letter or a digit, with the columns <code>upos</code> and <code>feats</code>, one dictionary for the words of one set of features; a library that reads the features another way overrides it. The object checks and reads a mapping of features once for all the words that share it, so an override that gives the words of one form one mapping is faster</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>parse(source)</code></td>
+<td style="text-align: left;">method</td>
+<td style="text-align: left;">Document of the source, from <code>Stats</code>; a library sets it to annotate a string in its language</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>feature_names</code></td>
