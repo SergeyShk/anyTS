@@ -84,7 +84,7 @@ wheels = [
 
 [[package]]
 name = "anyts"
-version = "0.5.0.dev3"
+version = "0.5.0.dev4"
 source = { editable = "." }
 dependencies = [
     { name = "anyseg" },
