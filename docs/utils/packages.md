@@ -55,7 +55,7 @@ make_lazy(__name__, {"Highlight": "highlight", "zipf": "zipf"})
 ## Class of a lazy package { #LazyPackage }
 
 <!-- --8<-- [start:LazyPackage] -->
-`LazyPackage` is the class of a package after `make_lazy`, a subclass of `types.ModuleType`. It imports a name of its mapping on first read and keeps it as its attribute, gives a module of the package as an attribute, and lists the names of the mapping in `dir()`: those of `__all__` if the package has it, so that `help()` and `inspect.getmembers()` import only the public names. A name that is neither raises `AttributeError`, a module that fails to import for a missing dependency raises its `ModuleNotFoundError`, and an `AttributeError` raised while a module imports comes as an `ImportError` with it as the cause, since Python would take it for a missing name.
+`LazyPackage` is the class of a package after `make_lazy`, a subclass of `types.ModuleType`. It imports a name of its mapping on first read and keeps it as its attribute, gives a module of the package as an attribute, and lists the names of the mapping in `dir()`: those of `__all__` if the package has it, so that `help()` and `inspect.getmembers()` import only the public names. The imports of the names of every lazy package go one at a time, so threads that read names first at once do not meet in a module another thread is still loading; a module that reads a lazy name while it loads goes on. A name that is neither raises `AttributeError`, a module that fails to import for a missing dependency raises its `ModuleNotFoundError`, and an `AttributeError` raised while a module imports comes as an `ImportError` with it as the cause, since Python would take it for a missing name.
 <!-- --8<-- [end:LazyPackage] -->
 
 === "Code"

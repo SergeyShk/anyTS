@@ -3,6 +3,7 @@ from __future__ import annotations
 import math
 import re
 import sys
+import threading
 import unicodedata
 from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, Sequence, Set, Sized
 from functools import lru_cache
@@ -42,6 +43,8 @@ _BLANK = r"[^\S\n\r\x0b\x0c\x85\u2028\u2029]|[\x00-\x08\x0e-\x1f\x7f-\x84\x86-\x
 BLANK_LINE = re.compile(rf"(?>{_BREAK}|\u2029)(?:(?:{_BLANK})*(?>{_BREAK}|\u2029))+|\u2029")
 # A line break of Unicode, the paragraph separator among them
 LINE_BREAK = re.compile(rf"{_BREAK}|\u2029")
+# One import of a name of a lazy package at a time, a nested one in the same thread included
+_LAZY_IMPORT = threading.RLock()
 
 
 @lru_cache(maxsize=1)
@@ -1071,23 +1074,29 @@ class LazyPackage(ModuleType):
         (zipf, kwic) leaves the function under that name in the package, as an
         eager import would. dir() lists the names of the mapping that __all__
         holds, all of them for a package without __all__, so that help() and
-        inspect.getmembers() import only the public names
+        inspect.getmembers() import only the public names. The imports of the
+        names of every lazy package go one at a time, so that threads reading
+        names first at once do not meet in a module half loaded by another
     """
 
     def __getattr__(self, name: str) -> Any:
         modules = self.__dict__["_MODULES"]
         if name in modules:
             module = f"{self.__name__}.{modules[name]}"
-            # Python would take an AttributeError of the import for a missing name
-            try:
-                value = getattr(import_module(module), name)
-            except AttributeError as error:
-                raise ImportError(f"cannot import {name} from {module}: {error}") from error
-            super().__setattr__(name, value)
+            with _LAZY_IMPORT:
+                if name in self.__dict__:
+                    return self.__dict__[name]
+                # Python would take an AttributeError of the import for a missing name
+                try:
+                    value = getattr(import_module(module), name)
+                except AttributeError as error:
+                    raise ImportError(f"cannot import {name} from {module}: {error}") from error
+                super().__setattr__(name, value)
             return value
         if name.isidentifier() and not name.startswith("__"):
             try:
-                return import_module(f".{name}", self.__name__)
+                with _LAZY_IMPORT:
+                    return import_module(f".{name}", self.__name__)
             except ModuleNotFoundError as error:
                 if error.name != f"{self.__name__}.{name}":
                     raise
