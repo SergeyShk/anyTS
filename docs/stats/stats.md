@@ -44,7 +44,7 @@ Raises:
 ## Methods
 
 <!-- --8<-- [start:Stats-get_stats] -->
-`get_stats(flat=False)` returns a copy of the statistics of `stat_names`: editing it does not change the object. With `flat=True` the values of a dictionary statistic become keys of their own, joined to its name with an underscore: the distribution `{3: 5}` of `c_lengths` gives the key `c_lengths_3`.
+`get_stats(*, flat=False)` returns a copy of the statistics of `stat_names`: editing it does not change the object. With `flat=True` the values of a dictionary statistic become keys of their own, joined to its name with an underscore: the distribution `{3: 5}` of `c_lengths` gives the key `c_lengths_3`.
 <!-- --8<-- [end:Stats-get_stats] -->
 
 <!-- --8<-- [start:Stats-to_dataframe] -->

@@ -108,7 +108,7 @@ With `normalize=True` the object has the normalized statistics too, of the type 
 <!-- --8<-- [end:BasicStats-count_words_by] -->
 
 <!-- --8<-- [start:BasicStats-get_stats] -->
-`get_stats(flat)` returns a dictionary with the distributions `c_letters` and `c_syllables`, the statistics of `stats_desc`, the distribution `c_punctuations` and, with `normalize=True`, the normalized counts, as a copy: editing it does not change the object. With `flat=True` the distributions give a key for every value the text has, such as `c_letters_3` and `c_punctuations_comma`.
+`get_stats(*, flat=False)` returns a dictionary with the distributions `c_letters` and `c_syllables`, the statistics of `stats_desc`, the distribution `c_punctuations` and, with `normalize=True`, the normalized counts, as a copy: editing it does not change the object. With `flat=True` the distributions give a key for every value the text has, such as `c_letters_3` and `c_punctuations_comma`.
 <!-- --8<-- [end:BasicStats-get_stats] -->
 
 <!-- --8<-- [start:BasicStats-print_stats] -->

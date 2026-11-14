@@ -114,7 +114,7 @@ class Stats:
         """
         return tuple(self.stats_desc)
 
-    def get_stats(self, flat: bool = False) -> dict[str, Any]:
+    def get_stats(self, *, flat: bool = False) -> dict[str, Any]:
         """
         Getting the computed statistics
 

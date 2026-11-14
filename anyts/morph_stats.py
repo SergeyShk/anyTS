@@ -237,7 +237,7 @@ class MorphStats(Stats):
             words.append(MorphWord(form, pos, found))
         return words
 
-    def get_stats(  # type: ignore[override]
+    def get_stats(
         self, *args: str, filter_none: bool = False, flat: bool = False
     ) -> dict[str, Any]:
         """
