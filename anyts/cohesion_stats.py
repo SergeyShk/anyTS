@@ -881,10 +881,9 @@ class CohesionStats(Stats):
             the book); a demonstrative carries PronType=Dem; an argument is
             NOUN, PROPN or PRON; a content word is one of CONTENT_UD_POS and no
             demonstrative; the lemma is that of the word in lower case, its form
-            without one; the
-            tense, the mood and the aspect are the features Tense, Mood and
-            Aspect. Any word may start a connector; a library sets
-            connector_blocked where its parse rules one out
+            without one; the tense, the mood and the aspect are the features
+            Tense, Mood and Aspect. Any word may start a connector; a library
+            sets connector_blocked where its parse rules one out
 
         Arguments:
             word (TreeWord): Word of the tree
