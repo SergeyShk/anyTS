@@ -237,7 +237,7 @@ class MorphStats(Stats):
             words.append(MorphWord(form, pos, found))
         return words
 
-    def get_stats(  # type: ignore[override]
+    def get_stats(
         self, *args: str, filter_none: bool = False, flat: bool = False
     ) -> dict[str, Any]:
         """
@@ -258,8 +258,9 @@ class MorphStats(Stats):
             UnknownStatError: If a statistic is unknown
             ParameterError: If filter_none or flat is not a bool
         """
-        check_bool(filter_none, "filter_none")
-        check_bool(flat, "flat")
+        messages = self.messages
+        check_bool(filter_none, "filter_none", message=messages["bool_param"])
+        check_bool(flat, "flat", message=messages["bool_param"])
         stats: dict[str, dict[str | None, int]] = {}
         for stat in self._checked_stats(args):
             counts = dict(Counter(getattr(self, stat)))

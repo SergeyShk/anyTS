@@ -228,6 +228,10 @@ DELTA_VARIANTS = {
 MESSAGES: Mapping[str, str] = MappingProxyType(
     {
         "source_type": "The data source cannot be of type {type}",
+        "bool_param": "The {param} must be a bool, not {type}",
+        "integer_param": "The {param} must be an integer, not {type}",
+        "number_param": "The {param} must be a number, not {type}",
+        "words_param": "The {param} must be a list of strings, not {type}",
         "source_span": "The data source cannot be a Span: pass span.as_doc()",
         "no_words": "The data source has no words",
         "document_tokens": "The tokens of the data source cannot make a document: {error}",
@@ -329,16 +333,26 @@ MESSAGES: Mapping[str, str] = MappingProxyType(
         "hook_highlights": "The {hook} of {cls} must return Highlight objects, not {type}",
         "hook_morph_words": "The {hook} of {cls} must return MorphWord objects, not {type}",
         "connector_dict": "The connectors must be a dictionary of a phrase and its class and kind",
+        "connector_words": "The words must be a list of strings, not {type}",
+        "connector_sent_index": "The number of the sentence must be an integer, not {type}",
+        "connector_pos_list": "The parts of speech must be a list, not {type}",
         "connector_entry": "A connector must be a phrase with a pair of its class and kind: {connector}",
         "connector_class": "Unknown class or kind of a connector: {cls}, {kind}",
         "connector_pos_type": "A part of speech must be a string or None, not {type}",
         "connector_pos": "The parts of speech must be as many as the words",
+        "connector_breaks_type": (
+            "The positions of the marks must be a collection of integers, not {type}"
+        ),
         "connector_breaks": (
             "A position of a mark must be between 1 and {last}, the positions of the words after "
             "the first, not {position}"
         ),
         "connector_breaks_short": (
             "A sentence of fewer than two words has no positions of the marks, not {position}"
+        ),
+        "connector_blocked_type": (
+            "The positions of the words that start no connector must be a collection of "
+            "integers, not {type}"
         ),
         "connector_blocked": (
             "A position of a word that starts no connector must be between 0 and {last}, "

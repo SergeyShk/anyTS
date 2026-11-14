@@ -38,7 +38,7 @@ def check_params(top_n: int, *, messages: Mapping[str, str] = MESSAGES) -> None:
         ParameterError: If the number of the most frequent words is not an integer or is
             below one
     """
-    check_integer(top_n, "number of the most frequent words")
+    check_integer(top_n, "top_n", message=messages["integer_param"])
     if top_n < 1:
         raise ParameterError(messages["top_n"])
 
@@ -138,13 +138,13 @@ class StyleStats(Stats):
         if words_extractor is not None and not isinstance(words_extractor, WordsExtractor):
             raise SourceTypeError(messages["words_extractor_type"])
         check_params(top_n, messages=messages)
-        for words, what in (
+        for words, param in (
             (stopwords, "stopwords"),
-            (nausea_stopwords, "nausea stopwords"),
+            (nausea_stopwords, "nausea_stopwords"),
             (cliches, "cliches"),
         ):
             if words is not None:
-                check_words(words, what, ordered=False)
+                check_words(words, param, ordered=False, message=messages["words_param"])
         document = self._document(source)
         self.forms = self.doc_words(document)
         self.words = words_extractor.extract(document.text) if words_extractor else self.forms

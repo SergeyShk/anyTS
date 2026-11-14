@@ -420,8 +420,8 @@ def test_no_connector_starts_at_a_blocked_word(matcher):
 @pytest.mark.parametrize(
     ("blocked", "error", "message"),
     [
-        ("1", SourceTypeError, r"^A list of positions of the blocked words is expected"),
-        ([1.5], ParameterError, r"^The position of a blocked word must be an integer"),
+        ("1", SourceTypeError, r"^The positions of the words that start no connector must be a "),
+        ([1.5], ParameterError, r"^The positions of .+ collection of integers, not float$"),
         (
             [-1],
             ParameterError,

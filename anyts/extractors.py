@@ -11,9 +11,8 @@ from typing import Any, ClassVar
 
 from .constants import MESSAGES
 from .exceptions import ParameterError, SourceTypeError
-from .utils import BLANK_LINE as BLANK_LINE
-from .utils import NUMBER_PATTERN as NUMBER_PATTERN
 from .utils import (
+    BLANK_LINE,
     _separators,
     check_bool,
     check_callable,
@@ -24,6 +23,7 @@ from .utils import (
     is_number,
     is_punctuation,
 )
+from .utils import NUMBER_PATTERN as NUMBER_PATTERN
 
 Tokenizer = Pattern[str] | Callable[[str], Iterable[str]]
 # The end of a sentence: a final mark, the closing marks after it and the whitespace (group 1)

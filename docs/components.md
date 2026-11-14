@@ -172,8 +172,7 @@ StyleStatsComponent(nlp, name, stopwords=None, top_n=10, nausea_stopwords=None, 
 
 Raises:
 
-- `SourceTypeError` - stopwords, nausea stopwords or cliches that are not a list of strings;
-- `ParameterError` - a `top_n` that is not an integer of at least one.
+- `ParameterError` - stopwords, nausea stopwords or cliches that are not a list of strings, a `top_n` that is not an integer of at least one.
 <!-- --8<-- [end:StyleStatsComponent] -->
 
 ### Phonetic statistics { #PhonStatsComponent }
@@ -250,7 +249,7 @@ Raises:
 <summary>Language hooks of a subclass</summary>
 
 <!-- --8<-- [start:StatsComponent-hooks] -->
-A language library subclasses `StatsComponent` for every class of its statistics and registers the subclass as a factory under its prefix, `Language.factory("<prefix>_<statistics>")`, so that the factories of several libraries live in one process; declared as entry points of `spacy_factories`, they load with `spacy.load` without importing the library. The subclass sets the class of its statistics and checks its parameters in its `__init__` before calling the `__init__` of the base, so a wrong parameter fails at `add_pipe`. The components of the classes of statistics of the core already carry their parameters and checks; a library sets its subclass of the statistics on them.
+A language library subclasses `StatsComponent` for every class of its statistics and registers the subclass as a factory under its prefix, `Language.factory("<prefix>_<statistics>")`, so that the factories of several libraries live in one process; declared as entry points of `spacy_factories`, they load with `spacy.load` without importing the library. The subclass sets the class of its statistics and checks its parameters in its `__init__` before calling the `__init__` of the base, so a wrong parameter fails at `add_pipe`. A wrong value of the config of a component of the core raises `ParameterError`, whatever the parameter; a library checks its own parameters the same way, with the `check_*` functions of `anyts.utils`, rather than leaving them to the validation of spaCy, which raises `ConfigValidationError` against the annotations of a factory. The components of the classes of statistics of the core already carry their parameters and checks; a library sets its subclass of the statistics on them.
 
 | Hook | Kind | Description |
 | :--- | :--- | :---------- |

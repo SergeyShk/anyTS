@@ -3,8 +3,10 @@ from __future__ import annotations
 import math
 import re
 import sys
+import threading
 import unicodedata
 from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, Sequence, Set, Sized
+from contextlib import contextmanager
 from functools import lru_cache
 from importlib import import_module
 from itertools import repeat
@@ -12,7 +14,7 @@ from numbers import Integral, Real
 from re import Pattern
 from statistics import StatisticsError, fmean
 from string import Formatter
-from types import ModuleType
+from types import FrameType, ModuleType
 from typing import TYPE_CHECKING, Any, TypeGuard
 
 from .constants import MESSAGES
@@ -42,6 +44,8 @@ _BLANK = r"[^\S\n\r\x0b\x0c\x85\u2028\u2029]|[\x00-\x08\x0e-\x1f\x7f-\x84\x86-\x
 BLANK_LINE = re.compile(rf"(?>{_BREAK}|\u2029)(?:(?:{_BLANK})*(?>{_BREAK}|\u2029))+|\u2029")
 # A line break of Unicode, the paragraph separator among them
 LINE_BREAK = re.compile(rf"{_BREAK}|\u2029")
+# One import of a name of a lazy package at a time, a nested one in the same thread included
+_LAZY_IMPORT = threading.RLock()
 
 
 @lru_cache(maxsize=1)
@@ -620,7 +624,9 @@ def shannon_entropy(counts: Mapping[Any, int]) -> float:
     )
 
 
-def check_sequence(value: object, what: str = "words", ordered: bool = True) -> None:
+def check_sequence(
+    value: object, what: str = "words", ordered: bool = True, *, message: str | None = None
+) -> None:
     """
     Checking that an argument is a sequence and not a text or an iterator
 
@@ -632,6 +638,8 @@ def check_sequence(value: object, what: str = "words", ordered: bool = True) -> 
         value (object): Value to check
         what (str): What is expected, for the message of the error
         ordered (bool): Whether the order and the repeats of the items matter
+        message (str): Message of the error with the fields {type}, the type of the value,
+            and {param}, what, in place of the English one
 
     Raises:
         SourceTypeError: If a string (of characters or bytes), a Doc, a Span, an
@@ -648,25 +656,33 @@ def check_sequence(value: object, what: str = "words", ordered: bool = True) -> 
         ...
         anyts.exceptions.SourceTypeError: A list of words is expected, not a string
     """
-    if isinstance(value, str | bytes | bytearray):
-        raise SourceTypeError(f"A list of {what} is expected, not a string")
-    if is_doc(value) or is_span(value):
+    problem = _sequence_problem(value, what, ordered)
+    if problem is not None:
         raise SourceTypeError(
+            problem if message is None else message.format(type=type(value).__name__, param=what)
+        )
+
+
+def _sequence_problem(value: object, what: str, ordered: bool) -> str | None:
+    """Why a value is no sequence of check_sequence, None for a sequence"""
+    if isinstance(value, str | bytes | bytearray):
+        return f"A list of {what} is expected, not a string"
+    if is_doc(value) or is_span(value):
+        return (
             f"A list of {what} is expected, not a {type(value).__name__}: "
             "extract the words with WordsExtractor"
         )
     if isinstance(value, Iterator):
-        raise SourceTypeError(f"A list of {what} is expected, not an iterator")
+        return f"A list of {what} is expected, not an iterator"
     sized: object = value
     if not isinstance(value, Iterable) or not isinstance(sized, Sized):
-        raise SourceTypeError(f"A list of {what} is expected, not {type(value).__name__}")
+        return f"A list of {what} is expected, not {type(value).__name__}"
     ndim = getattr(value, "ndim", 1)
     if ndim != 1:
-        raise SourceTypeError(
-            f"A list of {what} is expected, not a {ndim}-dimensional {type(value).__name__}"
-        )
+        return f"A list of {what} is expected, not a {ndim}-dimensional {type(value).__name__}"
     if ordered and isinstance(value, Set | Mapping):
-        raise SourceTypeError(f"A list of {what} is expected, not {type(value).__name__}")
+        return f"A list of {what} is expected, not {type(value).__name__}"
+    return None
 
 
 def _sliceable(values: Any) -> Any:
@@ -678,7 +694,13 @@ def _sliceable(values: Any) -> Any:
     return values
 
 
-def check_words(value: Iterable[object], what: str = "words", ordered: bool = True) -> None:
+def check_words(
+    value: Iterable[object],
+    what: str = "words",
+    ordered: bool = True,
+    *,
+    message: str | None = None,
+) -> None:
     """
     Checking that an argument is a list of words: a sequence of strings
 
@@ -686,6 +708,8 @@ def check_words(value: Iterable[object], what: str = "words", ordered: bool = Tr
         value (object): Value to check
         what (str): What is expected, for the message of the error
         ordered (bool): Whether the order and the repeats of the words matter (check_sequence)
+        message (str): Message of the error with the fields {type}, the type of the value or
+            of the item that is not a string, and {param}, what, in place of the English one
 
     Raises:
         SourceTypeError: If the value fails check_sequence or holds an item
@@ -700,10 +724,14 @@ def check_words(value: Iterable[object], what: str = "words", ordered: bool = Tr
         ...
         anyts.exceptions.SourceTypeError: The words must be strings, not Token
     """
-    check_sequence(value, what, ordered)
+    check_sequence(value, what, ordered, message=message)
     if not all(map(isinstance, value, repeat(str))):
-        item = next(item for item in value if not isinstance(item, str))
-        raise SourceTypeError(f"The {what} must be strings, not {type(item).__name__}")
+        kind = type(next(item for item in value if not isinstance(item, str))).__name__
+        raise SourceTypeError(
+            f"The {what} must be strings, not {kind}"
+            if message is None
+            else message.format(type=kind, param=what)
+        )
 
 
 def check_word(value: object, what: str = "word") -> None:
@@ -761,7 +789,7 @@ def check_counts(value: object) -> None:
             raise SourceError(f"The frequencies must be finite and not negative, not {count}")
 
 
-def check_integer(value: object, what: str) -> None:
+def check_integer(value: object, what: str, *, message: str | None = None) -> None:
     """
     Checking that a parameter is an integer
 
@@ -771,6 +799,8 @@ def check_integer(value: object, what: str) -> None:
     Arguments:
         value (object): Value to check
         what (str): Name of the parameter, for the message of the error
+        message (str): Message of the error with the fields {type}, the type of the value,
+            and {param}, what, in place of the English one
 
     Raises:
         ParameterError: If the value is not an integer
@@ -784,16 +814,23 @@ def check_integer(value: object, what: str) -> None:
         anyts.exceptions.ParameterError: The window size must be an integer, not float
     """
     if isinstance(value, bool) or not isinstance(value, Integral):
-        raise ParameterError(f"The {what} must be an integer, not {type(value).__name__}")
+        kind = type(value).__name__
+        raise ParameterError(
+            f"The {what} must be an integer, not {kind}"
+            if message is None
+            else message.format(type=kind, param=what)
+        )
 
 
-def check_bool(value: object, what: str) -> None:
+def check_bool(value: object, what: str, *, message: str | None = None) -> None:
     """
     Checking that a parameter is a bool, a numpy bool included
 
     Arguments:
         value (object): Value to check
         what (str): Name of the parameter, for the message of the error
+        message (str): Message of the error with the fields {type}, the type of the value,
+            and {param}, what, in place of the English one
 
     Raises:
         ParameterError: If the value is not a bool
@@ -808,10 +845,15 @@ def check_bool(value: object, what: str) -> None:
     """
     numpy = sys.modules.get("numpy")
     if not (isinstance(value, bool) or (numpy is not None and isinstance(value, numpy.bool_))):
-        raise ParameterError(f"The {what} must be a bool, not {type(value).__name__}")
+        kind = type(value).__name__
+        raise ParameterError(
+            f"The {what} must be a bool, not {kind}"
+            if message is None
+            else message.format(type=kind, param=what)
+        )
 
 
-def check_number(value: object, what: str) -> None:
+def check_number(value: object, what: str, *, message: str | None = None) -> None:
     """
     Checking that a parameter is a finite real number
 
@@ -821,6 +863,8 @@ def check_number(value: object, what: str) -> None:
     Arguments:
         value (object): Value to check
         what (str): Name of the parameter, for the message of the error
+        message (str): Message of the error with the fields {type}, the type of the value or
+            the value that is not finite, and {param}, what, in place of the English one
 
     Raises:
         ParameterError: If the value is not a finite real number
@@ -834,9 +878,18 @@ def check_number(value: object, what: str) -> None:
         anyts.exceptions.ParameterError: The confidence level must be a number, not str
     """
     if isinstance(value, bool) or not isinstance(value, Real):
-        raise ParameterError(f"The {what} must be a number, not {type(value).__name__}")
+        kind = type(value).__name__
+        raise ParameterError(
+            f"The {what} must be a number, not {kind}"
+            if message is None
+            else message.format(type=kind, param=what)
+        )
     if not math.isfinite(value):
-        raise ParameterError(f"The {what} must be a finite number, not {value}")
+        raise ParameterError(
+            f"The {what} must be a finite number, not {value}"
+            if message is None
+            else message.format(type=value, param=what)
+        )
 
 
 def check_callable(value: object, what: str) -> None:
@@ -1033,23 +1086,31 @@ class LazyPackage(ModuleType):
         (zipf, kwic) leaves the function under that name in the package, as an
         eager import would. dir() lists the names of the mapping that __all__
         holds, all of them for a package without __all__, so that help() and
-        inspect.getmembers() import only the public names
+        inspect.getmembers() import only the public names. The imports of the
+        names of every lazy package go one at a time, so that threads reading
+        names first at once do not meet in a module half loaded by another; a
+        thread that runs the body of a module it imports goes on without waiting,
+        as a thread that imports may wait for that module
     """
 
     def __getattr__(self, name: str) -> Any:
         modules = self.__dict__["_MODULES"]
         if name in modules:
             module = f"{self.__name__}.{modules[name]}"
-            # Python would take an AttributeError of the import for a missing name
-            try:
-                value = getattr(import_module(module), name)
-            except AttributeError as error:
-                raise ImportError(f"cannot import {name} from {module}: {error}") from error
-            super().__setattr__(name, value)
+            with _lazy_import_lock():
+                if name in self.__dict__:
+                    return self.__dict__[name]
+                # Python would take an AttributeError of the import for a missing name
+                try:
+                    value = getattr(import_module(module), name)
+                except AttributeError as error:
+                    raise ImportError(f"cannot import {name} from {module}: {error}") from error
+                super().__setattr__(name, value)
             return value
         if name.isidentifier() and not name.startswith("__"):
             try:
-                return import_module(f".{name}", self.__name__)
+                with _lazy_import_lock():
+                    return import_module(f".{name}", self.__name__)
             except ModuleNotFoundError as error:
                 if error.name != f"{self.__name__}.{name}":
                     raise
@@ -1067,6 +1128,33 @@ class LazyPackage(ModuleType):
         if (public := self.__dict__.get("__all__")) is not None:
             names = [name for name in names if name in public]
         return sorted({*super().__dir__(), *names})
+
+
+@contextmanager
+def _lazy_import_lock() -> Iterator[None]:
+    """The lock of the lazy imports; a thread that runs the body of a module it imports takes it
+    only when it is free, since a thread that holds it may wait for the lock of that module"""
+    acquired = _LAZY_IMPORT.acquire(blocking=not _imports_a_module())
+    try:
+        yield
+    finally:
+        if acquired:
+            _LAZY_IMPORT.release()
+
+
+def _imports_a_module() -> bool:
+    """Whether the calling thread runs the body of a module it imports or reloads: a frame of
+    _load_unlocked or _exec of the import system is on its stack, which from pkg import name at
+    the top level does not put there"""
+    frame: FrameType | None = sys._getframe(1)
+    while frame is not None:
+        code = frame.f_code
+        if code.co_name in ("_load_unlocked", "_exec") and code.co_filename.startswith(
+            "<frozen importlib._bootstrap"
+        ):
+            return True
+        frame = frame.f_back
+    return False
 
 
 def make_lazy(name: str, modules: Mapping[str, str]) -> None:

@@ -219,7 +219,7 @@ class BasicStats(Stats, metaclass=ABCMeta):
     ):
         messages = self.messages
         _check_extractors(sents_extractor, words_extractor, messages)
-        check_bool(normalize, "normalization")
+        check_bool(normalize, "normalize", message=messages["bool_param"])
         _check_factor(
             complex_syl_factor,
             "minimum number of syllables in a complex word",
