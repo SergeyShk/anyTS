@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 import pytest
 import spacy
+from anyseg import Document
 from spacy.tokens import Doc
 
 from anyts.cohesion_stats import (
@@ -34,6 +35,7 @@ from anyts.cohesion_stats import (
     dominant,
 )
 from anyts.constants import COHESION_STATS_DESC, MESSAGES
+from anyts.document import to_document
 from anyts.exceptions import ParameterError, SourceError, SourceTypeError
 from anyts.extractors import SentsExtractor
 
@@ -689,7 +691,7 @@ def test_paragraphs():
         lemmas=["rain", ".", "\n\n"],
     )
     assert CohesionStats(trailing).n_paragraphs == 1
-    inside = paragraph_doc()
+    inside = paragraph_doc("\n")
     inside[5].is_sent_start = False
     assert CohesionStats(inside).n_paragraphs == 2
     assert [word.paragraph_start for word in CohesionStats(inside).analyze(inside)[0]] == [
@@ -700,6 +702,11 @@ def test_paragraphs():
         False,
         False,
     ]
+    # A blank line inside a sentence of a Doc ends it, as the paragraphs of the document hold
+    # the sentences
+    blank = paragraph_doc()
+    blank[5].is_sent_start = False
+    assert CohesionStats(blank).n_sents == 3
     # The sentences of an extractor over the text keep the paragraphs
     assert CohesionStats(paragraph_doc(), sents_extractor=SentsExtractor()).n_paragraphs == 2
 
@@ -966,15 +973,22 @@ def test_word_info_keeps_its_own_mark_and_its_wrong_result():
     )
 
     class Marking(CohesionStats):
-        def word_info(self, unit):
-            return super().word_info(unit)._replace(break_before=unit[0].text == "cat")
+        def word_info(self, word):
+            return super().word_info(word)._replace(break_before=word.form == "cat")
 
     class Dicts(CohesionStats):
-        def word_info(self, unit):
-            return {"word": unit[0].text}
+        def word_info(self, word):
+            return {"word": word.form}
 
     marked = [word.break_before for word in Marking(doc).analyze(doc)[0]]
     assert marked == [False, False, True, False]
+    # An invisible separator glued to a word is no punctuation mark
+    for text, marks in (("It came before\u200b the end", 0), ("It came before, the end", 1)):
+        document = nouns(text)
+        assert (
+            sum(word.break_before for word in CohesionStats(document).analyze(document)[0])
+            == marks
+        )
     with pytest.raises(SourceTypeError, match=r"must return sentences of CohesionWord"):
         Dicts(doc)
 
@@ -1023,10 +1037,10 @@ def test_blocked_words_reach_the_matcher():
             return {"if": ("conditional", "primary"), "and": ("additive", "primary")}
 
     class Questions(Conditions):
-        def word_info(self, unit):
+        def word_info(self, word):
             # An if after wonder opens an indirect question, no condition
-            blocked = unit[0].lower_ == "if" and unit[0].nbor(-1).lemma_ == "wonder"
-            return super().word_info(unit)._replace(connector_blocked=blocked)
+            blocked = word.form == "if" and word.tree.words[word.index - 1].lemma == "wonder"
+            return super().word_info(word)._replace(connector_blocked=blocked)
 
     assert texts(Conditions(doc).connector_spans) == ["if", "and", "if"]
     assert texts(Questions(doc).connector_spans) == ["and", "if"]
@@ -1083,6 +1097,31 @@ def test_sentences_by_an_extractor():
         ("It", "saw", "this", "bird", "However", "the", "bird", "and", "the", "cat", "slept"),
     )
 
+    # A sentence the text does not hold is passed over, the words outside the sentences found
+    # are left out
+    class Dropping(SentsExtractor):
+        def sentenize(self, text):
+            return ["No such sentence", text[:23]]
+
+    assert CohesionStats(text_doc(), sents_extractor=Dropping()).words == (
+        ("The", "cat", "sat", "on", "the", "mat"),
+    )
+    # A paragraph starts at the first word kept after a line break: Ok is too short a sentence
+    text = "The cat sat on the mat today.\nOk. The dog ran in the park now."
+    stats = CohesionStats(nouns(text), sents_extractor=SentsExtractor(min_len=5))
+    assert stats.n_sents == 2 and stats.n_paragraphs == 2
+
+
+def nouns(text, lemmas=True):
+    """A document of a text whose words are nouns with their lower case for lemmas"""
+    document = to_document(text)
+    forms = document.column("form")
+    document.set_columns(
+        upos=["NOUN" if form.isalpha() else "PUNCT" for form in forms],
+        lemma=[form.lower() if lemmas else None for form in forms],
+    )
+    return document
+
 
 def test_default_word_info():
     doc = Doc(
@@ -1094,17 +1133,55 @@ def test_default_word_info():
         morphs=["Poss=Yes", "Degree=Pos", "", "", ""],
         sent_starts=[True, False, False, False, False],
     )
-
-    class Hyphens(CohesionStats):
-        join_hyphens = True
-
     stats = CohesionStats(doc)
     assert stats.n_words == 4 and stats.n_pronouns == 1
-    word = Hyphens(doc).analyze(doc)[0][1]
-    assert word == CohesionWord(
-        "well-known", "well-known", "ADJ", False, False, False, False, True
-    )
+    # The parts of a word the tokenizer split at its hyphen are words of their own
+    assert stats.words == (("My", "well", "known", "Ann"),)
     assert stats.lemmas == (("my", "well", "know", "ann"),)
+    word = stats.analyze(doc)[0][1]
+    assert word == CohesionWord("well", "well", "ADJ", False, False, False, False, True)
+    # A word without a lemma is lemmatized by its form
+    document = nouns("Cats sleep. Dogs bark.", lemmas=False)
+    document.set_columns(lemma=[None, "sleep", None, None, "bark", None])
+    stats = CohesionStats(document)
+    assert stats.lemmas == (("cats", "sleep"), ("dogs", "bark"))
+    assert stats.noun_overlap_adjacent == 0 and stats.n_given == 0
+
+
+def spanish_document():
+    """A document whose multiword token del holds the words de and el"""
+    document = Document.from_tokens(
+        "Vino del pueblo.", [0, 5, 9, 15], [4, 8, 15, 16], words={1: ["de", "el"]}
+    )
+    document.set_columns(
+        lemma=["Venir", "de", "el", "pueblo", "."],
+        upos=["VERB", "ADP", "DET", "NOUN", "PUNCT"],
+        feats=["Mood=Ind|Tense=Past", None, "Definite=Def", "Number=Sing", None],
+    )
+    return document
+
+
+def test_words_of_universal_dependencies():
+    stats = CohesionStats(spanish_document())
+    assert stats.words == (("Vino", "de", "el", "pueblo"),)
+    assert stats.lemmas == (("venir", "de", "el", "pueblo"),)
+    assert (stats.n_nouns, stats.n_pronouns, stats.n_content_words) == (1, 0, 2)
+    # The words of one token have no mark between them
+    words = stats.analyze(spanish_document())[0]
+    assert [word.break_before for word in words] == [False] * 4
+    assert words[0].tense == "Past" and words[0].mood == "Ind"
+
+
+def test_parse_of_a_library():
+    """A library that annotates a string in parse needs no analyze of its own"""
+
+    class Annotated(CohesionStats):
+        def parse(self, source):
+            return spanish_document() if source == "Vino del pueblo." else super().parse(source)
+
+    assert Annotated("Vino del pueblo.").words == (("Vino", "de", "el", "pueblo"),)
+    with pytest.raises(SourceError, match=f"^{re.escape(MESSAGES['no_pos'])}$"):
+        Annotated("Vino del pueblo")
 
 
 def test_own_analysis():
@@ -1127,7 +1204,7 @@ def test_own_analysis():
 @pytest.mark.parametrize(
     ("source", "kwargs", "error", "message"),
     [
-        ("The cat", {}, SourceTypeError, MESSAGES["source_type"].format(type="str")),
+        (42, {}, SourceTypeError, MESSAGES["source_type"].format(type="int")),
         (text_doc()[:2], {}, SourceTypeError, MESSAGES["source_span"]),
         (None, {"sents_extractor": "x"}, SourceTypeError, MESSAGES["sents_extractor_type"]),
         (text_doc(pos=False), {}, SourceError, MESSAGES["no_pos"]),

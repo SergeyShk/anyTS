@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from bisect import bisect_right
 from collections import Counter
 from collections.abc import Collection, Iterable, Mapping, Sequence
 from itertools import pairwise
@@ -20,28 +21,26 @@ from .constants import (
     MESSAGES,
     TEMPORAL_FEATURES,
 )
+from .document import TreeWord, get_tree
 from .exceptions import ParameterError, SourceError, SourceTypeError
 from .extractors import SentsExtractor
 from .stats import Stats
 from .utils import (
+    BLANK_LINE,
+    LINE_BREAK,
+    _is_mark_gap,
     check_bool,
     check_integer,
     check_messages,
     check_sequence,
     check_words,
-    find_unit_marks,
-    find_unit_paragraph_starts,
-    has_pos,
-    has_sents,
-    is_doc,
-    iter_doc_units,
+    has_words,
     safe_divide,
-    source_type_error,
-    split_doc_units,
 )
 
 if TYPE_CHECKING:
-    from spacy.tokens import Doc, Token
+    from anyseg import Document
+    from spacy.tokens import Doc
 
 _NO_POSITIONS: frozenset[int] = frozenset()
 _PARAGRAPH_START = attrgetter("paragraph_start")
@@ -537,8 +536,9 @@ class CohesionStats(Stats):
         the temporal cohesion and the connectors of a dictionary per 1000
         words. The sentences are compared by lemmas.
         A language library subclasses the class and sets its hooks; by default
-        the source is a Doc with the parts of speech and the lemmas, read by
-        Universal Dependencies, and there are no connectors.
+        the words are those of the tree of the document of parse (get_tree)
+        with their parts of speech, lemmas and features of Universal
+        Dependencies, and there are no connectors.
         get_stats, to_dataframe, print_stats and describe come from Stats
 
     References:
@@ -546,10 +546,9 @@ class CohesionStats(Stats):
         https://doi.org/10.3758/s13428-015-0651-7 (Crossley et al. 2016, TAACO)
 
     Arguments:
-        source (Doc): Data source (a Doc object, or what analyze reads)
-        sents_extractor (SentsExtractor): Sentence extraction tool; given, it splits a
-            Doc by its text whatever its boundaries, and without it a Doc with no
-            boundaries is split by sents_extractor_class()
+        source (str|Doc|Document): Data source (a string, a Doc or a Document object)
+        sents_extractor (SentsExtractor): Sentence extraction tool; given, it splits the
+            text in place of the sentences of the document
         connectors (dict[str, tuple[str, str]]): Class and kind by connector;
             load_connectors() by default
         blank_lines (bool): Start the paragraphs after the blank lines alone, for a text
@@ -612,33 +611,29 @@ class CohesionStats(Stats):
 
     Methods:
         analyze: Words of the sentences of a source with their features
-        doc_units: Words of the sentences of a Doc as lists of tokens
-        word_info: Features of a word of a Doc
+        word_info: Features of a word of the tree
         load_connectors: Dictionary of the connectors of the language
         connector_matcher: Matcher of the dictionary of the class, built once
 
     Class attributes:
-        sents_extractor_class (type): Sentence extractor of a Doc with no boundaries
         connector_matcher_class (type): Class that finds the connectors (ConnectorMatcher)
-        join_hyphens (bool): Take a word the tokenizer split at its hyphens for one word
         temporal_features (tuple[str, ...]): Features of the verbs whose repetitions
             make the temporal cohesion: one or more of tense, mood, aspect
         stats_desc (dict[str, str]): Statistics of get_stats and their descriptions for
             print_stats
 
     Raises:
-        SourceTypeError: If the extractor is of another type, the source is not a Doc
-            (analyze), analyze does not give sentences of CohesionWord objects, or the
-            connectors are not a dictionary of phrases and pairs of strings
-        SourceError: If the source has no parts of speech or no lemmas (analyze), or no
-            words
+        SourceTypeError: If the extractor is of another type, the source is neither a
+            string, a Doc nor a Document object, parse does not return a Document,
+            analyze does not give sentences of CohesionWord objects, or the connectors
+            are not a dictionary of phrases and pairs of strings
+        SourceError: If the words of the source have no parts of speech or no lemmas
+            (analyze), or there are no words
         ParameterError: If a connector has an unknown class or kind; when a class is
             defined, if its temporal features are not one or more distinct known ones
     """
 
-    sents_extractor_class: ClassVar[type[SentsExtractor]] = SentsExtractor
     connector_matcher_class: ClassVar[type[ConnectorMatcher]] = ConnectorMatcher
-    join_hyphens: ClassVar[bool] = False
     temporal_features: ClassVar[tuple[str, ...]] = ("tense", "aspect")
     stats_desc: ClassVar[Mapping[str, str]] = COHESION_STATS_DESC
     _connector_matcher: ClassVar[ConnectorMatcher | None] = None
@@ -670,7 +665,7 @@ class CohesionStats(Stats):
 
     def __init__(
         self,
-        source: Doc,
+        source: str | Doc | Document,
         sents_extractor: SentsExtractor | None = None,
         connectors: Mapping[str, tuple[str, str]] | None = None,
         blank_lines: bool = False,
@@ -785,46 +780,85 @@ class CohesionStats(Stats):
         for name in matcher.kinds:
             setattr(self, f"connectors_{name}", kinds[name] * per_1000)
 
-    def analyze(self, source: Doc) -> Iterable[Sequence[CohesionWord]]:
+    def analyze(self, source: str | Doc | Document) -> Iterable[Sequence[CohesionWord]]:
         """
         Getting the words of the sentences of a source with their features
 
         Description:
-            The words of a Doc with the parts of speech and the lemmas, sentence
-            by sentence (doc_units), with the features of word_info; a library
-            that reads a string or a Doc without these annotations overrides it
+            The words of the tree of the document of parse (get_tree) with a
+            letter or a digit, sentence by sentence - those of the document, or
+            those of sents_extractor over its text when one is given - with the
+            features of word_info. A word gets break_before when a punctuation
+            mark stands between it and the word before in its sentence (except a
+            quote, an apostrophe, an invisible separator and a hyphen joining two
+            parts of a word), and paragraph_start when a line break (LINE_BREAK)
+            does, or a blank line (BLANK_LINE) with blank_lines, between the
+            words of the sentences; a library that reads the features another
+            way overrides it
 
         Arguments:
-            source (Doc): Data source
+            source (str|Doc|Document): Data source
 
         Returns:
             iterable[list[CohesionWord]]: Words of every sentence
 
         Raises:
-            SourceTypeError: If the source is not a Doc object
-            SourceError: If the source has no parts of speech or no lemmas
+            SourceTypeError: If the source is neither a string, a Doc nor a Document
+                object, or parse does not return a Document
+            SourceError: If the words of the source have no parts of speech or no lemmas
         """
         messages = self.messages
-        if not is_doc(source):
-            raise source_type_error(messages, source)
-        if not has_pos(source):
+        tree = get_tree(self._document(source))
+        words = [word for word in tree.words if has_words(word.form)]
+        if not words:
+            return []
+        if not any(word.upos for word in words):
             raise SourceError(messages["no_pos"])
-        if not source.has_annotation("LEMMA"):
+        if not any(word.lemma for word in tree.words):
             raise SourceError(messages["no_lemmas"])
-        sents = self.doc_units(source)
-        units = [unit for sent in sents for unit in sent]
+        text = tree.text
+        sents = self._sentences(words, text)
+        pattern = BLANK_LINE if self.blank_lines else LINE_BREAK
         starts = {
-            units[position][0].i
-            for position in find_unit_paragraph_starts(units, self.blank_lines)
+            word.index
+            for last, word in pairwise(word for sent in sents for word in sent)
+            if pattern.search(text, last.end, word.start)
         }
-        return [
-            [
-                self._marked(self.word_info(unit), position in marks, unit[0].i in starts)
-                for position, unit in enumerate(sent)
-            ]
-            for sent in sents
-            for marks in (find_unit_marks(sent),)
-        ]
+        found = []
+        for sent in sents:
+            marks = {
+                word.index
+                for last, word in pairwise(sent)
+                if _is_mark_gap(text[last.end : word.start])
+            }
+            found.append(
+                [
+                    self._marked(self.word_info(word), word.index in marks, word.index in starts)
+                    for word in sent
+                ]
+            )
+        return found
+
+    def _sentences(self, words: Sequence[TreeWord], text: str) -> list[list[TreeWord]]:
+        """Words of every sentence: of the document, or of sents_extractor over its text"""
+        sents: dict[int, list[TreeWord]] = {}
+        if self.sents_extractor is None:
+            for word in words:
+                sents.setdefault(word.sentence, []).append(word)
+            return list(sents.values())
+        starts, ends = [], []
+        cursor = 0
+        for sent in self.sents_extractor.extract(text):
+            start = text.find(sent, cursor)
+            if start != -1:
+                cursor = start + len(sent)
+                starts.append(start)
+                ends.append(cursor)
+        for word in words:
+            index = bisect_right(starts, word.start) - 1
+            if index >= 0 and word.start < ends[index]:
+                sents.setdefault(index, []).append(word)
+        return list(sents.values())
 
     @staticmethod
     def _marked(word: object, break_before: bool, paragraph_start: bool) -> Any:
@@ -837,62 +871,33 @@ class CohesionStats(Stats):
             )
         return word
 
-    def doc_units(self, doc: Doc) -> list[list[list[Token]]]:
+    def word_info(self, word: TreeWord) -> CohesionWord:
         """
-        Getting the words of the sentences of a Doc as lists of tokens
-
-        Description:
-            By the boundaries of the Doc, or by the sentences of the extractor
-            over its text when one is given or the Doc has no boundaries
-            (split_doc_units); with join_hyphens, the parts of a hyphenated
-            word are one word (iter_doc_units)
-
-        Arguments:
-            doc (Doc): Doc object
-
-        Returns:
-            list[list[list[Token]]]: Tokens of every word of every sentence
-        """
-        if self.sents_extractor is not None or not has_sents(doc):
-            return split_doc_units(
-                doc, self.sents_extractor or self.sents_extractor_class(), self.join_hyphens
-            )
-        return [list(iter_doc_units(sent, self.join_hyphens)) for sent in doc.sents]
-
-    def word_info(self, unit: Sequence[Token]) -> CohesionWord:
-        """
-        Getting the features of a word of a Doc by Universal Dependencies
+        Getting the features of a word of the tree by Universal Dependencies
 
         Description:
             A noun is NOUN or PROPN; a pronoun is PRON or a possessive,
             demonstrative or personal determiner (my book, this book, but not
             the book); a demonstrative carries PronType=Dem; an argument is
             NOUN, PROPN or PRON; a content word is one of CONTENT_UD_POS and no
-            demonstrative; the tense, the mood and the aspect are the features
-            Tense, Mood and Aspect. A word of several tokens (join_hyphens) is
-            written and lemmatized by its joined text, with the other features
-            of its first token. Any word may start a connector; a library sets
-            connector_blocked where its parse rules one out
+            demonstrative; the lemma is that of the word in lower case, its form
+            without one; the tense, the mood and the aspect are the features
+            Tense, Mood and Aspect. Any word may start a connector; a library
+            sets connector_blocked where its parse rules one out
 
         Arguments:
-            unit (list[Token]): Tokens of the word
+            word (TreeWord): Word of the tree
 
         Returns:
             CohesionWord: Word with its features
         """
-        token = unit[0]
-        if len(unit) == 1:
-            text, lemma = token.text, token.lemma_.lower()
-        else:
-            text = "".join(part.text for part in unit)
-            lemma = text.lower()
-        features = token.morph.to_dict()
+        features = word.feats
         pron_type = features.get("PronType", "").split(",")
         demonstrative = "Dem" in pron_type
-        pos = token.pos_
+        pos = word.upos or ""
         return CohesionWord(
-            word=text,
-            lemma=lemma,
+            word=word.form,
+            lemma=(word.lemma or word.form).lower(),
             pos=pos or None,
             noun=pos in ("NOUN", "PROPN"),
             pronoun=pos == "PRON" or (pos == "DET" and _is_pronominal_det(features, pron_type)),

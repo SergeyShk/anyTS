@@ -772,6 +772,9 @@ def test_find_marks():
     assert find_marks('after "The Inspector" a play', title) == frozenset()
     assert find_marks("after „The Inspector“ a play", title) == frozenset()
     assert find_marks("l’homme", ["l", "homme"]) == frozenset()
+    # The invisible separators are no marks
+    for separator in "\u00ad\u200b\u2060\ufeff":
+        assert find_marks(f"before{separator} the end", ["before", "the", "end"]) == frozenset()
     with pytest.raises(SourceTypeError):
         find_marks(5, words)
     with pytest.raises(SourceTypeError):

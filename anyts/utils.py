@@ -167,8 +167,10 @@ def find_marks(text: str, words: Sequence[str]) -> frozenset[int]:
         The words are found in the text in their order, apart from the letters
         and digits around them unless glued to the word before or after; a word
         with an is_punctuation character between it and the word before gets
-        its position, except a quote, an apostrophe and the hyphen that joins
-        two parts of a word. A word the text does not hold is passed over
+        its position, except a quote, an apostrophe, an invisible separator (the
+        soft hyphen, zero-width characters, the byte order mark) and the hyphen
+        that joins two parts of a word. A word the text does not hold is passed
+        over
 
     Arguments:
         text (str): Text
@@ -225,9 +227,12 @@ def _stands_apart(text: str, start: int, end: int, cursor: int, following: str) 
 
 
 def _is_mark_gap(gap: str) -> bool:
-    """Whether the text between two words holds a punctuation mark, the quotes and the
-    hyphen that joins two parts of a word aside"""
-    return gap != "-" and any(is_punctuation(char) and not _is_quote(char) for char in gap)
+    """Whether the text between two words holds a punctuation mark, the quotes, the hyphen
+    that joins two parts of a word and the invisible separators aside"""
+    separators = _separators()
+    return gap != "-" and any(
+        is_punctuation(char) and not _is_quote(char) and char not in separators for char in gap
+    )
 
 
 def _is_quote(char: str) -> bool:
@@ -815,8 +820,8 @@ def find_unit_marks(units: Sequence[Sequence[Token]]) -> frozenset[int]:
     Description:
         The words are those of iter_doc_units in one sentence; a word with an
         is_punctuation character between it and the word before gets its
-        position, except a quote, an apostrophe and the hyphen that joins two
-        parts of a word (find_marks)
+        position, except a quote, an apostrophe, an invisible separator and the
+        hyphen that joins two parts of a word (find_marks)
 
     Arguments:
         units (list[list[Token]]): Tokens of every word of a sentence

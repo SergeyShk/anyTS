@@ -5,11 +5,11 @@ CohesionStats(source, sents_extractor=None, connectors=None, blank_lines=False)
 ```
 
 <!-- --8<-- [start:CohesionStats] -->
-The cohesion statistics of a text in the manner of Coh-Metrix: the overlap of the sentences, the givenness, the temporal cohesion and the connectors of a dictionary. The sentences are compared by lemmas. The data source is a `Doc` object of [spaCy](https://github.com/explosion/spaCy) with the parts of speech and the lemmas, split into sentences by its boundaries, or by the sentence extractor over its text when one is given or the `Doc` has none.
+The cohesion statistics of a text in the manner of Coh-Metrix: the overlap of the sentences, the givenness, the temporal cohesion and the connectors of a dictionary. The sentences are compared by lemmas. The data source is a text, a `Doc` object of [spaCy](https://github.com/explosion/spaCy) or a `Document` of [anySeg](https://github.com/SergeyShk/anySeg) with parts of speech and lemmas; a language library annotates a string in its `parse`. The words are those of Universal Dependencies of its [document](https://sergeyshk.github.io/anyTS/document/#get_tree) (`get_tree`) with a letter or a digit, split into sentences by the document, or by the sentence extractor over its text when one is given.
 
 Raises:
 
-- `SourceTypeError` - an extractor of another type, a source that is not a `Doc`, connectors that are not a dictionary of phrases and pairs of strings;
+- `SourceTypeError` - an extractor of another type, a source that is neither a string, a `Doc` nor a `Document`, a `parse` that returns no `Document`, connectors that are not a dictionary of phrases and pairs of strings;
 - `SourceError` - a source without parts of speech, lemmas or words;
 - `ParameterError` - an unknown class or kind of a connector, a `blank_lines` that is not a `bool`.
 <!-- --8<-- [end:CohesionStats] -->
@@ -88,8 +88,8 @@ Raises:
 <!-- --8<-- [start:CohesionStats-parameters] -->
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
-| `source` | `Doc` | - | Data source: a `Doc` with the parts of speech and the lemmas, or what `analyze` reads |
-| `sents_extractor` | `SentsExtractor` | `None` | Sentence extraction tool; given here, it splits a `Doc` by its text whatever its boundaries |
+| `source` | `str` / `Doc` / `Document` | - | Data source with the parts of speech and the lemmas, a text that `parse` annotates, or what `analyze` reads |
+| `sents_extractor` | `SentsExtractor` | `None` | Sentence extraction tool; given here, it splits the text in place of the sentences of the document, and the words outside its sentences are left out |
 | `connectors` | `dict[str, tuple[str, str]]` | `None` | Class and kind by connector; those of `load_connectors` by default |
 | `blank_lines` | `bool` | `False` | Start the paragraphs after the blank lines alone, for a text whose lines are wrapped inside its paragraphs; after every line break by default |
 <!-- --8<-- [end:CohesionStats-parameters] -->
@@ -490,22 +490,21 @@ Words that are not a list of strings and parts of speech that are not a list of 
 <summary>Language hooks of a subclass</summary>
 
 <!-- --8<-- [start:CohesionStats-hooks] -->
-A language library subclasses `CohesionStats`. By default the words and their features are read from a `Doc` by Universal Dependencies, and there are no connectors:
+A language library subclasses `CohesionStats`. By default the words are the `TreeWord` objects of the tree of the document of `parse` (`get_tree`) with their features of Universal Dependencies, and there are no connectors:
 
 | Hook | Kind | Description |
 | :--- | :--- | :---------- |
-| `analyze(source)` | method | Words of the sentences of a source as `CohesionWord`: the word, its lemma, its part of speech, whether it is a noun, a pronoun, a demonstrative, an argument and a content word, its tense, mood and aspect, whether a punctuation mark stands before it (`break_before`, which the rules of the connectors do not read through), whether no connector starts at it (`connector_blocked`, by a rule of the parse such as an *if* of an indirect question) and whether a paragraph starts at it (`paragraph_start`); by default those of a `Doc`, sentence by sentence (`doc_units`), with the features of `word_info`; the default marks the words after a line break of the `Doc`, or after a blank line with `blank_lines` (`find_unit_paragraph_starts`); a library that reads a string or a `Doc` without these annotations overrides it, `find_paragraph_starts` with `blank_lines` giving the paragraph starts of a string |
-| `doc_units(doc)` | method | Words of the sentences of a `Doc` as lists of tokens: by its boundaries, or by the extractor over its text (`split_doc_units` of `anyts.utils`) |
-| `word_info(unit)` | method | Features of a word of a `Doc`; by default a noun is `NOUN` or `PROPN`, a pronoun `PRON` or a possessive, demonstrative or personal determiner, a demonstrative carries `PronType=Dem`, an argument is `NOUN`, `PROPN` or `PRON`, a content word one of `anyts.constants.CONTENT_UD_POS` and no demonstrative, and the tense, the mood and the aspect are the features `Tense`, `Mood` and `Aspect`; a library sets `connector_blocked` where its parse rules a connector out |
+| `parse(source)` | method | Document of the source, from `Stats`; a library sets it to annotate a string in its language |
+| `analyze(source)` | method | Words of the sentences of a source as `CohesionWord`: the word, its lemma, its part of speech, whether it is a noun, a pronoun, a demonstrative, an argument and a content word, its tense, mood and aspect, whether a punctuation mark stands before it (`break_before`, which the rules of the connectors do not read through), whether no connector starts at it (`connector_blocked`, by a rule of the parse such as an *if* of an indirect question) and whether a paragraph starts at it (`paragraph_start`); by default the words of the tree with a letter or a digit, sentence by sentence, with the features of `word_info`; the default marks the words after a punctuation mark in their sentence, except a quote, an apostrophe, an invisible separator and the hyphen that joins two parts of a word, and the words after a line break, or after a blank line with `blank_lines`, among the words of the sentences; a library that reads the words another way overrides it, `find_paragraph_starts` with `blank_lines` giving the paragraph starts of a string |
+| `word_info(word)` | method | Features of a `TreeWord` of the tree; by default the lemma is that of the word in lower case, its form without one, a noun is `NOUN` or `PROPN`, a pronoun `PRON` or a possessive, demonstrative or personal determiner, a demonstrative carries `PronType=Dem`, an argument is `NOUN`, `PROPN` or `PRON`, a content word one of `anyts.constants.CONTENT_UD_POS` and no demonstrative, and the tense, the mood and the aspect are the features `Tense`, `Mood` and `Aspect`; a library sets `connector_blocked` where its parse rules a connector out |
 | `load_connectors()` | class method | Dictionary of the connectors of the language, class and kind by connector; empty by default |
 | `connector_matcher()` | class method | Matcher of that dictionary, built once for a class and shared by its instances and by searches outside the statistics |
 | `connector_matcher_class` | class attribute | Class that finds the connectors with the context rules of the language; `ConnectorMatcher` by default. A matcher with other classes or kinds gives other `connectors_*` attributes, so the subclass sets its own `stats_desc` too |
 | `temporal_features` | class attribute | Features of the verbs whose repetitions make the temporal cohesion: a tuple of one or more distinct ones of `tense`, `mood` and `aspect` (`TEMPORAL_FEATURES`), checked when the class is defined; `tense` and `aspect` by default, as in Coh-Metrix |
-| `sents_extractor_class`, `join_hyphens` | class attributes | Sentence extractor of a `Doc` without boundaries, joining of the hyphenated words of a `Doc` |
 | `stats_desc`, `stats_headers` | class attributes | Statistics of `get_stats` with their descriptions (`COHESION_STATS_DESC` by default), headers of the columns for `print_stats` |
 | `messages` | class attribute | Messages of the errors by key; `MESSAGES` by default |
 
-The parameters of a library - its model of a string, its word extractor - go to the constructor of its subclass, which keeps them for its `analyze`. An `analyze` that does not give sentences of `CohesionWord` objects raises `SourceTypeError`.
+The parameters of a library - its model of a string - go to the constructor of its subclass, which keeps them for its `parse` and `analyze`. An `analyze` that does not give sentences of `CohesionWord` objects raises `SourceTypeError`.
 <!-- --8<-- [end:CohesionStats-hooks] -->
 
 </details>

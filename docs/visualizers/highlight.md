@@ -263,7 +263,7 @@ Phrases that are not a collection of strings or a mapping of strings raise `Sour
 find_connector_highlights(words, sents, matcher, note=None, pos=None, text=None, blocked=None)
 ```
 
-The layer `connectors`: the connectors of a `ConnectorMatcher` of the language inside every sentence, in the whole text when the sentences are `None`; a one-word connector is checked by its part of speech when a word of the sentence has one - its own, or that of the hook `pos`. With the `text`, a character of `is_punctuation` between two words is a punctuation mark, which the rules of the matcher do not read through; a quote, an apostrophe and the hyphen that joins two parts of a word are none. No connector starts at a word the hook `blocked` rules out, such as one its parse makes no connector. The note gives the text, the class and the kind of the connector by default.
+The layer `connectors`: the connectors of a `ConnectorMatcher` of the language inside every sentence, in the whole text when the sentences are `None`; a one-word connector is checked by its part of speech when a word of the sentence has one - its own, or that of the hook `pos`. With the `text`, a character of `is_punctuation` between two words is a punctuation mark, which the rules of the matcher do not read through; a quote, an apostrophe, an invisible separator (the soft hyphen, zero-width characters, the byte order mark) and the hyphen that joins two parts of a word are none. No connector starts at a word the hook `blocked` rules out, such as one its parse makes no connector. The note gives the text, the class and the kind of the connector by default.
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
