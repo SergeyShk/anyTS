@@ -461,7 +461,7 @@ Finds the punctuation marks between the words of a sentence of a `Doc`: the word
 find_unit_paragraph_starts(units, blank_lines=False)
 ```
 
-Finds the words of a `Doc` that start a paragraph: the words are those of `iter_doc_units` over the whole `Doc`, across its sentences, and a word that a line break (`LINE_BREAK`) separates from the word before gets its position, inside a sentence too, or a blank line (`BLANK_LINE`) with `blank_lines`, as `find_paragraph_starts` does for a text. `CohesionStats` sets the `paragraph_start` of its words by these positions. A `blank_lines` that is not a `bool` raises `ParameterError`.
+Finds the words of a `Doc` that start a paragraph: the words are those of `iter_doc_units` over the whole `Doc`, across its sentences, and a word that a line break (`LINE_BREAK`) separates from the word before gets its position, inside a sentence too, or a blank line (`BLANK_LINE`) with `blank_lines`, as `find_paragraph_starts` does for a text. A `blank_lines` that is not a `bool` raises `ParameterError`.
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |

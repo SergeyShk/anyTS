@@ -336,7 +336,7 @@ CASES = [
     ("no_parse", SourceError, lambda: Syntax(Doc(VOCAB, words=["Yes"]))),
     ("no_pos", SourceError, lambda: Syntax(PARSED)),
     ("no_lemmas", SourceError, lambda: Lemmas(TAGGED_PARSE)),
-    ("source_type", SourceTypeError, lambda: Cohesion("Yes")),
+    ("source_type", SourceTypeError, lambda: Cohesion(5)),
     ("source_span", SourceTypeError, lambda: Cohesion(PARSED[:1])),
     ("source_type", SourceTypeError, lambda: Morph(5)),
     ("source_span", SourceTypeError, lambda: Morph(PARSED[:1])),
