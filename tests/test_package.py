@@ -219,9 +219,16 @@ def test_lazy_package_imports_one_name_at_a_time(tmp_path, monkeypatch):
     found = {}
 
     def reader(thread):
+        name = f"Name{thread % 8}"
+
         def read():
             barrier.wait()
-            found[thread] = getattr(package, f"Name{thread % 8}")
+            if thread < 8:
+                found[thread] = getattr(package, name)
+            else:
+                # from anyts_lazy_threads import NameN, which reads the name in the import system
+                module = __import__("anyts_lazy_threads", fromlist=[name])
+                found[thread] = getattr(module, name)
 
         return read
 

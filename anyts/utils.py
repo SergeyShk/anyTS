@@ -1143,10 +1143,15 @@ def _lazy_import_lock() -> Iterator[None]:
 
 
 def _imports_a_module() -> bool:
-    """Whether the calling thread runs the body of a module it imports"""
+    """Whether the calling thread runs the body of a module it imports or reloads: a frame of
+    _load_unlocked or _exec of the import system is on its stack, which from pkg import name at
+    the top level does not put there"""
     frame: FrameType | None = sys._getframe(1)
     while frame is not None:
-        if frame.f_code.co_filename.startswith("<frozen importlib._bootstrap"):
+        code = frame.f_code
+        if code.co_name in ("_load_unlocked", "_exec") and code.co_filename.startswith(
+            "<frozen importlib._bootstrap"
+        ):
             return True
         frame = frame.f_back
     return False
