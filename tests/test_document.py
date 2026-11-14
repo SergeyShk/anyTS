@@ -131,6 +131,32 @@ def test_doc_without_sentences():
     assert sentences(to_document(partial)) == ["One.", "Two!", "Three"]
 
 
+def test_doc_converted_once():
+    """The last Doc converted keeps its document while its tokens and annotations stay"""
+    nlp = spacy.blank("en")
+    doc = nlp("One. Two!")
+    document = to_document(doc)
+    assert to_document(doc) is document
+    # Another sentenize, a new annotation and a Doc between them convert it again
+    assert to_document(doc, sentenize=semicolons) is not document
+    assert to_document(doc, sentenize=semicolons) is to_document(doc, sentenize=semicolons)
+    document = to_document(doc)
+    doc[0].lemma_ = "one"
+    changed = to_document(doc)
+    assert changed is not document and changed.column("lemma")[0] == "one"
+    to_document(nlp("Three"))
+    assert to_document(doc) is not changed
+    # The words of a multiword token of anySeg are part of the annotations
+    doc = nlp("Vino del pueblo")
+    plain = to_document(doc)
+    doc[1]._.anyseg_words = [{"form": "de"}, {"form": "el"}]
+    assert [word.form for word in to_document(doc).words] == ["Vino", "de", "el", "pueblo"]
+    assert len(plain.words) == 3
+    # A Doc that is gone matches no Doc made in its place
+    assert to_document(nlp("Four")).text == "Four"
+    assert to_document(nlp("Five")).text == "Five"
+
+
 def test_doc_columns():
     vocab = spacy.blank("en").vocab
     doc = Doc(

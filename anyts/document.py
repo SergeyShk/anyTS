@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import weakref
 from bisect import bisect_left, bisect_right
 from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from functools import cache
@@ -30,6 +31,19 @@ Spans = Callable[[str], Iterable[tuple[int, int, str]]]
 _WORD_SEPARATORS = "\u00ad\u200c\u200d"
 
 
+class _Converted(NamedTuple):
+    """The last Doc converted, the stamp of its annotations, the sentenize of the conversion and
+    its document"""
+
+    doc: weakref.ref[Doc]
+    stamp: tuple[bytes, str]
+    sentenize: Spans | None
+    document: Document
+
+
+_last_converted: list[_Converted] = []
+
+
 def to_document(
     source: str | Doc | Document,
     tokenize: Spans | None = None,
@@ -55,7 +69,11 @@ def to_document(
         zero-width characters, the byte order mark) at the edges of a token are
         left out, and a token of nothing else is dropped
         The default tokens are the words of WordsExtractor and every run of one
-        other character; the default sentences are those of SentsExtractor
+        other character; the default sentences are those of SentsExtractor.
+        The document of the last Doc converted is kept while the Doc lives with
+        the same tokens, annotations and sentenize, so the classes of statistics
+        of one Doc convert it once: the same Document comes back, and it is not
+        to be changed
 
     Arguments:
         source (str|Doc|Document): Data source
@@ -90,7 +108,7 @@ def to_document(
     if is_document(source):
         return source
     if is_doc(source):
-        return _doc_document(source, sentenize, messages)
+        return _cached_document(source, sentenize, messages)
     if isinstance(source, str):
         return _text_document(source, tokenize, sentenize)
     raise source_type_error(messages, source)
@@ -387,6 +405,32 @@ def _source_text(source: str | Doc | Document, messages: Mapping[str, str]) -> s
     if is_doc(source) or is_document(source):
         return source.text
     raise source_type_error(messages, source)
+
+
+def _cached_document(doc: Doc, sentenize: Spans | None, messages: Mapping[str, str]) -> Document:
+    """Document of a Doc, the one of the last conversion while the Doc and its annotations are
+    the same"""
+    stamp = _doc_stamp(doc)
+    for converted in _last_converted:
+        if (
+            converted.doc() is doc
+            and converted.stamp == stamp
+            and converted.sentenize == sentenize
+        ):
+            return converted.document
+    document = _doc_document(doc, sentenize, messages)
+    _last_converted[:] = [_Converted(weakref.ref(doc), stamp, sentenize, document)]
+    return document
+
+
+def _doc_stamp(doc: Doc) -> tuple[bytes, str]:
+    """The tokens of a Doc and the annotations its document reads: the columns, the sentence
+    starts and the words of the multiword tokens of anySeg"""
+    from anyseg.spacy import given_words
+    from spacy.attrs import DEP, HEAD, LEMMA, MORPH, ORTH, POS, SENT_START, SPACY, TAG
+
+    columns = doc.to_array([ORTH, SPACY, LEMMA, POS, TAG, MORPH, HEAD, DEP, SENT_START])
+    return columns.tobytes(), repr(sorted(given_words(doc).items()))
 
 
 def _doc_document(doc: Doc, sentenize: Spans | None, messages: Mapping[str, str]) -> Document:
