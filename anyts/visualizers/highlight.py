@@ -4,19 +4,17 @@ import html
 import re
 from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass
-from functools import partial
 from itertools import pairwise
 from numbers import Integral, Real
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Any, ClassVar, NamedTuple
 
 from ..constants import ALLITERATION_MIN_WORD_LEN, ALLITERATION_THRESHOLD, MESSAGES
+from ..document import _parsed, to_document
 from ..exceptions import ParameterError, SourceError, SourceTypeError
-from ..extractors import SentsExtractor, _check_spans, _iter_words, iter_part_sents
 from ..syntax_stats import get_words
 from ..utils import (
     _is_mark_gap,
-    _unit_word,
     check_callable,
     check_integer,
     check_messages,
@@ -24,29 +22,28 @@ from ..utils import (
     check_word,
     check_words,
     find_phrases,
-    has_pos,
-    has_sents,
+    has_words,
     in_order,
-    is_doc,
-    iter_doc_tokens,
-    source_type_error,
 )
 
 if TYPE_CHECKING:
+    from anyseg import Document
     from spacy.tokens import Doc, Token
 
     from ..cohesion_stats import Connector, ConnectorMatcher
 
 # Line breaks of Unix, Windows and old Mac texts
 _LINE_BREAK = re.compile(r"\r\n?|\n")
-# What an annotation of a Doc gives a layer, for the message of an unavailable layer
+# The columns of the words of a document a layer may need
+_COLUMNS = frozenset(("lemma", "upos", "xpos", "feats", "head", "deprel", "deps", "misc"))
+# What a column of a document gives a layer, for the message of an unavailable layer
 _ANNOTATION_NAMES = {
-    "DEP": "dependency parse",
-    "LEMMA": "lemmas",
-    "POS": "parts of speech",
-    "TAG": "tags",
-    "MORPH": "morphological features",
-    "ENT_IOB": "named entities",
+    "head": "dependency parse",
+    "deprel": "dependency parse",
+    "lemma": "lemmas",
+    "upos": "parts of speech",
+    "xpos": "tags",
+    "feats": "morphological features",
 }
 
 
@@ -154,24 +151,21 @@ class HighlightedText:
         language library subclasses the class, sets the class attributes
             layers_desc - the layers in the order of drawing with their legends
             default_layers - the layers on by default
-            layer_annotations - the annotations of a Doc a layer needs (DEP, POS,
-                LEMMA...); a layer without them is available for a string too
+            layer_annotations - the columns of the document a layer needs
+                (deprel, upos, lemma...); a layer without them is always available
             layer_styles - the CSS declarations of the layers
             css_prefix - the prefix of the CSS classes
-            annotation_names - the names of the annotations in the message of
-                an unavailable layer
+            annotation_names - the names of the columns in the message of an
+                unavailable layer
             messages - the messages of the errors by key
-        and implements find, overriding iter_words, iter_sents and doc_words
-        when needed. The sentences of a Doc come from its boundaries
-        (iter_doc_sents), or from iter_sents over its text without them or with
-        partial ones (has_sents); iter_sents gets the parts of a text between
-        blank lines one by one, so a blank line ends a sentence as in
-        SentsExtractor. The words of a sentence are those that start in it.
+        and implements find, overriding parse and doc_words when needed. The
+        words and the sentences are those of the document of parse (doc_words,
+        iter_doc_sents); the words of a sentence are those that start in it.
         Fragments of different layers may overlap. The result shows in Jupyter
         as HTML with a legend (to_html)
 
     Arguments:
-        source (str|Doc): Data source (a string or a Doc object)
+        source (str|Doc|Document): Data source (a string, a Doc or a Document object)
         layers (list[str]|str): Layers of the highlighting; the layers of
             default_layers the source allows if not set; "all" - every layer the
             source allows
@@ -187,13 +181,14 @@ class HighlightedText:
         css: Getting the styles of the layers
 
     Raises:
-        SourceTypeError: If the source is neither a string nor a Doc, find does not
-            return fragments of Highlight, or iter_words or iter_sents does not give
-            ascending triples of integer bounds inside the text and a string
+        SourceTypeError: If the source is neither a string, a Doc nor a Document,
+            parse does not return a Document, or find does not return fragments of
+            Highlight
         SourceError: If the source has no words
         ParameterError: If a layer is unknown or not allowed by the source, the
             layers are not a list of names, or find gives a fragment of another
-            layer, an empty one or one outside the text
+            layer, an empty one or one outside the text; when a class is defined,
+            if a layer needs a column that a document has not
     """
 
     layers_desc: ClassVar[Mapping[str, str]] = MappingProxyType({})
@@ -207,44 +202,32 @@ class HighlightedText:
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
         check_messages(cls.messages)
+        for layer, columns in cls.layer_annotations.items():
+            if unknown := [column for column in columns if column not in _COLUMNS]:
+                raise ParameterError(
+                    cls.messages["layer_columns"].format(
+                        layer=layer, cls=cls.__name__, columns=", ".join(map(str, unknown))
+                    )
+                )
 
-    def __init__(self, source: str | Doc, layers: Sequence[str] | str | None = None):
-        doc = None
-        if is_doc(source):
-            doc = source
-            self.text = source.text
-            words = self.doc_words(source)
-            spans = (
-                iter_doc_sents(source)
-                if has_sents(source)
-                else iter_part_sents(partial(self._hook_spans, "iter_sents"), self.text)
-            )
-            sents = get_text_sents(spans, words)
-        elif isinstance(source, str):
-            self.text = source
-            words = [
-                Word(start, end, text)
-                for start, end, text in self._hook_spans("iter_words", source)
-            ]
-            sents = get_text_sents(
-                iter_part_sents(partial(self._hook_spans, "iter_sents"), source), words
-            )
-        else:
-            raise source_type_error(self.messages, source)
+    def __init__(self, source: str | Doc | Document, layers: Sequence[str] | str | None = None):
+        document = _parsed(self, source)
+        self.text = document.text
+        words = self.doc_words(document)
+        sents = get_text_sents(iter_doc_sents(document), words)
         if not words:
             raise SourceError(self.messages["no_words"])
         available = [
             layer
             for layer in self.layers_desc
             if all(
-                doc is not None and _has_annotation(doc, annotation)
-                for annotation in self.layer_annotations.get(layer, ())
+                _has_column(document, column) for column in self.layer_annotations.get(layer, ())
             )
         ]
         self.layers = self._select_layers(layers, available)
         highlights = []
         for layer in self.layers:
-            found = self.find(layer, words, sents, doc)
+            found = self.find(layer, words, sents, document)
             if not isinstance(found, Iterable):
                 raise SourceTypeError(self._find_error(found))
             for h in found:
@@ -266,61 +249,43 @@ class HighlightedText:
                 highlights.append(h)
         self.highlights = tuple(sorted(highlights, key=lambda h: (h.start, -h.end)))
 
-    def iter_words(self, text: str) -> Iterable[tuple[int, int, str]]:
+    def parse(self, source: str | Doc | Document) -> Document:
         """
-        Extracting the words of a string with their positions
+        Getting the document of a data source
 
         Description:
-            By default the words of the default tokenizer of WordsExtractor;
-            a language library overrides the method
+            to_document by default, as Stats.parse; a language library
+            overrides it to segment and annotate a string in its language
 
         Arguments:
-            text (str): Text string
+            source (str|Doc|Document): Data source
 
         Returns:
-            iterable[tuple[int, int, str]]: Position of the first character,
-                position after the last character and text of each word
+            Document: Document of anySeg
+
+        Raises:
+            SourceTypeError: If the source is neither a string, a Doc nor a Document
+                object
         """
-        return _iter_words(text)
+        return to_document(source, messages=self.messages)
 
-    def iter_sents(self, text: str) -> Iterator[tuple[int, int, str]]:
+    def doc_words(self, document: Document) -> list[Word]:
         """
-        Extracting the sentences of a string with their positions
-
-        Description:
-            By default the sentences of the default tokenizer of SentsExtractor;
-            a language library overrides the method
-
-        Arguments:
-            text (str): Text string
-
-        Returns:
-            iterator[tuple[int, int, str]]: Position of the first character,
-                position after the last character and text of each sentence
-        """
-        position = 0
-        for sent in SentsExtractor().extract(text):
-            start = text.index(sent, position)
-            position = start + len(sent)
-            yield start, position, sent
-
-    def doc_words(self, doc: Doc) -> list[Word]:
-        """
-        Extracting the words of a Doc object with their positions
+        Extracting the words of a document with their positions
 
         Description:
             By default get_doc_words; a language library overrides the method
 
         Arguments:
-            doc (Doc): Doc object
+            document (Document): Document of anySeg
 
         Returns:
             list[Word]: Words with their positions
         """
-        return get_doc_words(doc)
+        return get_doc_words(document)
 
     def find(
-        self, layer: str, words: Sequence[Word], sents: Sequence[Sent], doc: Doc | None
+        self, layer: str, words: Sequence[Word], sents: Sequence[Sent], document: Document
     ) -> list[Highlight]:
         """
         Finding the fragments of a layer
@@ -334,23 +299,12 @@ class HighlightedText:
             layer (str): Layer of the highlighting
             words (list[Word]): Words of the text with their positions
             sents (list[Sent]): Sentences of the text with their positions
-            doc (Doc): Doc object of the source; None for a string
+            document (Document): Document of the source
 
         Returns:
             list[Highlight]: Fragments of the layer, of this layer only
         """
         raise NotImplementedError
-
-    def _hook_spans(self, hook: str, text: str) -> list[tuple[int, int, str]]:
-        """The words or the sentences iter_words or iter_sents gives for a text, checked"""
-        return _check_spans(
-            getattr(self, hook)(text),
-            text,
-            hook,
-            error=lambda value: self.messages["hook_spans"].format(
-                hook=hook, cls=type(self).__name__, span=repr(value)
-            ),
-        )
 
     def _find_error(self, value: object) -> str:
         """Message of a result of find that is not fragments of the highlighting"""
@@ -491,54 +445,42 @@ class HighlightedText:
         return "".join(chunks)
 
 
-def get_doc_words(doc: Doc) -> list[Word]:
+def get_doc_words(document: Document) -> list[Word]:
     """
-    Extracting the words of a Doc object with their positions
+    Extracting the words of a document with their positions
 
     Description:
-        The words of iter_doc_tokens, a byte order mark at the start left out,
-        with the part of speech and the lemma when the Doc has them
+        The tokens with a letter or a digit (has_words), with the part of
+        speech and the lemma of their first word of Universal Dependencies
+        when the document has them
 
     Arguments:
-        doc (Doc): Doc object
+        document (Document): Document of anySeg
 
     Returns:
         list[Word]: Words with their positions
     """
-    pos, lemma = has_pos(doc), doc.has_annotation("LEMMA")
-    return [
-        Word(
-            *_unit_word([token]),
-            token.pos_ if pos else None,
-            token.lemma_ if lemma else None,
-        )
-        for token in iter_doc_tokens(doc)
-    ]
+    words = []
+    for token in document.tokens:
+        text = token.text
+        if has_words(text):
+            first = token.words[0]
+            words.append(Word(token.start, token.end, text, first.upos, first.lemma))
+    return words
 
 
-def iter_doc_sents(doc: Doc) -> Iterator[tuple[int, int, str]]:
+def iter_doc_sents(document: Document) -> Iterator[tuple[int, int, str]]:
     """
-    Extracting the sentences of a Doc object with their positions
-
-    Description:
-        The sentences of its boundaries; the whitespace tokens at the edges of a
-        sentence are left out of its positions, and a sentence of whitespace
-        alone is skipped
+    Extracting the sentences of a document with their positions
 
     Arguments:
-        doc (Doc): Doc object with the sentence boundaries
+        document (Document): Document of anySeg
 
     Returns:
         iterator[tuple[int, int, str]]: Position of the first character,
             position after the last character and text of each sentence
     """
-    text = doc.text
-    for sent in doc.sents:
-        tokens = [token for token in sent if not token.is_space]
-        if tokens:
-            start = min(token.idx for token in tokens)
-            end = max(token.idx + len(token) for token in tokens)
-            yield start, end, text[start:end]
+    return ((sent.start, sent.end, sent.text) for sent in document.sentences)
 
 
 def get_text_sents(spans: Iterable[tuple[int, int, str]], words: Sequence[Word]) -> list[Sent]:
@@ -694,9 +636,9 @@ def _check_hooks(*hooks: tuple[object, str]) -> None:
             check_callable(hook, what)
 
 
-def _has_annotation(doc: Doc, annotation: str) -> bool:
-    """Whether a Doc carries an annotation, the parts of speech by its words (has_pos)"""
-    return has_pos(doc) if annotation == "POS" else doc.has_annotation(annotation)
+def _has_column(document: Document, column: str) -> bool:
+    """Whether a column of a document holds a value for a word"""
+    return any(value is not None for value in document.column(column))
 
 
 def _plural(n: int, noun: str) -> str:

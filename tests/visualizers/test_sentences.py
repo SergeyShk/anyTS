@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 import spacy
+from anyseg import Document
 from matplotlib.axes import Axes
 
 from anyts import SentsExtractor, WordsExtractor
@@ -77,10 +78,16 @@ def test_sentence_lengths_hooks():
     nlp.add_pipe("sentencizer")
     doc = nlp("A well-known cat. It sleeps.")
     assert sentence_lengths(doc) == [4, 2]
-    assert sentence_lengths(doc, join_hyphens=True) == [3, 2]
-    # A Doc without sentence boundaries is counted as its text, by the extractors
+    # A Doc without sentence boundaries gets the sentences of its text
     bare = spacy.blank("xx")("A well-known cat. It sleeps.")
-    assert sentence_lengths(bare, join_hyphens=True) == [4, 2]
+    assert sentence_lengths(bare) == [4, 2]
+    # The tokens of a document decide the words: a hyphenated token is one word
+    document = Document.from_tokens("A well-known cat.", [0, 2, 13, 16], [1, 12, 16, 17])
+    assert sentence_lengths(document) == [3]
+    # An extractor splits the text of a Doc too
+    assert sentence_lengths(
+        doc, sents_extractor=SentsExtractor(tokenizer=re.compile(r"(?<=\.) "))
+    ) == [4, 2]
     with pytest.raises(SourceTypeError, match="SentsExtractor"):
         sentence_lengths(text, sents_extractor=WordsExtractor())
     with pytest.raises(SourceTypeError, match="WordsExtractor"):

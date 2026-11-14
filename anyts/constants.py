@@ -272,7 +272,8 @@ MESSAGES: Mapping[str, str] = MappingProxyType(
         "layers_type": "The layers must be a list of names or a string",
         "unknown_layer": "Unknown layer of the highlighting: {layer}",
         "layer_unavailable": "The layer {layer} is not available",
-        "layer_annotations": "The layer {layer} needs a Doc with the annotations: {annotations}",
+        "layer_annotations": "The layer {layer} needs a document with the annotations: {annotations}",
+        "layer_columns": "The layer {layer} of {cls} needs columns a document has not: {columns}",
         "fragment_layer": "A fragment of the layer {found} is found for {layer}",
         "fragment_outside": (
             "A fragment of the layer {layer} is empty or lies outside the text: {start}-{end}"
@@ -328,10 +329,6 @@ MESSAGES: Mapping[str, str] = MappingProxyType(
         "hook_sounds": "The {hook} of {cls} must return a string or strings, not {type}",
         "hook_highlights": "The {hook} of {cls} must return Highlight objects, not {type}",
         "hook_morph_words": "The {hook} of {cls} must return MorphWord objects, not {type}",
-        "hook_spans": (
-            "The {hook} of {cls} must give ascending triples of integer bounds inside the text "
-            "and a string, not {span}"
-        ),
         "connector_dict": "The connectors must be a dictionary of a phrase and its class and kind",
         "connector_entry": "A connector must be a phrase with a pair of its class and kind: {connector}",
         "connector_class": "Unknown class or kind of a connector: {cls}, {kind}",

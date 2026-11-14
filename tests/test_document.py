@@ -84,6 +84,11 @@ def test_sentenize():
     # A sentence that starts inside a token starts at the next one; a blank line ends a sentence
     document = to_document("Onetwo three\n\nfour", sentenize=thirds)
     assert sentences(document) == ["Onetwo", "three", "four"]
+    # The sentences may come in any order: only their starts count
+    backwards = to_document("One. Two. Three.", sentenize=lambda text: semicolons(text)[::-1])
+    assert sentences(backwards) == ["One. Two. Three."]
+    reversed_thirds = to_document("Onetwo three", sentenize=lambda text: thirds(text)[::-1])
+    assert sentences(reversed_thirds) == ["Onetwo", "three"]
 
 
 def test_hooks_are_checked():
@@ -95,7 +100,7 @@ def test_hooks_are_checked():
         to_document(TEXT, tokenize=lambda text: [(0, 3)])
     with pytest.raises(SourceTypeError, match="ascending integer bounds"):
         to_document(TEXT, tokenize=lambda text: [(4, 7, "cat"), (0, 3, "The")])
-    with pytest.raises(SourceTypeError, match="ascending integer bounds"):
+    with pytest.raises(SourceTypeError, match="must give integer bounds inside"):
         to_document(TEXT, sentenize=lambda text: [(0, 99, text)])
 
 

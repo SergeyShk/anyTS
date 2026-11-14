@@ -5,11 +5,11 @@ from bisect import bisect_left
 from collections.abc import Callable, Iterable, Iterator, Mapping
 from functools import cache
 from re import Pattern
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from .constants import MESSAGES
 from .exceptions import SourceError, SourceTypeError
-from .extractors import _check_spans, _iter_part_sents, _sentence_spans, _word_pattern
+from .extractors import _check_spans, _sentence_spans, _word_pattern
 from .utils import (
     BLANK_LINE,
     _separators,
@@ -62,7 +62,7 @@ def to_document(
         tokenize (Callable[[str], Iterable[tuple[int, int, str]]]): Tokens of a
             string with their positions
         sentenize (Callable[[str], Iterable[tuple[int, int, str]]]): Sentences of a
-            string with their positions
+            string with their positions, in any order
         messages (dict[str, str]): Messages of the errors by key (MESSAGES)
 
     Returns:
@@ -71,8 +71,8 @@ def to_document(
     Raises:
         SourceTypeError: If the source is neither a string, a Doc nor a Document
             object, tokenize or sentenize is not callable, either does not give
-            ascending triples of integer bounds inside the text and a string, or a
-            token of tokenize runs over a blank line
+            triples of integer bounds inside the text and a string, those of
+            tokenize ascending, or a token of tokenize runs over a blank line
         SourceError: If a token of the Doc runs over a blank line or its words in
             token._.anyseg_words cannot be in a document
 
@@ -131,6 +131,18 @@ def document_words(document: Document) -> tuple[str, ...]:
         )
         if has_words(word)
     )
+
+
+def _parsed(owner: Any, source: str | Doc | Document) -> Document:
+    """Document of the parse hook of an object, checked to be a Document"""
+    document = owner.parse(source)
+    if not is_document(document):
+        raise SourceTypeError(
+            owner.messages["hook_document"].format(
+                hook="parse", cls=type(owner).__name__, type=type(document).__name__
+            )
+        )
+    return document
 
 
 def _source_text(source: str | Doc | Document, messages: Mapping[str, str]) -> str:
@@ -220,7 +232,7 @@ def _hook_spans(text: str, tokenize: Spans) -> tuple[list[int], list[int]]:
 def _sent_starts(text: str, starts: list[int], sentenize: Spans | None) -> list[int]:
     """Indices of the first tokens of the sentences of every part of a text between blank lines"""
     first: list[int] = []
-    sents = _iter_sents(text) if sentenize is None else _iter_part_sents(sentenize, text)
+    sents = _iter_sents(text) if sentenize is None else _hook_sents(sentenize, text)
     for start, end, _ in sents:
         index = bisect_left(starts, start)
         if index < len(starts) and starts[index] < end and (not first or index > first[-1]):
@@ -228,18 +240,32 @@ def _sent_starts(text: str, starts: list[int], sentenize: Spans | None) -> list[
     return first
 
 
+def _hook_sents(sentenize: Spans, text: str) -> Iterator[tuple[int, int, str]]:
+    """Sentences of sentenize with their positions by start, every part between blank lines apart"""
+    for part_start, part in _parts(text):
+        for start, end, sent in sorted(
+            _check_spans(sentenize(part), part, "sentence splitter", ordered=False)
+        ):
+            yield part_start + start, part_start + end, sent
+
+
 def _iter_sents(text: str) -> Iterator[tuple[int, int, str]]:
     """Sentences of SentsExtractor with their positions, every part between blank lines apart"""
     separators = _separators()
-    bounds = [0, *(bound for match in BLANK_LINE.finditer(text) for bound in match.span())]
-    for part_start, part_end in zip(bounds[::2], [*bounds[1::2], len(text)], strict=True):
-        part = text[part_start:part_end]
+    for part_start, part in _parts(text):
         for start, end in _sentence_spans(part):
             sent = part[start:end]
             stripped = sent.strip(separators)
             if stripped:
                 first = part_start + start + len(sent) - len(sent.lstrip(separators))
                 yield first, first + len(stripped), stripped
+
+
+def _parts(text: str) -> Iterator[tuple[int, str]]:
+    """Parts of a text between blank lines with their starts"""
+    bounds = [0, *(bound for match in BLANK_LINE.finditer(text) for bound in match.span())]
+    for start, end in zip(bounds[::2], [*bounds[1::2], len(text)], strict=True):
+        yield start, text[start:end]
 
 
 @cache

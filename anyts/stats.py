@@ -7,8 +7,8 @@ from numbers import Real
 from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
 from .constants import MESSAGES
-from .exceptions import ParameterError, SourceTypeError, UnknownStatError
-from .utils import check_bool, check_messages, check_number, is_document
+from .exceptions import ParameterError, UnknownStatError
+from .utils import check_bool, check_messages, check_number
 
 if TYPE_CHECKING:
     from anyseg import Document
@@ -100,14 +100,9 @@ class Stats:
 
     def _document(self, source: str | Doc | Document) -> Document:
         """Document of parse, checked to be a Document"""
-        document = self.parse(source)
-        if not is_document(document):
-            raise SourceTypeError(
-                self.messages["hook_document"].format(
-                    hook="parse", cls=type(self).__name__, type=type(document).__name__
-                )
-            )
-        return document
+        from .document import _parsed
+
+        return _parsed(self, source)
 
     def stat_names(self) -> tuple[str, ...]:
         """
