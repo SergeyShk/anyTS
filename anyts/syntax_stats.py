@@ -407,7 +407,7 @@ class SyntaxStats(Stats):
                 1
                 for sent in heads
                 for word in sent
-                if (first := firsts[reattached.get(word.index, word).index]) is not None
+                if (first := firsts.get(reattached.get(word.index, word).index)) is not None
                 and base_dep(first) in NOMINAL_CLAUSE_DEPS
             ),
             "n_verb_phrases": sum(

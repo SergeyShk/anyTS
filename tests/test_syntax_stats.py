@@ -1116,6 +1116,17 @@ def test_subordinating_marks():
     assert is_subordinate_clause_head(tree(nominal)[12], subordinating_marks={"for"})
     stats = Marked(nominal)
     assert (stats.n_t_units, stats.n_subordinate_clauses, stats.n_complex_nominals) == (1, 3, 2)
+    # he came , to help and she stayed, the infinitive attached to the comma: the clause stayed
+    # joins is none
+    comma = parse(
+        ["he", "came", ",", "to", "help", "and", "she", "stayed"],
+        [1, 1, 1, 4, 2, 7, 7, 4],
+        ["nsubj", "ROOT", "punct", "mark", "advcl", "cc", "nsubj", "conj"],
+        ["", fin, "", "", "VerbForm=Inf", "", "", fin],
+        pos=["PRON", "VERB", "PUNCT", "PART", "VERB", "CCONJ", "PRON", "VERB"],
+    )
+    stats = SyntaxStats(comma)
+    assert (stats.n_t_units, stats.n_complex_nominals) == (1, 0)
 
     class HookOnly(SyntaxStats):
         def is_subordinating_mark(self, word):
