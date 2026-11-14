@@ -18,7 +18,6 @@ from anyts.basic_stats import (
     count_punctuations,
     dash_pattern,
 )
-from anyts.components import start_sents_after_blank_lines
 from anyts.constants import BASIC_STATS_DESC, PUNCTUATION_TYPES, SPACES
 from anyts.document import to_document
 from anyts.exceptions import ParameterError, SourceError, SourceTypeError, UnknownStatError
@@ -239,7 +238,8 @@ def test_doc_with_sentence_boundaries(bs):
 def test_doc_with_partial_sentence_boundaries():
     """The starts after the blank lines alone leave the sentences to the extractor"""
     text = "The cat sleeps. The dog eats\n\nThe bird sings. It flies."
-    doc = start_sents_after_blank_lines(spacy.blank("xx")(text))
+    doc = spacy.blank("xx")(text)
+    doc[[token.idx for token in doc].index(text.index("The bird"))].is_sent_start = True
     assert Stats(doc).n_sents == Stats(text).n_sents == 4
 
 

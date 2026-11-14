@@ -7,10 +7,11 @@ from anyseg import Document
 from spacy.tokens import Doc
 
 from anyts.constants import LEXICAL_STATS_DESC, MESSAGES
+from anyts.document import document_words, to_document
 from anyts.exceptions import ParameterError, SourceError, SourceTypeError
 from anyts.extractors import WordsExtractor
 from anyts.lexical_stats import LexicalStats, LexicalWord, calc_surprisal
-from anyts.utils import is_doc, is_number, iter_doc_words, source_type_error
+from anyts.utils import is_doc, is_number, source_type_error
 
 
 class Entry(NamedTuple):
@@ -50,7 +51,7 @@ class English(LexicalStats):
 
     def analyze(self, source):
         if is_doc(source):
-            words = [text for _, _, text in iter_doc_words(source)]
+            words = list(document_words(to_document(source)))
         elif isinstance(source, str):
             words = WordsExtractor().extract(source)
         else:

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from inspect import isabstract
-from typing import TYPE_CHECKING, Any, ClassVar, TypeVar, cast
+from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
 from .basic_stats import BasicStats
 from .cohesion_stats import CohesionStats
@@ -18,7 +18,6 @@ from .constants import (
 )
 from .diversity_stats import check_params as check_diversity_params
 from .exceptions import ParameterError, SourceError, SourceTypeError
-from .extractors import BLANK_LINE
 from .lexical_stats import LexicalStats
 from .morph_stats import MorphStats
 from .phon_stats import PhonStats
@@ -35,21 +34,16 @@ from .utils import (
     check_words,
     has_words,
     is_number,
-    iter_doc_words,
 )
 
 if TYPE_CHECKING:
     from spacy.language import Language
     from spacy.tokens import Doc
-    from thinc.types import Ints2d
 
 # Extensions of Doc registered by the components; any other one belongs to another package
 _EXTENSIONS: set[str] = set()
 
 Stats = TypeVar("Stats")
-
-# The characters that end a line in BLANK_LINE, the paragraph separator among them
-_LINE_BREAKS = frozenset("\n\r\x0b\x0c\x85\u2028\u2029")
 
 
 class StatsComponent:
@@ -139,8 +133,8 @@ class StatsComponent:
         Preparing the pipeline the component is added to
 
         Description:
-            Nothing by default; a language library adds the rules of its
-            tokenizer here, for instance
+            Nothing by default; a language library checks or sets here what
+            its statistics need from the pipeline
 
         Arguments:
             nlp (Language): Pipeline
@@ -396,23 +390,19 @@ class LexicalStatsComponent(StatsComponent):
         attribute freq_dict (None by default, for the dictionary of the class),
         which a library sets before the constructor of the core; a class without
         a dictionary of its own and no freq_dict are refused when the component
-        is made. A document gets the statistics when it has a word (iter_doc_words
-        with join_hyphens, has_words) other than a number (is_number)
-
-    Class attributes:
-        join_hyphens (bool): Take a word the tokenizer split at its hyphens for one word
+        is made. A document gets the statistics when it has a token with a letter
+        or a digit (has_words) other than a number (is_number)
     """
 
     stats_class: ClassVar[type[Any] | None] = LexicalStats
     stats_params: ClassVar[tuple[str, ...]] = ("freq_dict",)
-    join_hyphens: ClassVar[bool] = False
     freq_dict: Any = None
 
     def accepts(self, doc: Doc) -> bool:
         separators = _separators()
         return any(
-            has_words(word) and not self.is_number(word.strip(separators))
-            for _, _, word in iter_doc_words(doc, self.join_hyphens)
+            has_words(token.text) and not self.is_number(token.text.strip(separators))
+            for token in doc
         )
 
     def _stats_class(self) -> type[Any]:
@@ -630,68 +620,3 @@ class UnadaptedReadabilityStatsComponent(StatsComponent):
                 doc, self.basic, stats_class.basic_stats_class or BasicStats, self.basic_factory
             )
         )
-
-
-def start_sents_after_blank_lines(doc: Doc) -> Doc:
-    """
-    Starting a sentence at the first token after a blank line
-
-    Description:
-        A spaCy component that goes before the parser, senter or sentencizer,
-        which keeps the starts set here and places the others. The whitespace
-        before such a start stays with the sentence before it, and the marks
-        that open a paragraph (a dash of a dialogue, ¡, «) stay with its first
-        word. Alone, it sets partial boundaries (has_sents), so the statistics
-        take the sentences from the text. A parsed document passes untouched,
-        since spaCy keeps its sentences. A language library registers it under
-        its prefix: Language.component("<prefix>_blank_lines",
-        func=start_sents_after_blank_lines)
-
-    Arguments:
-        doc (Doc): Doc object
-
-    Returns:
-        Doc: The document
-
-    Example:
-        >>> import spacy
-        >>> from spacy.language import Language
-        >>> from anyts.components import start_sents_after_blank_lines
-        >>> nlp = spacy.blank("xx")
-        >>> _ = nlp.add_pipe("sentencizer")
-        >>> [sent.text for sent in nlp("Notes\\n\\nThe cat sleeps.").sents]
-        ['Notes\\n\\nThe cat sleeps.']
-        >>> _ = Language.component("demo_blank_lines", func=start_sents_after_blank_lines)
-        >>> _ = nlp.add_pipe("demo_blank_lines", before="sentencizer")
-        >>> [sent.text for sent in nlp("Notes\\n\\nThe cat sleeps.").sents]
-        ['Notes\\n\\n', 'The cat sleeps.']
-    """
-    from spacy.attrs import SENT_START
-
-    if not len(doc) or doc.has_annotation("DEP"):
-        return doc
-    text = doc.text
-    # Written at once: every assignment of is_sent_start makes spaCy scan the whole document
-    starts = doc.to_array([SENT_START]).astype("int64")
-    end = None
-    spaces: list[int] = []
-    leading = False
-    for token in doc:
-        if token.is_space:
-            spaces.append(token.i)
-            # A space after an opening mark (—\u00a0¡) keeps it with the word, a line break does not
-            leading = leading and _LINE_BREAKS.isdisjoint(token.text)
-            if leading:
-                starts[token.i] = -1
-            continue
-        if end is not None and BLANK_LINE.search(text, end, token.idx):
-            starts[spaces] = -1
-            starts[token.i] = 1
-            leading = not has_words(token.text)
-        elif leading:
-            starts[token.i] = -1
-            leading = not has_words(token.text)
-        spaces = []
-        end = token.idx + len(token)
-    doc.from_array([SENT_START], cast("Ints2d", starts.astype("uint64")))
-    return doc

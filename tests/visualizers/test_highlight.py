@@ -8,7 +8,6 @@ from anyseg import Document
 from spacy.tokens import Doc
 
 from anyts.cohesion_stats import ConnectorMatcher
-from anyts.components import start_sents_after_blank_lines
 from anyts.document import get_tree, to_document
 from anyts.exceptions import ParameterError, SourceError, SourceTypeError
 from anyts.visualizers import Highlight, HighlightedText
@@ -145,7 +144,8 @@ def test_doc_with_the_parts_of_speech_of_the_whitespace_alone():
 def test_doc_with_partial_boundaries():
     """The starts after the blank lines alone leave the sentences to the text"""
     paragraphs = f"{text}\n\n{text}"
-    partial = start_sents_after_blank_lines(spacy.blank("xx")(paragraphs))
+    partial = spacy.blank("xx")(paragraphs)
+    partial[[token.idx for token in partial].index(len(text) + 2)].is_sent_start = True
     assert spans(Marks(partial), "long_sents") == spans(Marks(paragraphs), "long_sents")
     assert len(spans(Marks(partial), "long_sents")) == 2
 

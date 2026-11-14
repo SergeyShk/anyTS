@@ -7,7 +7,7 @@ BasicStats(source, sents_extractor=None, words_extractor=None, normalize=False, 
 <!-- --8<-- [start:BasicStats] -->
 The basic statistics of a text: the counts of its sentences, words, characters, syllables and punctuation marks and the distributions of its words. The data source is a text, a `Doc` object of [spaCy](https://github.com/explosion/spaCy) or a `Document` of [anySeg](https://github.com/SergeyShk/anySeg). Letters are counted by `str.isalpha`, so digits, hyphens and marks inside a word are not letters.
 
-The words and the sentences come from the [document](https://sergeyshk.github.io/anyTS/document/) of the source (`parse`): its tokens without punctuation marks and symbols such as `€` or `%` (`doc_words`) and its sentences; an extractor given is used on the text instead. A `Doc` keeps its sentence starts, and one with none or only partial ones (`has_sents`) gets those of `parse`. A blank line ends a sentence of every source, since it ends a paragraph of the document. A sentence without words, such as punctuation alone, is not counted.
+The words and the sentences come from the [document](https://sergeyshk.github.io/anyTS/document/) of the source (`parse`): its tokens without punctuation marks and symbols such as `€` or `%` (`doc_words`) and its sentences; an extractor given is used on the text instead. A `Doc` keeps its sentence starts, and one with no or only partial sentence starts (a token whose `is_sent_start` is unset) gets those of `parse`. A blank line ends a sentence of every source, since it ends a paragraph of the document. A sentence without words, such as punctuation alone, is not counted.
 
 Raises:
 

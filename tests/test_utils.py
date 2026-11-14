@@ -11,13 +11,11 @@ import pytest
 import spacy
 from spacy.tokens import Doc
 
-from anyts.components import start_sents_after_blank_lines
 from anyts.constants import MESSAGES
 from anyts.document import get_tree, to_document
 from anyts.exceptions import ParameterError, SourceError, SourceTypeError
 from anyts.utils import (
     _PUNCTUATION_CATEGORIES,
-    add_tokenizer_rules,
     check_bool,
     check_callable,
     check_counts,
@@ -30,8 +28,6 @@ from anyts.utils import (
     count_words_by_spans,
     find_phrases,
     has_feature,
-    has_pos,
-    has_sents,
     has_words,
     in_order,
     is_doc,
@@ -42,15 +38,9 @@ from anyts.utils import (
     is_punctuation,
     is_span,
     is_token,
-    iter_doc_tokens,
-    iter_doc_units,
-    iter_doc_words,
-    joins_previous,
     safe_divide,
     safe_mean,
-    set_sent_starts,
     shannon_entropy,
-    split_doc_units,
 )
 
 
@@ -160,35 +150,6 @@ def test_has_words(text, expected):
 @pytest.mark.parametrize("text", ["The cat sleeps", "?!", ""])
 def test_has_words_of_a_doc(nlp, text):
     assert has_words(nlp(text)) is has_words(text)
-
-
-def test_has_sents(nlp):
-    text = "The cat sleeps. The dog eats\n\nThe bird sings. It flies."
-    assert not has_sents(nlp(text))
-    sentencizer = spacy.blank("xx")
-    sentencizer.add_pipe("sentencizer")
-    assert has_sents(sentencizer(text))
-    # The starts after the blank lines alone leave the other tokens unset
-    partial = start_sents_after_blank_lines(nlp(text))
-    assert partial.has_annotation("SENT_START")
-    assert not has_sents(partial)
-    full = Doc(nlp.vocab, words=["The", "cat", "Dogs"], sent_starts=[True, False, True])
-    assert has_sents(full)
-
-
-def test_has_pos(nlp):
-    # A pipeline without its morphologizer marks the whitespace tokens SPACE all the same
-    doc = nlp("The cat sleeps.\n\nThe dog eats.")
-    assert not has_pos(doc)
-    doc[4].pos_ = "SPACE"
-    assert doc.has_annotation("POS") and not has_pos(doc)
-    doc[6].pos_ = "NOUN"
-    assert has_pos(doc)
-    # A Doc without words is checked by its annotation
-    marks = nlp("!\n?")
-    assert not has_pos(marks)
-    marks[0].pos_ = "PUNCT"
-    assert has_pos(marks)
 
 
 def test_is_language(nlp):
@@ -363,89 +324,6 @@ def test_check_integer_errors(value, name):
         check_integer(value, "window size")
 
 
-def test_iter_doc_tokens(nlp):
-    doc = nlp("The 50 % of books,  wow!")
-    assert [token.text for token in iter_doc_tokens(doc)] == ["The", "50", "of", "books", "wow"]
-    assert [token.text for token in iter_doc_tokens(doc[3:])] == ["of", "books", "wow"]
-
-
-def test_iter_doc_units(nlp):
-    doc = nlp("A well-known, far-off cat - dog up-to-date.")
-    units = [[token.text for token in unit] for unit in iter_doc_units(doc)]
-    assert units == [
-        [word] for word in ["A", "well", "known", "far", "off", "cat", "dog", "up", "to", "date"]
-    ]
-    joined = [" ".join(token.text for token in unit) for unit in iter_doc_units(doc, True)]
-    assert joined == ["A", "well - known", "far - off", "cat", "dog", "up - to - date"]
-
-
-@pytest.mark.parametrize(
-    ("spaces", "expected"),
-    [
-        ((False, False, True), ["well-known"]),
-        ((True, False, True), ["well", "known"]),
-        ((False, True, True), ["well", "known"]),
-    ],
-)
-def test_iter_doc_units_whitespace(nlp, spaces, expected):
-    doc = Doc(nlp.vocab, words=["well", "-", "known"], spaces=list(spaces))
-    assert [word for _, _, word in iter_doc_words(doc, join_hyphens=True)] == expected
-
-
-def test_iter_doc_units_stop_at_a_sentence_start(nlp):
-    doc = Doc(
-        nlp.vocab,
-        words=["Tick", "-", "tock", "-", "tock", "came"],
-        spaces=[False] * 5 + [True],
-        sent_starts=[True, False, True, False, False, False],
-    )
-    units = [" ".join(token.text for token in unit) for unit in iter_doc_units(doc, True)]
-    assert units == ["Tick", "tock - tock", "came"]
-    words = [word for sent in doc.sents for _, _, word in iter_doc_words(sent, True)]
-    assert words == [word for _, _, word in iter_doc_words(doc, True)]
-
-
-def test_iter_doc_units_stop_at_space_and_punctuation(nlp):
-    doc = Doc(nlp.vocab, words=["well", "-", "\n", "known", "-", "?"], spaces=[False] * 6)
-    assert [word for _, _, word in iter_doc_words(doc, join_hyphens=True)] == ["well", "known"]
-
-
-def test_iter_doc_words(nlp):
-    doc = nlp("A well-known cat")
-    assert list(iter_doc_words(doc)) == [
-        (0, 1, "A"),
-        (2, 6, "well"),
-        (7, 12, "known"),
-        (13, 16, "cat"),
-    ]
-    assert list(iter_doc_words(doc, join_hyphens=True)) == [
-        (0, 1, "A"),
-        (2, 12, "well-known"),
-        (13, 16, "cat"),
-    ]
-    assert list(iter_doc_words(doc[1:4], join_hyphens=True)) == [(2, 12, "well-known")]
-    assert list(iter_doc_words(nlp("- . ,"), join_hyphens=True)) == []
-
-
-def test_iter_doc_words_drops_byte_order_mark(nlp):
-    doc = nlp("\ufeffThe cat. \ufeff\ufeffThe dog.")
-    assert doc[0].text == "\ufeffThe"
-    assert list(iter_doc_words(doc)) == [
-        (1, 4, "The"),
-        (5, 8, "cat"),
-        (12, 15, "The"),
-        (16, 19, "dog"),
-    ]
-
-
-@pytest.mark.parametrize(
-    ("text", "expected"),
-    [("Hello \u200b world", ["Hello", "world"]), ("I \u2764\ufe0f it", ["I", "it"])],
-)
-def test_iter_doc_words_skips_invisible(nlp, text, expected):
-    assert [word for _, _, word in iter_doc_words(nlp(text))] == expected
-
-
 def test_count_words_by_spans():
     starts = [0, 4, 10, 14, 20]
     assert count_words_by_spans(starts, [(0, 9), (10, 19), (20, 24)]) == [2, 2, 1]
@@ -509,19 +387,6 @@ def test_has_feature():
     assert has_feature(who, "PronType", "Rel") and not has_feature(who, "PronType", "Re")
 
 
-def test_joins_previous():
-    vocab = spacy.blank("xx").vocab
-    doc = Doc(
-        vocab,
-        words=["Some", "-", "one", "came", "with", "a", "well", "-", "known", "cat", "."],
-        spaces=[False, False, True, True, True, True, False, False, True, False, False],
-    )
-    assert [token.text for token in doc if joins_previous(token)] == ["one", "known"]
-    spaced = Doc(vocab, words=["Some", "-", "one"])
-    assert not joins_previous(spaced[2])
-    assert not joins_previous(spaced[0])
-
-
 def test_verb_forms():
     doc = Doc(
         spacy.blank("xx").vocab,
@@ -562,42 +427,6 @@ def test_shannon_entropy_of_bad_counts(count):
         shannon_entropy({"a": count, "b": 2})
 
 
-def test_split_doc_units():
-    from anyts.extractors import SentsExtractor
-
-    class Fixed(SentsExtractor):
-        def __init__(self, sents):
-            super().__init__()
-            self.sents = sents
-
-        def sentenize(self, text):
-            return self.sents
-
-    doc = Doc(
-        spacy.blank("xx").vocab,
-        words=["One", "well", "-", "known", ".", "Two", ".", "Three"],
-        spaces=[True, False, False, False, True, False, True, False],
-    )
-
-    def texts(units):
-        return [["".join(token.text for token in unit) for unit in sent] for sent in units]
-
-    assert texts(split_doc_units(doc, Fixed(["One well-known.", "Two.", "Three"]))) == [
-        ["One", "well", "known"],
-        ["Two"],
-        ["Three"],
-    ]
-    # A sentence the extractor drops leaves its words out; joined parts are one word
-    assert texts(split_doc_units(doc, Fixed(["One well-known.", "Three"]), join_hyphens=True)) == [
-        ["One", "well-known"],
-        ["Three"],
-    ]
-    assert split_doc_units(doc, Fixed([])) == []
-    # A Span: the sentences are found in its own text
-    assert texts(split_doc_units(doc[5:], Fixed(["Two.", "Three"]))) == [["Two"], ["Three"]]
-    assert split_doc_units(doc, Fixed(["Four"])) == []
-
-
 def test_check_word():
     check_word("cat")
     with pytest.raises(SourceTypeError, match=r"^The word must be a string, not list$"):
@@ -619,135 +448,9 @@ def test_check_sequence_requires_a_length():
     check_sequence(range(3))
 
 
-def test_add_tokenizer_rules():
-    nlp = spacy.blank("en")
-    text = "--No, he said a|b ok~~"
-    assert [token.text for token in nlp(text)] == ["--No", ",", "he", "said", "a|b", "ok~~"]
-    add_tokenizer_rules(
-        nlp, prefixes=[r"-{2,}(?=\w)"], suffixes=[r"(?<=\w)~{2,}"], infixes=[r"(?<=\w)\|(?=\w)"]
-    )
-    assert [token.text for token in nlp(text)] == [
-        "--",
-        "No",
-        ",",
-        "he",
-        "said",
-        "a",
-        "|",
-        "b",
-        "ok",
-        "~~",
-    ]
-    # A rule the tokenizer has is not added again
-    search = nlp.tokenizer.prefix_search
-    add_tokenizer_rules(nlp, prefixes=[r"-{2,}(?=\w)"])
-    assert nlp.tokenizer.prefix_search is search
-
-
-def test_add_tokenizer_rules_of_abbreviations():
-    nlp = spacy.blank("en")
-    add_tokenizer_rules(nlp, abbreviations=["a.m.", "e.g.", "xyz."])
-    # A form the tokenizer keeps whole gives the others, a form it splits is left
-    assert [len(nlp(form)) for form in ("a.m.", "A.m.", "A.M.")] == [1, 1, 1]
-    assert [len(nlp(form)) for form in ("e.g.", "E.g.", "E.G.")] == [1, 1, 1]
-    assert len(nlp("Xyz.")) == 2
-    # The tokenizer keeps Q.E.D. whole by a pattern, not by a rule, so its other forms follow
-    assert [len(nlp(form)) for form in ("q.e.d.", "Q.e.d.")] == [2, 2]
-    add_tokenizer_rules(nlp, abbreviations=["q.e.d."])
-    assert [len(nlp(form)) for form in ("q.e.d.", "Q.e.d.", "Q.E.D.")] == [1, 1, 1]
-
-
-def test_add_tokenizer_rules_to_other_tokenizers():
-    nlp = spacy.blank("en")
-    nlp.tokenizer.prefix_search = None
-    add_tokenizer_rules(nlp, prefixes=[r"-{2,}(?=\w)"])
-    assert [token.text for token in nlp("--No")] == ["--", "No"]
-    # A rule that is not a regular expression is left, as is a tokenizer of another class
-    nlp.tokenizer.suffix_search = lambda text: None
-    add_tokenizer_rules(nlp, suffixes=[r"-{2,}"])
-    assert nlp.tokenizer.suffix_search("no--") is None
-    nlp.tokenizer = lambda text: spacy.tokens.Doc(nlp.vocab, words=text.split())
-    add_tokenizer_rules(nlp, prefixes=[r"-"])
-    assert [token.text for token in nlp("--No x")] == ["--No", "x"]
-
-
-def test_add_tokenizer_rules_anchor_every_branch():
-    nlp = spacy.blank("en")
-    add_tokenizer_rules(nlp, prefixes=[r"#|@"], suffixes=[r"~|\^"])
-    assert [token.text for token in nlp("a@b c^d")] == ["a@b", "c^d"]
-    assert [token.text for token in nlp("@b c^")] == ["@", "b", "c", "^"]
-
-
-def test_add_tokenizer_rules_inside_a_rule_of_the_tokenizer():
-    # \+ and / lie inside rules of spaCy, which are other alternatives
-    nlp = spacy.blank("en")
-    assert [token.text for token in nlp("+5 1/2")] == ["+5", "1/2"]
-    add_tokenizer_rules(nlp, prefixes=[r"\+"], infixes=["/"])
-    assert [token.text for token in nlp("+5 1/2")] == ["+", "5", "1", "/", "2"]
-
-
-def test_add_tokenizer_rules_inside_a_group_of_the_tokenizer():
-    # -- is an alternative inside a group of the infixes of spaCy
-    nlp = spacy.blank("en")
-    add_tokenizer_rules(nlp, infixes=["--"])
-    infixes = nlp.tokenizer.infix_finditer
-    add_tokenizer_rules(nlp, infixes=["--"])
-    assert nlp.tokenizer.infix_finditer is infixes
-    assert [token.text for token in nlp("no--5")] == ["no", "--", "5"]
-
-
-def test_add_tokenizer_rules_without_infixes():
-    nlp = spacy.blank("en")
-    nlp.tokenizer.infix_finditer = None
-    add_tokenizer_rules(nlp, prefixes=[r"-{2,}(?=\w)"])
-    assert nlp.tokenizer.infix_finditer is None
-    assert [token.text for token in nlp("ab cd")] == ["ab", "cd"]
-
-
-@pytest.mark.parametrize(
-    ("kwargs", "message"),
-    [
-        ({"prefixes": r"-{2,}"}, r"^A list of prefixes is expected, not a string$"),
-        ({"infixes": [1]}, r"^The infixes must be strings, not int$"),
-        ({"abbreviations": "sr."}, r"^A list of abbreviations is expected, not a string$"),
-    ],
-)
-def test_add_tokenizer_rules_checks_the_rules(kwargs, message):
-    with pytest.raises(SourceTypeError, match=message):
-        add_tokenizer_rules(spacy.blank("en"), **kwargs)
-
-
-@pytest.mark.parametrize(
-    ("kwargs", "message"),
-    [
-        (
-            {"prefixes": ["("]},
-            r"^The rule '\(' of the prefixes is not a regular expression: missing",
-        ),
-        ({"suffixes": ["(?i)ab"]}, r"^The rule '\(\?i\)ab' of the suffixes .*: global flags"),
-        ({"infixes": ["a)|(b"]}, r"^The rule 'a\)\|\(b' of the infixes .*: unbalanced"),
-    ],
-)
-def test_add_tokenizer_rules_checks_the_expressions(kwargs, message):
-    nlp = spacy.blank("en")
-    prefixes = nlp.tokenizer.prefix_search
-    with pytest.raises(ParameterError, match=message):
-        add_tokenizer_rules(nlp, **kwargs)
-    assert nlp.tokenizer.prefix_search == prefixes
-
-
 def test_find_phrases_checks_the_normalization():
     with pytest.raises(SourceTypeError, match=r"^The normalization must be callable, not int$"):
         find_phrases(["in", "fact"], ["in fact"], 42)
-
-
-def test_add_tokenizer_rules_of_alternatives_once():
-    nlp = spacy.blank("en")
-    add_tokenizer_rules(nlp, infixes=["~~|\\^\\^"], prefixes=["#|@"])
-    infixes, prefixes = nlp.tokenizer.infix_finditer, nlp.tokenizer.prefix_search
-    add_tokenizer_rules(nlp, infixes=["~~|\\^\\^"], prefixes=["#|@"])
-    assert nlp.tokenizer.infix_finditer is infixes
-    assert nlp.tokenizer.prefix_search is prefixes
 
 
 def test_find_marks():
@@ -781,20 +484,6 @@ def test_find_marks():
         find_marks("So", "So")
 
 
-def test_find_unit_marks():
-    from anyts.utils import find_unit_marks, iter_doc_units
-
-    doc = spacy.blank("en")('So, "it" is late - very late')
-    assert find_unit_marks(list(iter_doc_units(doc))) == {1, 4}
-    doc = spacy.blank("en")("After \u00abThe Inspector\u00bb, a play")
-    assert find_unit_marks(list(iter_doc_units(doc))) == {3}
-    doc = spacy.blank("en")("The so-called experts")
-    assert [token.text for token in doc] == ["The", "so", "-", "called", "experts"]
-    assert find_unit_marks(list(iter_doc_units(doc))) == frozenset()
-    assert find_unit_marks(list(iter_doc_units(doc, join_hyphens=True))) == frozenset()
-    assert find_unit_marks([]) == frozenset()
-
-
 def test_find_paragraph_starts():
     from anyts.utils import find_paragraph_starts
 
@@ -819,24 +508,6 @@ def test_find_paragraph_starts():
         find_paragraph_starts("Notes", ["Notes"], 1)
 
 
-def test_find_unit_paragraph_starts():
-    from anyts.utils import find_unit_paragraph_starts, iter_doc_units
-
-    nlp = spacy.blank("en")
-    for gap in ("\n\n", "\r\n \r\n", "\u2029"):
-        doc = nlp(f"Notes{gap}It rains.{gap}We stay, «{gap}home")
-        units = list(iter_doc_units(doc))
-        assert [unit[0].text for unit in units] == ["Notes", "It", "rains", "We", "stay", "home"]
-        assert find_unit_paragraph_starts(units) == {1, 3, 5}, repr(gap)
-        assert find_unit_paragraph_starts(units, blank_lines=True) == {1, 3, 5}, repr(gap)
-    units = list(iter_doc_units(nlp("It rains.\nWe stay")))
-    assert find_unit_paragraph_starts(units) == {2}
-    assert find_unit_paragraph_starts(units, blank_lines=True) == frozenset()
-    assert find_unit_paragraph_starts([]) == frozenset()
-    with pytest.raises(ParameterError, match=r"^The blank_lines must be a bool, not str$"):
-        find_unit_paragraph_starts([], "no")
-
-
 def test_is_token(nlp):
     doc = nlp("The cat")
     assert is_token(doc[0]) and not is_token(doc[:1]) and not is_token("The")
@@ -853,36 +524,3 @@ def test_check_bool(value):
 def test_messages_are_read_only():
     with pytest.raises(TypeError):
         MESSAGES["no_words"] = "No words"  # type: ignore[index]
-
-
-def test_set_sent_starts():
-    """The offsets of a segmenter give the sentences; the whitespace stays before a start"""
-    nlp = spacy.blank("en")
-    nlp.add_pipe("sentencizer")
-    text = "Mr. Smith came.  Dr. Who\nleft. Bye"
-    doc = set_sent_starts(nlp.make_doc(text), [0, 15, 17, 100])
-    # 15 is whitespace: the start goes to the next word; 100 is past the end
-    assert [sent.text for sent in nlp(doc).sents] == ["Mr. Smith came.  ", "Dr. Who\nleft. Bye"]
-    assert set_sent_starts(nlp.make_doc(""), [0]).text == ""
-    # The whitespace at the start of a text goes with the first sentence
-    doc = set_sent_starts(nlp.make_doc("\n\nIt rains. It pours."), [2, 12])
-    assert [sent.text for sent in nlp(doc).sents] == ["\n\nIt rains.", "It pours."]
-    parsed = Doc(
-        nlp.vocab, words=["It", "rains", "."], heads=[1, 1, 1], deps=["nsubj", "ROOT", "punct"]
-    )
-    assert set_sent_starts(parsed, [0, 3]) is parsed
-    assert [token.is_sent_start for token in parsed] == [True, False, False]
-
-
-@pytest.mark.parametrize(
-    ("starts", "error"),
-    [
-        ("0", SourceTypeError),
-        (5, SourceTypeError),
-        ([1.5], ParameterError),
-        ([-1], ParameterError),
-    ],
-)
-def test_set_sent_starts_errors(starts, error):
-    with pytest.raises(error):
-        set_sent_starts(spacy.blank("en")("It rains."), starts)

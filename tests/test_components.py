@@ -20,16 +20,15 @@ from anyts.components import (
     StatsComponent,
     StyleStatsComponent,
     SyntaxStatsComponent,
-    start_sents_after_blank_lines,
 )
 from anyts.constants import MATTR_WINDOW_LEN, NAUSEA_TOP_N, PHON_WINDOW_LEN
 from anyts.diversity_stats import check_params
+from anyts.document import document_words, to_document
 from anyts.exceptions import ParameterError, SourceError, SourceTypeError
 from anyts.morph_stats import MorphStats
 from anyts.readability_stats import ReadabilityStats
 from anyts.style_stats import StyleStats
 from anyts.syntax_stats import SyntaxStats
-from anyts.utils import iter_doc_words
 
 
 @Language.factory("anyts_test_diversity")
@@ -42,11 +41,8 @@ class DiversityComponent(StatsComponent):
         super().__init__(nlp, name)
 
     def compute(self, doc: Doc) -> DiversityStats:
-        words = [word.lower() for _, _, word in iter_doc_words(doc)]
+        words = [word.lower() for word in document_words(to_document(doc))]
         return DiversityStats(words, window_len=self.window_len)
-
-
-Language.component("anyts_test_blank_lines", func=start_sents_after_blank_lines)
 
 
 @Language.factory("anyts_test_ratio")
@@ -251,87 +247,6 @@ def test_extension_of_another_package_is_kept(nlp):
     spacy.blank("xx").add_pipe("anyts_test_diversity", name="anyts_test_again")
 
 
-@pytest.mark.parametrize(
-    ("text", "expected"),
-    [
-        (
-            "Notes without a dot\n\nThe cat sleeps. The dog eats.",
-            ["Notes without a dot", "The cat sleeps.", "The dog eats."],
-        ),
-        ("One. Two.\n\nThree.\n \nFour", ["One.", "Two.", "Three.", "Four"]),
-        ("One \n \t\nTwo\r\n\r\nThree\n\n\n\nFour", ["One", "Two", "Three", "Four"]),
-        ("A list\n- one\n- two", ["A list\n- one\n- two"]),
-        ("\n\nOne\n\n", ["One"]),
-    ],
-)
-def test_blank_lines_start_sentences(nlp, text, expected):
-    nlp.add_pipe("anyts_test_blank_lines")
-    nlp.add_pipe("sentencizer")
-    assert [sent.text.strip() for sent in nlp(text).sents] == expected
-    assert list(nlp.pipe([text, ""]))[1].text == ""
-
-
-def test_blank_lines_set_only_their_starts(nlp):
-    doc = start_sents_after_blank_lines(nlp("One. Two\n\nThree"))
-    assert [token.is_sent_start for token in doc] == [True, None, None, False, True]
-    doc = start_sents_after_blank_lines(nlp("One.\nTwo"))
-    assert [token.is_sent_start for token in doc] == [True, None, None, None]
-
-
-def test_blank_lines_keep_the_opening_marks_with_the_first_word(nlp):
-    """A dash or an opening mark of a paragraph does not end up a sentence of its own"""
-    doc = start_sents_after_blank_lines(nlp("Fin:\n\n--¡Vaya, vaya!\n\n«Bueno»"))
-    assert [(token.text, token.is_sent_start) for token in doc] == [
-        ("Fin", True),
-        (":", None),
-        ("\n\n", False),
-        ("--¡Vaya", True),
-        (",", None),
-        ("vaya", None),
-        ("!", None),
-        ("\n\n", False),
-        ("«", True),
-        ("Bueno", False),
-        ("»", None),
-    ]
-    # Every line break after an opening mark leaves the next word to the parser
-    for line_break in ("\n", "\r", "\u2028", "\x85"):
-        doc = start_sents_after_blank_lines(nlp(f"Fin:\n\n«{line_break}Bueno"))
-        assert doc[-1].text == "Bueno" and doc[-1].is_sent_start is None, repr(line_break)
-    # A paragraph of marks alone leaves the next paragraph to its own blank line
-    doc = start_sents_after_blank_lines(nlp("Uno.\n\n* * *\n\nDos"))
-    assert [token.text for token in doc if token.is_sent_start] == ["Uno", "*", "Dos"]
-    # A space after the mark keeps it with the word, a line break ends the marks
-    doc = start_sents_after_blank_lines(nlp("Fin:\n\n—\u00a0¡Vaya!"))
-    assert [(token.text, token.is_sent_start) for token in doc][3:] == [
-        ("—", True),
-        ("\u00a0", False),
-        ("¡", False),
-        ("Vaya", False),
-        ("!", None),
-    ]
-    doc = start_sents_after_blank_lines(nlp("Uno.\n\n* * *\nDos"))
-    assert [(token.text, token.is_sent_start) for token in doc][-2:] == [
-        ("\n", None),
-        ("Dos", None),
-    ]
-
-
-def test_blank_lines_line_breaks_after_an_opening_mark(nlp):
-    """A form feed, as any line break, ends the space that keeps an opening mark with its word"""
-    for gap in ("\n", "\x0c"):
-        doc = start_sents_after_blank_lines(nlp(f"Notes\n\n\u2014 {gap} The cat sleeps."))
-        assert next(token for token in doc if token.text == "The").is_sent_start is None, repr(gap)
-
-
-def test_blank_lines_of_a_parsed_document(nlp):
-    """A parsed document, passed through the pipeline again, keeps its sentences"""
-    doc = Doc(nlp.vocab, words=["One", "two"], heads=[1, 1], deps=["dep", "ROOT"])
-    starts = [token.is_sent_start for token in doc]
-    assert start_sents_after_blank_lines(doc) is doc
-    assert [token.is_sent_start for token in doc] == starts
-
-
 class Recorded:
     """Statistics that keep their source and their keyword arguments"""
 
@@ -389,6 +304,32 @@ def test_component_saved_and_loaded(nlp, tmp_path):
     doc = loaded("The cat")
     assert doc._.generic.kwargs == {"size": 7}
     assert doc._.readability.kwargs == {"preset": "other"}
+
+
+class Syllables(BasicStats):
+    def count_syllables(self, word):
+        return 1
+
+
+@Language.factory("anyts_test_syllables")
+class SyllablesComponent(BasicStatsComponent):
+    stats_class = Syllables
+
+
+@pytest.mark.parametrize("tokenizer", ["spacy", "anyseg"])
+def test_components_with_the_tokenizers_of_spacy_and_anyseg(tokenizer):
+    """The statistics read the document of the tokens and the sentences of either pipeline"""
+    nlp = spacy.blank("es")
+    if tokenizer == "anyseg":
+        from anyseg.spacy import Tokenizer
+
+        nlp.tokenizer = Tokenizer(nlp.vocab, "es")
+        nlp.add_pipe("anyseg_sentencizer")
+    else:
+        nlp.add_pipe("sentencizer")
+    nlp.add_pipe("anyts_test_syllables", name="basic")
+    stats = nlp("Vino del pueblo. Se fue\n\nOtro día, otra vez.")._.basic
+    assert (stats.n_words, stats.n_sents) == (9, 3)
 
 
 def test_components_of_the_core_classes():
@@ -535,14 +476,12 @@ def test_components_pass_their_parameters(nlp):
     assert not lexical.accepts(nlp("1999 2020")) and lexical.accepts(nlp("1999 cats"))
 
     class Ordinals(Lexical):
-        join_hyphens = True
-
         def is_number(self, word):
-            return word in {"5-th", "1st"}
+            return word in {"5th", "1st"}
 
-    # The numbers of a language, a hyphenated one taken whole
+    # The numbers of a language
     ordinals = Ordinals(nlp, "o")
-    assert not ordinals.accepts(nlp("5-th 1st")) and ordinals.accepts(nlp("5-th cats"))
+    assert not ordinals.accepts(nlp("5th 1st")) and ordinals.accepts(nlp("5th cats"))
     with pytest.raises(ParameterError):
         Diversity(nlp, "d", window_len=0)
     with pytest.raises(ParameterError):

@@ -9,7 +9,6 @@ from anyseg import Document
 from matplotlib.axes import Axes
 
 from anyts import SentsExtractor, WordsExtractor
-from anyts.components import start_sents_after_blank_lines
 from anyts.exceptions import ParameterError, SourceError, SourceTypeError
 from anyts.visualizers import sentence_lengths, sentence_lengths_plot
 
@@ -42,7 +41,8 @@ def test_sentence_lengths():
 
 def test_sentence_lengths_of_a_doc_with_partial_boundaries():
     text = "The cat sleeps. The dog eats\n\nThe bird sings. It flies."
-    doc = start_sents_after_blank_lines(spacy.blank("xx")(text))
+    doc = spacy.blank("xx")(text)
+    doc[[token.idx for token in doc].index(text.index("The bird"))].is_sent_start = True
     assert sentence_lengths(doc) == sentence_lengths(text) == [3, 3, 3, 2]
 
 

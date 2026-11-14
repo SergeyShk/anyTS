@@ -268,10 +268,6 @@ def test_signatures_match_the_code():
 
 PARAMETER_TABLE = "| Parameter | Type | Default | Description |"
 TABLE_ROW = re.compile(r"^\|\s*`\*{0,2}(\w+)`\s*\|[^|]*\|\s*(.*?)\s*\|")
-# Parameters a section leaves to its prose: the core functions take join_hyphens besides the
-# parameters the libraries share
-UNTABULATED = {"sentence_lengths_plot": {"join_hyphens"}}
-
 
 # A key of a family of measures that links to the card of its function
 MEASURE_KEY = re.compile(r"^\| \[`(\w+)`\]\(#\1\)", re.MULTILINE)
@@ -346,7 +342,6 @@ def test_parameter_tables_match_the_code():
             for param in inspect.signature(target).parameters.values()
             if param.name != "self"
             and not (in_section and base.endswith("Component") and param.name in ("nlp", "name"))
-            and param.name not in UNTABULATED.get(base, ())
         ]
         where = f"{page.relative_to(DOCS)}: {base}"
         assert [name for name, _ in rows] == [param.name for param in params], where
