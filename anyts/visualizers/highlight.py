@@ -28,9 +28,10 @@ from ..utils import (
 
 if TYPE_CHECKING:
     from anyseg import Document
-    from spacy.tokens import Doc, Token
+    from spacy.tokens import Doc
 
     from ..cohesion_stats import Connector, ConnectorMatcher
+    from ..document import TreeWord
 
 # Line breaks of Unix, Windows and old Mac texts
 _LINE_BREAK = re.compile(r"\r\n?|\n")
@@ -554,21 +555,22 @@ def group_words_by_sents(words: Sequence[Word], sents: Sequence[Sent]) -> list[l
     return groups
 
 
-def tokens_span(tokens: Iterable[Token]) -> tuple[int, int]:
+def tokens_span(words: Iterable[TreeWord]) -> tuple[int, int]:
     """
     Computing the positions of the fragment of a text that covers some words
 
     Description:
-        The punctuation marks and the whitespace tokens are left out
+        The tokens of the words of the tree; punctuation marks and symbols are
+        left out (get_words)
 
     Arguments:
-        tokens (Doc|Span|list[Token]): Sequence of tokens with a word
+        words (list[TreeWord]): Words of the tree with a word among them
 
     Returns:
         tuple[int, int]: Position of the first character and position after the last one
     """
-    words = get_words(tokens)
-    return min(token.idx for token in words), max(token.idx + len(token) for token in words)
+    found = get_words(words)
+    return min(word.start for word in found), max(word.end for word in found)
 
 
 def split_segments(
@@ -848,7 +850,8 @@ def find_connector_highlights(
 
 
 def find_split_predicate_highlights(
-    pairs: Iterable[tuple[Token, Token]], note: Callable[[Token, Token], str] | None = None
+    pairs: Iterable[tuple[TreeWord, TreeWord]],
+    note: Callable[[TreeWord, TreeWord], str] | None = None,
 ) -> list[Highlight]:
     """
     Finding the split predicates
@@ -858,8 +861,9 @@ def find_split_predicate_highlights(
         the words from the first to the last of the pair
 
     Arguments:
-        pairs (list[tuple[Token, Token]]): Verb and noun of every split predicate
-        note (Callable[[Token, Token], str]): Note of a pair; its lemmas if not set
+        pairs (list[tuple[TreeWord, TreeWord]]): Verb and noun of every split predicate
+        note (Callable[[TreeWord, TreeWord], str]): Note of a pair; its lemmas, or forms
+            without them, in lower case if not set
 
     Returns:
         list[Highlight]: Fragments of the layer split_predicates
@@ -869,7 +873,10 @@ def find_split_predicate_highlights(
     """
     _check_hooks((note, "note"))
     note = note or (
-        lambda verb, noun: f"split predicate: {verb.lemma_.lower()} {noun.lemma_.lower()}"
+        lambda verb, noun: (
+            f"split predicate: {(verb.lemma or verb.form).lower()} "
+            f"{(noun.lemma or noun.form).lower()}"
+        )
     )
     highlights = []
     for verb, noun in pairs:

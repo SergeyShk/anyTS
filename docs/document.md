@@ -103,3 +103,72 @@ Checks whether a value is a `Document` object of anySeg without importing anySeg
     ```
     (True, False)
     ```
+
+## Dependency tree { #get_tree }
+
+<!-- --8<-- [start:get_tree] -->
+``` {.python .signature}
+get_tree(document)
+```
+
+Returns the dependency tree of a document: its words of Universal Dependencies with the columns `lemma`, `upos`, `xpos`, `feats`, `head` and `deprel`, linked by their heads within their sentences. A word without a head heads its sentence. The syntactic statistics and their language hooks read the words of this tree. A value that is not a `Document` raises `SourceTypeError`.
+
+| Parameter | Type | Default | Description |
+| :-------- | :--- | :------ | :---------- |
+| `document` | `Document` | - | Document of anySeg |
+
+The result is a `Tree` named tuple: `text`, `words` - the words of the document, punctuation marks included - and `sentences` - the words of every sentence.
+<!-- --8<-- [end:get_tree] -->
+
+<!-- --8<-- [start:TreeWord] -->
+``` {.python .signature}
+TreeWord
+```
+
+A word of the tree, with the names of Universal Dependencies and its place in the tree:
+
+| Attribute | Type | Description |
+| :-------- | :--- | :---------- |
+| `index` | `int` | Position among the words of the document |
+| `form` | `str` | Form of the word |
+| `lemma` | `str` / `None` | Lemma |
+| `upos` | `str` / `None` | Part of speech of Universal Dependencies |
+| `xpos` | `str` / `None` | Tag of the language |
+| `feats` | `dict[str, str]` | Features by name, the values of a feature of several joined by commas (`Int,Rel`); the words of one set of features share one mapping |
+| `deprel` | `str` / `None` | Relation to the head; the root of a spaCy parse is `root` |
+| `head` | `TreeWord` / `None` | Word it hangs on, `None` at the head of a sentence |
+| `children` | `tuple[TreeWord]` | Words hanging on it, in the order of the text |
+| `sentence` | `int` | Position of its sentence |
+| `start`, `end` | `int` | Positions of its token in the text; the words of a multiword token share them |
+| `tree` | `Tree` | Tree of the document, for the words around it (`word.tree.words[word.index - 1]`) |
+
+In place of the attributes of a spaCy `Token`: `text` - `form`, `lemma_` - `lemma`, `pos_` - `upos`, `tag_` - `xpos`, `dep_` - `deprel`, `morph.get(name)` - `feats.get(name)` (a string), `i` - `index`, `idx` - `start`, `head` of a root - `None` instead of the token itself.
+<!-- --8<-- [end:TreeWord] -->
+
+=== "Code"
+
+    ``` python
+    import spacy
+    from spacy.tokens import Doc
+
+    from anyts.document import get_tree, to_document
+
+    doc = Doc(
+        spacy.blank("en").vocab,
+        words=["Cats", "sleep", "."],
+        heads=[1, 1, 1],
+        deps=["nsubj", "ROOT", "punct"],
+        pos=["NOUN", "VERB", "PUNCT"],
+        morphs=["Number=Plur", "Mood=Ind|VerbForm=Fin", ""],
+    )
+    cats, sleep, mark = get_tree(to_document(doc)).words
+    cats.head.form, sleep.head, sleep.deprel, sleep.feats["VerbForm"]
+    sleep.children
+    ```
+
+=== "Result"
+
+    ```
+    ('sleep', None, 'root', 'Fin')
+    (TreeWord(0, 'Cats', NOUN, nsubj), TreeWord(2, '.', PUNCT, punct))
+    ```

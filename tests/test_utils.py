@@ -13,6 +13,7 @@ from spacy.tokens import Doc
 
 from anyts.components import start_sents_after_blank_lines
 from anyts.constants import MESSAGES
+from anyts.document import get_tree, to_document
 from anyts.exceptions import ParameterError, SourceError, SourceTypeError
 from anyts.utils import (
     _PUNCTUATION_CATEGORIES,
@@ -497,12 +498,15 @@ def test_numbers_of_two_patterns_are_cached_apart():
 def test_has_feature():
     doc = Doc(
         spacy.blank("xx").vocab,
-        words=["Children", "play"],
-        morphs=["Number=Plur", "Mood=Ind|VerbForm=Fin"],
+        words=["Children", "play", "who"],
+        morphs=["Number=Plur", "Mood=Ind|VerbForm=Fin", "PronType=Int,Rel"],
     )
-    assert has_feature(doc[1], "VerbForm", "Fin")
-    assert not has_feature(doc[1], "VerbForm", "Inf")
-    assert not has_feature(doc[0], "Mood", "Ind")
+    children, play, who = get_tree(to_document(doc)).words
+    assert has_feature(play, "VerbForm", "Fin")
+    assert not has_feature(play, "VerbForm", "Inf")
+    assert not has_feature(children, "Mood", "Ind")
+    # One value of several
+    assert has_feature(who, "PronType", "Rel") and not has_feature(who, "PronType", "Re")
 
 
 def test_joins_previous():
@@ -525,8 +529,9 @@ def test_verb_forms():
         morphs=["Case=Nom", "VerbForm=Fin", "VerbForm=Fin", "", "VerbForm=Inf"],
         pos=["PRON", "AUX", "VERB", "PART", "VERB"],
     )
-    assert [is_finite_verb(token) for token in doc] == [False, False, True, False, False]
-    assert [is_infinitive(token) for token in doc] == [False, False, False, False, True]
+    words = get_tree(to_document(doc)).words
+    assert [is_finite_verb(word) for word in words] == [False, False, True, False, False]
+    assert [is_infinitive(word) for word in words] == [False, False, False, False, True]
 
 
 def test_safe_mean():

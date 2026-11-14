@@ -331,7 +331,7 @@ CASES = [
     ("source_span", SourceTypeError, lambda: Phon(PARSED[:1])),
     ("source_type", SourceTypeError, lambda: Style(5)),
     ("source_span", SourceTypeError, lambda: Style(PARSED[:1])),
-    ("source_type", SourceTypeError, lambda: Syntax("Yes")),
+    ("source_type", SourceTypeError, lambda: Syntax(5)),
     ("source_span", SourceTypeError, lambda: Syntax(PARSED[:1])),
     ("no_parse", SourceError, lambda: Syntax(Doc(VOCAB, words=["Yes"]))),
     ("no_pos", SourceError, lambda: Syntax(PARSED)),
@@ -383,7 +383,7 @@ CASES = [
         lambda: hooked(Phon, parse=lambda self, source: "Yes")(TEXT),
     ),
     (
-        "hook_doc",
+        "hook_document",
         SourceTypeError,
         lambda: hooked(Syntax, parse=lambda self, source: "Yes")(PARSED),
     ),

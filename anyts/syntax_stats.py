@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import zlib
 from collections import Counter
 from collections.abc import Callable, Collection, Hashable, Iterable, Mapping, Sequence
 from functools import cache, cached_property, partial, wraps
@@ -27,6 +26,7 @@ from .constants import (
     SYNTAX_STATS_DESC,
     VALENCY_IGNORED_DEPS,
 )
+from .document import TreeWord, get_tree
 from .exceptions import SourceError, SourceTypeError
 from .stats import Stats
 from .utils import (
@@ -34,23 +34,16 @@ from .utils import (
     check_sequence,
     check_words,
     has_feature,
-    has_pos,
-    has_sents,
-    is_doc,
+    has_words,
     is_finite_verb,
     is_infinitive,
-    is_span,
-    is_token,
-    is_word,
-    joins_previous,
     safe_divide,
     safe_mean,
-    source_type_error,
 )
 
 if TYPE_CHECKING:
-    from spacy.tokens import Doc, Token
-    from spacy.vocab import Vocab
+    from anyseg import Document
+    from spacy.tokens import Doc
 
 _Function = TypeVar("_Function", bound=Callable[..., Any])
 
@@ -61,17 +54,14 @@ _SUBJECT_DEPS = SUBJECT_DEPS | {"csubjpass", "nsubjpass"}
 _AGREEMENT_FEATURES = ("Person", "Number", "Gender")
 
 
-def _takes_token(function: _Function) -> _Function:
-    """A function of a token: a value that is no Token raises SourceTypeError, not AttributeError"""
+def _takes_word(function: _Function) -> _Function:
+    """A function of a word: a value that is no TreeWord raises SourceTypeError"""
 
     @wraps(function)
-    def checked(token: object, *args: Any, **kwargs: Any) -> Any:
-        try:
-            return function(token, *args, **kwargs)
-        except AttributeError:
-            if is_token(token):
-                raise
-            raise SourceTypeError(f"A Token is expected, not {type(token).__name__}") from None
+    def checked(word: object, *args: Any, **kwargs: Any) -> Any:
+        if not isinstance(word, TreeWord):
+            raise SourceTypeError(f"A TreeWord is expected, not {type(word).__name__}")
+        return function(word, *args, **kwargs)
 
     return cast(_Function, checked)
 
@@ -82,11 +72,11 @@ class SyntaxStats(Stats):
 
     Description:
         Measures of the dependency tree and of the syntactic constructions
-        (Ivanov, Solnyshkina and Solovyev 2018). Punctuation, symbols and
-        whitespace are no nodes of the tree, and the distances are counted in
-        positions of words. The measures of a sentence (the longest dependency,
-        the depth, the nodes per leaf) are averaged over the sentences, the
-        constructions are given per sentence.
+        (Ivanov, Solnyshkina and Solovyev 2018) over the tree of the document
+        of parse (get_tree). Punctuation and symbols are no nodes of the tree,
+        and the distances are counted in positions of words. The measures of a
+        sentence (the longest dependency, the depth, the nodes per leaf) are
+        averaged over the sentences, the constructions are given per sentence.
         A language library subclasses the class and sets its hooks; the
         defaults read Universal Dependencies and the relations it shares with
         ClearNLP. The subclass adds the statistics of its own constructions
@@ -99,11 +89,11 @@ class SyntaxStats(Stats):
         https://dialogue-conf.org/media/4302/ivanovvv.pdf
 
     Arguments:
-        source (Doc): Data source (a Doc object with a dependency parse and parts of
-            speech, or what parse makes one of)
+        source (str|Doc|Document): Data source with a dependency parse and parts of
+            speech (a Doc, a Document, or what parse makes one of)
 
     Attributes:
-        sents (tuple[tuple[Token]]): Words of every sentence with words
+        sents (tuple[tuple[TreeWord]]): Words of every sentence with words
         n_sents (int): Number of sentences with words
         n_words (int): Number of words
         n_leaves (int): Number of leaves - words with no dependent word
@@ -180,7 +170,6 @@ class SyntaxStats(Stats):
         noun_verb_ratio (float): Ratio of the nouns to the verb forms
 
     Methods:
-        parse: Doc of a source
         is_clause_head: Whether a word heads a clause
         is_infinitive_periphrasis: Whether an infinitive makes one predicate with its head
         auxiliary_form: Verb form of an auxiliary without the feature VerbForm
@@ -195,8 +184,6 @@ class SyntaxStats(Stats):
         find_split_predicates: Split predicates of the words
 
     Class attributes:
-        join_hyphens (bool): Take a word the tokenizer split at its hyphens for one
-            word (joins_previous)
         requires_lemmas (bool): Whether the source must carry lemmas
         negation_words (frozenset[str]): Words of negation besides Polarity=Neg, in
             lower case
@@ -208,14 +195,14 @@ class SyntaxStats(Stats):
             print_stats
 
     Raises:
-        SourceTypeError: If the source is not a Doc object or parse does not return
-            one; when a class is defined, if its negation_words or subordinating_marks
-            are not a collection of strings
+        SourceTypeError: If the source is neither a string, a Doc nor a Document
+            object or parse does not return a Document; when a class is defined, if
+            its negation_words or subordinating_marks are not a collection of strings
         SourceError: If the source has no dependency parse, no parts of speech, no
-            lemmas when requires_lemmas, or no words
+            lemmas when requires_lemmas, or no words, or a token of a Doc runs over a
+            blank line
     """
 
-    join_hyphens: ClassVar[bool] = False
     requires_lemmas: ClassVar[bool] = False
     negation_words: ClassVar[frozenset[str]] = frozenset()
     subordinating_marks: ClassVar[frozenset[str]] = frozenset()
@@ -227,89 +214,82 @@ class SyntaxStats(Stats):
         check_words(cls.negation_words, "negation_words", ordered=False)
         check_words(cls.subordinating_marks, "subordinating_marks", ordered=False)
 
-    def __init__(self, source: Doc):
+    def __init__(self, source: str | Doc | Document):
         messages = self.messages
-        doc = self.parse(source)
-        if not is_doc(doc):
-            raise SourceTypeError(
-                messages["hook_doc"].format(
-                    hook="parse", cls=type(self).__name__, type=type(doc).__name__
-                )
-            )
-        if not doc.has_annotation("DEP") or not has_sents(doc):
-            raise SourceError(messages["no_parse"])
-        if not has_pos(doc):
+        document = self._document(source)
+        if not any(document.column("deprel")):
+            parsed = any(map(has_words, document.column("form")))
+            raise SourceError(messages["no_parse" if parsed else "no_words"])
+        tree = get_tree(document)
+        tagged = [word for word in tree.words if _is_word(word)] or tree.words
+        if not any(word.upos for word in tagged):
             raise SourceError(messages["no_pos"])
-        if self.requires_lemmas and not doc.has_annotation("LEMMA"):
+        if self.requires_lemmas and not any(word.lemma for word in tree.words):
             raise SourceError(messages["no_lemmas"])
-        join_hyphens = self.join_hyphens
         spans, sents = [], []
-        for span in doc.sents:
-            if sent_words := get_words(span, join_hyphens):
+        for span in tree.sentences:
+            if sent_words := get_words(span):
                 spans.append(span)
                 sents.append(tuple(sent_words))
         if not sents:
             raise SourceError(messages["no_words"])
-        self.sents = _light_sents(doc, sents)
-        words = [token for sent in sents for token in sent]
+        self.sents = tuple(sents)
+        words = [word for sent in sents for word in sent]
         self.n_sents = len(sents)
         self.n_words = len(words)
 
-        # A whole sentence: a dependent can hang on the second part of a hyphenated word
-        distances = [calc_dependency_distances(span, join_hyphens) for span in spans]
+        distances = [calc_dependency_distances(span) for span in spans]
         all_distances = [distance for sent in distances for distance in sent]
-        depths = [calc_tree_depth(span, join_hyphens) for span in spans]
-        children = [[count_children(token, join_hyphens) for token in sent] for sent in sents]
+        depths = [calc_tree_depth(span) for span in spans]
+        children = [[count_children(word) for word in sent] for sent in sents]
         leaves = [sum(1 for count in sent if not count) for sent in children]
         self.c_children = dict(
             sorted(Counter(count for sent in children for count in sent).items())
         )
-        self.c_deps = dict(sorted(Counter(token.dep_ for token in words).items()))
+        self.c_deps = dict(sorted(Counter(word.deprel or "" for word in words).items()))
         self.n_leaves = sum(leaves)
         self.n_subtrees = self.n_words - self.n_leaves
-        finite_verbs = [token for token in words if is_finite_verb(token)]
-        chains = [
-            length for span in spans for length in calc_coordination_chains(span, join_hyphens)
-        ]
+        finite_verbs = [word for word in words if is_finite_verb(word)]
+        chains = [length for span in spans for length in calc_coordination_chains(span)]
         self.n_coordination_chains = len(chains)
-        heads = [[token for token in sent if self.is_clause_head(token)] for sent in sents]
+        heads = [[word for word in sent if self.is_clause_head(word)] for sent in sents]
         self.n_clauses = sum(map(len, heads))
         subordinate = [
-            [token for token in sent if self.is_subordinate_clause_head(token)] for sent in heads
+            [word for word in sent if self.is_subordinate_clause_head(word)] for sent in heads
         ]
         self.n_subordinate_clauses = sum(map(len, subordinate))
         self.n_complex_sents = sum(1 for sent in subordinate if sent)
         infinitive = [
-            token.i for sent in heads for token in sent if self.is_infinitive_clause_head(token)
+            word.index for sent in heads for word in sent if self.is_infinitive_clause_head(word)
         ]
         self.n_infinitive_clauses = len(infinitive)
-        nouns = [token for token in words if token.pos_ in ("NOUN", "PROPN")]
+        nouns = [word for word in words if word.upos in ("NOUN", "PROPN")]
         self.n_nouns = len(nouns)
         participle_clauses = [
-            subtree_len(token, join_hyphens) for token in words if self.is_participle_clause(token)
+            subtree_len(word) for word in words if self.is_participle_clause(word)
         ]
         self.n_participle_clauses = len(participle_clauses)
-        self.n_verbs = sum(1 for token in words if token.pos_ == "VERB")
-        passive = [token for token in words if self.is_passive(token)]
+        self.n_verbs = sum(1 for word in words if word.upos == "VERB")
+        passive = [word for word in words if self.is_passive(word)]
         self.n_passive = len(passive)
-        self.n_agentless_passive = sum(1 for token in passive if self.is_agentless(token))
-        self.n_infinitives = sum(1 for token in words if is_infinitive(token))
-        self.n_negations = sum(1 for token in words if self.is_negation(token))
+        self.n_agentless_passive = sum(1 for word in passive if self.is_agentless(word))
+        self.n_infinitives = sum(1 for word in words if is_infinitive(word))
+        self.n_negations = sum(1 for word in words if self.is_negation(word))
         split_predicates = self.find_split_predicates(words)
         self.n_split_predicates = len(split_predicates)
         self.split_predicates = tuple(
-            f"{verb.text} {noun.text}" for verb, noun in split_predicates
+            f"{verb.form} {noun.form}" for verb, noun in split_predicates
         )
-        subjects = [token for token in nouns if base_dep(token) in NOMINAL_SUBJECT_DEPS]
-        objects = [token for token in nouns if base_dep(token) in OBJECT_DEPS]
+        subjects = [word for word in nouns if base_dep(word) in NOMINAL_SUBJECT_DEPS]
+        objects = [word for word in nouns if base_dep(word) in OBJECT_DEPS]
         self.n_nominal_subjects = len(subjects)
-        self.n_preverbal_subjects = sum(1 for token in subjects if token.i < token.head.i)
+        self.n_preverbal_subjects = sum(1 for word in subjects if _before_head(word))
         self.n_nominal_objects = len(objects)
-        self.n_preverbal_objects = sum(1 for token in objects if token.i < token.head.i)
+        self.n_preverbal_objects = sum(1 for word in objects if _before_head(word))
         # The units of the statistics computed on first use
-        self._spans = tuple((span.start, span.end) for span in spans)
-        self._clause_heads = tuple(tuple(token.i for token in sent) for sent in heads)
-        self._subordinate_heads = tuple(tuple(token.i for token in sent) for sent in subordinate)
+        self._spans = tuple(spans)
+        self._clause_heads = tuple(tuple(sent) for sent in heads)
+        self._subordinate_heads = tuple(tuple(sent) for sent in subordinate)
         self._infinitive_heads = frozenset(infinitive)
 
         self.mean_dependency_distance = safe_mean(all_distances)
@@ -326,14 +306,10 @@ class SyntaxStats(Stats):
             safe_divide(len(sent), n_leaves, nan)
             for sent, n_leaves in zip(sents, leaves, strict=True)
         )
-        roots = [
-            next((i for i, token in enumerate(sent) if is_root(token)), None) for sent in sents
-        ]
+        roots = [next((i for i, word in enumerate(sent) if is_root(word)), None) for sent in sents]
         self.words_before_root = safe_mean([i for i in roots if i is not None])
         self.verb_valency = safe_divide(
-            sum(calc_valency(token, join_hyphens) for token in finite_verbs),
-            len(finite_verbs),
-            nan,
+            sum(calc_valency(word) for word in finite_verbs), len(finite_verbs), nan
         )
         self.coordination_chains_per_sent = self.n_coordination_chains / self.n_sents
         self.mean_coordination_chain_len = safe_mean(chains)
@@ -343,7 +319,7 @@ class SyntaxStats(Stats):
         self.p_complex_sents = self.n_complex_sents / self.n_sents
         self.infinitive_clauses_per_sent = self.n_infinitive_clauses / self.n_sents
         self.modifiers_per_noun = safe_divide(
-            sum(count_noun_modifiers(token, join_hyphens) for token in nouns), self.n_nouns, nan
+            sum(count_noun_modifiers(word) for word in nouns), self.n_nouns, nan
         )
         self.participle_clauses_per_sent = self.n_participle_clauses / self.n_sents
         self.mean_participle_clause_len = safe_mean(participle_clauses)
@@ -363,79 +339,72 @@ class SyntaxStats(Stats):
     @cached_property
     def _l2sca(self) -> dict[str, int]:
         """Numbers of the units of L2SCA"""
-        join_hyphens = self.join_hyphens
-        doc = self.sents[0][0].doc
-        words = [token for sent in self.sents for token in sent]
-        heads = [[doc[i] for i in sent] for sent in self._clause_heads]
-        clause_ids = {token.i for sent in heads for token in sent}
+        words = [word for sent in self.sents for word in sent]
+        heads = self._clause_heads
+        clause_ids = {word.index for sent in heads for word in sent}
         # A conjunct or a parataxis with a subordinating mark heads a subordinate or an infinitive
         # clause: no T-unit nor a clause under it, no member of the coordination it hangs on
         marked = {
-            token.i
+            word.index
             for sent in heads
-            for token in sent
-            if base_dep(token) in MAIN_CLAUSE_DEPS and _has_mark(token, self.is_subordinating_mark)
+            for word in sent
+            if base_dep(word) in MAIN_CLAUSE_DEPS and _has_mark(word, self.is_subordinating_mark)
         }
-        firsts = _first_conjuncts(words, join_hyphens, marked)
+        firsts = _first_conjuncts(words, marked)
         # A finite conjunct with a subject of its own of an infinitive clause, a predicate a model
         # attaches to the infinitive, joins the clause the chain of infinitives completes
         reattached = {
-            token.i: owner
+            word.index: owner
             for sent in heads
-            for token in sent
-            if base_dep(token) == "conj"
-            and (first := firsts[token.i]) is not None
-            and first.i in self._infinitive_heads
-            and token.i not in self._infinitive_heads
-            and not _shares_subject(token, join_hyphens)
+            for word in sent
+            if base_dep(word) == "conj"
+            and (first := firsts[word.index]) is not None
+            and first.index in self._infinitive_heads
+            and word.index not in self._infinitive_heads
+            and not _shares_subject(word)
             and (owner := _infinitive_owner(first, self.auxiliary_form)) is not None
         }
         n_t_units = n_complex_t_units = 0
         for sent, subordinate in zip(heads, self._subordinate_heads, strict=True):
-            units = {token.i for token in _t_unit_heads(sent, join_hyphens, marked, reattached)}
+            units = {word.index for word in _t_unit_heads(sent, marked, reattached)}
             n_t_units += len(units)
-            n_complex_t_units += len(
-                _t_units_of([doc[i] for i in subordinate], units, join_hyphens) - {None}
-            )
-        coordinations: dict[int, list[Token]] = {}
-        for token in words:
-            first = firsts[token.i]
-            if base_dep(token) == "conj" and first is not None and token.i not in marked:
-                coordinations.setdefault(first.i, []).append(token)
-        nouns = [token for token in words if token.pos_ in ("NOUN", "PROPN")]
-        modified = _heads_of(words, COMPLEX_NOMINAL_DEPS, join_hyphens)
-        word_of = {token.i: token for token in words}
+            n_complex_t_units += len(_t_units_of(subordinate, units) - {None})
+        coordinations: dict[int, list[TreeWord]] = {}
+        for word in words:
+            first = firsts[word.index]
+            if base_dep(word) == "conj" and first is not None and word.index not in marked:
+                coordinations.setdefault(first.index, []).append(word)
+        nouns = [word for word in words if word.upos in ("NOUN", "PROPN")]
+        modified = _heads_of(words, COMPLEX_NOMINAL_DEPS)
+        word_of = {word.index: word for word in words}
         predicates = {
-            token.i
-            for token in words
-            if token.pos_ in ("VERB", "AUX") and not self._is_attributive(token, firsts)
-        } | _heads_of(words, SUBJECT_DEPS | {"cop"}, join_hyphens)
+            word.index
+            for word in words
+            if word.upos in ("VERB", "AUX") and not self._is_attributive(word, firsts)
+        } | _heads_of(words, SUBJECT_DEPS | {"cop"})
         return {
             "n_t_units": n_t_units,
             "n_complex_t_units": n_complex_t_units,
             "n_l2sca_clauses": sum(
                 1
                 for sent in heads
-                for token in sent
-                if (token.i in marked or not _shares_subject(token, join_hyphens))
-                and token.i not in self._infinitive_heads
+                for word in sent
+                if (word.index in marked or not _shares_subject(word))
+                and word.index not in self._infinitive_heads
             ),
             # A coordination of phrases, or of predicates sharing a subject
             "n_coordinate_phrases": sum(
                 1
                 for first, conjuncts in coordinations.items()
                 if first not in clause_ids
-                or any(
-                    token.i not in clause_ids or _shares_subject(token, join_hyphens)
-                    for token in conjuncts
-                )
+                or any(word.index not in clause_ids or _shares_subject(word) for word in conjuncts)
             ),
-            "n_complex_nominals": sum(1 for token in nouns if token.i in modified)
+            "n_complex_nominals": sum(1 for word in nouns if word.index in modified)
             + sum(
                 1
                 for sent in heads
-                for token in sent
-                if (first := firsts[token.i]) is not None
+                for word in sent
+                if (first := firsts[word.index]) is not None
                 and base_dep(first) in NOMINAL_CLAUSE_DEPS
             ),
             "n_verb_phrases": sum(
@@ -449,15 +418,15 @@ class SyntaxStats(Stats):
             ),
         }
 
-    def _is_attributive(self, token: Token, firsts: Mapping[int, Token | None]) -> bool:
+    def _is_attributive(self, word: TreeWord, firsts: Mapping[int, TreeWord | None]) -> bool:
         """Whether a non-finite verb form is an attribute of a noun: under amod or acl, or
         coordinated to one, without an auxiliary or a copula, which L2SCA takes for a part of
         the noun phrase; one with a subject of its own stays a predicate (is_predicate)"""
-        if predicate_form(token, self.auxiliary_form) not in NONFINITE_CLAUSE_FORMS:
+        if predicate_form(word, self.auxiliary_form) not in NONFINITE_CLAUSE_FORMS:
             return False
-        first = firsts[token.i]
-        return base_dep(first if first is not None else token) in ("acl", "amod") and not any(
-            base_dep(child) in AUXILIARY_DEPS for child in token.children
+        first = firsts[word.index]
+        return base_dep(first if first is not None else word) in ("acl", "amod") and not any(
+            base_dep(child) in AUXILIARY_DEPS for child in word.children
         )
 
     @property
@@ -515,13 +484,10 @@ class SyntaxStats(Stats):
     @cached_property
     def _prep_chains(self) -> list[int]:
         """Lengths of the prepositional chains"""
-        doc = self.sents[0][0].doc
         return [
             length
-            for start, end in self._spans
-            for length in calc_modifier_chains(
-                doc[start:end], self.is_prep_complement, self.join_hyphens
-            )
+            for span in self._spans
+            for length in calc_modifier_chains(span, self.is_prep_complement)
         ]
 
     @property
@@ -538,79 +504,31 @@ class SyntaxStats(Stats):
 
     @cached_property
     def pos_edit_distance(self) -> float:
-        return _mean_edit_distance([[token.pos_ for token in sent] for sent in self.sents])
+        return _mean_edit_distance([[word.upos or "" for word in sent] for sent in self.sents])
 
     @cached_property
     def syntax_similarity(self) -> float:
         return _mean_multiset_similarity(
-            [Counter(_word_triple(token) for token in sent) for sent in self.sents]
+            [Counter(_word_triple(word) for word in sent) for sent in self.sents]
         )
 
-    def __getstate__(self) -> dict[str, Any]:
-        """State for pickle and copy: spaCy pickles no token, so sents goes as the compressed
-        bytes of its Doc and the positions of the words"""
-        state = self.__dict__.copy()
-        sents = state.pop("sents", None)
-        if sents:
-            doc = sents[0][0].doc
-            data = zlib.compress(doc.to_bytes(exclude=["tensor", "user_data"]))
-            state["_sents_doc"] = (doc.lang_, data)
-            state["_sents_positions"] = tuple(tuple(token.i for token in sent) for sent in sents)
-        return state
-
-    def __setstate__(self, state: dict[str, Any]) -> None:
-        """Restoring the tokens of sents on a blank vocabulary of the language of the Doc"""
-        state = dict(state)
-        saved = state.pop("_sents_doc", None)
-        positions = state.pop("_sents_positions", ())
-        self.__dict__.update(state)
-        if saved is not None:
-            from spacy.tokens import Doc
-
-            lang, data = saved
-            doc = Doc(_blank_vocab(lang)).from_bytes(zlib.decompress(data))
-            self.sents = tuple(tuple(doc[i] for i in sent) for sent in positions)
-
-    def parse(self, source: Doc) -> Doc:  # type: ignore[override]
-        """
-        Getting the Doc of a source
-
-        Description:
-            The source itself, which must be a Doc; a library that parses
-            strings overrides the method
-
-        Arguments:
-            source (Doc): Data source
-
-        Returns:
-            Doc: Doc with a dependency parse and parts of speech
-
-        Raises:
-            SourceTypeError: If the source is not a Doc object
-        """
-        if not is_doc(source):
-            raise source_type_error(self.messages, source)
-        return source
-
-    def is_clause_head(self, token: Token) -> bool:
+    def is_clause_head(self, word: TreeWord) -> bool:
         """
         Checking whether a word heads a clause
 
         Description:
-            is_clause_head of the module with join_hyphens of the class and the
-            hooks is_infinitive_periphrasis and auxiliary_form
+            is_clause_head of the module with the hooks is_infinitive_periphrasis
+            and auxiliary_form
 
         Arguments:
-            token (Token): Token
+            word (TreeWord): Word of the tree
 
         Returns:
             bool: Result of the check
         """
-        return is_clause_head(
-            token, self.join_hyphens, self.is_infinitive_periphrasis, self.auxiliary_form
-        )
+        return is_clause_head(word, self.is_infinitive_periphrasis, self.auxiliary_form)
 
-    def is_infinitive_periphrasis(self, token: Token) -> bool:
+    def is_infinitive_periphrasis(self, word: TreeWord) -> bool:
         """
         Checking whether an infinitive makes one predicate with its head
 
@@ -621,14 +539,14 @@ class SyntaxStats(Stats):
             infinitive subject (csubj) of a modal word (is_clause_head); none by default
 
         Arguments:
-            token (Token): Token
+            word (TreeWord): Word of the tree
 
         Returns:
             bool: Result of the check
         """
         return False
 
-    def auxiliary_form(self, token: Token) -> str:
+    def auxiliary_form(self, word: TreeWord) -> str:
         """
         Getting the verb form of an auxiliary without the feature VerbForm
 
@@ -638,14 +556,14 @@ class SyntaxStats(Stats):
             skips the auxiliary, by default
 
         Arguments:
-            token (Token): Auxiliary or copula
+            word (TreeWord): Auxiliary or copula
 
         Returns:
             str: Value of VerbForm, an empty string to skip the auxiliary
         """
         return ""
 
-    def is_subordinate_clause_head(self, token: Token) -> bool:
+    def is_subordinate_clause_head(self, word: TreeWord) -> bool:
         """
         Checking whether a word heads a subordinate clause
 
@@ -654,19 +572,19 @@ class SyntaxStats(Stats):
             auxiliary_form and is_subordinating_mark
 
         Arguments:
-            token (Token): Token
+            word (TreeWord): Word of the tree
 
         Returns:
             bool: Result of the check
         """
         return is_subordinate_clause_head(
-            token,
+            word,
             self.is_clause_head,
             self.auxiliary_form,
             is_subordinating_mark=self.is_subordinating_mark,
         )
 
-    def is_infinitive_clause_head(self, token: Token) -> bool:
+    def is_infinitive_clause_head(self, word: TreeWord) -> bool:
         """
         Checking whether a word heads an infinitive clause
 
@@ -675,19 +593,19 @@ class SyntaxStats(Stats):
             auxiliary_form and is_subordinating_mark
 
         Arguments:
-            token (Token): Token
+            word (TreeWord): Word of the tree
 
         Returns:
             bool: Result of the check
         """
         return is_infinitive_clause_head(
-            token,
+            word,
             self.is_clause_head,
             self.auxiliary_form,
             is_subordinating_mark=self.is_subordinating_mark,
         )
 
-    def is_subordinating_mark(self, token: Token) -> bool:
+    def is_subordinating_mark(self, word: TreeWord) -> bool:
         """
         Checking whether a mark is a subordinating conjunction
 
@@ -699,32 +617,30 @@ class SyntaxStats(Stats):
             reads the context of a word that is a conjunction and a pronoun
 
         Arguments:
-            token (Token): Token with the relation mark
+            word (TreeWord): Word with the relation mark
 
         Returns:
             bool: Result of the check
         """
-        return _is_subordinating_mark(token, self.subordinating_marks)
+        return _is_subordinating_mark(word, self.subordinating_marks)
 
-    def is_prep_complement(self, token: Token) -> bool:
+    def is_prep_complement(self, word: TreeWord) -> bool:
         """
         Checking whether a word is a link of a prepositional chain
 
         Description:
-            is_prep_complement of the module with join_hyphens of the class by
-            default. The chains are computed on first use, from the words of sents:
-            the tokens of a copy of the Doc without its user data and tensor, on a
-            blank vocabulary after pickling
+            is_prep_complement of the module by default. The chains are computed
+            on first use, from the words of sents
 
         Arguments:
-            token (Token): Token
+            word (TreeWord): Word of the tree
 
         Returns:
             bool: Result of the check
         """
-        return is_prep_complement(token, self.join_hyphens)
+        return is_prep_complement(word)
 
-    def is_participle_clause(self, token: Token) -> bool:
+    def is_participle_clause(self, word: TreeWord) -> bool:
         """
         Checking whether a word heads a participial clause
 
@@ -734,33 +650,33 @@ class SyntaxStats(Stats):
             dependent besides cc, conj and parataxis (calc_valency)
 
         Arguments:
-            token (Token): Token
+            word (TreeWord): Word of the tree
 
         Returns:
             bool: Result of the check
         """
-        if not has_feature(token, "VerbForm", "Part") or is_root(token):
+        if not has_feature(word, "VerbForm", "Part") or is_root(word):
             return False
-        if any(base_dep(child) in AUXILIARY_DEPS for child in token.children):
+        if any(base_dep(child) in AUXILIARY_DEPS for child in word.children):
             return False
-        return calc_valency(token, self.join_hyphens) > 0
+        return calc_valency(word) > 0
 
-    def is_passive(self, token: Token) -> bool:
+    def is_passive(self, word: TreeWord) -> bool:
         """
         Checking whether a word is a passive verb form
 
         Description:
-            is_passive of the module with join_hyphens of the class
+            is_passive of the module
 
         Arguments:
-            token (Token): Token
+            word (TreeWord): Word of the tree
 
         Returns:
             bool: Result of the check
         """
-        return is_passive(token, self.join_hyphens)
+        return is_passive(word)
 
-    def is_agentless(self, token: Token) -> bool:
+    def is_agentless(self, word: TreeWord) -> bool:
         """
         Checking whether a word is a passive form with no agent
 
@@ -768,14 +684,14 @@ class SyntaxStats(Stats):
             A passive form by the hook is_passive with no agent (has_agent)
 
         Arguments:
-            token (Token): Token
+            word (TreeWord): Word of the tree
 
         Returns:
             bool: Result of the check
         """
-        return self.is_passive(token) and not has_agent(token, self.join_hyphens)
+        return self.is_passive(word) and not has_agent(word)
 
-    def is_negation(self, token: Token) -> bool:
+    def is_negation(self, word: TreeWord) -> bool:
         """
         Checking whether a word is a word of negation
 
@@ -784,16 +700,16 @@ class SyntaxStats(Stats):
             conjunction (neither... nor) is none. Every such word counts
 
         Arguments:
-            token (Token): Token
+            word (TreeWord): Word of the tree
 
         Returns:
             bool: Result of the check
         """
-        if token.pos_ in ("CCONJ", "SCONJ"):
+        if word.upos in ("CCONJ", "SCONJ"):
             return False
-        return has_feature(token, "Polarity", "Neg") or token.text.lower() in self.negation_words
+        return has_feature(word, "Polarity", "Neg") or word.form.lower() in self.negation_words
 
-    def find_split_predicates(self, words: Sequence[Token]) -> list[tuple[Token, Token]]:
+    def find_split_predicates(self, words: Sequence[TreeWord]) -> list[tuple[TreeWord, TreeWord]]:
         """
         Finding the split predicates
 
@@ -802,153 +718,136 @@ class SyntaxStats(Stats):
             decision); none by default, as they depend on the language
 
         Arguments:
-            words (list[Token]): Words of the text
+            words (list[TreeWord]): Words of the text
 
         Returns:
-            list[tuple[Token, Token]]: Pairs of the verb and the noun in the order of the words
+            list[tuple[TreeWord, TreeWord]]: Pairs of the verb and the noun in the order of the
+                words
         """
         return []
 
 
-def _light_sents(doc: Doc, sents: Sequence[Sequence[Token]]) -> tuple[tuple[Token, ...], ...]:
-    """
-    Words of the sentences on a copy of the Doc without its tensor and user data: the
-    statistics keep neither the activations of the model nor a cycle through an extension
-    """
-    from spacy.tokens import Doc
-
-    light = Doc.from_docs([doc], exclude=["spans", "tensor", "user_data"])  # type: ignore[call-arg]  # not in the stub of spaCy
-    return tuple(tuple(light[token.i] for token in sent) for sent in sents)
+def _is_word(word: TreeWord) -> bool:
+    """Whether a word of the tree is a word: it holds a letter or a digit (has_words)"""
+    return has_words(word.form)
 
 
-@cache
-def _blank_vocab(lang: str) -> Vocab:
-    """Blank vocabulary of a language, one per process, for the Doc of a restored SyntaxStats"""
-    import spacy
-    from spacy.vocab import Vocab
-
-    return spacy.blank(lang).vocab if lang else Vocab()
+def _before_head(word: TreeWord) -> bool:
+    """Whether a word stands before the word it hangs on"""
+    return word.head is not None and word.index < word.head.index
 
 
-def _word_triple(token: Token) -> tuple[str, str, str]:
+def _word_triple(word: TreeWord) -> tuple[str, str, str]:
     """Dependency triple of a word: the part of speech of its head, the nearest word above it
     through punctuation, its base relation and its own part of speech; a word with no word
     above it has an empty head and the relation root"""
-    head, seen = token, {token.i}
+    head, seen = word, {word.index}
     # A broken parse can link the marks above a word in a loop
-    while not is_root(head) and head.head.i not in seen:
+    while head.head is not None and head.head.index not in seen:
         head = head.head
-        if is_word(head):
-            return (head.pos_, base_dep(token), token.pos_)
-        seen.add(head.i)
-    return ("", "root", token.pos_)
+        if _is_word(head):
+            return (head.upos or "", base_dep(word), word.upos or "")
+        seen.add(head.index)
+    return ("", "root", word.upos or "")
 
 
 def _t_unit_heads(
-    heads: Sequence[Token],
-    join_hyphens: bool,
-    marked: Collection[int],
-    reattached: Mapping[int, Token],
-) -> list[Token]:
+    heads: Sequence[TreeWord], marked: Collection[int], reattached: Mapping[int, TreeWord]
+) -> list[TreeWord]:
     """Clause heads of a sentence that head a T-unit: the head of the sentence and the main
     clauses joined to it through conj or parataxis, but for a conjunct without a subject of its
     own, a predicate of the clause it is coordinated to; a marked clause head is no main clause,
     and a reattached one joins the clause of its word"""
-    ids = {token.i for token in heads}
+    ids = {word.index for word in heads}
     known: dict[int, bool] = {}
     return [
-        token
-        for token in heads
-        if _is_main_clause(token, ids, join_hyphens, known, marked, reattached)
-        and not _shares_subject(token, join_hyphens)
+        word
+        for word in heads
+        if _is_main_clause(word, ids, known, marked, reattached) and not _shares_subject(word)
     ]
 
 
 def _is_main_clause(
-    token: Token,
+    word: TreeWord,
     ids: Collection[int],
-    join_hyphens: bool,
     known: dict[int, bool],
     marked: Collection[int],
-    reattached: Mapping[int, Token],
+    reattached: Mapping[int, TreeWord],
 ) -> bool:
     """Whether a clause head reaches the head of the sentence through main clauses alone, none
     of them marked; known keeps the answers for the clause heads on the way"""
     path: list[int] = []
     on_path: set[int] = set()
-    while token.i not in known:
-        path.append(token.i)
-        on_path.add(token.i)
-        if token.i in marked:
+    while word.index not in known:
+        path.append(word.index)
+        on_path.add(word.index)
+        if word.index in marked:
             outcome = False
             break
-        if is_root(token):
+        if is_root(word):
             outcome = True
             break
-        parent = reattached.get(token.i)
+        parent = reattached.get(word.index)
         if parent is None:
-            parent = _chain_parent(token, join_hyphens)
-            if base_dep(token) not in MAIN_CLAUSE_DEPS:
+            parent = _chain_parent(word)
+            if base_dep(word) not in MAIN_CLAUSE_DEPS:
                 parent = None
-        if parent is None or parent.i not in ids or parent.i in on_path:
+        if parent is None or parent.index not in ids or parent.index in on_path:
             outcome = False
             break
-        token = parent
+        word = parent
     else:
-        outcome = known[token.i]
+        outcome = known[word.index]
     for i in path:
         known[i] = outcome
     return outcome
 
 
-def _shares_subject(token: Token, join_hyphens: bool) -> bool:
+def _shares_subject(word: TreeWord) -> bool:
     """Whether a conjunct is a predicate sharing the subject of the clause it is coordinated
     to: no subject of its own, and no person, number or gender of its own either, which in a
     language that drops its subjects tell another one (llegamos y nos esperabas)"""
-    if base_dep(token) != "conj":
+    if base_dep(word) != "conj":
         return False
     if any(
-        base_dep(child) in _SUBJECT_DEPS or child.dep_ == "expl"
-        for child in get_children(token, join_hyphens)
+        base_dep(child) in _SUBJECT_DEPS or child.deprel == "expl" for child in get_children(word)
     ):
         return False
-    head = _chain_parent(token, join_hyphens)
-    own, other = _agreement(token), _agreement(head) if head is not None else {}
+    head = _chain_parent(word)
+    own, other = _agreement(word), _agreement(head) if head is not None else {}
     return all(own[feature] == other[feature] for feature in own.keys() & other.keys())
 
 
-def _agreement(token: Token) -> dict[str, list[str]]:
+def _agreement(word: TreeWord) -> dict[str, str]:
     """Person, number and gender of a predicate: those of its first auxiliary or copula that
     has them, which agree with the subject where a participle or a noun has its own (hemos
     llegado, es un equipo), else those of the word"""
-    for word in [*(child for child in token.children if base_dep(child) in AUXILIARY_DEPS), token]:
-        found = {feature: word.morph.get(feature, []) for feature in _AGREEMENT_FEATURES}
+    for part in [*(child for child in word.children if base_dep(child) in AUXILIARY_DEPS), word]:
+        found = {feature: part.feats.get(feature, "") for feature in _AGREEMENT_FEATURES}
         if any(found.values()):
             return {feature: values for feature, values in found.items() if values}
     return {}
 
 
-def _t_units_of(
-    tokens: Iterable[Token], units: Collection[int], join_hyphens: bool
-) -> set[int | None]:
+def _t_units_of(words: Iterable[TreeWord], units: Collection[int]) -> set[int | None]:
     """Positions of the heads of the T-units the clauses belong to, the nearest ones above
     them; None for a clause under none"""
     known: dict[int, int | None] = {}
     found = set()
-    for token in tokens:
-        path, seen = [], {token.i}
+    for word in words:
+        path, seen = [], {word.index}
         unit = None
-        parent = _chain_parent(token, join_hyphens)
-        while parent is not None and parent.i not in seen:
-            if parent.i in known:
-                unit = known[parent.i]
+        parent = _chain_parent(word)
+        while parent is not None and parent.index not in seen:
+            if parent.index in known:
+                unit = known[parent.index]
                 break
-            if parent.i in units:
-                unit = parent.i
+            if parent.index in units:
+                unit = parent.index
                 break
-            path.append(parent.i)
-            seen.add(parent.i)
-            parent = _chain_parent(parent, join_hyphens)
+            path.append(parent.index)
+            seen.add(parent.index)
+            parent = _chain_parent(parent)
         for i in path:
             known[i] = unit
         found.add(unit)
@@ -956,26 +855,26 @@ def _t_units_of(
 
 
 def _first_conjuncts(
-    words: Iterable[Token], join_hyphens: bool, starts: Collection[int] = ()
-) -> dict[int, Token | None]:
+    words: Iterable[TreeWord], starts: Collection[int] = ()
+) -> dict[int, TreeWord | None]:
     """First conjunct of the coordination of every word by its position, the word itself out
     of one or at one of starts; None through a punctuation mark or a loop of conjuncts"""
-    known: dict[int, Token | None] = {}
-    for token in words:
+    known: dict[int, TreeWord | None] = {}
+    for start in words:
         path: list[int] = []
         on_path: set[int] = set()
-        word = token
+        word = start
         while True:
-            if word.i in known:
-                first = known[word.i]
+            if word.index in known:
+                first = known[word.index]
                 break
-            if base_dep(word) != "conj" or word.i in starts:
-                first = known[word.i] = word
+            if base_dep(word) != "conj" or word.index in starts:
+                first = known[word.index] = word
                 break
-            path.append(word.i)
-            on_path.add(word.i)
-            parent = _chain_parent(word, join_hyphens)
-            if parent is None or parent.i in on_path:
+            path.append(word.index)
+            on_path.add(word.index)
+            parent = _chain_parent(word)
+            if parent is None or parent.index in on_path:
                 first = None
                 break
             word = parent
@@ -984,13 +883,12 @@ def _first_conjuncts(
     return known
 
 
-def _heads_of(words: Iterable[Token], relations: Collection[str], join_hyphens: bool) -> set[int]:
+def _heads_of(words: Iterable[TreeWord], relations: Collection[str]) -> set[int]:
     """Positions of the words some of the words hang on by one of the relations"""
     return {
-        parent.i
-        for token in words
-        if base_dep(token) in relations
-        and (parent := _chain_parent(token, join_hyphens)) is not None
+        parent.index
+        for word in words
+        if base_dep(word) in relations and (parent := _chain_parent(word)) is not None
     }
 
 
@@ -1044,112 +942,52 @@ def _multiset_similarity(first: Counter[Hashable], second: Counter[Hashable]) ->
     return sum((first & second).values()) / union if union else 1.0
 
 
-def get_words(tokens: Iterable[Token], join_hyphens: bool = False) -> list[Token]:
+def get_words(words: Iterable[TreeWord]) -> list[TreeWord]:
     """
-    Getting the words of a sequence of tokens
+    Getting the words of a sequence of words of the tree
 
     Description:
-        With join_hyphens, a word the tokenizer split at its hyphens is one
-        word, given by the part that holds its relation (the head of the
-        sentence, or the part hanging outside the word, the nearest to the
-        root), or by its first part when a hyphen holds the relation or the
-        parts form a loop
+        The words with a letter or a digit (has_words): punctuation marks and
+        symbols are no nodes of the measures
 
     Arguments:
-        tokens (Doc|Span|list[Token]): Sequence of tokens
-        join_hyphens (bool): Join the parts of hyphenated words (joins_previous)
+        words (list[TreeWord]): Words of the tree, such as those of a sentence
 
     Returns:
-        list[Token]: List of words
+        list[TreeWord]: List of words
     """
-    return [_word_part(unit) for unit in _word_units(tokens, join_hyphens)]
+    return [word for word in words if _is_word(word)]
 
 
-def _word_units(tokens: Iterable[Token], join_hyphens: bool) -> list[list[Token]]:
+def is_root(word: TreeWord) -> bool:
     """
-    Words of a sequence of tokens as lists of their tokens
-
-    Description:
-        With join_hyphens the parts of a hyphenated word and the hyphens between
-        them are one word, when its earlier parts are in the sequence
-    """
-    units: list[list[Token]] = []
-    unit_of: dict[int, list[Token]] = {}
-    for token in tokens:
-        if not is_word(token):
-            continue
-        first = token.i - 2
-        if join_hyphens and first in unit_of and joins_previous(token):
-            unit = unit_of[first]
-            unit.extend((token.doc[token.i - 1], token))
-        else:
-            unit = [token]
-            units.append(unit)
-        unit_of[token.i] = unit
-    return units
-
-
-def _word_part(unit: Sequence[Token]) -> Token:
-    """
-    Part that gives a word: the one holding the head of its sentence or hanging
-    outside it (_word_head), the first part when that is a hyphen or there is none
-    """
-    if len(unit) == 1:
-        return unit[0]
-    part = next((token for token in unit if is_root(token)), None)
-    if part is None:
-        part = _word_head(unit)
-    return part if part is not None and is_word(part) else unit[0]
-
-
-def _word_head(unit: Sequence[Token]) -> Token | None:
-    """
-    Part of a word that hangs on a token outside it, the nearest to the root and
-    a word rather than a hyphen when equal; None for a word that holds the head
-    of its sentence or has no part hanging outside it
-    """
-    if len(unit) == 1:
-        return None if is_root(unit[0]) else unit[0]
-    if any(is_root(token) for token in unit):
-        return None
-    ids = {token.i for token in unit}
-    outside = [token for token in unit if token.head.i not in ids]
-    if not outside:
-        # A broken parse can link the parts of one word in a loop
-        return None
-    if len(outside) == 1:
-        return outside[0]
-    return min(outside, key=lambda token: (sum(1 for _ in token.ancestors), not is_word(token)))
-
-
-def is_root(token: Token) -> bool:
-    """
-    Checking whether a token is the head of its sentence
+    Checking whether a word is the head of its sentence
 
     Arguments:
-        token (Token): Token
+        word (TreeWord): Word of the tree
 
     Returns:
         bool: Result of the check
     """
-    return token.head.i == token.i
+    return word.head is None
 
 
-def base_dep(token: Token) -> str:
+def base_dep(word: TreeWord) -> str:
     """
-    Getting the syntactic relation of a token without its subtype
+    Getting the syntactic relation of a word without its subtype
 
     Description:
         The subtypes of Universal Dependencies are separated by a colon:
-        expl:pass - expl, nsubj:pass - nsubj
+        expl:pass - expl, nsubj:pass - nsubj; a word without a relation gives an
+        empty string
 
     Arguments:
-        token (Token): Token
+        word (TreeWord): Word of the tree
 
     Returns:
         str: Base relation
     """
-    return _base_relation(token.dep_)
+    return _base_relation(word.deprel or "")
 
 
 @cache
@@ -1158,178 +996,104 @@ def _base_relation(relation: str) -> str:
     return relation.split(":")[0]
 
 
-def get_children(token: Token, join_hyphens: bool = False) -> list[Token]:
+def get_children(word: TreeWord) -> list[TreeWord]:
     """
-    Getting the dependent words of a token
-
-    Description:
-        With join_hyphens, the dependents of a hyphenated word are the words
-        whose head (the part hanging outside the word, the nearest to the root)
-        hangs on one of its tokens, each given by that part, or by its first
-        part when it hangs by a hyphen
+    Getting the dependent words of a word
 
     Arguments:
-        token (Token): Token
-        join_hyphens (bool): Join the parts of hyphenated words (joins_previous)
+        word (TreeWord): Word of the tree
 
     Returns:
-        list[Token]: List of the dependents without punctuation and whitespace
+        list[TreeWord]: List of the dependents without punctuation marks and symbols
     """
-    if not join_hyphens:
-        return [child for child in token.children if is_word(child)]
-    word = _hyphenated_word(token) or [token]
-    ids = {part.i for part in word}
-    children: dict[int, Token] = {}
-    for part in word:
-        for child in part.children:
-            unit = _hyphenated_word(child) if child.i not in ids else None
-            if unit is None or unit[0].i in children:
-                continue
-            if len(unit) == 1:
-                children[child.i] = child
-                continue
-            head = _word_head(unit)
-            if head is not None and head.head.i in ids:
-                children[unit[0].i] = _word_part(unit)
-    return [children[start] for start in sorted(children)]
+    return [child for child in word.children if _is_word(child)]
 
 
-def _hyphenated_word(token: Token) -> list[Token] | None:
-    """Tokens of the hyphenated word a token or an inner hyphen belongs to, None for no word"""
-    doc = token.doc
-    i = token.i
-    if not is_word(token):
-        if token.text != "-" or i + 1 >= len(doc) or not joins_previous(doc[i + 1]):
-            return None
-        i += 1
-    elif (i == 0 or doc[i - 1].text != "-") and (i + 1 >= len(doc) or doc[i + 1].text != "-"):
-        # The common case: no hyphen next to the word
-        return [token]
-    start = i
-    while joins_previous(doc[start]):
-        start -= 2
-    end = i
-    while end + 2 < len(doc) and joins_previous(doc[end + 2]):
-        end += 2
-    return list(doc[start : end + 1])
-
-
-def count_children(token: Token, join_hyphens: bool = False) -> int:
+def count_children(word: TreeWord) -> int:
     """
-    Counting the dependent words of a token
+    Counting the dependent words of a word
 
     Arguments:
-        token (Token): Token
-        join_hyphens (bool): Join the parts of hyphenated words (get_children)
+        word (TreeWord): Word of the tree
 
     Returns:
-        int: Number of dependent words
+        int: Number of dependent words (get_children)
     """
-    return len(get_children(token, join_hyphens))
+    return len(get_children(word))
 
 
-def subtree_len(token: Token, join_hyphens: bool = False) -> int:
+def subtree_len(word: TreeWord) -> int:
     """
-    Computing the length of the subtree of a token in words
+    Computing the length of the subtree of a word in words
 
     Description:
-        The token and all of its direct and indirect dependents; with
-        join_hyphens, the hyphenated word of the token and the words that hang
-        on it (get_children), directly or through punctuation
+        The word and all of its direct and indirect dependents, punctuation
+        left out
 
     Arguments:
-        token (Token): Token
-        join_hyphens (bool): Join the parts of hyphenated words (joins_previous)
+        word (TreeWord): Word of the tree
 
     Returns:
         int: Number of words in the subtree
     """
-    if not join_hyphens:
-        count = 0
-        tokens = [token]
-        # A broken parse can link tokens in a loop, and Token.subtree never ends then
-        seen = {token.i}
-        while tokens:
-            current = tokens.pop()
-            count += is_word(current)
-            for child in current.children:
-                if child.i not in seen:
-                    seen.add(child.i)
-                    tokens.append(child)
-        return count
     count = 0
-    words = [_hyphenated_word(token) or [token]]
-    seen = {part.i for part in words[0]}
+    words = [word]
+    # A broken parse can link words in a loop
+    seen = {word.index}
     while words:
-        word = words.pop()
-        count += is_word(word[0])
-        ids = {part.i for part in word}
-        tokens = [child for part in word for child in part.children if child.i not in ids]
-        while tokens:
-            child = tokens.pop()
-            # A broken parse can link tokens in a loop
-            if child.i in seen:
-                continue
-            seen.add(child.i)
-            unit = _hyphenated_word(child)
-            if unit is None:
-                tokens.extend(child.children)
-            elif len(unit) == 1 or ((head := _word_head(unit)) is not None and head.i == child.i):
-                seen.update(part.i for part in unit)
-                words.append(unit)
+        current = words.pop()
+        count += _is_word(current)
+        for child in current.children:
+            if child.index not in seen:
+                seen.add(child.index)
+                words.append(child)
     return count
 
 
-def calc_dependency_distances(tokens: Iterable[Token], join_hyphens: bool = False) -> list[int]:
+def calc_dependency_distances(words: Iterable[TreeWord]) -> list[int]:
     """
     Computing the dependency distances
 
     Description:
         The distance between a word and its head in positions of words,
         punctuation left out (Liu 2008); the head of a sentence and a word whose
-        head lies outside the sequence are skipped. With join_hyphens, a
-        hyphenated word is one position, and its head is that of its part
-        hanging outside it, the nearest to the root
+        head lies outside the sequence or is a punctuation mark are skipped
 
     References:
         Liu H. Dependency distance as a metric for language comprehension difficulty.
         Journal of Cognitive Science, 2008, 9(2), 159-191
 
     Arguments:
-        tokens (Doc|Span|list[Token]): Sequence of tokens
-        join_hyphens (bool): Join the parts of hyphenated words (joins_previous)
+        words (list[TreeWord]): Words of the tree, such as those of a sentence
 
     Returns:
         list[int]: Distances in the order of the words
     """
-    units = _word_units(tokens, join_hyphens)
-    positions = {token.i: position for position, unit in enumerate(units) for token in unit}
-    distances = []
-    for position, unit in enumerate(units):
-        head = _word_head(unit)
-        if head is not None and head.head.i in positions:
-            distances.append(abs(position - positions[head.head.i]))
-    return distances
+    words = get_words(words)
+    positions = {word.index: position for position, word in enumerate(words)}
+    return [
+        abs(position - positions[word.head.index])
+        for position, word in enumerate(words)
+        if word.head is not None and word.head.index in positions
+    ]
 
 
-def calc_tree_depth(tokens: Iterable[Token], join_hyphens: bool = False) -> int:
+def calc_tree_depth(words: Iterable[TreeWord]) -> int:
     """
     Computing the depth of the dependency tree
 
     Description:
-        The longest path from the head of the sentence to a leaf in relations;
-        the maximum for several sentences, 0 for a sentence of one word. With
-        join_hyphens, a hyphenated word is one node, as in
-        calc_dependency_distances
+        The longest path from the head of the sentence to a leaf in relations,
+        through punctuation; the maximum for several sentences, 0 for a sentence
+        of one word
 
     Arguments:
-        tokens (Doc|Span|list[Token]): Sequence of tokens
-        join_hyphens (bool): Join the parts of hyphenated words (joins_previous)
+        words (list[TreeWord]): Words of the tree, such as those of a sentence
 
     Returns:
         int: Depth of the tree
     """
-    parents = _unit_parents(_word_units(tokens, join_hyphens))
+    parents = _word_parents(get_words(words))
     depths: dict[int, int] = {}
     for start in range(len(parents)):
         chain: list[int] = []
@@ -1345,30 +1109,29 @@ def calc_tree_depth(tokens: Iterable[Token], join_hyphens: bool = False) -> int:
     return max(depths.values(), default=0)
 
 
-def _unit_parents(units: Sequence[Sequence[Token]]) -> list[int | None]:
+def _word_parents(words: Sequence[TreeWord]) -> list[int | None]:
     """
-    Index of the word every word of a sequence hangs on, through punctuation and
-    tokens outside the sequence; None for a word with no such head
+    Position in the sequence of the word every word hangs on, through punctuation and words
+    outside the sequence; None for a word with no such head
     """
-    unit_of = {token.i: n for n, unit in enumerate(units) for token in unit}
+    position_of = {word.index: n for n, word in enumerate(words)}
     parents: list[int | None] = []
-    for n, unit in enumerate(units):
-        head = _word_head(unit)
+    for n, word in enumerate(words):
         parent = None
-        token = head.head if head is not None else None
+        head = word.head
         seen = set()
-        while token is not None and token.i not in seen:
-            seen.add(token.i)
-            if unit_of.get(token.i, n) != n:
-                parent = unit_of[token.i]
+        while head is not None and head.index not in seen:
+            seen.add(head.index)
+            if position_of.get(head.index, n) != n:
+                parent = position_of[head.index]
                 break
-            token = None if is_root(token) else token.head
+            head = head.head
         parents.append(parent)
     return parents
 
 
-@_takes_token
-def predicate_form(token: Token, auxiliary_form: Callable[[Token], str] | None = None) -> str:
+@_takes_word
+def predicate_form(word: TreeWord, auxiliary_form: Callable[[TreeWord], str] | None = None) -> str:
     """
     Getting the verb form of a predicate
 
@@ -1382,7 +1145,7 @@ def predicate_form(token: Token, auxiliary_form: Callable[[Token], str] | None =
         form or an empty string to skip it; without the hook it is skipped
 
     Arguments:
-        token (Token): Token
+        word (TreeWord): Word of the tree
         auxiliary_form (callable): Verb form of an auxiliary without the feature
             VerbForm
 
@@ -1391,11 +1154,12 @@ def predicate_form(token: Token, auxiliary_form: Callable[[Token], str] | None =
             an empty string for a word with no verb form
 
     Raises:
-        SourceTypeError: If the token is not a Token or auxiliary_form is not callable
+        SourceTypeError: If the word is not a TreeWord or auxiliary_form is not callable
 
     Example:
         >>> import spacy
         >>> from spacy.tokens import Doc
+        >>> from anyts.document import get_tree, to_document
         >>> from anyts.syntax_stats import predicate_form
         >>> doc = Doc(
         ...     spacy.blank("en").vocab,
@@ -1404,19 +1168,20 @@ def predicate_form(token: Token, auxiliary_form: Callable[[Token], str] | None =
         ...     deps=["nsubj", "aux", "ROOT"],
         ...     morphs=["Case=Nom", "VerbForm=Fin", "VerbForm=Part"],
         ... )
-        >>> predicate_form(doc[2]), predicate_form(doc[0])
+        >>> she, _, arrived = get_tree(to_document(doc)).words
+        >>> predicate_form(arrived), predicate_form(she)
         ('Fin', '')
     """
     if auxiliary_form is not None:
         check_callable(auxiliary_form, "verb form of an auxiliary")
     auxiliaries = [
         (child, form)
-        for child in token.children
+        for child in word.children
         if base_dep(child) in AUXILIARY_DEPS
         and (form := _verb_form(child) or (auxiliary_form(child) if auxiliary_form else ""))
     ]
     if not auxiliaries:
-        return _verb_form(token)
+        return _verb_form(word)
     if any(form == "Fin" for _, form in auxiliaries):
         return "Fin"
     auxiliary, form = auxiliaries[0]
@@ -1425,31 +1190,28 @@ def predicate_form(token: Token, auxiliary_form: Callable[[Token], str] | None =
     return form
 
 
-def _verb_form(token: Token) -> str:
-    """Verb form of a token, an empty string without one"""
-    return next(iter(token.morph.get("VerbForm", [])), "")
+def _verb_form(word: TreeWord) -> str:
+    """Verb form of a word, the first of several, an empty string without one"""
+    return word.feats.get("VerbForm", "").split(",")[0]
 
 
-def calc_valency(token: Token, join_hyphens: bool = False) -> int:
+def calc_valency(word: TreeWord) -> int:
     """
-    Computing the valency of a token
+    Computing the valency of a word
 
     Description:
         The number of dependent words without cc, conj and parataxis
 
     Arguments:
-        token (Token): Token
-        join_hyphens (bool): Join the parts of hyphenated words (get_children)
+        word (TreeWord): Word of the tree
 
     Returns:
         int: Number of dependent words
     """
-    return sum(
-        1 for child in get_children(token, join_hyphens) if child.dep_ not in VALENCY_IGNORED_DEPS
-    )
+    return sum(1 for child in get_children(word) if child.deprel not in VALENCY_IGNORED_DEPS)
 
 
-def calc_coordination_chains(tokens: Iterable[Token], join_hyphens: bool = False) -> list[int]:
+def calc_coordination_chains(words: Iterable[TreeWord]) -> list[int]:
     """
     Computing the lengths of the coordination chains
 
@@ -1458,33 +1220,22 @@ def calc_coordination_chains(tokens: Iterable[Token], join_hyphens: bool = False
         conjunct hangs on (the first one in Universal Dependencies, the
         previous one in ClearNLP); a nested coordination (A and B, or C) and an
         enumeration split between several heads are one chain. Its length is
-        the number of its words. With join_hyphens, a hyphenated word is one
-        word, linked by the conj of any of its parts
+        the number of its words
 
     Arguments:
-        tokens (Doc|Span|list[Token]): Sequence of tokens
-        join_hyphens (bool): Join the parts of hyphenated words (joins_previous)
+        words (list[TreeWord]): Words of the tree, such as those of a sentence
 
     Returns:
         list[int]: Lengths of the chains in the order of their first words
     """
-    if join_hyphens:
-        units = _word_units(tokens, True)
-        unit_of = {token.i: n for n, unit in enumerate(units) for token in unit}
-        # Any part can be the conjunct: the parser links the parts of a compound adjective apart
-        links = [
-            (n, unit_of[token.head.i])
-            for n, unit in enumerate(units)
-            for token in unit
-            if token.dep_ == "conj" and is_word(token) and unit_of.get(token.head.i, n) != n
-        ]
-        return _chain_sizes(range(len(units)), links)
-    words = get_words(tokens)
-    ids = {token.i for token in words}
+    words = get_words(words)
+    ids = {word.index for word in words}
     links = [
-        (token.i, token.head.i) for token in words if token.dep_ == "conj" and token.head.i in ids
+        (word.index, word.head.index)
+        for word in words
+        if word.deprel == "conj" and word.head is not None and word.head.index in ids
     ]
-    return _chain_sizes([token.i for token in words], links)
+    return _chain_sizes([word.index for word in words], links)
 
 
 def _chain_sizes(nodes: Iterable[int], links: Iterable[tuple[int, int]]) -> list[int]:
@@ -1509,8 +1260,8 @@ def _chain_sizes(nodes: Iterable[int], links: Iterable[tuple[int, int]]) -> list
     return list(chains.values())
 
 
-@_takes_token
-def is_predicate(token: Token, join_hyphens: bool = False) -> bool:
+@_takes_word
+def is_predicate(word: TreeWord) -> bool:
     """
     Checking whether a word can be the predicate of its clause
 
@@ -1521,27 +1272,24 @@ def is_predicate(token: Token, join_hyphens: bool = False) -> bool:
         a parenthetical word does not
 
     Arguments:
-        token (Token): Token
-        join_hyphens (bool): Join the parts of hyphenated words (get_children)
+        word (TreeWord): Word of the tree
 
     Returns:
         bool: Result of the check
 
     Raises:
-        SourceTypeError: If the token is not a Token
+        SourceTypeError: If the word is not a TreeWord
     """
-    return token.pos_ in ("VERB", "AUX") or any(
-        base_dep(child) in SUBJECT_DEPS or base_dep(child) == "cop"
-        for child in get_children(token, join_hyphens)
+    return word.upos in ("VERB", "AUX") or any(
+        base_dep(child) in SUBJECT_DEPS or base_dep(child) == "cop" for child in get_children(word)
     )
 
 
-@_takes_token
+@_takes_word
 def is_clause_head(
-    token: Token,
-    join_hyphens: bool = False,
-    is_infinitive_periphrasis: Callable[[Token], bool] | None = None,
-    auxiliary_form: Callable[[Token], str] | None = None,
+    word: TreeWord,
+    is_infinitive_periphrasis: Callable[[TreeWord], bool] | None = None,
+    auxiliary_form: Callable[[TreeWord], str] | None = None,
 ) -> bool:
     """
     Checking whether a word heads a clause
@@ -1560,8 +1308,7 @@ def is_clause_head(
         conjuncts is none
 
     Arguments:
-        token (Token): Token
-        join_hyphens (bool): Join the parts of hyphenated words (is_predicate)
+        word (TreeWord): Word of the tree
         is_infinitive_periphrasis (callable): Whether an infinitive makes one
             predicate with its head (is_infinitive_clause); none by default
         auxiliary_form (callable): Verb form of an auxiliary without the feature
@@ -1571,68 +1318,68 @@ def is_clause_head(
         bool: Result of the check
 
     Raises:
-        SourceTypeError: If the token is not a Token, or is_infinitive_periphrasis or
-            auxiliary_form is not callable
+        SourceTypeError: If the word is not a TreeWord, or is_infinitive_periphrasis
+            or auxiliary_form is not callable
     """
     if is_infinitive_periphrasis is not None:
         check_callable(is_infinitive_periphrasis, "check of an infinitive periphrasis")
     if auxiliary_form is not None:
         check_callable(auxiliary_form, "verb form of an auxiliary")
-    return _is_clause_head(token, join_hyphens, is_infinitive_periphrasis, auxiliary_form)
+    return _is_clause_head(word, is_infinitive_periphrasis, auxiliary_form)
 
 
 def _is_clause_head(
-    token: Token,
-    join_hyphens: bool,
-    is_infinitive_periphrasis: Callable[[Token], bool] | None,
-    auxiliary_form: Callable[[Token], str] | None,
+    word: TreeWord,
+    is_infinitive_periphrasis: Callable[[TreeWord], bool] | None,
+    auxiliary_form: Callable[[TreeWord], str] | None,
 ) -> bool:
     """is_clause_head with checked hooks"""
     seen = set()
     # Up the chains of conjuncts and infinitive complements to the word that is none
-    while is_word(token) and token.i not in seen:
-        if is_root(token):
+    while _is_word(word) and word.index not in seen:
+        head = word.head
+        if head is None:
             return True
-        form = predicate_form(token, auxiliary_form)
+        form = predicate_form(word, auxiliary_form)
         if form in NONFINITE_CLAUSE_FORMS:
             return False
-        dep = base_dep(token)
+        dep = base_dep(word)
         if dep != "conj":
             if dep == "xcomp":
                 if form == "Fin":
                     return True
                 completed = (
-                    _completed_word(token, is_infinitive_periphrasis, auxiliary_form)
-                    if _is_infinitive_complement(token, is_infinitive_periphrasis, auxiliary_form)
+                    _completed_word(word, is_infinitive_periphrasis, auxiliary_form)
+                    if _is_infinitive_complement(word, is_infinitive_periphrasis, auxiliary_form)
                     else None
                 )
                 if completed is None:
                     return False
-                seen.add(token.i)
-                token = completed
+                seen.add(word.index)
+                word = completed
                 continue
             if dep not in CLAUSE_DEPS:
                 return False
             if dep == "parataxis":
-                return is_predicate(token, join_hyphens)
+                return is_predicate(word)
             if dep == "csubj" and form == "Inf" and is_infinitive_periphrasis:
-                return not is_infinitive_periphrasis(token)
+                return not is_infinitive_periphrasis(word)
             return not (dep == "acl" and form == "Inf")
-        if form == "Inf" and is_infinitive_periphrasis and is_infinitive_periphrasis(token):
+        if form == "Inf" and is_infinitive_periphrasis and is_infinitive_periphrasis(word):
             return False
-        if not is_predicate(token, join_hyphens):
+        if not is_predicate(word):
             return False
-        seen.add(token.i)
-        token = token.head
+        seen.add(word.index)
+        word = head
     return False
 
 
-@_takes_token
+@_takes_word
 def is_infinitive_clause(
-    token: Token,
-    is_infinitive_periphrasis: Callable[[Token], bool] | None = None,
-    is_clause_head: Callable[[Token], bool] | None = None,
-    auxiliary_form: Callable[[Token], str] | None = None,
+    word: TreeWord,
+    is_infinitive_periphrasis: Callable[[TreeWord], bool] | None = None,
+    is_clause_head: Callable[[TreeWord], bool] | None = None,
+    auxiliary_form: Callable[[TreeWord], str] | None = None,
 ) -> bool:
     """
     Checking whether an infinitive complement heads a clause of its own
@@ -1649,7 +1396,7 @@ def is_infinitive_clause(
         belongs to that phrase
 
     Arguments:
-        token (Token): Token
+        word (TreeWord): Word of the tree
         is_infinitive_periphrasis (callable): Whether an infinitive makes one
             predicate with its head; none by default
         is_clause_head (callable): Whether a word heads a clause; by default
@@ -1661,7 +1408,7 @@ def is_infinitive_clause(
         bool: Result of the check
 
     Raises:
-        SourceTypeError: If the token is not a Token, or is_infinitive_periphrasis,
+        SourceTypeError: If the word is not a TreeWord, or is_infinitive_periphrasis,
             is_clause_head or auxiliary_form is not callable
     """
     if is_infinitive_periphrasis is not None:
@@ -1671,102 +1418,114 @@ def is_infinitive_clause(
     if is_clause_head is None:
         is_clause_head = _clause_head_check(is_infinitive_periphrasis, auxiliary_form)
     check_callable(is_clause_head, "check of a clause head")
-    return _is_infinitive_clause(token, is_infinitive_periphrasis, is_clause_head, auxiliary_form)
+    return _is_infinitive_clause(word, is_infinitive_periphrasis, is_clause_head, auxiliary_form)
 
 
 def _clause_head_check(
-    is_infinitive_periphrasis: Callable[[Token], bool] | None,
-    auxiliary_form: Callable[[Token], str] | None,
-) -> Callable[[Token], bool]:
+    is_infinitive_periphrasis: Callable[[TreeWord], bool] | None,
+    auxiliary_form: Callable[[TreeWord], str] | None,
+) -> Callable[[TreeWord], bool]:
     """is_clause_head of the module with checked hooks"""
     return partial(
         _is_clause_head,
-        join_hyphens=False,
         is_infinitive_periphrasis=is_infinitive_periphrasis,
         auxiliary_form=auxiliary_form,
     )
 
 
 def _is_infinitive_clause(
-    token: Token,
-    is_infinitive_periphrasis: Callable[[Token], bool] | None,
-    is_clause_head: Callable[[Token], bool],
-    auxiliary_form: Callable[[Token], str] | None,
+    word: TreeWord,
+    is_infinitive_periphrasis: Callable[[TreeWord], bool] | None,
+    is_clause_head: Callable[[TreeWord], bool],
+    auxiliary_form: Callable[[TreeWord], str] | None,
 ) -> bool:
     """is_infinitive_clause with checked hooks"""
-    if not _is_infinitive_complement(token, is_infinitive_periphrasis, auxiliary_form):
+    if not _is_infinitive_complement(word, is_infinitive_periphrasis, auxiliary_form):
         return False
-    completed = _completed_word(token, is_infinitive_periphrasis, auxiliary_form)
+    completed = _completed_word(word, is_infinitive_periphrasis, auxiliary_form)
     return completed is not None and is_clause_head(completed)
 
 
 def _is_infinitive_complement(
-    token: Token,
-    is_infinitive_periphrasis: Callable[[Token], bool] | None,
-    auxiliary_form: Callable[[Token], str] | None,
+    word: TreeWord,
+    is_infinitive_periphrasis: Callable[[TreeWord], bool] | None,
+    auxiliary_form: Callable[[TreeWord], str] | None,
 ) -> bool:
     """Infinitive under xcomp that makes no periphrasis with its head"""
-    if base_dep(token) != "xcomp" or predicate_form(token, auxiliary_form) != "Inf":
+    if base_dep(word) != "xcomp" or predicate_form(word, auxiliary_form) != "Inf":
         return False
-    return not (is_infinitive_periphrasis is not None and is_infinitive_periphrasis(token))
+    return not (is_infinitive_periphrasis is not None and is_infinitive_periphrasis(word))
 
 
 def _completed_word(
-    token: Token,
-    is_infinitive_periphrasis: Callable[[Token], bool] | None,
-    auxiliary_form: Callable[[Token], str] | None,
-) -> Token | None:
+    word: TreeWord,
+    is_infinitive_periphrasis: Callable[[TreeWord], bool] | None,
+    auxiliary_form: Callable[[TreeWord], str] | None,
+) -> TreeWord | None:
     """
     Word an infinitive complement completes, up its non-finite complements and the
     infinitives of a periphrasis a model attaches as conj or csubj, an infinitive conjunct
-    of a periphrasis among them (is ready to come and help us live); None in a loop
+    of a periphrasis among them (is ready to come and help us live); None in a loop or for
+    a complement with no head
     """
-    seen = {token.i}
-    word = token.head
-    while word.i not in seen and (
-        (base_dep(word) == "xcomp" and predicate_form(word, auxiliary_form) != "Fin")
-        or (
-            is_infinitive_periphrasis is not None
-            and base_dep(word) in ("conj", "csubj")
-            and _in_periphrasis(word, is_infinitive_periphrasis, auxiliary_form)
+    seen = {word.index}
+    completed = word.head
+    while (
+        completed is not None
+        and completed.head is not None
+        and completed.index not in seen
+        and (
+            (base_dep(completed) == "xcomp" and predicate_form(completed, auxiliary_form) != "Fin")
+            or (
+                is_infinitive_periphrasis is not None
+                and base_dep(completed) in ("conj", "csubj")
+                and _in_periphrasis(completed, is_infinitive_periphrasis, auxiliary_form)
+            )
         )
     ):
-        seen.add(word.i)
-        word = word.head
+        seen.add(completed.index)
+        completed = completed.head
+    if completed is None:
+        return None
     # A loop through the words above would bring the checks back to the infinitive
-    above = word
-    while not is_root(above) and above.i not in seen:
-        seen.add(above.i)
+    above = completed
+    while above.head is not None and above.index not in seen:
+        seen.add(above.index)
         above = above.head
-    return None if above.i == token.i else word
+    return None if above.index == word.index else completed
 
 
 def _in_periphrasis(
-    token: Token,
-    is_infinitive_periphrasis: Callable[[Token], bool],
-    auxiliary_form: Callable[[Token], str] | None,
+    word: TreeWord,
+    is_infinitive_periphrasis: Callable[[TreeWord], bool],
+    auxiliary_form: Callable[[TreeWord], str] | None,
 ) -> bool:
     """Whether an infinitive makes one predicate with its head (is_infinitive_periphrasis),
     itself or through the infinitive conjuncts above it, as is_clause_head asks"""
     seen = set()
-    while token.i not in seen and predicate_form(token, auxiliary_form) == "Inf":
-        dep = base_dep(token)
-        if dep in ("xcomp", "csubj", "conj") and is_infinitive_periphrasis(token):
+    current: TreeWord | None = word
+    while (
+        current is not None
+        and current.index not in seen
+        and predicate_form(current, auxiliary_form) == "Inf"
+    ):
+        dep = base_dep(current)
+        if dep in ("xcomp", "csubj", "conj") and is_infinitive_periphrasis(current):
             return True
         if dep != "conj":
             return False
-        seen.add(token.i)
-        token = token.head
+        seen.add(current.index)
+        current = current.head
     return False
 
 
-@_takes_token
+@_takes_word
 def is_subordinate_clause_head(
-    token: Token,
-    is_clause_head: Callable[[Token], bool] | None = None,
-    auxiliary_form: Callable[[Token], str] | None = None,
+    word: TreeWord,
+    is_clause_head: Callable[[TreeWord], bool] | None = None,
+    auxiliary_form: Callable[[TreeWord], str] | None = None,
     subordinating_marks: Collection[str] = (),
-    is_subordinating_mark: Callable[[Token], bool] | None = None,
+    is_subordinating_mark: Callable[[TreeWord], bool] | None = None,
 ) -> bool:
     """
     Checking whether a word heads a subordinate clause
@@ -1787,7 +1546,7 @@ def is_subordinate_clause_head(
         as well
 
     Arguments:
-        token (Token): Token
+        word (TreeWord): Word of the tree
         is_clause_head (callable): Whether a word heads a clause; by default
             is_clause_head of the module with the hooks of this check
         auxiliary_form (callable): Verb form of an auxiliary without the feature
@@ -1802,37 +1561,37 @@ def is_subordinate_clause_head(
         bool: Result of the check
 
     Raises:
-        SourceTypeError: If the token is not a Token, is_clause_head, auxiliary_form
+        SourceTypeError: If the word is not a TreeWord, is_clause_head, auxiliary_form
             or is_subordinating_mark is not callable, or subordinating_marks is not a
             collection of strings
     """
     is_clause_head, is_marked = _clause_kind_hooks(
         is_clause_head, auxiliary_form, subordinating_marks, is_subordinating_mark
     )
-    if is_root(token) or not is_clause_head(token):
+    if is_root(word) or not is_clause_head(word):
         return False
-    word, dep = _clause_relation(token, is_marked, auxiliary_form)
-    if predicate_form(token, auxiliary_form) == "Inf":
-        return False
+    first, dep = _clause_relation(word, is_marked, auxiliary_form)
     if predicate_form(word, auxiliary_form) == "Inf":
+        return False
+    if predicate_form(first, auxiliary_form) == "Inf":
         # A finite conjunct with a subject of its own, which a model attaches to an infinitive,
         # takes the kind of the clause the chain of infinitives completes
-        owner = None if _shares_subject(token, False) else _infinitive_owner(word, auxiliary_form)
+        owner = None if _shares_subject(word) else _infinitive_owner(first, auxiliary_form)
         if owner is None:
             return False
-        word, dep = _clause_relation(owner, is_marked, auxiliary_form)
-        if predicate_form(word, auxiliary_form) == "Inf":
+        first, dep = _clause_relation(owner, is_marked, auxiliary_form)
+        if predicate_form(first, auxiliary_form) == "Inf":
             return False
-    return dep == "xcomp" or (not is_root(word) and dep in SUBORDINATE_CLAUSE_DEPS)
+    return dep == "xcomp" or (not is_root(first) and dep in SUBORDINATE_CLAUSE_DEPS)
 
 
-@_takes_token
+@_takes_word
 def is_infinitive_clause_head(
-    token: Token,
-    is_clause_head: Callable[[Token], bool] | None = None,
-    auxiliary_form: Callable[[Token], str] | None = None,
+    word: TreeWord,
+    is_clause_head: Callable[[TreeWord], bool] | None = None,
+    auxiliary_form: Callable[[TreeWord], str] | None = None,
     subordinating_marks: Collection[str] = (),
-    is_subordinating_mark: Callable[[Token], bool] | None = None,
+    is_subordinating_mark: Callable[[TreeWord], bool] | None = None,
 ) -> bool:
     """
     Checking whether a word heads an infinitive clause
@@ -1844,12 +1603,11 @@ def is_infinitive_clause_head(
         one: the relation of the first word up its chain of conjuncts decides, as in
         is_subordinate_clause_head; an infinitive under conj or parataxis with a
         subordinating mark, or an infinitive conjunct of it, heads one too (came , in
-        order to help). Such a clause is
-        counted apart from the subordinate ones, as grammars of many languages take
-        it for a part of a simple sentence
+        order to help). Such a clause is counted apart from the subordinate ones, as
+        grammars of many languages take it for a part of a simple sentence
 
     Arguments:
-        token (Token): Token
+        word (TreeWord): Word of the tree
         is_clause_head (callable): Whether a word heads a clause; by default
             is_clause_head of the module with the hooks of this check
         auxiliary_form (callable): Verb form of an auxiliary without the feature
@@ -1864,39 +1622,41 @@ def is_infinitive_clause_head(
         bool: Result of the check
 
     Raises:
-        SourceTypeError: If the token is not a Token, is_clause_head, auxiliary_form
+        SourceTypeError: If the word is not a TreeWord, is_clause_head, auxiliary_form
             or is_subordinating_mark is not callable, or subordinating_marks is not a
             collection of strings
     """
     is_clause_head, is_marked = _clause_kind_hooks(
         is_clause_head, auxiliary_form, subordinating_marks, is_subordinating_mark
     )
-    if is_root(token) or not is_clause_head(token):
+    if is_root(word) or not is_clause_head(word):
         return False
-    _, dep = _clause_relation(token, is_marked, auxiliary_form)
-    return predicate_form(token, auxiliary_form) == "Inf" and (
+    _, dep = _clause_relation(word, is_marked, auxiliary_form)
+    return predicate_form(word, auxiliary_form) == "Inf" and (
         dep == "xcomp" or dep in SUBORDINATE_CLAUSE_DEPS
     )
 
 
-def _infinitive_owner(word: Token, auxiliary_form: Callable[[Token], str] | None) -> Token | None:
+def _infinitive_owner(
+    word: TreeWord, auxiliary_form: Callable[[TreeWord], str] | None
+) -> TreeWord | None:
     """Word a chain of infinitives completes: the first word above an infinitive that is no
     infinitive, or the head of the sentence; None in a loop"""
-    seen = {word.i}
-    while predicate_form(word, auxiliary_form) == "Inf" and not is_root(word):
+    seen = {word.index}
+    while predicate_form(word, auxiliary_form) == "Inf" and word.head is not None:
         word = word.head
-        if word.i in seen:
+        if word.index in seen:
             return None
-        seen.add(word.i)
+        seen.add(word.index)
     return word
 
 
 def _clause_kind_hooks(
-    is_clause_head: Callable[[Token], bool] | None,
-    auxiliary_form: Callable[[Token], str] | None,
+    is_clause_head: Callable[[TreeWord], bool] | None,
+    auxiliary_form: Callable[[TreeWord], str] | None,
     subordinating_marks: Collection[str],
-    is_subordinating_mark: Callable[[Token], bool] | None,
-) -> tuple[Callable[[Token], bool], Callable[[Token], bool]]:
+    is_subordinating_mark: Callable[[TreeWord], bool] | None,
+) -> tuple[Callable[[TreeWord], bool], Callable[[TreeWord], bool]]:
     """Checked hooks of the checks of the kind of a clause: the check of a clause head, the
     one of the module by default, and the check of a subordinating mark"""
     if auxiliary_form is not None:
@@ -1912,48 +1672,48 @@ def _clause_kind_hooks(
 
 
 def _clause_relation(
-    token: Token,
-    is_subordinating_mark: Callable[[Token], bool],
-    auxiliary_form: Callable[[Token], str] | None,
-) -> tuple[Token, str]:
+    word: TreeWord,
+    is_subordinating_mark: Callable[[TreeWord], bool],
+    auxiliary_form: Callable[[TreeWord], str] | None,
+) -> tuple[TreeWord, str]:
     """First word up the chain of conjuncts of a clause head and its relation, advcl for a
     conjunct or a parataxis with a subordinating mark, of its own or of a clause it is
     coordinated to when it is an infinitive or has a subject of its own: a conjunct sharing the
     subject may be a predicate of the main clause"""
-    if base_dep(token) in MAIN_CLAUSE_DEPS and _has_mark(token, is_subordinating_mark):
-        return token, "advcl"
-    inherits = predicate_form(token, auxiliary_form) == "Inf" or not _shares_subject(token, False)
+    if base_dep(word) in MAIN_CLAUSE_DEPS and _has_mark(word, is_subordinating_mark):
+        return word, "advcl"
+    inherits = predicate_form(word, auxiliary_form) == "Inf" or not _shares_subject(word)
     seen = set()
-    while base_dep(token) == "conj" and token.i not in seen:
-        seen.add(token.i)
-        token = token.head
+    while base_dep(word) == "conj" and word.head is not None and word.index not in seen:
+        seen.add(word.index)
+        word = word.head
         if (
             inherits
-            and base_dep(token) in MAIN_CLAUSE_DEPS
-            and _has_mark(token, is_subordinating_mark)
+            and base_dep(word) in MAIN_CLAUSE_DEPS
+            and _has_mark(word, is_subordinating_mark)
         ):
-            return token, "advcl"
-    return token, base_dep(token)
+            return word, "advcl"
+    return word, base_dep(word)
 
 
-def _has_mark(token: Token, is_subordinating_mark: Callable[[Token], bool]) -> bool:
+def _has_mark(word: TreeWord, is_subordinating_mark: Callable[[TreeWord], bool]) -> bool:
     """Whether a word has a dependent mark that is a subordinating conjunction"""
     return any(
-        base_dep(child) == "mark" and is_subordinating_mark(child) for child in token.children
+        base_dep(child) == "mark" and is_subordinating_mark(child) for child in word.children
     )
 
 
-@_takes_token
-def is_subordinating_mark(token: Token, subordinating_marks: Collection[str] = ()) -> bool:
+@_takes_word
+def is_subordinating_mark(word: TreeWord, subordinating_marks: Collection[str] = ()) -> bool:
     """
     Checking whether a mark is a subordinating conjunction
 
     Description:
-        A word with the relation mark whose text in lower case, with the words of
+        A word with the relation mark whose form in lower case, with the words of
         its fixed expression after a space (so that), is one of subordinating_marks
 
     Arguments:
-        token (Token): Token
+        word (TreeWord): Word of the tree
         subordinating_marks (list[str]): Subordinating conjunctions in lower case, with
             the words of their fixed expression after a space; none by default
 
@@ -1961,12 +1721,13 @@ def is_subordinating_mark(token: Token, subordinating_marks: Collection[str] = (
         bool: Result of the check
 
     Raises:
-        SourceTypeError: If the token is not a Token or subordinating_marks is not a
+        SourceTypeError: If the word is not a TreeWord or subordinating_marks is not a
             collection of strings
 
     Example:
         >>> import spacy
         >>> from spacy.tokens import Doc
+        >>> from anyts.document import get_tree, to_document
         >>> from anyts.syntax_stats import is_subordinating_mark
         >>> doc = Doc(
         ...     spacy.blank("en").vocab,
@@ -1974,23 +1735,24 @@ def is_subordinating_mark(token: Token, subordinating_marks: Collection[str] = (
         ...     heads=[0, 4, 1, 4, 0],
         ...     deps=["ROOT", "mark", "fixed", "nsubj", "parataxis"],
         ... )
-        >>> is_subordinating_mark(doc[1], {"so that"}), is_subordinating_mark(doc[1], {"so"})
+        >>> so = get_tree(to_document(doc)).words[1]
+        >>> is_subordinating_mark(so, {"so that"}), is_subordinating_mark(so, {"so"})
         (True, False)
     """
     check_words(subordinating_marks, "subordinating_marks", ordered=False)
-    return _is_subordinating_mark(token, subordinating_marks)
+    return _is_subordinating_mark(word, subordinating_marks)
 
 
-def _is_subordinating_mark(token: Token, marks: Collection[str]) -> bool:
+def _is_subordinating_mark(word: TreeWord, marks: Collection[str]) -> bool:
     """is_subordinating_mark with checked marks"""
-    if not marks or base_dep(token) != "mark":
+    if not marks or base_dep(word) != "mark":
         return False
-    fixed = (child for child in token.children if base_dep(child) == "fixed")
-    return " ".join(word.text.lower() for word in (token, *fixed)) in marks
+    fixed = (child for child in word.children if base_dep(child) == "fixed")
+    return " ".join(part.form.lower() for part in (word, *fixed)) in marks
 
 
-@_takes_token
-def is_passive(token: Token, join_hyphens: bool = False) -> bool:
+@_takes_word
+def is_passive(word: TreeWord) -> bool:
     """
     Checking whether a word is a passive verb form
 
@@ -2000,24 +1762,23 @@ def is_passive(token: Token, join_hyphens: bool = False) -> bool:
         csubjpass, auxpass of ClearNLP
 
     Arguments:
-        token (Token): Token
-        join_hyphens (bool): Join the parts of hyphenated words (get_children)
+        word (TreeWord): Word of the tree
 
     Returns:
         bool: Result of the check
 
     Raises:
-        SourceTypeError: If the token is not a Token
+        SourceTypeError: If the word is not a TreeWord
     """
-    if token.pos_ != "VERB":
+    if word.upos != "VERB":
         return False
-    return has_feature(token, "Voice", "Pass") or any(
-        child.dep_ in PASSIVE_DEPS for child in get_children(token, join_hyphens)
+    return has_feature(word, "Voice", "Pass") or any(
+        child.deprel in PASSIVE_DEPS for child in get_children(word)
     )
 
 
-@_takes_token
-def has_agent(token: Token, join_hyphens: bool = False) -> bool:
+@_takes_word
+def has_agent(word: TreeWord) -> bool:
     """
     Checking whether a word has an agent
 
@@ -2026,20 +1787,19 @@ def has_agent(token: Token, join_hyphens: bool = False) -> bool:
         agent of ClearNLP
 
     Arguments:
-        token (Token): Token
-        join_hyphens (bool): Join the parts of hyphenated words (get_children)
+        word (TreeWord): Word of the tree
 
     Returns:
         bool: Result of the check
 
     Raises:
-        SourceTypeError: If the token is not a Token
+        SourceTypeError: If the word is not a TreeWord
     """
-    return any(child.dep_ in AGENT_DEPS for child in get_children(token, join_hyphens))
+    return any(child.deprel in AGENT_DEPS for child in get_children(word))
 
 
-@_takes_token
-def is_agentless(token: Token, join_hyphens: bool = False) -> bool:
+@_takes_word
+def is_agentless(word: TreeWord) -> bool:
     """
     Checking whether a word is a passive form with no agent
 
@@ -2047,19 +1807,18 @@ def is_agentless(token: Token, join_hyphens: bool = False) -> bool:
         A passive form (is_passive) with no agent (has_agent)
 
     Arguments:
-        token (Token): Token
-        join_hyphens (bool): Join the parts of hyphenated words (get_children)
+        word (TreeWord): Word of the tree
 
     Returns:
         bool: Result of the check
 
     Raises:
-        SourceTypeError: If the token is not a Token
+        SourceTypeError: If the word is not a TreeWord
     """
-    return is_passive(token, join_hyphens) and not has_agent(token, join_hyphens)
+    return is_passive(word) and not has_agent(word)
 
 
-def count_noun_modifiers(token: Token, join_hyphens: bool = False) -> int:
+def count_noun_modifiers(word: TreeWord) -> int:
     """
     Counting the modifiers of a noun phrase
 
@@ -2068,19 +1827,16 @@ def count_noun_modifiers(token: Token, join_hyphens: bool = False) -> int:
         their subtypes (NOUN_MODIFIER_DEPS); conj and appos are no modifiers
 
     Arguments:
-        token (Token): Token
-        join_hyphens (bool): Join the parts of hyphenated words (get_children)
+        word (TreeWord): Word of the tree
 
     Returns:
         int: Number of modifiers
     """
-    return sum(
-        1 for child in get_children(token, join_hyphens) if base_dep(child) in NOUN_MODIFIER_DEPS
-    )
+    return sum(1 for child in get_children(word) if base_dep(child) in NOUN_MODIFIER_DEPS)
 
 
-@_takes_token
-def is_prep_complement(token: Token, join_hyphens: bool = False) -> bool:
+@_takes_word
+def is_prep_complement(word: TreeWord) -> bool:
     """
     Checking whether a word is a complement with a preposition
 
@@ -2095,18 +1851,18 @@ def is_prep_complement(token: Token, join_hyphens: bool = False) -> bool:
         prepositional chain (calc_modifier_chains)
 
     Arguments:
-        token (Token): Token
-        join_hyphens (bool): Join the parts of hyphenated words (get_children)
+        word (TreeWord): Word of the tree
 
     Returns:
         bool: Result of the check
 
     Raises:
-        SourceTypeError: If the token is not a Token
+        SourceTypeError: If the word is not a TreeWord
 
     Example:
         >>> import spacy
         >>> from spacy.tokens import Doc
+        >>> from anyts.document import get_tree, to_document
         >>> from anyts.syntax_stats import is_prep_complement
         >>> doc = Doc(
         ...     spacy.blank("en").vocab,
@@ -2115,13 +1871,14 @@ def is_prep_complement(token: Token, join_hyphens: bool = False) -> bool:
         ...     deps=["det", "ROOT", "case", "det", "nmod"],
         ...     pos=["DET", "NOUN", "ADP", "DET", "NOUN"],
         ... )
-        >>> is_prep_complement(doc[4]), is_prep_complement(doc[1])
+        >>> words = get_tree(to_document(doc)).words
+        >>> is_prep_complement(words[4]), is_prep_complement(words[1])
         (True, False)
     """
-    relation = base_dep(token)
+    relation = base_dep(word)
     if relation == "acl":
         return False
-    children = _dependents(token, join_hyphens)
+    children = word.children
     if relation not in PREP_COMPLEMENT_DEPS and not any(
         base_dep(child) == "cop" or base_dep(child) in _SUBJECT_DEPS for child in children
     ):
@@ -2129,24 +1886,14 @@ def is_prep_complement(token: Token, join_hyphens: bool = False) -> bool:
     return any(base_dep(child) == "case" and _is_adposition(child) for child in children)
 
 
-def _dependents(token: Token, join_hyphens: bool) -> list[Token]:
-    """Dependents of a word for a check of their relations: those of get_children for a
-    hyphenated word with join_hyphens, the children of its token otherwise"""
-    if join_hyphens and len(_hyphenated_word(token) or ()) > 1:
-        return get_children(token, join_hyphens)
-    return list(token.children)
-
-
-def _is_adposition(token: Token) -> bool:
+def _is_adposition(word: TreeWord) -> bool:
     """Whether a word is an adposition or begins one of several words (fixed)"""
-    return token.pos_ == "ADP" or any(
-        base_dep(child) == "fixed" and child.pos_ == "ADP" for child in token.children
+    return word.upos == "ADP" or any(
+        base_dep(child) == "fixed" and child.upos == "ADP" for child in word.children
     )
 
 
-def dependency_triples(
-    tokens: Iterable[Token], join_hyphens: bool = False
-) -> list[tuple[str, str, str]]:
+def dependency_triples(words: Sequence[TreeWord]) -> list[tuple[str, str, str]]:
     """
     Getting the dependency triples of the words of a sentence
 
@@ -2158,18 +1905,18 @@ def dependency_triples(
         head and the relation root, whatever its label
 
     Arguments:
-        tokens (Doc|Span|list[Token]): Sequence of tokens
-        join_hyphens (bool): Join the parts of hyphenated words (get_words)
+        words (list[TreeWord]): Words of the tree, such as those of a sentence
 
     Returns:
         list[tuple[str, str, str]]: Triples in the order of the words
 
     Raises:
-        SourceTypeError: If the tokens are not a Doc, a Span or a list of Token objects
+        SourceTypeError: If the words are not a list of TreeWord objects
 
     Example:
         >>> import spacy
         >>> from spacy.tokens import Doc
+        >>> from anyts.document import get_tree, to_document
         >>> from anyts.syntax_stats import dependency_triples
         >>> doc = Doc(
         ...     spacy.blank("en").vocab,
@@ -2178,14 +1925,12 @@ def dependency_triples(
         ...     deps=["det", "amod", "ROOT"],
         ...     pos=["DET", "ADJ", "NOUN"],
         ... )
-        >>> dependency_triples(doc)
+        >>> dependency_triples(get_tree(to_document(doc)).sentences[0])
         [('NOUN', 'det', 'DET'), ('NOUN', 'amod', 'ADJ'), ('', 'root', 'NOUN')]
     """
-    if not (is_doc(tokens) or is_span(tokens)):
-        check_sequence(tokens, "tokens")
-        if not all(is_token(token) for token in tokens):
-            raise SourceTypeError("The tokens must be a Doc, a Span or a list of Token objects")
-    return [_word_triple(token) for token in get_words(tokens, join_hyphens)]
+    if not (isinstance(words, Sequence) and all(isinstance(word, TreeWord) for word in words)):
+        raise SourceTypeError("The words must be a list of TreeWord objects")
+    return [_word_triple(word) for word in get_words(words)]
 
 
 def calc_edit_distance(sents: Sequence[Sequence[Hashable]]) -> float:
@@ -2270,7 +2015,7 @@ def calc_multiset_similarity(sents: Sequence[Iterable[Hashable]]) -> float:
 
 
 def calc_modifier_chains(
-    tokens: Iterable[Token], is_modifier: Callable[[Token], bool], join_hyphens: bool = False
+    words: Iterable[TreeWord], is_modifier: Callable[[TreeWord], bool]
 ) -> list[int]:
     """
     Computing the lengths of the chains of nested modifiers
@@ -2280,13 +2025,11 @@ def calc_modifier_chains(
         the increase of the efficiency of the use of resources (length 3); a
         chain starts at a modifier whose head is none, and its length is the
         number of modifiers in its longest branch. The links are those of
-        get_children: punctuation is no link, and with join_hyphens a
-        hyphenated word is one link
+        get_children: punctuation is no link
 
     Arguments:
-        tokens (Doc|Span|list[Token]): Sequence of tokens
-        is_modifier (Callable[[Token], bool]): Whether a word is a modifier of the chain
-        join_hyphens (bool): Join the parts of hyphenated words (get_words)
+        words (list[TreeWord]): Words of the tree, such as those of a sentence
+        is_modifier (Callable[[TreeWord], bool]): Whether a word is a modifier of the chain
 
     Returns:
         list[int]: Lengths of the chains in the order of the words
@@ -2299,41 +2042,34 @@ def calc_modifier_chains(
             f"The check of a modifier must be callable, not {type(is_modifier).__name__}"
         )
     chains = []
-    for token in get_words(tokens, join_hyphens):
-        if not is_modifier(token):
+    for word in get_words(words):
+        if not is_modifier(word):
             continue
-        parent = _chain_parent(token, join_hyphens)
+        parent = _chain_parent(word)
         if not (parent is not None and is_modifier(parent)):
-            length = _chain_len(token, is_modifier, join_hyphens)
+            length = _chain_len(word, is_modifier)
             if length >= 2:
                 chains.append(length)
     return chains
 
 
-def _chain_parent(token: Token, join_hyphens: bool) -> Token | None:
+def _chain_parent(word: TreeWord) -> TreeWord | None:
     """Word a word hangs on as get_children gives it, None through punctuation or at the root"""
-    if not join_hyphens:
-        head = token.head
-        return head if not is_root(token) and is_word(head) else None
-    unit = _hyphenated_word(token) or [token]
-    part = _word_head(unit)
-    if part is None:
-        return None
-    word = _hyphenated_word(part.head)
-    return _word_part(word) if word is not None else None
+    head = word.head
+    return head if head is not None and _is_word(head) else None
 
 
-def _chain_len(token: Token, is_modifier: Callable[[Token], bool], join_hyphens: bool) -> int:
-    """Number of the modifiers in the longest branch of a chain from a token, without recursion
+def _chain_len(word: TreeWord, is_modifier: Callable[[TreeWord], bool]) -> int:
+    """Number of the modifiers in the longest branch of a chain from a word, without recursion
     for a chain of any depth"""
     longest = 0
-    stack = [(token, 1)]
-    seen = {token.i}
+    stack = [(word, 1)]
+    seen = {word.index}
     while stack:
-        word, depth = stack.pop()
+        current, depth = stack.pop()
         longest = max(longest, depth)
-        for child in get_children(word, join_hyphens):
-            if child.i not in seen and is_modifier(child):
-                seen.add(child.i)
+        for child in get_children(current):
+            if child.index not in seen and is_modifier(child):
+                seen.add(child.index)
                 stack.append((child, depth + 1))
     return longest

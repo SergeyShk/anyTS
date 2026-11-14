@@ -9,7 +9,7 @@ from spacy.tokens import Doc
 
 from anyts.cohesion_stats import ConnectorMatcher
 from anyts.components import start_sents_after_blank_lines
-from anyts.document import to_document
+from anyts.document import get_tree, to_document
 from anyts.exceptions import ParameterError, SourceError, SourceTypeError
 from anyts.visualizers import Highlight, HighlightedText
 from anyts.visualizers.highlight import (
@@ -366,7 +366,7 @@ def test_sentences_of_a_series():
 def test_tokens_span():
     # The punctuation at the edge is left out
     doc = parsed()
-    start, end = tokens_span(doc[8:12])
+    start, end = tokens_span(get_tree(to_document(doc)).words[8:12])
     assert doc.text[start:end] == "the dog eats"
 
 
@@ -578,10 +578,17 @@ def test_find_split_predicate_highlights():
         words=["They", "made", "a", "decision"],
         lemmas=["they", "make", "a", "decision"],
     )
-    found = find_split_predicate_highlights([(doc[1], doc[3])])
+    words = get_tree(to_document(doc)).words
+    found = find_split_predicate_highlights([(words[1], words[3])])
     assert found == [Highlight(5, 20, "split_predicates", "split predicate: make decision")]
     assert (
-        find_split_predicate_highlights([(doc[1], doc[3])], lambda v, n: v.text)[0].note == "made"
+        find_split_predicate_highlights([(words[1], words[3])], lambda v, n: v.form)[0].note
+        == "made"
+    )
+    # Without lemmas the note reads the forms
+    bare = get_tree(to_document(Doc(spacy.blank("xx").vocab, words=["Made", "Decision"]))).words
+    assert (
+        find_split_predicate_highlights([tuple(bare)])[0].note == "split predicate: made decision"
     )
     assert find_split_predicate_highlights([]) == []
 

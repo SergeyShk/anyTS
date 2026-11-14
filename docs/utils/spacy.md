@@ -1,6 +1,6 @@
 # spaCy objects
 
-Checks of spaCy objects without importing spaCy, the words of a `Doc` and their morphology, the parts of a hyphenated word, the sentences of a `Doc` and the tokenizer rules of a language.
+Checks of spaCy objects without importing spaCy, the words of a `Doc`, the morphology of the words of the [tree of a document](https://sergeyshk.github.io/anyTS/document/#get_tree), the parts of a hyphenated word, the sentences of a `Doc` and the tokenizer rules of a language.
 
 ## Doc, Span, Token and Language objects { #is_doc-is_span }
 
@@ -116,7 +116,7 @@ Checks whether a `Doc` has its sentence boundaries: they count when every token 
 has_pos(doc)
 ```
 
-Checks whether the words of a `Doc` carry parts of speech: one word (`is_word`) with a part of speech is enough. The whitespace tokens do not count, as the attribute ruler of a pipeline without its tagger or morphologizer marks them `SPACE` all the same, which `doc.has_annotation("POS")` takes for parts of speech; a `Doc` without words is checked by its annotation. The statistics and the highlighting check the parts of speech by it.
+Checks whether the words of a `Doc` carry parts of speech: one word (`is_word`) with a part of speech is enough. The whitespace tokens do not count, as the attribute ruler of a pipeline without its tagger or morphologizer marks them `SPACE` all the same, which `doc.has_annotation("POS")` takes for parts of speech; a `Doc` without words is checked by its annotation. The cohesion statistics check the parts of speech of a `Doc` by it.
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
@@ -148,7 +148,7 @@ Checks whether the words of a `Doc` carry parts of speech: one word (`is_word`) 
 is_word(token)
 ```
 
-Checks whether a token is a word: not whitespace and not a token of `is_punctuation`, so symbols like `%`, `€`, `+` and invisible characters are no words either. The words of `iter_doc_tokens` and the nodes of the dependency tree of the syntactic statistics are such tokens.
+Checks whether a token is a word: not whitespace and not a token of `is_punctuation`, so symbols like `%`, `€`, `+` and invisible characters are no words either. The words of `iter_doc_tokens` are such tokens.
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
@@ -176,14 +176,14 @@ Checks whether a token is a word: not whitespace and not a token of `is_punctuat
 
 <!-- --8<-- [start:has_feature] -->
 ``` {.python .signature}
-has_feature(token, field, value)
+has_feature(word, field, value)
 ```
 
-Checks whether a token carries a morphological feature with a given value: `has_feature(token, "VerbForm", "Fin")`.
+Checks whether a word of the tree of a document carries a morphological feature with a given value: `has_feature(word, "VerbForm", "Fin")`; a feature with several values (`PronType=Int,Rel`) carries each of them.
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
-| `token` | `Token` | - | Token |
+| `word` | `TreeWord` | - | Word of the tree |
 | `field` | `str` | - | Name of the feature |
 | `value` | `str` | - | Value of the feature |
 <!-- --8<-- [end:has_feature] -->
@@ -194,44 +194,50 @@ Checks whether a token carries a morphological feature with a given value: `has_
     from spacy.tokens import Doc
     from spacy.vocab import Vocab
 
+    from anyts.document import get_tree, to_document
     from anyts.utils import has_feature
 
     doc = Doc(
-        Vocab(), words=["She", "has", "left"], morphs=["", "Mood=Ind|VerbForm=Fin", "VerbForm=Part"]
+        Vocab(),
+        words=["Who", "has", "left"],
+        morphs=["PronType=Int,Rel", "Mood=Ind|VerbForm=Fin", "VerbForm=Part"],
     )
-    has_feature(doc[1], "VerbForm", "Fin"), has_feature(doc[2], "VerbForm", "Fin")
+    who, has, left = get_tree(to_document(doc)).words
+    has_feature(has, "VerbForm", "Fin"), has_feature(left, "VerbForm", "Fin")
+    has_feature(who, "PronType", "Rel")
     ```
 
 === "Result"
 
     ```
     (True, False)
+    True
     ```
 
 ## Verb forms { #verb-forms }
 
 <!-- --8<-- [start:is_finite_verb] -->
 ``` {.python .signature}
-is_finite_verb(token)
+is_finite_verb(word)
 ```
 
-Checks whether a token is a finite verb: the part of speech `VERB` with `VerbForm=Fin`, so a finite auxiliary (`AUX`) is not one.
+Checks whether a word of the tree of a document is a finite verb: the part of speech `VERB` with `VerbForm=Fin`, so a finite auxiliary (`AUX`) is not one.
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
-| `token` | `Token` | - | Token |
+| `word` | `TreeWord` | - | Word of the tree |
 <!-- --8<-- [end:is_finite_verb] -->
 
 <!-- --8<-- [start:is_infinitive] -->
 ``` {.python .signature}
-is_infinitive(token)
+is_infinitive(word)
 ```
 
-Checks whether a token is an infinitive, `VerbForm=Inf` whatever its part of speech.
+Checks whether a word of the tree of a document is an infinitive, `VerbForm=Inf` whatever its part of speech.
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
-| `token` | `Token` | - | Token |
+| `word` | `TreeWord` | - | Word of the tree |
 <!-- --8<-- [end:is_infinitive] -->
 
 === "Code"
@@ -240,6 +246,7 @@ Checks whether a token is an infinitive, `VerbForm=Inf` whatever its part of spe
     from spacy.tokens import Doc
     from spacy.vocab import Vocab
 
+    from anyts.document import get_tree, to_document
     from anyts.utils import is_finite_verb, is_infinitive
 
     doc = Doc(
@@ -248,7 +255,8 @@ Checks whether a token is an infinitive, `VerbForm=Inf` whatever its part of spe
         pos=["PRON", "VERB", "PART", "VERB"],
         morphs=["", "VerbForm=Fin", "", "VerbForm=Inf"],
     )
-    [(token.text, is_finite_verb(token), is_infinitive(token)) for token in doc]
+    words = get_tree(to_document(doc)).words
+    [(word.form, is_finite_verb(word), is_infinitive(word)) for word in words]
     ```
 
 === "Result"
@@ -264,7 +272,7 @@ Checks whether a token is an infinitive, `VerbForm=Inf` whatever its part of spe
 joins_previous(token)
 ```
 
-Checks whether a token continues a word the tokenizer split at its hyphens (`well-known` into `well`, `-`, `known`): the token is a word right after a hyphen that follows a word, with no whitespace around the hyphen and no sentence starting at the hyphen or the token. `iter_doc_units` and the functions of the dependency tree join the parts of a word by this rule with `join_hyphens=True`.
+Checks whether a token continues a word the tokenizer split at its hyphens (`well-known` into `well`, `-`, `known`): the token is a word right after a hyphen that follows a word, with no whitespace around the hyphen and no sentence starting at the hyphen or the token. `iter_doc_units` joins the parts of a word by this rule with `join_hyphens=True`.
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |

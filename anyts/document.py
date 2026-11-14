@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import re
-from bisect import bisect_left
-from collections.abc import Callable, Iterable, Iterator, Mapping
+from bisect import bisect_left, bisect_right
+from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from functools import cache
 from re import Pattern
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, NamedTuple
 
 from .constants import MESSAGES
 from .exceptions import SourceError, SourceTypeError
@@ -131,6 +131,241 @@ def document_words(document: Document) -> tuple[str, ...]:
         )
         if has_words(word)
     )
+
+
+class TreeWord:
+    """
+    Word of the dependency tree of a document
+
+    Description:
+        A word of Universal Dependencies of a document with its columns and its
+        place in the tree: the word it hangs on, None at the head of a sentence,
+        and the words hanging on it in the order of the text. The words of a
+        multiword token share its positions. Made by get_tree
+
+    Attributes:
+        index (int): Position among the words of the document
+        form (str): Form of the word
+        lemma (str|None): Lemma
+        upos (str|None): Part of speech of Universal Dependencies
+        xpos (str|None): Tag of the language
+        feats (Mapping[str, str]): Features of Universal Dependencies by name, the
+            values of a feature of several joined by commas (Int,Rel); the words of
+            one set of features share one mapping
+        deprel (str|None): Relation to the head
+        head (TreeWord|None): Word it hangs on, None at the head of a sentence
+        children (tuple[TreeWord]): Words hanging on it
+        sentence (int): Position of its sentence among the sentences of the document
+        start (int): Position of the first character of its token
+        end (int): Position after the last character of its token
+        tree (Tree): Tree of the document
+    """
+
+    __slots__ = (
+        "children",
+        "deprel",
+        "end",
+        "feats",
+        "form",
+        "head",
+        "index",
+        "lemma",
+        "sentence",
+        "start",
+        "tree",
+        "upos",
+        "xpos",
+    )
+
+    index: int
+    form: str
+    lemma: str | None
+    upos: str | None
+    xpos: str | None
+    feats: Mapping[str, str]
+    deprel: str | None
+    head: TreeWord | None
+    children: tuple[TreeWord, ...]
+    sentence: int
+    start: int
+    end: int
+    tree: Tree
+
+    def __repr__(self) -> str:
+        return f"TreeWord({self.index}, {self.form!r}, {self.upos}, {self.deprel})"
+
+    def __reduce__(self) -> tuple[Any, ...]:
+        # A word is its tree and its position, so that pickle and copy follow no chain of links
+        return _tree_word, (self.tree, self.index)
+
+
+class Tree(NamedTuple):
+    """
+    Dependency tree of a document
+
+    Attributes:
+        text (str): Text of the document
+        words (tuple[TreeWord]): Words of the document, punctuation marks included
+        sentences (tuple[tuple[TreeWord]]): Words of every sentence
+    """
+
+    text: str
+    words: tuple[TreeWord, ...]
+    sentences: tuple[tuple[TreeWord, ...], ...]
+
+    def __reduce__(self) -> tuple[Any, ...]:
+        # The columns and the positions of the heads, linked again on loading
+        rows = [
+            (
+                word.form,
+                word.lemma,
+                word.upos,
+                word.xpos,
+                word.feats,
+                word.deprel,
+                word.head.index if word.head is not None else None,
+                word.sentence,
+                word.start,
+                word.end,
+            )
+            for word in self.words
+        ]
+        return _restore_tree, (self.text, rows)
+
+
+def get_tree(document: Document) -> Tree:
+    """
+    Getting the dependency tree of a document
+
+    Description:
+        The words of Universal Dependencies of the document with the columns
+        lemma, upos, xpos, feats, head and deprel, linked by their heads within
+        their sentences: a word without a head (0 or None) heads its sentence
+
+    Arguments:
+        document (Document): Document of anySeg
+
+    Returns:
+        Tree: Tree of the document
+
+    Raises:
+        SourceTypeError: If the document is not a Document object
+
+    Example:
+        >>> import spacy
+        >>> from spacy.tokens import Doc
+        >>> from anyts.document import get_tree, to_document
+        >>> doc = Doc(
+        ...     spacy.blank("en").vocab,
+        ...     words=["Cats", "sleep"],
+        ...     heads=[1, 1],
+        ...     deps=["nsubj", "ROOT"],
+        ...     pos=["NOUN", "VERB"],
+        ... )
+        >>> cats, sleep = get_tree(to_document(doc)).words
+        >>> cats.head is sleep, sleep.head, sleep.children
+        (True, None, (TreeWord(0, 'Cats', NOUN, nsubj),))
+    """
+    if not is_document(document):
+        raise SourceTypeError(MESSAGES["source_type"].format(type=type(document).__name__))
+    column = document.column
+    tokens = document.tokens
+    sizes = {token.index: len(token.words) for token in document.multiword_tokens}
+    starts: list[int] = []
+    ends: list[int] = []
+    for index, (start, end) in enumerate(zip(tokens.starts, tokens.ends, strict=True)):
+        size = sizes.get(index, 1)
+        starts.extend([start] * size)
+        ends.extend([end] * size)
+    sentence_starts = document.sentences.starts
+    features: dict[str | None, Mapping[str, str]] = {}
+    words: list[TreeWord] = []
+    firsts: list[int] = []
+    rows = zip(
+        column("form"),
+        column("lemma"),
+        column("upos"),
+        column("xpos"),
+        column("feats"),
+        column("deprel"),
+        starts,
+        ends,
+        strict=True,
+    )
+    for index, (form, lemma, upos, xpos, feats, deprel, start, end) in enumerate(rows):
+        word = TreeWord()
+        word.index = index
+        word.form = form
+        word.lemma = lemma
+        word.upos = upos
+        word.xpos = xpos
+        if (found := features.get(feats)) is None:
+            found = features[feats] = _feature_dict(feats)
+        word.feats = found
+        word.deprel = deprel
+        word.start = start
+        word.end = end
+        word.sentence = bisect_right(sentence_starts, start) - 1
+        if word.sentence == len(firsts):
+            firsts.append(index)
+        words.append(word)
+    heads = [
+        firsts[word.sentence] + head - 1 if head else None
+        for word, head in zip(words, column("head"), strict=True)
+    ]
+    return _linked_tree(document.text, words, heads, len(firsts))
+
+
+def _linked_tree(
+    text: str, words: list[TreeWord], heads: Sequence[int | None], n_sentences: int
+) -> Tree:
+    """Tree of words with their columns, linked by the positions of their heads"""
+    children: list[list[TreeWord]] = [[] for _ in words]
+    for word, head in zip(words, heads, strict=True):
+        word.head = words[head] if head is not None else None
+        if head is not None:
+            children[head].append(word)
+    sentences: list[list[TreeWord]] = [[] for _ in range(n_sentences)]
+    for word in words:
+        word.children = tuple(children[word.index])
+        sentences[word.sentence].append(word)
+    tree = Tree(text, tuple(words), tuple(map(tuple, sentences)))
+    for word in words:
+        word.tree = tree
+    return tree
+
+
+def _restore_tree(text: str, rows: Sequence[tuple[Any, ...]]) -> Tree:
+    """Tree of the columns Tree.__reduce__ gives"""
+    words = []
+    heads = []
+    for index, (form, lemma, upos, xpos, feats, deprel, head, sentence, start, end) in enumerate(
+        rows
+    ):
+        word = TreeWord()
+        word.index = index
+        word.form = form
+        word.lemma = lemma
+        word.upos = upos
+        word.xpos = xpos
+        word.feats = feats
+        word.deprel = deprel
+        word.sentence = sentence
+        word.start = start
+        word.end = end
+        words.append(word)
+        heads.append(head)
+    return _linked_tree(text, words, heads, words[-1].sentence + 1 if words else 0)
+
+
+def _tree_word(tree: Tree, index: int) -> TreeWord:
+    """Word of a tree by its position, for TreeWord.__reduce__"""
+    return tree.words[index]
+
+
+def _feature_dict(feats: str | None) -> dict[str, str]:
+    """Features of a word in the CoNLL-U format as a dictionary, a part without a value left out"""
+    return dict(pair.split("=", 1) for pair in feats.split("|") if "=" in pair) if feats else {}
 
 
 def _parsed(owner: Any, source: str | Doc | Document) -> Document:
