@@ -2619,8 +2619,7 @@ True
 </table>
 <p>Raises:</p>
 <ul>
-<li><code>SourceTypeError</code> - stopwords, nausea stopwords or cliches that are not a list of strings;</li>
-<li><code>ParameterError</code> - a <code>top_n</code> that is not an integer of at least one.</li>
+<li><code>ParameterError</code> - stopwords, nausea stopwords or cliches that are not a list of strings, a <code>top_n</code> that is not an integer of at least one.</li>
 </ul>
 <!-- --8<-- [end:StyleStatsComponent] -->
 
@@ -2695,7 +2694,7 @@ True
 <details class="library-hooks">
 <summary>Language hooks of a subclass</summary>
 <!-- --8<-- [start:StatsComponent-hooks] -->
-<p>A language library subclasses <code>StatsComponent</code> for every class of its statistics and registers the subclass as a factory under its prefix, <code>Language.factory("&lt;prefix&gt;_&lt;statistics&gt;")</code>, so that the factories of several libraries live in one process; declared as entry points of <code>spacy_factories</code>, they load with <code>spacy.load</code> without importing the library. The subclass sets the class of its statistics and checks its parameters in its <code>__init__</code> before calling the <code>__init__</code> of the base, so a wrong parameter fails at <code>add_pipe</code>. The components of the classes of statistics of the core already carry their parameters and checks; a library sets its subclass of the statistics on them.</p>
+<p>A language library subclasses <code>StatsComponent</code> for every class of its statistics and registers the subclass as a factory under its prefix, <code>Language.factory("&lt;prefix&gt;_&lt;statistics&gt;")</code>, so that the factories of several libraries live in one process; declared as entry points of <code>spacy_factories</code>, they load with <code>spacy.load</code> without importing the library. The subclass sets the class of its statistics and checks its parameters in its <code>__init__</code> before calling the <code>__init__</code> of the base, so a wrong parameter fails at <code>add_pipe</code>. A wrong value of the config of a component of the core raises <code>ParameterError</code>, whatever the parameter; a library checks its own parameters the same way, with the <code>check_*</code> functions of <code>anyts.utils</code>, rather than leaving them to the validation of spaCy, which raises <code>ConfigValidationError</code> against the annotations of a factory. The components of the classes of statistics of the core already carry their parameters and checks; a library sets its subclass of the statistics on them.</p>
 <table>
 <thead>
 <tr>

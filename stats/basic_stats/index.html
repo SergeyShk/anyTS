@@ -2411,7 +2411,7 @@ Entropy of the word lengths in syllables (bits) |   0.50
 <!-- --8<-- [end:BasicStats-count_words_by] -->
 
 <!-- --8<-- [start:BasicStats-get_stats] -->
-<p><code>get_stats(flat)</code> returns a dictionary with the distributions <code>c_letters</code> and <code>c_syllables</code>, the statistics of <code>stats_desc</code>, the distribution <code>c_punctuations</code> and, with <code>normalize=True</code>, the normalized counts, as a copy: editing it does not change the object. With <code>flat=True</code> the distributions give a key for every value the text has, such as <code>c_letters_3</code> and <code>c_punctuations_comma</code>.</p>
+<p><code>get_stats(*, flat=False)</code> returns a dictionary with the distributions <code>c_letters</code> and <code>c_syllables</code>, the statistics of <code>stats_desc</code>, the distribution <code>c_punctuations</code> and, with <code>normalize=True</code>, the normalized counts, as a copy: editing it does not change the object. With <code>flat=True</code> the distributions give a key for every value the text has, such as <code>c_letters_3</code> and <code>c_punctuations_comma</code>.</p>
 <!-- --8<-- [end:BasicStats-get_stats] -->
 
 <!-- --8<-- [start:BasicStats-print_stats] -->

@@ -2217,10 +2217,10 @@
 
 
 <h1 id="input-checks">Input checks<a class="headerlink" href="#input-checks" title="Permanent link">&para;</a></h1>
-<p>Input checks shared by the functions and classes of the core; their messages are in English.</p>
+<p>Input checks shared by the functions and classes of the core; their messages are in English, and a class passes its own <code>message</code> where a library translates the error.</p>
 <h2 id="check_sequence">Sequences<a class="headerlink" href="#check_sequence" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:check_sequence] -->
-<div class="signature highlight"><pre><span></span><code><span class="n">check_sequence</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">what</span><span class="o">=</span><span class="s1">'words'</span><span class="p">,</span> <span class="n">ordered</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">check_sequence</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">what</span><span class="o">=</span><span class="s1">'words'</span><span class="p">,</span> <span class="n">ordered</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 <p>Checks that an argument is a sequence and not a text or an iterator: a string would be iterated by characters, and an iterator exhausted by the first pass. A set or a mapping holds every item once, in no order of the text, so it passes only with <code>ordered=False</code>, for a collection such as stop words.</p>
 <table>
@@ -2251,6 +2251,12 @@
 <td style="text-align: left;"><code>True</code></td>
 <td style="text-align: left;">Whether the order and the repeats of the items matter</td>
 </tr>
+<tr>
+<td style="text-align: left;"><code>message</code></td>
+<td style="text-align: left;"><code>str</code></td>
+<td style="text-align: left;"><code>None</code></td>
+<td style="text-align: left;">Message of the error with the fields <code>{type}</code>, the type of the value, and <code>{param}</code>, the <code>what</code>, in place of the English one, such as one of <code>MESSAGES</code> a library translates</td>
+</tr>
 </tbody>
 </table>
 <p>A string (of characters or bytes), a <code>Doc</code>, a <code>Span</code>, an iterator, an object that cannot be iterated or has no length, a table - a two-dimensional array or a <code>DataFrame</code> - and, unless <code>ordered=False</code>, a set or a mapping raise <code>SourceTypeError</code>.</p>
@@ -2276,7 +2282,7 @@ anyts.exceptions.SourceTypeError: A list of words is expected, not a string
 </div>
 <h2 id="check_words">Lists of words<a class="headerlink" href="#check_words" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:check_words] -->
-<div class="signature highlight"><pre><span></span><code><span class="n">check_words</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">what</span><span class="o">=</span><span class="s1">'words'</span><span class="p">,</span> <span class="n">ordered</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">check_words</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">what</span><span class="o">=</span><span class="s1">'words'</span><span class="p">,</span> <span class="n">ordered</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 <p>Checks that an argument is a list of words: it passes <code>check_sequence</code> and every item is a string.</p>
 <table>
@@ -2306,6 +2312,12 @@ anyts.exceptions.SourceTypeError: A list of words is expected, not a string
 <td style="text-align: left;"><code>bool</code></td>
 <td style="text-align: left;"><code>True</code></td>
 <td style="text-align: left;">Whether the order and the repeats of the words matter</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>message</code></td>
+<td style="text-align: left;"><code>str</code></td>
+<td style="text-align: left;"><code>None</code></td>
+<td style="text-align: left;">Message of the error with the fields <code>{type}</code>, the type of the value or of the item that is not a string, and <code>{param}</code>, the <code>what</code>, in place of the English one</td>
 </tr>
 </tbody>
 </table>
@@ -2431,7 +2443,7 @@ anyts.exceptions.SourceError: The frequencies must be finite and not negative, n
 </div>
 <h2 id="check_integer">Integers<a class="headerlink" href="#check_integer" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:check_integer] -->
-<div class="signature highlight"><pre><span></span><code><span class="n">check_integer</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">what</span><span class="p">)</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">check_integer</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">what</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 <p>Checks that a parameter is an integer.</p>
 <table>
@@ -2455,6 +2467,12 @@ anyts.exceptions.SourceError: The frequencies must be finite and not negative, n
 <td style="text-align: left;"><code>str</code></td>
 <td style="text-align: left;">-</td>
 <td style="text-align: left;">Name of the parameter, for the message of the error</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>message</code></td>
+<td style="text-align: left;"><code>str</code></td>
+<td style="text-align: left;"><code>None</code></td>
+<td style="text-align: left;">Message of the error with the fields <code>{type}</code>, the type of the value, and <code>{param}</code>, the <code>what</code>, in place of the English one, such as one of <code>MESSAGES</code> a library translates</td>
 </tr>
 </tbody>
 </table>
@@ -2480,7 +2498,7 @@ anyts.exceptions.ParameterError: The window size must be an integer, not float
 </div>
 <h2 id="check_bool">Bools<a class="headerlink" href="#check_bool" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:check_bool] -->
-<div class="signature highlight"><pre><span></span><code><span class="n">check_bool</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">what</span><span class="p">)</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">check_bool</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">what</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 <p>Checks that a parameter is a <code>bool</code>, a numpy <code>bool_</code> included.</p>
 <table>
@@ -2504,6 +2522,12 @@ anyts.exceptions.ParameterError: The window size must be an integer, not float
 <td style="text-align: left;"><code>str</code></td>
 <td style="text-align: left;">-</td>
 <td style="text-align: left;">Name of the parameter, for the message of the error</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>message</code></td>
+<td style="text-align: left;"><code>str</code></td>
+<td style="text-align: left;"><code>None</code></td>
+<td style="text-align: left;">Message of the error with the fields <code>{type}</code>, the type of the value, and <code>{param}</code>, the <code>what</code>, in place of the English one, such as one of <code>MESSAGES</code> a library translates</td>
 </tr>
 </tbody>
 </table>
@@ -2529,7 +2553,7 @@ anyts.exceptions.ParameterError: The normalization must be a bool, not str
 </div>
 <h2 id="check_number">Numbers<a class="headerlink" href="#check_number" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:check_number] -->
-<div class="signature highlight"><pre><span></span><code><span class="n">check_number</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">what</span><span class="p">)</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">check_number</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">what</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 <p>Checks that a parameter is a finite real number.</p>
 <table>
@@ -2553,6 +2577,12 @@ anyts.exceptions.ParameterError: The normalization must be a bool, not str
 <td style="text-align: left;"><code>str</code></td>
 <td style="text-align: left;">-</td>
 <td style="text-align: left;">Name of the parameter, for the message of the error</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>message</code></td>
+<td style="text-align: left;"><code>str</code></td>
+<td style="text-align: left;"><code>None</code></td>
+<td style="text-align: left;">Message of the error with the fields <code>{type}</code>, the type of the value or the value that is not finite, and <code>{param}</code>, the <code>what</code>, in place of the English one</td>
 </tr>
 </tbody>
 </table>
