@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import weakref
 from bisect import bisect_left, bisect_right
 from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from functools import cache
@@ -30,6 +31,19 @@ Spans = Callable[[str], Iterable[tuple[int, int, str]]]
 _WORD_SEPARATORS = "\u00ad\u200c\u200d"
 
 
+class _Converted(NamedTuple):
+    """The last Doc converted, the stamp of its annotations, the sentenize of the conversion (None
+    for a Doc with its sentences) and its document"""
+
+    doc: weakref.ref[Doc]
+    stamp: tuple[bytes, str, bool]
+    sentenize: Spans | None
+    document: Document
+
+
+_last_converted: list[_Converted] = []
+
+
 def to_document(
     source: str | Doc | Document,
     tokenize: Spans | None = None,
@@ -55,7 +69,11 @@ def to_document(
         zero-width characters, the byte order mark) at the edges of a token are
         left out, and a token of nothing else is dropped
         The default tokens are the words of WordsExtractor and every run of one
-        other character; the default sentences are those of SentsExtractor
+        other character; the default sentences are those of SentsExtractor.
+        The document of the last Doc converted is kept while the Doc lives with
+        the same tokens and annotations, and the same sentenize for a Doc
+        without its sentences, so the classes of statistics of one Doc convert
+        it once: the same Document comes back, and it is not to be changed
 
     Arguments:
         source (str|Doc|Document): Data source
@@ -90,7 +108,7 @@ def to_document(
     if is_document(source):
         return source
     if is_doc(source):
-        return _doc_document(source, sentenize, messages)
+        return _cached_document(source, sentenize, messages)
     if isinstance(source, str):
         return _text_document(source, tokenize, sentenize)
     raise source_type_error(messages, source)
@@ -389,6 +407,39 @@ def _source_text(source: str | Doc | Document, messages: Mapping[str, str]) -> s
     raise source_type_error(messages, source)
 
 
+def _cached_document(doc: Doc, sentenize: Spans | None, messages: Mapping[str, str]) -> Document:
+    """Document of a Doc, the one of the last conversion while the Doc and its annotations are
+    the same"""
+    stamp = _doc_stamp(doc)
+    if _has_sentences(doc):
+        sentenize = None
+    for converted in _last_converted:
+        if (
+            converted.doc() is doc
+            and converted.stamp == stamp
+            and converted.sentenize == sentenize
+        ):
+            return converted.document
+    document = _doc_document(doc, sentenize, messages)
+    _last_converted[:] = [_Converted(weakref.ref(doc, _forget), stamp, sentenize, document)]
+    return document
+
+
+def _forget(ref: weakref.ref[Doc]) -> None:
+    """Dropping the document of a Doc that is gone"""
+    _last_converted[:] = [converted for converted in _last_converted if converted.doc is not ref]
+
+
+def _doc_stamp(doc: Doc) -> tuple[bytes, str, bool]:
+    """The tokens of a Doc and the annotations its document reads: the columns, the sentence
+    starts, the words of the multiword tokens of anySeg and a hook of the sentences"""
+    from anyseg.spacy import given_words
+    from spacy.attrs import DEP, HEAD, LEMMA, MORPH, ORTH, POS, SENT_START, SPACY, TAG
+
+    columns = doc.to_array([ORTH, SPACY, LEMMA, POS, TAG, MORPH, HEAD, DEP, SENT_START])
+    return columns.tobytes(), repr(list(given_words(doc).items())), "sents" in doc.user_hooks
+
+
 def _doc_document(doc: Doc, sentenize: Spans | None, messages: Mapping[str, str]) -> Document:
     """Document of a Doc; one with neither sentences nor a parse gets those of sentenize"""
     from anyseg import Document
@@ -398,7 +449,7 @@ def _doc_document(doc: Doc, sentenize: Spans | None, messages: Mapping[str, str]
         document = from_doc(doc)
     except (TypeError, ValueError) as error:
         raise SourceError(messages["document_tokens"].format(error=error)) from error
-    if doc.has_annotation("SENT_START", require_complete=True) or doc.has_annotation("DEP"):
+    if _has_sentences(doc):
         return document
     tokens = document.tokens
     starts = _sent_starts(document.text, tokens.starts, sentenize)
@@ -417,6 +468,11 @@ def _doc_document(doc: Doc, sentenize: Spans | None, messages: Mapping[str, str]
         misc=column("misc"),
     )
     return rebuilt
+
+
+def _has_sentences(doc: Doc) -> bool:
+    """Whether a Doc has its sentences: is_sent_start set at every token, or a parse"""
+    return doc.has_annotation("SENT_START", require_complete=True) or doc.has_annotation("DEP")
 
 
 def _text_document(text: str, tokenize: Spans | None, sentenize: Spans | None) -> Document:

@@ -13,6 +13,8 @@ Returns the document of a data source in the model of anySeg. A `Document` is re
 
 The default tokens are the words of `WordsExtractor` and every run of one other character, such as `...` or `--`; the default sentences are those of `SentsExtractor`.
 
+The document of the last `Doc` converted is kept while the `Doc` lives with the same tokens and annotations, and the same `sentenize` for a `Doc` without its sentences, so the classes of statistics and the components of one `Doc` convert it once. The same `Document` comes back then: it is not to be changed, and a document of its own is built for that.
+
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
 | `source` | `str` / `Doc` / `Document` | - | Data source |
