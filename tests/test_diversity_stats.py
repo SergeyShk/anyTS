@@ -146,7 +146,7 @@ def test_init_generator_errors_propagate():
     [
         (calc_mattr, {"window_len": 50.0}, "The window size must be an integer, not float"),
         (calc_msttr, {"segment_len": 50.0}, "The segment size must be an integer, not float"),
-        (calc_mtld, {"min_len": 10.0}, "The minimum factor length of MTLD must be an integer"),
+        (calc_mtld, {"min_len": 10.0}, "The min_len must be an integer, not float"),
         (calc_hdd, {"sample_size": 42.0}, "The HD-D sample size must be an integer, not float"),
     ],
 )

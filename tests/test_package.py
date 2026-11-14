@@ -6,6 +6,7 @@ import shutil
 import subprocess
 import sys
 import threading
+import time
 import zipfile
 from pathlib import Path
 
@@ -186,6 +187,16 @@ def test_lazy_package_of_its_own_mapping(tmp_path, monkeypatch):
     assert Heavy.__module__ == "anyts_lazy_own.heavy" and package.helper() == 1
 
 
+def _run_threads(targets, timeout=10):
+    """Running the functions in daemon threads; the threads still alive after the timeout"""
+    threads = [threading.Thread(target=target, daemon=True) for target in targets]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join(timeout)
+    return [thread for thread in threads if thread.is_alive()]
+
+
 def test_lazy_package_imports_one_name_at_a_time(tmp_path, monkeypatch):
     """Threads that read the names first at once import their modules one after another, and
     a thread that waited for a name another one imported takes it"""
@@ -199,28 +210,54 @@ def test_lazy_package_imports_one_name_at_a_time(tmp_path, monkeypatch):
     )
     files = {
         "__init__.py": "from anyts.utils import make_lazy\n"
-        "make_lazy(__name__, {**{f'Name{i}': f'm{i}' for i in range(8)}, 'Nested': 'nested'})\n",
+        "make_lazy(__name__, {f'Name{i}': f'm{i}' for i in range(8)})\n",
         "count.py": "loading = []\npeak = []\n",
-        # A module that reads a name of its package while it is imported
-        "nested.py": "from anyts_lazy_threads import Name0 as Nested\n",
         **{f"m{i}.py": f"{slow}Name{i} = {i}\n" for i in range(8)},
     }
     package = _package(tmp_path, monkeypatch, "anyts_lazy_threads", files)
     barrier = threading.Barrier(16)
     found = {}
 
-    def read(thread):
-        barrier.wait()
-        found[thread] = getattr(package, f"Name{thread % 8}")
+    def reader(thread):
+        def read():
+            barrier.wait()
+            found[thread] = getattr(package, f"Name{thread % 8}")
 
-    threads = [threading.Thread(target=read, args=(i,)) for i in range(16)]
-    for thread in threads:
-        thread.start()
-    for thread in threads:
-        thread.join()
+        return read
+
+    assert _run_threads([reader(i) for i in range(16)]) == []
     assert found == {i: i % 8 for i in range(16)}
     assert max(importlib.import_module("anyts_lazy_threads.count").peak) == 1
-    assert package.Nested == 0
+
+
+def test_lazy_package_inside_the_import_of_a_module(tmp_path, monkeypatch):
+    """A module that reads a lazy name or imports a module of its package while it is imported
+    goes on, whether the thread imports it through the package or directly while another one
+    holds the lock of the lazy imports"""
+    package = _package(
+        tmp_path,
+        monkeypatch,
+        "anyts_lazy_inside",
+        {
+            "__init__.py": "from anyts.utils import make_lazy\n"
+            "make_lazy(__name__, {'Light': 'light', 'Nested': 'nested', 'Heavy': 'heavy'})\n",
+            "light.py": "Light = 1\n",
+            "nested.py": "from anyts_lazy_inside import Light as Nested\n",
+            "heavy.py": "import time\ntime.sleep(0.3)\nfrom . import style\nHeavy = style.STYLE\n",
+            "style.py": "STYLE = 2\n",
+        },
+    )
+    assert package.Nested == 1
+
+    def direct():
+        importlib.import_module("anyts_lazy_inside.heavy")
+
+    def lazy():
+        time.sleep(0.1)
+        assert package.Heavy == 2
+
+    assert _run_threads([direct, lazy]) == []
+    assert package.Heavy == 2
 
 
 def test_lazy_package_lists_the_public_names(tmp_path, monkeypatch):

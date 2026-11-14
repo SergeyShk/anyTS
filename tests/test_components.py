@@ -487,11 +487,15 @@ def test_components_pass_their_parameters(nlp):
     with pytest.raises(ParameterError):
         Style(nlp, "s", top_n=0)
     # Every wrong value of the config is a ParameterError
-    with pytest.raises(ParameterError, match=r"^The stopwords of the config .+, not str$"):
+    with pytest.raises(
+        ParameterError, match=r"^The stopwords must be a list of strings, not str$"
+    ):
         Style(nlp, "s", stopwords="the")
-    with pytest.raises(ParameterError, match=r"^The nausea_stopwords of the config .+, not int$"):
+    with pytest.raises(
+        ParameterError, match=r"^The nausea_stopwords must be a list of strings, not int$"
+    ):
         Style(nlp, "s", nausea_stopwords=[1])
-    with pytest.raises(ParameterError, match=r"^The cliches of the config"):
+    with pytest.raises(ParameterError, match=r"^The cliches must be a list of strings"):
         Style(nlp, "s", cliches="at the end of the day")
     with pytest.raises(ParameterError):
         Phon(nlp, "p", window_len=1)

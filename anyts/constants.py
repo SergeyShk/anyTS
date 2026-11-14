@@ -228,6 +228,10 @@ DELTA_VARIANTS = {
 MESSAGES: Mapping[str, str] = MappingProxyType(
     {
         "source_type": "The data source cannot be of type {type}",
+        "bool_param": "The {param} must be a bool, not {type}",
+        "integer_param": "The {param} must be an integer, not {type}",
+        "number_param": "The {param} must be a number, not {type}",
+        "words_param": "The {param} must be a list of strings, not {type}",
         "source_span": "The data source cannot be a Span: pass span.as_doc()",
         "no_words": "The data source has no words",
         "document_tokens": "The tokens of the data source cannot make a document: {error}",
@@ -264,7 +268,6 @@ MESSAGES: Mapping[str, str] = MappingProxyType(
             "before {component}"
         ),
         "extension_name": "The name of an extension must be a string, not {type}",
-        "config_words": "The {param} of the config must be a list of strings, not {type}",
         "no_stats_class": "{cls} has no concrete class of statistics in stats_class",
         "stats_param": "{cls} has no attribute {param} of stats_params",
         "foreign_extension": (
@@ -313,7 +316,6 @@ MESSAGES: Mapping[str, str] = MappingProxyType(
             "The data source has no parts of speech: "
             "parse the text with a model, without disabling its tagger or morphologizer"
         ),
-        "blank_lines": "The blank_lines must be a bool, not {type}",
         "temporal_features": (
             "The temporal features of {cls} must be one or more distinct features of {features}, "
             "not {value}"

@@ -38,7 +38,7 @@ def check_params(window_len: int, *, messages: Mapping[str, str] = MESSAGES) -> 
     Raises:
         ParameterError: If the window is not an integer or is below 2
     """
-    check_integer(window_len, "size of a window")
+    check_integer(window_len, "window_len", message=messages["integer_param"])
     if window_len < 2:
         raise ParameterError(messages["phon_window_len"])
 

@@ -258,8 +258,9 @@ class MorphStats(Stats):
             UnknownStatError: If a statistic is unknown
             ParameterError: If filter_none or flat is not a bool
         """
-        check_bool(filter_none, "filter_none")
-        check_bool(flat, "flat")
+        messages = self.messages
+        check_bool(filter_none, "filter_none", message=messages["bool_param"])
+        check_bool(flat, "flat", message=messages["bool_param"])
         stats: dict[str, dict[str | None, int]] = {}
         for stat in self._checked_stats(args):
             counts = dict(Counter(getattr(self, stat)))

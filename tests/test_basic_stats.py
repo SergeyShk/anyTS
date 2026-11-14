@@ -550,5 +550,5 @@ def test_hanging_hyphen_before_a_conjunction_after_any_space(space):
 
 
 def test_normalize_is_a_bool():
-    with pytest.raises(ParameterError, match=r"^The normalization must be a bool, not str$"):
+    with pytest.raises(ParameterError, match=r"^The normalize must be a bool, not str$"):
         Stats(TEXT, normalize="yes")

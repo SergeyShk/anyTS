@@ -677,7 +677,7 @@ class CohesionStats(Stats):
         messages = self.messages
         if sents_extractor is not None and not isinstance(sents_extractor, SentsExtractor):
             raise SourceTypeError(messages["sents_extractor_type"])
-        check_bool(blank_lines, "blank_lines", message=messages["blank_lines"])
+        check_bool(blank_lines, "blank_lines", message=messages["bool_param"])
         self.sents_extractor = sents_extractor
         self.blank_lines = blank_lines
         matcher = (

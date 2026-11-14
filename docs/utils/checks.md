@@ -16,7 +16,7 @@ Checks that an argument is a sequence and not a text or an iterator: a string wo
 | `value` | `object` | - | Value to check |
 | `what` | `str` | `"words"` | What is expected, for the message of the error |
 | `ordered` | `bool` | `True` | Whether the order and the repeats of the items matter |
-| `message` | `str` | `None` | Message of the error with the field `{type}`, the type of the value, in place of the English one, such as one of `MESSAGES` a library translates |
+| `message` | `str` | `None` | Message of the error with the fields `{type}`, the type of the value, and `{param}`, the `what`, in place of the English one, such as one of `MESSAGES` a library translates |
 
 A string (of characters or bytes), a `Doc`, a `Span`, an iterator, an object that cannot be iterated or has no length, a table - a two-dimensional array or a `DataFrame` - and, unless `ordered=False`, a set or a mapping raise `SourceTypeError`.
 <!-- --8<-- [end:check_sequence] -->
@@ -53,7 +53,7 @@ Checks that an argument is a list of words: it passes `check_sequence` and every
 | `value` | `Iterable` | - | Value to check |
 | `what` | `str` | `"words"` | What is expected, for the message of the error |
 | `ordered` | `bool` | `True` | Whether the order and the repeats of the words matter |
-| `message` | `str` | `None` | Message of the error with the field `{type}`, the type of the value or of the item that is not a string, in place of the English one |
+| `message` | `str` | `None` | Message of the error with the fields `{type}`, the type of the value or of the item that is not a string, and `{param}`, the `what`, in place of the English one |
 
 A value that fails `check_sequence` or holds an item that is not a string, such as a spaCy token, raises `SourceTypeError`.
 <!-- --8<-- [end:check_words] -->
@@ -163,7 +163,7 @@ Checks that a parameter is an integer.
 | :-------- | :--- | :------ | :---------- |
 | `value` | `object` | - | Value to check |
 | `what` | `str` | - | Name of the parameter, for the message of the error |
-| `message` | `str` | `None` | Message of the error with the field `{type}`, the type of the value, in place of the English one, such as one of `MESSAGES` a library translates |
+| `message` | `str` | `None` | Message of the error with the fields `{type}`, the type of the value, and `{param}`, the `what`, in place of the English one, such as one of `MESSAGES` a library translates |
 
 A value that is not an integer, a `bool` or a `float` included, even a whole one like `5.0`, raises `ParameterError`.
 <!-- --8<-- [end:check_integer] -->
@@ -198,7 +198,7 @@ Checks that a parameter is a `bool`, a numpy `bool_` included.
 | :-------- | :--- | :------ | :---------- |
 | `value` | `object` | - | Value to check |
 | `what` | `str` | - | Name of the parameter, for the message of the error |
-| `message` | `str` | `None` | Message of the error with the field `{type}`, the type of the value, in place of the English one, such as one of `MESSAGES` a library translates |
+| `message` | `str` | `None` | Message of the error with the fields `{type}`, the type of the value, and `{param}`, the `what`, in place of the English one, such as one of `MESSAGES` a library translates |
 
 A value that is not a `bool`, `0`, `1` and `"yes"` included, raises `ParameterError`.
 <!-- --8<-- [end:check_bool] -->
@@ -224,7 +224,7 @@ A value that is not a `bool`, `0`, `1` and `"yes"` included, raises `ParameterEr
 
 <!-- --8<-- [start:check_number] -->
 ``` {.python .signature}
-check_number(value, what)
+check_number(value, what, *, message=None)
 ```
 
 Checks that a parameter is a finite real number.
@@ -233,6 +233,7 @@ Checks that a parameter is a finite real number.
 | :-------- | :--- | :------ | :---------- |
 | `value` | `object` | - | Value to check |
 | `what` | `str` | - | Name of the parameter, for the message of the error |
+| `message` | `str` | `None` | Message of the error with the fields `{type}`, the type of the value or the value that is not finite, and `{param}`, the `what`, in place of the English one |
 
 A value that is not a finite real number - a `bool`, a string, `None`, `nan`, an infinity - raises `ParameterError`.
 <!-- --8<-- [end:check_number] -->

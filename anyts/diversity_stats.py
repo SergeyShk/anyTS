@@ -98,31 +98,38 @@ def check_params(
     Raises:
         ParameterError: If a parameter is not a number of its type or is out of range
     """
-    check_integer(window_len, "window size")
+    check_integer(window_len, "window_len", message=messages["integer_param"])
     if window_len < 1:
         raise ParameterError(messages["window_len"])
-    _check_mtld_params(mtld_threshold, mtld_min_len, messages)
-    check_integer(hdd_sample_size, "HD-D sample size")
+    _check_mtld_params(mtld_threshold, mtld_min_len, messages, ("mtld_threshold", "mtld_min_len"))
+    check_integer(hdd_sample_size, "hdd_sample_size", message=messages["integer_param"])
     if hdd_sample_size < 1:
         raise ParameterError(messages["hdd_sample_size"])
-    _check_log_base(log_base, messages)
+    _check_log_base(log_base, messages, "log_base")
 
 
-def _check_log_base(base: float, messages: Mapping[str, str] = MESSAGES) -> None:
-    """Checking the logarithm base of the Summer, Maas and Dugast metrics"""
-    check_number(base, "logarithm base")
+def _check_log_base(
+    base: float, messages: Mapping[str, str] = MESSAGES, name: str = "base"
+) -> None:
+    """Checking the logarithm base of the Summer, Maas and Dugast metrics, named as the
+    parameter that takes it"""
+    check_number(base, name, message=messages["number_param"])
     if not base > 1:
         raise ParameterError(messages["log_base"])
 
 
 def _check_mtld_params(
-    threshold: float, min_len: int, messages: Mapping[str, str] = MESSAGES
+    threshold: float,
+    min_len: int,
+    messages: Mapping[str, str] = MESSAGES,
+    names: tuple[str, str] = ("threshold", "min_len"),
 ) -> None:
-    """Checking the TTR threshold and the minimum factor length of MTLD"""
-    check_number(threshold, "TTR threshold of MTLD")
+    """Checking the TTR threshold and the minimum factor length of MTLD, named as the parameters
+    that take them"""
+    check_number(threshold, names[0], message=messages["number_param"])
     if not 0 < threshold < 1:
         raise ParameterError(messages["mtld_threshold"])
-    check_integer(min_len, "minimum factor length of MTLD")
+    check_integer(min_len, names[1], message=messages["integer_param"])
     if min_len < 0:
         raise ParameterError(messages["mtld_min_len"])
 

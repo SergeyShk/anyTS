@@ -6,6 +6,7 @@ import sys
 import threading
 import unicodedata
 from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, Sequence, Set, Sized
+from contextlib import contextmanager
 from functools import lru_cache
 from importlib import import_module
 from itertools import repeat
@@ -13,7 +14,7 @@ from numbers import Integral, Real
 from re import Pattern
 from statistics import StatisticsError, fmean
 from string import Formatter
-from types import ModuleType
+from types import FrameType, ModuleType
 from typing import TYPE_CHECKING, Any, TypeGuard
 
 from .constants import MESSAGES
@@ -637,8 +638,8 @@ def check_sequence(
         value (object): Value to check
         what (str): What is expected, for the message of the error
         ordered (bool): Whether the order and the repeats of the items matter
-        message (str): Message of the error with the field {type}, the type of the value,
-            in place of the English one
+        message (str): Message of the error with the fields {type}, the type of the value,
+            and {param}, what, in place of the English one
 
     Raises:
         SourceTypeError: If a string (of characters or bytes), a Doc, a Span, an
@@ -658,7 +659,7 @@ def check_sequence(
     problem = _sequence_problem(value, what, ordered)
     if problem is not None:
         raise SourceTypeError(
-            problem if message is None else message.format(type=type(value).__name__)
+            problem if message is None else message.format(type=type(value).__name__, param=what)
         )
 
 
@@ -707,8 +708,8 @@ def check_words(
         value (object): Value to check
         what (str): What is expected, for the message of the error
         ordered (bool): Whether the order and the repeats of the words matter (check_sequence)
-        message (str): Message of the error with the field {type}, the type of the value or
-            of the item that is not a string, in place of the English one
+        message (str): Message of the error with the fields {type}, the type of the value or
+            of the item that is not a string, and {param}, what, in place of the English one
 
     Raises:
         SourceTypeError: If the value fails check_sequence or holds an item
@@ -729,7 +730,7 @@ def check_words(
         raise SourceTypeError(
             f"The {what} must be strings, not {kind}"
             if message is None
-            else message.format(type=kind)
+            else message.format(type=kind, param=what)
         )
 
 
@@ -798,8 +799,8 @@ def check_integer(value: object, what: str, *, message: str | None = None) -> No
     Arguments:
         value (object): Value to check
         what (str): Name of the parameter, for the message of the error
-        message (str): Message of the error with the field {type}, the type of the value,
-            in place of the English one
+        message (str): Message of the error with the fields {type}, the type of the value,
+            and {param}, what, in place of the English one
 
     Raises:
         ParameterError: If the value is not an integer
@@ -817,7 +818,7 @@ def check_integer(value: object, what: str, *, message: str | None = None) -> No
         raise ParameterError(
             f"The {what} must be an integer, not {kind}"
             if message is None
-            else message.format(type=kind)
+            else message.format(type=kind, param=what)
         )
 
 
@@ -828,8 +829,8 @@ def check_bool(value: object, what: str, *, message: str | None = None) -> None:
     Arguments:
         value (object): Value to check
         what (str): Name of the parameter, for the message of the error
-        message (str): Message of the error with the field {type}, the type of the value,
-            in place of the English one
+        message (str): Message of the error with the fields {type}, the type of the value,
+            and {param}, what, in place of the English one
 
     Raises:
         ParameterError: If the value is not a bool
@@ -848,11 +849,11 @@ def check_bool(value: object, what: str, *, message: str | None = None) -> None:
         raise ParameterError(
             f"The {what} must be a bool, not {kind}"
             if message is None
-            else message.format(type=kind)
+            else message.format(type=kind, param=what)
         )
 
 
-def check_number(value: object, what: str) -> None:
+def check_number(value: object, what: str, *, message: str | None = None) -> None:
     """
     Checking that a parameter is a finite real number
 
@@ -862,6 +863,8 @@ def check_number(value: object, what: str) -> None:
     Arguments:
         value (object): Value to check
         what (str): Name of the parameter, for the message of the error
+        message (str): Message of the error with the fields {type}, the type of the value or
+            the value that is not finite, and {param}, what, in place of the English one
 
     Raises:
         ParameterError: If the value is not a finite real number
@@ -875,9 +878,18 @@ def check_number(value: object, what: str) -> None:
         anyts.exceptions.ParameterError: The confidence level must be a number, not str
     """
     if isinstance(value, bool) or not isinstance(value, Real):
-        raise ParameterError(f"The {what} must be a number, not {type(value).__name__}")
+        kind = type(value).__name__
+        raise ParameterError(
+            f"The {what} must be a number, not {kind}"
+            if message is None
+            else message.format(type=kind, param=what)
+        )
     if not math.isfinite(value):
-        raise ParameterError(f"The {what} must be a finite number, not {value}")
+        raise ParameterError(
+            f"The {what} must be a finite number, not {value}"
+            if message is None
+            else message.format(type=value, param=what)
+        )
 
 
 def check_callable(value: object, what: str) -> None:
@@ -1076,14 +1088,16 @@ class LazyPackage(ModuleType):
         holds, all of them for a package without __all__, so that help() and
         inspect.getmembers() import only the public names. The imports of the
         names of every lazy package go one at a time, so that threads reading
-        names first at once do not meet in a module half loaded by another
+        names first at once do not meet in a module half loaded by another; a
+        thread that runs the body of a module it imports goes on without waiting,
+        as a thread that imports may wait for that module
     """
 
     def __getattr__(self, name: str) -> Any:
         modules = self.__dict__["_MODULES"]
         if name in modules:
             module = f"{self.__name__}.{modules[name]}"
-            with _LAZY_IMPORT:
+            with _lazy_import_lock():
                 if name in self.__dict__:
                     return self.__dict__[name]
                 # Python would take an AttributeError of the import for a missing name
@@ -1095,7 +1109,7 @@ class LazyPackage(ModuleType):
             return value
         if name.isidentifier() and not name.startswith("__"):
             try:
-                with _LAZY_IMPORT:
+                with _lazy_import_lock():
                     return import_module(f".{name}", self.__name__)
             except ModuleNotFoundError as error:
                 if error.name != f"{self.__name__}.{name}":
@@ -1114,6 +1128,28 @@ class LazyPackage(ModuleType):
         if (public := self.__dict__.get("__all__")) is not None:
             names = [name for name in names if name in public]
         return sorted({*super().__dir__(), *names})
+
+
+@contextmanager
+def _lazy_import_lock() -> Iterator[None]:
+    """The lock of the lazy imports; a thread that runs the body of a module it imports takes it
+    only when it is free, since a thread that holds it may wait for the lock of that module"""
+    acquired = _LAZY_IMPORT.acquire(blocking=not _imports_a_module())
+    try:
+        yield
+    finally:
+        if acquired:
+            _LAZY_IMPORT.release()
+
+
+def _imports_a_module() -> bool:
+    """Whether the calling thread runs the body of a module it imports"""
+    frame: FrameType | None = sys._getframe(1)
+    while frame is not None:
+        if frame.f_code.co_filename.startswith("<frozen importlib._bootstrap"):
+            return True
+        frame = frame.f_back
+    return False
 
 
 def make_lazy(name: str, modules: Mapping[str, str]) -> None:

@@ -482,9 +482,8 @@ class StyleStatsComponent(StatsComponent):
             (cliches, "cliches"),
         ):
             if words is not None:
-                message = messages["config_words"].replace("{param}", param)
                 try:
-                    check_words(words, param, ordered=False, message=message)
+                    check_words(words, param, ordered=False, message=messages["words_param"])
                 except SourceTypeError as error:
                     raise ParameterError(str(error)) from None
         self.stopwords = stopwords
@@ -555,7 +554,7 @@ class CohesionStatsComponent(StatsComponent):
     stats_params: ClassVar[tuple[str, ...]] = ("blank_lines",)
 
     def __init__(self, nlp: Language, name: str, blank_lines: bool = False):
-        check_bool(blank_lines, "blank_lines", message=self.messages["blank_lines"])
+        check_bool(blank_lines, "blank_lines", message=self.messages["bool_param"])
         self.blank_lines = blank_lines
         super().__init__(nlp, name)
 

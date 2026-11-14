@@ -128,7 +128,7 @@ class Stats:
         Raises:
             ParameterError: If flat is not a bool
         """
-        check_bool(flat, "flat")
+        check_bool(flat, "flat", message=self.messages["bool_param"])
         stats = {stat: getattr(self, stat) for stat in self.stat_names()}
         return _flatten(stats) if flat else _copy(stats)
 
