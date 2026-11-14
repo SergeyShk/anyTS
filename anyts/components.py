@@ -28,7 +28,15 @@ from .style_stats import StyleStats
 from .style_stats import check_params as check_style_params
 from .syntax_stats import SyntaxStats
 from .unadapted_readability_stats import UnadaptedReadabilityStats
-from .utils import check_bool, check_messages, check_words, has_words, is_number, iter_doc_words
+from .utils import (
+    _separators,
+    check_bool,
+    check_messages,
+    check_words,
+    has_words,
+    is_number,
+    iter_doc_words,
+)
 
 if TYPE_CHECKING:
     from spacy.language import Language
@@ -401,8 +409,9 @@ class LexicalStatsComponent(StatsComponent):
     freq_dict: Any = None
 
     def accepts(self, doc: Doc) -> bool:
+        separators = _separators()
         return any(
-            has_words(word) and not self.is_number(word)
+            has_words(word) and not self.is_number(word.strip(separators))
             for _, _, word in iter_doc_words(doc, self.join_hyphens)
         )
 

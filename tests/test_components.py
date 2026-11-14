@@ -446,9 +446,11 @@ def test_lexical_component_of_the_core(nlp):
     )
     Lexical(nlp, "anyts_test_lexical")(doc)
     assert doc._.anyts_test_lexical.lemmas == ("cat", "sleep")
-    assert (
-        Lexical(nlp, "anyts_test_lexical").accepts(Doc(nlp.vocab, words=["\uf0b7", "2"])) is False
-    )
+    lexical = Lexical(nlp, "anyts_test_lexical")
+    assert lexical.accepts(Doc(nlp.vocab, words=["\uf0b7", "2"])) is False
+    # A number keeps no invisible separator at its edges, as in the document
+    numbers = Doc(nlp.vocab, words=["2020\u200b", "\u00ad100", "2020\u2060"])
+    assert lexical.accepts(numbers) is False
     with pytest.raises(
         ParameterError, match=r"^LexicalStats has no frequency dictionary of its own"
     ):
