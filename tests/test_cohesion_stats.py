@@ -35,6 +35,7 @@ from anyts.cohesion_stats import (
     dominant,
 )
 from anyts.constants import COHESION_STATS_DESC, MESSAGES
+from anyts.document import to_document
 from anyts.exceptions import ParameterError, SourceError, SourceTypeError
 from anyts.extractors import SentsExtractor
 
@@ -981,6 +982,13 @@ def test_word_info_keeps_its_own_mark_and_its_wrong_result():
 
     marked = [word.break_before for word in Marking(doc).analyze(doc)[0]]
     assert marked == [False, False, True, False]
+    # An invisible separator glued to a word is no punctuation mark
+    for text, marks in (("It came before\u200b the end", 0), ("It came before, the end", 1)):
+        document = nouns(text)
+        assert (
+            sum(word.break_before for word in CohesionStats(document).analyze(document)[0])
+            == marks
+        )
     with pytest.raises(SourceTypeError, match=r"must return sentences of CohesionWord"):
         Dicts(doc)
 
@@ -1098,6 +1106,21 @@ def test_sentences_by_an_extractor():
     assert CohesionStats(text_doc(), sents_extractor=Dropping()).words == (
         ("The", "cat", "sat", "on", "the", "mat"),
     )
+    # A paragraph starts at the first word kept after a line break: Ok is too short a sentence
+    text = "The cat sat on the mat today.\nOk. The dog ran in the park now."
+    stats = CohesionStats(nouns(text), sents_extractor=SentsExtractor(min_len=5))
+    assert stats.n_sents == 2 and stats.n_paragraphs == 2
+
+
+def nouns(text, lemmas=True):
+    """A document of a text whose words are nouns with their lower case for lemmas"""
+    document = to_document(text)
+    forms = document.column("form")
+    document.set_columns(
+        upos=["NOUN" if form.isalpha() else "PUNCT" for form in forms],
+        lemma=[form.lower() if lemmas else None for form in forms],
+    )
+    return document
 
 
 def test_default_word_info():
@@ -1117,6 +1140,12 @@ def test_default_word_info():
     assert stats.lemmas == (("my", "well", "know", "ann"),)
     word = stats.analyze(doc)[0][1]
     assert word == CohesionWord("well", "well", "ADJ", False, False, False, False, True)
+    # A word without a lemma is lemmatized by its form
+    document = nouns("Cats sleep. Dogs bark.", lemmas=False)
+    document.set_columns(lemma=[None, "sleep", None, None, "bark", None])
+    stats = CohesionStats(document)
+    assert stats.lemmas == (("cats", "sleep"), ("dogs", "bark"))
+    assert stats.noun_overlap_adjacent == 0 and stats.n_given == 0
 
 
 def spanish_document():

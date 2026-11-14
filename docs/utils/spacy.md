@@ -116,7 +116,7 @@ Checks whether a `Doc` has its sentence boundaries: they count when every token 
 has_pos(doc)
 ```
 
-Checks whether the words of a `Doc` carry parts of speech: one word (`is_word`) with a part of speech is enough. The whitespace tokens do not count, as the attribute ruler of a pipeline without its tagger or morphologizer marks them `SPACE` all the same, which `doc.has_annotation("POS")` takes for parts of speech; a `Doc` without words is checked by its annotation. The cohesion statistics check the parts of speech of a `Doc` by it.
+Checks whether the words of a `Doc` carry parts of speech: one word (`is_word`) with a part of speech is enough. The whitespace tokens do not count, as the attribute ruler of a pipeline without its tagger or morphologizer marks them `SPACE` all the same, which `doc.has_annotation("POS")` takes for parts of speech; a `Doc` without words is checked by its annotation.
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
@@ -430,7 +430,7 @@ Splits the words of a `Doc` or a `Span` into the sentences of a sentence extract
 find_unit_marks(units)
 ```
 
-Finds the punctuation marks between the words of a sentence of a `Doc`: the words are those of `iter_doc_units`, and a word with a character of `is_punctuation` between it and the word before gets its position, except a quote, an apostrophe and the hyphen that joins two parts of a word, as `find_marks` does for a text.
+Finds the punctuation marks between the words of a sentence of a `Doc`: the words are those of `iter_doc_units`, and a word with a character of `is_punctuation` between it and the word before gets its position, except a quote, an apostrophe, an invisible separator and the hyphen that joins two parts of a word, as `find_marks` does for a text.
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |

@@ -790,10 +790,11 @@ class CohesionStats(Stats):
             those of sents_extractor over its text when one is given - with the
             features of word_info. A word gets break_before when a punctuation
             mark stands between it and the word before in its sentence (except a
-            quote, an apostrophe and a hyphen joining two parts of a word), and
-            paragraph_start when a line break (LINE_BREAK) does, or a blank line
-            (BLANK_LINE) with blank_lines; a library that reads the features
-            another way overrides it
+            quote, an apostrophe, an invisible separator and a hyphen joining two
+            parts of a word), and paragraph_start when a line break (LINE_BREAK)
+            does, or a blank line (BLANK_LINE) with blank_lines, between the
+            words of the sentences; a library that reads the features another
+            way overrides it
 
         Arguments:
             source (str|Doc|Document): Data source
@@ -816,14 +817,15 @@ class CohesionStats(Stats):
         if not any(word.lemma for word in tree.words):
             raise SourceError(messages["no_lemmas"])
         text = tree.text
+        sents = self._sentences(words, text)
         pattern = BLANK_LINE if self.blank_lines else LINE_BREAK
         starts = {
             word.index
-            for last, word in pairwise(words)
+            for last, word in pairwise(word for sent in sents for word in sent)
             if pattern.search(text, last.end, word.start)
         }
         found = []
-        for sent in self._sentences(words, text):
+        for sent in sents:
             marks = {
                 word.index
                 for last, word in pairwise(sent)
@@ -878,7 +880,8 @@ class CohesionStats(Stats):
             demonstrative or personal determiner (my book, this book, but not
             the book); a demonstrative carries PronType=Dem; an argument is
             NOUN, PROPN or PRON; a content word is one of CONTENT_UD_POS and no
-            demonstrative; the lemma is that of the word in lower case; the
+            demonstrative; the lemma is that of the word in lower case, its form
+            without one; the
             tense, the mood and the aspect are the features Tense, Mood and
             Aspect. Any word may start a connector; a library sets
             connector_blocked where its parse rules one out
@@ -895,7 +898,7 @@ class CohesionStats(Stats):
         pos = word.upos or ""
         return CohesionWord(
             word=word.form,
-            lemma=(word.lemma or "").lower(),
+            lemma=(word.lemma or word.form).lower(),
             pos=pos or None,
             noun=pos in ("NOUN", "PROPN"),
             pronoun=pos == "PRON" or (pos == "DET" and _is_pronominal_det(features, pron_type)),
