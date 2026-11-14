@@ -1054,6 +1054,18 @@ def test_subordinating_marks():
     )
     assert not is_subordinate_clause_head(tree(shared)[8], subordinating_marks={"for"})
     assert Marked(shared).n_subordinate_clauses == 1
+    # he left , for he was tired , she slept: a conjunct with a subject of its own and without a
+    # conjunction of its own is a main clause a model attaches to the marked one
+    asyndetic = parse(
+        ["he", "left", ",", "for", "he", "was", "tired", ",", "she", "slept"],
+        [1, 1, 6, 6, 6, 6, 1, 9, 9, 6],
+        ["nsubj", "ROOT", "punct", "mark", "nsubj", "cop", "conj", "punct", "nsubj", "conj"],
+        ["", fin, "", "", "", fin, "", "", "", fin],
+        pos=["PRON", "VERB", "PUNCT", "SCONJ", "PRON", "AUX", "ADJ", "PUNCT", "PRON", "VERB"],
+    )
+    assert not is_subordinate_clause_head(tree(asyndetic)[9], subordinating_marks={"for"})
+    stats = Marked(asyndetic)
+    assert (stats.n_t_units, stats.n_subordinate_clauses, stats.n_complex_t_units) == (2, 1, 1)
 
     class HookOnly(SyntaxStats):
         def is_subordinating_mark(self, word):
@@ -1553,6 +1565,35 @@ def test_verb_phrases_of_a_periphrasis():
         pos=["PART", "VERB", "NOUN"],
     )
     assert (SyntaxStats(doc).n_verb_phrases, Modal(doc).n_verb_phrases) == (2, 1)
+
+
+def test_coordinate_phrases_of_a_periphrasis():
+    """An infinitive of one predicate with its head is no member of a coordination when a model
+    attaches it as a conjunct; the infinitives of a periphrasis may be coordinated"""
+
+    class Modal(SyntaxStats):
+        def is_infinitive_periphrasis(self, word):
+            return word.head is not None and word.head.form.lower() == "must"
+
+    inf, fin = "VerbForm=Inf", "VerbForm=Fin"
+    # he must leave, with the infinitive attached to the modal as a conjunct
+    doc = parse(
+        ["he", "must", "leave"],
+        [1, 1, 1],
+        ["nsubj", "ROOT", "conj"],
+        morphs=["", fin, inf],
+        pos=["PRON", "VERB", "VERB"],
+    )
+    assert (SyntaxStats(doc).n_coordinate_phrases, Modal(doc).n_coordinate_phrases) == (1, 0)
+    # he must leave and stay
+    doc = parse(
+        ["he", "must", "leave", "and", "stay"],
+        [1, 1, 1, 4, 2],
+        ["nsubj", "ROOT", "xcomp", "cc", "conj"],
+        morphs=["", fin, inf, "", inf],
+        pos=["PRON", "VERB", "VERB", "CCONJ", "VERB"],
+    )
+    assert Modal(doc).n_coordinate_phrases == 1
 
 
 def test_coordinated_nominal_clauses():
