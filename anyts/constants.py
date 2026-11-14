@@ -264,6 +264,7 @@ MESSAGES: Mapping[str, str] = MappingProxyType(
             "before {component}"
         ),
         "extension_name": "The name of an extension must be a string, not {type}",
+        "config_words": "The {param} of the config must be a list of strings, not {type}",
         "no_stats_class": "{cls} has no concrete class of statistics in stats_class",
         "stats_param": "{cls} has no attribute {param} of stats_params",
         "foreign_extension": (

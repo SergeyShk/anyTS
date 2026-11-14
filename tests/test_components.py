@@ -486,11 +486,12 @@ def test_components_pass_their_parameters(nlp):
         Diversity(nlp, "d", window_len=0)
     with pytest.raises(ParameterError):
         Style(nlp, "s", top_n=0)
-    with pytest.raises(SourceTypeError):
+    # Every wrong value of the config is a ParameterError
+    with pytest.raises(ParameterError, match=r"^The stopwords of the config .+, not str$"):
         Style(nlp, "s", stopwords="the")
-    with pytest.raises(SourceTypeError):
+    with pytest.raises(ParameterError, match=r"^The nausea_stopwords of the config .+, not int$"):
         Style(nlp, "s", nausea_stopwords=[1])
-    with pytest.raises(SourceTypeError):
+    with pytest.raises(ParameterError, match=r"^The cliches of the config"):
         Style(nlp, "s", cliches="at the end of the day")
     with pytest.raises(ParameterError):
         Phon(nlp, "p", window_len=1)

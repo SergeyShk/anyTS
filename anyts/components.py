@@ -453,9 +453,8 @@ class StyleStatsComponent(StatsComponent):
         cliches (list[str]): Cliches; those of the class if not set
 
     Raises:
-        SourceTypeError: If the stopwords or the cliches are not a list of strings
-        ParameterError: If the number of the most frequent words is not an integer
-            of at least one
+        ParameterError: If the stopwords or the cliches are not a list of strings, or
+            the number of the most frequent words is not an integer of at least one
     """
 
     stats_class: ClassVar[type[Any] | None] = StyleStats
@@ -475,14 +474,19 @@ class StyleStatsComponent(StatsComponent):
         nausea_stopwords: list[str] | None = None,
         cliches: list[str] | None = None,
     ):
-        check_style_params(top_n, messages=self.messages)
-        for words, what in (
+        messages = self.messages
+        check_style_params(top_n, messages=messages)
+        for words, param in (
             (stopwords, "stopwords"),
-            (nausea_stopwords, "nausea stopwords"),
+            (nausea_stopwords, "nausea_stopwords"),
             (cliches, "cliches"),
         ):
             if words is not None:
-                check_words(words, what, ordered=False)
+                message = messages["config_words"].replace("{param}", param)
+                try:
+                    check_words(words, param, ordered=False, message=message)
+                except SourceTypeError as error:
+                    raise ParameterError(str(error)) from None
         self.stopwords = stopwords
         self.top_n = top_n
         self.nausea_stopwords = nausea_stopwords

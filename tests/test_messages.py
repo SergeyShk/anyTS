@@ -510,6 +510,7 @@ CASES = [
     ),
     ("window_len", ParameterError, lambda: OwnDiversity(spacy.blank("en"), "own_d", window_len=0)),
     ("top_n", ParameterError, lambda: OwnStyle(spacy.blank("en"), "own_s", top_n=0)),
+    ("config_words", ParameterError, lambda: OwnStyle(spacy.blank("en"), "own_s", cliches="a")),
     ("blank_lines", ParameterError, lambda: Cohesion(PARSED, blank_lines=1)),
     (
         "blank_lines",
