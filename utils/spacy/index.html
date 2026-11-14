@@ -2371,7 +2371,7 @@
 
 
 <h1 id="spacy-objects">spaCy objects<a class="headerlink" href="#spacy-objects" title="Permanent link">&para;</a></h1>
-<p>Checks of spaCy objects without importing spaCy, the words of a <code>Doc</code> and their morphology, the parts of a hyphenated word, the sentences of a <code>Doc</code> and the tokenizer rules of a language.</p>
+<p>Checks of spaCy objects without importing spaCy, the words of a <code>Doc</code>, the morphology of the words of the <a href="https://sergeyshk.github.io/anyTS/document/#get_tree">tree of a document</a>, the parts of a hyphenated word, the sentences of a <code>Doc</code> and the tokenizer rules of a language.</p>
 <h2 id="is_doc-is_span">Doc, Span, Token and Language objects<a class="headerlink" href="#is_doc-is_span" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:is_doc] -->
 <div class="signature highlight"><pre><span></span><code><span class="n">is_doc</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
@@ -2541,7 +2541,7 @@ True
 <!-- --8<-- [start:has_pos] -->
 <div class="signature highlight"><pre><span></span><code><span class="n">has_pos</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span>
 </code></pre></div>
-<p>Checks whether the words of a <code>Doc</code> carry parts of speech: one word (<code>is_word</code>) with a part of speech is enough. The whitespace tokens do not count, as the attribute ruler of a pipeline without its tagger or morphologizer marks them <code>SPACE</code> all the same, which <code>doc.has_annotation("POS")</code> takes for parts of speech; a <code>Doc</code> without words is checked by its annotation. The statistics and the highlighting check the parts of speech by it.</p>
+<p>Checks whether the words of a <code>Doc</code> carry parts of speech: one word (<code>is_word</code>) with a part of speech is enough. The whitespace tokens do not count, as the attribute ruler of a pipeline without its tagger or morphologizer marks them <code>SPACE</code> all the same, which <code>doc.has_annotation("POS")</code> takes for parts of speech; a <code>Doc</code> without words is checked by its annotation. The cohesion statistics check the parts of speech of a <code>Doc</code> by it.</p>
 <table>
 <thead>
 <tr>
@@ -2584,7 +2584,7 @@ True
 <!-- --8<-- [start:is_word] -->
 <div class="signature highlight"><pre><span></span><code><span class="n">is_word</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
 </code></pre></div>
-<p>Checks whether a token is a word: not whitespace and not a token of <code>is_punctuation</code>, so symbols like <code>%</code>, <code>€</code>, <code>+</code> and invisible characters are no words either. The words of <code>iter_doc_tokens</code> and the nodes of the dependency tree of the syntactic statistics are such tokens.</p>
+<p>Checks whether a token is a word: not whitespace and not a token of <code>is_punctuation</code>, so symbols like <code>%</code>, <code>€</code>, <code>+</code> and invisible characters are no words either. The words of <code>iter_doc_tokens</code> are such tokens.</p>
 <table>
 <thead>
 <tr>
@@ -2624,9 +2624,9 @@ True
 </div>
 <h2 id="has_feature">Morphological features<a class="headerlink" href="#has_feature" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:has_feature] -->
-<div class="signature highlight"><pre><span></span><code><span class="n">has_feature</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">has_feature</span><span class="p">(</span><span class="n">word</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
 </code></pre></div>
-<p>Checks whether a token carries a morphological feature with a given value: <code>has_feature(token, "VerbForm", "Fin")</code>.</p>
+<p>Checks whether a word of the tree of a document carries a morphological feature with a given value: <code>has_feature(word, "VerbForm", "Fin")</code>; a feature with several values (<code>PronType=Int,Rel</code>) carries each of them.</p>
 <table>
 <thead>
 <tr>
@@ -2638,10 +2638,10 @@ True
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><code>token</code></td>
-<td style="text-align: left;"><code>Token</code></td>
+<td style="text-align: left;"><code>word</code></td>
+<td style="text-align: left;"><code>TreeWord</code></td>
 <td style="text-align: left;">-</td>
-<td style="text-align: left;">Token</td>
+<td style="text-align: left;">Word of the tree</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>field</code></td>
@@ -2665,25 +2665,31 @@ True
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">spacy.tokens</span><span class="w"> </span><span class="kn">import</span> <span class="n">Doc</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">spacy.vocab</span><span class="w"> </span><span class="kn">import</span> <span class="n">Vocab</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">anyts.document</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_tree</span><span class="p">,</span> <span class="n">to_document</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">anyts.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">has_feature</span>
 
 <span class="n">doc</span> <span class="o">=</span> <span class="n">Doc</span><span class="p">(</span>
-    <span class="n">Vocab</span><span class="p">(),</span> <span class="n">words</span><span class="o">=</span><span class="p">[</span><span class="s2">"She"</span><span class="p">,</span> <span class="s2">"has"</span><span class="p">,</span> <span class="s2">"left"</span><span class="p">],</span> <span class="n">morphs</span><span class="o">=</span><span class="p">[</span><span class="s2">""</span><span class="p">,</span> <span class="s2">"Mood=Ind|VerbForm=Fin"</span><span class="p">,</span> <span class="s2">"VerbForm=Part"</span><span class="p">]</span>
+    <span class="n">Vocab</span><span class="p">(),</span>
+    <span class="n">words</span><span class="o">=</span><span class="p">[</span><span class="s2">"Who"</span><span class="p">,</span> <span class="s2">"has"</span><span class="p">,</span> <span class="s2">"left"</span><span class="p">],</span>
+    <span class="n">morphs</span><span class="o">=</span><span class="p">[</span><span class="s2">"PronType=Int,Rel"</span><span class="p">,</span> <span class="s2">"Mood=Ind|VerbForm=Fin"</span><span class="p">,</span> <span class="s2">"VerbForm=Part"</span><span class="p">],</span>
 <span class="p">)</span>
-<span class="n">has_feature</span><span class="p">(</span><span class="n">doc</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s2">"VerbForm"</span><span class="p">,</span> <span class="s2">"Fin"</span><span class="p">),</span> <span class="n">has_feature</span><span class="p">(</span><span class="n">doc</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="s2">"VerbForm"</span><span class="p">,</span> <span class="s2">"Fin"</span><span class="p">)</span>
+<span class="n">who</span><span class="p">,</span> <span class="n">has</span><span class="p">,</span> <span class="n">left</span> <span class="o">=</span> <span class="n">get_tree</span><span class="p">(</span><span class="n">to_document</span><span class="p">(</span><span class="n">doc</span><span class="p">))</span><span class="o">.</span><span class="n">words</span>
+<span class="n">has_feature</span><span class="p">(</span><span class="n">has</span><span class="p">,</span> <span class="s2">"VerbForm"</span><span class="p">,</span> <span class="s2">"Fin"</span><span class="p">),</span> <span class="n">has_feature</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="s2">"VerbForm"</span><span class="p">,</span> <span class="s2">"Fin"</span><span class="p">)</span>
+<span class="n">has_feature</span><span class="p">(</span><span class="n">who</span><span class="p">,</span> <span class="s2">"PronType"</span><span class="p">,</span> <span class="s2">"Rel"</span><span class="p">)</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code>(True, False)
+True
 </code></pre></div>
 </div>
 </div>
 </div>
 <h2 id="verb-forms">Verb forms<a class="headerlink" href="#verb-forms" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:is_finite_verb] -->
-<div class="signature highlight"><pre><span></span><code><span class="n">is_finite_verb</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">is_finite_verb</span><span class="p">(</span><span class="n">word</span><span class="p">)</span>
 </code></pre></div>
-<p>Checks whether a token is a finite verb: the part of speech <code>VERB</code> with <code>VerbForm=Fin</code>, so a finite auxiliary (<code>AUX</code>) is not one.</p>
+<p>Checks whether a word of the tree of a document is a finite verb: the part of speech <code>VERB</code> with <code>VerbForm=Fin</code>, so a finite auxiliary (<code>AUX</code>) is not one.</p>
 <table>
 <thead>
 <tr>
@@ -2695,19 +2701,19 @@ True
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><code>token</code></td>
-<td style="text-align: left;"><code>Token</code></td>
+<td style="text-align: left;"><code>word</code></td>
+<td style="text-align: left;"><code>TreeWord</code></td>
 <td style="text-align: left;">-</td>
-<td style="text-align: left;">Token</td>
+<td style="text-align: left;">Word of the tree</td>
 </tr>
 </tbody>
 </table>
 <!-- --8<-- [end:is_finite_verb] -->
 
 <!-- --8<-- [start:is_infinitive] -->
-<div class="signature highlight"><pre><span></span><code><span class="n">is_infinitive</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">is_infinitive</span><span class="p">(</span><span class="n">word</span><span class="p">)</span>
 </code></pre></div>
-<p>Checks whether a token is an infinitive, <code>VerbForm=Inf</code> whatever its part of speech.</p>
+<p>Checks whether a word of the tree of a document is an infinitive, <code>VerbForm=Inf</code> whatever its part of speech.</p>
 <table>
 <thead>
 <tr>
@@ -2719,10 +2725,10 @@ True
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><code>token</code></td>
-<td style="text-align: left;"><code>Token</code></td>
+<td style="text-align: left;"><code>word</code></td>
+<td style="text-align: left;"><code>TreeWord</code></td>
 <td style="text-align: left;">-</td>
-<td style="text-align: left;">Token</td>
+<td style="text-align: left;">Word of the tree</td>
 </tr>
 </tbody>
 </table>
@@ -2734,6 +2740,7 @@ True
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">spacy.tokens</span><span class="w"> </span><span class="kn">import</span> <span class="n">Doc</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">spacy.vocab</span><span class="w"> </span><span class="kn">import</span> <span class="n">Vocab</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">anyts.document</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_tree</span><span class="p">,</span> <span class="n">to_document</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">anyts.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_finite_verb</span><span class="p">,</span> <span class="n">is_infinitive</span>
 
 <span class="n">doc</span> <span class="o">=</span> <span class="n">Doc</span><span class="p">(</span>
@@ -2742,7 +2749,8 @@ True
     <span class="n">pos</span><span class="o">=</span><span class="p">[</span><span class="s2">"PRON"</span><span class="p">,</span> <span class="s2">"VERB"</span><span class="p">,</span> <span class="s2">"PART"</span><span class="p">,</span> <span class="s2">"VERB"</span><span class="p">],</span>
     <span class="n">morphs</span><span class="o">=</span><span class="p">[</span><span class="s2">""</span><span class="p">,</span> <span class="s2">"VerbForm=Fin"</span><span class="p">,</span> <span class="s2">""</span><span class="p">,</span> <span class="s2">"VerbForm=Inf"</span><span class="p">],</span>
 <span class="p">)</span>
-<span class="p">[(</span><span class="n">token</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="n">is_finite_verb</span><span class="p">(</span><span class="n">token</span><span class="p">),</span> <span class="n">is_infinitive</span><span class="p">(</span><span class="n">token</span><span class="p">))</span> <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">doc</span><span class="p">]</span>
+<span class="n">words</span> <span class="o">=</span> <span class="n">get_tree</span><span class="p">(</span><span class="n">to_document</span><span class="p">(</span><span class="n">doc</span><span class="p">))</span><span class="o">.</span><span class="n">words</span>
+<span class="p">[(</span><span class="n">word</span><span class="o">.</span><span class="n">form</span><span class="p">,</span> <span class="n">is_finite_verb</span><span class="p">(</span><span class="n">word</span><span class="p">),</span> <span class="n">is_infinitive</span><span class="p">(</span><span class="n">word</span><span class="p">))</span> <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">words</span><span class="p">]</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
@@ -2755,7 +2763,7 @@ True
 <!-- --8<-- [start:joins_previous] -->
 <div class="signature highlight"><pre><span></span><code><span class="n">joins_previous</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
 </code></pre></div>
-<p>Checks whether a token continues a word the tokenizer split at its hyphens (<code>well-known</code> into <code>well</code>, <code>-</code>, <code>known</code>): the token is a word right after a hyphen that follows a word, with no whitespace around the hyphen and no sentence starting at the hyphen or the token. <code>iter_doc_units</code> and the functions of the dependency tree join the parts of a word by this rule with <code>join_hyphens=True</code>.</p>
+<p>Checks whether a token continues a word the tokenizer split at its hyphens (<code>well-known</code> into <code>well</code>, <code>-</code>, <code>known</code>): the token is a word right after a hyphen that follows a word, with no whitespace around the hyphen and no sentence starting at the hyphen or the token. <code>iter_doc_units</code> joins the parts of a word by this rule with <code>join_hyphens=True</code>.</p>
 <table>
 <thead>
 <tr>

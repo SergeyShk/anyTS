@@ -1313,17 +1313,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#hyphenated-words" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Hyphenated words
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#is_root" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2627,17 +2616,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#hyphenated-words" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Hyphenated words
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#is_root" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2738,11 +2716,11 @@
 <div class="signature highlight"><pre><span></span><code><span class="n">SyntaxStats</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
 </code></pre></div>
 <!-- --8<-- [start:SyntaxStats] -->
-<p>The syntactic statistics of a text by its dependency tree (<a href="https://dialogue-conf.org/media/4302/ivanovvv.pdf">Ivanov, Solnyshkina and Solovyev 2018</a>): the measures of the tree and of the syntactic constructions. The data source is a <code>Doc</code> object of <a href="https://github.com/explosion/spaCy">spaCy</a> with a dependency parse and parts of speech. Punctuation, symbols and whitespace are no nodes of the tree, and the distances are counted in positions of words. The units of L2SCA, the prepositional chains and the similarity of sentences are computed on first use, so a subclass whose <code>stats_desc</code> does not name them does not pay for them.</p>
+<p>The syntactic statistics of a text by its dependency tree (<a href="https://dialogue-conf.org/media/4302/ivanovvv.pdf">Ivanov, Solnyshkina and Solovyev 2018</a>): the measures of the tree and of the syntactic constructions. The data source is a text, a <code>Doc</code> object of <a href="https://github.com/explosion/spaCy">spaCy</a> or a <code>Document</code> of <a href="https://github.com/SergeyShk/anySeg">anySeg</a> with a dependency parse and parts of speech; a language library parses a string in its <code>parse</code>. The tree is that of its <a href="https://sergeyshk.github.io/anyTS/document/#get_tree">document</a> (<code>get_tree</code>), and its nodes are the words of Universal Dependencies of the document with a letter or a digit: punctuation marks and symbols are none, and the tokens of the document decide what a word is. The distances are counted in positions of words. The units of L2SCA, the prepositional chains and the similarity of sentences are computed on first use, so a subclass whose <code>stats_desc</code> does not name them does not pay for them.</p>
 <p>Raises:</p>
 <ul>
-<li><code>SourceTypeError</code> - a source that is not a <code>Doc</code>;</li>
-<li><code>SourceError</code> - a source without a dependency parse (relations and sentence boundaries), without parts of speech, without lemmas when the class requires them, or without words.</li>
+<li><code>SourceTypeError</code> - a source that is neither a string, a <code>Doc</code> nor a <code>Document</code>, a <code>parse</code> that returns no <code>Document</code>;</li>
+<li><code>SourceError</code> - a source without a dependency parse, without parts of speech, without lemmas when the class requires them, or without words.</li>
 </ul>
 <!-- --8<-- [end:SyntaxStats] -->
 
@@ -2827,9 +2805,9 @@ Ratio of nouns to verbs                                    |   0.50
 <tbody>
 <tr>
 <td style="text-align: left;"><code>source</code></td>
-<td style="text-align: left;"><code>Doc</code></td>
+<td style="text-align: left;"><code>str</code> / <code>Doc</code> / <code>Document</code></td>
 <td style="text-align: left;">-</td>
-<td style="text-align: left;">Data source: a <code>Doc</code> with a dependency parse and parts of speech, or what <code>parse</code> takes</td>
+<td style="text-align: left;">Data source with a dependency parse and parts of speech, or a text that <code>parse</code> annotates</td>
 </tr>
 </tbody>
 </table>
@@ -2848,8 +2826,8 @@ Ratio of nouns to verbs                                    |   0.50
 <tbody>
 <tr>
 <td style="text-align: left;"><code>sents</code></td>
-<td style="text-align: left;"><code>tuple[tuple[Token]]</code></td>
-<td style="text-align: left;">Words of every sentence with words, on a copy of the <code>Doc</code> without its tensor and user data</td>
+<td style="text-align: left;"><code>tuple[tuple[TreeWord]]</code></td>
+<td style="text-align: left;">Words of the tree of every sentence with words</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>n_sents</code>, <code>n_words</code></td>
@@ -3200,9 +3178,9 @@ Ratio of nouns to verbs                                    |   0.50
 <h3 id="dependency_distances">Dependency distance<a class="headerlink" href="#dependency_distances" title="Permanent link">&para;</a></h3>
 <p class="metric-meta"><code>mean_dependency_distance</code> · <code>std_dependency_distance</code> · <code>max_dependency_distance</code> · <code>p_adjacent_dependencies</code></p>
 <!-- --8<-- [start:calc_dependency_distances] -->
-<div class="signature highlight"><pre><span></span><code><span class="n">calc_dependency_distances</span><span class="p">(</span><span class="n">tokens</span><span class="p">,</span> <span class="n">join_hyphens</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">calc_dependency_distances</span><span class="p">(</span><span class="n">words</span><span class="p">)</span>
 </code></pre></div>
-<p>The dependency distances (Liu 2008): the distance between a word and its head in positions of words, punctuation left out, in the order of the words. The head of a sentence and a word whose head lies outside the sequence are skipped.</p>
+<p>The dependency distances (Liu 2008): the distance between a word and its head in positions of words (<code>get_words</code>), punctuation left out, in the order of the words. The head of a sentence and a word whose head lies outside the sequence or is a punctuation mark are skipped.</p>
 <table>
 <thead>
 <tr>
@@ -3214,16 +3192,10 @@ Ratio of nouns to verbs                                    |   0.50
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><code>tokens</code></td>
-<td style="text-align: left;"><code>Doc</code> / <code>Span</code> / <code>list[Token]</code></td>
+<td style="text-align: left;"><code>words</code></td>
+<td style="text-align: left;"><code>list[TreeWord]</code></td>
 <td style="text-align: left;">-</td>
-<td style="text-align: left;">Sequence of tokens</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>join_hyphens</code></td>
-<td style="text-align: left;"><code>bool</code></td>
-<td style="text-align: left;"><code>False</code></td>
-<td style="text-align: left;">Take a hyphenated word for one position</td>
+<td style="text-align: left;">Words of the tree, such as those of a sentence</td>
 </tr>
 </tbody>
 </table>
@@ -3233,9 +3205,9 @@ Ratio of nouns to verbs                                    |   0.50
 <h3 id="tree_depth">Tree depth<a class="headerlink" href="#tree_depth" title="Permanent link">&para;</a></h3>
 <p class="metric-meta"><code>tree_depth</code></p>
 <!-- --8<-- [start:calc_tree_depth] -->
-<div class="signature highlight"><pre><span></span><code><span class="n">calc_tree_depth</span><span class="p">(</span><span class="n">tokens</span><span class="p">,</span> <span class="n">join_hyphens</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">calc_tree_depth</span><span class="p">(</span><span class="n">words</span><span class="p">)</span>
 </code></pre></div>
-<p>The depth of the dependency tree: the longest path from the head of a sentence to a leaf, in relations between words; the maximum for several sentences, 0 for a sentence of one word. With <code>join_hyphens</code> a hyphenated word is one word, and the words that hang on any of its parts are one level below it.</p>
+<p>The depth of the dependency tree: the longest path from the head of a sentence to a leaf, in relations between words, through punctuation; the maximum for several sentences, 0 for a sentence of one word.</p>
 <table>
 <thead>
 <tr>
@@ -3247,16 +3219,10 @@ Ratio of nouns to verbs                                    |   0.50
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><code>tokens</code></td>
-<td style="text-align: left;"><code>Doc</code> / <code>Span</code> / <code>list[Token]</code></td>
+<td style="text-align: left;"><code>words</code></td>
+<td style="text-align: left;"><code>list[TreeWord]</code></td>
 <td style="text-align: left;">-</td>
-<td style="text-align: left;">Sequence of tokens</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>join_hyphens</code></td>
-<td style="text-align: left;"><code>bool</code></td>
-<td style="text-align: left;"><code>False</code></td>
-<td style="text-align: left;">Take a hyphenated word for one word</td>
+<td style="text-align: left;">Words of the tree, such as those of a sentence</td>
 </tr>
 </tbody>
 </table>
@@ -3283,9 +3249,9 @@ Ratio of nouns to verbs                                    |   0.50
 <h3 id="valency">Valency of the finite verbs<a class="headerlink" href="#valency" title="Permanent link">&para;</a></h3>
 <p class="metric-meta"><code>verb_valency</code></p>
 <!-- --8<-- [start:calc_valency] -->
-<div class="signature highlight"><pre><span></span><code><span class="n">calc_valency</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="n">join_hyphens</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">calc_valency</span><span class="p">(</span><span class="n">word</span><span class="p">)</span>
 </code></pre></div>
-<p>The valency of a token: the number of its dependent words, the relations <code>cc</code>, <code>conj</code>, <code>parataxis</code> and <code>punct</code> left out (<code>anyts.constants.VALENCY_IGNORED_DEPS</code>); with <code>join_hyphens=True</code> a hyphenated dependent counts once, so <code>came</code> in <code>Some-one came</code> has one dependent and not two.</p>
+<p>The valency of a word: the number of its dependent words (<code>get_children</code>), the relations <code>cc</code>, <code>conj</code>, <code>parataxis</code> and <code>punct</code> left out (<code>anyts.constants.VALENCY_IGNORED_DEPS</code>).</p>
 <table>
 <thead>
 <tr>
@@ -3297,16 +3263,10 @@ Ratio of nouns to verbs                                    |   0.50
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><code>token</code></td>
-<td style="text-align: left;"><code>Token</code></td>
+<td style="text-align: left;"><code>word</code></td>
+<td style="text-align: left;"><code>TreeWord</code></td>
 <td style="text-align: left;">-</td>
-<td style="text-align: left;">Token</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>join_hyphens</code></td>
-<td style="text-align: left;"><code>bool</code></td>
-<td style="text-align: left;"><code>False</code></td>
-<td style="text-align: left;">Take a hyphenated word for one word</td>
+<td style="text-align: left;">Word of the tree</td>
 </tr>
 </tbody>
 </table>
@@ -3316,9 +3276,9 @@ Ratio of nouns to verbs                                    |   0.50
 <h3 id="coordination_chains">Coordination chains<a class="headerlink" href="#coordination_chains" title="Permanent link">&para;</a></h3>
 <p class="metric-meta"><code>coordination_chains_per_sent</code> · <code>mean_coordination_chain_len</code></p>
 <!-- --8<-- [start:calc_coordination_chains] -->
-<div class="signature highlight"><pre><span></span><code><span class="n">calc_coordination_chains</span><span class="p">(</span><span class="n">tokens</span><span class="p">,</span> <span class="n">join_hyphens</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">calc_coordination_chains</span><span class="p">(</span><span class="n">words</span><span class="p">)</span>
 </code></pre></div>
-<p>The lengths of the coordination chains, in the order of their first words. A chain is a group of words linked by <code>conj</code>, whichever word each conjunct hangs on: Universal Dependencies attaches every conjunct to the first one (<code>pears → apples</code>, <code>plums → apples</code>), ClearNLP to the previous one (<code>pears → apples</code>, <code>plums → pears</code>); both give one chain of three for <code>apples, pears and plums</code>. A nested coordination (<code>cats and dogs, or birds</code>) and an enumeration split between several heads are one chain too. The length of a chain is the number of its words; a conjunct whose head lies outside the sequence is not linked to it. With <code>join_hyphens</code> a hyphenated word is one conjunct, linked by the <code>conj</code> of any of its parts (<code>member and vice-governor</code> is a chain of two).</p>
+<p>The lengths of the coordination chains, in the order of their first words. A chain is a group of words linked by <code>conj</code>, whichever word each conjunct hangs on: Universal Dependencies attaches every conjunct to the first one (<code>pears → apples</code>, <code>plums → apples</code>), ClearNLP to the previous one (<code>pears → apples</code>, <code>plums → pears</code>); both give one chain of three for <code>apples, pears and plums</code>. A nested coordination (<code>cats and dogs, or birds</code>) and an enumeration split between several heads are one chain too. The length of a chain is the number of its words; a conjunct whose head lies outside the sequence is not linked to it.</p>
 <table>
 <thead>
 <tr>
@@ -3330,16 +3290,10 @@ Ratio of nouns to verbs                                    |   0.50
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><code>tokens</code></td>
-<td style="text-align: left;"><code>Doc</code> / <code>Span</code> / <code>list[Token]</code></td>
+<td style="text-align: left;"><code>words</code></td>
+<td style="text-align: left;"><code>list[TreeWord]</code></td>
 <td style="text-align: left;">-</td>
-<td style="text-align: left;">Sequence of tokens</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>join_hyphens</code></td>
-<td style="text-align: left;"><code>bool</code></td>
-<td style="text-align: left;"><code>False</code></td>
-<td style="text-align: left;">Take a hyphenated word for one word</td>
+<td style="text-align: left;">Words of the tree, such as those of a sentence</td>
 </tr>
 </tbody>
 </table>
@@ -3349,7 +3303,7 @@ Ratio of nouns to verbs                                    |   0.50
 <h3 id="clauses">Clauses<a class="headerlink" href="#clauses" title="Permanent link">&para;</a></h3>
 <p class="metric-meta"><code>clauses_per_sent</code> · <code>mean_clause_len</code></p>
 <!-- --8<-- [start:is_clause_head] -->
-<div class="signature highlight"><pre><span></span><code><span class="n">is_clause_head</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="n">join_hyphens</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_infinitive_periphrasis</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">auxiliary_form</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">is_clause_head</span><span class="p">(</span><span class="n">word</span><span class="p">,</span> <span class="n">is_infinitive_periphrasis</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">auxiliary_form</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 <p>Checks whether a word heads a clause: the head of the sentence or a word with <code>ccomp</code>, <code>advcl</code>, <code>acl</code>, <code>csubj</code> or <code>parataxis</code> (<code>anyts.constants.CLAUSE_DEPS</code>, subtypes included) whose predicate (<code>predicate_form</code>, so <code>has been built</code> is finite) is not a participle, a converb or a gerund (<code>NONFINITE_CLAUSE_FORMS</code>, counted apart), nor an infinitive under <code>acl</code>; under <code>xcomp</code>, a finite predicate or an infinitive clause (<code>is_infinitive_clause</code>). A <code>parataxis</code> and a conjunct of a clause head count only as predicates (<code>is_predicate</code>); an infinitive conjunct and an infinitive subject (<code>csubj</code>) are no clause by the check <code>is_infinitive_periphrasis</code>, since a model may attach the infinitive of a periphrasis to its verb as <code>conj</code> and to a modal word as <code>csubj</code>; a loop of conjuncts is no clause.</p>
 <table>
@@ -3363,35 +3317,29 @@ Ratio of nouns to verbs                                    |   0.50
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><code>token</code></td>
-<td style="text-align: left;"><code>Token</code></td>
+<td style="text-align: left;"><code>word</code></td>
+<td style="text-align: left;"><code>TreeWord</code></td>
 <td style="text-align: left;">-</td>
-<td style="text-align: left;">Token</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>join_hyphens</code></td>
-<td style="text-align: left;"><code>bool</code></td>
-<td style="text-align: left;"><code>False</code></td>
-<td style="text-align: left;">Take a hyphenated word for one word</td>
+<td style="text-align: left;">Word of the tree</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>is_infinitive_periphrasis</code></td>
-<td style="text-align: left;"><code>Callable[[Token], bool]</code></td>
+<td style="text-align: left;"><code>Callable[[TreeWord], bool]</code></td>
 <td style="text-align: left;"><code>None</code></td>
 <td style="text-align: left;">Whether an infinitive makes one predicate with its head; none by default</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>auxiliary_form</code></td>
-<td style="text-align: left;"><code>Callable[[Token], str]</code></td>
+<td style="text-align: left;"><code>Callable[[TreeWord], str]</code></td>
 <td style="text-align: left;"><code>None</code></td>
 <td style="text-align: left;">Verb form of an auxiliary without <code>VerbForm</code> (<code>predicate_form</code>); none by default</td>
 </tr>
 </tbody>
 </table>
-<p>A value that is not a <code>Token</code> and a check of a periphrasis or a form of an auxiliary that is not callable raise <code>SourceTypeError</code>.</p>
+<p>A value that is not a <code>TreeWord</code> and a check of a periphrasis or a form of an auxiliary that is not callable raise <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:is_clause_head] -->
 <!-- --8<-- [start:is_infinitive_clause] -->
-<div class="signature highlight"><pre><span></span><code><span class="n">is_infinitive_clause</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="n">is_infinitive_periphrasis</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">is_clause_head</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">auxiliary_form</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">is_infinitive_clause</span><span class="p">(</span><span class="n">word</span><span class="p">,</span> <span class="n">is_infinitive_periphrasis</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">is_clause_head</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">auxiliary_form</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 <p>Checks whether an infinitive complement heads a clause of its own: an infinitive (<code>predicate_form</code>, so <code>to be chosen</code> is one) under <code>xcomp</code> (<em>wants to leave</em>), unless the language check <code>is_infinitive_periphrasis</code> says it makes one predicate with its head (<em>can leave</em>, <em>begins to leave</em>), or the word it completes, the first one up its chain of non-finite complements under <code>xcomp</code> (<em>kept trying to leave</em>, <em>seemed able to leave</em>) and of the infinitives of a periphrasis that a model attaches as <code>conj</code> or <code>csubj</code>, heads no clause by the check <code>is_clause_head</code>: an infinitive in a participial phrase or under an infinitive under <code>acl</code> (<em>trying to leave</em>, <em>the wish to try to leave</em>) belongs to that phrase. A ClearNLP parse hangs an infinitive after a predicative adjective on an <code>acomp</code> or <code>oprd</code> (<em>is ready to leave</em>), which heads no clause, so that infinitive is none.</p>
 <table>
@@ -3405,39 +3353,39 @@ Ratio of nouns to verbs                                    |   0.50
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><code>token</code></td>
-<td style="text-align: left;"><code>Token</code></td>
+<td style="text-align: left;"><code>word</code></td>
+<td style="text-align: left;"><code>TreeWord</code></td>
 <td style="text-align: left;">-</td>
-<td style="text-align: left;">Token</td>
+<td style="text-align: left;">Word of the tree</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>is_infinitive_periphrasis</code></td>
-<td style="text-align: left;"><code>Callable[[Token], bool]</code></td>
+<td style="text-align: left;"><code>Callable[[TreeWord], bool]</code></td>
 <td style="text-align: left;"><code>None</code></td>
 <td style="text-align: left;">Whether an infinitive makes one predicate with its head; none by default</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>is_clause_head</code></td>
-<td style="text-align: left;"><code>Callable[[Token], bool]</code></td>
+<td style="text-align: left;"><code>Callable[[TreeWord], bool]</code></td>
 <td style="text-align: left;"><code>None</code></td>
 <td style="text-align: left;">Whether a word heads a clause; <code>is_clause_head</code> of the module with the hooks of this check if not given</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>auxiliary_form</code></td>
-<td style="text-align: left;"><code>Callable[[Token], str]</code></td>
+<td style="text-align: left;"><code>Callable[[TreeWord], str]</code></td>
 <td style="text-align: left;"><code>None</code></td>
 <td style="text-align: left;">Verb form of an auxiliary without <code>VerbForm</code> (<code>predicate_form</code>); none by default</td>
 </tr>
 </tbody>
 </table>
-<p>A value that is not a <code>Token</code> and a check or a form of an auxiliary that is not callable raise <code>SourceTypeError</code>.</p>
+<p>A value that is not a <code>TreeWord</code> and a check or a form of an auxiliary that is not callable raise <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:is_infinitive_clause] -->
 </div>
 <div class="metric-card">
 <h3 id="subordinate_clauses">Subordinate clauses<a class="headerlink" href="#subordinate_clauses" title="Permanent link">&para;</a></h3>
 <p class="metric-meta"><code>subordinate_clauses_per_sent</code> · <code>p_complex_sents</code></p>
 <!-- --8<-- [start:is_subordinate_clause_head] -->
-<div class="signature highlight"><pre><span></span><code><span class="n">is_subordinate_clause_head</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="n">is_clause_head</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">auxiliary_form</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">subordinating_marks</span><span class="o">=</span><span class="p">(),</span> <span class="n">is_subordinating_mark</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">is_subordinate_clause_head</span><span class="p">(</span><span class="n">word</span><span class="p">,</span> <span class="n">is_clause_head</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">auxiliary_form</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">subordinating_marks</span><span class="o">=</span><span class="p">(),</span> <span class="n">is_subordinating_mark</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 <p>Checks whether a word heads a subordinate clause: a clause head by the check <code>is_clause_head</code> with <code>ccomp</code>, <code>advcl</code>, <code>acl</code> or <code>csubj</code> (<code>SUBORDINATE_CLAUSE_DEPS</code>), or <code>xcomp</code> (a complement a model attaches as <code>xcomp</code>), or a conjunct of one, by the relation of the first word up its chain of conjuncts; neither the predicate of that word nor its own is an infinitive, which heads an infinitive clause, counted apart, and a finite conjunct with a subject of its own of an infinitive takes the kind of the clause of the first word above the infinitives that is none. A conjunct or a parataxis with a subordinating mark (<code>is_subordinating_mark</code>) heads a subordinate clause, since a model may attach a clause of <em>because</em> as <code>conj</code>, and so do its conjuncts with a subject of their own; those sharing its subject do not, as a model attaches the predicates of the main clause to it as well.</p>
 <table>
@@ -3451,20 +3399,20 @@ Ratio of nouns to verbs                                    |   0.50
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><code>token</code></td>
-<td style="text-align: left;"><code>Token</code></td>
+<td style="text-align: left;"><code>word</code></td>
+<td style="text-align: left;"><code>TreeWord</code></td>
 <td style="text-align: left;">-</td>
-<td style="text-align: left;">Token</td>
+<td style="text-align: left;">Word of the tree</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>is_clause_head</code></td>
-<td style="text-align: left;"><code>Callable[[Token], bool]</code></td>
+<td style="text-align: left;"><code>Callable[[TreeWord], bool]</code></td>
 <td style="text-align: left;"><code>None</code></td>
 <td style="text-align: left;">Whether a word heads a clause; <code>is_clause_head</code> of the module with the hooks of this check if not given</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>auxiliary_form</code></td>
-<td style="text-align: left;"><code>Callable[[Token], str]</code></td>
+<td style="text-align: left;"><code>Callable[[TreeWord], str]</code></td>
 <td style="text-align: left;"><code>None</code></td>
 <td style="text-align: left;">Verb form of an auxiliary without <code>VerbForm</code> (<code>predicate_form</code>); none by default</td>
 </tr>
@@ -3476,18 +3424,18 @@ Ratio of nouns to verbs                                    |   0.50
 </tr>
 <tr>
 <td style="text-align: left;"><code>is_subordinating_mark</code></td>
-<td style="text-align: left;"><code>Callable[[Token], bool]</code></td>
+<td style="text-align: left;"><code>Callable[[TreeWord], bool]</code></td>
 <td style="text-align: left;"><code>None</code></td>
 <td style="text-align: left;">Whether a mark is a subordinating conjunction; <code>is_subordinating_mark</code> of the module with <code>subordinating_marks</code> if not given</td>
 </tr>
 </tbody>
 </table>
-<p>A value that is not a <code>Token</code>, a check or a form of an auxiliary that is not callable and marks that are not a collection of strings raise <code>SourceTypeError</code>.</p>
+<p>A value that is not a <code>TreeWord</code>, a check or a form of an auxiliary that is not callable and marks that are not a collection of strings raise <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:is_subordinate_clause_head] -->
 <!-- --8<-- [start:is_subordinating_mark] -->
-<div class="signature highlight"><pre><span></span><code><span class="n">is_subordinating_mark</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="n">subordinating_marks</span><span class="o">=</span><span class="p">())</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">is_subordinating_mark</span><span class="p">(</span><span class="n">word</span><span class="p">,</span> <span class="n">subordinating_marks</span><span class="o">=</span><span class="p">())</span>
 </code></pre></div>
-<p>Checks whether a mark is a subordinating conjunction: a word with the relation <code>mark</code> whose text in lower case, with the words of its fixed expression after a space (<em>so that</em>), is one of <code>subordinating_marks</code>. The default of the hook <code>SyntaxStats.is_subordinating_mark</code>, which a library overrides to read the context of a word that is a conjunction and a pronoun.</p>
+<p>Checks whether a mark is a subordinating conjunction: a word with the relation <code>mark</code> whose form in lower case, with the words of its fixed expression after a space (<em>so that</em>), is one of <code>subordinating_marks</code>. The default of the hook <code>SyntaxStats.is_subordinating_mark</code>, which a library overrides to read the context of a word that is a conjunction and a pronoun.</p>
 <table>
 <thead>
 <tr>
@@ -3499,10 +3447,10 @@ Ratio of nouns to verbs                                    |   0.50
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><code>token</code></td>
-<td style="text-align: left;"><code>Token</code></td>
+<td style="text-align: left;"><code>word</code></td>
+<td style="text-align: left;"><code>TreeWord</code></td>
 <td style="text-align: left;">-</td>
-<td style="text-align: left;">Token</td>
+<td style="text-align: left;">Word of the tree</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>subordinating_marks</code></td>
@@ -3512,14 +3460,14 @@ Ratio of nouns to verbs                                    |   0.50
 </tr>
 </tbody>
 </table>
-<p>A value that is not a <code>Token</code> and marks that are not a collection of strings raise <code>SourceTypeError</code>.</p>
+<p>A value that is not a <code>TreeWord</code> and marks that are not a collection of strings raise <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:is_subordinating_mark] -->
 </div>
 <div class="metric-card">
 <h3 id="infinitive_clauses">Infinitive clauses<a class="headerlink" href="#infinitive_clauses" title="Permanent link">&para;</a></h3>
 <p class="metric-meta"><code>infinitive_clauses_per_sent</code></p>
 <!-- --8<-- [start:is_infinitive_clause_head] -->
-<div class="signature highlight"><pre><span></span><code><span class="n">is_infinitive_clause_head</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="n">is_clause_head</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">auxiliary_form</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">subordinating_marks</span><span class="o">=</span><span class="p">(),</span> <span class="n">is_subordinating_mark</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">is_infinitive_clause_head</span><span class="p">(</span><span class="n">word</span><span class="p">,</span> <span class="n">is_clause_head</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">auxiliary_form</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">subordinating_marks</span><span class="o">=</span><span class="p">(),</span> <span class="n">is_subordinating_mark</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 <p>Checks whether a word heads an infinitive clause: a clause head by the check <code>is_clause_head</code> whose own predicate is an infinitive, under <code>xcomp</code> or a relation of <code>SUBORDINATE_CLAUSE_DEPS</code> (<em>wants to leave</em>, <em>asked him to leave</em>, <em>came to help</em>, <em>it is hard to say</em>) or a conjunct of one, the first word up its chain of conjuncts deciding as in <code>is_subordinate_clause_head</code>; an infinitive under <code>conj</code> or <code>parataxis</code> with a subordinating mark, or an infinitive conjunct of it, heads one too (<em>came , in order to help</em>). Such a clause is counted apart from the subordinate ones, as grammars of many languages take it for a part of a simple sentence.</p>
 <table>
@@ -3533,20 +3481,20 @@ Ratio of nouns to verbs                                    |   0.50
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><code>token</code></td>
-<td style="text-align: left;"><code>Token</code></td>
+<td style="text-align: left;"><code>word</code></td>
+<td style="text-align: left;"><code>TreeWord</code></td>
 <td style="text-align: left;">-</td>
-<td style="text-align: left;">Token</td>
+<td style="text-align: left;">Word of the tree</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>is_clause_head</code></td>
-<td style="text-align: left;"><code>Callable[[Token], bool]</code></td>
+<td style="text-align: left;"><code>Callable[[TreeWord], bool]</code></td>
 <td style="text-align: left;"><code>None</code></td>
 <td style="text-align: left;">Whether a word heads a clause; <code>is_clause_head</code> of the module with the hooks of this check if not given</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>auxiliary_form</code></td>
-<td style="text-align: left;"><code>Callable[[Token], str]</code></td>
+<td style="text-align: left;"><code>Callable[[TreeWord], str]</code></td>
 <td style="text-align: left;"><code>None</code></td>
 <td style="text-align: left;">Verb form of an auxiliary without <code>VerbForm</code> (<code>predicate_form</code>); none by default</td>
 </tr>
@@ -3558,13 +3506,13 @@ Ratio of nouns to verbs                                    |   0.50
 </tr>
 <tr>
 <td style="text-align: left;"><code>is_subordinating_mark</code></td>
-<td style="text-align: left;"><code>Callable[[Token], bool]</code></td>
+<td style="text-align: left;"><code>Callable[[TreeWord], bool]</code></td>
 <td style="text-align: left;"><code>None</code></td>
 <td style="text-align: left;">Whether a mark is a subordinating conjunction; <code>is_subordinating_mark</code> of the module with <code>subordinating_marks</code> if not given</td>
 </tr>
 </tbody>
 </table>
-<p>A value that is not a <code>Token</code>, a check or a form of an auxiliary that is not callable and marks that are not a collection of strings raise <code>SourceTypeError</code>.</p>
+<p>A value that is not a <code>TreeWord</code>, a check or a form of an auxiliary that is not callable and marks that are not a collection of strings raise <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:is_infinitive_clause_head] -->
 </div>
 <div class="metric-card">
@@ -3591,9 +3539,9 @@ Ratio of nouns to verbs                                    |   0.50
 <h3 id="noun_modifiers">Modifiers of a noun<a class="headerlink" href="#noun_modifiers" title="Permanent link">&para;</a></h3>
 <p class="metric-meta"><code>modifiers_per_noun</code></p>
 <!-- --8<-- [start:count_noun_modifiers] -->
-<div class="signature highlight"><pre><span></span><code><span class="n">count_noun_modifiers</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="n">join_hyphens</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">count_noun_modifiers</span><span class="p">(</span><span class="n">word</span><span class="p">)</span>
 </code></pre></div>
-<p>Counts the modifiers of a noun phrase: the dependents with the relations <code>amod</code>, <code>det</code>, <code>nmod</code>, <code>nummod</code>, <code>acl</code> and their subtypes (<code>anyts.constants.NOUN_MODIFIER_DEPS</code>); <code>conj</code> and <code>appos</code> are no modifiers.</p>
+<p>Counts the modifiers of a noun phrase: the dependent words (<code>get_children</code>) with the relations <code>amod</code>, <code>det</code>, <code>nmod</code>, <code>nummod</code>, <code>acl</code> and their subtypes (<code>anyts.constants.NOUN_MODIFIER_DEPS</code>); <code>conj</code> and <code>appos</code> are no modifiers.</p>
 <table>
 <thead>
 <tr>
@@ -3605,16 +3553,10 @@ Ratio of nouns to verbs                                    |   0.50
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><code>token</code></td>
-<td style="text-align: left;"><code>Token</code></td>
+<td style="text-align: left;"><code>word</code></td>
+<td style="text-align: left;"><code>TreeWord</code></td>
 <td style="text-align: left;">-</td>
-<td style="text-align: left;">Token</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>join_hyphens</code></td>
-<td style="text-align: left;"><code>bool</code></td>
-<td style="text-align: left;"><code>False</code></td>
-<td style="text-align: left;">Take a hyphenated word for one word</td>
+<td style="text-align: left;">Word of the tree</td>
 </tr>
 </tbody>
 </table>
@@ -3627,7 +3569,7 @@ Ratio of nouns to verbs                                    |   0.50
 <p>A prepositional chain is two or more nested complements with a preposition, each hanging on the previous one: <em>on the mat of the house of the mayor</em> (length 3). The links are the words of the hook <code>is_prep_complement</code>, and the chains and their lengths are those of <code>calc_modifier_chains</code>; a chain may start at a complement of a verb (<code>obl</code>) or at a prepositional predicate with a copula (<em>was in the house of the mayor</em>), but not at a conjunct of a complement (<em>in Madrid and in the centre of the city</em>), and a predicate of a relative clause (<em>the house that was by the river</em>) is no link of the chain of its noun. The chains read Universal Dependencies alone: ClearNLP heads a phrase by its preposition (<code>prep</code>, <code>pobj</code>), so its parses give no chains.</p>
 <!-- --8<-- [end:SyntaxStats-prep_chains] -->
 <!-- --8<-- [start:is_prep_complement] -->
-<div class="signature highlight"><pre><span></span><code><span class="n">is_prep_complement</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="n">join_hyphens</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">is_prep_complement</span><span class="p">(</span><span class="n">word</span><span class="p">)</span>
 </code></pre></div>
 <p>Checks whether a word is a complement with a preposition: a word with the relation <code>nmod</code> or <code>obl</code> or a subtype of them (<code>anyts.constants.PREP_COMPLEMENT_DEPS</code>), or a predicate with a copula or a subject of its own out of a relative clause (<code>acl</code>), such as a nominal predicate of a language that drops the copula of the present tense, that has a dependent of the relation <code>case</code> that is an adposition (<code>ADP</code>) or begins one of several words (<code>fixed</code>: <em>in front of</em>). A noun in a case without a preposition and a possessive marker are none.</p>
 <table>
@@ -3641,20 +3583,14 @@ Ratio of nouns to verbs                                    |   0.50
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><code>token</code></td>
-<td style="text-align: left;"><code>Token</code></td>
+<td style="text-align: left;"><code>word</code></td>
+<td style="text-align: left;"><code>TreeWord</code></td>
 <td style="text-align: left;">-</td>
-<td style="text-align: left;">Token</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>join_hyphens</code></td>
-<td style="text-align: left;"><code>bool</code></td>
-<td style="text-align: left;"><code>False</code></td>
-<td style="text-align: left;">Take a hyphenated word for one word</td>
+<td style="text-align: left;">Word of the tree</td>
 </tr>
 </tbody>
 </table>
-<p>A value that is not a <code>Token</code> raises <code>SourceTypeError</code>.</p>
+<p>A value that is not a <code>TreeWord</code> raises <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:is_prep_complement] -->
 </div>
 <div class="metric-card">
@@ -3668,7 +3604,7 @@ Ratio of nouns to verbs                                    |   0.50
 <h3 id="passive">Passive<a class="headerlink" href="#passive" title="Permanent link">&para;</a></h3>
 <p class="metric-meta"><code>p_passive</code> · <code>p_agentless_passive</code></p>
 <!-- --8<-- [start:is_passive] -->
-<div class="signature highlight"><pre><span></span><code><span class="n">is_passive</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="n">join_hyphens</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">is_passive</span><span class="p">(</span><span class="n">word</span><span class="p">)</span>
 </code></pre></div>
 <p>Checks whether a word is a passive verb form: a verb with <code>Voice=Pass</code> or a dependent <code>nsubj:pass</code>, <code>csubj:pass</code>, <code>aux:pass</code>, or <code>nsubjpass</code>, <code>csubjpass</code>, <code>auxpass</code> of ClearNLP (<code>PASSIVE_DEPS</code>).</p>
 <table>
@@ -3682,30 +3618,24 @@ Ratio of nouns to verbs                                    |   0.50
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><code>token</code></td>
-<td style="text-align: left;"><code>Token</code></td>
+<td style="text-align: left;"><code>word</code></td>
+<td style="text-align: left;"><code>TreeWord</code></td>
 <td style="text-align: left;">-</td>
-<td style="text-align: left;">Token</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>join_hyphens</code></td>
-<td style="text-align: left;"><code>bool</code></td>
-<td style="text-align: left;"><code>False</code></td>
-<td style="text-align: left;">Take a hyphenated word for one word</td>
+<td style="text-align: left;">Word of the tree</td>
 </tr>
 </tbody>
 </table>
-<p>A value that is not a <code>Token</code> raises <code>SourceTypeError</code>.</p>
+<p>A value that is not a <code>TreeWord</code> raises <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:is_passive] -->
 <!-- --8<-- [start:has_agent] -->
-<div class="signature highlight"><pre><span></span><code><span class="n">has_agent</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="n">join_hyphens</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">has_agent</span><span class="p">(</span><span class="n">word</span><span class="p">)</span>
 </code></pre></div>
-<p>Checks whether a word has an agent: a dependent <code>obl:agent</code>, or <code>agent</code> of ClearNLP (<code>AGENT_DEPS</code>). The arguments and the error are those of <code>is_passive</code>.</p>
+<p>Checks whether a word has an agent: a dependent <code>obl:agent</code>, or <code>agent</code> of ClearNLP (<code>AGENT_DEPS</code>). The argument and the error are those of <code>is_passive</code>.</p>
 <!-- --8<-- [end:has_agent] -->
 <!-- --8<-- [start:is_agentless] -->
-<div class="signature highlight"><pre><span></span><code><span class="n">is_agentless</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="n">join_hyphens</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">is_agentless</span><span class="p">(</span><span class="n">word</span><span class="p">)</span>
 </code></pre></div>
-<p>Checks whether a word is a passive form (<code>is_passive</code>) without an agent (<code>has_agent</code>), with the same arguments and error.</p>
+<p>Checks whether a word is a passive form (<code>is_passive</code>) without an agent (<code>has_agent</code>), with the same argument and error.</p>
 <!-- --8<-- [end:is_agentless] -->
 </div>
 <div class="metric-card">
@@ -3737,7 +3667,7 @@ Ratio of nouns to verbs                                    |   0.50
 \]</div>
 <!-- --8<-- [end:SyntaxStats-similarity] -->
 <!-- --8<-- [start:dependency_triples] -->
-<div class="signature highlight"><pre><span></span><code><span class="n">dependency_triples</span><span class="p">(</span><span class="n">tokens</span><span class="p">,</span> <span class="n">join_hyphens</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">dependency_triples</span><span class="p">(</span><span class="n">words</span><span class="p">)</span>
 </code></pre></div>
 <p>The dependency triples of the words of a sentence (<code>get_words</code>), in their order: the part of speech of the head of a word - the nearest word above it through punctuation - its relation without a subtype (<code>base_dep</code>) and its own part of speech, such as <code>("NOUN", "amod", "ADJ")</code> for <em>a red house</em>. The head of the sentence, and a word with no word above it, give an empty head and the relation <code>root</code>, whatever its label.</p>
 <table>
@@ -3751,20 +3681,14 @@ Ratio of nouns to verbs                                    |   0.50
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><code>tokens</code></td>
-<td style="text-align: left;"><code>Doc</code> / <code>Span</code> / <code>list[Token]</code></td>
+<td style="text-align: left;"><code>words</code></td>
+<td style="text-align: left;"><code>list[TreeWord]</code></td>
 <td style="text-align: left;">-</td>
-<td style="text-align: left;">Sequence of tokens</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>join_hyphens</code></td>
-<td style="text-align: left;"><code>bool</code></td>
-<td style="text-align: left;"><code>False</code></td>
-<td style="text-align: left;">Take a hyphenated word for one word</td>
+<td style="text-align: left;">Words of the tree of a sentence</td>
 </tr>
 </tbody>
 </table>
-<p>Tokens that are not a <code>Doc</code>, a <code>Span</code> or a list of <code>Token</code> objects raise <code>SourceTypeError</code>.</p>
+<p>Words that are not a list of <code>TreeWord</code> objects raise <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:dependency_triples] -->
 <!-- --8<-- [start:calc_edit_distance] -->
 <div class="signature highlight"><pre><span></span><code><span class="n">calc_edit_distance</span><span class="p">(</span><span class="n">sents</span><span class="p">)</span>
@@ -3843,12 +3767,12 @@ Ratio of nouns to verbs                                    |   0.50
 </div>
 <h2 id="methods">Methods<a class="headerlink" href="#methods" title="Permanent link">&para;</a></h2>
 <p>The methods <code>get_stats</code>, <code>to_dataframe</code>, <code>print_stats</code> and <code>describe</code> are those of the <a href="../stats/">statistics interface</a>.</p>
-<p>The functions of the tree take a spaCy <code>Doc</code>, a <code>Span</code> or a list of tokens; its words are the tokens of <code>anyts.utils.is_word</code>. They read the relations that Universal Dependencies and the ClearNLP labels of the English models share: the head of a token, <code>cc</code>, <code>conj</code>, <code>parataxis</code>, <code>punct</code> and <code>aux</code>, the subjects <code>nsubj</code> and <code>csubj</code>, the modifiers of a noun <code>amod</code>, <code>det</code>, <code>nmod</code>, <code>nummod</code> and <code>acl</code>, the clause relations <code>ccomp</code>, <code>advcl</code> and <code>xcomp</code>, and the root; the copula <code>cop</code> of <code>predicate_form</code> and <code>is_predicate</code> exists in Universal Dependencies alone. The passive and its agent (<code>is_passive</code>, <code>has_agent</code>) and the order of the subjects and the objects read the relations of both schemes (<code>PASSIVE_DEPS</code>, <code>AGENT_DEPS</code>, <code>NOMINAL_SUBJECT_DEPS</code>, <code>OBJECT_DEPS</code>); the prepositional complements of <code>is_prep_complement</code> read Universal Dependencies alone. Everything else is up to a language library.</p>
+<p>The functions of the tree take the words of the tree of a document (<code>TreeWord</code> of <a href="../../document/#get_tree"><code>get_tree</code></a>): a word, or a sequence of them such as a sentence of the tree, whose words are those of <code>get_words</code>. They read the relations that Universal Dependencies and the ClearNLP labels of the English models share: the head of a word, <code>cc</code>, <code>conj</code>, <code>parataxis</code>, <code>punct</code> and <code>aux</code>, the subjects <code>nsubj</code> and <code>csubj</code>, the modifiers of a noun <code>amod</code>, <code>det</code>, <code>nmod</code>, <code>nummod</code> and <code>acl</code>, the clause relations <code>ccomp</code>, <code>advcl</code> and <code>xcomp</code>, and the root; the copula <code>cop</code> of <code>predicate_form</code> and <code>is_predicate</code> exists in Universal Dependencies alone. The passive and its agent (<code>is_passive</code>, <code>has_agent</code>) and the order of the subjects and the objects read the relations of both schemes (<code>PASSIVE_DEPS</code>, <code>AGENT_DEPS</code>, <code>NOMINAL_SUBJECT_DEPS</code>, <code>OBJECT_DEPS</code>); the prepositional complements of <code>is_prep_complement</code> read Universal Dependencies alone. Everything else is up to a language library.</p>
 <h2 id="get_words">Words of a sequence<a class="headerlink" href="#get_words" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:get_words] -->
-<div class="signature highlight"><pre><span></span><code><span class="n">get_words</span><span class="p">(</span><span class="n">tokens</span><span class="p">,</span> <span class="n">join_hyphens</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">get_words</span><span class="p">(</span><span class="n">words</span><span class="p">)</span>
 </code></pre></div>
-<p>The words of a sequence of tokens in their order; with <code>join_hyphens=True</code> a word the tokenizer split at its hyphens is one word, given by its part that holds its relation, as with the dependents of <code>get_children</code> (<code>governor</code> in <code>He is vice-governor</code>), or by its first part when a hyphen holds it.</p>
+<p>The words of a sequence of words of the tree in their order: those with a letter or a digit, so punctuation marks and symbols are left out.</p>
 <table>
 <thead>
 <tr>
@@ -3860,31 +3784,20 @@ Ratio of nouns to verbs                                    |   0.50
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><code>tokens</code></td>
-<td style="text-align: left;"><code>Doc</code> / <code>Span</code> / <code>list[Token]</code></td>
+<td style="text-align: left;"><code>words</code></td>
+<td style="text-align: left;"><code>list[TreeWord]</code></td>
 <td style="text-align: left;">-</td>
-<td style="text-align: left;">Sequence of tokens</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>join_hyphens</code></td>
-<td style="text-align: left;"><code>bool</code></td>
-<td style="text-align: left;"><code>False</code></td>
-<td style="text-align: left;">Take a hyphenated word for one word</td>
+<td style="text-align: left;">Words of the tree, such as those of a sentence</td>
 </tr>
 </tbody>
 </table>
 <!-- --8<-- [end:get_words] -->
 
-<h2 id="hyphenated-words">Hyphenated words<a class="headerlink" href="#hyphenated-words" title="Permanent link">&para;</a></h2>
-<!-- --8<-- [start:hyphenated_words] -->
-<p>A tokenizer may split a word at its hyphens (<code>well-known</code> into <code>well</code>, <code>-</code>, <code>known</code>), and a parser then hangs every part on its own head. With <code>join_hyphens=True</code> the functions of the tree take a word whose parts <code>anyts.utils.joins_previous</code> joins for one word with its hyphens. A word holding the head of the sentence has no head; the head of another one is that of its part hanging outside it, the nearest to the root (a word rather than a hyphen when equal). The dependents of a word are the words whose head hangs on one of its tokens, each given by that part (or by its first part when it hangs by a hyphen); its subtree is the word and the words that hang on it, directly or through punctuation. So every word has one dependency and is the dependent of one word.</p>
-<!-- --8<-- [end:hyphenated_words] -->
-
 <h2 id="is_root">Head of a sentence<a class="headerlink" href="#is_root" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:is_root] -->
-<div class="signature highlight"><pre><span></span><code><span class="n">is_root</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">is_root</span><span class="p">(</span><span class="n">word</span><span class="p">)</span>
 </code></pre></div>
-<p>Checks whether a token is the head of its sentence: its head is the token itself.</p>
+<p>Checks whether a word is the head of its sentence: it has no head. A value that is no <code>TreeWord</code>, such as a spaCy <code>Token</code>, raises <code>SourceTypeError</code>.</p>
 <table>
 <thead>
 <tr>
@@ -3896,10 +3809,10 @@ Ratio of nouns to verbs                                    |   0.50
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><code>token</code></td>
-<td style="text-align: left;"><code>Token</code></td>
+<td style="text-align: left;"><code>word</code></td>
+<td style="text-align: left;"><code>TreeWord</code></td>
 <td style="text-align: left;">-</td>
-<td style="text-align: left;">Token</td>
+<td style="text-align: left;">Word of the tree</td>
 </tr>
 </tbody>
 </table>
@@ -3907,9 +3820,9 @@ Ratio of nouns to verbs                                    |   0.50
 
 <h2 id="base_dep">Base relation<a class="headerlink" href="#base_dep" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:base_dep] -->
-<div class="signature highlight"><pre><span></span><code><span class="n">base_dep</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">base_dep</span><span class="p">(</span><span class="n">word</span><span class="p">)</span>
 </code></pre></div>
-<p>The relation of a token without its subtype, which Universal Dependencies separates by a colon: <code>nsubj:pass</code> gives <code>nsubj</code>, <code>expl:pass</code> gives <code>expl</code>.</p>
+<p>The relation of a word without its subtype, which Universal Dependencies separates by a colon: <code>nsubj:pass</code> gives <code>nsubj</code>, <code>expl:pass</code> gives <code>expl</code>; a word without a relation gives an empty string.</p>
 <table>
 <thead>
 <tr>
@@ -3921,10 +3834,10 @@ Ratio of nouns to verbs                                    |   0.50
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><code>token</code></td>
-<td style="text-align: left;"><code>Token</code></td>
+<td style="text-align: left;"><code>word</code></td>
+<td style="text-align: left;"><code>TreeWord</code></td>
 <td style="text-align: left;">-</td>
-<td style="text-align: left;">Token</td>
+<td style="text-align: left;">Word of the tree</td>
 </tr>
 </tbody>
 </table>
@@ -3932,9 +3845,9 @@ Ratio of nouns to verbs                                    |   0.50
 
 <h2 id="get_children">Dependent words<a class="headerlink" href="#get_children" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:get_children] -->
-<div class="signature highlight"><pre><span></span><code><span class="n">get_children</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="n">join_hyphens</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">get_children</span><span class="p">(</span><span class="n">word</span><span class="p">)</span>
 </code></pre></div>
-<p>The dependent words of a token, punctuation and whitespace left out; with <code>join_hyphens=True</code>, the dependents of the whole hyphenated word the token belongs to.</p>
+<p>The dependent words of a word, punctuation marks and symbols left out.</p>
 <table>
 <thead>
 <tr>
@@ -3946,36 +3859,30 @@ Ratio of nouns to verbs                                    |   0.50
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><code>token</code></td>
-<td style="text-align: left;"><code>Token</code></td>
+<td style="text-align: left;"><code>word</code></td>
+<td style="text-align: left;"><code>TreeWord</code></td>
 <td style="text-align: left;">-</td>
-<td style="text-align: left;">Token</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>join_hyphens</code></td>
-<td style="text-align: left;"><code>bool</code></td>
-<td style="text-align: left;"><code>False</code></td>
-<td style="text-align: left;">Take a hyphenated word for one word</td>
+<td style="text-align: left;">Word of the tree</td>
 </tr>
 </tbody>
 </table>
 <!-- --8<-- [end:get_children] -->
 
 <!-- --8<-- [start:count_children] -->
-<div class="signature highlight"><pre><span></span><code><span class="n">count_children</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="n">join_hyphens</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">count_children</span><span class="p">(</span><span class="n">word</span><span class="p">)</span>
 </code></pre></div>
-<p>The number of the dependent words of a token; the arguments are those of <code>get_children</code>.</p>
+<p>The number of the dependent words of a word; the argument is that of <code>get_children</code>.</p>
 <!-- --8<-- [end:count_children] -->
 
 <!-- --8<-- [start:subtree_len] -->
-<div class="signature highlight"><pre><span></span><code><span class="n">subtree_len</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="n">join_hyphens</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">subtree_len</span><span class="p">(</span><span class="n">word</span><span class="p">)</span>
 </code></pre></div>
-<p>The number of words in the subtree of a token: the token itself and all of its direct and indirect dependents; the arguments are those of <code>get_children</code>.</p>
+<p>The number of words in the subtree of a word: the word itself and all of its direct and indirect dependents, punctuation left out; the argument is that of <code>get_children</code>.</p>
 <!-- --8<-- [end:subtree_len] -->
 
 <h2 id="verb-forms">Verb form of a predicate<a class="headerlink" href="#verb-forms" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:predicate_form] -->
-<div class="signature highlight"><pre><span></span><code><span class="n">predicate_form</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="n">auxiliary_form</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">predicate_form</span><span class="p">(</span><span class="n">word</span><span class="p">,</span> <span class="n">auxiliary_form</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 <p>The verb form of a predicate by the forms (<code>VerbForm</code>) of its auxiliaries and copulas (<code>aux</code> and <code>cop</code> with their subtypes, <code>anyts.constants.AUXILIARY_DEPS</code>), as Universal Dependencies annotates them. A finite auxiliary makes the predicate finite wherever it stands (<em>had arrived</em>, the German <em>gekommen sein wird</em>); otherwise the first auxiliary decides (<em>to have gone</em> is an infinitive, <em>being chosen</em> a gerund), and without auxiliaries the word itself. A past participle auxiliary counts as finite, since it follows a finite one the parser may attach to another word (<em>had been chosen</em>); a present participle (<em>having eaten</em>) does not. A ClearNLP parse has no copula relation: its copula heads the clause with its own form, and its passive auxiliary <code>auxpass</code> is not read. An auxiliary the model leaves without a form is read by the language hook <code>auxiliary_form</code>, which gives its form or an empty string to skip it; without the hook it is skipped. A word with no verb form gives an empty string.</p>
 <table>
@@ -3989,20 +3896,20 @@ Ratio of nouns to verbs                                    |   0.50
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><code>token</code></td>
-<td style="text-align: left;"><code>Token</code></td>
+<td style="text-align: left;"><code>word</code></td>
+<td style="text-align: left;"><code>TreeWord</code></td>
 <td style="text-align: left;">-</td>
-<td style="text-align: left;">Token</td>
+<td style="text-align: left;">Word of the tree</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>auxiliary_form</code></td>
-<td style="text-align: left;"><code>Callable[[Token], str]</code></td>
+<td style="text-align: left;"><code>Callable[[TreeWord], str]</code></td>
 <td style="text-align: left;"><code>None</code></td>
 <td style="text-align: left;">Verb form of an auxiliary without <code>VerbForm</code></td>
 </tr>
 </tbody>
 </table>
-<p>A value that is not a <code>Token</code> and a hook that is not callable raise <code>SourceTypeError</code>.</p>
+<p>A value that is not a <code>TreeWord</code> and a hook that is not callable raise <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:predicate_form] -->
 
 <div class="tabbed-set tabbed-alternate" data-tabs="3:2"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Code</label><label for="__tabbed_3_2">Result</label></div>
@@ -4011,6 +3918,7 @@ Ratio of nouns to verbs                                    |   0.50
 <div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">spacy</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">spacy.tokens</span><span class="w"> </span><span class="kn">import</span> <span class="n">Doc</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">anyts.document</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_tree</span><span class="p">,</span> <span class="n">to_document</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">anyts.syntax_stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">predicate_form</span>
 
 <span class="n">vocab</span> <span class="o">=</span> <span class="n">spacy</span><span class="o">.</span><span class="n">blank</span><span class="p">(</span><span class="s2">"en"</span><span class="p">)</span><span class="o">.</span><span class="n">vocab</span>
@@ -4021,7 +3929,8 @@ Ratio of nouns to verbs                                    |   0.50
     <span class="n">deps</span><span class="o">=</span><span class="p">[</span><span class="s2">"nsubj:pass"</span><span class="p">,</span> <span class="s2">"aux"</span><span class="p">,</span> <span class="s2">"aux:pass"</span><span class="p">,</span> <span class="s2">"ROOT"</span><span class="p">],</span>
     <span class="n">morphs</span><span class="o">=</span><span class="p">[</span><span class="s2">"Case=Nom"</span><span class="p">,</span> <span class="s2">"VerbForm=Fin"</span><span class="p">,</span> <span class="s2">"VerbForm=Part"</span><span class="p">,</span> <span class="s2">"VerbForm=Part"</span><span class="p">],</span>
 <span class="p">)</span>
-<span class="n">predicate_form</span><span class="p">(</span><span class="n">doc</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+<span class="n">chosen</span> <span class="o">=</span> <span class="n">get_tree</span><span class="p">(</span><span class="n">to_document</span><span class="p">(</span><span class="n">doc</span><span class="p">))</span><span class="o">.</span><span class="n">words</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+<span class="n">predicate_form</span><span class="p">(</span><span class="n">chosen</span><span class="p">)</span>
 <span class="c1"># An auxiliary the model left without a form, read by the hook</span>
 <span class="n">doc</span> <span class="o">=</span> <span class="n">Doc</span><span class="p">(</span>
     <span class="n">vocab</span><span class="p">,</span>
@@ -4030,7 +3939,8 @@ Ratio of nouns to verbs                                    |   0.50
     <span class="n">deps</span><span class="o">=</span><span class="p">[</span><span class="s2">"mark"</span><span class="p">,</span> <span class="s2">"aux"</span><span class="p">,</span> <span class="s2">"ROOT"</span><span class="p">],</span>
     <span class="n">morphs</span><span class="o">=</span><span class="p">[</span><span class="s2">""</span><span class="p">,</span> <span class="s2">""</span><span class="p">,</span> <span class="s2">"VerbForm=Part"</span><span class="p">],</span>
 <span class="p">)</span>
-<span class="n">predicate_form</span><span class="p">(</span><span class="n">doc</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span> <span class="n">predicate_form</span><span class="p">(</span><span class="n">doc</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="k">lambda</span> <span class="n">aux</span><span class="p">:</span> <span class="s2">"Inf"</span> <span class="k">if</span> <span class="n">aux</span><span class="o">.</span><span class="n">lower_</span> <span class="o">==</span> <span class="s2">"have"</span> <span class="k">else</span> <span class="s2">""</span><span class="p">)</span>
+<span class="n">gone</span> <span class="o">=</span> <span class="n">get_tree</span><span class="p">(</span><span class="n">to_document</span><span class="p">(</span><span class="n">doc</span><span class="p">))</span><span class="o">.</span><span class="n">words</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+<span class="n">predicate_form</span><span class="p">(</span><span class="n">gone</span><span class="p">),</span> <span class="n">predicate_form</span><span class="p">(</span><span class="n">gone</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">aux</span><span class="p">:</span> <span class="s2">"Inf"</span> <span class="k">if</span> <span class="n">aux</span><span class="o">.</span><span class="n">form</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">"have"</span> <span class="k">else</span> <span class="s2">""</span><span class="p">)</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
@@ -4042,7 +3952,7 @@ Ratio of nouns to verbs                                    |   0.50
 </div>
 <h2 id="is_predicate">Predicate of a clause<a class="headerlink" href="#is_predicate" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:is_predicate] -->
-<div class="signature highlight"><pre><span></span><code><span class="n">is_predicate</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="n">join_hyphens</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">is_predicate</span><span class="p">(</span><span class="n">word</span><span class="p">)</span>
 </code></pre></div>
 <p>Checks whether a word can be the predicate of its clause: a verb (<code>VERB</code>, <code>AUX</code>), a word with a subject of its own (<code>nsubj</code>, <code>csubj</code> and their subtypes, <code>anyts.constants.SUBJECT_DEPS</code>) or with a copula (<code>cop</code>), so the nominal predicate of <code>he is tall</code> and of a language that drops the subject passes and a parenthetical word does not.</p>
 <table>
@@ -4056,27 +3966,21 @@ Ratio of nouns to verbs                                    |   0.50
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><code>token</code></td>
-<td style="text-align: left;"><code>Token</code></td>
+<td style="text-align: left;"><code>word</code></td>
+<td style="text-align: left;"><code>TreeWord</code></td>
 <td style="text-align: left;">-</td>
-<td style="text-align: left;">Token</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>join_hyphens</code></td>
-<td style="text-align: left;"><code>bool</code></td>
-<td style="text-align: left;"><code>False</code></td>
-<td style="text-align: left;">Take a hyphenated word for one word</td>
+<td style="text-align: left;">Word of the tree</td>
 </tr>
 </tbody>
 </table>
-<p>A value that is not a <code>Token</code> raises <code>SourceTypeError</code>.</p>
+<p>A value that is not a <code>TreeWord</code> raises <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:is_predicate] -->
 
 <h2 id="calc_modifier_chains">Chains of modifiers<a class="headerlink" href="#calc_modifier_chains" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:calc_modifier_chains] -->
-<div class="signature highlight"><pre><span></span><code><span class="n">calc_modifier_chains</span><span class="p">(</span><span class="n">tokens</span><span class="p">,</span> <span class="n">is_modifier</span><span class="p">,</span> <span class="n">join_hyphens</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">calc_modifier_chains</span><span class="p">(</span><span class="n">words</span><span class="p">,</span> <span class="n">is_modifier</span><span class="p">)</span>
 </code></pre></div>
-<p>The lengths of the chains of nested modifiers, in the order of the words. A chain is two or more modifiers each hanging on the previous one, such as the complements of <code>the increase of the efficiency of the use of resources</code> (length 3); the check <code>is_modifier</code> of a language says what a modifier is (a complement with a preposition, a noun in the genitive). A chain starts at a modifier whose head is none, and its length is the number of modifiers in its longest branch. The links are those of <code>get_children</code>: punctuation is no link, and with <code>join_hyphens</code> a hyphenated word is one link.</p>
+<p>The lengths of the chains of nested modifiers, in the order of the words. A chain is two or more modifiers each hanging on the previous one, such as the complements of <code>the increase of the efficiency of the use of resources</code> (length 3); the check <code>is_modifier</code> of a language says what a modifier is (a complement with a preposition, a noun in the genitive). A chain starts at a modifier whose head is none, and its length is the number of modifiers in its longest branch. The links are those of <code>get_children</code>: punctuation is no link.</p>
 <table>
 <thead>
 <tr>
@@ -4088,22 +3992,16 @@ Ratio of nouns to verbs                                    |   0.50
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><code>tokens</code></td>
-<td style="text-align: left;"><code>Doc</code> / <code>Span</code> / <code>list[Token]</code></td>
+<td style="text-align: left;"><code>words</code></td>
+<td style="text-align: left;"><code>list[TreeWord]</code></td>
 <td style="text-align: left;">-</td>
-<td style="text-align: left;">Sequence of tokens</td>
+<td style="text-align: left;">Words of the tree, such as those of a sentence</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>is_modifier</code></td>
-<td style="text-align: left;"><code>Callable[[Token], bool]</code></td>
+<td style="text-align: left;"><code>Callable[[TreeWord], bool]</code></td>
 <td style="text-align: left;">-</td>
 <td style="text-align: left;">Whether a word is a modifier of the chain</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>join_hyphens</code></td>
-<td style="text-align: left;"><code>bool</code></td>
-<td style="text-align: left;"><code>False</code></td>
-<td style="text-align: left;">Take a hyphenated word for one word</td>
 </tr>
 </tbody>
 </table>
@@ -4116,6 +4014,7 @@ Ratio of nouns to verbs                                    |   0.50
 <div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">spacy</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">spacy.tokens</span><span class="w"> </span><span class="kn">import</span> <span class="n">Doc</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">anyts.document</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_tree</span><span class="p">,</span> <span class="n">to_document</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">anyts.syntax_stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">calc_modifier_chains</span>
 
 <span class="n">doc</span> <span class="o">=</span> <span class="n">Doc</span><span class="p">(</span>
@@ -4124,7 +4023,8 @@ Ratio of nouns to verbs                                    |   0.50
     <span class="n">heads</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span>
     <span class="n">deps</span><span class="o">=</span><span class="p">[</span><span class="s2">"det"</span><span class="p">,</span> <span class="s2">"ROOT"</span><span class="p">,</span> <span class="s2">"case"</span><span class="p">,</span> <span class="s2">"det"</span><span class="p">,</span> <span class="s2">"nmod"</span><span class="p">,</span> <span class="s2">"case"</span><span class="p">,</span> <span class="s2">"det"</span><span class="p">,</span> <span class="s2">"nmod"</span><span class="p">],</span>
 <span class="p">)</span>
-<span class="n">calc_modifier_chains</span><span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">token</span><span class="p">:</span> <span class="n">token</span><span class="o">.</span><span class="n">dep_</span> <span class="o">==</span> <span class="s2">"nmod"</span><span class="p">)</span>
+<span class="n">sentence</span> <span class="o">=</span> <span class="n">get_tree</span><span class="p">(</span><span class="n">to_document</span><span class="p">(</span><span class="n">doc</span><span class="p">))</span><span class="o">.</span><span class="n">sentences</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">calc_modifier_chains</span><span class="p">(</span><span class="n">sentence</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">word</span><span class="p">:</span> <span class="n">word</span><span class="o">.</span><span class="n">deprel</span> <span class="o">==</span> <span class="s2">"nmod"</span><span class="p">)</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
@@ -4137,7 +4037,7 @@ Ratio of nouns to verbs                                    |   0.50
 <details class="library-hooks">
 <summary>Language hooks of a subclass</summary>
 <!-- --8<-- [start:SyntaxStats-hooks] -->
-<p>A language library subclasses <code>SyntaxStats</code>. The defaults read Universal Dependencies with its morphological features and the relations it shares with ClearNLP; the passive, its agent and the order of the subjects and the objects read the relations of both, the prepositional chains those of Universal Dependencies:</p>
+<p>A language library subclasses <code>SyntaxStats</code>. The hooks of a word get a <code>TreeWord</code> of the tree of the document of <code>parse</code> (<code>get_tree</code>). The defaults read Universal Dependencies with its morphological features and the relations it shares with ClearNLP; the passive, its agent and the order of the subjects and the objects read the relations of both, the prepositional chains those of Universal Dependencies:</p>
 <table>
 <thead>
 <tr>
@@ -4150,67 +4050,67 @@ Ratio of nouns to verbs                                    |   0.50
 <tr>
 <td style="text-align: left;"><code>parse(source)</code></td>
 <td style="text-align: left;">method</td>
-<td style="text-align: left;"><code>Doc</code> of a source; by default the source itself, which must be a <code>Doc</code>; a library may parse a string</td>
+<td style="text-align: left;">Document of the source, from <code>Stats</code>; a library sets it to parse and annotate a string in its language</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>is_clause_head(token)</code></td>
+<td style="text-align: left;"><code>is_clause_head(word)</code></td>
 <td style="text-align: left;">method</td>
-<td style="text-align: left;">Whether a word heads a clause; by default <code>is_clause_head</code> of the module with <code>join_hyphens</code> of the class and the hooks <code>is_infinitive_periphrasis</code> and <code>auxiliary_form</code></td>
+<td style="text-align: left;">Whether a word heads a clause; by default <code>is_clause_head</code> of the module with the hooks <code>is_infinitive_periphrasis</code> and <code>auxiliary_form</code></td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>is_infinitive_periphrasis(token)</code></td>
+<td style="text-align: left;"><code>is_infinitive_periphrasis(word)</code></td>
 <td style="text-align: left;">method</td>
 <td style="text-align: left;">Whether an infinitive under <code>xcomp</code>, an infinitive conjunct or an infinitive subject (<code>csubj</code>) of a modal word makes one predicate with its head, a modal or phasal verb (<em>can leave</em>, <em>begins to leave</em>): one clause and one verb phrase; none by default</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>auxiliary_form(token)</code></td>
+<td style="text-align: left;"><code>auxiliary_form(word)</code></td>
 <td style="text-align: left;">method</td>
 <td style="text-align: left;">Verb form the checks of the clauses read for an auxiliary or a copula without <code>VerbForm</code> (<code>predicate_form</code>); by default an empty string, which skips it</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>is_subordinate_clause_head(token)</code></td>
+<td style="text-align: left;"><code>is_subordinate_clause_head(word)</code></td>
 <td style="text-align: left;">method</td>
 <td style="text-align: left;">Whether a clause head heads a subordinate clause, asked only of the words of <code>is_clause_head</code>; by default <code>is_subordinate_clause_head</code> of the module over the hooks <code>is_clause_head</code>, <code>auxiliary_form</code> and <code>is_subordinating_mark</code></td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>is_infinitive_clause_head(token)</code></td>
+<td style="text-align: left;"><code>is_infinitive_clause_head(word)</code></td>
 <td style="text-align: left;">method</td>
 <td style="text-align: left;">Whether a clause head heads an infinitive clause (<em>wants to leave</em>, <em>came to help</em>), counted apart from the subordinate ones; by default <code>is_infinitive_clause_head</code> of the module over the hooks <code>is_clause_head</code>, <code>auxiliary_form</code> and <code>is_subordinating_mark</code></td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>is_subordinating_mark(token)</code></td>
+<td style="text-align: left;"><code>is_subordinating_mark(word)</code></td>
 <td style="text-align: left;">method</td>
 <td style="text-align: left;">Whether a mark of a conjunct or a parataxis is a subordinating conjunction, which makes it a subordinate clause (an infinitive one with an infinitive); by default <code>is_subordinating_mark</code> of the module with <code>subordinating_marks</code>; a library reads the context of a word that is a conjunction and a pronoun</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>is_prep_complement(token)</code></td>
+<td style="text-align: left;"><code>is_prep_complement(word)</code></td>
 <td style="text-align: left;">method</td>
-<td style="text-align: left;">Whether a word is a link of a prepositional chain; by default <code>is_prep_complement</code> of the module with <code>join_hyphens</code> of the class. It gets the words of <code>sents</code> on first use: tokens of a copy of the <code>Doc</code> without its user data and tensor, on a blank vocabulary after pickling, so no extension of a token</td>
+<td style="text-align: left;">Whether a word is a link of a prepositional chain; by default <code>is_prep_complement</code> of the module. It gets the words of <code>sents</code> on first use</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>is_participle_clause(token)</code></td>
+<td style="text-align: left;"><code>is_participle_clause(word)</code></td>
 <td style="text-align: left;">method</td>
 <td style="text-align: left;">Whether a word heads a participial clause; by default a participle that is not the head of the sentence, has no auxiliary or copula and has a dependent (<code>calc_valency</code>)</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>is_passive(token)</code></td>
+<td style="text-align: left;"><code>is_passive(word)</code></td>
 <td style="text-align: left;">method</td>
-<td style="text-align: left;">Whether a word is a passive verb form; by default <code>is_passive</code> of the module with <code>join_hyphens</code> of the class</td>
+<td style="text-align: left;">Whether a word is a passive verb form; by default <code>is_passive</code> of the module</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>is_agentless(token)</code></td>
+<td style="text-align: left;"><code>is_agentless(word)</code></td>
 <td style="text-align: left;">method</td>
 <td style="text-align: left;">Whether a passive form has no agent; by default the hook <code>is_passive</code> without an agent (<code>has_agent</code> of the module)</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>is_negation(token)</code></td>
+<td style="text-align: left;"><code>is_negation(word)</code></td>
 <td style="text-align: left;">method</td>
 <td style="text-align: left;">Whether a word is a word of negation; by default <code>Polarity=Neg</code> or a word of <code>negation_words</code>, a conjunction excluded</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>find_split_predicates(words)</code></td>
 <td style="text-align: left;">method</td>
-<td style="text-align: left;">Pairs of a light verb and the noun that carries its meaning (<code>to make a decision</code>); none by default</td>
+<td style="text-align: left;">Pairs of a light verb and the noun that carries its meaning (<code>to make a decision</code>) among the words of the text; none by default</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>negation_words</code></td>
@@ -4221,11 +4121,6 @@ Ratio of nouns to verbs                                    |   0.50
 <td style="text-align: left;"><code>subordinating_marks</code></td>
 <td style="text-align: left;">class attribute</td>
 <td style="text-align: left;">Subordinating conjunctions in lower case, the words of a fixed expression after a space, for the hook <code>is_subordinating_mark</code> (<em>because</em>, <em>so that</em>); none by default</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>join_hyphens</code></td>
-<td style="text-align: left;">class attribute</td>
-<td style="text-align: left;">Take a word the tokenizer split at its hyphens for one word, in the tree and in the default hooks</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>requires_lemmas</code></td>
@@ -4244,7 +4139,7 @@ Ratio of nouns to verbs                                    |   0.50
 </tr>
 </tbody>
 </table>
-<p>The subclass adds the statistics of the constructions of its language (chains of complements by <code>calc_modifier_chains</code>, its own clauses) in its constructor from <code>sents</code>, with its own <code>stats_desc</code>. A <code>negation_words</code> that is not a collection of strings raises <code>SourceTypeError</code> when the class is defined, and so does a <code>parse</code> that does not return a <code>Doc</code> when the statistics are computed.</p>
+<p>The subclass adds the statistics of the constructions of its language (chains of complements by <code>calc_modifier_chains</code>, its own clauses) in its constructor from <code>sents</code>, with its own <code>stats_desc</code>. A <code>negation_words</code> or <code>subordinating_marks</code> that is not a collection of strings raises <code>SourceTypeError</code> when the class is defined, and so does a <code>parse</code> that does not return a <code>Document</code> when the statistics are computed.</p>
 <!-- --8<-- [end:SyntaxStats-hooks] -->
 </details>
 

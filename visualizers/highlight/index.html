@@ -2593,9 +2593,9 @@
 <!-- --8<-- [end:group_words_by_sents] -->
 
 <!-- --8<-- [start:tokens_span] -->
-<div class="signature highlight"><pre><span></span><code><span class="n">tokens_span</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">tokens_span</span><span class="p">(</span><span class="n">words</span><span class="p">)</span>
 </code></pre></div>
-<p>The positions of the fragment that covers some tokens, without the punctuation and the whitespace at its edges.</p>
+<p>The positions of the fragment that covers some words of the tree of a document (<code>TreeWord</code>): from the start of the first to the end of the last token of the words with a letter or a digit, so the punctuation marks and the symbols at its edges are left out.</p>
 <!-- --8<-- [end:tokens_span] -->
 
 <!-- --8<-- [start:split_segments] -->
@@ -2850,7 +2850,7 @@
 <!-- --8<-- [start:find_split_predicate_highlights] -->
 <div class="signature highlight"><pre><span></span><code><span class="n">find_split_predicate_highlights</span><span class="p">(</span><span class="n">pairs</span><span class="p">,</span> <span class="n">note</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
-<p>The layer <code>split_predicates</code>: a fragment for every pair of a light verb and its noun a language finds, from the first word of the pair to the last; the note reads their lemmas by default.</p>
+<p>The layer <code>split_predicates</code>: a fragment for every pair of a light verb and its noun a language finds, words of the tree of a document, from the first word of the pair to the last; by default the note reads their lemmas, or the forms of the words without them, in lower case.</p>
 <table>
 <thead>
 <tr>
@@ -2863,13 +2863,13 @@
 <tbody>
 <tr>
 <td style="text-align: left;"><code>pairs</code></td>
-<td style="text-align: left;"><code>list[tuple[Token, Token]]</code></td>
+<td style="text-align: left;"><code>list[tuple[TreeWord, TreeWord]]</code></td>
 <td style="text-align: left;">-</td>
 <td style="text-align: left;">Light verb and noun of every split predicate</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>note</code></td>
-<td style="text-align: left;"><code>Callable[[Token, Token], str]</code></td>
+<td style="text-align: left;"><code>Callable[[TreeWord, TreeWord], str]</code></td>
 <td style="text-align: left;"><code>None</code></td>
 <td style="text-align: left;">Note of a pair</td>
 </tr>

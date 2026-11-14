@@ -636,6 +636,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#get_tree" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dependency tree
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -2086,6 +2097,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#get_tree" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dependency tree
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -2252,6 +2274,138 @@
 </div>
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code>(True, False)
+</code></pre></div>
+</div>
+</div>
+</div>
+<h2 id="get_tree">Dependency tree<a class="headerlink" href="#get_tree" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:get_tree] -->
+<div class="signature highlight"><pre><span></span><code><span class="n">get_tree</span><span class="p">(</span><span class="n">document</span><span class="p">)</span>
+</code></pre></div>
+<p>Returns the dependency tree of a document: its words of Universal Dependencies with the columns <code>lemma</code>, <code>upos</code>, <code>xpos</code>, <code>feats</code>, <code>head</code> and <code>deprel</code>, linked by their heads within their sentences. A word without a head heads its sentence. The syntactic statistics and their language hooks read the words of this tree. A value that is not a <code>Document</code> raises <code>SourceTypeError</code>.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Parameter</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Default</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>document</code></td>
+<td style="text-align: left;"><code>Document</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Document of anySeg</td>
+</tr>
+</tbody>
+</table>
+<p>The result is a <code>Tree</code> named tuple: <code>text</code>, <code>words</code> - the words of the document, punctuation marks included - and <code>sentences</code> - the words of every sentence.</p>
+<!-- --8<-- [end:get_tree] -->
+
+<!-- --8<-- [start:TreeWord] -->
+<div class="signature highlight"><pre><span></span><code><span class="n">TreeWord</span>
+</code></pre></div>
+<p>A word of the tree, with the names of Universal Dependencies and its place in the tree:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Attribute</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>index</code></td>
+<td style="text-align: left;"><code>int</code></td>
+<td style="text-align: left;">Position among the words of the document</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>form</code></td>
+<td style="text-align: left;"><code>str</code></td>
+<td style="text-align: left;">Form of the word</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>lemma</code></td>
+<td style="text-align: left;"><code>str</code> / <code>None</code></td>
+<td style="text-align: left;">Lemma</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>upos</code></td>
+<td style="text-align: left;"><code>str</code> / <code>None</code></td>
+<td style="text-align: left;">Part of speech of Universal Dependencies</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>xpos</code></td>
+<td style="text-align: left;"><code>str</code> / <code>None</code></td>
+<td style="text-align: left;">Tag of the language</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>feats</code></td>
+<td style="text-align: left;"><code>dict[str, str]</code></td>
+<td style="text-align: left;">Features by name, the values of a feature of several joined by commas (<code>Int,Rel</code>); the words of one set of features share one mapping</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>deprel</code></td>
+<td style="text-align: left;"><code>str</code> / <code>None</code></td>
+<td style="text-align: left;">Relation to the head; the root of a spaCy parse is <code>root</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>head</code></td>
+<td style="text-align: left;"><code>TreeWord</code> / <code>None</code></td>
+<td style="text-align: left;">Word it hangs on, <code>None</code> at the head of a sentence</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>children</code></td>
+<td style="text-align: left;"><code>tuple[TreeWord]</code></td>
+<td style="text-align: left;">Words hanging on it, in the order of the text</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>sentence</code></td>
+<td style="text-align: left;"><code>int</code></td>
+<td style="text-align: left;">Position of its sentence</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>start</code>, <code>end</code></td>
+<td style="text-align: left;"><code>int</code></td>
+<td style="text-align: left;">Positions of its token in the text; the words of a multiword token share them</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>tree</code></td>
+<td style="text-align: left;"><code>Tree</code></td>
+<td style="text-align: left;">Tree of the document, for the words around it (<code>word.tree.words[word.index - 1]</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>In place of the attributes of a spaCy <code>Token</code>: <code>text</code> - <code>form</code>, <code>lemma_</code> - <code>lemma</code>, <code>pos_</code> - <code>upos</code>, <code>tag_</code> - <code>xpos</code>, <code>dep_</code> - <code>deprel</code>, <code>morph.get(name)</code> - <code>feats.get(name)</code> (a string), <code>i</code> - <code>index</code>, <code>idx</code> - <code>start</code>, <code>head</code> of a root - <code>None</code> instead of the token itself.</p>
+<!-- --8<-- [end:TreeWord] -->
+
+<div class="tabbed-set tabbed-alternate" data-tabs="4:2"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><input id="__tabbed_4_2" name="__tabbed_4" type="radio" /><div class="tabbed-labels"><label for="__tabbed_4_1">Code</label><label for="__tabbed_4_2">Result</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">spacy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">spacy.tokens</span><span class="w"> </span><span class="kn">import</span> <span class="n">Doc</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">anyts.document</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_tree</span><span class="p">,</span> <span class="n">to_document</span>
+
+<span class="n">doc</span> <span class="o">=</span> <span class="n">Doc</span><span class="p">(</span>
+    <span class="n">spacy</span><span class="o">.</span><span class="n">blank</span><span class="p">(</span><span class="s2">"en"</span><span class="p">)</span><span class="o">.</span><span class="n">vocab</span><span class="p">,</span>
+    <span class="n">words</span><span class="o">=</span><span class="p">[</span><span class="s2">"Cats"</span><span class="p">,</span> <span class="s2">"sleep"</span><span class="p">,</span> <span class="s2">"."</span><span class="p">],</span>
+    <span class="n">heads</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+    <span class="n">deps</span><span class="o">=</span><span class="p">[</span><span class="s2">"nsubj"</span><span class="p">,</span> <span class="s2">"ROOT"</span><span class="p">,</span> <span class="s2">"punct"</span><span class="p">],</span>
+    <span class="n">pos</span><span class="o">=</span><span class="p">[</span><span class="s2">"NOUN"</span><span class="p">,</span> <span class="s2">"VERB"</span><span class="p">,</span> <span class="s2">"PUNCT"</span><span class="p">],</span>
+    <span class="n">morphs</span><span class="o">=</span><span class="p">[</span><span class="s2">"Number=Plur"</span><span class="p">,</span> <span class="s2">"Mood=Ind|VerbForm=Fin"</span><span class="p">,</span> <span class="s2">""</span><span class="p">],</span>
+<span class="p">)</span>
+<span class="n">cats</span><span class="p">,</span> <span class="n">sleep</span><span class="p">,</span> <span class="n">mark</span> <span class="o">=</span> <span class="n">get_tree</span><span class="p">(</span><span class="n">to_document</span><span class="p">(</span><span class="n">doc</span><span class="p">))</span><span class="o">.</span><span class="n">words</span>
+<span class="n">cats</span><span class="o">.</span><span class="n">head</span><span class="o">.</span><span class="n">form</span><span class="p">,</span> <span class="n">sleep</span><span class="o">.</span><span class="n">head</span><span class="p">,</span> <span class="n">sleep</span><span class="o">.</span><span class="n">deprel</span><span class="p">,</span> <span class="n">sleep</span><span class="o">.</span><span class="n">feats</span><span class="p">[</span><span class="s2">"VerbForm"</span><span class="p">]</span>
+<span class="n">sleep</span><span class="o">.</span><span class="n">children</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>('sleep', None, 'root', 'Fin')
+(TreeWord(0, 'Cats', NOUN, nsubj), TreeWord(2, '.', PUNCT, punct))
 </code></pre></div>
 </div>
 </div>
