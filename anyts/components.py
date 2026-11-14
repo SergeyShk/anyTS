@@ -133,8 +133,8 @@ class StatsComponent:
         Preparing the pipeline the component is added to
 
         Description:
-            Nothing by default; a language library adds the rules of its
-            tokenizer here, for instance
+            Nothing by default; a language library checks or sets here what
+            its statistics need from the pipeline
 
         Arguments:
             nlp (Language): Pipeline

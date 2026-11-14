@@ -43,10 +43,10 @@ def to_document(
     Description:
         A Document of anySeg is returned as it is. A Doc of spaCy keeps its
         tokens, their columns (lemma, part of speech, features, head and
-        relation) and its sentences (anyseg.spacy.from_doc); a Doc without a
-        start or an end of a sentence at every token, as before the parser,
-        senter or sentencizer, and without a parse gets those of sentenize on
-        its text. A string is split into tokens by tokenize and
+        relation) and its sentences (anyseg.spacy.from_doc); a Doc with no or
+        only partial sentence starts (a token whose is_sent_start is unset), as
+        before the parser, senter or sentencizer, and without a parse gets those
+        of sentenize on its text. A string is split into tokens by tokenize and
         into sentences by sentenize, and the default tokens fill the gaps
         between those of tokenize. A blank line (BLANK_LINE) ends a paragraph
         of the document and so a sentence, of a Doc too: every part between

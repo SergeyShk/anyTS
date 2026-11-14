@@ -115,7 +115,7 @@ The language enters through four parameters:
 | `tokenize` | `Callable` | `None` | The tokens of a string and of the keyword as triples of the start, the end and the text, the default tokens of `to_document` filling the gaps; words of `\w` and punctuation marks by default |
 | `lemmatize` | `Callable` | `None` | The lemmas of a word, given its text and its words of Universal Dependencies (`Word` objects of anySeg; none for the keyword), or one lemma as a string; a word matches when one of its lemmas is one of those of the keyword |
 | `fold` | `Callable` | `str.lower` | The folding of a word form (with `ignore_case`) or a lemma before the comparison, such as the letters a language takes for the same |
-| `sentenize` | `Callable` | `None` | The sentences of a string, of the keyword and of the text of a `Doc` without a start or an end of a sentence at every token as triples of the start, the end and the text, in any order; those of `SentsExtractor` by default |
+| `sentenize` | `Callable` | `None` | The sentences, as triples of the start, the end and the text in any order, of a string, of the keyword and of the text of a `Doc` with no or only partial sentence starts (a token whose `is_sent_start` is unset); those of `SentsExtractor` by default |
 
 A `tokenize` that does not give the tokens in order as triples of integer bounds within the string and a string raises `SourceTypeError`, and so does a `sentenize` whose triples do not lie within it. By default the lemmas of a word are the word itself and, for a token of one word of Universal Dependencies with a lemma, that lemma: a word is found by its own form, and a `Doc` of a pipeline with a lemmatizer by its lemmas.
 <!-- --8<-- [end:kwic-hooks] -->

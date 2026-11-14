@@ -257,7 +257,7 @@ A language library subclasses `StatsComponent` for every class of its statistics
 | `stats_class` | class attribute | The class of statistics made of a document, `None` by default; a component with neither a concrete class nor its own `compute` raises `ParameterError` at `add_pipe` |
 | `stats_params` | class attribute | The attributes of the component passed to the class of statistics as keyword arguments, none by default; a name the component lacks raises `ParameterError` at `add_pipe` |
 | `compute(doc)` | method | The statistics of a document, `stats_class(doc, **params)` by default; overridden by a component that computes otherwise, such as one reusing the statistics of another component |
-| `prepare(nlp)` | method | Preparing the pipeline when the component is added, such as the rules of the tokenizer; nothing by default |
+| `prepare(nlp)` | method | Preparing the pipeline when the component is added: what the statistics of a library need from it; nothing by default |
 | `accepts(doc)` | method | Whether a document gets the statistics; by default whether it has a word (`has_words`) |
 | `messages` | class attribute | The messages of the errors by key, `MESSAGES` by default |
 | `from_extension(doc, name, stats_class, factory=None)` | method | The statistics another component put into the document, for reuse instead of computing them again; an extension without statistics of the class raises `SourceError`, which names the factory to add. The other component must accept every document the reusing one does, since a document it passes leaves `None` |
