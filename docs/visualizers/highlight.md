@@ -162,10 +162,10 @@ The words of every sentence; the words out of the sentences are skipped.
 
 <!-- --8<-- [start:tokens_span] -->
 ``` {.python .signature}
-tokens_span(tokens)
+tokens_span(words)
 ```
 
-The positions of the fragment that covers some tokens, without the punctuation and the whitespace at its edges.
+The positions of the fragment that covers some words of the tree of a document (`TreeWord`): from the start of the first to the end of the last token of the words with a letter or a digit, so the punctuation marks and the symbols at its edges are left out.
 <!-- --8<-- [end:tokens_span] -->
 
 <!-- --8<-- [start:split_segments] -->
@@ -285,12 +285,12 @@ A hook that cannot be called or a `text` that is not a string raises `SourceType
 find_split_predicate_highlights(pairs, note=None)
 ```
 
-The layer `split_predicates`: a fragment for every pair of a light verb and its noun a language finds, from the first word of the pair to the last; the note reads their lemmas by default.
+The layer `split_predicates`: a fragment for every pair of a light verb and its noun a language finds, words of the tree of a document, from the first word of the pair to the last; by default the note reads their lemmas, or the forms of the words without them, in lower case.
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
-| `pairs` | `list[tuple[Token, Token]]` | - | Light verb and noun of every split predicate |
-| `note` | `Callable[[Token, Token], str]` | `None` | Note of a pair |
+| `pairs` | `list[tuple[TreeWord, TreeWord]]` | - | Light verb and noun of every split predicate |
+| `note` | `Callable[[TreeWord, TreeWord], str]` | `None` | Note of a pair |
 <!-- --8<-- [end:find_split_predicate_highlights] -->
 
 ### Runs of alliteration { #calc_alliteration_runs }

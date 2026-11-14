@@ -1,13 +1,15 @@
+import pickle
 import random
 import re
 
 import pytest
 import spacy
+from anyseg import Document
 from spacy.tokens import Doc
 
 from anyts.components import start_sents_after_blank_lines
 from anyts.constants import MESSAGES
-from anyts.document import document_words, to_document
+from anyts.document import document_words, get_tree, to_document
 from anyts.exceptions import SourceError, SourceTypeError
 from anyts.extractors import split_paragraphs
 from anyts.utils import is_document
@@ -229,3 +231,32 @@ def test_tokens_over_a_blank_line():
     text = "One two. Three four.\n\nFive six."
     with pytest.raises(SourceTypeError, match="tokens a document can hold: token 4: runs over"):
         to_document(text, tokenize=lambda t: [(14, 24, t[14:24])])
+
+
+def test_tree():
+    document = Document.from_tokens(
+        "Vino del pueblo. Se fue",
+        [0, 5, 9, 15, 17, 20],
+        [4, 8, 15, 16, 19, 23],
+        sentence_starts=[0, 4],
+        words={1: ["de", "el"]},
+    )
+    document.set_columns(
+        upos=["VERB", "ADP", "DET", "NOUN", "PUNCT", "PRON", "VERB"],
+        feats=["Mood=Ind", None, "Gender=Masc", "Gender=Masc", None, None, "Mood=Ind"],
+        head=[0, 4, 4, 1, 1, 2, 0],
+        deprel=["root", "case", "det", "obl", "punct", "obj", "root"],
+    )
+    tree = get_tree(document)
+    vino, de, el, pueblo, mark, se, fue = tree.words
+    assert tree.sentences == ((vino, de, el, pueblo, mark), (se, fue))
+    assert (de.start, de.end) == (el.start, el.end) == (5, 8)
+    assert pueblo.children == (de, el) and de.head is pueblo and vino.head is None
+    assert (se.sentence, se.head) == (1, fue)
+    assert el.feats is pueblo.feats and vino.feats == {"Mood": "Ind"} and de.feats == {}
+    clone = pickle.loads(pickle.dumps(el))
+    assert clone.head.form == "pueblo" and clone.tree.sentences[1][1].children[0].form == "Se"
+    empty = pickle.loads(pickle.dumps(get_tree(to_document(""))))
+    assert empty.words == empty.sentences == ()
+    with pytest.raises(SourceTypeError, match="cannot be of type str"):
+        get_tree("Vino del pueblo")

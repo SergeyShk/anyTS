@@ -319,7 +319,6 @@ MESSAGES: Mapping[str, str] = MappingProxyType(
         "tokenizer": "The tokenizer is set incorrectly",
         "tokenizer_iterable": "The tokenizer must return an iterable object",
         "tokenizer_strings": "The tokenizer must return strings, not {type}",
-        "hook_doc": "The {hook} of {cls} must return a Doc, not {type}",
         "hook_document": "The {hook} of {cls} must return a Document, not {type}",
         "hook_lexical_words": "The {hook} of {cls} must return LexicalWord objects, not {type}",
         "hook_cohesion_words": (

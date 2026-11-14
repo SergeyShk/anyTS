@@ -25,6 +25,7 @@ if TYPE_CHECKING:
     from spacy.tokens import Doc, Span, Token
     from thinc.types import Ints2d
 
+    from .document import TreeWord
     from .extractors import SentsExtractor
 
 # Punctuation, symbols, combining marks and invisible format characters
@@ -594,45 +595,45 @@ def is_word(token: Token) -> bool:
     return not token.is_space and not is_punctuation(token.text)
 
 
-def has_feature(token: Token, field: str, value: str) -> bool:
+def has_feature(word: TreeWord, field: str, value: str) -> bool:
     """
-    Checking whether a token carries a morphological feature with a given value
+    Checking whether a word carries a morphological feature with a given value
 
     Arguments:
-        token (Token): Token
+        word (TreeWord): Word of the tree of a document
         field (str): Name of the feature of Universal Dependencies (VerbForm, Mood)
-        value (str): Value of the feature (Part, Ger, Fin)
+        value (str): Value of the feature (Part, Ger, Fin), one of several (Int of Int,Rel)
 
     Returns:
         bool: Result of the check
     """
-    return value in token.morph.get(field, [])
+    return value in word.feats.get(field, "").split(",")
 
 
-def is_finite_verb(token: Token) -> bool:
+def is_finite_verb(word: TreeWord) -> bool:
     """
-    Checking whether a token is a finite form of a verb
+    Checking whether a word is a finite form of a verb
 
     Arguments:
-        token (Token): Token
+        word (TreeWord): Word of the tree of a document
 
     Returns:
         bool: Result of the check
     """
-    return token.pos_ == "VERB" and has_feature(token, "VerbForm", "Fin")
+    return word.upos == "VERB" and has_feature(word, "VerbForm", "Fin")
 
 
-def is_infinitive(token: Token) -> bool:
+def is_infinitive(word: TreeWord) -> bool:
     """
-    Checking whether a token is an infinitive
+    Checking whether a word is an infinitive
 
     Arguments:
-        token (Token): Token
+        word (TreeWord): Word of the tree of a document
 
     Returns:
         bool: Result of the check
     """
-    return has_feature(token, "VerbForm", "Inf")
+    return has_feature(word, "VerbForm", "Inf")
 
 
 def joins_previous(token: Token) -> bool:

@@ -1,12 +1,17 @@
+import copy
+import pickle
+import re
 from math import isnan, nan
 from statistics import fmean, pstdev
 from typing import ClassVar
 
 import pytest
 import spacy
+from anyseg import Document
 from spacy.tokens import Doc
 
 from anyts.constants import MESSAGES, SYNTAX_STATS_DESC
+from anyts.document import TreeWord, get_tree, to_document
 from anyts.exceptions import SourceError, SourceTypeError
 from anyts.syntax_stats import (
     SyntaxStats,
@@ -37,7 +42,6 @@ from anyts.syntax_stats import (
     predicate_form,
     subtree_len,
 )
-from anyts.utils import is_word, joins_previous
 
 VOCAB = spacy.blank("xx").vocab
 
@@ -55,6 +59,30 @@ def parse(words, heads, deps, morphs=None, spaces=None, pos=None):
     )
 
 
+def tree(doc):
+    """Words of the tree of a Doc: without whitespace tokens doc[i] is the word i"""
+    return get_tree(to_document(doc)).words
+
+
+def document(words, heads, deps, upos=None, feats=None):
+    """A Document of one sentence with a hand-made tree: heads are the IDs of the head words
+    from 1, 0 at the root, and every label stays as given"""
+    starts = [sum(len(word) + 1 for word in words[:i]) for i in range(len(words))]
+    ends = [start + len(word) for start, word in zip(starts, words, strict=True)]
+    source = Document.from_tokens(" ".join(words), starts, ends)
+    columns = {"head": heads, "deprel": deps}
+    if upos:
+        columns["upos"] = upos
+    if feats:
+        columns["feats"] = [value or None for value in feats]
+    source.set_columns(**columns)
+    return source
+
+
+def forms(words):
+    return [word.form for word in words]
+
+
 @pytest.fixture
 def house():
     # The white house , by the way , is nice %
@@ -66,57 +94,60 @@ def house():
     )
 
 
-def test_is_word(house):
-    assert [token.text for token in house if is_word(token)] == [
-        "The",
-        "white",
-        "house",
-        "is",
-        "nice",
-    ]
-    assert [token.text for token in get_words(house)] == ["The", "white", "house", "is", "nice"]
+def test_get_words(house):
+    assert forms(get_words(tree(house))) == ["The", "white", "house", "is", "nice"]
 
 
 def test_invisible_characters_are_not_words():
-    doc = parse(["one", "​", "two"], [2, 2, 2], ["dep", "dep", "ROOT"])
-    assert [token.text for token in get_words(doc)] == ["one", "two"]
+    # The zero-width space is no token of the document, the left-to-right mark is no word
+    words = tree(parse(["one", "​", "two", "‎"], [2, 2, 2, 2], ["dep", "dep", "ROOT", "dep"]))
+    assert forms(words) == ["one", "two", "‎"]
+    assert forms(get_words(words)) == ["one", "two"]
 
 
 def test_is_root(house):
-    assert [token.text for token in house if is_root(token)] == ["nice"]
+    words = tree(house)
+    assert [word.form for word in words if is_root(word)] == ["nice"]
+    assert words[5].head is None and words[2].head is words[5]
 
 
 def test_base_dep():
-    doc = parse(["It", "was", "built"], [2, 2, 2], ["nsubj:pass", "aux:pass", "ROOT"])
-    assert [base_dep(token) for token in doc] == ["nsubj", "aux", "ROOT"]
+    # The label ROOT of spaCy is root in the document
+    words = tree(parse(["It", "was", "built"], [2, 2, 2], ["nsubj:pass", "aux:pass", "ROOT"]))
+    assert [base_dep(word) for word in words] == ["nsubj", "aux", "root"]
+    # A word without a relation
+    assert base_dep(get_tree(to_document("Hello")).words[0]) == ""
 
 
 def test_children_and_subtree(house):
-    noun = house[2]
-    assert [child.text for child in get_children(noun)] == ["The", "white"]
+    words = tree(house)
+    noun = words[2]
+    assert forms(get_children(noun)) == ["The", "white"]
     assert count_children(noun) == 2
     assert subtree_len(noun) == 3
-    assert subtree_len(house[5]) == 5
+    assert subtree_len(words[5]) == 5
 
 
 def test_dependency_distances(house):
+    words = tree(house)
     # Positions of the words: The 0, white 1, house 2, is 3, nice 4
-    assert calc_dependency_distances(house) == [2, 1, 2, 1]
-    assert calc_dependency_distances(house[4:]) == [1]
-    assert calc_dependency_distances(parse(["Hello"], [0], ["ROOT"])) == []
+    assert calc_dependency_distances(words) == [2, 1, 2, 1]
+    assert calc_dependency_distances(words[4:]) == [1]
+    assert calc_dependency_distances(tree(parse(["Hello"], [0], ["ROOT"]))) == []
 
 
 def test_tree_depth(house):
-    assert calc_tree_depth(house) == 2
-    assert calc_tree_depth(house[4:6]) == 1
-    assert calc_tree_depth(parse(["Hello"], [0], ["ROOT"])) == 0
-    assert calc_tree_depth(parse(["!"], [0], ["ROOT"])) == 0
+    words = tree(house)
+    assert calc_tree_depth(words) == 2
+    assert calc_tree_depth(words[4:6]) == 1
+    assert calc_tree_depth(tree(parse(["Hello"], [0], ["ROOT"]))) == 0
+    assert calc_tree_depth(tree(parse(["!"], [0], ["ROOT"]))) == 0
 
 
 def predicate(words, deps, morphs):
     """The last word with every other word attached to it"""
     last = len(words) - 1
-    return parse(words, [last] * len(words), [*deps, "ROOT"], morphs)[last]
+    return tree(parse(words, [last] * len(words), [*deps, "ROOT"], morphs))[last]
 
 
 @pytest.mark.parametrize(
@@ -135,6 +166,8 @@ def predicate(words, deps, morphs):
         (["having", "eaten"], ["aux"], ["Tense=Pres|VerbForm=Part", "VerbForm=Part"], "Part"),
         (["been", "eaten"], ["aux"], ["Tense=Past|VerbForm=Part", "VerbForm=Part"], "Fin"),
         (["to", "be", "eaten"], ["mark", "aux"], ["", "VerbForm=Inf", "VerbForm=Part"], "Inf"),
+        # The first of several forms
+        (["went"], [], ["VerbForm=Fin,Inf"], "Fin"),
     ],
 )
 def test_predicate_form(words, deps, morphs, form):
@@ -143,21 +176,23 @@ def test_predicate_form(words, deps, morphs, form):
 
 def test_predicate_form_of_a_finite_auxiliary_after_another():
     # A verb-final clause: dass er gekommen sein wird, every auxiliary on the participle
-    doc = parse(
-        ["dass", "er", "gekommen", "sein", "wird"],
-        [2, 2, 2, 2, 2],
-        ["mark", "nsubj", "ROOT", "aux", "aux"],
-        morphs=["", "Case=Nom", "VerbForm=Part", "VerbForm=Inf", "VerbForm=Fin"],
+    words = tree(
+        parse(
+            ["dass", "er", "gekommen", "sein", "wird"],
+            [2, 2, 2, 2, 2],
+            ["mark", "nsubj", "ROOT", "aux", "aux"],
+            morphs=["", "Case=Nom", "VerbForm=Part", "VerbForm=Inf", "VerbForm=Fin"],
+        )
     )
-    assert predicate_form(doc[2]) == "Fin"
+    assert predicate_form(words[2]) == "Fin"
 
 
 def test_predicate_form_of_an_auxiliary_without_a_form():
-    token = predicate(["habéis", "llegado"], ["aux"], ["", "VerbForm=Part"])
-    assert predicate_form(token, lambda aux: "Fin") == "Fin"
-    assert predicate_form(token, lambda aux: "") == "Part"
-    token = predicate(["á", "haber", "llegado"], ["aux", "aux"], ["", "VerbForm=Inf", ""])
-    assert predicate_form(token, lambda aux: "Fin" if aux.text == "habéis" else "") == "Inf"
+    word = predicate(["habéis", "llegado"], ["aux"], ["", "VerbForm=Part"])
+    assert predicate_form(word, lambda aux: "Fin") == "Fin"
+    assert predicate_form(word, lambda aux: "") == "Part"
+    word = predicate(["á", "haber", "llegado"], ["aux", "aux"], ["", "VerbForm=Inf", ""])
+    assert predicate_form(word, lambda aux: "Fin" if aux.form == "habéis" else "") == "Inf"
     with_form = predicate(["had", "arrived"], ["aux"], ["VerbForm=Fin", "VerbForm=Part"])
     assert predicate_form(with_form, lambda aux: pytest.fail("read by its form")) == "Fin"
 
@@ -171,13 +206,15 @@ def test_predicate_form_hook_must_be_callable():
 
 def test_valency():
     # The director made a review and signed
-    doc = parse(
-        ["The", "director", "made", "a", "review", "and", "signed", "."],
-        [1, 2, 2, 4, 2, 6, 2, 2],
-        ["det", "nsubj", "ROOT", "det", "obj", "cc", "conj", "punct"],
+    words = tree(
+        parse(
+            ["The", "director", "made", "a", "review", "and", "signed", "."],
+            [1, 2, 2, 4, 2, 6, 2, 2],
+            ["det", "nsubj", "ROOT", "det", "obj", "cc", "conj", "punct"],
+        )
     )
-    assert calc_valency(doc[2]) == 2
-    assert count_children(doc[2]) == 3
+    assert calc_valency(words[2]) == 2
+    assert count_children(words[2]) == 3
 
 
 # apples , pears and plums
@@ -195,327 +232,101 @@ COORDINATION = ["apples", ",", "pears", "and", "plums"]
     ids=["ud", "clearnlp"],
 )
 def test_coordination_chains_schemes(heads, expected):
-    doc = parse(COORDINATION, heads, ["ROOT", "punct", "conj", "cc", "conj"])
-    assert calc_coordination_chains(doc) == expected
+    words = tree(parse(COORDINATION, heads, ["ROOT", "punct", "conj", "cc", "conj"]))
+    assert calc_coordination_chains(words) == expected
 
 
 def test_coordination_chains_nested():
     # cats and dogs , or birds: the nested coordination is one chain of three
-    doc = parse(
-        ["cats", "and", "dogs", ",", "or", "birds"],
-        [0, 2, 0, 5, 5, 2],
-        ["ROOT", "cc", "conj", "punct", "cc", "conj"],
+    words = tree(
+        parse(
+            ["cats", "and", "dogs", ",", "or", "birds"],
+            [0, 2, 0, 5, 5, 2],
+            ["ROOT", "cc", "conj", "punct", "cc", "conj"],
+        )
     )
-    assert calc_coordination_chains(doc) == [3]
+    assert calc_coordination_chains(words) == [3]
 
 
-def test_coordination_chains_order_and_span():
+def test_coordination_chains_order_and_part():
     # red , green and blue cars , fast and slow trains
-    doc = parse(
-        ["red", ",", "green", "and", "blue", "cars", ",", "fast", "and", "slow", "trains"],
-        [5, 2, 0, 4, 0, 5, 10, 10, 9, 7, 5],
-        ["amod", "punct", "conj", "cc", "conj", "ROOT", "punct", "amod", "cc", "conj", "conj"],
+    words = tree(
+        parse(
+            ["red", ",", "green", "and", "blue", "cars", ",", "fast", "and", "slow", "trains"],
+            [5, 2, 0, 4, 0, 5, 10, 10, 9, 7, 5],
+            ["amod", "punct", "conj", "cc", "conj", "ROOT", "punct", "amod", "cc", "conj", "conj"],
+        )
     )
-    assert calc_coordination_chains(doc) == [3, 2, 2]
-    # The head of blue lies outside the span, so blue is in no chain
-    assert calc_coordination_chains(doc[4:]) == [2, 2]
-    assert calc_coordination_chains(doc[:5]) == [3]
+    assert calc_coordination_chains(words) == [3, 2, 2]
+    # The head of blue lies outside the words, so blue is in no chain
+    assert calc_coordination_chains(words[4:]) == [2, 2]
+    assert calc_coordination_chains(words[:5]) == [3]
 
 
 def test_coordination_chains_none(house):
-    assert calc_coordination_chains(house) == []
+    assert calc_coordination_chains(tree(house)) == []
     # A conjunct hanging on punctuation starts no chain
-    doc = parse(["a", ",", "b"], [0, 0, 1], ["ROOT", "punct", "conj"])
-    assert calc_coordination_chains(doc) == []
+    words = tree(parse(["a", ",", "b"], [0, 0, 1], ["ROOT", "punct", "conj"]))
+    assert calc_coordination_chains(words) == []
 
 
-def hyphenated(one_head=3):
-    # Some-one came with a well-known cat . - the parser hangs both parts of Some-one on the verb
-    return parse(
-        ["Some", "-", "one", "came", "with", "a", "well", "-", "known", "cat", "."],
-        [3, 0, one_head, 3, 9, 9, 9, 6, 9, 3, 3],
-        [
-            "nsubj",
-            "punct",
-            "nsubj",
-            "ROOT",
-            "case",
-            "det",
-            "amod",
-            "punct",
-            "amod",
-            "obl",
-            "punct",
-        ],
-        spaces=[False, False, True, True, True, True, False, False, True, False, False],
+def test_hyphenated_word_of_one_token():
+    # a well-known poet: the tokens of the document decide what a word is
+    words = tree(
+        parse(
+            ["a", "well-known", "poet"],
+            [2, 2, 2],
+            ["det", "amod", "ROOT"],
+            pos=["DET", "ADJ", "NOUN"],
+        )
     )
-
-
-def texts(tokens):
-    return [token.text for token in tokens]
-
-
-def test_hyphen_at_a_sentence_start():
-    # Tick- | tock came . - a sentence starts at the second part, which is not joined
-    doc = parse(
-        ["Tick", "-", "tock", "came", "."],
-        [0, 0, 3, 3, 3],
-        ["ROOT", "punct", "nsubj", "ROOT", "punct"],
-        spaces=[False, False, True, False, False],
-    )
-    tick, _, tock, came, _ = doc
-    assert [texts(sent) for sent in doc.sents] == [["Tick", "-"], ["tock", "came", "."]]
-    assert not joins_previous(tock)
-    assert texts(get_words(doc, join_hyphens=True)) == ["Tick", "tock", "came"]
-    assert texts(get_children(came, join_hyphens=True)) == ["tock"]
-    assert subtree_len(came, join_hyphens=True) == 2
-    assert subtree_len(tick, join_hyphens=True) == 1
-    whole = calc_dependency_distances(doc, join_hyphens=True)
-    by_sentence = [d for sent in doc.sents for d in calc_dependency_distances(sent, True)]
-    assert whole == by_sentence == [1]
-
-
-def test_words_of_hyphenated_words():
-    doc = hyphenated()
-    assert texts(get_words(doc)) == ["Some", "one", "came", "with", "a", "well", "known", "cat"]
-    assert texts(get_words(doc, join_hyphens=True)) == ["Some", "came", "with", "a", "well", "cat"]
-    # A part whose first part lies outside the sequence is a word of its own
-    assert texts(get_words(doc[2:5], join_hyphens=True)) == ["one", "came", "with"]
-    # A word is given by its part that holds its relation, not by its first part
-    governor = parse(
-        ["He", "is", "vice", "-", "governor", "of", "the", "vice", "-", "region"],
-        [4, 4, 4, 4, 4, 9, 9, 9, 7, 4],
-        ["nsubj", "cop", "amod", "punct", "ROOT", "case", "det", "amod", "punct", "nmod"],
-        spaces=[True, True, False, False, True, True, True, False, False, False],
-    )
-    assert texts(get_words(governor, join_hyphens=True)) == [
-        "He",
-        "is",
-        "governor",
-        "of",
-        "the",
-        "region",
+    assert forms(get_words(words)) == ["a", "well-known", "poet"]
+    assert dependency_triples(words) == [
+        ("NOUN", "det", "DET"),
+        ("NOUN", "amod", "ADJ"),
+        ("", "root", "NOUN"),
     ]
-    assert texts(get_children(governor[2], join_hyphens=True)) == ["He", "is", "region"]
-    # A word whose relation a hyphen holds, or whose parts form a loop, is given by its first part
-    laugh = parse(
-        ["Ha", "-", "ha", "!"], [1, 1, 1, 1], ["dep", "ROOT", "dep", "punct"], spaces=[False] * 4
+    # He lives in north-west of the city: the word of one token is a link of the chain
+    source = document(
+        ["He", "lives", "in", "north-west", "of", "the", "city"],
+        [2, 0, 4, 2, 7, 7, 4],
+        ["nsubj", "root", "case", "obl", "case", "det", "nmod"],
+        upos=["PRON", "VERB", "ADP", "NOUN", "ADP", "DET", "NOUN"],
     )
-    hanging = parse(
-        ["some", "-", "one", "came"],
-        [1, 3, 1, 3],
-        ["det", "nsubj", "dep", "ROOT"],
-        spaces=[False, False, True, False],
-    )
-    loop = parse(["a", "-", "b"], [2, 0, 1], ["dep", "punct", "dep"], spaces=[False] * 3)
-    assert texts(get_words(laugh, join_hyphens=True)) == ["Ha"]
-    assert texts(get_words(hanging, join_hyphens=True)) == ["some", "came"]
-    assert texts(get_words(loop, join_hyphens=True)) == ["a"]
-
-
-def test_children_of_hyphenated_words():
-    doc = hyphenated()
-    assert (calc_valency(doc[3]), calc_valency(doc[3], join_hyphens=True)) == (3, 2)
-    assert texts(get_children(doc[3], join_hyphens=True)) == ["Some", "cat"]
-    assert (count_children(doc[9]), count_children(doc[9], join_hyphens=True)) == (4, 3)
-    # Every part of a word gives the dependents of the whole word
-    assert get_children(doc[6], join_hyphens=True) == get_children(doc[8], join_hyphens=True) == []
-    # The second part hanging on the first one is no dependent of either
-    nested = hyphenated(one_head=0)
-    assert texts(get_children(nested[3], join_hyphens=True)) == ["Some", "cat"]
-    assert get_children(nested[0], join_hyphens=True) == []
-    assert texts(get_children(nested[0])) == ["one"]
-
-
-def test_subtree_of_hyphenated_words():
-    doc = hyphenated()
-    assert (subtree_len(doc[3]), subtree_len(doc[3], join_hyphens=True)) == (8, 6)
-    assert (subtree_len(doc[9]), subtree_len(doc[9], join_hyphens=True)) == (5, 4)
-
-
-def test_dependency_distances_of_hyphenated_words():
-    doc = hyphenated()
-    assert calc_dependency_distances(doc) == [2, 1, 4, 3, 2, 1, 5]
-    assert calc_dependency_distances(doc, join_hyphens=True) == [1, 3, 2, 1, 4]
-    assert calc_dependency_distances(hyphenated(one_head=0), join_hyphens=True) == [1, 3, 2, 1, 4]
-
-
-def test_first_part_hanging_on_a_later_one():
-    # She said : n-no . - "n" hangs on "no", which carries the relation to the verb
-    doc = parse(
-        ["She", "said", ":", "n", "-", "no", "."],
-        [1, 1, 1, 5, 5, 1, 1],
-        ["nsubj", "ROOT", "punct", "reparandum", "punct", "ccomp", "punct"],
-        spaces=[True, False, True, False, False, False, False],
-    )
-    assert texts(get_children(doc[1], join_hyphens=True)) == ["She", "no"]
-    assert calc_valency(doc[1], join_hyphens=True) == 2
-    assert calc_dependency_distances(doc, join_hyphens=True) == [1, 1]
-
-
-def test_word_holding_the_root():
-    # He came-to home . - the word with the head of the sentence has no dependency
-    doc = parse(
-        ["He", "came", "-", "to", "home", "."],
-        [1, 1, 1, 1, 1, 1],
-        ["nsubj", "ROOT", "punct", "advmod", "obl", "punct"],
-        spaces=[True, False, False, True, False, False],
-    )
-    assert calc_dependency_distances(doc) == [1, 1, 2]
-    assert calc_dependency_distances(doc, join_hyphens=True) == [1, 1]
-    assert texts(get_children(doc[3], join_hyphens=True)) == ["He", "home"]
-    # "to" hangs on "home" but belongs to the word with the root, not to the subtree of "home"
-    moved = parse(
-        ["He", "came", "-", "to", "home", "."],
-        [1, 1, 4, 4, 1, 1],
-        ["nsubj", "ROOT", "punct", "advmod", "obl", "punct"],
-        spaces=[True, False, False, True, False, False],
-    )
-    assert get_children(moved[4], join_hyphens=True) == []
-    assert (subtree_len(moved[4]), subtree_len(moved[4], join_hyphens=True)) == (2, 1)
-    assert subtree_len(moved[1], join_hyphens=True) == 3
-
-
-def test_word_hanging_by_its_hyphen():
-    # On clothes not re-ca-ll . - the parser hangs the parts and a hyphen on the noun
-    doc = parse(
-        ["On", "clothes", "not", "re", "-", "ca", "-", "ll", "."],
-        [1, 1, 4, 4, 1, 1, 1, 1, 1],
-        ["case", "ROOT", "advmod", "case", "nmod", "nmod", "nmod", "nmod", "punct"],
-        spaces=[True, True, True, False, False, False, False, False, False],
-    )
-    # The part that is a word is the head rather than the hyphen
-    assert texts(get_children(doc[1], join_hyphens=True)) == ["On", "ca"]
-    assert texts(get_children(doc[3], join_hyphens=True)) == ["not"]
-    assert calc_dependency_distances(doc, join_hyphens=True) == [1, 1, 2]
-    # A word that hangs by a hyphen alone is given by its first part
-    alone = parse(
-        ["On", "clothes", "re", "-", "call", "."],
-        [1, 1, 3, 1, 3, 1],
-        ["case", "ROOT", "case", "nmod", "fixed", "punct"],
-        spaces=[True, True, False, False, False, False],
-    )
-    assert texts(get_children(alone[1], join_hyphens=True)) == ["On", "re"]
-    assert calc_dependency_distances(alone, join_hyphens=True) == [1, 1]
-
-
-def test_subtree_of_the_whole_word():
-    # Over-seer me obeys . - "Over" hangs on "seer", "me" on "Over"
-    doc = parse(
-        ["Over", "-", "seer", "me", "obeys", "."],
-        [2, 2, 4, 0, 4, 4],
-        ["compound", "punct", "nsubj", "obj", "ROOT", "punct"],
-        spaces=[False, False, True, True, False, False],
-    )
-    assert subtree_len(doc[0], join_hyphens=True) == subtree_len(doc[2], join_hyphens=True) == 2
-    assert texts(get_children(doc[2], join_hyphens=True)) == ["me"]
-    assert (subtree_len(doc[0]), subtree_len(doc[2])) == (2, 3)
-
-
-def test_word_with_parts_on_several_heads():
-    # dog re-call barks - "re" hangs on "dog", "call" on the verb: the word depends on the verb
-    doc = parse(
-        ["dog", "re", "-", "call", "barks"],
-        [4, 0, 1, 4, 4],
-        ["nsubj", "nmod", "punct", "obj", "ROOT"],
-        spaces=[True, False, False, True, False],
-    )
-    assert texts(get_children(doc[0])) == ["re"]
-    assert get_children(doc[0], join_hyphens=True) == []
-    assert texts(get_children(doc[4], join_hyphens=True)) == ["dog", "call"]
-    assert calc_dependency_distances(doc, join_hyphens=True) == [2, 1]
-
-
-def test_tree_depth_of_hyphenated_words():
-    # I saw some-thing and more . - "more" hangs on the second part of some-thing
-    doc = parse(
-        ["I", "saw", "some", "-", "thing", "and", "more", "."],
-        [1, 1, 4, 4, 1, 6, 4, 1],
-        ["nsubj", "ROOT", "det", "punct", "obj", "cc", "conj", "punct"],
-        spaces=[True, True, False, False, True, True, False, False],
-    )
-    assert calc_tree_depth(doc) == calc_tree_depth(doc, join_hyphens=True) == 3
-    # The parts of a word of one sentence are no levels of its tree
-    tick = parse(
-        ["Tick", "-", "tock", "!"],
-        [0, 0, 0, 0],
-        ["ROOT", "punct", "dep", "punct"],
-        spaces=[False, False, False, False],
-    )
-    assert (calc_tree_depth(tick), calc_tree_depth(tick, join_hyphens=True)) == (1, 0)
-    assert calc_tree_depth(hyphenated(), join_hyphens=True) == 2
-    assert calc_tree_depth(hyphenated(one_head=0), join_hyphens=True) == 2
-
-
-def test_tree_depth_through_a_hyphen():
-    # A word that hangs on the inner hyphen of a word is one level below that word
-    doc = parse(
-        ["came", "well", "-", "known", "there"],
-        [0, 3, 3, 0, 2],
-        ["ROOT", "amod", "punct", "obl", "advmod"],
-        spaces=[True, False, False, True, False],
-    )
-    assert calc_tree_depth(doc, join_hyphens=True) == 2
+    assert is_prep_complement(get_tree(source).words[3])
+    stats = SyntaxStats(source)
+    assert (stats.n_words, stats.n_prep_chains, stats.max_prep_chain_len) == (7, 1, 2)
 
 
 def test_tree_depth_through_tokens_outside_the_words():
-    # well-known , new - "new" hangs on the comma, and the comma on "known"
-    doc = parse(
-        ["well", "-", "known", ",", "new"],
-        [2, 2, 2, 2, 3],
-        ["amod", "punct", "ROOT", "punct", "dep"],
-        spaces=[False, False, False, True, False],
+    # well known , new - "new" hangs on the comma, and the comma on "known"
+    words = tree(
+        parse(["well", "known", ",", "new"], [1, 1, 1, 2], ["advmod", "ROOT", "punct", "dep"])
     )
-    assert calc_tree_depth(doc) == calc_tree_depth(doc, join_hyphens=True) == 1
-    # A word whose head is outside the sequence is the head of its tree
-    assert calc_tree_depth([doc[0], doc[4]], join_hyphens=True) == 0
-
-
-def test_coordination_chains_of_hyphenated_words():
-    # member and vice-governor - the parts of vice-governor are two conjuncts for the parser
-    doc = parse(
-        ["member", "and", "vice", "-", "governor"],
-        [0, 2, 0, 2, 2],
-        ["ROOT", "cc", "conj", "punct", "conj"],
-        spaces=[True, True, False, False, False],
-    )
-    assert calc_coordination_chains(doc) == [3]
-    assert calc_coordination_chains(doc, join_hyphens=True) == [2]
-    # A conjunct of the second part of a word joins its chain
-    saw = parse(
-        ["I", "saw", "some", "-", "thing", "and", "more"],
-        [1, 1, 4, 4, 1, 6, 4],
-        ["nsubj", "ROOT", "det", "punct", "obj", "cc", "conj"],
-        spaces=[True, True, False, False, True, True, False],
-    )
-    assert calc_coordination_chains(saw, join_hyphens=True) == [2]
-    # A strict, haughty-learned face: the first part is the conjunct, the last one hangs on the noun
-    face = parse(
-        ["strict", ",", "haughty", "-", "learned", "face"],
-        [5, 2, 0, 4, 5, 5],
-        ["amod", "punct", "conj", "punct", "amod", "ROOT"],
-        spaces=[False, True, False, False, True, False],
-    )
-    assert calc_coordination_chains(face) == [2]
-    assert calc_coordination_chains(face, join_hyphens=True) == [2]
+    assert calc_tree_depth(words) == 1
+    # A word whose head is outside the words is the head of its tree
+    assert calc_tree_depth([words[0], words[3]]) == 0
 
 
 def test_subtree_of_a_loop():
-    doc = parse(["a", "b", "c"], [1, 0, 1], ["dep", "dep", "dep"])
-    assert subtree_len(doc[0]) == subtree_len(doc[0], join_hyphens=True) == 3
+    words = tree(parse(["a", "b", "c"], [1, 0, 1], ["dep", "dep", "dep"]))
+    assert subtree_len(words[0]) == 3
 
 
 def test_tree_depth_of_a_loop():
     # a, b and c hang on each other in a Doc of ten tokens
-    doc = parse(list("abcdefghij"), [1, 2, 0] + [3] * 7, ["dep"] * 10)
-    assert calc_tree_depth(doc[:3]) == calc_tree_depth(doc[:3], join_hyphens=True) == 2
+    words = tree(parse(list("abcdefghij"), [1, 2, 0] + [3] * 7, ["dep"] * 10))
+    assert calc_tree_depth(words[:3]) == 2
 
 
-def test_loop_inside_a_hyphenated_word():
-    doc = parse(["a", "-", "b"], [2, 0, 1], ["dep", "punct", "dep"], spaces=[False, False, False])
-    assert calc_tree_depth(doc, join_hyphens=True) == 0
-    assert calc_coordination_chains(doc, join_hyphens=True) == []
-    assert calc_dependency_distances(doc, join_hyphens=True) == []
+def test_loop_through_a_mark():
+    # a-b of three tokens: a hangs on b, b on the hyphen and the hyphen on a
+    words = tree(
+        parse(["a", "-", "b"], [2, 0, 1], ["dep", "punct", "dep"], spaces=[False, False, False])
+    )
+    assert calc_tree_depth(words) == 1
+    assert calc_coordination_chains(words) == []
+    assert calc_dependency_distances(words) == [1]
 
 
 # The house built by workers was sold . She said that he did not want to leave and left .
@@ -566,13 +377,16 @@ def two_sents():
 
 def test_syntax_stats_counts():
     stats = SyntaxStats(two_sents())
-    assert [[token.text for token in sent] for sent in stats.sents] == [
+    assert [forms(sent) for sent in stats.sents] == [
         ["The", "house", "built", "by", "workers", "was", "sold"],
         ["She", "said", "that", "he", "did", "not", "want", "to", "leave", "and", "left"],
     ]
+    assert all(isinstance(word, TreeWord) for sent in stats.sents for word in sent)
     assert (stats.n_sents, stats.n_words, stats.n_leaves, stats.n_subtrees) == (2, 18, 10, 8)
     assert stats.c_children == {0: 10, 1: 4, 2: 2, 3: 1, 5: 1}
-    assert stats.c_deps["nsubj"] == 2 and "punct" not in stats.c_deps
+    # The heads of the sentences have the relation root of the document
+    assert stats.c_deps["nsubj"] == 2 and stats.c_deps["root"] == 2
+    assert "punct" not in stats.c_deps and "ROOT" not in stats.c_deps
     # Clauses: sold; said, want (ccomp, subordinate), leave (xcomp, infinitive) and left
     assert (stats.n_clauses, stats.n_subordinate_clauses, stats.n_complex_sents) == (5, 1, 1)
     assert stats.n_infinitive_clauses == 1
@@ -640,6 +454,12 @@ def test_syntax_stats_metrics():
     assert list(stats.get_stats()) == list(SYNTAX_STATS_DESC)
 
 
+def test_sources_of_one_tree():
+    doc = two_sents()
+    expected = repr(SyntaxStats(doc).get_stats())
+    assert repr(SyntaxStats(to_document(doc)).get_stats()) == expected
+
+
 def test_syntax_stats_without_constructions(house):
     stats = SyntaxStats(house)
     assert stats.n_words == 5 and stats.n_clauses == 1
@@ -702,34 +522,38 @@ DEFAULT = Default.__new__(Default)
     ],
 )
 def test_default_clause_heads(words, heads, deps, pos, morphs, heads_of_clauses):
-    doc = parse(words, heads, deps, morphs, pos=pos)
-    assert [token.text for token in doc if DEFAULT.is_clause_head(token)] == heads_of_clauses
+    found = tree(parse(words, heads, deps, morphs, pos=pos))
+    assert [word.form for word in found if DEFAULT.is_clause_head(word)] == heads_of_clauses
 
 
 def test_default_subordinate_clauses():
     # He said that she came and left: left is a conjunct of a subordinate clause
-    doc = parse(
-        ["He", "said", "that", "she", "came", "and", "left", "and", "slept"],
-        [1, 1, 4, 4, 1, 6, 4, 8, 1],
-        ["nsubj", "ROOT", "mark", "nsubj", "ccomp", "cc", "conj", "cc", "conj"],
-        pos=["PRON", "VERB", "SCONJ", "PRON", "VERB", "CCONJ", "VERB", "CCONJ", "VERB"],
+    words = tree(
+        parse(
+            ["He", "said", "that", "she", "came", "and", "left", "and", "slept"],
+            [1, 1, 4, 4, 1, 6, 4, 8, 1],
+            ["nsubj", "ROOT", "mark", "nsubj", "ccomp", "cc", "conj", "cc", "conj"],
+            pos=["PRON", "VERB", "SCONJ", "PRON", "VERB", "CCONJ", "VERB", "CCONJ", "VERB"],
+        )
     )
-    assert [token.text for token in doc if DEFAULT.is_subordinate_clause_head(token)] == [
+    assert [word.form for word in words if DEFAULT.is_subordinate_clause_head(word)] == [
         "came",
         "left",
     ]
 
 
 def test_default_participle_clauses():
-    doc = parse(
-        ["the", "letters", "written", "has", "written", "sent", "written", "home"],
-        [1, 5, 1, 4, 5, 5, 5, 6],
-        ["det", "nsubj", "acl", "aux", "advcl", "ROOT", "advcl", "obl"],
-        ["", "", "VerbForm=Part", "", "VerbForm=Part", "VerbForm=Part", "VerbForm=Part", ""],
-        pos=["DET", "NOUN", "VERB", "AUX", "VERB", "VERB", "VERB", "NOUN"],
+    words = tree(
+        parse(
+            ["the", "letters", "written", "has", "written", "sent", "written", "home"],
+            [1, 5, 1, 4, 5, 5, 5, 6],
+            ["det", "nsubj", "acl", "aux", "advcl", "ROOT", "advcl", "obl"],
+            ["", "", "VerbForm=Part", "", "VerbForm=Part", "VerbForm=Part", "VerbForm=Part", ""],
+            pos=["DET", "NOUN", "VERB", "AUX", "VERB", "VERB", "VERB", "NOUN"],
+        )
     )
     # No dependent, an auxiliary, the head of the sentence: only written home is a clause
-    assert [token.i for token in doc if DEFAULT.is_participle_clause(token)] == [6]
+    assert [word.index for word in words if DEFAULT.is_participle_clause(word)] == [6]
 
 
 @pytest.mark.parametrize(
@@ -742,20 +566,22 @@ def test_default_participle_clauses():
     ],
 )
 def test_default_passive_by_both_schemes(deps, passive, agentless):
-    doc = parse(
-        ["It", "was", "built", "by", "them"],
-        [2, 2, 2, 4, 2],
-        deps,
-        pos=["PRON", "AUX", "VERB", "ADP", "PRON"],
+    words = tree(
+        parse(
+            ["It", "was", "built", "by", "them"],
+            [2, 2, 2, 4, 2],
+            deps,
+            pos=["PRON", "AUX", "VERB", "ADP", "PRON"],
+        )
     )
-    assert DEFAULT.is_passive(doc[2]) is passive
-    assert DEFAULT.is_agentless(doc[2]) is agentless
-    assert not DEFAULT.is_passive(doc[1])
+    assert DEFAULT.is_passive(words[2]) is passive
+    assert DEFAULT.is_agentless(words[2]) is agentless
+    assert not DEFAULT.is_passive(words[1])
 
 
 def test_default_passive_by_voice():
-    doc = parse(["built"], [0], ["ROOT"], ["Voice=Pass"], pos=["VERB"])
-    assert DEFAULT.is_passive(doc[0]) and DEFAULT.is_agentless(doc[0])
+    word = tree(parse(["built"], [0], ["ROOT"], ["Voice=Pass"], pos=["VERB"]))[0]
+    assert DEFAULT.is_passive(word) and DEFAULT.is_agentless(word)
 
 
 def test_default_negations():
@@ -766,7 +592,7 @@ def test_default_negations():
         ["Polarity=Neg", "", "Polarity=Neg", "", "", ""],
         pos=["CCONJ", "PRON", "CCONJ", "PRON", "ADV", "VERB"],
     )
-    assert not any(DEFAULT.is_negation(token) for token in doc)
+    assert not any(DEFAULT.is_negation(word) for word in tree(doc))
 
     class Negations(SyntaxStats):
         negation_words = frozenset({"never"})
@@ -777,7 +603,6 @@ def test_default_negations():
 class Hooked(SyntaxStats):
     """A language with split predicates, its own statistic and a parser of strings"""
 
-    join_hyphens = True
     requires_lemmas = True
     stats_desc: ClassVar[dict[str, str]] = {
         **SYNTAX_STATS_DESC,
@@ -787,20 +612,18 @@ class Hooked(SyntaxStats):
     def __init__(self, source):
         super().__init__(source)
         chains = [
-            length
-            for sent in self.sents
-            for length in calc_modifier_chains(sent, self.is_chain, self.join_hyphens)
+            length for sent in self.sents for length in calc_modifier_chains(sent, self.is_chain)
         ]
         self.chains_per_sent = len(chains) / self.n_sents
 
     @staticmethod
-    def is_chain(token):
-        return token.dep_ == "nmod"
+    def is_chain(word):
+        return word.deprel == "nmod"
 
     def parse(self, source):
         if isinstance(source, str):
             words = source.split()
-            return Doc(
+            source = Doc(
                 VOCAB,
                 words=words,
                 heads=[1, 1, 3, 1, 5, 3],
@@ -822,27 +645,22 @@ def test_hooks():
     assert list(stats.get_stats())[-1] == "chains_per_sent"
 
 
-def test_hyphenated_words_in_the_statistics():
-    doc = parse(
-        ["vice", "-", "governor", "came"],
-        [3, 2, 0, 3],
-        ["compound", "punct", "nsubj", "ROOT"],
-        pos=["NOUN", "PUNCT", "NOUN", "VERB"],
-        spaces=[False, False, True, False],
-    )
+def test_parse_must_return_a_document():
+    class DocParser(SyntaxStats):
+        def parse(self, source):
+            return parse(["Yes"], [0], ["ROOT"], pos=["INTJ"])
 
-    class Hyphens(SyntaxStats):
-        join_hyphens = True
-
-    assert SyntaxStats(doc).n_words == 3
-    assert Hyphens(doc).n_words == 2
-    assert Hyphens(doc).c_children == {0: 1, 1: 1}
+    message = MESSAGES["hook_document"].format(hook="parse", cls="DocParser", type="Doc")
+    with pytest.raises(SourceTypeError, match=f"^{re.escape(message)}$"):
+        DocParser("Yes")
 
 
 @pytest.mark.parametrize(
     ("source", "error", "message"),
     [
-        ("The house", SourceTypeError, MESSAGES["source_type"].format(type="str")),
+        # A string of the default parse has no dependency parse
+        ("The house", SourceError, MESSAGES["no_parse"]),
+        (5, SourceTypeError, MESSAGES["source_type"].format(type="int")),
         (Doc(VOCAB, words=["The", "house"]), SourceError, MESSAGES["no_parse"]),
         (parse(["The", "house"], [1, 1], ["det", "ROOT"]), SourceError, MESSAGES["no_pos"]),
         (
@@ -853,7 +671,7 @@ def test_hyphenated_words_in_the_statistics():
     ],
 )
 def test_syntax_stats_errors(source, error, message):
-    with pytest.raises(error, match=f"^{message}$"):
+    with pytest.raises(error, match=f"^{re.escape(message)}$"):
         SyntaxStats(source)
 
 
@@ -863,41 +681,70 @@ def test_lemmas_required():
 
     doc = parse(["Yes"], [0], ["ROOT"], pos=["INTJ"])
     assert SyntaxStats(doc).n_words == 1
-    with pytest.raises(SourceError, match=f"^{MESSAGES['no_lemmas']}$"):
+    with pytest.raises(SourceError, match=f"^{re.escape(MESSAGES['no_lemmas'])}$"):
         Lemmas(doc)
 
 
-def test_is_predicate():
+def test_blank_lines():
+    # He came \n\n She slept: the blank line ends a sentence, slept loses its head across it
     doc = parse(
-        ["She", "is", "tall", ",", "surely"],
-        [2, 2, 2, 2, 2],
-        ["nsubj", "cop", "ROOT", "punct", "parataxis"],
-        pos=["PRON", "AUX", "ADJ", "PUNCT", "ADV"],
+        ["He", "came", "\n\n", "She", "slept"],
+        [1, 1, 1, 4, 1],
+        ["nsubj", "ROOT", "dep", "nsubj", "conj"],
+        spaces=[True, False, False, True, False],
+        pos=["PRON", "VERB", "SPACE", "PRON", "VERB"],
     )
-    assert [token.text for token in doc if is_predicate(token)] == ["is", "tall"]
+    stats = SyntaxStats(doc)
+    assert [forms(sent) for sent in stats.sents] == [["He", "came"], ["She", "slept"]]
+    assert stats.c_deps == {"nsubj": 2, "root": 2}
+    # A token over a blank line makes no document
+    message = MESSAGES["document_tokens"].format(error="")
+    with pytest.raises(SourceError, match=f"^{re.escape(message)}"):
+        SyntaxStats(parse(["He", "came\n\nback"], [1, 1], ["nsubj", "ROOT"], pos=["PRON", "VERB"]))
+
+
+def test_is_predicate():
+    words = tree(
+        parse(
+            ["She", "is", "tall", ",", "surely"],
+            [2, 2, 2, 2, 2],
+            ["nsubj", "cop", "ROOT", "punct", "parataxis"],
+            pos=["PRON", "AUX", "ADJ", "PUNCT", "ADV"],
+        )
+    )
+    assert [word.form for word in words if is_predicate(word)] == ["is", "tall"]
 
 
 def test_count_noun_modifiers():
-    doc = parse(
-        ["the", "two", "old", "houses", "of", "Ann", "and", "flats", ",", "sold"],
-        [3, 3, 3, 3, 5, 3, 7, 3, 9, 3],
-        ["det", "nummod", "amod", "ROOT", "case", "nmod:poss", "cc", "conj", "punct", "acl"],
+    words = tree(
+        parse(
+            ["the", "two", "old", "houses", "of", "Ann", "and", "flats", ",", "sold"],
+            [3, 3, 3, 3, 5, 3, 7, 3, 9, 3],
+            ["det", "nummod", "amod", "ROOT", "case", "nmod:poss", "cc", "conj", "punct", "acl"],
+        )
     )
-    assert count_noun_modifiers(doc[3]) == 5
-    assert count_noun_modifiers(doc[5]) == 0
+    assert count_noun_modifiers(words[3]) == 5
+    assert count_noun_modifiers(words[5]) == 0
+
+
+def nmod(word):
+    return word.deprel == "nmod"
 
 
 def test_modifier_chains():
     # the use of the water of the river of the town, and the color of the sky
-    doc = parse(
-        ["use", "water", "river", "town", "color", "sky", "x"],
-        [0, 0, 1, 2, 1, 4, 6],
-        ["ROOT", "nmod", "nmod", "nmod", "nmod", "nmod", "ROOT"],
+    words = tree(
+        parse(
+            ["use", "water", "river", "town", "color", "sky", "x"],
+            [0, 0, 1, 2, 1, 4, 6],
+            ["ROOT", "nmod", "nmod", "nmod", "nmod", "nmod", "ROOT"],
+        )
     )
-    nmod = lambda token: token.dep_ == "nmod"  # noqa: E731
     # One chain from water: its longest branch is water - river - town
-    assert calc_modifier_chains(doc, nmod) == [3]
-    assert calc_modifier_chains(doc, lambda token: False) == []
+    assert calc_modifier_chains(words, nmod) == [3]
+    assert calc_modifier_chains(words, lambda word: False) == []
+    # Every word a modifier: the head of the sentence starts the only chain, x is alone
+    assert calc_modifier_chains(words, lambda word: True) == [4]
 
 
 # Yesterday the cat of the neighbour slept on the mat of the house of the mayor . Came the
@@ -957,32 +804,38 @@ def test_prepositional_chains_and_the_order_of_the_members():
 
 
 def test_prepositional_complements():
-    doc = order_doc()
-    assert [token.text for token in doc if is_prep_complement(token)] == [
+    assert [word.form for word in tree(order_doc()) if is_prep_complement(word)] == [
         "neighbour",
         "mat",
         "house",
         "mayor",
     ]
     # A complement without an adposition (a case of its own) is none
-    bare = parse(
-        ["the", "use", "water"], [1, 1, 1], ["det", "ROOT", "nmod"], pos=["DET", "NOUN", "NOUN"]
+    bare = tree(
+        parse(
+            ["the", "use", "water"],
+            [1, 1, 1],
+            ["det", "ROOT", "nmod"],
+            pos=["DET", "NOUN", "NOUN"],
+        )
     )
     assert not is_prep_complement(bare[2])
     # A subtype is the base relation; a possessive marker is no adposition
-    sub = parse(
-        ["went", "to", "town", "John", "'s"],
-        [0, 2, 0, 0, 3],
-        ["ROOT", "case", "obl:to", "nmod:poss", "case"],
-        pos=["VERB", "ADP", "NOUN", "PROPN", "PART"],
+    sub = tree(
+        parse(
+            ["went", "to", "town", "John", "'s"],
+            [0, 2, 0, 0, 3],
+            ["ROOT", "case", "obl:to", "nmod:poss", "case"],
+            pos=["VERB", "ADP", "NOUN", "PROPN", "PART"],
+        )
     )
     assert is_prep_complement(sub[2]) and not is_prep_complement(sub[3])
 
 
 def test_hook_of_the_prepositional_complements():
     class OnlyNmod(SyntaxStats):
-        def is_prep_complement(self, token):
-            return token.dep_ == "nmod" and super().is_prep_complement(token)
+        def is_prep_complement(self, word):
+            return word.deprel == "nmod" and super().is_prep_complement(word)
 
     # Without the obl of the verb the chain is of the house of the mayor
     stats = OnlyNmod(order_doc())
@@ -997,7 +850,7 @@ def test_prepositional_complements_of_several_words_and_of_a_copula():
         ["ROOT", "case", "fixed", "det", "obl", "case", "det", "nmod"],
         pos=["VERB", "ADV", "ADP", "DET", "NOUN", "ADP", "DET", "NOUN"],
     )
-    assert is_prep_complement(doc[4]) and SyntaxStats(doc).max_prep_chain_len == 2
+    assert is_prep_complement(tree(doc)[4]) and SyntaxStats(doc).max_prep_chain_len == 2
     # was in the house of the mayor: the predicate with a copula is the first link
     doc = parse(
         ["was", "in", "the", "house", "of", "the", "mayor"],
@@ -1005,7 +858,7 @@ def test_prepositional_complements_of_several_words_and_of_a_copula():
         ["cop", "case", "det", "ROOT", "case", "det", "nmod"],
         pos=["AUX", "ADP", "DET", "NOUN", "ADP", "DET", "NOUN"],
     )
-    assert is_prep_complement(doc[3]) and SyntaxStats(doc).max_prep_chain_len == 2
+    assert is_prep_complement(tree(doc)[3]) and SyntaxStats(doc).max_prep_chain_len == 2
     # talked about the house that was by the river: the predicate of the relative clause is
     # no link of the chain of house
     doc = parse(
@@ -1014,7 +867,7 @@ def test_prepositional_complements_of_several_words_and_of_a_copula():
         ["ROOT", "case", "det", "obl", "nsubj", "cop", "case", "det", "acl:relcl"],
         pos=["VERB", "ADP", "DET", "NOUN", "PRON", "AUX", "ADP", "DET", "NOUN"],
     )
-    assert not is_prep_complement(doc[8]) and SyntaxStats(doc).n_prep_chains == 0
+    assert not is_prep_complement(tree(doc)[8]) and SyntaxStats(doc).n_prep_chains == 0
     # A conjunct of a complement starts no chain of its own
     doc = parse(
         ["lived", "in", "town", "and", "in", "the", "centre", "of", "the", "city"],
@@ -1033,24 +886,7 @@ def test_prepositional_chain_of_a_predicate_without_a_copula():
         ["nsubj", "case", "det", "ROOT", "case", "det", "nmod"],
         pos=["PRON", "ADP", "DET", "NOUN", "ADP", "DET", "NOUN"],
     )
-    assert is_prep_complement(doc[3]) and SyntaxStats(doc).max_prep_chain_len == 2
-
-
-def test_prepositional_complement_of_a_hyphenated_word():
-    # lives in north-west of the city: in hangs on north, the relation obl on west
-    doc = parse(
-        ["He", "lives", "in", "north", "-", "west", "of", "the", "city"],
-        [1, 1, 3, 5, 5, 1, 8, 8, 5],
-        ["nsubj", "ROOT", "case", "compound", "punct", "obl", "case", "det", "nmod"],
-        spaces=[True, True, True, False, False, True, True, True, True],
-        pos=["PRON", "VERB", "ADP", "NOUN", "PUNCT", "NOUN", "ADP", "DET", "NOUN"],
-    )
-    assert is_prep_complement(doc[5], join_hyphens=True) and not is_prep_complement(doc[5])
-
-    class Hyphens(SyntaxStats):
-        join_hyphens = True
-
-    assert Hyphens(doc).n_prep_chains == 1 and SyntaxStats(doc).n_prep_chains == 0
+    assert is_prep_complement(tree(doc)[3]) and SyntaxStats(doc).max_prep_chain_len == 2
 
 
 # The man and the woman came ; she was tired , and he said that they left .
@@ -1198,14 +1034,15 @@ def test_subordinating_marks():
         ["", fin, "", "", "", fin, "", "", "", fin],
         pos=["PRON", "VERB", "PUNCT", "SCONJ", "PRON", "AUX", "ADJ", "CCONJ", "PRON", "VERB"],
     )
+    words = tree(doc)
     stats = SyntaxStats(doc)
     assert (stats.n_t_units, stats.n_subordinate_clauses, stats.n_complex_t_units) == (3, 0, 0)
     # slept, a conjunct with a subject of its own, belongs to the marked clause
     stats = Marked(doc)
     assert (stats.n_t_units, stats.n_subordinate_clauses, stats.n_complex_t_units) == (1, 2, 1)
-    assert is_subordinate_clause_head(doc[6], subordinating_marks={"for"})
-    assert not is_subordinate_clause_head(doc[6], subordinating_marks={"because"})
-    assert is_subordinate_clause_head(doc[9], subordinating_marks={"for"})
+    assert is_subordinate_clause_head(words[6], subordinating_marks={"for"})
+    assert not is_subordinate_clause_head(words[6], subordinating_marks={"because"})
+    assert is_subordinate_clause_head(words[9], subordinating_marks={"for"})
     # he left , for he was tired and cried: a conjunct sharing the subject may be a predicate of
     # the main clause, which a model attaches to the marked one too
     shared = parse(
@@ -1215,23 +1052,23 @@ def test_subordinating_marks():
         ["", fin, "", "", "", fin, "", "", fin],
         pos=["PRON", "VERB", "PUNCT", "SCONJ", "PRON", "AUX", "ADJ", "CCONJ", "VERB"],
     )
-    assert not is_subordinate_clause_head(shared[8], subordinating_marks={"for"})
+    assert not is_subordinate_clause_head(tree(shared)[8], subordinating_marks={"for"})
     assert Marked(shared).n_subordinate_clauses == 1
 
     class HookOnly(SyntaxStats):
-        def is_subordinating_mark(self, token):
-            return token.lower_ == "for"
+        def is_subordinating_mark(self, word):
+            return word.form.lower() == "for"
 
     # The hook alone, without subordinating_marks, marks the clause for every count
     stats = HookOnly(doc)
     assert (stats.n_t_units, stats.n_subordinate_clauses, stats.n_complex_t_units) == (1, 2, 1)
-    # A check of the mark token instead of the set
-    assert is_subordinate_clause_head(doc[6], is_subordinating_mark=lambda mark: mark.i == 3)
-    assert not is_subordinate_clause_head(doc[6], is_subordinating_mark=lambda mark: False)
+    # A check of the mark word instead of the set
+    assert is_subordinate_clause_head(words[6], is_subordinating_mark=lambda mark: mark.index == 3)
+    assert not is_subordinate_clause_head(words[6], is_subordinating_mark=lambda mark: False)
 
     class Contextual(Marked):
-        def is_subordinating_mark(self, token):
-            return super().is_subordinating_mark(token) and token.head.text != "tired"
+        def is_subordinating_mark(self, word):
+            return super().is_subordinating_mark(word) and word.head.form != "tired"
 
     stats = Contextual(doc)
     assert (stats.n_t_units, stats.n_subordinate_clauses) == (3, 0)
@@ -1321,14 +1158,15 @@ def test_subordinating_marks():
         pos=["PRON", "VERB", "PUNCT", "SCONJ", "PRON", "AUX", "ADJ", "PUNCT", "PRON", "VERB"],
     )
     assert (SyntaxStats(doc).n_t_units, Marked(doc).n_t_units) == (3, 1)
+    words = tree(doc)
     with pytest.raises(SourceTypeError):
-        is_subordinating_mark(doc[3], "so that")
+        is_subordinating_mark(words[3], "so that")
     with pytest.raises(SourceTypeError):
-        is_subordinate_clause_head(doc[6], is_subordinating_mark="so that")
+        is_subordinate_clause_head(words[6], is_subordinating_mark="so that")
     with pytest.raises(SourceTypeError):
-        is_subordinate_clause_head(doc[6], subordinating_marks="so that")
+        is_subordinate_clause_head(words[6], subordinating_marks="so that")
     with pytest.raises(SourceTypeError):
-        is_infinitive_clause_head(doc[6], subordinating_marks=[1])
+        is_infinitive_clause_head(words[6], subordinating_marks=[1])
     with pytest.raises(SourceTypeError):
 
         class Wrong(SyntaxStats):
@@ -1337,40 +1175,47 @@ def test_subordinating_marks():
 
 def test_is_subordinating_mark():
     # we left , so that they slept: the mark with the words of its fixed expression
-    doc = parse(
-        ["we", "left", ",", "so", "that", "they", "slept"],
-        [1, 1, 6, 6, 3, 6, 1],
-        ["nsubj", "ROOT", "punct", "mark", "fixed", "nsubj", "parataxis"],
-        pos=["PRON", "VERB", "PUNCT", "ADV", "SCONJ", "PRON", "VERB"],
+    words = tree(
+        parse(
+            ["we", "left", ",", "so", "that", "they", "slept"],
+            [1, 1, 6, 6, 3, 6, 1],
+            ["nsubj", "ROOT", "punct", "mark", "fixed", "nsubj", "parataxis"],
+            pos=["PRON", "VERB", "PUNCT", "ADV", "SCONJ", "PRON", "VERB"],
+        )
     )
-    assert is_subordinating_mark(doc[3], {"so that"}) and not is_subordinating_mark(doc[3], {"so"})
+    assert is_subordinating_mark(words[3], {"so that"})
+    assert not is_subordinating_mark(words[3], {"so"})
     # A word of another relation and no marks are none
-    assert not is_subordinating_mark(doc[4], {"that"}) and not is_subordinating_mark(doc[3])
+    assert not is_subordinating_mark(words[4], {"that"}) and not is_subordinating_mark(words[3])
 
 
 def test_finite_conjunct_of_an_infinitive_clause():
     # he wants to leave and leaves: a model attaches the finite verb to the infinitive, which
     # makes it neither an infinitive clause nor a subordinate one
     fin, inf = "VerbForm=Fin", "VerbForm=Inf"
-    doc = parse(
-        ["he", "wants", "to", "leave", "and", "leaves"],
-        [1, 1, 3, 1, 5, 3],
-        ["nsubj", "ROOT", "mark", "xcomp", "cc", "conj"],
-        ["", fin, "", inf, "", fin],
-        pos=["PRON", "VERB", "PART", "VERB", "CCONJ", "VERB"],
+    words = tree(
+        parse(
+            ["he", "wants", "to", "leave", "and", "leaves"],
+            [1, 1, 3, 1, 5, 3],
+            ["nsubj", "ROOT", "mark", "xcomp", "cc", "conj"],
+            ["", fin, "", inf, "", fin],
+            pos=["PRON", "VERB", "PART", "VERB", "CCONJ", "VERB"],
+        )
     )
-    assert is_infinitive_clause_head(doc[3]) and not is_infinitive_clause_head(doc[5])
-    assert not is_subordinate_clause_head(doc[5])
+    assert is_infinitive_clause_head(words[3]) and not is_infinitive_clause_head(words[5])
+    assert not is_subordinate_clause_head(words[5])
     # I know that he left and stay: an infinitive conjunct of a finite subordinate clause is an
     # infinitive clause, not a subordinate one
-    doc = parse(
-        ["I", "know", "that", "he", "left", "and", "stay"],
-        [1, 1, 4, 4, 1, 6, 4],
-        ["nsubj", "ROOT", "mark", "nsubj", "ccomp", "cc", "conj"],
-        ["", fin, "", "", fin, "", inf],
-        pos=["PRON", "VERB", "SCONJ", "PRON", "VERB", "CCONJ", "VERB"],
+    words = tree(
+        parse(
+            ["I", "know", "that", "he", "left", "and", "stay"],
+            [1, 1, 4, 4, 1, 6, 4],
+            ["nsubj", "ROOT", "mark", "nsubj", "ccomp", "cc", "conj"],
+            ["", fin, "", "", fin, "", inf],
+            pos=["PRON", "VERB", "SCONJ", "PRON", "VERB", "CCONJ", "VERB"],
+        )
     )
-    assert is_infinitive_clause_head(doc[6]) and not is_subordinate_clause_head(doc[6])
+    assert is_infinitive_clause_head(words[6]) and not is_subordinate_clause_head(words[6])
     # he came to help and she stayed: a finite conjunct with a subject of its own of the
     # infinitive joins the clause of came, a T-unit of its own
     doc = parse(
@@ -1382,8 +1227,9 @@ def test_finite_conjunct_of_an_infinitive_clause():
     )
     stats = SyntaxStats(doc)
     assert (stats.n_t_units, stats.n_l2sca_clauses, stats.clauses_per_t_unit) == (2, 2, 1.0)
-    assert not stats.is_infinitive_clause_head(doc[6])
-    assert not stats.is_subordinate_clause_head(doc[6])
+    stayed = tree(doc)[6]
+    assert not stats.is_infinitive_clause_head(stayed)
+    assert not stats.is_subordinate_clause_head(stayed)
     # I know that he wants to leave and she leaves: under a subordinate clause it is one too
     doc = parse(
         ["I", "know", "that", "he", "wants", "to", "leave", "and", "she", "leaves"],
@@ -1413,7 +1259,7 @@ def test_finite_conjunct_of_an_infinitive_clause():
         pos=["PRON", "VERB", "PART", "VERB", "PART", "VERB", "CCONJ", "PRON", "VERB"],
     )
     stats = SyntaxStats(doc)
-    assert not stats.is_subordinate_clause_head(doc[8]) and stats.n_t_units == 2
+    assert not stats.is_subordinate_clause_head(tree(doc)[8]) and stats.n_t_units == 2
     # I know that he came to try to leave and she left: under a subordinate clause
     doc = parse(
         ["I", "know", "that", "he", "came", "to", "try", "to", "leave", "and", "she", "left"],
@@ -1451,23 +1297,27 @@ def test_finite_conjunct_of_an_infinitive_clause():
     stats = SyntaxStats(doc)
     assert (stats.n_t_units, stats.n_subordinate_clauses) == (1, 2)
     # A loop of infinitives above the conjunct leaves it without a kind
-    cycle = parse(
-        ["go", "leave", "and", "she", "leaves"],
-        [1, 0, 4, 4, 1],
-        ["xcomp", "xcomp", "cc", "nsubj", "conj"],
-        [inf, inf, "", "", fin],
-        pos=["VERB", "VERB", "CCONJ", "PRON", "VERB"],
+    cycle = tree(
+        parse(
+            ["go", "leave", "and", "she", "leaves"],
+            [1, 0, 4, 4, 1],
+            ["xcomp", "xcomp", "cc", "nsubj", "conj"],
+            [inf, inf, "", "", fin],
+            pos=["VERB", "VERB", "CCONJ", "PRON", "VERB"],
+        )
     )
-    assert not is_subordinate_clause_head(cycle[4], lambda token: True)
-    # A loop of the words above the infinitive leaves the conjunct without a kind
-    loop = parse(
-        ["leave", "and", "she", "leaves"],
-        [0, 3, 3, 0],
-        ["xcomp", "cc", "nsubj", "conj"],
-        [inf, "", "", fin],
-        pos=["VERB", "CCONJ", "PRON", "VERB"],
+    assert not is_subordinate_clause_head(cycle[4], lambda word: True)
+    # An infinitive at the head of the sentence leaves the conjunct without a kind
+    root = tree(
+        parse(
+            ["leave", "and", "she", "leaves"],
+            [0, 3, 3, 0],
+            ["ROOT", "cc", "nsubj", "conj"],
+            [inf, "", "", fin],
+            pos=["VERB", "CCONJ", "PRON", "VERB"],
+        )
     )
-    assert not is_subordinate_clause_head(loop[3], lambda token: True)
+    assert not is_subordinate_clause_head(root[3], lambda word: True)
 
 
 def test_infinitive_clauses_of_the_subordinate_relations():
@@ -1665,8 +1515,8 @@ def test_verb_phrases_of_a_periphrasis():
     infinitive conjunct; a finite conjunct is"""
 
     class Modal(SyntaxStats):
-        def is_infinitive_periphrasis(self, token):
-            return token.head.lower_ == "must"
+        def is_infinitive_periphrasis(self, word):
+            return word.head is not None and word.head.form.lower() == "must"
 
     inf, fin = "VerbForm=Inf", "VerbForm=Fin"
     # he must leave and stay / he must leave and stays
@@ -1688,9 +1538,12 @@ def test_verb_phrases_of_a_periphrasis():
         pos=["PRON", "VERB", "VERB"],
     )
     assert (SyntaxStats(doc).n_verb_phrases, Modal(doc).n_verb_phrases) == (2, 1)
-    # A root marked as a conjunct of itself ends the walk up the conjuncts
-    doc = parse(["leave"], [0], ["conj"], morphs=[inf], pos=["VERB"])
-    assert Modal(doc).n_verb_phrases == 1
+    # The head of a sentence labelled conj in a Document ends the walk up the conjuncts
+    source = document(["leave"], [0], ["conj"], upos=["VERB"], feats=[inf])
+    assert Modal(source).n_verb_phrases == 1
+    # Infinitive conjuncts linked in a loop end it too
+    doc = parse(["go", "leave"], [1, 0], ["conj", "conj"], morphs=[inf, inf], pos=["VERB"] * 2)
+    assert Modal(doc).n_verb_phrases == 2
     # to leave is a must: an infinitive subject of a modal word
     doc = parse(
         ["to", "leave", "must"],
@@ -1731,9 +1584,19 @@ def test_words_before_a_root_out_of_the_words():
     assert isnan(SyntaxStats(doc).words_before_root)
 
 
+def test_word_without_a_relation():
+    # A label set without heads: a heads the sentence, b has no relation and no head
+    doc = Doc(VOCAB, words=["a", "b"], pos=["NOUN", "NOUN"])
+    doc[0].dep_ = "nsubj"
+    stats = SyntaxStats(doc)
+    assert stats.c_deps == {"": 1, "root": 1}
+    assert [word.head for word in stats.sents[0]] == [None, None]
+    assert stats.n_clauses == 2 and stats.words_before_root == 0.0
+
+
 def test_dependency_triples():
-    doc = two_sents()
-    assert dependency_triples(doc[:8]) == [
+    first = get_tree(to_document(two_sents())).sentences[0]
+    assert dependency_triples(first) == [
         ("NOUN", "det", "DET"),
         ("VERB", "nsubj", "NOUN"),
         ("NOUN", "acl", "VERB"),
@@ -1742,9 +1605,9 @@ def test_dependency_triples():
         ("VERB", "aux", "AUX"),
         ("", "root", "VERB"),
     ]
-    # The root of a sentence is root whatever its label; punctuation gives no triple
-    root = parse(["Yes", "!"], [0, 0], ["root", "punct"], pos=["INTJ", "PUNCT"])
-    assert dependency_triples(root) == [("", "root", "INTJ")]
+    # The head of a sentence is root whatever its label; punctuation gives no triple
+    source = document(["Yes", "!"], [0, 1], ["discourse", "punct"], upos=["INTJ", "PUNCT"])
+    assert dependency_triples(get_tree(source).words) == [("", "root", "INTJ")]
 
 
 def test_edit_distance_against_the_full_table():
@@ -1797,41 +1660,31 @@ def test_similarity_of_arrays_and_mappings():
     assert calc_multiset_similarity([{"a": "x"}, ["a"]]) == 1.0
 
 
-def test_triples_through_punctuation_and_hyphens():
+def test_triples_through_punctuation():
     # use « water »: water hangs on the opening quote, the quote on use
-    doc = parse(
-        ["use", "\u00ab", "water", "\u00bb"],
-        [0, 0, 1, 0],
-        ["ROOT", "punct", "nmod", "punct"],
-        pos=["NOUN", "PUNCT", "NOUN", "PUNCT"],
+    words = tree(
+        parse(
+            ["use", "«", "water", "»"],
+            [0, 0, 1, 0],
+            ["ROOT", "punct", "nmod", "punct"],
+            pos=["NOUN", "PUNCT", "NOUN", "PUNCT"],
+        )
     )
-    assert doc[2].head.i == 1
-    assert dependency_triples(doc) == [("", "root", "NOUN"), ("NOUN", "nmod", "NOUN")]
+    assert words[2].head.index == 1
+    assert dependency_triples(words) == [("", "root", "NOUN"), ("NOUN", "nmod", "NOUN")]
     # A word under a mark at the root has no word above it
-    marked = parse(["!", "Yes"], [0, 0], ["ROOT", "discourse"], pos=["PUNCT", "INTJ"])
+    marked = tree(parse(["!", "Yes"], [0, 0], ["ROOT", "discourse"], pos=["PUNCT", "INTJ"]))
     assert dependency_triples(marked) == [("", "root", "INTJ")]
     # Marks above a word linked in a loop end the climb
-    loop = parse(
-        ["Stop", "go", ",", ";"],
-        [0, 2, 3, 2],
-        ["ROOT", "dep", "punct", "punct"],
-        pos=["VERB", "VERB", "PUNCT", "PUNCT"],
+    loop = tree(
+        parse(
+            ["Stop", "go", ",", ";"],
+            [0, 2, 3, 2],
+            ["ROOT", "dep", "punct", "punct"],
+            pos=["VERB", "VERB", "PUNCT", "PUNCT"],
+        )
     )
     assert dependency_triples(loop) == [("", "root", "VERB"), ("", "root", "VERB")]
-    # A hyphenated word gives one triple by the part that holds its relation
-    hyphen = parse(
-        ["a", "well", "-", "known", "poet"],
-        [4, 3, 3, 4, 4],
-        ["det", "advmod", "punct", "amod", "ROOT"],
-        spaces=[True, False, False, True, True],
-        pos=["DET", "ADV", "PUNCT", "ADJ", "NOUN"],
-    )
-    assert dependency_triples(hyphen, join_hyphens=True) == [
-        ("NOUN", "det", "DET"),
-        ("NOUN", "amod", "ADJ"),
-        ("", "root", "NOUN"),
-    ]
-    assert len(dependency_triples(hyphen)) == 4
 
 
 def test_parts_of_speech_required():
@@ -1843,9 +1696,9 @@ def test_parts_of_speech_required():
         heads=[token.head.i for token in doc],
         deps=[token.dep_ for token in doc],
     )
-    with pytest.raises(SourceError, match=f"^{MESSAGES['no_pos']}$"):
+    with pytest.raises(SourceError, match=f"^{re.escape(MESSAGES['no_pos'])}$"):
         SyntaxStats(bare)
-    # The SPACE of the whitespace alone, which the attribute ruler sets without a tagger
+    # A whitespace token is no token of the document, nor its SPACE a part of speech
     spaced = Doc(
         VOCAB,
         words=["The", "house", "\n\n", "stands"],
@@ -1854,7 +1707,8 @@ def test_parts_of_speech_required():
         deps=["det", "nsubj", "dep", "ROOT"],
         pos=["", "", "SPACE", ""],
     )
-    with pytest.raises(SourceError, match=f"^{MESSAGES['no_pos']}$"):
+    assert forms(tree(spaced)) == ["The", "house", "stands"]
+    with pytest.raises(SourceError, match=f"^{re.escape(MESSAGES['no_pos'])}$"):
         SyntaxStats(spaced)
 
 
@@ -1872,45 +1726,33 @@ def test_items_must_be_hashable():
         calc_multiset_similarity([[{"a"}], [{"b"}]])
 
 
-@pytest.mark.parametrize("tokens", [None, "the cat", [1, 2], 5])
-def test_dependency_triples_need_tokens(tokens):
+@pytest.mark.parametrize(
+    "words", [None, "the cat", [1, 2], 5, list(parse(["Yes"], [0], ["ROOT"]))]
+)
+def test_dependency_triples_need_tree_words(words):
     with pytest.raises(SourceTypeError):
-        dependency_triples(tokens)
+        dependency_triples(words)
 
 
-def test_dependency_triples_of_spans_and_lists():
-    doc = two_sents()
+def test_dependency_triples_of_sequences():
+    words = tree(two_sents())
     assert (
-        dependency_triples(doc[:8])
-        == dependency_triples(list(doc[:8]))
-        == [dependency_triples(doc)[i] for i in range(7)]
+        dependency_triples(words[:8])
+        == dependency_triples(list(words[:8]))
+        == [dependency_triples(words)[i] for i in range(7)]
     )
 
 
 def test_modifier_chains_skip_punctuation():
-    doc = parse(["use", "\u00ab", "water"], [0, 0, 1], ["ROOT", "nmod", "nmod"])
-    assert calc_modifier_chains(doc, lambda token: token.dep_ == "nmod") == []
-
-
-def test_modifier_chains_of_hyphenated_words():
-    doc = parse(
-        ["use", "vice", "-", "governor", "town"],
-        [0, 0, 3, 1, 3],
-        ["ROOT", "nmod", "punct", "compound", "nmod"],
-        spaces=[True, False, False, True, False],
-    )
-    nmod = lambda token: token.dep_ == "nmod"  # noqa: E731
-    assert calc_modifier_chains(doc, nmod) == []
-    assert calc_modifier_chains(doc, nmod, join_hyphens=True) == [2]
-    # Every word a modifier: the head of the sentence starts the only chain
-    assert calc_modifier_chains(doc, lambda token: True, join_hyphens=True) == [3]
+    words = tree(parse(["use", "«", "water"], [0, 0, 1], ["ROOT", "nmod", "nmod"]))
+    assert calc_modifier_chains(words, nmod) == []
 
 
 def test_modifier_check_must_be_callable():
     with pytest.raises(
         SourceTypeError, match=r"^The check of a modifier must be callable, not str$"
     ):
-        calc_modifier_chains(parse(["Yes"], [0], ["ROOT"]), "nmod")
+        calc_modifier_chains(tree(parse(["Yes"], [0], ["ROOT"])), "nmod")
 
 
 def test_default_clause_heads_by_the_form_of_the_predicate():
@@ -1926,19 +1768,21 @@ def test_default_clause_heads_by_the_form_of_the_predicate():
     assert (stats.n_clauses, stats.n_subordinate_clauses, stats.n_complex_sents) == (2, 1, 1)
     assert stats.n_participle_clauses == 0
     # the fear to have been robbed: an infinitive auxiliary keeps the clause out
-    doc = parse(
-        ["fear", "to", "have", "been", "robbed"],
-        [0, 4, 4, 4, 0],
-        ["ROOT", "mark", "aux", "aux:pass", "acl"],
-        ["", "", "VerbForm=Inf", "VerbForm=Part", "VerbForm=Part"],
-        pos=["NOUN", "PART", "AUX", "AUX", "VERB"],
+    words = tree(
+        parse(
+            ["fear", "to", "have", "been", "robbed"],
+            [0, 4, 4, 4, 0],
+            ["ROOT", "mark", "aux", "aux:pass", "acl"],
+            ["", "", "VerbForm=Inf", "VerbForm=Part", "VerbForm=Part"],
+            pos=["NOUN", "PART", "AUX", "AUX", "VERB"],
+        )
     )
-    assert not DEFAULT.is_clause_head(doc[4])
+    assert not DEFAULT.is_clause_head(words[4])
 
 
-def finite_by_ending(token):
+def finite_by_ending(word):
     """Form of an auxiliary without VerbForm: habéis is finite"""
-    return "Fin" if token.text == "habéis" else ""
+    return "Fin" if word.form == "habéis" else ""
 
 
 def test_clause_heads_by_the_form_of_an_auxiliary():
@@ -1950,67 +1794,80 @@ def test_clause_heads_by_the_form_of_an_auxiliary():
         ["VerbForm=Fin", "", "", "", "VerbForm=Part", ""],
         pos=["VERB", "SCONJ", "PRON", "AUX", "VERB", "PUNCT"],
     )
-    assert not is_clause_head(doc[4]) and not is_subordinate_clause_head(doc[4])
-    assert is_clause_head(doc[4], auxiliary_form=finite_by_ending)
-    assert is_subordinate_clause_head(doc[4], auxiliary_form=finite_by_ending)
+    words = tree(doc)
+    assert not is_clause_head(words[4]) and not is_subordinate_clause_head(words[4])
+    assert is_clause_head(words[4], auxiliary_form=finite_by_ending)
+    assert is_subordinate_clause_head(words[4], auxiliary_form=finite_by_ending)
     assert is_subordinate_clause_head(
-        doc[4], lambda token: is_clause_head(token, auxiliary_form=finite_by_ending)
+        words[4], lambda word: is_clause_head(word, auxiliary_form=finite_by_ending)
     )
 
     class Spanish(SyntaxStats):
-        def auxiliary_form(self, token):
-            return finite_by_ending(token)
+        def auxiliary_form(self, word):
+            return finite_by_ending(word)
 
-    assert DEFAULT.auxiliary_form(doc[3]) == ""
+    assert DEFAULT.auxiliary_form(words[3]) == ""
     assert (SyntaxStats(doc).n_clauses, SyntaxStats(doc).n_subordinate_clauses) == (1, 0)
     assert (Spanish(doc).n_clauses, Spanish(doc).n_subordinate_clauses) == (2, 1)
 
 
+def infinitive_by_form(word):
+    """Form of an auxiliary without VerbForm: haber is an infinitive"""
+    return "Inf" if word.form == "haber" else ""
+
+
 def test_infinitive_clauses_by_the_form_of_an_auxiliary():
     # Quiere haber llegado: the model leaves haber without a form
-    doc = parse(
-        ["Quiere", "haber", "llegado"],
-        [0, 2, 0],
-        ["ROOT", "aux", "xcomp"],
-        ["VerbForm=Fin", "", "VerbForm=Part"],
-        pos=["VERB", "AUX", "VERB"],
+    words = tree(
+        parse(
+            ["Quiere", "haber", "llegado"],
+            [0, 2, 0],
+            ["ROOT", "aux", "xcomp"],
+            ["VerbForm=Fin", "", "VerbForm=Part"],
+            pos=["VERB", "AUX", "VERB"],
+        )
     )
-    infinitive = lambda token: "Inf" if token.text == "haber" else ""  # noqa: E731
-    assert not is_infinitive_clause(doc[2]) and not is_infinitive_clause_head(doc[2])
-    assert is_infinitive_clause(doc[2], auxiliary_form=infinitive)
-    assert is_infinitive_clause_head(doc[2], auxiliary_form=infinitive)
-    assert is_clause_head(doc[2], auxiliary_form=infinitive)
+    assert not is_infinitive_clause(words[2]) and not is_infinitive_clause_head(words[2])
+    assert is_infinitive_clause(words[2], auxiliary_form=infinitive_by_form)
+    assert is_infinitive_clause_head(words[2], auxiliary_form=infinitive_by_form)
+    assert is_clause_head(words[2], auxiliary_form=infinitive_by_form)
     # a complement of a non-finite complement: llegado completes the word above it
-    doc = parse(
-        ["Dijo", "querer", "haber", "llegado"],
-        [0, 0, 3, 1],
-        ["ROOT", "xcomp", "aux", "xcomp"],
-        ["VerbForm=Fin", "VerbForm=Inf", "", "VerbForm=Part"],
-        pos=["VERB", "VERB", "AUX", "VERB"],
+    words = tree(
+        parse(
+            ["Dijo", "querer", "haber", "llegado"],
+            [0, 0, 3, 1],
+            ["ROOT", "xcomp", "aux", "xcomp"],
+            ["VerbForm=Fin", "VerbForm=Inf", "", "VerbForm=Part"],
+            pos=["VERB", "VERB", "AUX", "VERB"],
+        )
     )
-    assert is_infinitive_clause(doc[3], auxiliary_form=infinitive)
+    assert is_infinitive_clause(words[3], auxiliary_form=infinitive_by_form)
     # Sé que habéis querido ir: ir completes querido, finite by habéis without a form
-    doc = parse(
-        ["Sé", "que", "habéis", "querido", "ir"],
-        [0, 3, 3, 0, 3],
-        ["ROOT", "mark", "aux", "ccomp", "xcomp"],
-        ["VerbForm=Fin", "", "", "VerbForm=Part", "VerbForm=Inf"],
-        pos=["VERB", "SCONJ", "AUX", "VERB", "VERB"],
+    words = tree(
+        parse(
+            ["Sé", "que", "habéis", "querido", "ir"],
+            [0, 3, 3, 0, 3],
+            ["ROOT", "mark", "aux", "ccomp", "xcomp"],
+            ["VerbForm=Fin", "", "", "VerbForm=Part", "VerbForm=Inf"],
+            pos=["VERB", "SCONJ", "AUX", "VERB", "VERB"],
+        )
     )
-    assert not is_infinitive_clause(doc[4]) and not is_infinitive_clause_head(doc[4])
-    assert is_infinitive_clause(doc[4], auxiliary_form=finite_by_ending)
-    assert is_infinitive_clause_head(doc[4], auxiliary_form=finite_by_ending)
+    assert not is_infinitive_clause(words[4]) and not is_infinitive_clause_head(words[4])
+    assert is_infinitive_clause(words[4], auxiliary_form=finite_by_ending)
+    assert is_infinitive_clause_head(words[4], auxiliary_form=finite_by_ending)
     # ir completes querido under xcomp of a participle, finite by habéis without a form
-    doc = parse(
-        ["Vio", "hombres", "dispuestos", "habéis", "querido", "ir"],
-        [0, 0, 1, 4, 2, 4],
-        ["ROOT", "obj", "acl", "aux", "xcomp", "xcomp"],
-        ["VerbForm=Fin", "", "VerbForm=Part", "", "VerbForm=Part", "VerbForm=Inf"],
-        pos=["VERB", "NOUN", "VERB", "AUX", "VERB", "VERB"],
+    words = tree(
+        parse(
+            ["Vio", "hombres", "dispuestos", "habéis", "querido", "ir"],
+            [0, 0, 1, 4, 2, 4],
+            ["ROOT", "obj", "acl", "aux", "xcomp", "xcomp"],
+            ["VerbForm=Fin", "", "VerbForm=Part", "", "VerbForm=Part", "VerbForm=Inf"],
+            pos=["VERB", "NOUN", "VERB", "AUX", "VERB", "VERB"],
+        )
     )
-    assert not is_infinitive_clause(doc[5]) and not is_clause_head(doc[5])
-    assert is_infinitive_clause(doc[5], auxiliary_form=finite_by_ending)
-    assert is_clause_head(doc[5], auxiliary_form=finite_by_ending)
+    assert not is_infinitive_clause(words[5]) and not is_clause_head(words[5])
+    assert is_infinitive_clause(words[5], auxiliary_form=finite_by_ending)
+    assert is_clause_head(words[5], auxiliary_form=finite_by_ending)
 
 
 def test_infinitive_clauses_by_the_hook_of_the_class():
@@ -2022,15 +1879,11 @@ def test_infinitive_clauses_by_the_hook_of_the_class():
         ["VerbForm=Fin", "", "VerbForm=Part"],
         pos=["VERB", "AUX", "VERB"],
     )
-
-    def infinitive(token):
-        return "Inf" if token.text == "haber" else ""
-
-    assert not is_subordinate_clause_head(doc[2], auxiliary_form=infinitive)
+    assert not is_subordinate_clause_head(tree(doc)[2], auxiliary_form=infinitive_by_form)
 
     class Hooked(SyntaxStats):
-        def auxiliary_form(self, token):
-            return infinitive(token)
+        def auxiliary_form(self, word):
+            return infinitive_by_form(word)
 
     stats = Hooked(doc)
     assert (stats.n_clauses, stats.n_subordinate_clauses, stats.n_infinitive_clauses) == (2, 0, 1)
@@ -2039,17 +1892,17 @@ def test_infinitive_clauses_by_the_hook_of_the_class():
 @pytest.mark.parametrize(
     "check",
     [
-        lambda token: is_clause_head(token, auxiliary_form="Fin"),
-        lambda token: is_infinitive_clause(token, auxiliary_form="Fin"),
-        lambda token: is_subordinate_clause_head(token, auxiliary_form="Fin"),
-        lambda token: is_infinitive_clause_head(token, auxiliary_form="Fin"),
+        lambda word: is_clause_head(word, auxiliary_form="Fin"),
+        lambda word: is_infinitive_clause(word, auxiliary_form="Fin"),
+        lambda word: is_subordinate_clause_head(word, auxiliary_form="Fin"),
+        lambda word: is_infinitive_clause_head(word, auxiliary_form="Fin"),
     ],
 )
 def test_form_of_an_auxiliary_must_be_callable(check):
     with pytest.raises(
         SourceTypeError, match=r"^The verb form of an auxiliary must be callable, not str$"
     ):
-        check(parse(["Yes"], [0], ["ROOT"])[0])
+        check(tree(parse(["Yes"], [0], ["ROOT"]))[0])
 
 
 def listing(n, pos, dep):
@@ -2070,36 +1923,18 @@ def test_long_chains_of_conjuncts():
 
 
 def test_a_loop_of_conjuncts():
-    doc = parse(["a", "b", "c"], [1, 0, 1], ["conj", "conj", "dep"], pos=["VERB"] * 3)
-    assert not any(DEFAULT.is_clause_head(token) for token in doc)
-    assert not any(DEFAULT.is_subordinate_clause_head(token) for token in doc)
-
-
-def test_a_dependency_label_without_heads():
-    doc = Doc(VOCAB, words=["a", "b"])
-    doc[0].dep_ = "nsubj"
-    with pytest.raises(SourceError, match=f"^{MESSAGES['no_parse']}$"):
-        SyntaxStats(doc)
+    words = tree(parse(["a", "b", "c"], [1, 0, 1], ["conj", "conj", "dep"], pos=["VERB"] * 3))
+    assert not any(DEFAULT.is_clause_head(word) for word in words)
+    assert not any(DEFAULT.is_subordinate_clause_head(word) for word in words)
 
 
 @pytest.mark.parametrize("mark", ["punct", "nmod"])
 def test_modifier_chains_under_punctuation(mark):
     # use << water river: the chain below the mark is the same whatever its label
-    doc = parse(["use", "\u00ab", "water", "river"], [0, 0, 1, 2], ["ROOT", mark, "nmod", "nmod"])
-    assert calc_modifier_chains(doc, lambda token: token.dep_ == "nmod") == [2]
-
-
-def test_modifier_chains_through_an_inner_part():
-    # use vice-governor town city: town hangs on governor, an inner part of the word
-    doc = parse(
-        ["use", "vice", "-", "governor", "town", "city"],
-        [0, 0, 3, 1, 3, 4],
-        ["ROOT", "nmod", "punct", "compound", "nmod", "nmod"],
-        spaces=[True, False, False, True, True, False],
+    words = tree(
+        parse(["use", "«", "water", "river"], [0, 0, 1, 2], ["ROOT", mark, "nmod", "nmod"])
     )
-    nmod = lambda token: token.dep_ == "nmod"  # noqa: E731
-    assert calc_modifier_chains(doc, nmod, join_hyphens=True) == [3]
-    assert calc_modifier_chains(doc, nmod) == [2]
+    assert calc_modifier_chains(words, nmod) == [2]
 
 
 def test_negation_words_checked_at_class_definition():
@@ -2110,44 +1945,48 @@ def test_negation_words_checked_at_class_definition():
 
 
 def test_predicates_of_the_module_match_the_hooks():
-    doc = parse(
-        ["He", "said", "that", "it", "was", "built", "and", "left", "by", "them"],
-        [1, 1, 5, 5, 5, 1, 7, 5, 9, 7],
-        [
-            "nsubj",
-            "ROOT",
-            "mark",
-            "nsubj:pass",
-            "aux:pass",
-            "ccomp",
-            "cc",
-            "conj",
-            "case",
-            "obl:agent",
-        ],
-        pos=["PRON", "VERB", "SCONJ", "PRON", "AUX", "VERB", "CCONJ", "VERB", "ADP", "PRON"],
+    words = tree(
+        parse(
+            ["He", "said", "that", "it", "was", "built", "and", "left", "by", "them"],
+            [1, 1, 5, 5, 5, 1, 7, 5, 9, 7],
+            [
+                "nsubj",
+                "ROOT",
+                "mark",
+                "nsubj:pass",
+                "aux:pass",
+                "ccomp",
+                "cc",
+                "conj",
+                "case",
+                "obl:agent",
+            ],
+            pos=["PRON", "VERB", "SCONJ", "PRON", "AUX", "VERB", "CCONJ", "VERB", "ADP", "PRON"],
+        )
     )
-    for token in doc:
-        assert is_clause_head(token) is DEFAULT.is_clause_head(token)
-        assert is_subordinate_clause_head(token) is DEFAULT.is_subordinate_clause_head(token)
-        assert is_passive(token) is DEFAULT.is_passive(token)
-        assert is_agentless(token) is DEFAULT.is_agentless(token)
-    assert [token.text for token in doc if is_subordinate_clause_head(token)] == ["built", "left"]
-    assert has_agent(doc[7]) and not has_agent(doc[5])
-    assert is_agentless(doc[5]) and not is_agentless(doc[7])
+    for word in words:
+        assert is_clause_head(word) is DEFAULT.is_clause_head(word)
+        assert is_subordinate_clause_head(word) is DEFAULT.is_subordinate_clause_head(word)
+        assert is_passive(word) is DEFAULT.is_passive(word)
+        assert is_agentless(word) is DEFAULT.is_agentless(word)
+    assert [word.form for word in words if is_subordinate_clause_head(word)] == ["built", "left"]
+    assert has_agent(words[7]) and not has_agent(words[5])
+    assert is_agentless(words[5]) and not is_agentless(words[7])
 
 
 def test_subordinate_clause_head_by_a_hook():
-    doc = parse(
-        ["He", "said", "that", "she", "came"],
-        [1, 1, 4, 4, 1],
-        ["nsubj", "ROOT", "mark", "nsubj", "ccomp"],
-        pos=["PRON", "VERB", "SCONJ", "PRON", "VERB"],
-    )
-    assert is_subordinate_clause_head(doc[4])
-    assert not is_subordinate_clause_head(doc[4], lambda token: False)
+    came = tree(
+        parse(
+            ["He", "said", "that", "she", "came"],
+            [1, 1, 4, 4, 1],
+            ["nsubj", "ROOT", "mark", "nsubj", "ccomp"],
+            pos=["PRON", "VERB", "SCONJ", "PRON", "VERB"],
+        )
+    )[4]
+    assert is_subordinate_clause_head(came)
+    assert not is_subordinate_clause_head(came, lambda word: False)
     with pytest.raises(SourceTypeError):
-        is_subordinate_clause_head(doc[4], "clause")
+        is_subordinate_clause_head(came, "clause")
 
 
 # He can come and go . She wants to leave and rest , seems happy and said he came
@@ -2176,8 +2015,8 @@ def infinitives():
     return parse(words, heads, deps, morphs, pos=pos)
 
 
-def is_modal(token):
-    return token.head.text == "can"
+def is_modal(word):
+    return word.head.form == "can"
 
 
 @pytest.mark.parametrize(
@@ -2198,83 +2037,89 @@ def is_modal(token):
     ],
 )
 def test_infinitive_clauses(periphrasis, heads_of_clauses, infinitive):
-    doc = infinitives()
+    words = tree(infinitives())
 
-    def is_head(token):
-        return is_clause_head(token, is_infinitive_periphrasis=periphrasis)
+    def is_head(word):
+        return is_clause_head(word, is_infinitive_periphrasis=periphrasis)
 
-    assert [token.text for token in doc if is_head(token)] == heads_of_clauses
+    assert [word.form for word in words if is_head(word)] == heads_of_clauses
     # came is finite under xcomp: a complement clause, subordinate
-    assert [token.text for token in doc if is_subordinate_clause_head(token, is_head)] == ["came"]
-    assert [token.text for token in doc if is_infinitive_clause_head(token, is_head)] == infinitive
-    assert is_infinitive_clause(doc[8], periphrasis) and not is_infinitive_clause(doc[12])
-    assert is_infinitive_clause(doc[2], periphrasis) is (periphrasis is None)
-    assert not is_infinitive_clause(doc[4]) and not is_infinitive_clause(doc[15])
+    assert [word.form for word in words if is_subordinate_clause_head(word, is_head)] == ["came"]
+    assert [word.form for word in words if is_infinitive_clause_head(word, is_head)] == infinitive
+    assert is_infinitive_clause(words[8], periphrasis) and not is_infinitive_clause(words[12])
+    assert is_infinitive_clause(words[2], periphrasis) is (periphrasis is None)
+    assert not is_infinitive_clause(words[4]) and not is_infinitive_clause(words[15])
 
 
 def test_infinitive_clause_by_the_hooks_of_its_clause_head():
     # Debe salir y querer, pide cantar: pide hangs on querer, a conjunct of the periphrasis,
     # so the clause of pide is the one of the periphrasis
-    doc = parse(
-        ["Debe", "salir", "y", "querer", "pide", "cantar"],
-        [0, 0, 3, 0, 3, 4],
-        ["ROOT", "xcomp", "cc", "conj", "conj", "xcomp"],
-        ["VerbForm=Fin", "VerbForm=Inf", "", "VerbForm=Inf", "VerbForm=Fin", "VerbForm=Inf"],
-        pos=["AUX", "VERB", "CCONJ", "VERB", "VERB", "VERB"],
+    words = tree(
+        parse(
+            ["Debe", "salir", "y", "querer", "pide", "cantar"],
+            [0, 0, 3, 0, 3, 4],
+            ["ROOT", "xcomp", "cc", "conj", "conj", "xcomp"],
+            ["VerbForm=Fin", "VerbForm=Inf", "", "VerbForm=Inf", "VerbForm=Fin", "VerbForm=Inf"],
+            pos=["AUX", "VERB", "CCONJ", "VERB", "VERB", "VERB"],
+        )
     )
 
-    def periphrasis(token):
-        return token.head.text == "Debe"
+    def periphrasis(word):
+        return word.head.form == "Debe"
 
-    assert not is_infinitive_clause(doc[5], periphrasis)
-    assert is_infinitive_clause(doc[5], periphrasis, is_clause_head)
+    assert not is_infinitive_clause(words[5], periphrasis)
+    assert is_infinitive_clause(words[5], periphrasis, is_clause_head)
 
 
 @pytest.mark.parametrize(("verb", "dep"), [("Tiene", "conj"), ("Hay", "csubj")])
 def test_infinitive_clause_under_a_periphrasis_attached_as_conj_or_csubj(verb, dep):
     # Tiene que intentar salir, Hay que intentar salir: the models attach intentar to the
     # verb of the periphrasis as conj or csubj
-    doc = parse(
-        [verb, "que", "intentar", "salir"],
-        [0, 2, 0, 2],
-        ["ROOT", "mark", dep, "xcomp"],
-        ["VerbForm=Fin", "", "VerbForm=Inf", "VerbForm=Inf"],
-        pos=["VERB", "SCONJ", "VERB", "VERB"],
+    words = tree(
+        parse(
+            [verb, "que", "intentar", "salir"],
+            [0, 2, 0, 2],
+            ["ROOT", "mark", dep, "xcomp"],
+            ["VerbForm=Fin", "", "VerbForm=Inf", "VerbForm=Inf"],
+            pos=["VERB", "SCONJ", "VERB", "VERB"],
+        )
     )
 
-    def periphrasis(token):
-        return token.head.text == verb
+    def periphrasis(word):
+        return word.head.form == verb
 
-    assert not is_clause_head(doc[2], is_infinitive_periphrasis=periphrasis)
-    assert is_infinitive_clause(doc[3], periphrasis)
-    assert is_clause_head(doc[3], is_infinitive_periphrasis=periphrasis)
+    assert not is_clause_head(words[2], is_infinitive_periphrasis=periphrasis)
+    assert is_infinitive_clause(words[3], periphrasis)
+    assert is_clause_head(words[3], is_infinitive_periphrasis=periphrasis)
 
 
 def test_infinitive_under_a_conjunct_of_a_periphrasis():
     # we are ready to come and help you live: help shares the periphrasis of come, live is
     # an infinitive clause of its own
     fin, inf = "VerbForm=Fin", "VerbForm=Inf"
-    doc = parse(
-        ["we", "are", "ready", "to", "come", "and", "help", "you", "live"],
-        [2, 2, 2, 4, 2, 6, 4, 6, 6],
-        ["nsubj", "cop", "ROOT", "mark", "xcomp", "cc", "conj", "obj", "xcomp"],
-        ["", fin, "", "", inf, "", inf, "", inf],
-        pos=["PRON", "AUX", "ADJ", "PART", "VERB", "CCONJ", "VERB", "PRON", "VERB"],
+    words = tree(
+        parse(
+            ["we", "are", "ready", "to", "come", "and", "help", "you", "live"],
+            [2, 2, 2, 4, 2, 6, 4, 6, 6],
+            ["nsubj", "cop", "ROOT", "mark", "xcomp", "cc", "conj", "obj", "xcomp"],
+            ["", fin, "", "", inf, "", inf, "", inf],
+            pos=["PRON", "AUX", "ADJ", "PART", "VERB", "CCONJ", "VERB", "PRON", "VERB"],
+        )
     )
 
-    def periphrasis(token):
-        return token.head.text == "ready"
+    def periphrasis(word):
+        return word.head.form == "ready"
 
-    def is_head(token):
-        return is_clause_head(token, is_infinitive_periphrasis=periphrasis)
+    def is_head(word):
+        return is_clause_head(word, is_infinitive_periphrasis=periphrasis)
 
-    assert [token.text for token in doc if is_head(token)] == ["ready", "live"]
-    assert is_infinitive_clause(doc[8], periphrasis)
-    assert [token.text for token in doc if is_infinitive_clause_head(token, is_head)] == ["live"]
+    assert [word.form for word in words if is_head(word)] == ["ready", "live"]
+    assert is_infinitive_clause(words[8], periphrasis)
+    assert [word.form for word in words if is_infinitive_clause_head(word, is_head)] == ["live"]
 
 
-def is_has(token):
-    return token.head.text == "has"
+def is_has(word):
+    return word.head.form == "has"
 
 
 @pytest.mark.parametrize(
@@ -2362,18 +2207,18 @@ def is_has(token):
 def test_infinitive_clause_cases(
     words, heads, deps, morphs, periphrasis, heads_of_clauses, infinitive
 ):
-    doc = parse(words, heads, deps, morphs, pos=["VERB"] * len(words))
+    found = tree(parse(words, heads, deps, morphs, pos=["VERB"] * len(words)))
 
-    def is_head(token):
-        return is_clause_head(token, is_infinitive_periphrasis=periphrasis)
+    def is_head(word):
+        return is_clause_head(word, is_infinitive_periphrasis=periphrasis)
 
-    assert [token.text for token in doc if is_head(token)] == heads_of_clauses
-    assert not any(is_subordinate_clause_head(token, is_head) for token in doc)
-    assert [token.text for token in doc if is_infinitive_clause_head(token, is_head)] == infinitive
+    assert [word.form for word in found if is_head(word)] == heads_of_clauses
+    assert not any(is_subordinate_clause_head(word, is_head) for word in found)
+    assert [word.form for word in found if is_infinitive_clause_head(word, is_head)] == infinitive
 
 
-def is_need(token):
-    return token.head.text == "Need"
+def is_need(word):
+    return word.head.form == "Need"
 
 
 @pytest.mark.parametrize(
@@ -2381,101 +2226,116 @@ def is_need(token):
 )
 def test_infinitive_subject_of_a_modal_word(periphrasis, heads_of_clauses):
     # Need to leave: a model may hang the infinitive on the modal word as csubj
-    doc = parse(
-        ["Need", "to", "leave"],
-        [0, 2, 0],
-        ["ROOT", "mark", "csubj"],
-        ["", "", "VerbForm=Inf"],
-        pos=["ADJ", "PART", "VERB"],
+    words = tree(
+        parse(
+            ["Need", "to", "leave"],
+            [0, 2, 0],
+            ["ROOT", "mark", "csubj"],
+            ["", "", "VerbForm=Inf"],
+            pos=["ADJ", "PART", "VERB"],
+        )
     )
 
-    def is_head(token):
-        return is_clause_head(token, is_infinitive_periphrasis=periphrasis)
+    def is_head(word):
+        return is_clause_head(word, is_infinitive_periphrasis=periphrasis)
 
-    assert [token.text for token in doc if is_head(token)] == heads_of_clauses
+    assert [word.form for word in words if is_head(word)] == heads_of_clauses
     # An infinitive subject that is a clause is an infinitive clause, not a subordinate one
-    assert not any(is_subordinate_clause_head(token, is_head) for token in doc)
-    assert [token.text for token in doc if is_infinitive_clause_head(token, is_head)] == (
+    assert not any(is_subordinate_clause_head(word, is_head) for word in words)
+    assert [word.form for word in words if is_infinitive_clause_head(word, is_head)] == (
         heads_of_clauses[1:]
     )
 
 
 def test_infinitive_clause_head_by_a_hook():
-    doc = infinitives()
-    assert is_infinitive_clause_head(doc[8]) and not is_infinitive_clause_head(doc[6])
-    assert not is_infinitive_clause_head(doc[8], lambda token: False)
+    words = tree(infinitives())
+    assert is_infinitive_clause_head(words[8]) and not is_infinitive_clause_head(words[6])
+    assert not is_infinitive_clause_head(words[8], lambda word: False)
     with pytest.raises(SourceTypeError):
-        is_infinitive_clause_head(doc[8], "clause")
+        is_infinitive_clause_head(words[8], "clause")
 
 
 def test_infinitive_clause_by_a_check_of_a_clause_head():
-    doc = parse(
-        ["She", "wants", "to", "leave"],
-        [1, 1, 3, 1],
-        ["nsubj", "ROOT", "mark", "xcomp"],
-        ["", "VerbForm=Fin", "", "VerbForm=Inf"],
-    )
-    assert is_infinitive_clause(doc[3])
-    assert not is_infinitive_clause(doc[3], is_clause_head=lambda token: False)
+    leave = tree(
+        parse(
+            ["She", "wants", "to", "leave"],
+            [1, 1, 3, 1],
+            ["nsubj", "ROOT", "mark", "xcomp"],
+            ["", "VerbForm=Fin", "", "VerbForm=Inf"],
+        )
+    )[3]
+    assert is_infinitive_clause(leave)
+    assert not is_infinitive_clause(leave, is_clause_head=lambda word: False)
     with pytest.raises(SourceTypeError):
-        is_infinitive_clause(doc[3], is_clause_head="clause")
+        is_infinitive_clause(leave, is_clause_head="clause")
 
 
 def test_infinitive_clause_in_a_loop():
     # leave completes go, a conjunct of leave: the checks would go round
-    doc = parse(
-        ["She", "go", "leave"],
-        [1, 2, 1],
-        ["nsubj", "conj", "xcomp"],
-        ["", "VerbForm=Fin", "VerbForm=Inf"],
-        pos=["PRON", "VERB", "VERB"],
+    words = tree(
+        parse(
+            ["She", "go", "leave"],
+            [1, 2, 1],
+            ["nsubj", "conj", "xcomp"],
+            ["", "VerbForm=Fin", "VerbForm=Inf"],
+            pos=["PRON", "VERB", "VERB"],
+        )
     )
-    assert not is_infinitive_clause(doc[2]) and not is_clause_head(doc[2])
-    assert not is_clause_head(doc[1])
+    assert not is_infinitive_clause(words[2]) and not is_clause_head(words[2])
+    assert not is_clause_head(words[1])
+
+
+def test_infinitive_complement_without_a_head():
+    # The head of a sentence labelled xcomp in a Document completes no word
+    source = document(["leave"], [0], ["xcomp"], upos=["VERB"], feats=["VerbForm=Inf"])
+    leave = get_tree(source).words[0]
+    assert is_clause_head(leave) and not is_infinitive_clause(leave)
 
 
 def test_long_chain_of_infinitives_and_conjuncts():
     # Each infinitive completes a conjunct of the infinitive before it
     n = 1001
-    doc = parse(
-        ["go"] * n,
-        [0, *range(n - 1)],
-        ["ROOT", *("xcomp" if i % 2 else "conj" for i in range(1, n))],
-        ["VerbForm=Fin", *["VerbForm=Inf"] * (n - 1)],
-        pos=["VERB"] * n,
+    words = tree(
+        parse(
+            ["go"] * n,
+            [0, *range(n - 1)],
+            ["ROOT", *("xcomp" if i % 2 else "conj" for i in range(1, n))],
+            ["VerbForm=Fin", *["VerbForm=Inf"] * (n - 1)],
+            pos=["VERB"] * n,
+        )
     )
-    assert is_clause_head(doc[n - 1]) and is_clause_head(doc[n - 2])
+    assert is_clause_head(words[n - 1]) and is_clause_head(words[n - 2])
 
 
 def test_infinitive_periphrasis_hook():
     class Modal(SyntaxStats):
-        def is_infinitive_periphrasis(self, token):
-            return is_modal(token)
+        def is_infinitive_periphrasis(self, word):
+            return is_modal(word)
 
     doc = infinitives()
-    assert not DEFAULT.is_infinitive_periphrasis(doc[2])
+    words = tree(doc)
+    assert not DEFAULT.is_infinitive_periphrasis(words[2])
     assert (SyntaxStats(doc).n_clauses, Modal(doc).n_clauses) == (9, 7)
     assert (Modal(doc).n_subordinate_clauses, Modal(doc).n_infinitive_clauses) == (1, 2)
     assert SyntaxStats(doc).n_infinitive_clauses == 4
     for check in (is_clause_head, is_infinitive_clause):
         with pytest.raises(SourceTypeError):
-            check(doc[2], is_infinitive_periphrasis="modal")
+            check(words[2], is_infinitive_periphrasis="modal")
 
 
 def test_clause_head_of_a_loop_of_conjuncts():
-    doc = parse(
-        ["He", "came", "left", "slept"],
-        [1, 1, 3, 2],
-        ["nsubj", "ROOT", "conj", "conj"],
-        pos=["PRON", "VERB", "VERB", "VERB"],
+    words = tree(
+        parse(
+            ["He", "came", "left", "slept"],
+            [1, 1, 3, 2],
+            ["nsubj", "ROOT", "conj", "conj"],
+            pos=["PRON", "VERB", "VERB", "VERB"],
+        )
     )
-    assert not is_clause_head(doc[2]) and not is_subordinate_clause_head(doc[2])
+    assert not is_clause_head(words[2]) and not is_subordinate_clause_head(words[2])
 
 
 def test_pickle_and_copy():
-    import copy
-    import pickle
-
     doc = parse(
         ["He", "came", "and", "left", ".", "She", "slept"],
         [1, 1, 3, 1, 1, 6, 6],
@@ -2484,41 +2344,49 @@ def test_pickle_and_copy():
     )
     stats = SyntaxStats(doc)
     data = pickle.dumps(stats)
-    assert len(data) < len(pickle.dumps(doc.vocab))
+    # The words of the tree hold no object of spaCy
+    assert b"spacy" not in data
     for clone in (pickle.loads(data), copy.deepcopy(stats), copy.copy(stats)):
         assert repr(clone.get_stats()) == repr(stats.get_stats())
-        assert [[token.text for token in sent] for sent in clone.sents] == [
+        assert [forms(sent) for sent in clone.sents] == [
             ["He", "came", "and", "left"],
             ["She", "slept"],
         ]
-        assert clone.sents[0][1].dep_ == "ROOT"
+        he, came = clone.sents[0][:2]
+        assert came.deprel == "root" and came.head is None and he.head is came
+    bare = copy.deepcopy(SyntaxStats.__new__(SyntaxStats))
+    assert not hasattr(bare, "sents")
 
 
-def test_sents_keep_no_tensor_and_no_user_data():
-    import numpy as np
-
-    doc = parse(["He", "came"], [1, 1], ["nsubj", "ROOT"], pos=["PRON", "VERB"])
-    doc.tensor = np.ones((2, 4), dtype="float32")
-    doc.user_data["stats"] = object()
-    light = SyntaxStats(doc).sents[0][0].doc
-    assert light is not doc
-    assert light.tensor.size == 0 and not light.user_data
-    assert [(token.text, token.dep_, token.head.i) for token in light] == [
-        ("He", "nsubj", 1),
-        ("came", "ROOT", 1),
-    ]
+def test_pickle_of_a_long_text():
+    """A tree goes as its columns, so pickle and copy follow no chain of the links of its words"""
+    n = 5000
+    doc = parse(
+        ["w"] * n,
+        [5 * (i // 5) + 1 for i in range(n)],
+        ["ROOT" if i % 5 == 1 else "obj" for i in range(n)],
+        pos=["VERB" if i % 5 == 1 else "NOUN" for i in range(n)],
+    )
+    stats = SyntaxStats(doc)
+    for clone in (pickle.loads(pickle.dumps(stats)), copy.deepcopy(stats)):
+        assert repr(clone.get_stats()) == repr(stats.get_stats())
+        first, last = clone.sents[0][0], clone.sents[-1][-1]
+        assert first.tree is last.tree and len(first.tree.words) == n
+        assert last.head is clone.sents[-1][1] and last.head.children[-1] is last
 
 
 def test_copula_makes_a_predicate():
     # y estaba cansado: a nominal predicate without a subject of its own
-    doc = parse(
-        ["Lo", "pensó", "y", "estaba", "cansado"],
-        [1, 1, 4, 4, 1],
-        ["obj", "ROOT", "cc", "cop", "conj"],
-        pos=["PRON", "VERB", "CCONJ", "AUX", "ADJ"],
+    words = tree(
+        parse(
+            ["Lo", "pensó", "y", "estaba", "cansado"],
+            [1, 1, 4, 4, 1],
+            ["obj", "ROOT", "cc", "cop", "conj"],
+            pos=["PRON", "VERB", "CCONJ", "AUX", "ADJ"],
+        )
     )
-    assert is_predicate(doc[4]) and not is_predicate(doc[0])
-    assert is_clause_head(doc[4])
+    assert is_predicate(words[4]) and not is_predicate(words[0])
+    assert is_clause_head(words[4])
 
 
 @pytest.mark.parametrize(
@@ -2534,42 +2402,35 @@ def test_copula_makes_a_predicate():
         has_agent,
         is_agentless,
         is_prep_complement,
+        is_root,
     ],
 )
-def test_checks_of_a_token(check):
-    with pytest.raises(SourceTypeError, match=r"^A Token is expected, not NoneType$"):
+def test_checks_of_a_word(check):
+    with pytest.raises(SourceTypeError, match=r"^A TreeWord is expected, not NoneType$"):
         check(None)
-    with pytest.raises(SourceTypeError, match=r"^A Token is expected, not str$"):
+    with pytest.raises(SourceTypeError, match=r"^A TreeWord is expected, not str$"):
         check("came")
+    # A spaCy token is none, a leaf without dependents too
+    leaf = parse(["came"], [0], ["ROOT"])[0]
+    with pytest.raises(SourceTypeError, match=r"^A TreeWord is expected, not Token$"):
+        check(leaf)
 
 
-def test_error_of_a_hook_on_a_token():
-    # An AttributeError of a hook on a real token is no error of the argument
-    doc = parse(
-        ["Wants", "to", "leave"], [0, 2, 0], ["ROOT", "mark", "xcomp"], ["", "", "VerbForm=Inf"]
-    )
+def test_error_of_a_hook_on_a_word():
+    # An AttributeError of a hook on a word of the tree is no error of the argument
+    leave = tree(
+        parse(
+            ["Wants", "to", "leave"],
+            [0, 2, 0],
+            ["ROOT", "mark", "xcomp"],
+            ["", "", "VerbForm=Inf"],
+        )
+    )[2]
     with pytest.raises(AttributeError):
-        is_clause_head(doc[2], is_infinitive_periphrasis=lambda token: token.missing)
-
-
-def test_pickle_without_a_language_and_without_sents():
-    import copy
-    import pickle
-
-    from spacy.vocab import Vocab
-
-    doc = Doc(
-        Vocab(), words=["He", "came"], heads=[1, 1], deps=["nsubj", "ROOT"], pos=["PRON", "VERB"]
-    )
-    clone = pickle.loads(pickle.dumps(SyntaxStats(doc)))
-    assert [token.text for token in clone.sents[0]] == ["He", "came"]
-    bare = copy.deepcopy(SyntaxStats.__new__(SyntaxStats))
-    assert not hasattr(bare, "sents")
+        is_clause_head(leave, is_infinitive_periphrasis=lambda word: word.missing)
 
 
 def test_pickle_of_the_object_of_a_component():
-    import pickle
-
     from anyts.components import SyntaxStatsComponent
 
     nlp = spacy.blank("xx")

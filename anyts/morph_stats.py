@@ -5,6 +5,7 @@ from collections.abc import Iterable, Mapping
 from typing import TYPE_CHECKING, Any, ClassVar, NamedTuple
 
 from .constants import MORPH_FEATURES, MORPH_STATS_DESC, MORPH_VALUES_DESC
+from .document import _feature_dict
 from .exceptions import ParameterError, SourceError, SourceTypeError, UnknownStatError
 from .stats import Stats, _print_table
 from .utils import check_bool, has_words
@@ -375,11 +376,6 @@ class MorphStats(Stats):
                     self.messages["unknown_stat"].format(stat=stat, stats=names)
                 )
         return stats or names
-
-
-def _feature_dict(feats: str | None) -> dict[str, str]:
-    """Features of a word in the CoNLL-U format as a dictionary, a part without a value left out"""
-    return dict(pair.split("=", 1) for pair in feats.split("|") if "=" in pair) if feats else {}
 
 
 def _wrong_word(word: object) -> str:
