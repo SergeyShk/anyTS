@@ -14,7 +14,6 @@ from .utils import (
     BLANK_LINE,
     _separators,
     check_callable,
-    has_sents,
     has_words,
     is_doc,
     is_document,
@@ -44,9 +43,10 @@ def to_document(
     Description:
         A Document of anySeg is returned as it is. A Doc of spaCy keeps its
         tokens, their columns (lemma, part of speech, features, head and
-        relation) and its sentences (anyseg.spacy.from_doc); a Doc with no or
-        only partial sentence starts (has_sents) and no parse gets those of
-        sentenize on its text. A string is split into tokens by tokenize and
+        relation) and its sentences (anyseg.spacy.from_doc); a Doc without a
+        start or an end of a sentence at every token, as before the parser,
+        senter or sentencizer, and without a parse gets those of sentenize on
+        its text. A string is split into tokens by tokenize and
         into sentences by sentenize, and the default tokens fill the gaps
         between those of tokenize. A blank line (BLANK_LINE) ends a paragraph
         of the document and so a sentence, of a Doc too: every part between
@@ -398,7 +398,7 @@ def _doc_document(doc: Doc, sentenize: Spans | None, messages: Mapping[str, str]
         document = from_doc(doc)
     except (TypeError, ValueError) as error:
         raise SourceError(messages["document_tokens"].format(error=error)) from error
-    if has_sents(doc) or doc.has_annotation("DEP"):
+    if doc.has_annotation("SENT_START", require_complete=True) or doc.has_annotation("DEP"):
         return document
     tokens = document.tokens
     starts = _sent_starts(document.text, tokens.starts, sentenize)

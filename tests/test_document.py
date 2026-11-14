@@ -7,7 +7,6 @@ import spacy
 from anyseg import Document
 from spacy.tokens import Doc
 
-from anyts.components import start_sents_after_blank_lines
 from anyts.constants import MESSAGES
 from anyts.document import document_words, get_tree, to_document
 from anyts.exceptions import SourceError, SourceTypeError
@@ -126,7 +125,8 @@ def test_doc_without_sentences():
     doc = spacy.blank("en")("One. Two!\n\nThree; four")
     assert sentences(to_document(doc)) == ["One.", "Two!", "Three; four"]
     assert sentences(to_document(doc, sentenize=semicolons)) == ["One. Two!", "Three;", "four"]
-    partial = start_sents_after_blank_lines(spacy.blank("en")("One. Two!\n\nThree"))
+    partial = spacy.blank("en")("One. Two!\n\nThree")
+    partial[-1].is_sent_start = True
     assert partial.has_annotation("SENT_START")
     assert sentences(to_document(partial)) == ["One.", "Two!", "Three"]
 

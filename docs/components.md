@@ -19,12 +19,12 @@ A component of the lexical diversity of the words of a `Doc`:
     from anyts import DiversityStats
     from anyts.components import StatsComponent
     from anyts.diversity_stats import check_params
-    from anyts.utils import iter_doc_words
+    from anyts.document import document_words, to_document
 
 
     class Diversity(DiversityStats):
         def __init__(self, doc, window_len=50):
-            words = [word.lower() for _, _, word in iter_doc_words(doc)]
+            words = [word.lower() for word in document_words(to_document(doc))]
             super().__init__(words, window_len=window_len)
 
 
@@ -151,7 +151,7 @@ LexicalStatsComponent(nlp, name)
 ```
 
 <!-- --8<-- [start:LexicalStatsComponent] -->
-`LexicalStatsComponent` puts the lexical sophistication statistics into the extension, with the frequency dictionary of its attribute `freq_dict`: `None` by default, for the dictionary of the class, and set by a library before the constructor of the core; a class without a dictionary of its own and no `freq_dict` raise `ParameterError` when the component is made. A document gets the statistics when it has a word of `iter_doc_words` (with `join_hyphens`) with a letter or a digit (`has_words`) other than a number of the method `is_number`, `anyts.utils.is_number` by default; a library gives the numbers its class leaves out, so a document of numbers alone passes untouched.
+`LexicalStatsComponent` puts the lexical sophistication statistics into the extension, with the frequency dictionary of its attribute `freq_dict`: `None` by default, for the dictionary of the class, and set by a library before the constructor of the core; a class without a dictionary of its own and no `freq_dict` raise `ParameterError` when the component is made. A document gets the statistics when it has a token with a letter or a digit (`has_words`) other than a number of the method `is_number`, `anyts.utils.is_number` by default; a library gives the numbers its class leaves out, so a document of numbers alone passes untouched.
 <!-- --8<-- [end:LexicalStatsComponent] -->
 
 ### Style metrics { #StyleStatsComponent }
@@ -243,41 +243,6 @@ Raises:
 - `SourceTypeError` - a class without `basic_stats_class` and no `basic`;
 - `SourceError` - a document whose extension `basic` holds no basic statistics of the class.
 <!-- --8<-- [end:UnadaptedReadabilityStatsComponent] -->
-
-## Sentences after blank lines { #start_sents_after_blank_lines }
-
-<!-- --8<-- [start:start_sents_after_blank_lines] -->
-``` {.python .signature}
-start_sents_after_blank_lines(doc)
-```
-
-A component that starts a sentence at the first token after a blank line - a line break, optional whitespace and another line break - so that a heading, a list item or a paragraph without a final mark is a sentence of its own, as in the sentence extractor. It goes before the parser, `senter` or `sentencizer`, which keeps its starts and places the others. The whitespace before such a start stays with the sentence before it, and the marks that open a paragraph (a dash of a dialogue, `¡`, `«`) stay with its first word. Alone, the component leaves the sentences within a paragraph unsplit and sets partial boundaries (`has_sents`), so the statistics take the sentences of such a document from its text. A parsed document, such as one passed through the pipeline again, passes untouched, since spaCy keeps its sentences. A language library registers the component under its prefix, `Language.component("<prefix>_blank_lines", func=start_sents_after_blank_lines)`.
-
-| Parameter | Type | Default | Description |
-| :-------- | :--- | :------ | :---------- |
-| `doc` | `Doc` | - | Doc object |
-<!-- --8<-- [end:start_sents_after_blank_lines] -->
-
-=== "Code"
-
-    ``` python
-    import spacy
-    from spacy.language import Language
-
-    from anyts.components import start_sents_after_blank_lines
-
-    Language.component("demo_blank_lines", func=start_sents_after_blank_lines)
-    nlp = spacy.blank("xx")
-    nlp.add_pipe("demo_blank_lines")
-    nlp.add_pipe("sentencizer")
-    [sent.text.strip() for sent in nlp("What is new\n\nFaster import. Fewer bugs.").sents]
-    ```
-
-=== "Result"
-
-    ```
-    ['What is new', 'Faster import.', 'Fewer bugs.']
-    ```
 
 ## For library developers { #hooks }
 
