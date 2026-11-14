@@ -184,7 +184,8 @@ class HighlightedText:
         SourceTypeError: If the source is neither a string, a Doc nor a Document,
             parse does not return a Document, or find does not return fragments of
             Highlight
-        SourceError: If the source has no words
+        SourceError: If the source has no words, or a token of a Doc runs over a blank
+            line (to_document)
         ParameterError: If a layer is unknown or not allowed by the source, the
             layers are not a list of names, or find gives a fragment of another
             layer, an empty one or one outside the text; when a class is defined,
@@ -203,10 +204,16 @@ class HighlightedText:
         super().__init_subclass__(**kwargs)
         check_messages(cls.messages)
         for layer, columns in cls.layer_annotations.items():
-            if unknown := [column for column in columns if column not in _COLUMNS]:
+            valid = isinstance(columns, Sequence) and not isinstance(columns, str)
+            unknown = (
+                [repr(column) for column in columns if column not in _COLUMNS]
+                if valid
+                else [repr(columns)]
+            )
+            if unknown:
                 raise ParameterError(
                     cls.messages["layer_columns"].format(
-                        layer=layer, cls=cls.__name__, columns=", ".join(map(str, unknown))
+                        layer=layer, cls=cls.__name__, columns=", ".join(unknown)
                     )
                 )
 
@@ -266,6 +273,7 @@ class HighlightedText:
         Raises:
             SourceTypeError: If the source is neither a string, a Doc nor a Document
                 object
+            SourceError: If a token of a Doc runs over a blank line
         """
         return to_document(source, messages=self.messages)
 
@@ -346,10 +354,12 @@ class HighlightedText:
             if not isinstance(layer, str) or layer not in cls.layers_desc:
                 raise ParameterError(messages["unknown_layer"].format(layer=layer))
             if layer not in available:
-                needs = [
-                    cls.annotation_names.get(annotation, annotation)
-                    for annotation in cls.layer_annotations.get(layer, ())
-                ]
+                needs = list(
+                    dict.fromkeys(
+                        cls.annotation_names.get(annotation, annotation)
+                        for annotation in cls.layer_annotations.get(layer, ())
+                    )
+                )
                 if not needs:
                     raise ParameterError(messages["layer_unavailable"].format(layer=layer))
                 raise ParameterError(

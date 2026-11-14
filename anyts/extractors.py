@@ -26,7 +26,8 @@ from .utils import (
 )
 
 Tokenizer = Pattern[str] | Callable[[str], Iterable[str]]
-_SENTENCE_BOUNDARY = re.compile(r"(?<=[.!?…])\s+|(?<=[.!?…][\"'»”’)\]])\s+")
+# The end of a sentence: a final mark, the closing marks after it and the whitespace (group 1)
+_SENTENCE_BOUNDARY = re.compile(r"(?<=[.!?…])[\"'»”’)\]]*(\s+)")
 
 
 def _iter_words(text: str) -> Iterator[tuple[int, int, str]]:
@@ -201,7 +202,7 @@ class SentsExtractor(Extractor):
     Description:
         The default tokenizer is the method sentenize, which a language library
         overrides; here it splits at whitespace after ., !, ? or …, optionally
-        followed by a closing quote or bracket. The text is split at blank lines
+        followed by closing quotes and brackets. The text is split at blank lines
         first and every part goes to the tokenizer, so a blank line ends a
         sentence and a part without words is a sentence of its own
 
@@ -281,7 +282,7 @@ class SentsExtractor(Extractor):
 
 def _sentence_spans(text: str) -> list[tuple[int, int]]:
     """Bounds of the sentences of the default rule of SentsExtractor.sentenize, unstripped"""
-    bounds = [match.span() for match in _SENTENCE_BOUNDARY.finditer(text)]
+    bounds = [match.span(1) for match in _SENTENCE_BOUNDARY.finditer(text)]
     starts = [0, *(end for _, end in bounds)]
     ends = [*(start for start, _ in bounds), len(text)]
     spans = []

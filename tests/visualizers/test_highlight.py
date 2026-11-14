@@ -161,13 +161,18 @@ def test_layers_unavailable(layer, requirement):
 
 
 def test_layers_unknown_column():
-    message = r"^The layer subjects of Entities needs columns a document has not: DEP, ner$"
+    message = r"^The layer subjects of Entities needs columns a document has not: 'DEP', 'ner'$"
     with pytest.raises(ParameterError, match=message):
 
         class Entities(Marks):
             layer_annotations: ClassVar[dict[str, tuple[str, ...]]] = {
                 "subjects": ("DEP", "upos", "ner")
             }
+
+    # The columns of a layer are a sequence of names, not a name alone
+    for columns in ("upos", None, 5):
+        with pytest.raises(ParameterError, match=rf"has not: {re.escape(repr(columns))}$"):
+            type("Columns", (Marks,), {"layer_annotations": {"nouns": columns}})
 
 
 def test_layers_selection():
@@ -254,6 +259,13 @@ def test_layer_requirements_listed():
     message = r"needs a document with the annotations: dependency parse, parts of speech, lemmas$"
     with pytest.raises(ParameterError, match=message):
         Heavy(text, layers="subjects")
+
+    # Two columns of one annotation name it once
+    class Tree(Marks):
+        layer_annotations: ClassVar[dict[str, tuple[str, ...]]] = {"subjects": ("deprel", "head")}
+
+    with pytest.raises(ParameterError, match=r"the annotations: dependency parse$"):
+        Tree(text, layers="subjects")
     with pytest.raises(ParameterError, match=r"^The layer long_sents is not available$"):
         Marks._select_layers(["long_sents"], [])
 
@@ -710,6 +722,14 @@ def test_phrase_highlights_of_a_part_normalized_to_nothing():
         words, ["in fact ,", ","], "x", normalize=lambda w: w.strip(",").lower()
     )
     assert found == [Highlight(0, 7, "x", "\u00abin fact ,\u00bb")]
+
+
+def test_token_over_a_blank_line():
+    doc = spacy.blank("en")("Mr. John\n\nSmith came home.")
+    with doc.retokenize() as retokenizer:
+        retokenizer.merge(doc[1:4])
+    with pytest.raises(SourceError, match="cannot make a document: token 1"):
+        Marks(doc)
 
 
 def test_parse_checked():

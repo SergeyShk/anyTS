@@ -174,7 +174,7 @@ Sentences that are not a list of strings raise `SourceTypeError`.
 <summary>Language hooks of a subclass</summary>
 
 <!-- --8<-- [start:SentsExtractor-hooks] -->
-The default tokenizer is the method `sentenize(text)`, which a language library overrides in a subclass. In the core it splits the text at whitespace after `.`, `!`, `?` or `…`, optionally followed by a closing quote or bracket; it knows no abbreviations, so `e.g. this` is two sentences. A piece without words, such as the dots of a spaced ellipsis `. . .` or a lone `!`, stays with the sentence before it, or with the one after it at the start of the text. The messages of its errors come from the class attribute `messages`, `MESSAGES` by default.
+The default tokenizer is the method `sentenize(text)`, which a language library overrides in a subclass. In the core it splits the text at whitespace after `.`, `!`, `?` or `…`, optionally followed by closing quotes and brackets (`.")`); it knows no abbreviations, so `e.g. this` is two sentences. A piece without words, such as the dots of a spaced ellipsis `. . .` or a lone `!`, stays with the sentence before it, or with the one after it at the start of the text. The messages of its errors come from the class attribute `messages`, `MESSAGES` by default.
 <!-- --8<-- [end:SentsExtractor-hooks] -->
 
 </details>

@@ -10,7 +10,7 @@ Highlighting of a text by layers, in the manner of the style checkers: every lay
 Raises:
 
 - `SourceTypeError` - a source that is neither a string, a `Doc` nor a `Document`, a `parse` that returns no `Document`;
-- `SourceError` - a source without words;
+- `SourceError` - a source without words, a `Doc` with a token over a blank line;
 - `ParameterError` - layers that are not a name or a list of names, a layer that is unknown or one that needs an annotation the source lacks.
 <!-- --8<-- [end:HighlightedText] -->
 

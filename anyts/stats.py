@@ -93,6 +93,7 @@ class Stats:
         Raises:
             SourceTypeError: If the source is neither a string, a Doc nor a Document
                 object
+            SourceError: If a token of a Doc runs over a blank line
         """
         from .document import to_document
 
