@@ -551,7 +551,7 @@ class CohesionStatsComponent(StatsComponent):
     stats_params: ClassVar[tuple[str, ...]] = ("blank_lines",)
 
     def __init__(self, nlp: Language, name: str, blank_lines: bool = False):
-        check_bool(blank_lines, "blank_lines")
+        check_bool(blank_lines, "blank_lines", message=self.messages["blank_lines"])
         self.blank_lines = blank_lines
         super().__init__(nlp, name)
 

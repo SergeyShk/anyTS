@@ -1,12 +1,12 @@
 # Input checks
 
-Input checks shared by the functions and classes of the core; their messages are in English.
+Input checks shared by the functions and classes of the core; their messages are in English, and a class passes its own `message` where a library translates the error.
 
 ## Sequences { #check_sequence }
 
 <!-- --8<-- [start:check_sequence] -->
 ``` {.python .signature}
-check_sequence(value, what='words', ordered=True)
+check_sequence(value, what='words', ordered=True, *, message=None)
 ```
 
 Checks that an argument is a sequence and not a text or an iterator: a string would be iterated by characters, and an iterator exhausted by the first pass. A set or a mapping holds every item once, in no order of the text, so it passes only with `ordered=False`, for a collection such as stop words.
@@ -16,6 +16,7 @@ Checks that an argument is a sequence and not a text or an iterator: a string wo
 | `value` | `object` | - | Value to check |
 | `what` | `str` | `"words"` | What is expected, for the message of the error |
 | `ordered` | `bool` | `True` | Whether the order and the repeats of the items matter |
+| `message` | `str` | `None` | Message of the error with the field `{type}`, the type of the value, in place of the English one, such as one of `MESSAGES` a library translates |
 
 A string (of characters or bytes), a `Doc`, a `Span`, an iterator, an object that cannot be iterated or has no length, a table - a two-dimensional array or a `DataFrame` - and, unless `ordered=False`, a set or a mapping raise `SourceTypeError`.
 <!-- --8<-- [end:check_sequence] -->
@@ -42,7 +43,7 @@ A string (of characters or bytes), a `Doc`, a `Span`, an iterator, an object tha
 
 <!-- --8<-- [start:check_words] -->
 ``` {.python .signature}
-check_words(value, what='words', ordered=True)
+check_words(value, what='words', ordered=True, *, message=None)
 ```
 
 Checks that an argument is a list of words: it passes `check_sequence` and every item is a string.
@@ -52,6 +53,7 @@ Checks that an argument is a list of words: it passes `check_sequence` and every
 | `value` | `Iterable` | - | Value to check |
 | `what` | `str` | `"words"` | What is expected, for the message of the error |
 | `ordered` | `bool` | `True` | Whether the order and the repeats of the words matter |
+| `message` | `str` | `None` | Message of the error with the field `{type}`, the type of the value or of the item that is not a string, in place of the English one |
 
 A value that fails `check_sequence` or holds an item that is not a string, such as a spaCy token, raises `SourceTypeError`.
 <!-- --8<-- [end:check_words] -->
@@ -152,7 +154,7 @@ A value that is not a mapping, a word that is not a string or a frequency that i
 
 <!-- --8<-- [start:check_integer] -->
 ``` {.python .signature}
-check_integer(value, what)
+check_integer(value, what, *, message=None)
 ```
 
 Checks that a parameter is an integer.
@@ -161,6 +163,7 @@ Checks that a parameter is an integer.
 | :-------- | :--- | :------ | :---------- |
 | `value` | `object` | - | Value to check |
 | `what` | `str` | - | Name of the parameter, for the message of the error |
+| `message` | `str` | `None` | Message of the error with the field `{type}`, the type of the value, in place of the English one, such as one of `MESSAGES` a library translates |
 
 A value that is not an integer, a `bool` or a `float` included, even a whole one like `5.0`, raises `ParameterError`.
 <!-- --8<-- [end:check_integer] -->
@@ -186,7 +189,7 @@ A value that is not an integer, a `bool` or a `float` included, even a whole one
 
 <!-- --8<-- [start:check_bool] -->
 ``` {.python .signature}
-check_bool(value, what)
+check_bool(value, what, *, message=None)
 ```
 
 Checks that a parameter is a `bool`, a numpy `bool_` included.
@@ -195,6 +198,7 @@ Checks that a parameter is a `bool`, a numpy `bool_` included.
 | :-------- | :--- | :------ | :---------- |
 | `value` | `object` | - | Value to check |
 | `what` | `str` | - | Name of the parameter, for the message of the error |
+| `message` | `str` | `None` | Message of the error with the field `{type}`, the type of the value, in place of the English one, such as one of `MESSAGES` a library translates |
 
 A value that is not a `bool`, `0`, `1` and `"yes"` included, raises `ParameterError`.
 <!-- --8<-- [end:check_bool] -->

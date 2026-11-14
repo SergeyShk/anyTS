@@ -312,6 +312,7 @@ MESSAGES: Mapping[str, str] = MappingProxyType(
             "The data source has no parts of speech: "
             "parse the text with a model, without disabling its tagger or morphologizer"
         ),
+        "blank_lines": "The blank_lines must be a bool, not {type}",
         "temporal_features": (
             "The temporal features of {cls} must be one or more distinct features of {features}, "
             "not {value}"
@@ -329,16 +330,26 @@ MESSAGES: Mapping[str, str] = MappingProxyType(
         "hook_highlights": "The {hook} of {cls} must return Highlight objects, not {type}",
         "hook_morph_words": "The {hook} of {cls} must return MorphWord objects, not {type}",
         "connector_dict": "The connectors must be a dictionary of a phrase and its class and kind",
+        "connector_words": "The words must be a list of strings, not {type}",
+        "connector_sent_index": "The number of the sentence must be an integer, not {type}",
+        "connector_pos_list": "The parts of speech must be a list, not {type}",
         "connector_entry": "A connector must be a phrase with a pair of its class and kind: {connector}",
         "connector_class": "Unknown class or kind of a connector: {cls}, {kind}",
         "connector_pos_type": "A part of speech must be a string or None, not {type}",
         "connector_pos": "The parts of speech must be as many as the words",
+        "connector_breaks_type": (
+            "The positions of the marks must be a collection of integers, not {type}"
+        ),
         "connector_breaks": (
             "A position of a mark must be between 1 and {last}, the positions of the words after "
             "the first, not {position}"
         ),
         "connector_breaks_short": (
             "A sentence of fewer than two words has no positions of the marks, not {position}"
+        ),
+        "connector_blocked_type": (
+            "The positions of the words that start no connector must be a collection of "
+            "integers, not {type}"
         ),
         "connector_blocked": (
             "A position of a word that starts no connector must be between 0 and {last}, "

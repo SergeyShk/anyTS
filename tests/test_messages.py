@@ -12,6 +12,7 @@ from anyts import CharNgramsExtractor, SentsExtractor, WordsExtractor
 from anyts.basic_stats import BasicStats
 from anyts.cohesion_stats import CohesionStats, ConnectorMatcher
 from anyts.components import (
+    CohesionStatsComponent,
     DiversityStatsComponent,
     LexicalStatsComponent,
     PhonStatsComponent,
@@ -189,6 +190,10 @@ class OwnPhon(PhonStatsComponent):
     messages = OWN
 
 
+class OwnCohesion(CohesionStatsComponent):
+    messages = OWN
+
+
 class BareComponent(StatsComponent):
     messages = OWN
 
@@ -306,6 +311,11 @@ CASES = [
     ),
     ("connector_dict", SourceTypeError, lambda: Matcher(["and"])),
     ("connector_entry", SourceTypeError, lambda: Matcher({"and": "additive"})),
+    ("connector_words", SourceTypeError, lambda: Matcher({}).find("and")),
+    ("connector_sent_index", ParameterError, lambda: Matcher({}).find(["and"], 1.5)),
+    ("connector_pos_list", SourceTypeError, lambda: Matcher({}).find(["and"], pos="CCONJ")),
+    ("connector_breaks_type", SourceTypeError, lambda: Matcher({}).find(["a", "b"], breaks=1)),
+    ("connector_blocked_type", ParameterError, lambda: Matcher({}).find(["a"], blocked=[0.5])),
     ("connector_pos_type", SourceTypeError, lambda: Matcher({}).find(["and"], pos=[1])),
     ("connector_class", ParameterError, lambda: Matcher({"and": ("other", "primary")})),
     ("connector_pos", ParameterError, lambda: Matcher({}).find(["and"], pos=[])),
@@ -500,6 +510,12 @@ CASES = [
     ),
     ("window_len", ParameterError, lambda: OwnDiversity(spacy.blank("en"), "own_d", window_len=0)),
     ("top_n", ParameterError, lambda: OwnStyle(spacy.blank("en"), "own_s", top_n=0)),
+    ("blank_lines", ParameterError, lambda: Cohesion(PARSED, blank_lines=1)),
+    (
+        "blank_lines",
+        ParameterError,
+        lambda: OwnCohesion(spacy.blank("en"), "own_c", blank_lines=1),
+    ),
     ("phon_window_len", ParameterError, lambda: OwnPhon(spacy.blank("en"), "own_p", window_len=1)),
     ("sents_extractor_type", SourceTypeError, lambda: Cohesion(PARSED, sents_extractor="x")),
     ("no_pos", SourceError, lambda: Cohesion(PARSED)),

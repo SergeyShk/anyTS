@@ -620,7 +620,9 @@ def shannon_entropy(counts: Mapping[Any, int]) -> float:
     )
 
 
-def check_sequence(value: object, what: str = "words", ordered: bool = True) -> None:
+def check_sequence(
+    value: object, what: str = "words", ordered: bool = True, *, message: str | None = None
+) -> None:
     """
     Checking that an argument is a sequence and not a text or an iterator
 
@@ -632,6 +634,8 @@ def check_sequence(value: object, what: str = "words", ordered: bool = True) -> 
         value (object): Value to check
         what (str): What is expected, for the message of the error
         ordered (bool): Whether the order and the repeats of the items matter
+        message (str): Message of the error with the field {type}, the type of the value,
+            in place of the English one
 
     Raises:
         SourceTypeError: If a string (of characters or bytes), a Doc, a Span, an
@@ -648,25 +652,33 @@ def check_sequence(value: object, what: str = "words", ordered: bool = True) -> 
         ...
         anyts.exceptions.SourceTypeError: A list of words is expected, not a string
     """
-    if isinstance(value, str | bytes | bytearray):
-        raise SourceTypeError(f"A list of {what} is expected, not a string")
-    if is_doc(value) or is_span(value):
+    problem = _sequence_problem(value, what, ordered)
+    if problem is not None:
         raise SourceTypeError(
+            problem if message is None else message.format(type=type(value).__name__)
+        )
+
+
+def _sequence_problem(value: object, what: str, ordered: bool) -> str | None:
+    """Why a value is no sequence of check_sequence, None for a sequence"""
+    if isinstance(value, str | bytes | bytearray):
+        return f"A list of {what} is expected, not a string"
+    if is_doc(value) or is_span(value):
+        return (
             f"A list of {what} is expected, not a {type(value).__name__}: "
             "extract the words with WordsExtractor"
         )
     if isinstance(value, Iterator):
-        raise SourceTypeError(f"A list of {what} is expected, not an iterator")
+        return f"A list of {what} is expected, not an iterator"
     sized: object = value
     if not isinstance(value, Iterable) or not isinstance(sized, Sized):
-        raise SourceTypeError(f"A list of {what} is expected, not {type(value).__name__}")
+        return f"A list of {what} is expected, not {type(value).__name__}"
     ndim = getattr(value, "ndim", 1)
     if ndim != 1:
-        raise SourceTypeError(
-            f"A list of {what} is expected, not a {ndim}-dimensional {type(value).__name__}"
-        )
+        return f"A list of {what} is expected, not a {ndim}-dimensional {type(value).__name__}"
     if ordered and isinstance(value, Set | Mapping):
-        raise SourceTypeError(f"A list of {what} is expected, not {type(value).__name__}")
+        return f"A list of {what} is expected, not {type(value).__name__}"
+    return None
 
 
 def _sliceable(values: Any) -> Any:
@@ -678,7 +690,13 @@ def _sliceable(values: Any) -> Any:
     return values
 
 
-def check_words(value: Iterable[object], what: str = "words", ordered: bool = True) -> None:
+def check_words(
+    value: Iterable[object],
+    what: str = "words",
+    ordered: bool = True,
+    *,
+    message: str | None = None,
+) -> None:
     """
     Checking that an argument is a list of words: a sequence of strings
 
@@ -686,6 +704,8 @@ def check_words(value: Iterable[object], what: str = "words", ordered: bool = Tr
         value (object): Value to check
         what (str): What is expected, for the message of the error
         ordered (bool): Whether the order and the repeats of the words matter (check_sequence)
+        message (str): Message of the error with the field {type}, the type of the value or
+            of the item that is not a string, in place of the English one
 
     Raises:
         SourceTypeError: If the value fails check_sequence or holds an item
@@ -700,10 +720,14 @@ def check_words(value: Iterable[object], what: str = "words", ordered: bool = Tr
         ...
         anyts.exceptions.SourceTypeError: The words must be strings, not Token
     """
-    check_sequence(value, what, ordered)
+    check_sequence(value, what, ordered, message=message)
     if not all(map(isinstance, value, repeat(str))):
-        item = next(item for item in value if not isinstance(item, str))
-        raise SourceTypeError(f"The {what} must be strings, not {type(item).__name__}")
+        kind = type(next(item for item in value if not isinstance(item, str))).__name__
+        raise SourceTypeError(
+            f"The {what} must be strings, not {kind}"
+            if message is None
+            else message.format(type=kind)
+        )
 
 
 def check_word(value: object, what: str = "word") -> None:
@@ -761,7 +785,7 @@ def check_counts(value: object) -> None:
             raise SourceError(f"The frequencies must be finite and not negative, not {count}")
 
 
-def check_integer(value: object, what: str) -> None:
+def check_integer(value: object, what: str, *, message: str | None = None) -> None:
     """
     Checking that a parameter is an integer
 
@@ -771,6 +795,8 @@ def check_integer(value: object, what: str) -> None:
     Arguments:
         value (object): Value to check
         what (str): Name of the parameter, for the message of the error
+        message (str): Message of the error with the field {type}, the type of the value,
+            in place of the English one
 
     Raises:
         ParameterError: If the value is not an integer
@@ -784,16 +810,23 @@ def check_integer(value: object, what: str) -> None:
         anyts.exceptions.ParameterError: The window size must be an integer, not float
     """
     if isinstance(value, bool) or not isinstance(value, Integral):
-        raise ParameterError(f"The {what} must be an integer, not {type(value).__name__}")
+        kind = type(value).__name__
+        raise ParameterError(
+            f"The {what} must be an integer, not {kind}"
+            if message is None
+            else message.format(type=kind)
+        )
 
 
-def check_bool(value: object, what: str) -> None:
+def check_bool(value: object, what: str, *, message: str | None = None) -> None:
     """
     Checking that a parameter is a bool, a numpy bool included
 
     Arguments:
         value (object): Value to check
         what (str): Name of the parameter, for the message of the error
+        message (str): Message of the error with the field {type}, the type of the value,
+            in place of the English one
 
     Raises:
         ParameterError: If the value is not a bool
@@ -808,7 +841,12 @@ def check_bool(value: object, what: str) -> None:
     """
     numpy = sys.modules.get("numpy")
     if not (isinstance(value, bool) or (numpy is not None and isinstance(value, numpy.bool_))):
-        raise ParameterError(f"The {what} must be a bool, not {type(value).__name__}")
+        kind = type(value).__name__
+        raise ParameterError(
+            f"The {what} must be a bool, not {kind}"
+            if message is None
+            else message.format(type=kind)
+        )
 
 
 def check_number(value: object, what: str) -> None:

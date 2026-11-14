@@ -324,6 +324,22 @@ def test_check_integer_errors(value, name):
         check_integer(value, "window size")
 
 
+def test_checks_with_a_message():
+    """A message of a class takes the place of the English one, with the type of the value"""
+    message = "Own: {type}"
+    with pytest.raises(SourceTypeError, match=r"^Own: str$"):
+        check_sequence("the cat", message=message)
+    with pytest.raises(SourceTypeError, match=r"^Own: list_iterator$"):
+        check_words(iter(["the"]), message=message)
+    with pytest.raises(SourceTypeError, match=r"^Own: int$"):
+        check_words(["the", 1], message=message)
+    with pytest.raises(ParameterError, match=r"^Own: float$"):
+        check_integer(5.0, "window size", message=message)
+    with pytest.raises(ParameterError, match=r"^Own: int$"):
+        check_bool(1, "flag", message=message)
+    assert check_words(["the"], message=message) is None
+
+
 def test_count_words_by_spans():
     starts = [0, 4, 10, 14, 20]
     assert count_words_by_spans(starts, [(0, 9), (10, 19), (20, 24)]) == [2, 2, 1]

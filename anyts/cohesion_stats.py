@@ -325,30 +325,33 @@ class ConnectorMatcher:
                 a blocked position is not that of a word, or the parts of speech are
                 not as many as the words
         """
-        check_words(words)
-        check_integer(sent_index, "number of the sentence")
+        messages = self.messages
+        check_words(words, message=messages["connector_words"])
+        check_integer(
+            sent_index, "number of the sentence", message=messages["connector_sent_index"]
+        )
         if pos is not None:
-            check_sequence(pos, "parts of speech")
+            check_sequence(pos, "parts of speech", message=messages["connector_pos_list"])
             for tag in pos:
                 if tag is not None and not isinstance(tag, str):
                     raise SourceTypeError(
-                        self.messages["connector_pos_type"].format(type=type(tag).__name__)
+                        messages["connector_pos_type"].format(type=type(tag).__name__)
                     )
             if len(pos) != len(words):
-                raise ParameterError(self.messages["connector_pos"])
+                raise ParameterError(messages["connector_pos"])
         marks = self._positions(
             breaks,
             1,
             len(words),
             ("positions of the marks", "position of a mark"),
-            ("connector_breaks", "connector_breaks_short"),
+            ("connector_breaks_type", "connector_breaks", "connector_breaks_short"),
         )
         starts = self._positions(
             blocked,
             0,
             len(words),
             ("positions of the blocked words", "position of a blocked word"),
-            ("connector_blocked", "connector_blocked_empty"),
+            ("connector_blocked_type", "connector_blocked", "connector_blocked_empty"),
         )
         return self._find(words, sent_index, pos, marks, starts)
 
@@ -358,18 +361,19 @@ class ConnectorMatcher:
         first: int,
         size: int,
         names: tuple[str, str],
-        keys: tuple[str, str],
+        keys: tuple[str, str, str],
     ) -> frozenset[int]:
         """Positions of the words from first to the last one, checked: names of the positions
-        and of one position for the checks, keys of the messages of a position out of range and
-        of a sentence without such positions"""
+        and of one position for the checks, keys of the messages of positions of a wrong type, of
+        a position out of range and of a sentence without such positions"""
         if positions is None:
             return frozenset()
-        check_sequence(positions, names[0], ordered=False)
+        kind, outside, none = keys
+        message = self.messages[kind]
+        check_sequence(positions, names[0], ordered=False, message=message)
         for position in positions:
-            check_integer(position, names[1])
+            check_integer(position, names[1], message=message)
             if not first <= position < size:
-                outside, none = keys
                 raise ParameterError(
                     self.messages[outside].format(last=size - 1, position=position)
                     if size > first
@@ -673,7 +677,7 @@ class CohesionStats(Stats):
         messages = self.messages
         if sents_extractor is not None and not isinstance(sents_extractor, SentsExtractor):
             raise SourceTypeError(messages["sents_extractor_type"])
-        check_bool(blank_lines, "blank_lines")
+        check_bool(blank_lines, "blank_lines", message=messages["blank_lines"])
         self.sents_extractor = sents_extractor
         self.blank_lines = blank_lines
         matcher = (
