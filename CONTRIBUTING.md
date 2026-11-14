@@ -34,7 +34,7 @@ make docs-build  # mkdocs build --strict, if the documentation changed
 
 CI runs the same on Python 3.11-3.15 (Linux) and on Windows and macOS for one Python version.
 
-A change that may slow the statistics down is measured with `make bench`: the classes of this tree against those of `master`, the time of a run over the documents and the largest memory of one document, on CoNLL-U files of annotated texts in the folder `BENCH_DATA`. A repeated run on the same code stays within 5 %.
+A change that may slow the statistics down is measured with `make bench`: the classes of this tree against those of the commit it starts from on `master`, the time of a run over the documents and the largest memory of one document. The documents are CoNLL-U files of annotated texts in the folder of the environment variable `BENCH_DATA` (`--data` of `scripts/bench.py`), by default `core_snapshot/bench-documents` next to the clone of the repository. A repeated run on the same code stays within 5 %.
 
 ## What a pull request is expected to contain
 

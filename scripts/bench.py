@@ -2,7 +2,8 @@
 Speed and memory of the classes of statistics against master
 
 The classes read frozen documents: CoNLL-U files of texts annotated by the pipelines of the
-language libraries, in BENCH_DATA (../core_snapshot/bench-documents by default). Every class
+language libraries, in the folder of the environment variable BENCH_DATA or of --data, by
+default core_snapshot/bench-documents next to the clone of the repository. Every class
 runs once over all of them to warm up, then REPEATS times; the fastest run is its time. Its
 memory is the largest peak of the memory Python allocates for one document. The garbage
 collector runs before every measurement and not during it, since the trees hold cycles.
@@ -13,12 +14,14 @@ Usage:
     uv run python scripts/bench.py take OUT [--data DIR]
     uv run python scripts/bench.py compare OLD NEW
 
-run takes the classes of a worktree of master and of this tree in the same environment and
-prints the table of both.
+run takes the classes of a worktree of the commit this branch starts from on master (git
+merge-base) and of this tree, in the same environment, and prints the table of both; a class
+one of them lacks has a dash.
 """
 
 import argparse
 import gc
+import importlib
 import json
 import os
 import re
@@ -32,7 +35,6 @@ from pathlib import Path
 from typing import Any, NamedTuple
 
 ROOT = Path(__file__).resolve().parents[1]
-DATA = Path(os.environ.get("BENCH_DATA", ROOT.parent / "core_snapshot" / "bench-documents"))
 REPEATS = 5
 VOWELS = "aeiouyáéíóúüаеёиоуыэюя"
 VOWEL_GROUP = re.compile(f"[{VOWELS}]+")
@@ -57,56 +59,75 @@ class Frequencies:
         return float(len(lemma))
 
 
-def stats_classes() -> dict[str, Callable[[Any], Any]]:
-    """The classes of the core with the hooks of a language they need, by name"""
+def _basic() -> Callable[[Any], Any]:
     from anyts.basic_stats import BasicStats
-    from anyts.cohesion_stats import CohesionStats
-    from anyts.diversity_stats import DiversityStats
-    from anyts.document import document_words, get_tree
-    from anyts.lexical_stats import LexicalStats
-    from anyts.morph_stats import MorphStats
-    from anyts.phon_stats import PhonStats
-    from anyts.readability_stats import ReadabilityStats
-    from anyts.style_stats import StyleStats
-    from anyts.syntax_stats import SyntaxStats
 
     class Basic(BasicStats):
         def count_syllables(self, word: str) -> int:
             return len(VOWEL_GROUP.findall(word.lower()))
 
-    class Readability(ReadabilityStats):
-        basic_stats_class = Basic
+    return Basic
+
+
+def _readability() -> Callable[[Any], Any]:
+    from anyts.readability_stats import ReadabilityStats
+
+    return type("Readability", (ReadabilityStats,), {"basic_stats_class": _basic()})
+
+
+def _phon() -> Callable[[Any], Any]:
+    from anyts.phon_stats import PhonStats
 
     class Phon(PhonStats):
         def syllabify(self, word: str) -> Sequence[str]:
             return SYLLABLE.findall(word) or [word]
 
-    class Lexical(LexicalStats):
-        freq_dict_class = Frequencies
+    return Phon
 
-    return {
-        "get_tree": get_tree,
-        "BasicStats": Basic,
-        "ReadabilityStats": Readability,
-        "StyleStats": StyleStats,
-        "PhonStats": Phon,
-        "DiversityStats": lambda document: DiversityStats(
-            [word.lower() for word in document_words(document)]
-        ),
-        "LexicalStats": Lexical,
-        "MorphStats": MorphStats,
-        "SyntaxStats": SyntaxStats,
-        "CohesionStats": CohesionStats,
-    }
+
+def _diversity() -> Callable[[Any], Any]:
+    from anyts.diversity_stats import DiversityStats
+    from anyts.document import document_words
+
+    return lambda document: DiversityStats([word.lower() for word in document_words(document)])
+
+
+def _lexical() -> Callable[[Any], Any]:
+    from anyts.lexical_stats import LexicalStats
+
+    return type("Lexical", (LexicalStats,), {"freq_dict_class": Frequencies})
+
+
+def _core(module: str, name: str) -> Callable[[], Callable[[Any], Any]]:
+    return lambda: getattr(importlib.import_module(f"anyts.{module}"), name)
+
+
+# Every class with the hooks of a language it needs, made when the tree has it
+CLASSES: dict[str, Callable[[], Callable[[Any], Any]]] = {
+    "get_tree": _core("document", "get_tree"),
+    "BasicStats": _basic,
+    "ReadabilityStats": _readability,
+    "StyleStats": _core("style_stats", "StyleStats"),
+    "PhonStats": _phon,
+    "DiversityStats": _diversity,
+    "LexicalStats": _lexical,
+    "MorphStats": _core("morph_stats", "MorphStats"),
+    "SyntaxStats": _core("syntax_stats", "SyntaxStats"),
+    "CohesionStats": _core("cohesion_stats", "CohesionStats"),
+}
+
+
+def data_files(data: Path) -> list[Path]:
+    paths = sorted(data.rglob("*.conllu"))
+    if not paths:
+        raise SystemExit(f"No CoNLL-U files in {data}: set BENCH_DATA or --data")
+    return paths
 
 
 def documents(data: Path) -> list[Any]:
     from anyseg import read_conllu
 
-    paths = sorted(data.rglob("*.conllu"))
-    if not paths:
-        raise SystemExit(f"No CoNLL-U files in {data}: set BENCH_DATA or --data")
-    return [read_conllu(path.read_text(encoding="utf-8"))[0] for path in paths]
+    return [read_conllu(path.read_text(encoding="utf-8"))[0] for path in data_files(data)]
 
 
 def measure(make: Callable[[Any], Any], sources: Sequence[Any]) -> dict[str, float]:
@@ -145,7 +166,13 @@ def take(out: Path, data: Path) -> None:
     import anyts
 
     sources = documents(data)
-    results = {name: measure(make, sources) for name, make in stats_classes().items()}
+    results = {}
+    for name, factory in CLASSES.items():
+        try:
+            make = factory()
+        except (ImportError, AttributeError):
+            continue
+        results[name] = measure(make, sources)
     meta = {"anyts": str(Path(anyts.__file__).parent), "documents": len(sources)}
     out.write_text(json.dumps({"meta": meta, "classes": results}, indent=1), encoding="utf-8")
 
@@ -158,41 +185,63 @@ def compare(old: Path, new: Path, names: tuple[str, str] = ("old", "new")) -> No
         f"{'':18}{names[0] + ', s':>12}{names[1] + ', s':>12}{'change':>9}"
         f"{names[0] + ', MB':>13}{names[1] + ', MB':>13}{'change':>9}"
     )
-    for name, first in before.items():
-        second = after.get(name)
-        if second is None:
-            continue
+    for name in {**before, **after}:
+        first, second = before.get(name), after.get(name)
         print(
-            f"{name:18}{first['time']:12.3f}{second['time']:12.3f}"
-            f"{_change(first['time'], second['time']):>9}"
-            f"{first['memory'] / 1e6:13.1f}{second['memory'] / 1e6:13.1f}"
-            f"{_change(first['memory'], second['memory']):>9}"
+            f"{name:18}{_value(first, 'time', 1):>12}{_value(second, 'time', 1):>12}"
+            f"{_change(first, second, 'time'):>9}"
+            f"{_value(first, 'memory', 1e6):>13}{_value(second, 'memory', 1e6):>13}"
+            f"{_change(first, second, 'memory'):>9}"
         )
 
 
-def _change(first: float, second: float) -> str:
-    return f"{(second - first) / first * 100:+.1f} %" if first else ""
+def _value(stats: dict[str, float] | None, key: str, unit: float) -> str:
+    return "-" if stats is None else f"{stats[key] / unit:.{3 if key == 'time' else 1}f}"
+
+
+def _change(first: dict[str, float] | None, second: dict[str, float] | None, key: str) -> str:
+    if first is None or second is None or not first[key]:
+        return ""
+    return f"{(second[key] - first[key]) / first[key] * 100:+.1f} %"
 
 
 def run(data: Path) -> None:
+    data_files(data)
     script = str(Path(__file__).resolve())
+    base = _git("merge-base", "HEAD", "master")
     with tempfile.TemporaryDirectory() as folder:
-        master = Path(folder) / "master"
-        git = ["git", "-C", str(ROOT), "worktree"]
-        subprocess.run([*git, "add", "--quiet", "--detach", str(master), "master"], check=True)
+        tree = Path(folder) / "base"
+        _git("worktree", "add", "--quiet", "--detach", str(tree), base)
         try:
             # The anyts of the worktree comes first on the path, in the same environment
-            environment = {**os.environ, "PYTHONPATH": str(master), "PYTHONDONTWRITEBYTECODE": "1"}
+            environment = {**os.environ, "PYTHONPATH": str(tree), "PYTHONDONTWRITEBYTECODE": "1"}
             command = [sys.executable, script, "take"]
-            subprocess.run(
-                [*command, f"{folder}/master.json", "--data", str(data)],
-                env=environment,
-                check=True,
-            )
-            subprocess.run([*command, f"{folder}/this.json", "--data", str(data)], check=True)
-            compare(Path(folder, "master.json"), Path(folder, "this.json"), ("master", "this"))
+            _take([*command, f"{folder}/base.json", "--data", str(data)], environment)
+            _take([*command, f"{folder}/this.json", "--data", str(data)], None)
+            compare(Path(folder, "base.json"), Path(folder, "this.json"), ("base", "this"))
         finally:
-            subprocess.run([*git, "remove", str(master)], check=True)
+            _git("worktree", "remove", str(tree))
+
+
+def _git(*args: str) -> str:
+    return subprocess.run(
+        ["git", "-C", str(ROOT), *args], check=True, capture_output=True, text=True
+    ).stdout.strip()
+
+
+def _take(command: list[str], environment: dict[str, str] | None) -> None:
+    """A measurement in a process of its own; its failure ends the run with its code"""
+    code = subprocess.run(command, env=environment, check=False).returncode
+    if code:
+        raise SystemExit(code)
+
+
+def _default_data() -> Path:
+    """BENCH_DATA, or core_snapshot/bench-documents next to the main clone of the repository"""
+    if "BENCH_DATA" in os.environ:
+        return Path(os.environ["BENCH_DATA"])
+    common = Path(_git("rev-parse", "--path-format=absolute", "--git-common-dir"))
+    return common.parent.parent / "core_snapshot" / "bench-documents"
 
 
 def main() -> None:
@@ -202,15 +251,15 @@ def main() -> None:
         command = commands.add_parser(name)
         if name == "take":
             command.add_argument("out", type=Path)
-        command.add_argument("--data", type=Path, default=DATA)
+        command.add_argument("--data", type=Path)
     command = commands.add_parser("compare")
     command.add_argument("old", type=Path)
     command.add_argument("new", type=Path)
     args = parser.parse_args()
     if args.command == "run":
-        run(args.data)
+        run(args.data or _default_data())
     elif args.command == "take":
-        take(args.out, args.data)
+        take(args.out, args.data or _default_data())
     else:
         compare(args.old, args.new)
 
