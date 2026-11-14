@@ -13,7 +13,6 @@ import spacy
 from anyts import CharNgramsExtractor, SentsExtractor, WordsExtractor
 from anyts.exceptions import ParameterError, SourceTypeError
 from anyts.extractors import (
-    BLANK_LINE,
     NUMBER_PATTERN,
     Extractor,
     FixedSentsExtractor,
@@ -22,6 +21,7 @@ from anyts.extractors import (
     iter_part_sents,
     split_paragraphs,
 )
+from anyts.utils import BLANK_LINE
 
 TEXT = (
     "Thesauri are a special class of lexicographic resources marked by the following"
