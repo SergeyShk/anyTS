@@ -407,7 +407,7 @@ class SyntaxStats(Stats):
                 1
                 for sent in heads
                 for word in sent
-                if (first := firsts[word.index]) is not None
+                if (first := firsts[reattached.get(word.index, word).index]) is not None
                 and base_dep(first) in NOMINAL_CLAUSE_DEPS
             ),
             "n_verb_phrases": sum(
@@ -1571,8 +1571,8 @@ def is_subordinate_clause_head(
         conjunct or a parataxis with a subordinating mark (is_subordinating_mark)
         is a subordinate clause, since a model may attach a clause of because as
         conj, and so are its conjuncts with a subject and a coordinating conjunction
-        of their own; the others are not, as a model attaches the predicates of the
-        main clause to it as well
+        of their own; the others take the kind of the clause the marked one hangs
+        on, as a model attaches the predicates of that clause to it as well
 
     Arguments:
         word (TreeWord): Word of the tree
@@ -1707,7 +1707,8 @@ def _clause_relation(
 ) -> tuple[TreeWord, str]:
     """First word up the chain of conjuncts of a clause head and its relation, advcl for a
     conjunct or a parataxis with a subordinating mark, of its own or of a clause it is
-    coordinated to (_inherits_mark)"""
+    coordinated to when it and every conjunct on the way take the mark (_inherits_mark) or
+    share the subject"""
     if base_dep(word) in MAIN_CLAUSE_DEPS and _has_mark(word, is_subordinating_mark):
         return word, "advcl"
     inherits = _inherits_mark(word, auxiliary_form)
@@ -1721,6 +1722,7 @@ def _clause_relation(
             and _has_mark(word, is_subordinating_mark)
         ):
             return word, "advcl"
+        inherits = inherits and (_shares_subject(word) or _inherits_mark(word, auxiliary_form))
     return word, base_dep(word)
 
 

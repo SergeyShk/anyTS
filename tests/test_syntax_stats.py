@@ -1066,6 +1066,56 @@ def test_subordinating_marks():
     assert not is_subordinate_clause_head(tree(asyndetic)[9], subordinating_marks={"for"})
     stats = Marked(asyndetic)
     assert (stats.n_t_units, stats.n_subordinate_clauses, stats.n_complex_t_units) == (2, 1, 1)
+    # he left , for he was tired , she slept and they ate: ate is coordinated to slept, a main
+    # clause, so it takes no mark either
+    chain = parse(
+        [
+            "he",
+            "left",
+            ",",
+            "for",
+            "he",
+            "was",
+            "tired",
+            ",",
+            "she",
+            "slept",
+            "and",
+            "they",
+            "ate",
+        ],
+        [1, 1, 6, 6, 6, 6, 1, 9, 9, 6, 12, 12, 9],
+        [
+            *["nsubj", "ROOT", "punct", "mark", "nsubj", "cop", "conj", "punct", "nsubj"],
+            *["conj", "cc", "nsubj", "conj"],
+        ],
+        ["", fin, "", "", "", fin, "", "", "", fin, "", "", fin],
+        pos=[
+            *["PRON", "VERB", "PUNCT", "SCONJ", "PRON", "AUX", "ADJ", "PUNCT", "PRON", "VERB"],
+            *["CCONJ", "PRON", "VERB"],
+        ],
+    )
+    assert not is_subordinate_clause_head(tree(chain)[12], subordinating_marks={"for"})
+    stats = Marked(chain)
+    assert (stats.n_t_units, stats.n_subordinate_clauses, stats.n_complex_t_units) == (3, 1, 1)
+    # he said that I left , for I was tired , he slept: slept takes the kind of left, a nominal
+    # clause
+    nominal = parse(
+        ["he", "said", "that", "I", "left", ",", "for", "I", "was", "tired", ",", "he", "slept"],
+        [1, 1, 4, 4, 1, 9, 9, 9, 9, 4, 12, 12, 9],
+        [
+            *["nsubj", "ROOT", "mark", "nsubj", "ccomp", "punct", "mark", "nsubj", "cop", "conj"],
+            *["punct", "nsubj", "conj"],
+        ],
+        ["", fin, "", "", fin, "", "", "", fin, "", "", "", fin],
+        pos=[
+            *["PRON", "VERB", "SCONJ", "PRON", "VERB", "PUNCT", "SCONJ", "PRON", "AUX", "ADJ"],
+            *["PUNCT", "PRON", "VERB"],
+        ],
+    )
+    assert is_subordinate_clause_head(tree(nominal)[12], subordinating_marks={"for"})
+    stats = Marked(nominal)
+    assert (stats.n_t_units, stats.n_subordinate_clauses, stats.n_complex_nominals) == (1, 3, 2)
 
     class HookOnly(SyntaxStats):
         def is_subordinating_mark(self, word):
