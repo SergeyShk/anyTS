@@ -2129,11 +2129,11 @@
 
 
 <h1 id="kwic-concordance">KWIC concordance<a class="headerlink" href="#kwic-concordance" title="Permanent link">&para;</a></h1>
-<div class="signature highlight"><pre><span></span><code><span class="n">kwic</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">keyword</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">by_lemma</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">ignore_case</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">tokenize</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">lemmatize</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fold</span><span class="o">=</span><span class="nb">str</span><span class="o">.</span><span class="n">lower</span><span class="p">,</span> <span class="n">join_hyphens</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">sentenize</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">kwic</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">keyword</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">by_lemma</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">ignore_case</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">tokenize</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">lemmatize</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fold</span><span class="o">=</span><span class="nb">str</span><span class="o">.</span><span class="n">lower</span><span class="p">,</span> <span class="n">sentenize</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 <!-- --8<-- [start:kwic] -->
-<p>A KWIC concordance (keyword in context) - every occurrence of a word or a phrase with its context on both sides. Occurrences are found among the words of the text by the word form, ignoring case or respecting it (<code>ignore_case=False</code>), or by the lemma (<code>by_lemma=True</code>); the keyword is lemmatized as a string, so with a lemmatizer a phrase may be written in any form and without one it is given by lemmas. The words of a string and of the keyword come from the tokenizer, those of a <code>Doc</code> from its tokens: a tokenizer that splits a string as the pipeline does finds the same in both. Punctuation and symbols are not words; forms are compared in the composed form of Unicode (NFC), without soft hyphens.</p>
-<p>A phrase does not cross the end of a paragraph or a sentence unless the keyword has a final mark or a sentence start in the same place (<code>U.S. Army</code>). A sentence ends at a boundary of a <code>Doc</code> anywhere between the words, an opening mark included, or, without boundaries or with partial ones (<code>has_sents</code>), at a sentence start of the sentence splitter, by default a final mark before whitespace. The context is <code>window</code> words on each side as written, punctuation included; whitespace collapses into one space, and occurrences do not overlap.</p>
+<p>A KWIC concordance (keyword in context) - every occurrence of a word or a phrase with its context on both sides. Occurrences are found among the words of the text by the word form, ignoring case or respecting it (<code>ignore_case=False</code>), or by the lemma (<code>by_lemma=True</code>); the keyword is lemmatized as a string, so with a lemmatizer a phrase may be written in any form and without one it is given by lemmas. The words are those of the <a href="https://sergeyshk.github.io/anyTS/document/">document</a> of the text - the tokens of a string by the tokenizer, of a <code>Doc</code> or of a <code>Document</code> by their own - and the keyword is split as a string: a tokenizer that splits a string as the pipeline does finds the same in both. A word has a letter or a digit, so punctuation and symbols are not words; forms are compared in the composed form of Unicode (NFC), without soft hyphens.</p>
+<p>A phrase does not cross the end of a sentence or a paragraph of the document unless the keyword has a final mark or a sentence start in the same place (<code>U.S. Army</code>). The sentences are those of a <code>Doc</code> or a <code>Document</code>, or of the sentence splitter for a string, the keyword and a <code>Doc</code> without them (by default those of <code>SentsExtractor</code>). The context is <code>window</code> words on each side as written, punctuation included; whitespace collapses into one space, and occurrences do not overlap.</p>
 <!-- --8<-- [end:kwic] -->
 
 <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Code</label><label for="__tabbed_1_2">Result</label></div>
@@ -2156,7 +2156,7 @@
         <span class="n">text</span><span class="p">,</span>
         <span class="s2">"watch the bird"</span><span class="p">,</span>
         <span class="n">by_lemma</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">lemmatize</span><span class="o">=</span><span class="k">lambda</span> <span class="n">word</span><span class="p">,</span> <span class="n">tokens</span><span class="p">:</span> <span class="p">[</span><span class="n">lemmas</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">word</span><span class="p">,</span> <span class="n">word</span><span class="p">)],</span>
+        <span class="n">lemmatize</span><span class="o">=</span><span class="k">lambda</span> <span class="n">word</span><span class="p">,</span> <span class="n">words</span><span class="p">:</span> <span class="p">[</span><span class="n">lemmas</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">word</span><span class="p">,</span> <span class="n">word</span><span class="p">)],</span>
     <span class="p">)</span>
 <span class="p">]</span>
 </code></pre></div>
@@ -2185,9 +2185,9 @@
 <tbody>
 <tr>
 <td style="text-align: left;"><code>source</code></td>
-<td style="text-align: left;"><code>str</code> / <code>Doc</code></td>
+<td style="text-align: left;"><code>str</code> / <code>Doc</code> / <code>Document</code></td>
 <td style="text-align: left;">-</td>
-<td style="text-align: left;">Text or Doc object</td>
+<td style="text-align: left;">Text, Doc or Document object</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>keyword</code></td>
@@ -2215,7 +2215,7 @@
 </tr>
 </tbody>
 </table>
-<p>A keyword without words, a window that is not an integer or is negative and a <code>by_lemma</code> or <code>ignore_case</code> that is not a <code>bool</code> raise <code>ParameterError</code>; a source that is neither a string nor a <code>Doc</code>, a keyword that is not a string and a hook that is not callable raise <code>SourceTypeError</code>.</p>
+<p>A keyword without words, a window that is not an integer or is negative and a <code>by_lemma</code> or <code>ignore_case</code> that is not a <code>bool</code> raise <code>ParameterError</code>; a source that is neither a string, a <code>Doc</code> nor a <code>Document</code>, a keyword that is not a string and a hook that is not callable raise <code>SourceTypeError</code>, and a <code>Doc</code> whose token runs over a blank line <code>SourceError</code>.</p>
 <!-- --8<-- [end:kwic-parameters] -->
 
 <h2 id="result">Result<a class="headerlink" href="#result" title="Permanent link">&para;</a></h2>
@@ -2303,7 +2303,7 @@
 <details class="library-hooks">
 <summary>Language hooks of the parameters</summary>
 <!-- --8<-- [start:kwic-hooks] -->
-<p>The language enters through five parameters:</p>
+<p>The language enters through four parameters:</p>
 <table>
 <thead>
 <tr>
@@ -2318,13 +2318,13 @@
 <td style="text-align: left;"><code>tokenize</code></td>
 <td style="text-align: left;"><code>Callable</code></td>
 <td style="text-align: left;"><code>None</code></td>
-<td style="text-align: left;">The words of a string and of the keyword as triples of the start, the end and the text; a run of word characters by default</td>
+<td style="text-align: left;">The tokens of a string and of the keyword as triples of the start, the end and the text, the default tokens of <code>to_document</code> filling the gaps; words of <code>\w</code> and punctuation marks by default</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>lemmatize</code></td>
 <td style="text-align: left;"><code>Callable</code></td>
 <td style="text-align: left;"><code>None</code></td>
-<td style="text-align: left;">The lemmas of a word, given its text and its tokens in a <code>Doc</code> (none for a string and the keyword), or one lemma as a string; a word matches when one of its lemmas is one of those of the keyword</td>
+<td style="text-align: left;">The lemmas of a word, given its text and its words of Universal Dependencies (<code>Word</code> objects of anySeg; none for the keyword), or one lemma as a string; a word matches when one of its lemmas is one of those of the keyword</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>fold</code></td>
@@ -2333,20 +2333,14 @@
 <td style="text-align: left;">The folding of a word form (with <code>ignore_case</code>) or a lemma before the comparison, such as the letters a language takes for the same</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>join_hyphens</code></td>
-<td style="text-align: left;"><code>bool</code></td>
-<td style="text-align: left;"><code>False</code></td>
-<td style="text-align: left;">Join the parts of the hyphenated words of a <code>Doc</code> the tokenizer split (<code>iter_doc_units</code>); the default tokenizer then keeps them whole in a string and in the keyword too</td>
-</tr>
-<tr>
 <td style="text-align: left;"><code>sentenize</code></td>
 <td style="text-align: left;"><code>Callable</code></td>
 <td style="text-align: left;"><code>None</code></td>
-<td style="text-align: left;">The sentences of a string, of the keyword and of the text of a <code>Doc</code> without boundaries or with partial ones (<code>has_sents</code>) as triples of the start, the end and the text; a final mark before whitespace by default</td>
+<td style="text-align: left;">The sentences of a string, of the keyword and of the text of a <code>Doc</code> without them or with partial ones (<code>has_sents</code>) as triples of the start, the end and the text, in any order; those of <code>SentsExtractor</code> by default</td>
 </tr>
 </tbody>
 </table>
-<p>A <code>tokenize</code> that does not give the words in order as triples of integer bounds within the string and a string raises <code>SourceTypeError</code>, and so does a <code>sentenize</code> whose triples do not lie within it; the sentences may come in any order. The words of a <code>Doc</code> are its tokens without a byte order mark at the start. By default the lemmas of a word are the word itself and, for a one-token word of a <code>Doc</code> with lemmas, the lemma of the model: a word is found by its own form, and a <code>Doc</code> of a pipeline with a lemmatizer by its lemmas.</p>
+<p>A <code>tokenize</code> that does not give the tokens in order as triples of integer bounds within the string and a string raises <code>SourceTypeError</code>, and so does a <code>sentenize</code> whose triples do not lie within it. By default the lemmas of a word are the word itself and, for a token of one word of Universal Dependencies with a lemma, that lemma: a word is found by its own form, and a <code>Doc</code> of a pipeline with a lemmatizer by its lemmas.</p>
 <!-- --8<-- [end:kwic-hooks] -->
 </details>
 

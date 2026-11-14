@@ -2085,7 +2085,7 @@
 
 
 <h1 id="sentence-lengths">Sentence lengths<a class="headerlink" href="#sentence-lengths" title="Permanent link">&para;</a></h1>
-<div class="signature highlight"><pre><span></span><code><span class="n">sentence_lengths_plot</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">inset</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sents_extractor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">words_extractor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">join_hyphens</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">sentence_lengths_plot</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">inset</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sents_extractor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">words_extractor</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 <!-- --8<-- [start:sentence_lengths_plot] -->
 <p>The curve of the lengths of the sentences - the rhythm of a text: the length of every sentence in words, in order, the moving average over <code>window</code> sentences and an inset with the histogram of the lengths. Short and long sentences in turn are an editorial sign of a lively text, a flat curve of a monotonous one. The function takes the axes <code>ax</code> and returns <code>Axes</code>.</p>
@@ -2110,9 +2110,9 @@
 <tbody>
 <tr>
 <td style="text-align: left;"><code>source</code></td>
-<td style="text-align: left;"><code>str</code> / <code>Doc</code> / <code>Iterable[int]</code></td>
+<td style="text-align: left;"><code>str</code> / <code>Doc</code> / <code>Document</code> / <code>Iterable[int]</code></td>
 <td style="text-align: left;">-</td>
-<td style="text-align: left;">Text, Doc object or lengths of the sentences (a list, a numpy array, a Series)</td>
+<td style="text-align: left;">Text, Doc or Document object or lengths of the sentences (a list, a numpy array, a Series)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>window</code></td>
@@ -2142,25 +2142,25 @@
 <td style="text-align: left;"><code>sents_extractor</code></td>
 <td style="text-align: left;"><code>SentsExtractor</code></td>
 <td style="text-align: left;"><code>None</code></td>
-<td style="text-align: left;">Extractor of the sentences of a string; the sentence extractor of the library by default</td>
+<td style="text-align: left;">Extractor of the sentences of the text, used in place of those of the document</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>words_extractor</code></td>
 <td style="text-align: left;"><code>WordsExtractor</code></td>
 <td style="text-align: left;"><code>None</code></td>
-<td style="text-align: left;">Extractor of the words of a sentence of a string; the word extractor of the library by default</td>
+<td style="text-align: left;">Extractor of the words of a sentence of the text, used in place of those of the document</td>
 </tr>
 </tbody>
 </table>
 <p>The source and the extractors raise the errors of <code>sentence_lengths</code>, and no sentences raise <code>SourceError</code>; a <code>window</code> that is not an integer of at least one, labels that <code>merge_labels</code> refuses and an <code>ax</code> that is not a matplotlib <code>Axes</code> raise <code>ParameterError</code>.</p>
 <!-- --8<-- [end:sentence_lengths_plot-parameters] -->
 
-<p>The core functions also take <code>join_hyphens</code>, <code>False</code> by default, which joins the parts of hyphenated words of a <code>Doc</code> with sentence boundaries (<code>iter_doc_words</code>). The extractors of the core are <code>SentsExtractor()</code> and <code>WordsExtractor()</code>.</p>
+<p>Without an extractor the sentences and the words are those of the <a href="https://sergeyshk.github.io/anyTS/document/">document</a> of the source (<code>to_document</code>); with one, the text is split by the extractors, <code>SentsExtractor()</code> and <code>WordsExtractor()</code> for the one not given.</p>
 <h2 id="sentence_lengths">Lengths of the sentences<a class="headerlink" href="#sentence_lengths" title="Permanent link">&para;</a></h2>
-<div class="signature highlight"><pre><span></span><code><span class="n">sentence_lengths</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">sents_extractor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">words_extractor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">join_hyphens</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">sentence_lengths</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">sents_extractor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">words_extractor</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 <!-- --8<-- [start:sentence_lengths] -->
-<p>The lengths of the sentences in words, in order: a string is split by the sentence and the word extractors, a <code>Doc</code> by its boundaries and <code>iter_doc_words</code> with <code>join_hyphens</code>, and a <code>Doc</code> without boundaries or with partial ones (<code>has_sents</code>) is counted as its text. Sentences without words are skipped. Ready lengths (non-negative integers in a sequence or an iterator) are used as they are. The arguments are those of <code>sentence_lengths_plot</code>.</p>
+<p>The lengths of the sentences in words, in order: the sentences of the document of a text, a <code>Doc</code> or a <code>Document</code> (<code>to_document</code>) and their words with a letter or a digit, or, with an extractor given, the sentences and the words of the extractors on the text. Sentences without words are skipped. Ready lengths (non-negative integers in a sequence or an iterator) are used as they are. The arguments are those of <code>sentence_lengths_plot</code>.</p>
 <p>A table, a set, a mapping, bytes, a length that is not an integer and an extractor of another type raise <code>SourceTypeError</code>, a negative length <code>SourceError</code>.</p>
 <!-- --8<-- [end:sentence_lengths] -->
 
