@@ -1,3 +1,4 @@
+import gc
 import pickle
 import random
 import re
@@ -7,6 +8,7 @@ import spacy
 from anyseg import Document
 from spacy.tokens import Doc
 
+from anyts import document as document_module
 from anyts.constants import MESSAGES
 from anyts.document import document_words, get_tree, to_document
 from anyts.exceptions import SourceError, SourceTypeError
@@ -146,15 +148,28 @@ def test_doc_converted_once():
     assert changed is not document and changed.column("lemma")[0] == "one"
     to_document(nlp("Three"))
     assert to_document(doc) is not changed
+    # A hook of the sentences is an annotation too
+    document = to_document(doc)
+    doc.user_hooks["sents"] = lambda whole: [whole[:]]
+    assert to_document(doc) is not document
+    assert [sentence.text for sentence in to_document(doc).sentences] == ["One. Two!"]
+    # A Doc with its sentences takes no sentenize
+    parsed = Doc(nlp.vocab, words=["Cats", "sleep"], heads=[1, 1], deps=["nsubj", "ROOT"])
+    assert to_document(parsed, sentenize=semicolons) is to_document(parsed)
     # The words of a multiword token of anySeg are part of the annotations
     doc = nlp("Vino del pueblo")
     plain = to_document(doc)
     doc[1]._.anyseg_words = [{"form": "de"}, {"form": "el"}]
     assert [word.form for word in to_document(doc).words] == ["Vino", "de", "el", "pueblo"]
     assert len(plain.words) == 3
-    # A Doc that is gone matches no Doc made in its place
-    assert to_document(nlp("Four")).text == "Four"
-    assert to_document(nlp("Five")).text == "Five"
+    doc.user_data[("._.", "anyseg_words", None, None)] = "a value of the whole Doc"
+    assert len(to_document(doc).words) == 4
+    # Docs of one text are other Docs, and a Doc that is gone takes its document with it
+    first, second = nlp("Four"), nlp("Four")
+    assert to_document(first) is not to_document(second)
+    del first, second
+    gc.collect()
+    assert document_module._last_converted == []
 
 
 def test_doc_columns():
