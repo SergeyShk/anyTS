@@ -31,7 +31,7 @@ sentence_lengths_plot(text, window=2)
 The source and the extractors raise the errors of `sentence_lengths`, and no sentences raise `SourceError`; a `window` that is not an integer of at least one, labels that `merge_labels` refuses and an `ax` that is not a matplotlib `Axes` raise `ParameterError`.
 <!-- --8<-- [end:sentence_lengths_plot-parameters] -->
 
-Without an extractor the sentences and the words are those of the [document](https://sergeyshk.github.io/anyTS/document/) of the source (`to_document`); with one, a string or a `Doc` without sentences of its own (no start at some token and no parse) is split by the extractors, `SentsExtractor()` and `WordsExtractor()` for the one not given, while a `Doc` with sentences and a `Document` keep theirs.
+Without an extractor the sentences and the words are those of the [document](https://sergeyshk.github.io/anyTS/document/) of the source (`to_document`); with one, a string or a `Doc` without sentences of its own (no start at some token, no hook and no parse) is split by the extractors, `SentsExtractor()` and `WordsExtractor()` for the one not given, while a `Doc` with sentences and a `Document` keep theirs.
 
 ## Lengths of the sentences { #sentence_lengths }
 
@@ -40,7 +40,7 @@ sentence_lengths(source, sents_extractor=None, words_extractor=None)
 ```
 
 <!-- --8<-- [start:sentence_lengths] -->
-The lengths of the sentences in words, in order: the sentences of the document of a text, a `Doc` or a `Document` (`to_document`) and their words with a letter or a digit, or, with an extractor given, the sentences and the words of the extractors on the text of a string or of a `Doc` without sentences of its own (no start at some token and no parse); a `Doc` with sentences and a `Document` keep theirs. Sentences without words are skipped. Ready lengths (non-negative integers in a sequence or an iterator) are used as they are. The arguments are those of `sentence_lengths_plot`.
+The lengths of the sentences in words, in order: the sentences of the document of a text, a `Doc` or a `Document` (`to_document`) and their words with a letter or a digit, or, with an extractor given, the sentences and the words of the extractors on the text of a string or of a `Doc` without sentences of its own (no start at some token, no hook and no parse); a `Doc` with sentences and a `Document` keep theirs. Sentences without words are skipped. Ready lengths (non-negative integers in a sequence or an iterator) are used as they are. The arguments are those of `sentence_lengths_plot`.
 
 A table, a set, a mapping, bytes, a length that is not an integer and an extractor of another type raise `SourceTypeError`, a negative length `SourceError`.
 <!-- --8<-- [end:sentence_lengths] -->

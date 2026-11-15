@@ -1345,8 +1345,10 @@ def is_clause_head(
         as predicates (is_predicate), so a parenthetical word is no clause, nor
         is an infinitive conjunct or an infinitive subject (csubj) by the check
         is_infinitive_periphrasis, since a model may attach the infinitive of a
-        periphrasis to its verb as conj and to a modal word as csubj; a loop of
-        conjuncts is none
+        periphrasis to its verb as conj and to a modal word as csubj. A
+        conjunct past such an infinitive is one only when a predicate on the
+        way that is no infinitive has a subject of its own (he must leave and
+        she stayed); a loop of conjuncts is none
 
     Arguments:
         word (TreeWord): Word of the tree
@@ -1375,7 +1377,7 @@ def _is_clause_head(
     auxiliary_form: Callable[[TreeWord], str] | None,
 ) -> bool:
     """is_clause_head with checked hooks"""
-    start = word
+    own = False
     seen = set()
     # Up the chains of conjuncts and infinitive complements to the word that is none
     while _is_word(word) and word.index not in seen:
@@ -1409,11 +1411,12 @@ def _is_clause_head(
             return not (dep == "acl" and form == "Inf")
         if form == "Inf" and is_infinitive_periphrasis and is_infinitive_periphrasis(word):
             # Past the infinitive of a periphrasis, a part of the predicate of its head, goes only a
-            # conjunct with a subject of its own (he must leave and she stayed)
-            if word is start or _shares_subject(start):
+            # chain with a predicate of a subject of its own (he must leave and she stayed)
+            if not own:
                 return False
         elif not is_predicate(word):
             return False
+        own = own or (form != "Inf" and not _shares_subject(word))
         seen.add(word.index)
         word = head
     return False
@@ -1724,26 +1727,33 @@ def _clause_relation(
     """First word up the chain of conjuncts of a clause head and its relation, advcl for a
     conjunct or a parataxis with a subordinating mark, of its own or of a clause it is
     coordinated to when it and every conjunct on the way take the mark (_inherits_mark) or
-    share the subject; past a marked clause whose mark it does not take, the chain goes on to
-    the clause that one hangs on"""
+    share the subject; past a marked clause whose mark it does not take, the chain goes on as
+    from that clause, to the clause it hangs on"""
     if base_dep(word) in MAIN_CLAUSE_DEPS and _has_mark(word, is_subordinating_mark):
         return word, "advcl"
     inherits = _inherits_mark(word, auxiliary_form)
     seen: set[int] = set()
     while word.head is not None and word.index not in seen:
-        if base_dep(word) != "conj" and not (
-            seen and base_dep(word) in MAIN_CLAUSE_DEPS and _has_mark(word, is_subordinating_mark)
-        ):
+        passed = (
+            bool(seen)
+            and base_dep(word) in MAIN_CLAUSE_DEPS
+            and _has_mark(word, is_subordinating_mark)
+        )
+        if base_dep(word) != "conj" and not passed:
             break
         seen.add(word.index)
         word = word.head
         if (
-            inherits
+            (inherits or passed)
             and base_dep(word) in MAIN_CLAUSE_DEPS
             and _has_mark(word, is_subordinating_mark)
         ):
             return word, "advcl"
-        inherits = inherits and (_shares_subject(word) or _inherits_mark(word, auxiliary_form))
+        inherits = (
+            _inherits_mark(word, auxiliary_form)
+            if passed
+            else inherits and (_shares_subject(word) or _inherits_mark(word, auxiliary_form))
+        )
     return word, base_dep(word)
 
 
