@@ -65,12 +65,12 @@ def to_document(
         unset), as before the parser, senter or sentencizer, and without a parse
         or a hook gets those of sentenize on its text. A string is split into
         tokens by tokenize and into sentences by sentenize, and the default
-        tokens fill the gaps between those of tokenize. A blank line (BLANK_LINE) ends a paragraph
-        of the document and so a sentence, of a Doc too: every part between
-        blank lines goes to sentenize apart, and a sentence starts at its first
-        token. Whitespace and invisible separators (the soft hyphen,
-        zero-width characters, the byte order mark) at the edges of a token are
-        left out, and a token of nothing else is dropped.
+        tokens fill the gaps between those of tokenize. A blank line
+        (BLANK_LINE) ends a paragraph of the document and so a sentence, of a
+        Doc too: every part between blank lines goes to sentenize apart, and a
+        sentence starts at its first token. Whitespace and invisible separators
+        (the soft hyphen, zero-width characters, the byte order mark) at the
+        edges of a token are left out, and a token of nothing else is dropped.
         The default tokens are the words of WordsExtractor and every run of one
         other character; the default sentences are those of SentsExtractor.
         The document of the last Doc converted is kept while the Doc lives with
