@@ -9,7 +9,7 @@ The common interface of the classes of statistics. Every class of statistics is 
 
 Raises:
 
-- `ParameterError` - when a subclass is defined, messages that `check_messages` rejects and a scale of `level_scales` that is not pairs of a finite lower bound and a band with the bounds descending.
+- `ParameterError` - when a subclass is defined, messages that `check_messages` rejects, a scale of `level_scales` that is not pairs of a finite lower bound and a band with the bounds descending, and an attribute of 0.4 the core no longer reads: `words_extractor_class`, `sents_extractor_class` and `join_hyphens` (the document comes from `parse`, the words of the counters from `doc_words`) and `doc_units` (`analyze`).
 <!-- --8<-- [end:Stats] -->
 
 === "Code"

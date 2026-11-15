@@ -15,6 +15,7 @@ from ..exceptions import ParameterError, SourceError, SourceTypeError
 from ..syntax_stats import get_words
 from ..utils import (
     LINE_BREAK,
+    _check_removed,
     _is_mark_gap,
     check_callable,
     check_integer,
@@ -47,6 +48,8 @@ _ANNOTATION_NAMES = {
     "xpos": "tags",
     "feats": "morphological features",
 }
+# Hooks of the highlighting of 0.4 the core no longer reads, with what replaces them
+_REMOVED_HOOKS = MappingProxyType({"iter_words": "parse or doc_words", "iter_sents": "parse"})
 
 
 class Word(NamedTuple):
@@ -191,7 +194,8 @@ class HighlightedText:
         ParameterError: If a layer is unknown or not allowed by the source, the
             layers are not a list of names, or find gives a fragment of another
             layer, an empty one or one outside the text; when a class is defined,
-            if a layer needs a column that a document has not
+            if a layer needs a column that a document has not, or the class defines
+            a hook of 0.4 the core no longer reads (iter_words, iter_sents)
     """
 
     layers_desc: ClassVar[Mapping[str, str]] = MappingProxyType({})
@@ -205,6 +209,7 @@ class HighlightedText:
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
         check_messages(cls.messages)
+        _check_removed(cls, _REMOVED_HOOKS, cls.messages)
         for layer, columns in cls.layer_annotations.items():
             valid = isinstance(columns, Sequence) and not isinstance(columns, str)
             unknown = (

@@ -245,6 +245,24 @@ def test_level_scales_checked_at_class_definition(scales, message):
         type("Scaled", (Stats,), {"level_scales": scales})
 
 
+@pytest.mark.parametrize(
+    ("name", "replacement"),
+    [
+        ("words_extractor_class", "parse or doc_words"),
+        ("sents_extractor_class", "parse"),
+        ("join_hyphens", "parse"),
+        ("doc_units", "analyze"),
+    ],
+)
+def test_attributes_of_0_4_raise_at_class_definition(name, replacement):
+    """A class with an attribute the core no longer reads fails at once, not with other numbers"""
+    with pytest.raises(ParameterError) as raised:
+        type("Old", (Sizes,), {name: None})
+    assert (
+        str(raised.value) == f"Old defines {name}, which is no longer read: override {replacement}"
+    )
+
+
 def test_scale_level_of_an_ascending_scale():
     with pytest.raises(ParameterError, match=r"^The lower bounds of the scale must descend"):
         scale_level(50, [(0, "short"), (100, "long")])

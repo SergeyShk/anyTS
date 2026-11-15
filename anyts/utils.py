@@ -1051,6 +1051,18 @@ def check_messages(messages: object, defaults: Mapping[str, str] = MESSAGES) -> 
             )
 
 
+def _check_removed(cls: type, removed: Mapping[str, str], messages: Mapping[str, str]) -> None:
+    """Raising ParameterError for a class with an attribute of 0.4 the core no longer reads, with
+    the hook that replaces it"""
+    for name, replacement in removed.items():
+        if hasattr(cls, name):
+            raise ParameterError(
+                messages["removed_attribute"].format(
+                    cls=cls.__name__, name=name, replacement=replacement
+                )
+            )
+
+
 def source_type_error(messages: Mapping[str, str], source: object) -> SourceTypeError:
     """
     Getting the error of a data source of a wrong type

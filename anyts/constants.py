@@ -270,6 +270,7 @@ MESSAGES: Mapping[str, str] = MappingProxyType(
         "extension_name": "The name of an extension must be a string, not {type}",
         "no_stats_class": "{cls} has no concrete class of statistics in stats_class",
         "stats_param": "{cls} has no attribute {param} of stats_params",
+        "removed_attribute": "{cls} defines {name}, which is no longer read: override {replacement}",
         "foreign_extension": (
             "The extension {name} of Doc belongs to another package: give the component another name"
         ),

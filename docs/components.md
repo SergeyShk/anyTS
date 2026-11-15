@@ -254,7 +254,7 @@ A language library subclasses `StatsComponent` for every class of its statistics
 | Hook | Kind | Description |
 | :--- | :--- | :---------- |
 | `stats_class` | class attribute | The class of statistics made of a document, `None` by default; a component with neither a concrete class nor its own `compute` raises `ParameterError` at `add_pipe` |
-| `stats_params` | class attribute | The attributes of the component passed to the class of statistics as keyword arguments, none by default; a name the component lacks raises `ParameterError` at `add_pipe` |
+| `stats_params` | class attribute | The attributes of the component passed to the class of statistics as keyword arguments, none by default; a name the component lacks raises `ParameterError` at `add_pipe`. The attribute `join_hyphens` of 0.4, which the core no longer reads, raises `ParameterError` when the class is defined: the words come from `parse` of the class of statistics |
 | `compute(doc)` | method | The statistics of a document, `stats_class(doc, **params)` by default; overridden by a component that computes otherwise, such as one reusing the statistics of another component |
 | `prepare(nlp)` | method | Preparing the pipeline when the component is added: what the statistics of a library need from it; nothing by default |
 | `accepts(doc)` | method | Whether a document gets the statistics; by default whether it has a word (`has_words`) |

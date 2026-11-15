@@ -479,6 +479,13 @@ CASES = [
         ParameterError,
         lambda: check_highlight_params(1, 1, 0, messages=OWN),
     ),
+    ("removed_attribute", ParameterError, lambda: type("Old", (Stats,), {"join_hyphens": True})),
+    ("removed_attribute", ParameterError, lambda: hooked(Layers, iter_words=lambda self, t: ())),
+    (
+        "removed_attribute",
+        ParameterError,
+        lambda: type("Old", (BareComponent,), {"join_hyphens": True}),
+    ),
     (
         "stats_param",
         ParameterError,

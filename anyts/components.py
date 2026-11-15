@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from inspect import isabstract
+from types import MappingProxyType
 from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
 from .basic_stats import BasicStats
@@ -28,6 +29,7 @@ from .style_stats import check_params as check_style_params
 from .syntax_stats import SyntaxStats
 from .unadapted_readability_stats import UnadaptedReadabilityStats
 from .utils import (
+    _check_removed,
     _separators,
     check_bool,
     check_messages,
@@ -42,6 +44,8 @@ if TYPE_CHECKING:
 
 # Extensions of Doc registered by the components; any other one belongs to another package
 _EXTENSIONS: set[str] = set()
+# Attributes of the components of 0.4 the core no longer reads, with what replaces them
+_REMOVED_ATTRIBUTES = MappingProxyType({"join_hyphens": "parse of stats_class"})
 
 Stats = TypeVar("Stats")
 
@@ -75,7 +79,9 @@ class StatsComponent:
     Raises:
         ParameterError: If another package registered an extension of Doc with the name,
             the component has neither a concrete stats_class nor a compute of its own,
-            or it lacks an attribute of stats_params
+            or it lacks an attribute of stats_params; when a class is defined, if its
+            messages are incomplete or it defines join_hyphens of 0.4, which the core
+            no longer reads
 
     Methods:
         prepare: Preparing the pipeline
@@ -91,6 +97,7 @@ class StatsComponent:
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
         check_messages(cls.messages)
+        _check_removed(cls, _REMOVED_ATTRIBUTES, cls.messages)
 
     def __init__(self, nlp: Language, name: str):
         if type(self).compute is StatsComponent.compute:
