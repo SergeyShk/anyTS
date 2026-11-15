@@ -63,7 +63,10 @@ def kwic(
         splits a string as the pipeline does finds the same in a Doc. The words
         are the tokens with a letter or a digit (document_words). Lemmas, and word
         forms with ignore_case, are folded by fold; forms are compared in NFC,
-        without soft hyphens. A phrase does not cross the end of a sentence or
+        without soft hyphens and without the final period of a word with a
+        letter: a tokenizer by Universal Dependencies leaves the period of an
+        abbreviation to it inside a sentence and splits it off at the end (Sr.
+        and Sr). A phrase does not cross the end of a sentence or
         a paragraph of the document unless the keyword has such an end in the
         same place, or a final mark before whitespace there, whatever the case
         after it. The context is window words on each side as written,
@@ -210,8 +213,12 @@ def _words(document: Document) -> list[_Word]:
 
 
 def _normalize(word: str) -> str:
-    """Composed form of a word (NFC) without soft hyphens"""
-    return unicodedata.normalize("NFC", word).replace("\u00ad", "")
+    """Composed form of a word (NFC) without soft hyphens and the final period of a word with a
+    letter, the period of an abbreviation"""
+    word = unicodedata.normalize("NFC", word).replace("\u00ad", "")
+    if word.endswith(".") and any(char.isalpha() for char in word):
+        return word[:-1]
+    return word
 
 
 def _lemmas(word: str, words: Sequence[Word]) -> tuple[str, ...]:

@@ -1,6 +1,7 @@
 import re
 import unicodedata
 
+import anyseg
 import pytest
 import spacy
 from anyseg import Document
@@ -134,6 +135,31 @@ def test_kwic_splits_the_keyword_like_the_text():
         line.keyword
         for line in kwic("He went to the U.S. in May.", "U.S", tokenize=words_of(r"[\w.]+\w|\w"))
     ] == ["U.S"]
+
+
+def test_kwic_of_an_abbreviation():
+    # A tokenizer by UD leaves the period of an abbreviation to it inside a sentence and splits it
+    # off at the end, in the keyword and in the text alike
+    def tokenize(text):
+        return [
+            (token.start, token.end, token.text)
+            for token in anyseg.segment(text, lang="es").tokens
+        ]
+
+    def sentenize(text):
+        sentences = anyseg.segment(text, lang="es").sentences
+        return [(sent.start, sent.end, text[sent.start : sent.end]) for sent in sentences]
+
+    def found(source, keyword):
+        return [
+            line.keyword for line in kwic(source, keyword, tokenize=tokenize, sentenize=sentenize)
+        ]
+
+    assert found("El Sr. García vino.", "Sr.") == ["Sr."]
+    assert found("Vino el Sr.", "Sr.") == ["Sr"]
+    assert found("El Sr. García vino.", "el Sr. García") == ["El Sr. García"]
+    assert found("Viajó a EE. UU. en mayo.", "EE. UU.") == ["EE. UU."]
+    assert found("Viajó a EE. UU.", "EE. UU.") == ["EE. UU"]
 
 
 def test_kwic_fold():
