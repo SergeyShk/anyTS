@@ -16,7 +16,7 @@
         <link rel="prev" href="../installation/">
       
       
-        <link rel="next" href="../exceptions/">
+        <link rel="next" href="../migration/">
       
       
         
@@ -651,6 +651,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../migration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Migrating from 0.4
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -2134,7 +2162,7 @@
 <!-- --8<-- [start:to_document] -->
 <div class="signature highlight"><pre><span></span><code><span class="n">to_document</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">tokenize</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sentenize</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">messages</span><span class="o">=</span><span class="n">MESSAGES</span><span class="p">)</span>
 </code></pre></div>
-<p>Returns the document of a data source in the model of anySeg. A <code>Document</code> is returned as it is. A <code>Doc</code> keeps its tokens, their columns and its sentences, those of a hook (<code>doc.user_hooks["sents"]</code>) of a <code>Doc</code> without a parse included. A multiword token of the tokenizer of anySeg (<code>token._.anyseg_words</code>) whose words carry no columns of their own is one word with the columns and the head the pipeline gave the token, as the tagger and the parser of a spaCy model see it; words with their own columns stay words of Universal Dependencies. A <code>Doc</code> with no or only partial sentence starts (a token whose <code>is_sent_start</code> is unset), as before the parser, <code>senter</code> or <code>sentencizer</code>, and without a parse gets the sentences of <code>sentenize</code> on its text. A string is split into tokens by <code>tokenize</code> and into sentences by <code>sentenize</code>, which may give them in any order since only their starts count, and the default tokens fill the gaps between those of <code>tokenize</code>, so a tokenizer may give the words alone. A blank line (<code>BLANK_LINE</code>) ends a paragraph of the document and so a sentence, of a <code>Doc</code> too: every part between blank lines goes to <code>sentenize</code> apart, and a sentence starts at its first token. Whitespace and invisible separators (the soft hyphen, zero-width characters, the byte order mark) at the edges of a token are left out, and a token of nothing else is dropped.</p>
+<p>Returns the document of a data source in the model of anySeg. A <code>Document</code> is returned as it is. A <code>Doc</code> keeps its tokens, their columns and its sentences, those of a hook (<code>doc.user_hooks["sents"]</code>) of a <code>Doc</code> without a parse included. A multiword token of the tokenizer of anySeg (<code>token._.anyseg_words</code>) whose words carry no columns of their own is one word with the columns and the head the pipeline gave the token, as the tagger and the parser of a spaCy model see it; words with their own columns stay words of Universal Dependencies. A <code>Doc</code> with no or only partial sentence starts (a token whose <code>is_sent_start</code> is unset), as before the parser, <code>senter</code> or <code>sentencizer</code>, and without a parse gets the sentences of <code>sentenize</code> on its text. A string is split into tokens by <code>tokenize</code> and into sentences by <code>sentenize</code>, which may give them in any order since only their starts count, and the default tokens fill the gaps between those of <code>tokenize</code>, so a tokenizer may give the words alone. A blank line (<code>BLANK_LINE</code>) ends a paragraph of the document and so a sentence, of a <code>Doc</code> too: every part between blank lines goes to <code>sentenize</code> apart, and a sentence starts at its first token. Of the words of a parse that hung over a blank line, the first heads its new sentence and the others hang on it with <code>dep</code>. Whitespace and invisible separators (the soft hyphen, zero-width characters, the byte order mark) at the edges of a token are left out, and a token of nothing else is dropped.</p>
 <p>The default tokens are the words of <code>WordsExtractor</code> and every run of one other character, such as <code>...</code> or <code>--</code>; the default sentences are those of <code>SentsExtractor</code>.</p>
 <p>The document of the <code>Doc</code> a thread converted last is kept while the <code>Doc</code> lives with the same tokens and annotations, and the same <code>sentenize</code> for a <code>Doc</code> without its sentences, so the classes of statistics and the components of one <code>Doc</code> convert it once. The same <code>Document</code> comes back then: it is not to be changed, and a document of its own is built for that.</p>
 <table>
@@ -2173,7 +2201,7 @@
 </tr>
 </tbody>
 </table>
-<p>A source that is neither a string, a <code>Doc</code> nor a <code>Document</code> raises <code>SourceTypeError</code> (a <code>Span</code> with the message <code>source_span</code>), and so does a <code>tokenize</code> or <code>sentenize</code> that cannot be called, does not give triples of integer bounds within the text and a string (ascending for <code>tokenize</code>), or gives a token over a blank line. A <code>Doc</code> with a token over a blank line, as a retokenizer may merge, or with words in <code>token._.anyseg_words</code> that a document cannot hold raises <code>SourceError</code> with the message <code>document_tokens</code>.</p>
+<p>A source that is neither a string, a <code>Doc</code> nor a <code>Document</code> raises <code>SourceTypeError</code> (a <code>Span</code> with the message <code>source_span</code>), and so does a <code>tokenize</code> or <code>sentenize</code> that cannot be called, does not give triples of integer bounds within the text and a string (ascending for <code>tokenize</code>; the message <code>hook_bounds</code>), or gives a token over a blank line (<code>document_tokens</code>). A <code>Doc</code> with a token over a blank line, as a retokenizer may merge, or with words in <code>token._.anyseg_words</code> that a document cannot hold raises <code>SourceError</code> with the message <code>document_tokens</code>.</p>
 <!-- --8<-- [end:to_document] -->
 
 <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Code</label><label for="__tabbed_1_2">Result</label></div>
@@ -2346,8 +2374,8 @@
 </tr>
 <tr>
 <td style="text-align: left;"><code>feats</code></td>
-<td style="text-align: left;"><code>dict[str, str]</code></td>
-<td style="text-align: left;">Features by name, the values of a feature of several joined by commas (<code>Int,Rel</code>); the words of one set of features share one mapping</td>
+<td style="text-align: left;"><code>Mapping[str, str]</code></td>
+<td style="text-align: left;">Features by name, the values of a feature of several joined by commas (<code>Int,Rel</code>); the words of one set of features share one mapping, which is not to be changed</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>deprel</code></td>
@@ -2377,11 +2405,11 @@
 <tr>
 <td style="text-align: left;"><code>tree</code></td>
 <td style="text-align: left;"><code>Tree</code></td>
-<td style="text-align: left;">Tree of the document, for the words around it (<code>word.tree.words[word.index - 1]</code>)</td>
+<td style="text-align: left;">Tree of the document, for the words around it (<code>word.tree.words[word.index - 1]</code> for a word after the first)</td>
 </tr>
 </tbody>
 </table>
-<p>In place of the attributes of a spaCy <code>Token</code>: <code>text</code> - <code>form</code>, <code>lemma_</code> - <code>lemma</code>, <code>pos_</code> - <code>upos</code>, <code>tag_</code> - <code>xpos</code>, <code>dep_</code> - <code>deprel</code>, <code>morph.get(name)</code> - <code>feats.get(name)</code> (a string), <code>i</code> - <code>index</code> (other where a <code>Doc</code> has tokens of whitespace: <code>tree.word_at(token.idx, token.idx + len(token))</code> gives the word of a token), <code>idx</code> - <code>start</code>, <code>head</code> of a root - <code>None</code> instead of the token itself, <code>subtree</code> - <code>get_subtree(word)</code> of <code>anyts.syntax_stats</code>.</p>
+<p>In place of the attributes of a spaCy <code>Token</code> (the <a href="https://sergeyshk.github.io/anyTS/migration/#tree-words">migration page</a> has more): <code>text</code> - <code>form</code>, <code>lemma_</code> - <code>lemma</code>, <code>pos_</code> - <code>upos</code>, <code>tag_</code> - <code>xpos</code>, <code>dep_</code> - <code>deprel</code>, <code>morph.get(name)</code> - <code>feats.get(name)</code> (a string), <code>i</code> - <code>index</code> (other where a <code>Doc</code> has tokens of whitespace: <code>tree.word_at(token.idx, token.idx + len(token))</code> gives the word of a token), <code>idx</code> - <code>start</code>, <code>head</code> of a root - <code>None</code> instead of the token itself, <code>subtree</code> - <code>get_subtree(word)</code> of <code>anyts.syntax_stats</code>.</p>
 <!-- --8<-- [end:TreeWord] -->
 
 <div class="tabbed-set tabbed-alternate" data-tabs="4:2"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><input id="__tabbed_4_2" name="__tabbed_4" type="radio" /><div class="tabbed-labels"><label for="__tabbed_4_1">Code</label><label for="__tabbed_4_2">Result</label></div>
