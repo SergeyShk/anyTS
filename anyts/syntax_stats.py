@@ -1240,8 +1240,8 @@ def calc_valency(word: TreeWord) -> int:
     Computing the valency of a word
 
     Description:
-        The number of dependent words without cc, conj, parataxis and punct,
-        their subtypes (parataxis:discourse) included
+        The number of dependent words without cc, conj, parataxis and punct
+        and their subtypes (parataxis:discourse)
 
     Arguments:
         word (TreeWord): Word of the tree
