@@ -1201,6 +1201,78 @@ def test_connectors_in_the_text_of_multiword_tokens():
     assert [word.token for word in words[:3]] == ["Al", "", None]
 
 
+def test_words_of_a_connector_of_several_words():
+    """The words of a connector of several words refer to nothing and give no tense; a connector
+    of one word keeps its features"""
+
+    class Spanish(CohesionStats):
+        @classmethod
+        def load_connectors(cls):
+            return {
+                "es decir": ("reformulative", "primary"),
+                "por lo tanto": ("causal", "primary"),
+                "luego": ("temporal", "primary"),
+            }
+
+    text = "La comisión aplazó la decisión. Es decir, nadie votó. Por lo tanto, luego siguió."
+    rows = [
+        ("el", "DET", None),
+        ("comisión", "NOUN", None),
+        ("aplazar", "VERB", "Tense=Past"),
+        ("el", "DET", None),
+        ("decisión", "NOUN", None),
+        (".", "PUNCT", None),
+        ("ser", "AUX", "Mood=Ind|Tense=Pres"),
+        ("decir", "VERB", "VerbForm=Inf"),
+        (",", "PUNCT", None),
+        ("nadie", "PRON", None),
+        ("votar", "VERB", "Tense=Past"),
+        (".", "PUNCT", None),
+        ("por", "ADP", None),
+        ("el", "DET", None),
+        ("tanto", "PRON", None),
+        (",", "PUNCT", None),
+        ("luego", "ADV", None),
+        ("seguir", "VERB", "Tense=Past"),
+        (".", "PUNCT", None),
+    ]
+    document = anyseg.segment(text, lang="es")
+    lemmas, tags, feats = zip(*rows, strict=True)
+    document.set_columns(lemma=list(lemmas), upos=list(tags), feats=list(feats))
+    stats = Spanish(document)
+    assert [c.text for c in stats.connector_spans] == ["es decir", "por lo tanto", "luego"]
+    # es decir gives no present tense, tanto is no pronoun, decir no content word
+    assert stats.tense_repetition == 1
+    assert (stats.n_pronouns, stats.n_content_words) == (1, 6)
+    assert stats.lemmas[1] == ("ser", "decir", "nadie", "votar")
+
+
+def test_words_of_a_connector_spelled_as_one_word():
+    """A connector the dictionary spells as one word may cover several words of the text"""
+
+    class Russian(CohesionStats):
+        @classmethod
+        def load_connectors(cls):
+            return {"т.е.": ("reformulative", "primary")}
+
+    rows = [
+        ("он", "PRON", None),
+        ("уйти", "VERB", "Tense=Past"),
+        (".", "PUNCT", None),
+        ("то", "PRON", None),
+        ("есть", "VERB", "Tense=Pres"),
+        ("он", "PRON", None),
+        ("сбежать", "VERB", "Tense=Past"),
+        (".", "PUNCT", None),
+    ]
+    document = anyseg.segment("Он ушёл. Т. е. он сбежал.", lang="ru")
+    lemmas, tags, feats = zip(*rows, strict=True)
+    document.set_columns(lemma=list(lemmas), upos=list(tags), feats=list(feats))
+    stats = Russian(document)
+    assert [(c.start, c.end) for c in stats.connector_spans] == [(0, 2)]
+    assert (stats.tense_repetition, stats.n_pronouns) == (1, 2)
+
+
 def test_parse_of_a_library():
     """A library that annotates a string in parse needs no analyze of its own"""
 
