@@ -628,6 +628,19 @@ def test_own_messages(key, error, call):
     assert "{" not in message
 
 
+def test_messages_without_fields_are_raised_as_they_are():
+    """A message whose default has no fields may hold braces, and they come out as written"""
+    braced = {**MESSAGES, "ngram_range": "Range {n}", "sentence_lengths": "Lengths {x}"}
+
+    class BracedWords(WordsExtractor):
+        messages = braced
+
+    with pytest.raises(ParameterError, match=r"^Range \{n\}$"):
+        BracedWords(ngram_range=(1.5, 2))
+    with pytest.raises(SourceTypeError, match=r"^Lengths \{x\}$"):
+        sentence_rhythm("123", messages=braced)
+
+
 def test_messages_of_functions():
     """A function takes the messages as a parameter with the English default"""
     with pytest.raises(ParameterError, match=r"^Own: The reading speed"):

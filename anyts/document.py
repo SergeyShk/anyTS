@@ -257,24 +257,31 @@ class Tree(NamedTuple):
     words: tuple[TreeWord, ...]
     sentences: tuple[tuple[TreeWord, ...], ...]
 
-    def word_at(self, position: int) -> TreeWord | None:
+    def word_at(self, position: int, end: int | None = None) -> TreeWord | None:
         """
-        Getting the word at a position of the text
+        Getting the word at a position or a span of the text
 
         Description:
-            The word whose token covers the position, the first word of a
-            multiword token, or None where no word stands, as at whitespace. The
-            word of a token of spaCy is word_at(token.idx): its position among
-            the words differs from token.i where a Doc has tokens of whitespace
+            The word whose token covers the position, or with end the first one
+            whose token overlaps the span from the position to end; the first
+            word of a multiword token, or None where no word stands, as at
+            whitespace. The word of a token of spaCy is
+            word_at(token.idx, token.idx + len(token)), since its position among
+            the words differs from token.i where a Doc has tokens of whitespace,
+            and the token of the document leaves out the separators at the edges
+            of the token, such as a byte order mark
 
         Arguments:
             position (int): Position of a character of the text
+            end (int): Position after the span; the character at the position alone
+                by default
 
         Returns:
-            TreeWord|None: Word at the position
+            TreeWord|None: Word at the position or of the span
         """
+        limit = position + 1 if end is None else max(end, position + 1)
         index = bisect_right(self.words, position, key=lambda word: word.end)
-        if index < len(self.words) and self.words[index].start <= position:
+        if index < len(self.words) and self.words[index].start < limit:
             return self.words[index]
         return None
 
