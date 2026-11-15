@@ -150,9 +150,12 @@ def test_kwic_of_an_abbreviation():
         sentences = anyseg.segment(text, lang="es").sentences
         return [(sent.start, sent.end, text[sent.start : sent.end]) for sent in sentences]
 
-    def found(source, keyword):
+    def found(source, keyword, by_lemma=False):
         return [
-            line.keyword for line in kwic(source, keyword, tokenize=tokenize, sentenize=sentenize)
+            line.keyword
+            for line in kwic(
+                source, keyword, by_lemma=by_lemma, tokenize=tokenize, sentenize=sentenize
+            )
         ]
 
     assert found("El Sr. García vino.", "Sr.") == ["Sr."]
@@ -160,6 +163,8 @@ def test_kwic_of_an_abbreviation():
     assert found("El Sr. García vino.", "el Sr. García") == ["El Sr. García"]
     assert found("Viajó a EE. UU. en mayo.", "EE. UU.") == ["EE. UU."]
     assert found("Viajó a EE. UU.", "EE. UU.") == ["EE. UU"]
+    # The lemmas of a word are its form by default, compared without the period too
+    assert found("El Sr. García vino.", "Sr.", by_lemma=True) == ["Sr."]
 
 
 def test_kwic_fold():

@@ -1247,6 +1247,32 @@ def test_words_of_a_connector_of_several_words():
     assert stats.lemmas[1] == ("ser", "decir", "nadie", "votar")
 
 
+def test_words_of_a_connector_spelled_as_one_word():
+    """A connector the dictionary spells as one word may cover several words of the text"""
+
+    class Russian(CohesionStats):
+        @classmethod
+        def load_connectors(cls):
+            return {"т.е.": ("reformulative", "primary")}
+
+    rows = [
+        ("он", "PRON", None),
+        ("уйти", "VERB", "Tense=Past"),
+        (".", "PUNCT", None),
+        ("то", "PRON", None),
+        ("есть", "VERB", "Tense=Pres"),
+        ("он", "PRON", None),
+        ("сбежать", "VERB", "Tense=Past"),
+        (".", "PUNCT", None),
+    ]
+    document = anyseg.segment("Он ушёл. Т. е. он сбежал.", lang="ru")
+    lemmas, tags, feats = zip(*rows, strict=True)
+    document.set_columns(lemma=list(lemmas), upos=list(tags), feats=list(feats))
+    stats = Russian(document)
+    assert [(c.start, c.end) for c in stats.connector_spans] == [(0, 2)]
+    assert (stats.tense_repetition, stats.n_pronouns) == (1, 2)
+
+
 def test_parse_of_a_library():
     """A library that annotates a string in parse needs no analyze of its own"""
 
