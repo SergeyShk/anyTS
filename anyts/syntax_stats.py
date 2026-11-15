@@ -427,12 +427,22 @@ class SyntaxStats(Stats):
         """Clause a finite conjunct with a subject of its own joins, a predicate a model attaches
         to the first conjunct: the one the chain of infinitives completes for an infinitive
         clause, the one a marked clause hangs on when the conjunct takes no mark of it
-        (_inherits_mark); None for another"""
+        (_inherits_mark), the one whose periphrasis the conjunct hangs on (he must leave and
+        she stayed); None for another"""
         if first.index in self._infinitive_heads:
             return _infinitive_owner(first, self.auxiliary_form)
         if first.index in marked and not _inherits_mark(word, self.auxiliary_form):
             return _chain_parent(first)
-        return None
+        parent = _chain_parent(word)
+        seen = {word.index}
+        while (
+            parent is not None
+            and parent.index not in seen
+            and self._is_periphrasis_conjunct(parent)
+        ):
+            seen.add(parent.index)
+            parent = _chain_parent(parent)
+        return parent if len(seen) > 1 else None
 
     def _is_periphrasis_conjunct(self, word: TreeWord) -> bool:
         """Whether an infinitive conjunct makes one predicate with its head by the language check,
@@ -831,8 +841,9 @@ def _is_main_clause(
 def _shares_subject(word: TreeWord) -> bool:
     """Whether a conjunct is a predicate sharing the subject of the clause it is coordinated
     to: no subject of its own, and no person, number or gender of its own either, which in a
-    language that drops its subjects tell another one (llegamos y nos esperabas)"""
-    if base_dep(word) != "conj":
+    language that drops its subjects tell another one (llegamos y nos esperabas); the head of
+    a sentence labelled conj shares none"""
+    if base_dep(word) != "conj" or word.head is None:
         return False
     if any(
         base_dep(child) in _SUBJECT_DEPS or child.deprel == "expl" for child in get_children(word)
@@ -1333,8 +1344,10 @@ def is_clause_head(
         as predicates (is_predicate), so a parenthetical word is no clause, nor
         is an infinitive conjunct or an infinitive subject (csubj) by the check
         is_infinitive_periphrasis, since a model may attach the infinitive of a
-        periphrasis to its verb as conj and to a modal word as csubj; a loop of
-        conjuncts is none
+        periphrasis to its verb as conj and to a modal word as csubj. A
+        conjunct past such an infinitive is one only when a predicate on the
+        way that is no infinitive has a subject of its own (he must leave and
+        she stayed); a loop of conjuncts is none
 
     Arguments:
         word (TreeWord): Word of the tree
@@ -1363,6 +1376,7 @@ def _is_clause_head(
     auxiliary_form: Callable[[TreeWord], str] | None,
 ) -> bool:
     """is_clause_head with checked hooks"""
+    own = False
     seen = set()
     # Up the chains of conjuncts and infinitive complements to the word that is none
     while _is_word(word) and word.index not in seen:
@@ -1395,9 +1409,13 @@ def _is_clause_head(
                 return not is_infinitive_periphrasis(word)
             return not (dep == "acl" and form == "Inf")
         if form == "Inf" and is_infinitive_periphrasis and is_infinitive_periphrasis(word):
+            # Past the infinitive of a periphrasis, a part of the predicate of its head, goes only a
+            # chain with a predicate of a subject of its own (he must leave and she stayed)
+            if not own:
+                return False
+        elif not is_predicate(word):
             return False
-        if not is_predicate(word):
-            return False
+        own = own or (form != "Inf" and not _shares_subject(word))
         seen.add(word.index)
         word = head
     return False
@@ -1708,31 +1726,53 @@ def _clause_relation(
     """First word up the chain of conjuncts of a clause head and its relation, advcl for a
     conjunct or a parataxis with a subordinating mark, of its own or of a clause it is
     coordinated to when it and every conjunct on the way take the mark (_inherits_mark) or
-    share the subject"""
+    share the subject; past a marked clause whose mark it does not take, the chain goes on as
+    from that clause, to the clause it hangs on"""
     if base_dep(word) in MAIN_CLAUSE_DEPS and _has_mark(word, is_subordinating_mark):
         return word, "advcl"
     inherits = _inherits_mark(word, auxiliary_form)
-    seen = set()
-    while base_dep(word) == "conj" and word.head is not None and word.index not in seen:
+    seen: set[int] = set()
+    while word.head is not None and word.index not in seen:
+        passed = (
+            bool(seen)
+            and base_dep(word) in MAIN_CLAUSE_DEPS
+            and _has_mark(word, is_subordinating_mark)
+        )
+        if base_dep(word) != "conj" and not passed:
+            break
         seen.add(word.index)
         word = word.head
         if (
-            inherits
+            (inherits or passed)
             and base_dep(word) in MAIN_CLAUSE_DEPS
             and _has_mark(word, is_subordinating_mark)
         ):
             return word, "advcl"
-        inherits = inherits and (_shares_subject(word) or _inherits_mark(word, auxiliary_form))
+        inherits = (
+            _inherits_mark(word, auxiliary_form)
+            if passed
+            else inherits and (_shares_subject(word) or _inherits_mark(word, auxiliary_form))
+        )
     return word, base_dep(word)
 
 
 def _inherits_mark(word: TreeWord, auxiliary_form: Callable[[TreeWord], str] | None) -> bool:
     """Whether a conjunct takes the subordinating mark of the clause it is coordinated to: an
     infinitive, or a predicate with a subject and a coordinating conjunction of its own (because
-    he was tired and she slept); one sharing the subject or without a conjunction may be a
-    predicate of the main clause a model attaches to the marked one"""
-    return predicate_form(word, auxiliary_form) == "Inf" or (
-        not _shares_subject(word) and any(base_dep(child) == "cc" for child in word.children)
+    he was tired and she slept) - its child, or a child of the clause it hangs on between the two,
+    as ClearNLP attaches it; one sharing the subject or without a conjunction may be a predicate
+    of the main clause a model attaches to the marked one"""
+    if predicate_form(word, auxiliary_form) == "Inf":
+        return True
+    if _shares_subject(word):
+        return False
+    head = word.head
+    return any(base_dep(child) == "cc" for child in word.children) or (
+        head is not None
+        and any(
+            base_dep(child) == "cc" and head.index < child.index < word.index
+            for child in head.children
+        )
     )
 
 

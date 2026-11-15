@@ -372,6 +372,9 @@ def test_find_phrases_of_a_string():
 def test_numbers():
     assert is_number("2020") and is_number("-5") and is_number("10%")
     assert not is_number("cat")
+    # Thousands apart by a space, as in a token of anySeg, but no other spaced digits
+    assert all(map(is_number, ["3 500", "1 000 000", "3\u00a0500", "3\u202f500", "-1 000,5"]))
+    assert not any(map(is_number, ["35 00", "3 5", "10 %"]))
     roman = re.compile(r"[ivxlcdm]+")
     assert is_number("XIV", roman) and not is_number("2020", roman)
 

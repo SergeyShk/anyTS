@@ -465,7 +465,7 @@ class WordsExtractor(Extractor):
         character \\w followed by word characters, combining marks, zero-width
         joiners and non-joiners and soft hyphens) and lemmatize (by default the
         word itself) and sets the class attribute number_pattern (NUMBER_PATTERN
-        by default: -5, 1990-1995, 1,500.50, 12/03/2020, 3:30, 10%). The
+        by default: -5, 1990-1995, 1,500.50, 12/03/2020, 3:30, 10%, 3 500). The
         filters are applied in order: punctuation, numbers, lemmatization, lower
         case, stop words, word length
 

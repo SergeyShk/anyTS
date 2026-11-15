@@ -1628,6 +1628,147 @@ def test_verb_phrases_of_a_periphrasis():
     assert (SyntaxStats(doc).n_verb_phrases, Modal(doc).n_verb_phrases) == (2, 1)
 
 
+def test_conjunction_of_a_conjunct_where_clearnlp_attaches_it():
+    """ClearNLP attaches cc to the first conjunct: a conjunction between the marked clause and
+    its conjunct is the conjunct's own"""
+    fin = "VerbForm=Fin"
+    # he left , for he was tired and she slept: was heads its clause, and hangs on it
+    doc = parse(
+        ["he", "left", ",", "for", "he", "was", "tired", "and", "she", "slept"],
+        [1, 1, 1, 5, 5, 1, 5, 5, 9, 5],
+        ["nsubj", "ROOT", "punct", "mark", "nsubj", "conj", "acomp", "cc", "nsubj", "conj"],
+        ["", fin, "", "", "", fin, "", "", "", fin],
+        pos=["PRON", "VERB", "PUNCT", "SCONJ", "PRON", "AUX", "ADJ", "CCONJ", "PRON", "VERB"],
+    )
+    assert is_subordinate_clause_head(tree(doc)[9], subordinating_marks={"for"})
+    stats = Marked(doc)
+    assert (stats.n_t_units, stats.n_subordinate_clauses) == (1, 2)
+
+
+def test_conjunct_of_a_marked_parataxis_under_a_subordinate_clause():
+    """A conjunct that takes no mark of a marked parataxis takes the kind of the clause the
+    parataxis hangs on"""
+    fin = "VerbForm=Fin"
+    # I said that he left , because he was tired , she slept
+    doc = parse(
+        [
+            "I",
+            "said",
+            "that",
+            "he",
+            "left",
+            ",",
+            "because",
+            "he",
+            "was",
+            "tired",
+            ",",
+            "she",
+            "slept",
+        ],
+        [1, 1, 4, 4, 1, 9, 9, 9, 9, 4, 12, 12, 9],
+        [
+            *["nsubj", "ROOT", "mark", "nsubj", "ccomp", "punct", "mark", "nsubj", "cop"],
+            *["parataxis", "punct", "nsubj", "conj"],
+        ],
+        ["", fin, "", "", fin, "", "", "", fin, "", "", "", fin],
+        pos=[
+            *["PRON", "VERB", "SCONJ", "PRON", "VERB", "PUNCT", "SCONJ", "PRON", "AUX", "ADJ"],
+            *["PUNCT", "PRON", "VERB"],
+        ],
+    )
+    assert is_subordinate_clause_head(tree(doc)[12], subordinating_marks={"because"})
+
+    class Because(SyntaxStats):
+        subordinating_marks: ClassVar[frozenset[str]] = frozenset({"because"})
+
+    stats = Because(doc)
+    assert (stats.n_t_units, stats.n_subordinate_clauses) == (1, 3)
+    # I said , because he slept , because she ate , they left: the parataxis of ate, or its
+    # conjunct, hangs on another marked clause, so left is subordinate as that clause is
+    for dep in ("parataxis", "conj"):
+        doc = parse(
+            [
+                *["I", "said", ",", "because", "he", "slept", ","],
+                *["because", "she", "ate", ",", "they", "left"],
+            ],
+            [1, 1, 5, 5, 5, 1, 9, 9, 9, 5, 12, 12, 9],
+            [
+                *["nsubj", "ROOT", "punct", "mark", "nsubj", dep, "punct"],
+                *["mark", "nsubj", dep, "punct", "nsubj", "conj"],
+            ],
+            ["", fin, "", "", "", fin, "", "", "", fin, "", "", fin],
+            pos=[
+                *["PRON", "VERB", "PUNCT", "SCONJ", "PRON", "VERB", "PUNCT"],
+                *["SCONJ", "PRON", "VERB", "PUNCT", "PRON", "VERB"],
+            ],
+        )
+        stats = Because(doc)
+        assert (stats.n_t_units, stats.n_subordinate_clauses) == (1, 3)
+
+
+def test_head_of_a_sentence_labelled_conj():
+    """The head of a sentence heads a clause and a T-unit whatever its relation"""
+    source = document(["Left", "early"], [0, 1], ["conj", "advmod"], upos=["VERB", "ADV"])
+    stats = SyntaxStats(source)
+    assert (stats.n_clauses, stats.n_t_units, stats.n_l2sca_clauses) == (1, 1, 1)
+
+
+def test_finite_conjunct_with_a_subject_on_a_periphrasis():
+    """A finite conjunct with a subject of its own that hangs on the infinitive of a periphrasis
+    is a clause and a T-unit of its own, no coordinate phrase"""
+
+    class Modal(SyntaxStats):
+        def is_infinitive_periphrasis(self, word):
+            return word.head is not None and word.head.form.lower() == "must"
+
+    inf, fin = "VerbForm=Inf", "VerbForm=Fin"
+    # he must leave and she stayed, with leave attached to must as a conjunct
+    doc = parse(
+        ["he", "must", "leave", "and", "she", "stayed"],
+        [1, 1, 1, 5, 5, 2],
+        ["nsubj", "ROOT", "conj", "cc", "nsubj", "conj"],
+        ["", fin, inf, "", "", fin],
+        pos=["PRON", "VERB", "VERB", "CCONJ", "PRON", "VERB"],
+    )
+    stats = Modal(doc)
+    assert stats.is_clause_head(tree(doc)[5])
+    assert (stats.n_clauses, stats.n_t_units, stats.n_l2sca_clauses) == (2, 2, 2)
+    assert stats.n_coordinate_phrases == 0
+    # he must leave and she stayed and slept: slept shares the subject of stayed, a clause
+    doc = parse(
+        ["he", "must", "leave", "and", "she", "stayed", "and", "slept"],
+        [1, 1, 1, 5, 5, 2, 7, 5],
+        ["nsubj", "ROOT", "conj", "cc", "nsubj", "conj", "cc", "conj"],
+        ["", fin, inf, "", "", fin, "", fin],
+        pos=["PRON", "VERB", "VERB", "CCONJ", "PRON", "VERB", "CCONJ", "VERB"],
+    )
+    assert [Modal(doc).is_clause_head(word) for word in tree(doc)[1::2]] == [
+        True,
+        False,
+        True,
+        True,
+    ]
+    assert Modal(doc).n_clauses == 3
+
+    class Had(SyntaxStats):
+        def is_infinitive_periphrasis(self, word):
+            return word.head is not None and word.head.form == "Tuve"
+
+    # Tuve que salirme y dejarle solo: an infinitive conjunct whose features differ from those
+    # of its head, as with an enclitic, is no predicate of a subject of its own
+    doc = parse(
+        ["Tuve", "que", "salirme", "y", "dejarle", "solo"],
+        [0, 2, 0, 4, 2, 4],
+        ["ROOT", "mark", "conj", "cc", "conj", "obj"],
+        ["Person=1|" + fin, "", "Person=1|" + inf, "", "Person=3|" + inf, ""],
+        pos=["VERB", "SCONJ", "VERB", "CCONJ", "VERB", "ADJ"],
+    )
+    stats = Had(doc)
+    assert not stats.is_clause_head(tree(doc)[4])
+    assert (stats.n_clauses, stats.n_t_units) == (1, 1)
+
+
 def test_coordinate_phrases_of_a_periphrasis():
     """An infinitive of one predicate with its head is no member of a coordination when a model
     attaches it as a conjunct; the infinitives of a periphrasis may be coordinated"""

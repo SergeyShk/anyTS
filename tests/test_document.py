@@ -159,7 +159,7 @@ def test_doc_converted_once():
     # The words of a multiword token of anySeg are part of the annotations
     doc = nlp("Vino del pueblo")
     plain = to_document(doc)
-    doc[1]._.anyseg_words = [{"form": "de"}, {"form": "el"}]
+    doc[1]._.anyseg_words = [{"form": "de", "upos": "ADP"}, {"form": "el", "upos": "DET"}]
     assert [word.form for word in to_document(doc).words] == ["Vino", "de", "el", "pueblo"]
     assert len(plain.words) == 3
     doc.user_data[("._.", "anyseg_words", None, None)] = "a value of the whole Doc"
@@ -170,6 +170,124 @@ def test_doc_converted_once():
     del first, second
     gc.collect()
     assert document_module._last_converted == []
+
+
+def test_sentences_of_a_hook():
+    """A Doc without a parse whose sentences come from a hook keeps them, each paragraph too"""
+    doc = spacy.blank("en")("One two three. Four five six. Seven eight\n\nNine")
+
+    def by_period(whole):
+        start = 0
+        for token in whole:
+            if token.text == "." or token.text.startswith("\n"):
+                yield whole[start : token.i + 1]
+                start = token.i + 1
+        yield whole[start:]
+
+    doc.user_hooks["sents"] = by_period
+    assert sentences(to_document(doc)) == [
+        "One two three.",
+        "Four five six.",
+        "Seven eight",
+        "Nine",
+    ]
+    # Another hook is another document
+    doc.user_hooks["sents"] = lambda whole: [whole[:]]
+    assert sentences(to_document(doc)) == ["One two three. Four five six. Seven eight", "Nine"]
+
+
+def test_multiword_tokens_without_columns_of_their_words():
+    """A multiword token whose words have no columns of their own is one word, with the columns
+    and the head the pipeline gave the token; words with their columns stay words"""
+    vocab = spacy.blank("es").vocab
+    doc = Doc(
+        vocab,
+        words=["Vino", "del", "pueblo", "."],
+        heads=[0, 2, 0, 0],
+        deps=["ROOT", "case", "obl", "punct"],
+        pos=["VERB", "ADP", "NOUN", "PUNCT"],
+        lemmas=["venir", "del", "pueblo", "."],
+    )
+    import anyseg.spacy  # noqa: F401 - the extension token._.anyseg_words
+
+    doc[1]._.anyseg_words = [{"form": "de"}, {"form": "el"}]
+    words = get_tree(to_document(doc)).words
+    assert [(word.form, word.lemma, word.upos, word.deprel) for word in words] == [
+        ("Vino", "venir", "VERB", "root"),
+        ("del", "del", "ADP", "case"),
+        ("pueblo", "pueblo", "NOUN", "obl"),
+        (".", ".", "PUNCT", "punct"),
+    ]
+    assert [word.head.form if word.head else None for word in words] == [
+        None,
+        "pueblo",
+        "Vino",
+        "Vino",
+    ]
+    doc[1]._.anyseg_words = ({"form": "de"}, {"form": "el"})
+    assert [word.form for word in to_document(doc).words] == ["Vino", "del", "pueblo", "."]
+    doc[1]._.anyseg_words = [{"form": "de", "upos": "ADP"}, {"form": "el", "upos": "DET"}]
+    assert [word.upos for word in to_document(doc).words] == [
+        "VERB",
+        "ADP",
+        "DET",
+        "NOUN",
+        "PUNCT",
+    ]
+
+
+def test_multiword_tokens_merged_in_one_pass(monkeypatch):
+    """The merge of multiword tokens reads every column of the document once"""
+    from anyseg.spacy import from_doc
+
+    vocab = spacy.blank("es").vocab
+    doc = Doc(vocab, words=["al", "del"] * 3, heads=[0] * 6, deps=["ROOT"] * 6)
+    import anyseg.spacy  # noqa: F401 - the extension token._.anyseg_words
+
+    for token in doc:
+        token._.anyseg_words = [{"form": "a"}, {"form": "el"}]
+    document = from_doc(doc)
+    names = []
+    column = Document.column
+
+    def counted(self, name):
+        names.append(name)
+        return column(self, name)
+
+    monkeypatch.setattr(Document, "column", counted)
+    merged = document_module._merged(document, {token.index for token in document.tokens})
+    assert len(names) == len(set(names))
+    monkeypatch.undo()
+    assert [word.form for word in merged.words] == ["al", "del"] * 3
+
+
+def test_sentences_of_a_doc_in_one_pass(monkeypatch):
+    """The sentences of a Doc without them read the starts of its tokens a fixed number of times,
+    however many sentences it has"""
+    tokens = Document.tokens
+    reads = []
+
+    class Tokens:
+        def __init__(self, found):
+            self.found = found
+
+        def __getattr__(self, name):
+            reads.append(name)
+            return getattr(self.found, name)
+
+        def __iter__(self):
+            return iter(self.found)
+
+        def __len__(self):
+            return len(self.found)
+
+        def __getitem__(self, index):
+            return self.found[index]
+
+    monkeypatch.setattr(Document, "tokens", property(lambda self: Tokens(tokens.__get__(self))))
+    document = to_document(spacy.blank("en")("One. Two. " * 50))
+    assert len(document.sentences) == 100
+    assert reads.count("starts") <= 5
 
 
 def test_doc_columns():
@@ -200,7 +318,8 @@ def test_doc_multiword_tokens():
     doc = nlp("Vino del pueblo. Se fue")
     document = to_document(doc)
     assert tokens(document) == ["Vino", "del", "pueblo", ".", "Se", "fue"]
-    assert [word.form for word in document.words][:4] == ["Vino", "de", "el", "pueblo"]
+    # Without columns of their own the words of del are the token, as the pipeline sees it
+    assert [word.form for word in document.words][:3] == ["Vino", "del", "pueblo"]
     assert sentences(document) == ["Vino del pueblo.", "Se fue"]
     assert document_words(document) == ("Vino", "del", "pueblo", "Se", "fue")
 
