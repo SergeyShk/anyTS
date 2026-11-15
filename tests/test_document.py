@@ -372,6 +372,29 @@ def test_doc_multiword_tokens():
     assert document_words(document) == ("Vino", "del", "pueblo", "Se", "fue")
 
 
+def test_word_at_a_position():
+    """The word of a token of spaCy by its position, past the tokens of whitespace, and the first
+    word of a multiword token"""
+    doc = spacy.blank("en")("Cats  sleep\n\nDogs bark")
+    tree = get_tree(to_document(doc))
+    # The positions of the words are not those of the tokens
+    assert tree.words[doc[2].i].form == "Dogs"
+    assert [tree.word_at(token.idx) for token in doc] == [
+        tree.words[0],
+        None,
+        tree.words[1],
+        None,
+        tree.words[2],
+        tree.words[3],
+    ]
+    assert tree.word_at(3).form == "Cats"
+    assert tree.word_at(-1) is None
+    assert tree.word_at(len(doc.text)) is None
+    tree = get_tree(Document.from_tokens("al cine", [0, 3], [2, 7], words={0: ["a", "el"]}))
+    assert [word.form for word in tree.words] == ["a", "el", "cine"]
+    assert tree.word_at(1) is tree.words[0]
+
+
 def test_other_sources():
     doc = spacy.blank("en")(TEXT)
     with pytest.raises(SourceTypeError, match=re.escape(MESSAGES["source_span"])):

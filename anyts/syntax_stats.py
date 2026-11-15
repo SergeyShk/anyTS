@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections import Counter
-from collections.abc import Callable, Collection, Hashable, Iterable, Mapping, Sequence
+from collections.abc import Callable, Collection, Hashable, Iterable, Iterator, Mapping, Sequence
 from functools import cache, cached_property, partial, wraps
 from itertools import pairwise
 from math import nan
@@ -1076,18 +1076,38 @@ def subtree_len(word: TreeWord) -> int:
     Returns:
         int: Number of words in the subtree
     """
-    count = 0
+    return sum(map(_is_word, _subtree(word)))
+
+
+def get_subtree(word: TreeWord) -> list[TreeWord]:
+    """
+    Getting the subtree of a word
+
+    Description:
+        The word and all of its direct and indirect dependents in the order of
+        the text, punctuation marks included, as the subtree of a token of spaCy
+
+    Arguments:
+        word (TreeWord): Word of the tree
+
+    Returns:
+        list[TreeWord]: Words of the subtree
+    """
+    return sorted(_subtree(word), key=lambda found: found.index)
+
+
+def _subtree(word: TreeWord) -> Iterator[TreeWord]:
+    """The word and its direct and indirect dependents, each once"""
     words = [word]
     # A broken parse can link words in a loop
     seen = {word.index}
     while words:
         current = words.pop()
-        count += _is_word(current)
+        yield current
         for child in current.children:
             if child.index not in seen:
                 seen.add(child.index)
                 words.append(child)
-    return count
 
 
 def calc_dependency_distances(words: Iterable[TreeWord]) -> list[int]:

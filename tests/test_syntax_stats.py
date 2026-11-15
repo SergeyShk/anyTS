@@ -27,6 +27,7 @@ from anyts.syntax_stats import (
     count_noun_modifiers,
     dependency_triples,
     get_children,
+    get_subtree,
     get_words,
     has_agent,
     is_agentless,
@@ -126,6 +127,9 @@ def test_children_and_subtree(house):
     assert count_children(noun) == 2
     assert subtree_len(noun) == 3
     assert subtree_len(words[5]) == 5
+    # The subtree in the order of the text, punctuation marks included
+    assert forms(get_subtree(noun)) == ["The", "white", "house", ","]
+    assert get_subtree(words[5]) == list(words)
 
 
 def test_dependency_distances(house):
@@ -311,6 +315,8 @@ def test_tree_depth_through_tokens_outside_the_words():
 def test_subtree_of_a_loop():
     words = tree(parse(["a", "b", "c"], [1, 0, 1], ["dep", "dep", "dep"]))
     assert subtree_len(words[0]) == 3
+    assert forms(get_subtree(words[2])) == ["c"]
+    assert forms(get_subtree(words[0])) == ["a", "b", "c"]
 
 
 def test_tree_depth_of_a_loop():

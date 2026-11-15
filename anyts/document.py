@@ -248,11 +248,35 @@ class Tree(NamedTuple):
         text (str): Text of the document
         words (tuple[TreeWord]): Words of the document, punctuation marks included
         sentences (tuple[tuple[TreeWord]]): Words of every sentence
+
+    Methods:
+        word_at: Word at a position of the text
     """
 
     text: str
     words: tuple[TreeWord, ...]
     sentences: tuple[tuple[TreeWord, ...], ...]
+
+    def word_at(self, position: int) -> TreeWord | None:
+        """
+        Getting the word at a position of the text
+
+        Description:
+            The word whose token covers the position, the first word of a
+            multiword token, or None where no word stands, as at whitespace. The
+            word of a token of spaCy is word_at(token.idx): its position among
+            the words differs from token.i where a Doc has tokens of whitespace
+
+        Arguments:
+            position (int): Position of a character of the text
+
+        Returns:
+            TreeWord|None: Word at the position
+        """
+        index = bisect_right(self.words, position, key=lambda word: word.end)
+        if index < len(self.words) and self.words[index].start <= position:
+            return self.words[index]
+        return None
 
     def __reduce__(self) -> tuple[Any, ...]:
         # The columns and the positions of the heads, linked again on loading

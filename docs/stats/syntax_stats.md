@@ -716,6 +716,14 @@ subtree_len(word)
 The number of words in the subtree of a word: the word itself and all of its direct and indirect dependents, punctuation left out; the argument is that of `get_children`.
 <!-- --8<-- [end:subtree_len] -->
 
+<!-- --8<-- [start:get_subtree] -->
+``` {.python .signature}
+get_subtree(word)
+```
+
+The words of the subtree of a word in the order of the text: the word itself and all of its direct and indirect dependents, punctuation marks included, as the `subtree` of a spaCy token; the argument is that of `get_children`.
+<!-- --8<-- [end:get_subtree] -->
+
 ## Verb form of a predicate { #verb-forms }
 
 <!-- --8<-- [start:predicate_form] -->
