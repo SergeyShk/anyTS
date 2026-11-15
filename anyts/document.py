@@ -61,17 +61,16 @@ def to_document(
         (user_hooks["sents"]) of a Doc without a parse too; a multiword token
         of anySeg whose words have no columns of their own is one word with the
         columns and the head of the token, as the pipeline annotated it. A Doc
-        with no or
-        only partial sentence starts (a token whose is_sent_start is unset), as
-        before the parser, senter or sentencizer, and without a parse gets those
-        of sentenize on its text. A string is split into tokens by tokenize and
+        with no or only partial sentence starts (a token whose is_sent_start is
+        unset), as before the parser, senter or sentencizer, and without a parse
+        or a hook gets those of sentenize on its text. A string is split into tokens by tokenize and
         into sentences by sentenize, and the default tokens fill the gaps
         between those of tokenize. A blank line (BLANK_LINE) ends a paragraph
         of the document and so a sentence, of a Doc too: every part between
         blank lines goes to sentenize apart, and a sentence starts at its first
         token. Whitespace and invisible separators (the soft hyphen,
         zero-width characters, the byte order mark) at the edges of a token are
-        left out, and a token of nothing else is dropped
+        left out, and a token of nothing else is dropped.
         The default tokens are the words of WordsExtractor and every run of one
         other character; the default sentences are those of SentsExtractor.
         The document of the last Doc converted is kept while the Doc lives with
@@ -483,7 +482,7 @@ def _bare_tokens(doc: Doc, document: Document) -> set[int]:
     for token in document.multiword_tokens:
         span = doc.char_span(token.start, token.end, alignment_mode="expand")
         words = given.get((span.start_char, span.end_char)) if span is not None else None
-        if isinstance(words, list) and not any(
+        if isinstance(words, list | tuple) and not any(
             isinstance(word, Mapping) and columns & word.keys() for word in words
         ):
             bare.add(token.index)
@@ -529,10 +528,10 @@ def _merged(document: Document, merged: Collection[int]) -> Document:
         }
         or None,
     )
-    values: dict[str, list[Any]] = {
-        name: [column(name)[word.index] for word in keep]
-        for name in ("lemma", "upos", "xpos", "feats", "deprel", "deps", "misc")
-    }
+    values: dict[str, list[Any]] = {}
+    for name in ("lemma", "upos", "xpos", "feats", "deprel", "deps", "misc"):
+        found = column(name)
+        values[name] = [found[word.index] for word in keep]
     heads = []
     for word in keep:
         head = old_heads[word.index]
