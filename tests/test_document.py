@@ -109,7 +109,7 @@ def test_hooks_are_checked():
         to_document(TEXT, sentenize=lambda text: [(0, 99, text)])
     with pytest.raises(SourceTypeError, match=r"^The sentenize must give triples .+ not 5$"):
         to_document(TEXT, sentenize=lambda text: 5)
-    own = {**MESSAGES, "hook_spans": "Own {hook}: {span}"}
+    own = {**MESSAGES, "hook_bounds": "Own {hook}: {span}"}
     with pytest.raises(SourceTypeError, match=r"^Own tokenize: \(0, 3\)$"):
         to_document(TEXT, tokenize=lambda text: [(0, 3)], messages=own)
     with pytest.raises(SourceTypeError, match=r"^Own sentenize: 5$"):

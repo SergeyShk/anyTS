@@ -235,7 +235,7 @@ MESSAGES: Mapping[str, str] = MappingProxyType(
         "source_span": "The data source cannot be a Span: pass span.as_doc()",
         "no_words": "The data source has no words",
         "document_tokens": "The tokens of the data source cannot make a document: {error}",
-        "hook_spans": (
+        "hook_bounds": (
             "The {hook} must give triples of integer bounds inside the text and a string, "
             "ascending for tokenize, not {span}"
         ),

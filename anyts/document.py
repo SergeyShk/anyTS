@@ -720,7 +720,7 @@ def _hook_spans(
 
 def _spans_error(hook: str, messages: Mapping[str, str]) -> Callable[[object], str]:
     """Message of a wrong value a hook of the spans gives"""
-    return lambda span: messages["hook_spans"].format(hook=hook, span=repr(span))
+    return lambda span: messages["hook_bounds"].format(hook=hook, span=repr(span))
 
 
 def _sent_starts(

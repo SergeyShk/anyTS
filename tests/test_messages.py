@@ -570,7 +570,7 @@ CASES = [
         lambda: split_windows(TEXT, closing_marks=["--"], messages=OWN),
     ),
     (
-        "hook_spans",
+        "hook_bounds",
         SourceTypeError,
         lambda: to_document(TEXT, tokenize=lambda text: 5, messages=OWN),
     ),
