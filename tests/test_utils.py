@@ -402,6 +402,8 @@ def test_has_feature():
     assert has_feature(play, "VerbForm", "Fin")
     assert not has_feature(play, "VerbForm", "Inf")
     assert not has_feature(children, "Mood", "Ind")
+    # A feature the word lacks has no value, not even an empty one
+    assert not has_feature(children, "Mood", "")
     # One value of several
     assert has_feature(who, "PronType", "Rel") and not has_feature(who, "PronType", "Re")
 

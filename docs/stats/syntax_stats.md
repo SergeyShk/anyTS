@@ -246,7 +246,7 @@ The left embeddedness of Coh-Metrix (SYNLE): the number of the words of a senten
 calc_valency(word)
 ```
 
-The valency of a word: the number of its dependent words (`get_children`), the relations `cc`, `conj`, `parataxis` and `punct` left out (`anyts.constants.VALENCY_IGNORED_DEPS`).
+The valency of a word: the number of its dependent words (`get_children`), the relations `cc`, `conj`, `parataxis` and `punct` and their subtypes (`parataxis:discourse`) left out (`anyts.constants.VALENCY_IGNORED_DEPS`).
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
@@ -267,7 +267,7 @@ The valency of a word: the number of its dependent words (`get_children`), the r
 calc_coordination_chains(words)
 ```
 
-The lengths of the coordination chains, in the order of their first words. A chain is a group of words linked by `conj`, whichever word each conjunct hangs on: Universal Dependencies attaches every conjunct to the first one (`pears → apples`, `plums → apples`), ClearNLP to the previous one (`pears → apples`, `plums → pears`); both give one chain of three for `apples, pears and plums`. A nested coordination (`cats and dogs, or birds`) and an enumeration split between several heads are one chain too. The length of a chain is the number of its words; a conjunct whose head lies outside the sequence is not linked to it.
+The lengths of the coordination chains, in the order of their first words. A chain is a group of words linked by `conj` or a subtype of it, whichever word each conjunct hangs on: Universal Dependencies attaches every conjunct to the first one (`pears → apples`, `plums → apples`), ClearNLP to the previous one (`pears → apples`, `plums → pears`); both give one chain of three for `apples, pears and plums`. A nested coordination (`cats and dogs, or birds`) and an enumeration split between several heads are one chain too. The length of a chain is the number of its words; a conjunct whose head lies outside the sequence is not linked to it.
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |

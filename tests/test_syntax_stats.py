@@ -1716,6 +1716,19 @@ def test_finite_conjunct_with_a_subject_on_a_periphrasis():
     assert stats.n_coordinate_phrases == 0
 
 
+def test_subtypes_of_the_relations_of_valency_and_chains():
+    """A subtype counts as its base relation in the valency and in the coordination chains"""
+    source = document(
+        ["said", "well", "cats", "and", "dogs"],
+        [0, 1, 1, 5, 3],
+        ["root", "parataxis:discourse", "obj", "cc", "conj:and"],
+        upos=["VERB", "INTJ", "NOUN", "CCONJ", "NOUN"],
+    )
+    said, _, cats, _, dogs = get_tree(source).words
+    assert calc_valency(said) == 1
+    assert calc_coordination_chains([said, cats, dogs]) == [2]
+
+
 def test_coordinate_phrases_of_a_periphrasis():
     """An infinitive of one predicate with its head is no member of a coordination when a model
     attaches it as a conjunct; the infinitives of a periphrasis may be coordinated"""
