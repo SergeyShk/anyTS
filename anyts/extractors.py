@@ -27,6 +27,9 @@ from .utils import NUMBER_PATTERN as NUMBER_PATTERN
 
 Tokenizer = Pattern[str] | Callable[[str], Iterable[str]]
 # The end of a sentence: a final mark, the closing marks after it and the whitespace (group 1)
+# Invisible separators that join no characters, left out of the character n-grams: the soft
+# hyphen, the zero-width space, the word joiner and the byte order mark
+_INVISIBLE = dict.fromkeys(map(ord, "\u00ad\u200b\u2060\ufeff"))
 _SENTENCE_BOUNDARY = re.compile(r"(?<=[.!?…])[\"'»”’)\]]*(\s+)")
 
 
@@ -716,6 +719,7 @@ class CharNgramsExtractor(Extractor):
             SourceTypeError: If the text is not a string or the tokenizer is set incorrectly
         """
         _check_text(text, self.messages)
+        text = text.translate(_INVISIBLE)
         if self.lowercase:
             text = text.lower()
         if self.within_words:

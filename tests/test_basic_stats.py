@@ -549,6 +549,12 @@ def test_hanging_hyphen_before_a_conjunction_after_any_space(space):
     assert (counts["dash"], counts["hyphen"]) == (0, 2)
 
 
+def test_n_chars_without_any_line_break():
+    """Every line break of LINE_BREAK is left out of the characters, CRLF as one"""
+    for text in ("One.\nTwo", "One.\r\nTwo", "One.\x0cTwo", "One.\u2028Two", "One.\u2029Two"):
+        assert Stats(text).n_chars == 7, repr(text)
+
+
 def test_normalize_is_a_bool():
     with pytest.raises(ParameterError, match=r"^The normalize must be a bool, not str$"):
         Stats(TEXT, normalize="yes")

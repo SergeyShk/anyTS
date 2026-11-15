@@ -21,6 +21,7 @@ from .exceptions import ParameterError, SourceError, SourceTypeError
 from .extractors import SentsExtractor, WordsExtractor
 from .stats import Stats
 from .utils import (
+    LINE_BREAK,
     check_bool,
     check_integer,
     check_words,
@@ -171,7 +172,7 @@ class BasicStats(Stats, metaclass=ABCMeta):
         n_simple_words (int): Number of simple words
         n_monosyllable_words (int): Number of monosyllabic words
         n_polysyllable_words (int): Number of polysyllabic words
-        n_chars (int): Number of characters without the line breaks
+        n_chars (int): Number of characters without the line breaks (LINE_BREAK)
         n_letters (int): Number of letters
         n_spaces (int): Number of spaces of Unicode (Zs), such as the no-break space, and tabs
         n_syllables (int): Number of syllables
@@ -269,7 +270,7 @@ class BasicStats(Stats, metaclass=ABCMeta):
         self.n_polysyllable_words = (
             self.n_words - self.c_syllables.get(1, 0) - self.c_syllables.get(0, 0)
         )
-        self.n_chars = len(text) - text.count("\n") - text.count("\r")
+        self.n_chars = len(LINE_BREAK.sub("", text))
         self.n_letters = sum(map(str.isalpha, text))
         self.n_spaces = len(text) - len(text.translate(_DELETE_SPACES))
         self.n_syllables = sum(syllables_per_word)

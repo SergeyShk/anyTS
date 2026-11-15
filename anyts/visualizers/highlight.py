@@ -14,6 +14,7 @@ from ..document import _parsed, to_document
 from ..exceptions import ParameterError, SourceError, SourceTypeError
 from ..syntax_stats import get_words
 from ..utils import (
+    LINE_BREAK,
     _is_mark_gap,
     check_callable,
     check_integer,
@@ -33,8 +34,8 @@ if TYPE_CHECKING:
     from ..cohesion_stats import Connector, ConnectorMatcher
     from ..document import TreeWord
 
-# Line breaks of Unix, Windows and old Mac texts
-_LINE_BREAK = re.compile(r"\r\n?|\n")
+# Control characters HTML cannot hold, the tab and the line breaks (LINE_BREAK) aside
+_CONTROL = re.compile(r"[\x00-\x08\x0e-\x1f\x7f-\x84\x86-\x9f]")
 # The columns of the words of a document a layer may need
 _COLUMNS = frozenset(("lemma", "upos", "xpos", "feats", "head", "deprel", "deps", "misc"))
 # What a column of a document gives a layer, for the message of an unavailable layer
@@ -409,9 +410,10 @@ class HighlightedText:
         Description:
             A div of the class <prefix>-highlight with the legend and the text,
             where a highlighted segment is a span of the classes <prefix>-hl and
-            <prefix>-hl-<layer> with the notes in its title. Line breaks become
-            character references, so the markup can go into Markdown with no
-            blank line inside the block
+            <prefix>-hl-<layer> with the notes in its title. Line breaks
+            (LINE_BREAK) become character references, so the markup can go into
+            Markdown with no blank line inside the block, and the control
+            characters HTML cannot hold are left out
 
         Arguments:
             legend (bool): Add the legend with the counts of the fragments
@@ -445,7 +447,7 @@ class HighlightedText:
         p = self.css_prefix
         chunks = []
         for start, end, active in split_segments(len(self.text), self.highlights):
-            chunk = _LINE_BREAK.sub("&#10;", html.escape(self.text[start:end]))
+            chunk = _CONTROL.sub("", LINE_BREAK.sub("&#10;", html.escape(self.text[start:end])))
             if active:
                 active.sort(key=lambda h: self.layers.index(h.layer))
                 classes = " ".join(f"{p}-hl-{h.layer}" for h in active)
