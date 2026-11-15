@@ -63,10 +63,10 @@ def kwic(
         splits a string as the pipeline does finds the same in a Doc. The words
         are the tokens with a letter or a digit (document_words). Lemmas, and word
         forms with ignore_case, are folded by fold; forms are compared in NFC,
-        without soft hyphens and without the final period of a word with a
-        letter: a tokenizer by Universal Dependencies leaves the period of an
-        abbreviation to it inside a sentence and splits it off at the end (Sr.
-        and Sr). A phrase does not cross the end of a sentence or
+        without soft hyphens, and forms and lemmas without the final period of
+        a word with a letter: a tokenizer by Universal Dependencies leaves the
+        period of an abbreviation to it inside a sentence and splits it off at
+        the end (Sr. and Sr). A phrase does not cross the end of a sentence or
         a paragraph of the document unless the keyword has such an end in the
         same place, or a final mark before whitespace there, whatever the case
         after it. The context is window words on each side as written,
@@ -136,11 +136,11 @@ def kwic(
     def readings(word: _Word | _KeyWord) -> set[str]:
         form = _normalize(word.text)
         if not by_lemma:
-            return {fold(form) if ignore_case else form}
+            return {fold(_bare(form)) if ignore_case else _bare(form)}
         found = lemmas(form, word.words)
         if isinstance(found, str):
-            return {fold(_normalize(found))}
-        return {fold(_normalize(lemma)) for lemma in found}
+            return {fold(_bare(_normalize(found)))}
+        return {fold(_bare(_normalize(lemma))) for lemma in found}
 
     def crosses(index: int) -> bool:
         """Whether the phrase starting at a word runs across a sentence end the keyword lacks"""
@@ -213,12 +213,13 @@ def _words(document: Document) -> list[_Word]:
 
 
 def _normalize(word: str) -> str:
-    """Composed form of a word (NFC) without soft hyphens and the final period of a word with a
-    letter, the period of an abbreviation"""
-    word = unicodedata.normalize("NFC", word).replace("\u00ad", "")
-    if word.endswith(".") and any(char.isalpha() for char in word):
-        return word[:-1]
-    return word
+    """Composed form of a word (NFC) without soft hyphens"""
+    return unicodedata.normalize("NFC", word).replace("\u00ad", "")
+
+
+def _bare(word: str) -> str:
+    """A word without the final period of a word with a letter, the period of an abbreviation"""
+    return word[:-1] if word.endswith(".") and any(char.isalpha() for char in word) else word
 
 
 def _lemmas(word: str, words: Sequence[Word]) -> tuple[str, ...]:

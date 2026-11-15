@@ -45,8 +45,7 @@ if TYPE_CHECKING:
 _NO_POSITIONS: frozenset[int] = frozenset()
 _PARAGRAPH_START = attrgetter("paragraph_start")
 _CONNECTOR_BLOCKED = attrgetter("connector_blocked")
-# The features of a word of a connector of several words, which links the sentences and refers to
-# nothing
+# The features of a word of a connector of several words, which counts as the connector alone
 _PLAIN_WORD: dict[str, Any] = {
     "noun": False,
     "pronoun": False,
@@ -562,9 +561,9 @@ class CohesionStats(Stats):
         arguments and of the content words between sentences, the givenness,
         the temporal cohesion and the connectors of a dictionary per 1000
         words. The sentences are compared by lemmas. The words of a connector
-        of several words (por lo tanto, es decir) link the sentences and refer
-        to nothing: they are no nouns, pronouns or content words and give no
-        tense, mood or aspect.
+        of several words (por lo tanto, es decir) count as the connector alone:
+        they are no nouns, pronouns or content words, its anaphors included
+        (eso of por eso), and give no tense, mood or aspect.
         A language library subclasses the class and sets its hooks; by default
         the words are those of the tree of the document of parse (get_tree)
         with their parts of speech, lemmas and features of Universal
@@ -1087,7 +1086,7 @@ def _without_connector_words(
     nouns, pronouns or content words and give no tense, mood or aspect (por lo tanto, es decir)"""
     inside: dict[int, set[int]] = {}
     for connector in connectors:
-        if " " in connector.text:
+        if connector.end - connector.start > 1:
             inside.setdefault(connector.sent, set()).update(range(connector.start, connector.end))
     for index, positions in inside.items():
         sents[index] = tuple(
