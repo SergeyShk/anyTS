@@ -32,8 +32,10 @@ _PUNCTUATION_CATEGORIES = frozenset(
     ("Pc", "Pd", "Ps", "Pe", "Pi", "Pf", "Po", "Sm", "Sc", "Sk", "So", "Mn", "Mc", "Me", "Cf")
 )
 
-# A signed number with separators and an optional percent sign: -5, 1990-1995, 1,500.50, 10%
-NUMBER_PATTERN = re.compile(r"[+\-−]?\d+(?:[.,:/-]\d+)*%?")
+# A signed number with separators and an optional percent sign: -5, 1990-1995, 1,500.50, 10%,
+# its thousands apart by a space, a no-break or a narrow no-break space as in a token of
+# anySeg: 3 500, 1 000 000
+NUMBER_PATTERN = re.compile(r"[+\-−]?(?:\d{1,3}(?:[ \u00a0\u202f]\d{3})+|\d+)(?:[.,:/-]\d+)*%?")
 # A line break of Unicode, the vertical tab and the form feed among them, as in anySeg
 _BREAK = r"\r\n|[\n\r\x0b\x0c\x85\u2028]"
 # What a blank line may hold besides its breaks: whitespace, control characters and the

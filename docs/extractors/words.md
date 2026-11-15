@@ -131,7 +131,7 @@ A language library overrides these hooks in a subclass:
 | :--- | :--- | :---------- |
 | `tokenize(text)` | method | Tokenizer when `tokenizer` is not given; by default a word character `\w` followed by word characters, combining marks, zero-width joiners and non-joiners and soft hyphens, so that a word in NFD, in Devanagari or in Persian with `U+200C` stays whole |
 | `lemmatize(word)` | method | Lemma of a word for `use_lexemes=True`; the word itself by default |
-| `number_pattern` | class attribute | Pattern of a number for `filter_nums=True`, matched against the whole lower-cased word; by default a signed number with separators and an optional percent sign: `-5`, `1990-1995`, `1,500.50`, `12/03/2020`, `3:30`, `10%` |
+| `number_pattern` | class attribute | Pattern of a number for `filter_nums=True`, matched against the whole lower-cased word; by default a signed number with separators and an optional percent sign: `-5`, `1990-1995`, `1,500.50`, `12/03/2020`, `3:30`, `10%`, its thousands apart by a space, a no-break or a narrow no-break space as in a token of anySeg (`3 500`) |
 | `messages` | class attribute | Messages of the errors of the parameters, of the text and of the tokenizer; `MESSAGES` by default |
 <!-- --8<-- [end:WordsExtractor-hooks] -->
 
