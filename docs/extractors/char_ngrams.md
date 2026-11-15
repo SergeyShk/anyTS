@@ -7,7 +7,7 @@ CharNgramsExtractor(n=2, lowercase=False, within_words=False, tokenizer=None)
 <!-- --8<-- [start:CharNgramsExtractor] -->
 A class for extracting character N-grams from a text - sequences of N characters taken with a sliding window over the string. Character N-grams are a standard feature of stylometry and authorship attribution (Stamatatos 2009) and can replace words in measures such as Burrows's Delta.
 
-Whitespace runs are collapsed into a single space, punctuation marks are kept; the invisible separators that join no characters - the soft hyphen, the zero-width space, the word joiner and the byte order mark - are left out, while the zero-width joiner and non-joiner stay. With `within_words=True` N-grams do not cross word boundaries: the text is split into words by the tokenizer, punctuation is dropped, and words shorter than N yield no N-grams.
+Whitespace runs are collapsed into a single space, punctuation marks are kept; the soft hyphen, the word joiner and the byte order mark are left out and a zero-width space is a space between words, after the tokenizer has split the words, while the zero-width joiner and non-joiner stay. With `within_words=True` N-grams do not cross word boundaries: the text is split into words by the tokenizer, punctuation is dropped, and words shorter than N yield no N-grams.
 
 Raises:
 

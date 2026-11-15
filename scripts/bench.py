@@ -5,13 +5,14 @@ The classes read frozen documents: CoNLL-U files of texts annotated by the pipel
 language libraries, in the folder of the environment variable BENCH_DATA or of --data, by
 default core_snapshot/bench-documents next to the clone of the repository. Every class
 runs once over all of them to warm up, then REPEATS times; the fastest run is its time. Its
-memory is the largest peak of the memory Python allocates for one document. The garbage
-collector runs before every measurement and not during it, since the trees hold cycles.
+memory is the largest peak of the memory Python allocates for one document, which does not
+change from round to round, so run takes it in the first round only (take --no-memory). The
+garbage collector runs before every measurement and not during it, since the trees hold cycles.
 
 Usage:
     make bench
     uv run python scripts/bench.py run [--data DIR]
-    uv run python scripts/bench.py take OUT [--data DIR]
+    uv run python scripts/bench.py take OUT [--data DIR] [--no-memory]
     uv run python scripts/bench.py compare OLD NEW
 
 run takes the classes of a worktree of the commit this branch starts from on master (git
@@ -133,7 +134,9 @@ def documents(data: Path) -> list[Any]:
     return [read_conllu(path.read_text(encoding="utf-8"))[0] for path in data_files(data)]
 
 
-def measure(make: Callable[[Any], Any], sources: Sequence[Any]) -> dict[str, float]:
+def measure(
+    make: Callable[[Any], Any], sources: Sequence[Any], memory: bool = True
+) -> dict[str, float]:
     def run(source: Any) -> None:
         stats = make(source)
         if hasattr(stats, "get_stats"):
@@ -152,7 +155,7 @@ def measure(make: Callable[[Any], Any], sources: Sequence[Any]) -> dict[str, flo
                 run(source)
             times.append(time.perf_counter() - start)
             gc.enable()
-        for source in sources:
+        for source in sources if memory else ():
             gc.collect()
             gc.disable()
             tracemalloc.start()
@@ -162,10 +165,10 @@ def measure(make: Callable[[Any], Any], sources: Sequence[Any]) -> dict[str, flo
             gc.enable()
     finally:
         gc.enable()
-    return {"time": min(times), "memory": max(peaks)}
+    return {"time": min(times), "memory": max(peaks)} if peaks else {"time": min(times)}
 
 
-def take(out: Path, data: Path) -> None:
+def take(out: Path, data: Path, memory: bool = True) -> None:
     import anyts
 
     sources = documents(data)
@@ -175,7 +178,7 @@ def take(out: Path, data: Path) -> None:
             make = factory()
         except (ImportError, AttributeError):
             continue
-        results[name] = measure(make, sources)
+        results[name] = measure(make, sources, memory)
     meta = {"anyts": str(Path(anyts.__file__).parent), "documents": len(sources)}
     out.write_text(json.dumps({"meta": meta, "classes": results}, indent=1), encoding="utf-8")
 
@@ -222,7 +225,8 @@ def run(data: Path) -> None:
             for round_ in range(ROUNDS):
                 for side, env in (("base", environment), ("this", None)):
                     out = f"{folder}/{side}-{round_}.json"
-                    _take([*command, out, "--data", str(data)], env)
+                    memory = [] if round_ == 0 else ["--no-memory"]
+                    _take([*command, out, "--data", str(data), *memory], env)
             for side in ("base", "this"):
                 _fastest(Path(folder), side)
             compare(Path(folder, "base.json"), Path(folder, "this.json"), ("base", "this"))
@@ -232,7 +236,7 @@ def run(data: Path) -> None:
 
 def _fastest(folder: Path, side: str) -> None:
     """The measurements of a side over the rounds in one file: the fastest time of every class
-    and its largest memory"""
+    and its memory of the rounds that take it"""
     rounds = [
         json.loads(path.read_text(encoding="utf-8"))["classes"]
         for path in sorted(folder.glob(f"{side}-*.json"))
@@ -240,7 +244,7 @@ def _fastest(folder: Path, side: str) -> None:
     classes = {
         name: {
             "time": min(found[name]["time"] for found in rounds),
-            "memory": max(found[name]["memory"] for found in rounds),
+            "memory": max(found[name]["memory"] for found in rounds if "memory" in found[name]),
         }
         for name in rounds[0]
     }
@@ -279,6 +283,7 @@ def main() -> None:
         command = commands.add_parser(name)
         if name == "take":
             command.add_argument("out", type=Path)
+            command.add_argument("--no-memory", dest="memory", action="store_false")
         command.add_argument("--data", type=Path)
     command = commands.add_parser("compare")
     command.add_argument("old", type=Path)
@@ -287,7 +292,7 @@ def main() -> None:
     if args.command == "run":
         run(args.data or _default_data())
     elif args.command == "take":
-        take(args.out, args.data or _default_data())
+        take(args.out, args.data or _default_data(), args.memory)
     else:
         compare(args.old, args.new)
 

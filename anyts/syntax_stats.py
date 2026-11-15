@@ -682,7 +682,7 @@ class SyntaxStats(Stats):
         Description:
             A participle (VerbForm=Part) that is not the head of the sentence,
             has no auxiliary or copula (has been built is a predicate) and has a
-            dependent besides cc, conj and parataxis (calc_valency)
+            dependent besides cc, conj, parataxis and punct (calc_valency)
 
         Arguments:
             word (TreeWord): Word of the tree
@@ -1240,8 +1240,8 @@ def calc_valency(word: TreeWord) -> int:
     Computing the valency of a word
 
     Description:
-        The number of dependent words without cc, conj and parataxis, their
-        subtypes (parataxis:discourse) included
+        The number of dependent words without cc, conj, parataxis and punct,
+        their subtypes (parataxis:discourse) included
 
     Arguments:
         word (TreeWord): Word of the tree

@@ -3,6 +3,7 @@ import pickle
 import random
 import re
 import threading
+import weakref
 
 import pytest
 import spacy
@@ -183,10 +184,38 @@ def test_tree_of_the_last_doc_converted():
     document = Document.from_tokens("A b", [0, 2], [1, 3])
     assert get_tree(document) is not get_tree(document)
     other = Doc(vocab, words=["Dogs", "bark"], heads=[1, 1], deps=["nsubj", "ROOT"])
-    thread = threading.Thread(target=lambda: get_tree(to_document(other)))
-    thread.start()
-    thread.join()
+    slots = []
+
+    def convert():
+        get_tree(to_document(other))
+        slots.append(weakref.ref(document_module._slot()))
+
+    # The slot of a thread goes with it, without the garbage collector
+    gc.disable()
+    try:
+        thread = threading.Thread(target=convert)
+        thread.start()
+        thread.join()
+        assert slots[0]() is None
+    finally:
+        gc.enable()
     assert get_tree(to_document(doc)) is tree
+
+
+def test_tree_for_one_use():
+    """A tree no slot keeps is broken after its use, the tree of the slot stays whole"""
+    vocab = spacy.blank("en").vocab
+    doc = Doc(vocab, words=["Cats", "sleep"], heads=[1, 1], deps=["nsubj", "ROOT"])
+    with document_module._tree_once(to_document(doc)) as tree:
+        pass
+    assert tree is get_tree(to_document(doc))
+    assert tree.words[0].head is tree.words[1]
+    with document_module._tree_once(pickle.loads(pickle.dumps(to_document(doc)))) as tree:
+        cats, sleep = tree.words
+        assert cats.head is sleep
+    assert cats.head is None
+    assert sleep.children == ()
+    assert not hasattr(cats, "tree")
 
 
 def test_sentences_of_a_hook():

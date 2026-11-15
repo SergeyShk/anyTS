@@ -510,6 +510,14 @@ class TestCharNgramsExtractor:
             "t s",
         )
         assert CharNgramsExtractor(n=3).extract("a\u200db") == ("a\u200db",)
+        # A zero-width space parts the words, inside them too
+        assert CharNgramsExtractor(within_words=True).extract("cat\u200bdog") == (
+            "ca",
+            "at",
+            "do",
+            "og",
+        )
+        assert CharNgramsExtractor(n=3).extract("cat\u200bdog")[2:4] == ("t d", " do")
 
     def test_lowercase(self):
         ce = CharNgramsExtractor(n=3, lowercase=True)

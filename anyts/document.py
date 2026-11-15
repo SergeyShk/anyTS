@@ -5,9 +5,10 @@ import threading
 import weakref
 from bisect import bisect_left, bisect_right
 from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, Sequence
+from contextlib import contextmanager
 from functools import cache, partial
 from re import Pattern
-from typing import TYPE_CHECKING, Any, NamedTuple
+from typing import TYPE_CHECKING, Any, NamedTuple, cast
 
 from .constants import MESSAGES
 from .exceptions import SourceError, SourceTypeError
@@ -53,6 +54,12 @@ class _Converted:
         self.tree: Tree | None = None
 
 
+class _Slot(list[_Converted]):
+    """Slot of the last conversion of a thread, which the weak reference of its Doc finds"""
+
+    __slots__ = ("__weakref__",)
+
+
 # The slot of the last conversion of every thread
 _local = threading.local()
 
@@ -87,10 +94,10 @@ def to_document(
         left out, and a token of nothing else is dropped
         The default tokens are the words of WordsExtractor and every run of one
         other character; the default sentences are those of SentsExtractor.
-        The document of the last Doc converted is kept while the Doc lives with
-        the same tokens and annotations, and the same sentenize for a Doc
-        without its sentences, so the classes of statistics of one Doc convert
-        it once: the same Document comes back, and it is not to be changed
+        The document of the Doc a thread converted last is kept while the Doc
+        lives with the same tokens and annotations, and the same sentenize for
+        a Doc without its sentences, so the classes of statistics of one Doc
+        convert it once: the same Document comes back, and it is not to be changed
 
     Arguments:
         source (str|Doc|Document): Data source
@@ -278,8 +285,8 @@ def get_tree(document: Document) -> Tree:
         their sentences: a word without a head (0 or None) heads its sentence.
         The tree of the document of the Doc a thread converted last
         (to_document) is built once and kept with it, so the classes of one
-        Doc share it; a tree holds cycles of references, which the garbage
-        collector of Python frees
+        Doc share it, and it is not to be changed; a tree holds cycles of
+        references, which the garbage collector of Python frees
 
     Arguments:
         document (Document): Document of anySeg
@@ -418,6 +425,22 @@ def _feature_dict(feats: str | None) -> dict[str, str]:
     return dict(pair.split("=", 1) for pair in feats.split("|") if "=" in pair) if feats else {}
 
 
+@contextmanager
+def _tree_once(document: Document) -> Iterator[Tree]:
+    """Tree of a document (get_tree) for one use: a tree no slot keeps is broken after it, so that
+    it goes at once rather than with the garbage collector"""
+    tree = get_tree(document)
+    kept = any(converted.tree is tree for converted in _slot())
+    try:
+        yield tree
+    finally:
+        if not kept:
+            for word in tree.words:
+                word.head = None
+                word.children = ()
+                del word.tree
+
+
 def _parsed(owner: Any, source: str | Doc | Document) -> Document:
     """Document of the parse hook of an object, checked to be a Document"""
     document = owner.parse(source)
@@ -454,20 +477,24 @@ def _cached_document(doc: Doc, sentenize: Spans | None, messages: Mapping[str, s
         ):
             return converted.document
     document = _doc_document(doc, sentenize, messages)
-    slot[:] = [_Converted(weakref.ref(doc, partial(_forget, slot)), stamp, sentenize, document)]
+    # The slot is found by a weak reference too, so that a thread that ends frees it at once
+    forget = partial(_forget, weakref.ref(slot))
+    slot[:] = [_Converted(weakref.ref(doc, forget), stamp, sentenize, document)]
     return document
 
 
-def _slot() -> list[_Converted]:
+def _slot() -> _Slot:
     """The slot of the last conversion of the calling thread"""
-    slot: list[_Converted] | None = getattr(_local, "converted", None)
+    slot: _Slot | None = getattr(_local, "converted", None)
     if slot is None:
-        slot = _local.converted = []
+        slot = _local.converted = _Slot()
     return slot
 
 
-def _forget(slot: list[_Converted], ref: weakref.ref[Doc]) -> None:
-    """Dropping the document and the tree of a Doc that is gone"""
+def _forget(slot_ref: weakref.ref[_Slot], ref: weakref.ref[Doc]) -> None:
+    """Dropping the document and the tree of a Doc that is gone from its slot, which lives while it
+    keeps the weak reference calling this"""
+    slot = cast(_Slot, slot_ref())
     slot[:] = [converted for converted in slot if converted.doc is not ref]
 
 
