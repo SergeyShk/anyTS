@@ -10,7 +10,7 @@ import numpy as np
 from matplotlib.axes import Axes
 
 from ..constants import VISUALIZER_LABELS
-from ..document import to_document
+from ..document import _has_sentences, to_document
 from ..exceptions import ParameterError, SourceError, SourceTypeError
 from ..extractors import SentsExtractor, WordsExtractor
 from ..utils import check_integer, check_sequence, has_words, is_doc, is_document, merge_labels
@@ -45,8 +45,10 @@ def sentence_lengths_plot(
         inset (bool): Show the inset with the histogram
         ax (Axes): Axes for the plot; if not given, a new figure is created
         labels (dict[str, str]): Labels over VISUALIZER_LABELS["sentence_lengths_plot"]
-        sents_extractor (SentsExtractor): Extractor of the sentences of the text
-        words_extractor (WordsExtractor): Extractor of the words of a sentence of the text
+        sents_extractor (SentsExtractor): Extractor of the sentences of a string or of a Doc
+            without sentences
+        words_extractor (WordsExtractor): Extractor of the words of a sentence of a string or
+            of a Doc without sentences
 
     Returns:
         Axes: Axes with the plot
@@ -102,17 +104,20 @@ def sentence_lengths(
     Description:
         The sentences of the document of a text, a Doc or a Document
         (to_document) with their words (document_words); with an extractor
-        given, the text is split into sentences by sents_extractor and every
-        sentence into words by words_extractor instead, the other one by
-        default. Ready lengths (non-negative integers in a sequence or an
-        iterator) are used as they are. Sentences without words are skipped
+        given, a string or a Doc without sentences of its own (no start at
+        some token and no parse) is split into sentences by sents_extractor
+        and every sentence into words by words_extractor instead, the other
+        one by default, while a Doc with sentences and a Document keep theirs.
+        Ready lengths (non-negative integers in a sequence or an iterator) are
+        used as they are. Sentences without words are skipped
 
     Arguments:
         source (str|Doc|Document|Iterable[int]): Text, Doc or Document object or
             ready lengths
-        sents_extractor (SentsExtractor): Extractor of the sentences of the text
-        words_extractor (WordsExtractor): Extractor of the words of a sentence of
-            the text
+        sents_extractor (SentsExtractor): Extractor of the sentences of a string or of a Doc
+            without sentences
+        words_extractor (WordsExtractor): Extractor of the words of a sentence of a string or
+            of a Doc without sentences
 
     Returns:
         list[int]: Lengths of the sentences in order
@@ -134,13 +139,16 @@ def sentence_lengths(
     if words_extractor is not None and not isinstance(words_extractor, WordsExtractor):
         raise SourceTypeError("The word extractor must be a WordsExtractor")
     if isinstance(source, str) or is_doc(source) or is_document(source):
-        if sents_extractor is None and words_extractor is None:
-            lengths = _document_lengths(to_document(source))
-        else:
+        extracted = sents_extractor is not None or words_extractor is not None
+        if extracted and (
+            isinstance(source, str) or (is_doc(source) and not _has_sentences(source))
+        ):
             text = source if isinstance(source, str) else source.text
             sents = (sents_extractor or SentsExtractor()).extract(text)
             words = words_extractor or WordsExtractor()
             lengths = [len(words.extract(sent)) for sent in sents]
+        else:
+            lengths = _document_lengths(to_document(source))
         return [length for length in lengths if length]
     if isinstance(source, Iterator):
         source = list(source)

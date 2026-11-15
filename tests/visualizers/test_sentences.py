@@ -7,8 +7,10 @@ import pytest
 import spacy
 from anyseg import Document
 from matplotlib.axes import Axes
+from spacy.tokens import Doc
 
 from anyts import SentsExtractor, WordsExtractor
+from anyts.document import to_document
 from anyts.exceptions import ParameterError, SourceError, SourceTypeError
 from anyts.visualizers import sentence_lengths, sentence_lengths_plot
 
@@ -37,6 +39,19 @@ def test_sentence_lengths():
         sentence_lengths([3.5, 2])
     with pytest.raises(SourceTypeError):
         sentence_lengths(42)
+
+
+def test_sentence_lengths_of_a_doc_with_extractors():
+    """The extractors split a Doc without sentences of its own; a Doc with them and a Document
+    keep theirs"""
+    vocab = spacy.blank("en").vocab
+    words = ["Mr", "Smith", "came", "Then", "left"]
+    starts = [True, False, False, True, False]
+    extractors = (SentsExtractor(), WordsExtractor())
+    doc = Doc(vocab, words=words, sent_starts=starts)
+    assert sentence_lengths(doc, *extractors) == sentence_lengths(doc) == [3, 2]
+    assert sentence_lengths(to_document(doc), *extractors) == [3, 2]
+    assert sentence_lengths(Doc(vocab, words=words), *extractors) == [5]
 
 
 def test_sentence_lengths_of_a_doc_with_partial_boundaries():
