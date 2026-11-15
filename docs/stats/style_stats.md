@@ -11,7 +11,7 @@ The SEO metrics are counted on the words of the [document](https://sergeyshk.git
 
 Raises:
 
-- `SourceTypeError` - a source that is neither a string, a `Doc` nor a `Document`, a `parse` that returns no `Document`, an extractor of another type, a list that is not a list of strings;
+- `SourceTypeError` - a source that is neither a string, a `Doc` nor a `Document`, a `parse` that returns no `Document`, a `doc_words` that returns no sequence of strings, an extractor of another type, a list that is not a list of strings;
 - `SourceError` - a source without words;
 - `ParameterError` - a `top_n` that is not an integer of at least one.
 <!-- --8<-- [end:StyleStats] -->

@@ -11,7 +11,7 @@ The words and the sentences come from the [document](https://sergeyshk.github.io
 
 Raises:
 
-- `SourceTypeError` - a source that is neither a string, a `Doc` nor a `Document`, a `parse` that returns no `Document`, an extractor of another type;
+- `SourceTypeError` - a source that is neither a string, a `Doc` nor a `Document`, a `parse` that returns no `Document`, a `doc_words` that returns no sequence of strings, an extractor of another type;
 - `SourceError` - a source without words;
 - `ParameterError` - a threshold that is not an integer of at least one, a `normalize` that is not a `bool`.
 <!-- --8<-- [end:BasicStats] -->

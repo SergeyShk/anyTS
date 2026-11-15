@@ -17,7 +17,8 @@ Usage:
 
 run takes the classes of a worktree of the commit this branch starts from on master (git
 merge-base) and of this tree, in the same environment and in ROUNDS rounds in turn, the
-fastest of them counting, and prints the table of both; a class one of them lacks has a dash.
+fastest of them counting, and prints the table of both; a class one of them lacks, and the
+memory of a take without it, has a dash.
 """
 
 import argparse
@@ -202,11 +203,13 @@ def compare(old: Path, new: Path, names: tuple[str, str] = ("old", "new")) -> No
 
 
 def _value(stats: dict[str, float] | None, key: str, unit: float) -> str:
-    return "-" if stats is None else f"{stats[key] / unit:.{3 if key == 'time' else 1}f}"
+    if stats is None or key not in stats:
+        return "-"
+    return f"{stats[key] / unit:.{3 if key == 'time' else 1}f}"
 
 
 def _change(first: dict[str, float] | None, second: dict[str, float] | None, key: str) -> str:
-    if first is None or second is None or not first[key]:
+    if first is None or second is None or not first.get(key) or key not in second:
         return ""
     return f"{(second[key] - first[key]) / first[key] * 100:+.1f} %"
 

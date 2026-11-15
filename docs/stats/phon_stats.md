@@ -9,7 +9,7 @@ The phonetic statistics of a text: its sounds by class, their clusters, sequence
 
 Raises:
 
-- `SourceTypeError` - a source that is neither a string, a `Doc` nor a `Document`, a `parse` that returns no `Document`, an extractor of another type;
+- `SourceTypeError` - a source that is neither a string, a `Doc` nor a `Document`, a `parse` that returns no `Document`, a `doc_words`, `syllabify` or `transcribe` that returns no strings, an extractor of another type;
 - `SourceError` - a source without words;
 - `ParameterError` - a window that is not an integer of at least 2.
 <!-- --8<-- [end:PhonStats] -->

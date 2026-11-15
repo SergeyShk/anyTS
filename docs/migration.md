@@ -47,7 +47,7 @@ The words of the tree of a document (`get_tree`) are `TreeWord` objects in place
 | `lemma_`, `pos_`, `tag_` | `lemma`, `upos`, `xpos`: `None` without a value, not an empty string |
 | `dep_` | `deprel`; the root of a spaCy parse is `root`, not `ROOT` |
 | `morph.get(name)` | `feats[name].split(",")`: `feats` maps a name to its values joined by commas, and is not to be changed |
-| `i`, `doc[i]` | `index`, `tree.words[i]`: the positions of the words differ from `Token.i` where a `Doc` has tokens of whitespace or multiword tokens, and `tree.word_at(token.idx)` gives the word of a token |
+| `i`, `doc[i]` | `index`, `tree.words[i]`: the positions of the words differ from `Token.i` where a `Doc` has tokens of whitespace or multiword tokens, and `tree.word_at(token.idx, token.idx + len(token))` gives the word of a token, past the separators the document leaves out at its edges |
 | `idx` | `start`; `end` is the end of the token, shared by the words of a multiword token |
 | `head` | `head`, `None` at the head of a sentence instead of the token itself |
 | `children`, `subtree` | `children` (punctuation marks included), `get_subtree(word)` of `anyts.syntax_stats` |
@@ -58,7 +58,7 @@ The words of the tree of a document (`get_tree`) are `TreeWord` objects in place
 
 - A blank line ends a sentence of every source, a `Doc` with its own sentences included, so a sentence of a parser over a blank line is split: of the words that hung over the line, the first heads the new sentence and the others hang on it with `dep`. A blank line is that of anySeg: the vertical tab and the form feed break a line, and a line of separators alone is blank.
 - The tokens of the document decide what a word is: the tokenizer of spaCy splits `well-known` into three tokens and the words stay split, the tokenizer of anySeg keeps it whole. A multiword token of anySeg (`token._.anyseg_words`) gives its words of Universal Dependencies to `MorphStats`, `LexicalStats` and the tree; without columns of their own they are one word with the columns of the token.
-- `SyntaxStats`, `CohesionStats` and `MorphStats` take a string, which a library annotates in `parse`: with the default `parse` a string raises `SourceError` (`no_parse`, `no_pos`) instead of `SourceTypeError`. `LexicalStats` can be used without a subclass, given a dictionary.
+- `SyntaxStats`, `CohesionStats` and `MorphStats` take a string, which a library annotates in `parse`: with the default `parse` a string raises `SourceError` (`no_parse`, `no_pos`) instead of `SourceTypeError`. `CohesionStats` checks the parts of speech and the lemmas by `requires_pos` and `requires_lemmas`, which a library that annotates the words in `word_info` turns off. `LexicalStats` can be used without a subclass, given a dictionary.
 - `to_document` returns the same `Document` for an unchanged `Doc` in a thread, and `get_tree` the same tree: neither is to be changed, and code that needs other columns builds a document of its own.
 
 ## Messages { #messages }

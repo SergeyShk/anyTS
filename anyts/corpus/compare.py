@@ -703,7 +703,10 @@ def sentence_rhythm(
         >>> {key: round(value, 3) for key, value in sentence_rhythm([4, 8, 2, 7]).items()}
         {'sents_mean': 5.25, 'sents_std': 2.754, 'sents_cv': 0.525, 'sents_autocorr': -0.794}
     """
-    check_sequence(lengths, "lengths", message=messages["sentence_lengths"])
+    try:
+        check_sequence(lengths, "lengths")
+    except SourceTypeError:
+        raise SourceTypeError(messages["sentence_lengths"]) from None
     items: Sequence[object] = lengths
     if not all(not isinstance(length, bool) and isinstance(length, Integral) for length in items):
         raise SourceTypeError(messages["sentence_lengths"])

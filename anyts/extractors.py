@@ -539,8 +539,11 @@ class WordsExtractor(Extractor):
         if not isinstance(ngram_range, tuple | list) or len(ngram_range) != 2:
             raise ParameterError(messages["ngram_range"])
         lower, upper = ngram_range
-        check_integer(lower, "ngram_range", message=messages["ngram_range"])
-        check_integer(upper, "ngram_range", message=messages["ngram_range"])
+        for bound in (lower, upper):
+            try:
+                check_integer(bound, "ngram_range")
+            except ParameterError:
+                raise ParameterError(messages["ngram_range"]) from None
         if lower < 1:
             raise ParameterError(messages["ngram_lower"])
         if lower > upper:

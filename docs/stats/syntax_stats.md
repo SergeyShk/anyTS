@@ -9,7 +9,7 @@ The syntactic statistics of a text by its dependency tree ([Ivanov, Solnyshkina 
 
 Raises:
 
-- `SourceTypeError` - a source that is neither a string, a `Doc` nor a `Document`, a `parse` that returns no `Document`;
+- `SourceTypeError` - a source that is neither a string, a `Doc` nor a `Document`, a `parse` that returns no `Document`, a `find_split_predicates` that returns no pairs of `TreeWord` objects;
 - `SourceError` - a source without a dependency parse, without parts of speech, without lemmas when the class requires them, or without words.
 <!-- --8<-- [end:SyntaxStats] -->
 

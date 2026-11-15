@@ -395,8 +395,17 @@ def test_word_at_a_position():
         tree.words[3],
     ]
     assert tree.word_at(3).form == "Cats"
+    assert tree.word_at(4, 7) is tree.words[1]
+    assert tree.word_at(4, 6) is None
+    assert tree.word_at(6, 6) is tree.words[1]
     assert tree.word_at(-1) is None
     assert tree.word_at(len(doc.text)) is None
+    # The token of the document leaves out the separators at the edges of a token of spaCy
+    doc = spacy.blank("en")("\ufeffThe cat sat on the \u200bmat.")
+    tree = get_tree(to_document(doc))
+    found = [tree.word_at(token.idx, token.idx + len(token)) for token in doc]
+    assert [word.form for word in found] == ["The", "cat", "sat", "on", "the", "mat", "."]
+    assert tree.word_at(doc[0].idx) is None
     tree = get_tree(Document.from_tokens("al cine", [0, 3], [2, 7], words={0: ["a", "el"]}))
     assert [word.form for word in tree.words] == ["a", "el", "cine"]
     assert tree.word_at(1) is tree.words[0]
