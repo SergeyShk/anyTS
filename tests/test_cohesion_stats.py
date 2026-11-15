@@ -1213,6 +1213,20 @@ def test_parse_of_a_library():
         Annotated("Vino del pueblo")
 
 
+def test_own_word_info_without_annotations():
+    """A library that reads the features of the words itself keeps analyze on a source without
+    lemmas and parts of speech"""
+
+    class Lemmatized(CohesionStats):
+        def word_info(self, word):
+            lemma = word.form.lower().rstrip("s")
+            return CohesionWord(word.form, lemma, "NOUN", True, False, False, True, True)
+
+    stats = Lemmatized(text_doc(pos=False, lemmas=False))
+    assert stats.words
+    assert stats.noun_overlap_adjacent > 0
+
+
 def test_own_analysis():
     class Words(CohesionStats):
         def analyze(self, source):

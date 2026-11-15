@@ -636,7 +636,7 @@ class CohesionStats(Stats):
             analyze does not give sentences of CohesionWord objects, or the connectors
             are not a dictionary of phrases and pairs of strings
         SourceError: If the words of the source have no parts of speech or no lemmas
-            (analyze), or there are no words
+            for the default word_info (analyze), or there are no words
         ParameterError: If a connector has an unknown class or kind; when a class is
             defined, if its temporal features are not one or more distinct known ones
     """
@@ -810,6 +810,7 @@ class CohesionStats(Stats):
             SourceTypeError: If the source is neither a string, a Doc nor a Document
                 object, or parse does not return a Document
             SourceError: If the words of the source have no parts of speech or no lemmas
+                for the default word_info
         """
         with _tree_once(self._document(source)) as tree:
             return self._analyzed(tree)
@@ -820,10 +821,11 @@ class CohesionStats(Stats):
         words = [word for word in tree.words if has_words(word.form)]
         if not words:
             return []
-        if not any(word.upos for word in words):
-            raise SourceError(messages["no_pos"])
-        if not any(word.lemma for word in tree.words):
-            raise SourceError(messages["no_lemmas"])
+        if type(self).word_info is CohesionStats.word_info:
+            if not any(word.upos for word in words):
+                raise SourceError(messages["no_pos"])
+            if not any(word.lemma for word in tree.words):
+                raise SourceError(messages["no_lemmas"])
         text = tree.text
         sents = self._sentences(words, text)
         pattern = BLANK_LINE if self.blank_lines else LINE_BREAK
