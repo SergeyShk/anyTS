@@ -797,8 +797,8 @@ class CohesionStats(Stats):
             does, or a blank line (BLANK_LINE) with blank_lines, between the
             words of the sentences, and the words of a multiword token get its
             text in token. The tree of a string or a Document is released after
-            the analysis, so word_info keeps no word of the tree; a library that
-            reads the features another way overrides it
+            the analysis, and word_info is not to keep a word of it; a library
+            that reads the features another way overrides it
 
         Arguments:
             source (str|Doc|Document): Data source

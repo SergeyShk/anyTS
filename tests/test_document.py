@@ -200,6 +200,8 @@ def test_tree_of_the_last_doc_converted():
     finally:
         gc.enable()
     assert get_tree(to_document(doc)) is tree
+    # A thread may end while the callbacks of a Doc run, and its slot with it
+    document_module._forget(weakref.ref(document_module._Slot()), weakref.ref(doc))
 
 
 def test_tree_for_one_use():

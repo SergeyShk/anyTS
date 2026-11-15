@@ -8,7 +8,7 @@ from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, S
 from contextlib import contextmanager
 from functools import cache, partial
 from re import Pattern
-from typing import TYPE_CHECKING, Any, NamedTuple, cast
+from typing import TYPE_CHECKING, Any, NamedTuple
 
 from .constants import MESSAGES
 from .exceptions import SourceError, SourceTypeError
@@ -491,10 +491,10 @@ def _slot() -> _Slot:
 
 
 def _forget(slot_ref: weakref.ref[_Slot], ref: weakref.ref[Doc]) -> None:
-    """Dropping the document and the tree of a Doc that is gone from its slot, which lives while it
-    keeps the weak reference calling this"""
-    slot = cast(_Slot, slot_ref())
-    slot[:] = [converted for converted in slot if converted.doc is not ref]
+    """Dropping the document and the tree of a Doc that is gone from its slot, unless the slot is
+    gone too: its thread may end while the callbacks of the Doc run"""
+    if (slot := slot_ref()) is not None:
+        slot[:] = [converted for converted in slot if converted.doc is not ref]
 
 
 def _doc_stamp(doc: Doc) -> tuple[bytes, str, tuple[int, ...] | None]:
