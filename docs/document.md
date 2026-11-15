@@ -146,7 +146,7 @@ A word of the tree, with the names of Universal Dependencies and its place in th
 | `start`, `end` | `int` | Positions of its token in the text; the words of a multiword token share them |
 | `tree` | `Tree` | Tree of the document, for the words around it (`word.tree.words[word.index - 1]` for a word after the first) |
 
-In place of the attributes of a spaCy `Token` (the [migration page](https://sergeyshk.github.io/anyTS/migration/#tree-words) has them all): `text` - `form`, `lemma_` - `lemma`, `pos_` - `upos`, `tag_` - `xpos`, `dep_` - `deprel`, `morph.get(name)` - `feats.get(name)` (a string), `i` - `index` (other where a `Doc` has tokens of whitespace: `tree.word_at(token.idx, token.idx + len(token))` gives the word of a token), `idx` - `start`, `head` of a root - `None` instead of the token itself, `subtree` - `get_subtree(word)` of `anyts.syntax_stats`.
+In place of the attributes of a spaCy `Token` (the [migration page](https://sergeyshk.github.io/anyTS/migration/#tree-words) has more): `text` - `form`, `lemma_` - `lemma`, `pos_` - `upos`, `tag_` - `xpos`, `dep_` - `deprel`, `morph.get(name)` - `feats.get(name)` (a string), `i` - `index` (other where a `Doc` has tokens of whitespace: `tree.word_at(token.idx, token.idx + len(token))` gives the word of a token), `idx` - `start`, `head` of a root - `None` instead of the token itself, `subtree` - `get_subtree(word)` of `anyts.syntax_stats`.
 <!-- --8<-- [end:TreeWord] -->
 
 === "Code"
