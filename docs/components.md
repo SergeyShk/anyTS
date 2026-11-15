@@ -62,13 +62,46 @@ A component of the lexical diversity of the words of a `Doc`:
 ## Names { #names }
 
 <!-- --8<-- [start:StatsComponent-names] -->
-The name of the pipe is the name of the extension: `nlp.add_pipe(factory, name="basic")` puts the statistics into `doc._.basic`. Without `name` both take the name of the factory. The extension follows the pipe when the pipeline renames it (`nlp.rename_pipe`), and an extension removed by `Doc.remove_extension` while the component lives is registered again at its next document. A name taken by an extension of another package raises `ParameterError` instead of replacing it: at `add_pipe`, or at the first document after `rename_pipe`, which renames the pipe before the component learns its name. A component taken from another pipeline (`add_pipe(name, source=other)`) is the same object in both, so under a new name it writes to that extension in the other pipeline too; a separate component comes from the factory, `add_pipe(factory, name=...)`. The same component can be added twice under different names, with different parameters. A document with no words - an empty string, whitespace, punctuation alone - passes through a component untouched, its extension left at `None`.
+The name of the pipe is the name of the extension: `nlp.add_pipe(factory, name="basic")` puts the statistics into `doc._.basic`. Without `name` both take the name of the factory. The extension follows the pipe when the pipeline renames it (`nlp.rename_pipe`), and an extension removed by `Doc.remove_extension` while the component lives is registered again at its next document. A name taken by an extension of another package raises `ParameterError` instead of replacing it: at `add_pipe`, or at the first document after `rename_pipe`, which renames the pipe before the component learns its name. A component taken from another pipeline (`add_pipe(name, source=other)`) is the same object in both, so under a new name it writes to that extension in the other pipeline too; a separate component comes from the factory, `add_pipe(factory, name=...)`. The same component can be added twice under different names, with different parameters. A document with no words - an empty string, whitespace, punctuation alone - passes through a component untouched, its extension left at `None`. A document without an annotation the statistics need, such as the parse of `SyntaxStats` in a pipeline without a parser, raises `SourceError` in the component, and so the call of the pipeline fails.
 <!-- --8<-- [end:StatsComponent-names] -->
 
 <!-- --8<-- [start:StatsComponent-serialization] -->
 !!! warning "Serialization"
-    A component keeps an object of statistics in `doc._.<name>`, and spaCy cannot serialize it: `Doc.to_bytes()`, `DocBin(store_user_data=True)` and `nlp.pipe(..., n_process>1)` fail with these components in the pipeline. To save a document, leave the user data out (`doc.to_bytes(exclude=["user_data"])`) or keep `doc._.<name>.get_stats()` separately; for multiprocessing compute the statistics in the main process after `nlp.pipe`, without the components.
+    A component keeps an object of statistics in `doc._.<name>`, and spaCy cannot serialize it: `Doc.to_bytes()`, `DocBin(store_user_data=True)` and `nlp.pipe(..., n_process>1)` fail with these components in the pipeline. To save a document, keep `doc._.<name>.get_stats()` separately and clear the extension (`doc._.<name> = None`) before `doc.to_bytes()`: leaving all the user data out (`exclude=["user_data"]`) drops the words of the multiword tokens of anySeg (`token._.anyseg_words`) too, and the document read back has other words. For multiprocessing compute the statistics in the main process after `nlp.pipe`, without the components.
 <!-- --8<-- [end:StatsComponent-serialization] -->
+
+## Pipelines of anySeg { #anyseg }
+
+<!-- --8<-- [start:StatsComponent-anyseg] -->
+The tokenizer and the sentencizer of [anySeg](https://github.com/SergeyShk/anySeg) segment the text of a pipeline as the core segments a string: the tokenizer goes into the config of the pipeline (`anyseg.Tokenizer.v1`), since one set as `nlp.tokenizer` is not saved by `nlp.to_disk`, and the component `anyseg_sentencizer` gives the sentences and ends one after every blank line. A multiword token of the tokenizer, such as Spanish `del`, keeps its words of Universal Dependencies in `token._.anyseg_words`; the components read them through the document (`to_document`), and words without columns of their own are one word with the columns the tagger and the parser gave the token.
+<!-- --8<-- [end:StatsComponent-anyseg] -->
+
+=== "Code"
+
+    ``` python
+    import spacy
+
+    from anyts.document import to_document
+
+    config = {
+        "nlp": {
+            "tokenizer": {"@tokenizers": "anyseg.Tokenizer.v1"},
+            "pipeline": ["anyseg_sentencizer"],
+        },
+        "components": {"anyseg_sentencizer": {"factory": "anyseg_sentencizer"}},
+    }
+    nlp = spacy.blank("es", config=config)
+    doc = nlp("Vino del pueblo.\n\nSe fue al mar")
+    [token.text for token in doc]
+    [sentence.text for sentence in to_document(doc).sentences]
+    ```
+
+=== "Result"
+
+    ```
+    ['Vino', 'del', 'pueblo', '.', '\n\n', 'Se', 'fue', 'al', 'mar']
+    ['Vino del pueblo.', 'Se fue al mar']
+    ```
 
 ## Components of the classes of statistics { #class-components }
 
@@ -249,7 +282,7 @@ Raises:
 <summary>Language hooks of a subclass</summary>
 
 <!-- --8<-- [start:StatsComponent-hooks] -->
-A language library subclasses `StatsComponent` for every class of its statistics and registers the subclass as a factory under its prefix, `Language.factory("<prefix>_<statistics>")`, so that the factories of several libraries live in one process; declared as entry points of `spacy_factories`, they load with `spacy.load` without importing the library. The subclass sets the class of its statistics and checks its parameters in its `__init__` before calling the `__init__` of the base, so a wrong parameter fails at `add_pipe`. A wrong value of the config of a component of the core raises `ParameterError`, whatever the parameter; a library checks its own parameters the same way, with the `check_*` functions of `anyts.utils`, rather than leaving them to the validation of spaCy, which raises `ConfigValidationError` against the annotations of a factory. The components of the classes of statistics of the core already carry their parameters and checks; a library sets its subclass of the statistics on them.
+A language library subclasses `StatsComponent` for every class of its statistics and registers the subclass as a factory under its prefix, `Language.factory("<prefix>_<statistics>")`, so that the factories of several libraries live in one process; declared as entry points of `spacy_factories`, they load with `spacy.load` without importing the library. The subclass sets the class of its statistics and checks its parameters in its `__init__` before calling the `__init__` of the base, so a wrong parameter fails at `add_pipe`. A wrong value of the config of a component of the core raises `ParameterError`, whatever the parameter, once spaCy passes it to the component: a value a config cannot hold, such as an infinite number or a set, fails in spaCy first (`ValueError`); a library checks its own parameters the same way, with the `check_*` functions of `anyts.utils`, rather than leaving them to the validation of spaCy, which raises `ConfigValidationError` against the annotations of a factory. The components of the classes of statistics of the core already carry their parameters and checks; a library sets its subclass of the statistics on them.
 
 | Hook | Kind | Description |
 | :--- | :--- | :---------- |
