@@ -59,8 +59,9 @@ def kwic(
         Occurrences of a word or a phrase are found among the words of the
         document of the text (to_document with tokenize and sentenize) by the
         word form or by the lemma, when a word shares a lemma with its word of
-        the keyword; the keyword is split the same way. The words are the
-        tokens with a letter or a digit (document_words). Lemmas, and word
+        the keyword; the keyword is split as a string, so a tokenize that
+        splits a string as the pipeline does finds the same in a Doc. The words
+        are the tokens with a letter or a digit (document_words). Lemmas, and word
         forms with ignore_case, are folded by fold; forms are compared in NFC,
         without soft hyphens. A phrase does not cross the end of a sentence or
         a paragraph of the document unless the keyword has such an end in the

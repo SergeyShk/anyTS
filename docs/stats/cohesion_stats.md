@@ -89,7 +89,7 @@ Raises:
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
 | `source` | `str` / `Doc` / `Document` | - | Data source with the parts of speech and the lemmas, a text that `parse` annotates, or what `analyze` reads |
-| `sents_extractor` | `SentsExtractor` | `None` | Sentence extraction tool; given here, it splits the text in place of the sentences of the document, and the words outside its sentences are left out |
+| `sents_extractor` | `SentsExtractor` | `None` | Sentence extraction tool; given here, it splits the text in place of the sentences of the document, and the words outside its sentences are left out. Its sentences are found in the text in order, so one that is not a piece of the text is left out with its words |
 | `connectors` | `dict[str, tuple[str, str]]` | `None` | Class and kind by connector; those of `load_connectors` by default |
 | `blank_lines` | `bool` | `False` | Start the paragraphs after the blank lines alone, for a text whose lines are wrapped inside its paragraphs; after every line break by default |
 <!-- --8<-- [end:CohesionStats-parameters] -->

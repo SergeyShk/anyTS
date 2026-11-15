@@ -27,7 +27,7 @@ The full list of commands is in `make help`.
 Before submitting a pull request, these must pass:
 
 ```bash
-make lint        # ruff check, ruff format --check, mypy
+make lint        # ruff check --fix, ruff format, mypy (MODE=ci only checks)
 make test-cov    # pytest: tests and docstring examples (doctest), 100% coverage
 make docs-build  # mkdocs build --strict, if the documentation changed
 ```
@@ -39,7 +39,7 @@ A change that may slow the statistics down is measured with `make bench`: the cl
 ## What a pull request is expected to contain
 
 - **One topic per pull request.** Unrelated changes go separately.
-- **No language inside.** A tokenizer, a lemmatizer, a word list or a rule of one language comes as a class attribute that a library subclass overrides or as a function parameter with a neutral default. Dependency labels are only those shared by Universal Dependencies and ClearNLP (`cc`, `conj`, `parataxis`, `punct`, `ROOT`). Code, docstrings and documentation name no particular library.
+- **No language inside.** A tokenizer, a lemmatizer, a word list or a rule of one language comes as a class attribute that a library subclass overrides or as a function parameter with a neutral default. Dependency labels are only those shared by Universal Dependencies and ClearNLP (`cc`, `conj`, `parataxis`, `punct`, `root`). Code, docstrings and documentation name no particular library.
 - **Tests.** New code is covered by tests in `tests/` (mirroring the package) on neutral tokens; line and branch coverage stays at 100%. The values of new metrics are checked against an example computed by hand or against a reference implementation.
 - **Documentation.** The documentation is in English. The reference of every public function or class in `docs/` is a named section, `<!-- --8<-- [start:name] -->` ... `<!-- --8<-- [end:name] -->`, which the libraries include in their own pages: renaming or removing a section breaks their documentation build. A section is named after its function or class; the parts of a class page add a suffix (`WordsExtractor-parameters`, `WordsExtractor-extract`). Headings and examples stay outside the sections, since a library gives its own. Examples in docstrings and documentation show the actual output.
 - **Sources.** A new statistic cites the source of its formula in the docstring and on the documentation page; the implementation is checked against it, and differences from other libraries are stated explicitly.

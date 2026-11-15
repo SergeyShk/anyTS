@@ -10,7 +10,7 @@
 
     ---
 
-    Read a string, a spaCy `Doc` or a `Document` of [anySeg](https://github.com/SergeyShk/anySeg) as one document of tokens, words, sentences and paragraphs; a language library segments and annotates a string in its language
+    Read a string, a spaCy `Doc` or a `Document` of [anySeg](https://github.com/SergeyShk/anySeg) as one document of tokens, words, sentences and paragraphs; a language library segments and annotates a string in its language; code written for 0.4 moves as [the migration page](migration.md) says
 
     [:octicons-arrow-right-24: Document model](document.md)
 

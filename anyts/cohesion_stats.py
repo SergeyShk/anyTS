@@ -563,7 +563,7 @@ class CohesionStats(Stats):
     Arguments:
         source (str|Doc|Document): Data source (a string, a Doc or a Document object)
         sents_extractor (SentsExtractor): Sentence extraction tool; given, it splits the
-            text in place of the sentences of the document
+            text in place of the sentences of the document, found in the text in order
         connectors (dict[str, tuple[str, str]]): Class and kind by connector;
             load_connectors() by default
         blank_lines (bool): Start the paragraphs after the blank lines alone, for a text

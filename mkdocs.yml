@@ -8,6 +8,7 @@ nav:
       - About: index.md
       - Installation: installation.md
       - Document model: document.md
+      - Migrating from 0.4: migration.md
       - Exceptions: exceptions.md
       - Authors: authors.md
     - Extraction:
