@@ -3251,7 +3251,7 @@ Ratio of nouns to verbs                                    |   0.50
 <!-- --8<-- [start:calc_valency] -->
 <div class="signature highlight"><pre><span></span><code><span class="n">calc_valency</span><span class="p">(</span><span class="n">word</span><span class="p">)</span>
 </code></pre></div>
-<p>The valency of a word: the number of its dependent words (<code>get_children</code>), the relations <code>cc</code>, <code>conj</code>, <code>parataxis</code> and <code>punct</code> left out (<code>anyts.constants.VALENCY_IGNORED_DEPS</code>).</p>
+<p>The valency of a word: the number of its dependent words (<code>get_children</code>), the relations <code>cc</code>, <code>conj</code>, <code>parataxis</code> and <code>punct</code> and their subtypes (<code>parataxis:discourse</code>) left out (<code>anyts.constants.VALENCY_IGNORED_DEPS</code>).</p>
 <table>
 <thead>
 <tr>
@@ -3278,7 +3278,7 @@ Ratio of nouns to verbs                                    |   0.50
 <!-- --8<-- [start:calc_coordination_chains] -->
 <div class="signature highlight"><pre><span></span><code><span class="n">calc_coordination_chains</span><span class="p">(</span><span class="n">words</span><span class="p">)</span>
 </code></pre></div>
-<p>The lengths of the coordination chains, in the order of their first words. A chain is a group of words linked by <code>conj</code>, whichever word each conjunct hangs on: Universal Dependencies attaches every conjunct to the first one (<code>pears → apples</code>, <code>plums → apples</code>), ClearNLP to the previous one (<code>pears → apples</code>, <code>plums → pears</code>); both give one chain of three for <code>apples, pears and plums</code>. A nested coordination (<code>cats and dogs, or birds</code>) and an enumeration split between several heads are one chain too. The length of a chain is the number of its words; a conjunct whose head lies outside the sequence is not linked to it.</p>
+<p>The lengths of the coordination chains, in the order of their first words. A chain is a group of words linked by <code>conj</code> or a subtype of it, whichever word each conjunct hangs on: Universal Dependencies attaches every conjunct to the first one (<code>pears → apples</code>, <code>plums → apples</code>), ClearNLP to the previous one (<code>pears → apples</code>, <code>plums → pears</code>); both give one chain of three for <code>apples, pears and plums</code>. A nested coordination (<code>cats and dogs, or birds</code>) and an enumeration split between several heads are one chain too. The length of a chain is the number of its words; a conjunct whose head lies outside the sequence is not linked to it.</p>
 <table>
 <thead>
 <tr>

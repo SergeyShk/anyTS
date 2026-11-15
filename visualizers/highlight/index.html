@@ -2511,7 +2511,7 @@
 
 <h2 id="methods">Methods<a class="headerlink" href="#methods" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:HighlightedText-to_html] -->
-<p><code>to_html(legend=True, css=True)</code> returns the HTML markup of the highlighted text: a <code>div</code> of the class <code>&lt;prefix&gt;-highlight</code> with the legend, its counts and the text, where a highlighted segment is a <code>span</code> of the classes <code>&lt;prefix&gt;-hl</code> and <code>&lt;prefix&gt;-hl-&lt;layer&gt;</code> with the notes in its <code>title</code>; <code>&lt;prefix&gt;</code> is <code>css_prefix</code>. Overlapping fragments of different layers give segments with several classes, in the order of drawing. Line breaks (<code>\n</code>, <code>\r\n</code>, <code>\r</code>) become character references, one per break, so the markup can go into Markdown.</p>
+<p><code>to_html(legend=True, css=True)</code> returns the HTML markup of the highlighted text: a <code>div</code> of the class <code>&lt;prefix&gt;-highlight</code> with the legend, its counts and the text, where a highlighted segment is a <code>span</code> of the classes <code>&lt;prefix&gt;-hl</code> and <code>&lt;prefix&gt;-hl-&lt;layer&gt;</code> with the notes in its <code>title</code>; <code>&lt;prefix&gt;</code> is <code>css_prefix</code>. Overlapping fragments of different layers give segments with several classes, in the order of drawing. Line breaks (<code>LINE_BREAK</code>: <code>\n</code>, <code>\r\n</code>, <code>\r</code>, the vertical tab, the form feed, U+0085, U+2028, U+2029) become character references, one per break, so the markup can go into Markdown; the control characters HTML cannot hold, such as NUL, are left out.</p>
 <table>
 <thead>
 <tr>
