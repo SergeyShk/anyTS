@@ -533,7 +533,8 @@ def has_feature(word: TreeWord, field: str, value: str) -> bool:
     Returns:
         bool: Result of the check
     """
-    return value in word.feats.get(field, "").split(",")
+    values = word.feats.get(field)
+    return values is not None and value in values.split(",")
 
 
 def is_finite_verb(word: TreeWord) -> bool:

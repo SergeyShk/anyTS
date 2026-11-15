@@ -2,6 +2,8 @@ import gc
 import pickle
 import random
 import re
+import threading
+import weakref
 
 import pytest
 import spacy
@@ -169,7 +171,53 @@ def test_doc_converted_once():
     assert to_document(first) is not to_document(second)
     del first, second
     gc.collect()
-    assert document_module._last_converted == []
+    assert document_module._slot() == []
+
+
+def test_tree_of_the_last_doc_converted():
+    """The tree of the document of the last Doc converted is built once; a Document passed as it
+    is, which may change, gets a tree of its own every time; threads keep their own slots"""
+    vocab = spacy.blank("en").vocab
+    doc = Doc(vocab, words=["Cats", "sleep"], heads=[1, 1], deps=["nsubj", "ROOT"])
+    tree = get_tree(to_document(doc))
+    assert get_tree(to_document(doc)) is tree
+    document = Document.from_tokens("A b", [0, 2], [1, 3])
+    assert get_tree(document) is not get_tree(document)
+    other = Doc(vocab, words=["Dogs", "bark"], heads=[1, 1], deps=["nsubj", "ROOT"])
+    slots = []
+
+    def convert():
+        get_tree(to_document(other))
+        slots.append(weakref.ref(document_module._slot()))
+
+    # The slot of a thread goes with it, without the garbage collector
+    gc.disable()
+    try:
+        thread = threading.Thread(target=convert)
+        thread.start()
+        thread.join()
+        assert slots[0]() is None
+    finally:
+        gc.enable()
+    assert get_tree(to_document(doc)) is tree
+    # A thread may end while the callbacks of a Doc run, and its slot with it
+    document_module._forget(weakref.ref(document_module._Slot()), weakref.ref(doc))
+
+
+def test_tree_for_one_use():
+    """A tree no slot keeps is broken after its use, the tree of the slot stays whole"""
+    vocab = spacy.blank("en").vocab
+    doc = Doc(vocab, words=["Cats", "sleep"], heads=[1, 1], deps=["nsubj", "ROOT"])
+    with document_module._tree_once(to_document(doc)) as tree:
+        pass
+    assert tree is get_tree(to_document(doc))
+    assert tree.words[0].head is tree.words[1]
+    with document_module._tree_once(pickle.loads(pickle.dumps(to_document(doc)))) as tree:
+        cats, sleep = tree.words
+        assert cats.head is sleep
+    assert cats.head is None
+    assert sleep.children == ()
+    assert not hasattr(cats, "tree")
 
 
 def test_sentences_of_a_hook():

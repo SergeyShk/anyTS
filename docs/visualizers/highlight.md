@@ -84,7 +84,7 @@ A fragment of the highlighting: an immutable object with the parameters as its f
 ## Methods
 
 <!-- --8<-- [start:HighlightedText-to_html] -->
-`to_html(legend=True, css=True)` returns the HTML markup of the highlighted text: a `div` of the class `<prefix>-highlight` with the legend, its counts and the text, where a highlighted segment is a `span` of the classes `<prefix>-hl` and `<prefix>-hl-<layer>` with the notes in its `title`; `<prefix>` is `css_prefix`. Overlapping fragments of different layers give segments with several classes, in the order of drawing. Line breaks (`\n`, `\r\n`, `\r`) become character references, one per break, so the markup can go into Markdown.
+`to_html(legend=True, css=True)` returns the HTML markup of the highlighted text: a `div` of the class `<prefix>-highlight` with the legend, its counts and the text, where a highlighted segment is a `span` of the classes `<prefix>-hl` and `<prefix>-hl-<layer>` with the notes in its `title`; `<prefix>` is `css_prefix`. Overlapping fragments of different layers give segments with several classes, in the order of drawing. Line breaks (`LINE_BREAK`: `\n`, `\r\n`, `\r`, the vertical tab, the form feed, U+0085, U+2028, U+2029) become character references, one per break, so the markup can go into Markdown; the control characters HTML cannot hold, such as NUL, are left out.
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |

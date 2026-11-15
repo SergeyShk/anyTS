@@ -89,7 +89,7 @@ The thresholds of the core are `COMPLEX_SYL_FACTOR = 3` and `LONG_WORD_LETTER_FA
 | `n_simple_words` | `int` | Number of simple words: with a syllable, below the complex ones | `p_simple_words` |
 | `n_monosyllable_words` | `int` | Number of monosyllabic words | `p_monosyllable_words` |
 | `n_polysyllable_words` | `int` | Number of polysyllabic words, of two syllables or more | `p_polysyllable_words` |
-| `n_chars` | `int` | Number of characters without the line breaks | - |
+| `n_chars` | `int` | Number of characters without the line breaks (`LINE_BREAK`: `\n`, `\r\n`, `\r`, the vertical tab, the form feed, U+0085, U+2028, U+2029) | - |
 | `n_letters` | `int` | Number of letters | `p_letters` |
 | `n_spaces` | `int` | Number of spaces of Unicode (category Zs), such as the no-break space, and tabs | `p_spaces` |
 | `n_syllables` | `int` | Number of syllables | - |

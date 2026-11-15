@@ -503,6 +503,21 @@ class TestCharNgramsExtractor:
         assert CharNgramsExtractor(n=1).extract("ñu") == ("ñ", "u")
         assert CharNgramsExtractor(n=4).extract("ñu") == ()
         assert CharNgramsExtractor().extract("") == ()
+        # The invisible separators that join nothing are left out, the joiners stay
+        assert CharNgramsExtractor(n=3).extract("\ufeffca\u00adt\u200b \u2060s") == (
+            "cat",
+            "at ",
+            "t s",
+        )
+        assert CharNgramsExtractor(n=3).extract("a\u200db") == ("a\u200db",)
+        # A zero-width space parts the words, inside them too
+        assert CharNgramsExtractor(within_words=True).extract("cat\u200bdog") == (
+            "ca",
+            "at",
+            "do",
+            "og",
+        )
+        assert CharNgramsExtractor(n=3).extract("cat\u200bdog")[2:4] == ("t d", " do")
 
     def test_lowercase(self):
         ce = CharNgramsExtractor(n=3, lowercase=True)

@@ -26,6 +26,9 @@ from .utils import (
 from .utils import NUMBER_PATTERN as NUMBER_PATTERN
 
 Tokenizer = Pattern[str] | Callable[[str], Iterable[str]]
+# Invisible separators left out of the character n-grams: the soft hyphen, the zero-width
+# space, the word joiner and the byte order mark; a zero-width space between words is a space
+_INVISIBLE = dict.fromkeys(map(ord, "\u00ad\u200b\u2060\ufeff"))
 # The end of a sentence: a final mark, the closing marks after it and the whitespace (group 1)
 _SENTENCE_BOUNDARY = re.compile(r"(?<=[.!?…])[\"'»”’)\]]*(\s+)")
 
@@ -652,8 +655,10 @@ class CharNgramsExtractor(Extractor):
         A sliding window over the text with whitespace runs collapsed into one
         space and punctuation kept (Stamatatos 2009); with within_words, over
         each word of the tokenizer, punctuation dropped, so words shorter than
-        N yield no N-grams. The default word tokenizer is the method tokenize,
-        which a language library overrides; here it is that of WordsExtractor
+        N yield no N-grams. The soft hyphen, the word joiner and the byte order
+        mark are left out, and a zero-width space is a space between words. The
+        default word tokenizer is the method tokenize, which a language library
+        overrides; here it is that of WordsExtractor
 
     Arguments:
         n (int): N-gram length in characters
@@ -720,10 +725,12 @@ class CharNgramsExtractor(Extractor):
             text = text.lower()
         if self.within_words:
             units = [
-                word for word in self._tokenize(text, self.tokenize) if not is_punctuation(word)
+                word.translate(_INVISIBLE)
+                for word in self._tokenize(text, self.tokenize)
+                if not is_punctuation(word)
             ]
         else:
-            units = [" ".join(text.split())]
+            units = [" ".join(text.replace("\u200b", " ").translate(_INVISIBLE).split())]
         self.ngrams = tuple(
             unit[index : index + self.n]
             for unit in units

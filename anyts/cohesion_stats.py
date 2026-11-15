@@ -21,7 +21,7 @@ from .constants import (
     MESSAGES,
     TEMPORAL_FEATURES,
 )
-from .document import TreeWord, get_tree
+from .document import Tree, TreeWord, _tree_once
 from .exceptions import ParameterError, SourceError, SourceTypeError
 from .extractors import SentsExtractor
 from .stats import Stats
@@ -796,8 +796,9 @@ class CohesionStats(Stats):
             parts of a word), paragraph_start when a line break (LINE_BREAK)
             does, or a blank line (BLANK_LINE) with blank_lines, between the
             words of the sentences, and the words of a multiword token get its
-            text in token; a library that reads the features another way
-            overrides it
+            text in token. The tree of a string or a Document is released after
+            the analysis, and word_info is not to keep a word of it; a library
+            that reads the features another way overrides it
 
         Arguments:
             source (str|Doc|Document): Data source
@@ -810,8 +811,12 @@ class CohesionStats(Stats):
                 object, or parse does not return a Document
             SourceError: If the words of the source have no parts of speech or no lemmas
         """
+        with _tree_once(self._document(source)) as tree:
+            return self._analyzed(tree)
+
+    def _analyzed(self, tree: Tree) -> list[list[Any]]:
+        """Words of the sentences of a tree with their features, as analyze gives them"""
         messages = self.messages
-        tree = get_tree(self._document(source))
         words = [word for word in tree.words if has_words(word.form)]
         if not words:
             return []

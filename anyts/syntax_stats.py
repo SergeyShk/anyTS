@@ -682,7 +682,7 @@ class SyntaxStats(Stats):
         Description:
             A participle (VerbForm=Part) that is not the head of the sentence,
             has no auxiliary or copula (has been built is a predicate) and has a
-            dependent besides cc, conj and parataxis (calc_valency)
+            dependent besides cc, conj, parataxis and punct (calc_valency)
 
         Arguments:
             word (TreeWord): Word of the tree
@@ -1240,7 +1240,8 @@ def calc_valency(word: TreeWord) -> int:
     Computing the valency of a word
 
     Description:
-        The number of dependent words without cc, conj and parataxis
+        The number of dependent words without cc, conj, parataxis and punct
+        and their subtypes (parataxis:discourse)
 
     Arguments:
         word (TreeWord): Word of the tree
@@ -1248,7 +1249,7 @@ def calc_valency(word: TreeWord) -> int:
     Returns:
         int: Number of dependent words
     """
-    return sum(1 for child in get_children(word) if child.deprel not in VALENCY_IGNORED_DEPS)
+    return sum(1 for child in get_children(word) if base_dep(child) not in VALENCY_IGNORED_DEPS)
 
 
 def calc_coordination_chains(words: Iterable[TreeWord]) -> list[int]:
@@ -1256,8 +1257,8 @@ def calc_coordination_chains(words: Iterable[TreeWord]) -> list[int]:
     Computing the lengths of the coordination chains
 
     Description:
-        A chain is a group of words linked by conj, whichever word each
-        conjunct hangs on (the first one in Universal Dependencies, the
+        A chain is a group of words linked by conj or a subtype of it,
+        whichever word each conjunct hangs on (the first one in Universal Dependencies, the
         previous one in ClearNLP); a nested coordination (A and B, or C) and an
         enumeration split between several heads are one chain. Its length is
         the number of its words
@@ -1273,7 +1274,7 @@ def calc_coordination_chains(words: Iterable[TreeWord]) -> list[int]:
     links = [
         (word.index, word.head.index)
         for word in words
-        if word.deprel == "conj" and word.head is not None and word.head.index in ids
+        if base_dep(word) == "conj" and word.head is not None and word.head.index in ids
     ]
     return _chain_sizes([word.index for word in words], links)
 

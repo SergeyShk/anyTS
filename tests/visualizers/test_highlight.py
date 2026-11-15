@@ -411,6 +411,12 @@ def test_to_html_escaping():
         markup = Marks(sample, layers="stopwords").to_html()
         assert "\r" not in markup
         assert markup.count("&#10;") == 3
+    # Every line break of LINE_BREAK is a break, and the control characters of HTML go
+    markup = Marks(
+        "The cat\x0csleeps.\u2029The dog\x00 eats\u2028now.", layers="stopwords"
+    ).to_html()
+    assert markup.count("&#10;") == 3
+    assert "\x00" not in markup and "\x0c" not in markup and "\u2029" not in markup
 
 
 def test_css():
