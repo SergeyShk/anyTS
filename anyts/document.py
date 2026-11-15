@@ -57,7 +57,11 @@ def to_document(
     Description:
         A Document of anySeg is returned as it is. A Doc of spaCy keeps its
         tokens, their columns (lemma, part of speech, features, head and
-        relation) and its sentences (anyseg.spacy.from_doc); a Doc with no or
+        relation) and its sentences (anyseg.spacy.from_doc), those of a hook
+        (user_hooks["sents"]) of a Doc without a parse too; a multiword token
+        of anySeg whose words have no columns of their own is one word with the
+        columns and the head of the token, as the pipeline annotated it. A Doc
+        with no or
         only partial sentence starts (a token whose is_sent_start is unset), as
         before the parser, senter or sentencizer, and without a parse gets those
         of sentenize on its text. A string is split into tokens by tokenize and
