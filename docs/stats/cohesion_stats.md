@@ -5,7 +5,7 @@ CohesionStats(source, sents_extractor=None, connectors=None, blank_lines=False)
 ```
 
 <!-- --8<-- [start:CohesionStats] -->
-The cohesion statistics of a text in the manner of Coh-Metrix: the overlap of the sentences, the givenness, the temporal cohesion and the connectors of a dictionary. The sentences are compared by lemmas. The data source is a text, a `Doc` object of [spaCy](https://github.com/explosion/spaCy) or a `Document` of [anySeg](https://github.com/SergeyShk/anySeg) with parts of speech and lemmas; a language library annotates a string in its `parse`. The words are those of Universal Dependencies of its [document](https://sergeyshk.github.io/anyTS/document/#get_tree) (`get_tree`) with a letter or a digit, split into sentences by the document, or by the sentence extractor over its text when one is given.
+The cohesion statistics of a text in the manner of Coh-Metrix: the overlap of the sentences, the givenness, the temporal cohesion and the connectors of a dictionary. The sentences are compared by lemmas. The data source is a text, a `Doc` object of [spaCy](https://github.com/explosion/spaCy) or a `Document` of [anySeg](https://github.com/SergeyShk/anySeg) with parts of speech and lemmas; a language library annotates a string in its `parse`. The words are those of Universal Dependencies of its [document](https://sergeyshk.github.io/anyTS/document/#get_tree) (`get_tree`) with a letter or a digit, split into sentences by the document, or by the sentence extractor over its text when one is given. The words of a connector of several words (*por lo tanto*, *es decir*) link the sentences and refer to nothing: they are no nouns, pronouns or content words and give no tense, mood or aspect.
 
 Raises:
 

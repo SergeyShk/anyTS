@@ -45,6 +45,18 @@ if TYPE_CHECKING:
 _NO_POSITIONS: frozenset[int] = frozenset()
 _PARAGRAPH_START = attrgetter("paragraph_start")
 _CONNECTOR_BLOCKED = attrgetter("connector_blocked")
+# The features of a word of a connector of several words, which links the sentences and refers to
+# nothing
+_PLAIN_WORD: dict[str, Any] = {
+    "noun": False,
+    "pronoun": False,
+    "demonstrative": False,
+    "argument": False,
+    "content": False,
+    "tense": None,
+    "mood": None,
+    "aspect": None,
+}
 
 
 class Overlap(NamedTuple):
@@ -549,7 +561,10 @@ class CohesionStats(Stats):
         Cohesion in the manner of Coh-Metrix: the overlap of the nouns, of the
         arguments and of the content words between sentences, the givenness,
         the temporal cohesion and the connectors of a dictionary per 1000
-        words. The sentences are compared by lemmas.
+        words. The sentences are compared by lemmas. The words of a connector
+        of several words (por lo tanto, es decir) link the sentences and refer
+        to nothing: they are no nouns, pronouns or content words and give no
+        tense, mood or aspect.
         A language library subclasses the class and sets its hooks; by default
         the words are those of the tree of the document of parse (get_tree)
         with their parts of speech, lemmas and features of Universal
@@ -728,6 +743,12 @@ class CohesionStats(Stats):
         self.lemmas = tuple(tuple(word.lemma for word in sent) for sent in sents)
         self.n_sents = len(sents)
         self.n_words = sum(len(sent) for sent in sents)
+        self.connector_spans = tuple(
+            connector
+            for index, sent in enumerate(sents)
+            for connector in _sentence_connectors(matcher, index, sent)
+        )
+        sents = _without_connector_words(sents, self.connector_spans)
 
         nouns = [frozenset(word.lemma for word in sent if word.noun) for sent in sents]
         arguments = [frozenset(word.lemma for word in sent if word.argument) for sent in sents]
@@ -776,11 +797,6 @@ class CohesionStats(Stats):
             getattr(self, f"{feature}_repetition") for feature in self.temporal_features
         )
 
-        self.connector_spans = tuple(
-            connector
-            for index, sent in enumerate(sents)
-            for connector in _sentence_connectors(matcher, index, sent)
-        )
         self.n_connectors = len(self.connector_spans)
         self.n_inter_connectors = sum(
             1
@@ -1062,6 +1078,23 @@ def _sentence_connectors(
         connector._replace(start=bounds[connector.start], end=bounds[connector.end])
         for connector in found
     ]
+
+
+def _without_connector_words(
+    sents: list[tuple[CohesionWord, ...]], connectors: Sequence[Connector]
+) -> list[tuple[CohesionWord, ...]]:
+    """The sentences with the words of the connectors of several words as plain words: they are no
+    nouns, pronouns or content words and give no tense, mood or aspect (por lo tanto, es decir)"""
+    inside: dict[int, set[int]] = {}
+    for connector in connectors:
+        if " " in connector.text:
+            inside.setdefault(connector.sent, set()).update(range(connector.start, connector.end))
+    for index, positions in inside.items():
+        sents[index] = tuple(
+            word._replace(**_PLAIN_WORD) if position in positions else word
+            for position, word in enumerate(sents[index])
+        )
+    return sents
 
 
 def _token_texts(sent: Sequence[TreeWord], text: str) -> list[str | None]:
