@@ -261,6 +261,35 @@ def test_multiword_tokens_merged_in_one_pass(monkeypatch):
     assert [word.form for word in merged.words] == ["al", "del"] * 3
 
 
+def test_sentences_of_a_doc_in_one_pass(monkeypatch):
+    """The sentences of a Doc without them read the starts of its tokens a fixed number of times,
+    however many sentences it has"""
+    tokens = Document.tokens
+    reads = []
+
+    class Tokens:
+        def __init__(self, found):
+            self.found = found
+
+        def __getattr__(self, name):
+            reads.append(name)
+            return getattr(self.found, name)
+
+        def __iter__(self):
+            return iter(self.found)
+
+        def __len__(self):
+            return len(self.found)
+
+        def __getitem__(self, index):
+            return self.found[index]
+
+    monkeypatch.setattr(Document, "tokens", property(lambda self: Tokens(tokens.__get__(self))))
+    document = to_document(spacy.blank("en")("One. Two. " * 50))
+    assert len(document.sentences) == 100
+    assert reads.count("starts") <= 5
+
+
 def test_doc_columns():
     vocab = spacy.blank("en").vocab
     doc = Doc(
