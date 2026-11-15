@@ -196,8 +196,9 @@ class SyntaxStats(Stats):
 
     Raises:
         SourceTypeError: If the source is neither a string, a Doc nor a Document
-            object or parse does not return a Document; when a class is defined, if
-            its negation_words or subordinating_marks are not a collection of strings
+            object, parse does not return a Document or find_split_predicates does not
+            return pairs of TreeWord objects; when a class is defined, if its
+            negation_words or subordinating_marks are not a collection of strings
         SourceError: If the source has no dependency parse, no parts of speech, no
             lemmas when requires_lemmas, or no words, or a token of a Doc runs over a
             blank line
@@ -275,7 +276,9 @@ class SyntaxStats(Stats):
         self.n_agentless_passive = sum(1 for word in passive if self.is_agentless(word))
         self.n_infinitives = sum(1 for word in words if is_infinitive(word))
         self.n_negations = sum(1 for word in words if self.is_negation(word))
-        split_predicates = self.find_split_predicates(words)
+        split_predicates = _word_pairs(
+            self, "find_split_predicates", self.find_split_predicates(words)
+        )
         self.n_split_predicates = len(split_predicates)
         self.split_predicates = tuple(
             f"{verb.form} {noun.form}" for verb, noun in split_predicates
@@ -760,6 +763,24 @@ class SyntaxStats(Stats):
                 words
         """
         return []
+
+
+def _word_pairs(owner: Any, hook: str, result: object) -> tuple[tuple[TreeWord, TreeWord], ...]:
+    """Pairs of words a hook of a class returns, checked to be pairs of TreeWord objects"""
+    pairs = tuple(result) if isinstance(result, Iterable) else (result,)
+    for pair in pairs:
+        if isinstance(pair, tuple | list) and len(pair) == 2:
+            wrong = [word for word in pair if not isinstance(word, TreeWord)]
+            kind = type(wrong[0]).__name__ if wrong else None
+        else:
+            kind = type(pair).__name__
+        if kind is not None:
+            raise SourceTypeError(
+                owner.messages["hook_word_pairs"].format(
+                    hook=hook, cls=type(owner).__name__, type=kind
+                )
+            )
+    return cast(tuple[tuple[TreeWord, TreeWord], ...], pairs)
 
 
 def _is_word(word: TreeWord) -> bool:

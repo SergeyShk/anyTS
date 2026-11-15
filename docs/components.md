@@ -62,7 +62,7 @@ A component of the lexical diversity of the words of a `Doc`:
 ## Names { #names }
 
 <!-- --8<-- [start:StatsComponent-names] -->
-The name of the pipe is the name of the extension: `nlp.add_pipe(factory, name="basic")` puts the statistics into `doc._.basic`. Without `name` both take the name of the factory. The extension follows the pipe when the pipeline renames it (`nlp.rename_pipe`). A name taken by an extension of another package raises `ParameterError` instead of replacing it: at `add_pipe`, or at the first document after `rename_pipe`, which renames the pipe before the component learns its name. A component taken from another pipeline (`add_pipe(name, source=other)`) is the same object in both, so under a new name it writes to that extension in the other pipeline too; a separate component comes from the factory, `add_pipe(factory, name=...)`. The same component can be added twice under different names, with different parameters. A document with no words - an empty string, whitespace, punctuation alone - passes through a component untouched, its extension left at `None`.
+The name of the pipe is the name of the extension: `nlp.add_pipe(factory, name="basic")` puts the statistics into `doc._.basic`. Without `name` both take the name of the factory. The extension follows the pipe when the pipeline renames it (`nlp.rename_pipe`), and an extension removed by `Doc.remove_extension` while the component lives is registered again at its next document. A name taken by an extension of another package raises `ParameterError` instead of replacing it: at `add_pipe`, or at the first document after `rename_pipe`, which renames the pipe before the component learns its name. A component taken from another pipeline (`add_pipe(name, source=other)`) is the same object in both, so under a new name it writes to that extension in the other pipeline too; a separate component comes from the factory, `add_pipe(factory, name=...)`. The same component can be added twice under different names, with different parameters. A document with no words - an empty string, whitespace, punctuation alone - passes through a component untouched, its extension left at `None`.
 <!-- --8<-- [end:StatsComponent-names] -->
 
 <!-- --8<-- [start:StatsComponent-serialization] -->
@@ -125,7 +125,7 @@ With `preset` left at `None` the config of a saved pipeline holds no preset, and
 
 Raises:
 
-- `ParameterError` - a `stats_class` that is not concrete, a preset that is not a string or not one of the class, an extension not named by a string;
+- `ParameterError` - a `stats_class` that is not concrete, a preset that is not a string or not one of the class, an extension not named by a string or named by an empty one;
 - `SourceTypeError` - a class without `basic_stats_class` and no `basic`;
 - `SourceError` - a document whose extension `basic` holds no basic statistics of the class.
 <!-- --8<-- [end:ReadabilityStatsComponent] -->
@@ -238,7 +238,7 @@ UnadaptedReadabilityStatsComponent(nlp, name, basic=None)
 
 Raises:
 
-- `ParameterError` - a `stats_class` that is not concrete, an extension not named by a string;
+- `ParameterError` - a `stats_class` that is not concrete, an extension not named by a string or named by an empty one;
 - `SourceTypeError` - a class without `basic_stats_class` and no `basic`;
 - `SourceError` - a document whose extension `basic` holds no basic statistics of the class.
 <!-- --8<-- [end:UnadaptedReadabilityStatsComponent] -->

@@ -859,7 +859,7 @@ A language library subclasses `SyntaxStats`. The hooks of a word get a `TreeWord
 | `is_passive(word)` | method | Whether a word is a passive verb form; by default `is_passive` of the module |
 | `is_agentless(word)` | method | Whether a passive form has no agent; by default the hook `is_passive` without an agent (`has_agent` of the module) |
 | `is_negation(word)` | method | Whether a word is a word of negation; by default `Polarity=Neg` or a word of `negation_words`, a conjunction excluded |
-| `find_split_predicates(words)` | method | Pairs of a light verb and the noun that carries its meaning (`to make a decision`) among the words of the text; none by default |
+| `find_split_predicates(words)` | method | Pairs of a light verb and the noun that carries its meaning (`to make a decision`) among the words of the text; none by default. A result that is not pairs of `TreeWord` objects raises `SourceTypeError` |
 | `negation_words` | class attribute | Words of negation besides `Polarity=Neg`, in lower case; none by default |
 | `subordinating_marks` | class attribute | Subordinating conjunctions in lower case, the words of a fixed expression after a space, for the hook `is_subordinating_mark` (*because*, *so that*); none by default |
 | `requires_lemmas` | class attribute | Whether the source must carry lemmas, for hooks that read them |

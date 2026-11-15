@@ -210,7 +210,7 @@ A language library subclasses `BasicStats`:
 | Hook | Kind | Description |
 | :--- | :--- | :---------- |
 | `count_syllables(word)` | method | The syllables of a word; abstract |
-| `doc_words(document)` | method | The words of a document; `document_words` by default, overridden to normalize the forms of the words of a language |
+| `doc_words(document)` | method | The words of a document; `document_words` by default, overridden to normalize the forms of the words of a language; a result that is not a sequence of strings raises `SourceTypeError` |
 | `count_punctuations(text)` | method | The punctuation marks by type; `count_punctuations` of the module by default |
 | `stats_desc` | class attribute | The counts of `get_stats` with their descriptions for `print_stats`; `anyts.constants.BASIC_STATS_DESC` by default |
 

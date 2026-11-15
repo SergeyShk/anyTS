@@ -319,6 +319,18 @@ CASES = [
     ("connector_blocked_type", ParameterError, lambda: Matcher({}).find(["a"], blocked=[0.5])),
     ("connector_pos_type", SourceTypeError, lambda: Matcher({}).find(["and"], pos=[1])),
     ("connector_class", ParameterError, lambda: Matcher({"and": ("other", "primary")})),
+    (
+        "hook_string",
+        SourceTypeError,
+        lambda: hooked(Matcher, normalize=lambda self, word: None)(
+            {"and": ("additive", "primary")}
+        ),
+    ),
+    (
+        "matcher_class",
+        ParameterError,
+        lambda: type("Bad", (Cohesion,), {"connector_matcher_class": dict}),
+    ),
     ("connector_pos", ParameterError, lambda: Matcher({}).find(["and"], pos=[])),
     ("connector_breaks", ParameterError, lambda: Matcher({}).find(["a", "b"], breaks={2})),
     ("connector_breaks_short", ParameterError, lambda: Matcher({}).find(["a"], breaks={1})),
@@ -428,6 +440,14 @@ CASES = [
         SourceTypeError,
         lambda: hooked(Phon, syllabify=lambda self, word: None)(TEXT),
     ),
+    ("hook_words", SourceTypeError, lambda: hooked(Phon, doc_words=lambda self, d: [5])(TEXT)),
+    ("hook_words", SourceTypeError, lambda: hooked(Stats, doc_words=lambda self, d: "a")(TEXT)),
+    ("hook_words", SourceTypeError, lambda: hooked(Style, doc_words=lambda self, d: 5)(TEXT)),
+    (
+        "hook_word_pairs",
+        SourceTypeError,
+        lambda: hooked(Syntax, find_split_predicates=lambda self, words: ["ab"])(TAGGED_PARSE),
+    ),
     (
         "hook_sounds",
         SourceTypeError,
@@ -503,6 +523,16 @@ CASES = [
         "extension_name",
         ParameterError,
         lambda: OwnReadability(spacy.blank("en"), "own_r", basic=5),
+    ),
+    (
+        "empty_extension",
+        ParameterError,
+        lambda: OwnReadability(spacy.blank("en"), "own_r", basic=""),
+    ),
+    (
+        "empty_extension",
+        ParameterError,
+        lambda: OwnUnadapted(spacy.blank("en"), "own_u", basic=""),
     ),
     ("no_basic_stats_class", SourceTypeError, lambda: OwnUnadapted(spacy.blank("en"), "own_u")),
     (

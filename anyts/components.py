@@ -132,6 +132,9 @@ class StatsComponent:
         """Checking that the extension of the name is not one of another package"""
         from spacy.tokens import Doc
 
+        # An extension removed by Doc.remove_extension belongs to no package
+        if not Doc.has_extension(self._name):
+            _register(self._name)
         if self._name not in _EXTENSIONS or Doc.get_extension(self._name) != (None,) * 4:
             raise ParameterError(self.messages["foreign_extension"].format(name=self._name))
 
@@ -287,7 +290,8 @@ class ReadabilityStatsComponent(StatsComponent):
 
     Raises:
         ParameterError: If the class of statistics is not concrete, the preset is not a
-            string or is not one of the class, or the extension is not named by a string
+            string or is not one of the class, or the extension is not named by a
+            non-empty string
         SourceTypeError: If the class has no basic_stats_class to read a document and
             no basic statistics are reused
         SourceError: If the named extension holds no basic statistics of the class
@@ -313,8 +317,7 @@ class ReadabilityStatsComponent(StatsComponent):
                 raise ParameterError(
                     messages["unknown_preset"].format(preset=preset, presets=tuple(presets))
                 )
-        if basic is not None and not isinstance(basic, str):
-            raise ParameterError(messages["extension_name"].format(type=type(basic).__name__))
+        _check_basic(basic, messages)
         self.preset = preset
         self.basic = basic
         super().__init__(nlp, name)
@@ -329,6 +332,14 @@ class ReadabilityStatsComponent(StatsComponent):
         if self.preset is None:
             return stats_class(source)
         return stats_class(source, preset=self.preset)
+
+
+def _check_basic(basic: str | None, messages: Mapping[str, str]) -> None:
+    """Checking the name of the extension of the basic statistics to reuse"""
+    if basic is not None and not isinstance(basic, str):
+        raise ParameterError(messages["extension_name"].format(type=type(basic).__name__))
+    if basic == "":
+        raise ParameterError(messages["empty_extension"])
 
 
 class DiversityStatsComponent(StatsComponent):
@@ -600,7 +611,7 @@ class UnadaptedReadabilityStatsComponent(StatsComponent):
 
     Raises:
         ParameterError: If the class of statistics is not concrete or the extension is
-            not named by a string
+            not named by a non-empty string
         SourceTypeError: If the class has no basic_stats_class to read a document and
             no basic statistics are reused
         SourceError: If the named extension holds no basic statistics of the class
@@ -616,8 +627,7 @@ class UnadaptedReadabilityStatsComponent(StatsComponent):
             raise SourceTypeError(
                 messages["no_basic_stats_class"].format(cls=stats_class.__name__)
             )
-        if basic is not None and not isinstance(basic, str):
-            raise ParameterError(messages["extension_name"].format(type=type(basic).__name__))
+        _check_basic(basic, messages)
         self.basic = basic
         super().__init__(nlp, name)
 

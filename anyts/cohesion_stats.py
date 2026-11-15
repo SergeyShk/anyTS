@@ -140,8 +140,8 @@ class ConnectorMatcher:
 
     Raises:
         SourceTypeError: If the connectors are not a dictionary of a phrase and a pair
-            of strings; when a class is defined, if its rules are not collections of
-            strings or mappings of strings to them
+            of strings, or normalize does not return a string; when a class is defined,
+            if its rules are not collections of strings or mappings of strings to them
         ParameterError: If a connector has an unknown class or kind; when a class is
             defined, if a class or a kind takes the name inter or intra of the
             densities by place (CohesionStats)
@@ -233,7 +233,14 @@ class ConnectorMatcher:
             cls, kind = value
             if cls not in self.classes or kind not in self.kinds:
                 raise ParameterError(self.messages["connector_class"].format(cls=cls, kind=kind))
-            key = " ".join(self.normalize(connector).split())
+            normalized = self.normalize(connector)
+            if not isinstance(normalized, str):
+                raise SourceTypeError(
+                    self.messages["hook_string"].format(
+                        hook="normalize", cls=type(self).__name__, type=type(normalized).__name__
+                    )
+                )
+            key = " ".join(normalized.split())
             split = " ".join(key.replace("-", " ").replace(".", " ").split())
             # Tokens of UD may keep the period of each part of an abbreviation (e., g.)
             dotted = " ".join(key.replace(".", ". ").split())
@@ -639,6 +646,7 @@ class CohesionStats(Stats):
             for the default word_info (analyze), or there are no words
         ParameterError: If a connector has an unknown class or kind; when a class is
             defined, if its temporal features are not one or more distinct known ones
+            or its connector_matcher_class is not a subclass of ConnectorMatcher
     """
 
     connector_matcher_class: ClassVar[type[ConnectorMatcher]] = ConnectorMatcher
@@ -669,6 +677,11 @@ class CohesionStats(Stats):
                 cls.messages["temporal_features"].format(
                     cls=cls.__name__, features=TEMPORAL_FEATURES, value=repr(features)
                 )
+            )
+        matcher = cls.connector_matcher_class
+        if not (isinstance(matcher, type) and issubclass(matcher, ConnectorMatcher)):
+            raise ParameterError(
+                cls.messages["matcher_class"].format(cls=cls.__name__, value=repr(matcher))
             )
 
     def __init__(

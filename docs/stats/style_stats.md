@@ -391,7 +391,7 @@ A language library subclasses `StyleStats`; by default the hooks know no languag
 | :--- | :--- | :---------- |
 | `compound_prepositions_list`, `parentheticals_list`, `cliches_list` | class attributes | Compound prepositions, parenthetical expressions and cliches, checked as lists of strings when the class is defined; the parameter `cliches` replaces the last |
 | `normalize(word)` | method | Normalized form of a word or a phrase, by which the lists and the keywords are compared; the lower case by default |
-| `doc_words(document)` | method | Words of a document in lower case; those of `document_words` by default, overridden to normalize the forms of the words of a language |
+| `doc_words(document)` | method | Words of a document in lower case; those of `document_words` by default, overridden to normalize the forms of the words of a language; a result that is not a sequence of strings raises `SourceTypeError` |
 | `is_stopword(word)` | method | Whether a word is a stopword of the academic nausea, when `nausea_stopwords` is not given |
 | `is_water_word(word)` | method | Whether a word is water, when `stopwords` is not given; `is_stopword` by default |
 | `is_parenthetical(word)` | method | Whether a word is a parenthetical expression by itself, outside the phrases of `parentheticals_list` |

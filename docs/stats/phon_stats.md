@@ -319,7 +319,7 @@ A language library subclasses `PhonStats`:
 | `syllabify(word)` | method | Syllables of a word as it writes them; an abstract method |
 | `syllable_sounds(word)` | method | Sounds of every syllable of a word; the transcription of every syllable of `syllabify` by default |
 | `word_hiatus(word)` | method | Number of the hiatuses of a word; its runs of vowels by `count_hiatus` with `glides` by default, or for instance the vowels at the boundaries of its syllables |
-| `doc_words(document)` | method | Words of a document in lower case; those of `document_words` by default, overridden to normalize the forms of the words of a language |
+| `doc_words(document)` | method | Words of a document in lower case; those of `document_words` by default, overridden to normalize the forms of the words of a language; a result that is not a sequence of strings raises `SourceTypeError` |
 | `parse(source)` | method | Document of the source, from `Stats` |
 | `stats_desc`, `stats_headers` | class attributes | Statistics of `get_stats` with their descriptions (`anyts.constants.PHON_STATS_DESC` by default), headers of the columns for `print_stats` |
 | `messages` | class attribute | Messages of the errors by key; `MESSAGES` by default |

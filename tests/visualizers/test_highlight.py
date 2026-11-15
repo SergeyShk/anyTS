@@ -368,6 +368,8 @@ def test_tokens_span():
     doc = parsed()
     start, end = tokens_span(get_tree(to_document(doc)).words[8:12])
     assert doc.text[start:end] == "the dog eats"
+    with pytest.raises(SourceError, match=r"^The data source has no words$"):
+        tokens_span([])
 
 
 def test_split_segments():

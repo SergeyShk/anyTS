@@ -22,6 +22,7 @@ from .extractors import SentsExtractor, WordsExtractor
 from .stats import Stats
 from .utils import (
     LINE_BREAK,
+    _hook_words,
     check_bool,
     check_integer,
     check_words,
@@ -201,7 +202,8 @@ class BasicStats(Stats, metaclass=ABCMeta):
 
     Raises:
         SourceTypeError: If the source is neither a string, a Doc nor a Document object,
-            parse does not return a Document, or an extractor is of another type
+            parse does not return a Document, doc_words does not return a sequence of
+            strings, or an extractor is of another type
         SourceError: If the source has no words
         ParameterError: If a factor is not an integer or is below one, or normalize is
             not a bool
@@ -238,7 +240,7 @@ class BasicStats(Stats, metaclass=ABCMeta):
             words = (
                 words_extractor.extract(text)
                 if words_extractor is not None
-                else self.doc_words(document)
+                else _hook_words(self, "doc_words", self.doc_words(document))
             )
         if not words:
             raise SourceError(messages["no_words"])

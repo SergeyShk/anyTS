@@ -499,7 +499,7 @@ A language library subclasses `CohesionStats`. By default the words are the `Tre
 | `word_info(word)` | method | Features of a `TreeWord` of the tree; by default the lemma is that of the word in lower case, its form without one, a noun is `NOUN` or `PROPN`, a pronoun `PRON` or a possessive, demonstrative or personal determiner, a demonstrative carries `PronType=Dem`, an argument is `NOUN`, `PROPN` or `PRON`, a content word one of `anyts.constants.CONTENT_UD_POS` and no demonstrative, and the tense, the mood and the aspect are the features `Tense`, `Mood` and `Aspect`; a library sets `connector_blocked` where its parse rules a connector out. A source without parts of speech or lemmas raises `SourceError` with the default only, so a library that annotates the words itself, such as its own lemmatizer, overrides it and keeps `analyze` |
 | `load_connectors()` | class method | Dictionary of the connectors of the language, class and kind by connector; empty by default |
 | `connector_matcher()` | class method | Matcher of that dictionary, built once for a class and shared by its instances and by searches outside the statistics |
-| `connector_matcher_class` | class attribute | Class that finds the connectors with the context rules of the language; `ConnectorMatcher` by default. A matcher with other classes or kinds gives other `connectors_*` attributes, so the subclass sets its own `stats_desc` too |
+| `connector_matcher_class` | class attribute | Class that finds the connectors with the context rules of the language; `ConnectorMatcher` by default. A matcher with other classes or kinds gives other `connectors_*` attributes, so the subclass sets its own `stats_desc` too; a class that is not a subclass of `ConnectorMatcher` raises `ParameterError` when the class is defined |
 | `temporal_features` | class attribute | Features of the verbs whose repetitions make the temporal cohesion: a tuple of one or more distinct ones of `tense`, `mood` and `aspect` (`TEMPORAL_FEATURES`), checked when the class is defined; `tense` and `aspect` by default, as in Coh-Metrix |
 | `stats_desc`, `stats_headers` | class attributes | Statistics of `get_stats` with their descriptions (`COHESION_STATS_DESC` by default), headers of the columns for `print_stats` |
 | `messages` | class attribute | Messages of the errors by key; `MESSAGES` by default |
@@ -517,7 +517,7 @@ The rules of a language are class attributes of a subclass, empty by default apa
 
 | Hook | Kind | Description |
 | :--- | :--- | :---------- |
-| `normalize(text)` | method | Normalized form of a word and of a connector; the lower case by default |
+| `normalize(text)` | method | Normalized form of a word and of a connector; the lower case by default. A connector it gives no string for raises `SourceTypeError` |
 | `blocked_after`, `blocked_before` | class attributes | Words after or before a connector, by its text, that make it no connector (*before the end*) |
 | `blocked_after_pos` | class attribute | Parts of speech of the word after a connector, by its text, that make it no connector |
 | `not_at_start` | class attribute | Connectors that do not count at the start of a sentence, where they open a reply (*Well, ...*) |

@@ -573,8 +573,13 @@ def tokens_span(words: Iterable[TreeWord]) -> tuple[int, int]:
 
     Returns:
         tuple[int, int]: Position of the first character and position after the last one
+
+    Raises:
+        SourceError: If there is no word among the words
     """
     found = get_words(words)
+    if not found:
+        raise SourceError(MESSAGES["no_words"])
     return min(word.start for word in found), max(word.end for word in found)
 
 

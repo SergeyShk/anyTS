@@ -212,6 +212,9 @@ def test_pickled_component_registers_its_extension(nlp):
     restored = pickle.loads(data)
     assert Doc.has_extension("anyts_test_pickled")
     assert restored(nlp("The cat and the dog"))._.anyts_test_pickled.ttr == 0.8
+    # An extension removed while the component lives comes back with the next document
+    Doc.remove_extension("anyts_test_pickled")
+    assert restored(nlp("The cat and the dog"))._.anyts_test_pickled.ttr == 0.8
 
 
 def test_renamed_component_follows_with_its_extension(nlp):

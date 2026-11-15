@@ -273,6 +273,7 @@ MESSAGES: Mapping[str, str] = MappingProxyType(
             "before {component}"
         ),
         "extension_name": "The name of an extension must be a string, not {type}",
+        "empty_extension": "The name of an extension cannot be empty",
         "no_stats_class": "{cls} has no concrete class of statistics in stats_class",
         "stats_param": "{cls} has no attribute {param} of stats_params",
         "removed_attribute": "{cls} defines {name}, which is no longer read: override {replacement}",
@@ -336,6 +337,9 @@ MESSAGES: Mapping[str, str] = MappingProxyType(
             "The {hook} of {cls} must return sentences of CohesionWord objects, not {type}"
         ),
         "hook_syllables": "The {hook} of {cls} must return a sequence of strings, not {type}",
+        "hook_words": "The {hook} of {cls} must return a sequence of strings, not {type}",
+        "hook_word_pairs": "The {hook} of {cls} must return pairs of TreeWord objects, not {type}",
+        "hook_string": "The {hook} of {cls} must return a string, not {type}",
         "hook_sounds": "The {hook} of {cls} must return a string or strings, not {type}",
         "hook_highlights": "The {hook} of {cls} must return Highlight objects, not {type}",
         "hook_morph_words": "The {hook} of {cls} must return MorphWord objects, not {type}",
@@ -369,6 +373,10 @@ MESSAGES: Mapping[str, str] = MappingProxyType(
             "A sentence without words has no positions of the words, not {position}"
         ),
         "connector_type": "A Connector is expected, not {type}",
+        "matcher_class": (
+            "The connector_matcher_class of {cls} must be a subclass of ConnectorMatcher, "
+            "not {value}"
+        ),
         "morph_features": (
             "The feature_names of {cls} must map the names of new statistics, identifiers "
             "other than pos, tags, words and the names of the class, to the names of their "
