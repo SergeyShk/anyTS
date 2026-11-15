@@ -48,7 +48,8 @@ The words of the tree of a document (`get_tree`) are `TreeWord` objects in place
 | `lemma_`, `pos_`, `tag_` | `lemma`, `upos`, `xpos`: `None` without a value, not an empty string |
 | `dep_` | `deprel`; the root of a spaCy parse is `root`, not `ROOT` |
 | `morph.get(name)` | `feats.get(name)`: the values joined by commas (`Int,Rel`), `None` without the feature; `has_feature(word, name, value)` checks one value, and `feats` is not to be changed |
-| `morph.to_dict()`, `has_morph()`, `str(morph)` | `feats`, `bool(feats)`, the column `feats` of the document (`Case=Nom|PronType=Int,Rel`) |
+| `morph.to_dict()`, `str(morph)` | `feats`, the column `feats` of the document (`Case=Nom|PronType=Int,Rel`) |
+| `has_morph()` | none for a word: one annotated with no features and one never annotated both have empty `feats`; `bool(feats)` says whether a word has features, `doc.has_annotation("MORPH")` whether the `Doc` was annotated |
 | `doc`, `i`, `doc[i]` | `tree`, `index`, `tree.words[i]`: the positions of the words differ from `Token.i` where a `Doc` has tokens of whitespace or of invisible separators alone, or multiword tokens whose words carry columns, and `tree.word_at(token.idx, token.idx + len(token))` gives the word of a token |
 | `nbor(n)` | `tree.words[word.index + n]` |
 | `idx` | `start`, after `idx` where the token starts with a separator the document leaves out, such as a byte order mark; `end` is the end of the token, shared by the words of a multiword token |
