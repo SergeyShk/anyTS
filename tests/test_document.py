@@ -101,12 +101,19 @@ def test_hooks_are_checked():
         to_document(TEXT, tokenize=5)
     with pytest.raises(SourceTypeError, match="sentence splitter"):
         to_document(TEXT, sentenize="split")
-    with pytest.raises(SourceTypeError, match="triples"):
+    with pytest.raises(SourceTypeError, match=r"^The tokenize must give triples .+ not \(0, 3\)$"):
         to_document(TEXT, tokenize=lambda text: [(0, 3)])
-    with pytest.raises(SourceTypeError, match="ascending integer bounds"):
+    with pytest.raises(SourceTypeError, match=r"ascending for tokenize, not \(0, 3, 'The'\)$"):
         to_document(TEXT, tokenize=lambda text: [(4, 7, "cat"), (0, 3, "The")])
-    with pytest.raises(SourceTypeError, match="must give integer bounds inside"):
+    with pytest.raises(SourceTypeError, match=r"^The sentenize must give triples"):
         to_document(TEXT, sentenize=lambda text: [(0, 99, text)])
+    with pytest.raises(SourceTypeError, match=r"^The sentenize must give triples .+ not 5$"):
+        to_document(TEXT, sentenize=lambda text: 5)
+    own = {**MESSAGES, "hook_spans": "Own {hook}: {span}"}
+    with pytest.raises(SourceTypeError, match=r"^Own tokenize: \(0, 3\)$"):
+        to_document(TEXT, tokenize=lambda text: [(0, 3)], messages=own)
+    with pytest.raises(SourceTypeError, match=r"^Own sentenize: 5$"):
+        to_document(spacy.blank("en")("One two"), sentenize=lambda text: 5, messages=own)
 
 
 def test_document():
@@ -460,7 +467,7 @@ def test_tokens_over_a_blank_line():
     with pytest.raises(SourceError, match=r"^Own token 1"):
         to_document(doc, messages=own)
     text = "One two. Three four.\n\nFive six."
-    with pytest.raises(SourceTypeError, match="tokens a document can hold: token 4: runs over"):
+    with pytest.raises(SourceTypeError, match="cannot make a document: token 4: runs over"):
         to_document(text, tokenize=lambda t: [(14, 24, t[14:24])])
 
 

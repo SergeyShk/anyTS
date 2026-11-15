@@ -463,8 +463,8 @@ def test_check_params():
         ((30, 0, 0.001), r"^The minimum number of syllables in a complex word"),
         ((30, 4, 0), r"^The threshold of the alliteration must lie in the interval \(0, 1\]$"),
         ((30, 4, 1.5), r"^The threshold of the alliteration"),
-        ((2.5, 4, 0.001), r"^The number of words of a long sentence must be an integer"),
-        ((30, 4, "x"), r"^The threshold of the alliteration must be a number"),
+        ((2.5, 4, 0.001), r"^The long_sent_word_factor must be an integer, not float$"),
+        ((30, 4, "x"), r"^The alliteration_threshold must be a number, not str$"),
     ]:
         with pytest.raises(ParameterError, match=message):
             check_params(*args)
@@ -707,7 +707,7 @@ def test_finders_check_their_hooks():
     ("call", "error", "message"),
     [
         (lambda: find_long_sents([], 0), ParameterError, r"^The number of words of a long"),
-        (lambda: find_long_sents([], None), ParameterError, r"^The number of words of a long"),
+        (lambda: find_long_sents([], None), ParameterError, r"^The long_sent_word_factor must"),
         (lambda: find_complex_words([], 0, len), ParameterError, r"^The minimum number of syll"),
         (lambda: calc_alliteration_runs(["a"], {"c": 0.1}, 5), ParameterError, r"^The threshold"),
         (

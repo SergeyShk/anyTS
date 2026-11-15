@@ -123,11 +123,11 @@ def test_init_empty():
 @pytest.mark.parametrize(
     ("words", "message"),
     [
-        ("some text", r"^A list of words is expected, not a string$"),
-        (spacy.blank("xx")("some text"), r"not a Doc"),
-        (666, r"^A list of words is expected, not int$"),
-        ({"some", "text"}, r"^A list of words is expected, not set$"),
-        (Counter(["some", "text"]), r"^A list of words is expected, not Counter$"),
+        ("some text", r"^The words must be a list of strings, not str$"),
+        (spacy.blank("xx")("some text"), r"^The words must be a list of strings, not Doc$"),
+        (666, r"^The words must be a list of strings, not int$"),
+        ({"some", "text"}, r"^The words must be a list of strings, not set$"),
+        (Counter(["some", "text"]), r"^The words must be a list of strings, not Counter$"),
     ],
 )
 def test_init_type_error(words, message):
@@ -167,9 +167,9 @@ def checks(monkeypatch):
     calls = []
     check = diversity_stats.check_words
 
-    def counting(value, what="words"):
+    def counting(value, what="words", **kwargs):
         calls.append(len(value))
-        check(value, what)
+        check(value, what, **kwargs)
 
     monkeypatch.setattr(diversity_stats, "check_words", counting)
     return calls
@@ -209,7 +209,7 @@ def test_windowed_custom_function(checks):
 
 def test_init_tokens():
     doc = spacy.blank("xx")("the cat and the dog")
-    with pytest.raises(SourceTypeError, match=r"^The words must be strings, not Token$"):
+    with pytest.raises(SourceTypeError, match=r"^The words must be a list of strings, not Token$"):
         DiversityStats(list(doc))
 
 
@@ -798,11 +798,11 @@ def test_windowed_errors(ds):
         calc_windowed(riddle, calc_ttr, step=0)
     with pytest.raises(ValueError):
         calc_windowed(riddle, calc_ttr, confidence=1)
-    with pytest.raises(ParameterError, match=r"^The window size must be an integer, not float$"):
+    with pytest.raises(ParameterError, match=r"^The window_len must be an integer, not float$"):
         calc_windowed(riddle, calc_ttr, window_len=5.0)
-    with pytest.raises(ParameterError, match=r"^The window step must be an integer, not float$"):
+    with pytest.raises(ParameterError, match=r"^The step must be an integer, not float$"):
         calc_windowed(riddle, calc_ttr, step=2.0)
-    with pytest.raises(ParameterError, match=r"^The confidence level must be a number, not str$"):
+    with pytest.raises(ParameterError, match=r"^The confidence must be a number, not str$"):
         calc_windowed(riddle, calc_ttr, 3, confidence="0.95")
     with pytest.raises(SourceTypeError, match=r"^The metric must be a function, not str$"):
         calc_windowed(riddle, "ttr")

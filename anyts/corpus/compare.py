@@ -605,12 +605,12 @@ def split_windows(
     _check_windows(window, min_words, messages)
     if tokenize is not None and not callable(tokenize):
         raise SourceTypeError(f"The tokenizer must be callable, not {type(tokenize).__name__}")
-    for marks, what in (
-        (opening_marks, "opening marks"),
-        (symmetric_marks, "symmetric marks"),
-        (closing_marks, "closing marks"),
+    for marks, name in (
+        (opening_marks, "opening_marks"),
+        (symmetric_marks, "symmetric_marks"),
+        (closing_marks, "closing_marks"),
     ):
-        _check_marks(marks, what)
+        _check_marks(marks, name, messages)
     if min_words is None:
         min_words = 1 if window is None else window
     found = (
@@ -647,14 +647,14 @@ def split_windows(
     ]
 
 
-def _check_marks(marks: Collection[str], what: str) -> None:
-    """Checking that the marks are a collection of single characters"""
+def _check_marks(marks: Collection[str], name: str, messages: Mapping[str, str]) -> None:
+    """Checking that the marks of a parameter are a collection of single characters"""
     if isinstance(marks, str):
         return
-    check_words(marks, what, ordered=False)
+    check_words(marks, name, ordered=False, message=messages["words_param"])
     for mark in marks:
         if len(mark) != 1:
-            raise ParameterError(f"A mark of the {what} must be one character, not {mark!r}")
+            raise ParameterError(messages["mark_length"].format(param=name, mark=repr(mark)))
 
 
 def _check_windows(
@@ -662,11 +662,11 @@ def _check_windows(
 ) -> None:
     """Checking the size of a window and the smallest number of words in it"""
     if window is not None:
-        check_integer(window, "size of a window")
+        check_integer(window, "window", message=messages["integer_param"])
         if window < 1:
             raise ParameterError(messages["window_len"])
     if min_words is not None:
-        check_integer(min_words, "smallest number of words in a window")
+        check_integer(min_words, "min_words", message=messages["integer_param"])
         if min_words < 1:
             raise ParameterError(messages["min_words"])
         if window is not None and min_words > window:
@@ -703,7 +703,7 @@ def sentence_rhythm(
         >>> {key: round(value, 3) for key, value in sentence_rhythm([4, 8, 2, 7]).items()}
         {'sents_mean': 5.25, 'sents_std': 2.754, 'sents_cv': 0.525, 'sents_autocorr': -0.794}
     """
-    check_sequence(lengths, "sentence lengths")
+    check_sequence(lengths, "lengths", message=messages["sentence_lengths"])
     items: Sequence[object] = lengths
     if not all(not isinstance(length, bool) and isinstance(length, Integral) for length in items):
         raise SourceTypeError(messages["sentence_lengths"])

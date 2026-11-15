@@ -298,7 +298,9 @@ class ReadabilityStats(Stats):
         Raises:
             ParameterError: If the reading ease is not a finite number
         """
-        check_number(flesch_reading_easy, "reading ease")
+        check_number(
+            flesch_reading_easy, "flesch_reading_easy", message=self.messages["number_param"]
+        )
         grades = self.preset_reading_ease_grades.get(self.preset, self.reading_ease_grades)
         return scale_level(flesch_reading_easy, grades)
 
@@ -972,10 +974,10 @@ def calc_reading_time(
         ParameterError: If the number of words is not an integer or is negative, or
             the reading speed is not a positive number
     """
-    check_integer(n_words, "number of words")
+    check_integer(n_words, "n_words", message=messages["integer_param"])
     if n_words < 0:
-        raise ParameterError("The number of words cannot be negative")
-    check_number(wpm, "reading speed")
+        raise ParameterError(messages["negative_words"])
+    check_number(wpm, "wpm", message=messages["number_param"])
     if not wpm > 0:
         raise ParameterError(messages["reading_speed"])
     return n_words / wpm

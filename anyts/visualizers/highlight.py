@@ -131,18 +131,16 @@ def check_params(
 
 def _check_factor(value: int, key: str, messages: Mapping[str, str] = MESSAGES) -> None:
     """Checking the least number of words or syllables of a layer, its message by key"""
-    what = {
-        "long_sent_word_factor": "number of words of a long sentence",
-        "complex_syl_factor": "number of syllables of a complex word",
-    }[key]
-    check_integer(value, what)
+    check_integer(value, key, message=messages["integer_param"])
     if value < 1:
         raise ParameterError(messages[key])
 
 
-def _check_threshold(value: float, messages: Mapping[str, str] = MESSAGES) -> None:
-    """Checking the probability threshold of the alliteration"""
-    check_number(value, "threshold of the alliteration")
+def _check_threshold(
+    value: float, messages: Mapping[str, str] = MESSAGES, name: str = "alliteration_threshold"
+) -> None:
+    """Checking the probability threshold of the alliteration, a parameter of the name"""
+    check_number(value, name, message=messages["number_param"])
     if not 0 < value <= 1:
         raise ParameterError(messages["alliteration_threshold"])
 
@@ -935,7 +933,7 @@ def calc_alliteration_runs(
     """
     check_words(words)
     _check_frequencies(frequencies)
-    _check_threshold(threshold)
+    _check_threshold(threshold, name="threshold")
     _check_hooks((stem, "stem"), (is_transparent, "check of a transparent word"))
     return _alliteration_runs(words, frequencies, threshold, stem, is_transparent)
 
@@ -1032,7 +1030,7 @@ def find_alliteration(
             threshold in (0, 1]
     """
     _check_frequencies(frequencies)
-    _check_threshold(threshold)
+    _check_threshold(threshold, name="threshold")
     _check_hooks((stem, "stem"), (is_transparent, "check of a transparent word"), (note, "note"))
     note = note or (lambda consonant: f"alliteration on {consonant}")
     groups = [list(words)] if sents is None else group_words_by_sents(words, sents)

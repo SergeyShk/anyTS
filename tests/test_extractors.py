@@ -154,8 +154,8 @@ class TestSentsExtractor:
             (10, 5, "The minimum sentence length is greater than the maximum"),
             (-1, 0, "The sentence length bounds cannot be negative"),
             (0, -1, "The sentence length bounds cannot be negative"),
-            (1.5, 0, "The minimum sentence length must be an integer, not float"),
-            (0, "3", "The maximum sentence length must be an integer, not str"),
+            (1.5, 0, "The min_len must be an integer, not float"),
+            (0, "3", "The max_len must be an integer, not str"),
         ],
     )
     def test_length_bounds(self, min_len, max_len, message):
@@ -309,8 +309,8 @@ class TestWordsExtractor:
             (2, "The N-gram range must be a pair of integers"),
             ("12", "The N-gram range must be a pair of integers"),
             ((1, 2, 3), "The N-gram range must be a pair of integers"),
-            ((1.0, 2), "The lower N-gram bound must be an integer, not float"),
-            ((1, 2.0), "The upper N-gram bound must be an integer, not float"),
+            ((1.0, 2), "The N-gram range must be a pair of integers"),
+            ((1, 2.0), "The N-gram range must be a pair of integers"),
         ],
     )
     def test_ngram_range_error(self, ngram_range, message):
@@ -328,8 +328,8 @@ class TestWordsExtractor:
             (10, 5, "The minimum word length is greater than the maximum"),
             (-1, 0, "The word length bounds cannot be negative"),
             (0, -3, "The word length bounds cannot be negative"),
-            (1.0, 0, "The minimum word length must be an integer, not float"),
-            (0, True, "The maximum word length must be an integer, not bool"),
+            (1.0, 0, "The min_len must be an integer, not float"),
+            (0, True, "The max_len must be an integer, not bool"),
         ],
     )
     def test_length_bounds(self, min_len, max_len, message):
@@ -342,16 +342,16 @@ class TestWordsExtractor:
         assert WordsExtractor(stopwords=np.array([], dtype=str)).stopwords is None
 
     def test_stopwords_string(self):
-        with pytest.raises(SourceTypeError, match=r"^A list of stopwords is expected"):
+        with pytest.raises(SourceTypeError, match=r"^The stopwords must be a list of strings"):
             WordsExtractor(stopwords="the")
-        with pytest.raises(SourceTypeError, match=r"not an iterator$"):
+        with pytest.raises(SourceTypeError, match=r"not list_iterator$"):
             WordsExtractor(stopwords=iter(["the"]))
 
     @pytest.mark.parametrize(
         ("stopwords", "message"),
         [
-            ([1], "The stopwords must be strings, not int"),
-            (5, "A list of stopwords is expected, not int"),
+            ([1], "The stopwords must be a list of strings, not int"),
+            (5, "The stopwords must be a list of strings, not int"),
         ],
     )
     def test_stopwords_not_strings(self, stopwords, message):
@@ -463,9 +463,7 @@ class TestWordsExtractor:
         assert we.get_most_common(2) == [("the", 15), ("of", 9)]
         with pytest.raises(ParameterError, match=r"^The number of words must be greater than 0$"):
             we.get_most_common(0)
-        with pytest.raises(
-            ParameterError, match=r"^The number of words must be an integer, not float$"
-        ):
+        with pytest.raises(ParameterError, match=r"^The n must be an integer, not float$"):
             we.get_most_common(2.0)  # type: ignore[arg-type]
 
     def test_hooks(self):
@@ -549,13 +547,9 @@ class TestCharNgramsExtractor:
             ParameterError, match=r"^The number of N-grams must be greater than 0$"
         ):
             CharNgramsExtractor().get_most_common(0)
-        with pytest.raises(
-            ParameterError, match=r"^The N-gram length must be an integer, not float$"
-        ):
+        with pytest.raises(ParameterError, match=r"^The n must be an integer, not float$"):
             CharNgramsExtractor(n=2.0)  # type: ignore[arg-type]
-        with pytest.raises(
-            ParameterError, match=r"^The number of N-grams must be an integer, not float$"
-        ):
+        with pytest.raises(ParameterError, match=r"^The n must be an integer, not float$"):
             CharNgramsExtractor().get_most_common(1.5)  # type: ignore[arg-type]
         with pytest.raises(TypeError):
             CharNgramsExtractor(within_words=True, tokenizer=42).extract(self.text)

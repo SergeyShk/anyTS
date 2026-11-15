@@ -133,7 +133,7 @@ def to_document(
     if is_doc(source):
         return _cached_document(source, sentenize, messages)
     if isinstance(source, str):
-        return _text_document(source, tokenize, sentenize)
+        return _text_document(source, tokenize, sentenize, messages)
     raise source_type_error(messages, source)
 
 
@@ -553,7 +553,7 @@ def _doc_document(doc: Doc, sentenize: Spans | None, messages: Mapping[str, str]
     if doc.has_annotation("SENT_START", require_complete=True):
         return document
     token_starts = document.tokens.starts
-    starts = _sent_starts(document.text, token_starts, sentenize)
+    starts = _sent_starts(document.text, token_starts, sentenize, messages)
     return _with_sentences(document, [token_starts[index] for index in starts])
 
 
@@ -666,19 +666,21 @@ def _token_indices(starts: Sequence[int], positions: Iterable[int]) -> list[int]
     return sorted({bisect_left(starts, position) for position in positions} - {len(starts)})
 
 
-def _text_document(text: str, tokenize: Spans | None, sentenize: Spans | None) -> Document:
+def _text_document(
+    text: str, tokenize: Spans | None, sentenize: Spans | None, messages: Mapping[str, str]
+) -> Document:
     """Document of a string by its tokens, the default ones filling the gaps of tokenize"""
     from anyseg import Document
 
-    starts, ends = _token_spans(text) if tokenize is None else _hook_spans(text, tokenize)
+    starts, ends = (
+        _token_spans(text) if tokenize is None else _hook_spans(text, tokenize, messages)
+    )
     try:
         return Document.from_tokens(
-            text, starts, ends, sentence_starts=_sent_starts(text, starts, sentenize)
+            text, starts, ends, sentence_starts=_sent_starts(text, starts, sentenize, messages)
         )
     except ValueError as error:
-        raise SourceTypeError(
-            f"The tokenizer must give tokens a document can hold: {error}"
-        ) from error
+        raise SourceTypeError(messages["document_tokens"].format(error=error)) from error
 
 
 def _token_spans(text: str) -> tuple[list[int], list[int]]:
@@ -687,7 +689,9 @@ def _token_spans(text: str) -> tuple[list[int], list[int]]:
     return [start for start, _ in spans], [end for _, end in spans]
 
 
-def _hook_spans(text: str, tokenize: Spans) -> tuple[list[int], list[int]]:
+def _hook_spans(
+    text: str, tokenize: Spans, messages: Mapping[str, str]
+) -> tuple[list[int], list[int]]:
     """Bounds of the tokens of tokenize without the separators at their edges, gaps filled"""
     starts: list[int] = []
     ends: list[int] = []
@@ -702,7 +706,10 @@ def _hook_spans(text: str, tokenize: Spans) -> tuple[list[int], list[int]]:
             ends.append(start + len(stripped.rstrip(separators)))
 
     position = 0
-    for start, end, _ in (*_check_spans(tokenize(text), text, "tokenizer"), (len(text), 0, "")):
+    spans = _check_spans(
+        tokenize(text), text, "tokenizer", error=_spans_error("tokenize", messages)
+    )
+    for start, end, _ in (*spans, (len(text), 0, "")):
         for gap in _token_pattern().finditer(text, position, start):
             add(*gap.span())
         if end:
@@ -711,10 +718,17 @@ def _hook_spans(text: str, tokenize: Spans) -> tuple[list[int], list[int]]:
     return starts, ends
 
 
-def _sent_starts(text: str, starts: list[int], sentenize: Spans | None) -> list[int]:
+def _spans_error(hook: str, messages: Mapping[str, str]) -> Callable[[object], str]:
+    """Message of a wrong value a hook of the spans gives"""
+    return lambda span: messages["hook_spans"].format(hook=hook, span=repr(span))
+
+
+def _sent_starts(
+    text: str, starts: list[int], sentenize: Spans | None, messages: Mapping[str, str]
+) -> list[int]:
     """Indices of the first tokens of the sentences of every part of a text between blank lines"""
     first: list[int] = []
-    sents = _iter_sents(text) if sentenize is None else _hook_sents(sentenize, text)
+    sents = _iter_sents(text) if sentenize is None else _hook_sents(sentenize, text, messages)
     for start, end, _ in sents:
         index = bisect_left(starts, start)
         if index < len(starts) and starts[index] < end and (not first or index > first[-1]):
@@ -722,11 +736,14 @@ def _sent_starts(text: str, starts: list[int], sentenize: Spans | None) -> list[
     return first
 
 
-def _hook_sents(sentenize: Spans, text: str) -> Iterator[tuple[int, int, str]]:
+def _hook_sents(
+    sentenize: Spans, text: str, messages: Mapping[str, str]
+) -> Iterator[tuple[int, int, str]]:
     """Sentences of sentenize with their positions by start, every part between blank lines apart"""
+    error = _spans_error("sentenize", messages)
     for part_start, part in _parts(text):
         for start, end, sent in sorted(
-            _check_spans(sentenize(part), part, "sentence splitter", ordered=False)
+            _check_spans(sentenize(part), part, "sentence splitter", ordered=False, error=error)
         ):
             yield part_start + start, part_start + end, sent
 

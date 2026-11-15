@@ -24,6 +24,7 @@ from anyts.components import (
 from anyts.constants import MESSAGES
 from anyts.corpus import sentence_rhythm, split_windows
 from anyts.diversity_stats import DiversityStats, calc_ttr, calc_windowed, check_params
+from anyts.document import to_document
 from anyts.exceptions import ParameterError, SourceError, SourceTypeError, UnknownStatError
 from anyts.lexical_stats import LexicalStats, LexicalWord
 from anyts.morph_stats import MorphStats
@@ -525,6 +526,29 @@ CASES = [
         lambda: OwnDiversity(spacy.blank("en"), "own_d", log_base="e"),
     ),
     ("bool_param", ParameterError, lambda: Cohesion(PARSED, blank_lines=1)),
+    ("bool_param", ParameterError, lambda: Words(filter_punct=1)),
+    ("integer_param", ParameterError, lambda: Words(min_len=1.5)),
+    ("integer_param", ParameterError, lambda: Stats(TEXT).count_words_by_letters("5")),
+    ("number_param", ParameterError, lambda: Readability(TEXT).reading_ease_to_grade("5")),
+    ("words_param", SourceTypeError, lambda: Diversity("some text")),
+    ("words_param", SourceTypeError, lambda: Words(stopwords="the")),
+    ("words_param", SourceTypeError, lambda: Style(TEXT).keyword_density(5)),
+    ("negative_words", ParameterError, lambda: calc_reading_time(-1, messages=OWN)),
+    (
+        "mark_length",
+        ParameterError,
+        lambda: split_windows(TEXT, closing_marks=["--"], messages=OWN),
+    ),
+    (
+        "hook_spans",
+        SourceTypeError,
+        lambda: to_document(TEXT, tokenize=lambda text: 5, messages=OWN),
+    ),
+    (
+        "document_tokens",
+        SourceTypeError,
+        lambda: to_document("a\n\nb", tokenize=lambda text: [(0, 4, "a\n\nb")], messages=OWN),
+    ),
     (
         "bool_param",
         ParameterError,

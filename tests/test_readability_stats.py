@@ -313,7 +313,9 @@ def test_reading_ease_grades(rs):
     assert scaled.consensus_grade == median([*grades, 3])
     for value in (120, 90, 89.9, 45, 30, 29.9, 0, -50):
         assert rs.reading_ease_to_grade(value) == flesch_reading_easy_to_grade(value)
-    with pytest.raises(ParameterError, match=r"^The reading ease must be a finite number"):
+    with pytest.raises(
+        ParameterError, match=r"^The flesch_reading_easy must be a number, not nan"
+    ):
         rs.reading_ease_to_grade(float("nan"))
 
 
@@ -617,7 +619,7 @@ def test_grades_must_be_finite_numbers(grade):
 
 
 def test_reading_speed_must_be_finite():
-    with pytest.raises(ParameterError, match="finite"):
+    with pytest.raises(ParameterError, match=r"^The wpm must be a number, not inf$"):
         calc_reading_time(100, float("inf"))
 
 

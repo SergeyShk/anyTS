@@ -221,16 +221,8 @@ class BasicStats(Stats, metaclass=ABCMeta):
         messages = self.messages
         _check_extractors(sents_extractor, words_extractor, messages)
         check_bool(normalize, "normalize", message=messages["bool_param"])
-        _check_factor(
-            complex_syl_factor,
-            "minimum number of syllables in a complex word",
-            messages["complex_syl_factor"],
-        )
-        _check_factor(
-            long_word_letter_factor,
-            "minimum number of letters in a long word",
-            messages["long_word_letter_factor"],
-        )
+        _check_factor(complex_syl_factor, "complex_syl_factor", messages)
+        _check_factor(long_word_letter_factor, "long_word_letter_factor", messages)
         sents: Iterable[str]
         if sents_extractor is not None and words_extractor is not None:
             text = _source_text(source, messages)
@@ -357,7 +349,7 @@ class BasicStats(Stats, metaclass=ABCMeta):
         Raises:
             ParameterError: If the minimum is not an integer
         """
-        check_integer(min_syllables, "minimum number of syllables")
+        check_integer(min_syllables, "min_syllables", message=self.messages["integer_param"])
         return sum(count for spw, count in self.c_syllables.items() if spw >= min_syllables)
 
     def count_words_by_letters(self, min_letters: int) -> int:
@@ -373,7 +365,7 @@ class BasicStats(Stats, metaclass=ABCMeta):
         Raises:
             ParameterError: If the minimum is not an integer
         """
-        check_integer(min_letters, "minimum number of letters")
+        check_integer(min_letters, "min_letters", message=self.messages["integer_param"])
         return sum(count for cpw, count in self.c_letters.items() if cpw >= min_letters)
 
     def stat_names(self) -> tuple[str, ...]:
@@ -388,21 +380,21 @@ class BasicStats(Stats, metaclass=ABCMeta):
         return (*names, *_NORMALIZED_STATS) if self.normalize else names
 
 
-def _check_factor(value: int, what: str, message: str) -> None:
+def _check_factor(value: int, name: str, messages: Mapping[str, str]) -> None:
     """
     Checking a threshold of the complex or the long words
 
     Arguments:
         value (int): Threshold
-        what (str): Name of the threshold, for the message of a value that is not an integer
-        message (str): Message of a threshold below one
+        name (str): Name of the threshold, the key of the message of a threshold below one
+        messages (dict[str, str]): Messages of the errors by key
 
     Raises:
         ParameterError: If the threshold is not an integer or is below one
     """
-    check_integer(value, what)
+    check_integer(value, name, message=messages["integer_param"])
     if value < 1:
-        raise ParameterError(message)
+        raise ParameterError(messages[name])
 
 
 def _check_extractors(

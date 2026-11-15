@@ -232,7 +232,7 @@ class SentsExtractor(Extractor):
         super().__init__(tokenizer, min_len, max_len)
         messages = self.messages
         _check_length_bounds(
-            min_len, max_len, "sentence", messages["sent_len_bounds"], messages["sent_len_order"]
+            min_len, max_len, messages, messages["sent_len_bounds"], messages["sent_len_order"]
         )
         self.sents: tuple[str, ...] = ()
 
@@ -303,7 +303,11 @@ def _sentence_spans(text: str) -> list[tuple[int, int]]:
 
 
 def _check_length_bounds(
-    min_len: int, max_len: int, unit: str, negative: str, reversed_bounds: str
+    min_len: int,
+    max_len: int,
+    messages: Mapping[str, str],
+    negative: str,
+    reversed_bounds: str,
 ) -> None:
     """
     Checking the bounds of the length of an extracted unit
@@ -311,7 +315,8 @@ def _check_length_bounds(
     Arguments:
         min_len (int): Minimum length, 0 for no bound
         max_len (int): Maximum length, 0 for no bound
-        unit (str): Name of the unit, for the message of a bound that is not an integer
+        messages (dict[str, str]): Messages of the errors by key, for a bound that is
+            not an integer
         negative (str): Message of a negative bound
         reversed_bounds (str): Message of a minimum greater than the maximum
 
@@ -319,8 +324,8 @@ def _check_length_bounds(
         ParameterError: If a bound is not an integer, is negative or the minimum
             is greater than the maximum
     """
-    check_integer(min_len, f"minimum {unit} length")
-    check_integer(max_len, f"maximum {unit} length")
+    check_integer(min_len, "min_len", message=messages["integer_param"])
+    check_integer(max_len, "max_len", message=messages["integer_param"])
     if min_len < 0 or max_len < 0:
         raise ParameterError(negative)
     if min_len and max_len and min_len > max_len:
@@ -512,37 +517,37 @@ class WordsExtractor(Extractor):
         max_len: int = 0,
     ) -> None:
         super().__init__(tokenizer, min_len, max_len)
-        for value, what in (
-            (filter_punct, "filter of the punctuation"),
-            (filter_nums, "filter of the numbers"),
-            (use_lexemes, "use of the lexemes"),
-            (lowercase, "lowercasing"),
+        messages = self.messages
+        for value, name in (
+            (filter_punct, "filter_punct"),
+            (filter_nums, "filter_nums"),
+            (use_lexemes, "use_lexemes"),
+            (lowercase, "lowercase"),
         ):
-            check_bool(value, what)
+            check_bool(value, name, message=messages["bool_param"])
         self.filter_punct = filter_punct
         self.filter_nums = filter_nums
         self.use_lexemes = use_lexemes
         if stopwords is not None:
-            check_words(stopwords, "stopwords", ordered=False)
+            check_words(stopwords, "stopwords", ordered=False, message=messages["words_param"])
         self.stopwords = (
             frozenset(word.lower() for word in stopwords) or None
             if stopwords is not None
             else None
         )
         self.lowercase = lowercase
-        messages = self.messages
         if not isinstance(ngram_range, tuple | list) or len(ngram_range) != 2:
             raise ParameterError(messages["ngram_range"])
         lower, upper = ngram_range
-        check_integer(lower, "lower N-gram bound")
-        check_integer(upper, "upper N-gram bound")
+        check_integer(lower, "ngram_range", message=messages["ngram_range"])
+        check_integer(upper, "ngram_range", message=messages["ngram_range"])
         if lower < 1:
             raise ParameterError(messages["ngram_lower"])
         if lower > upper:
             raise ParameterError(messages["ngram_order"])
         self.ngram_range = (lower, upper)
         _check_length_bounds(
-            min_len, max_len, "word", messages["word_len_bounds"], messages["word_len_order"]
+            min_len, max_len, messages, messages["word_len_bounds"], messages["word_len_order"]
         )
         self.words: tuple[str, ...] = ()
 
@@ -616,7 +621,7 @@ class WordsExtractor(Extractor):
         Raises:
             ParameterError: If the number of words is not an integer or is less than 1
         """
-        check_integer(n, "number of words")
+        check_integer(n, "n", message=self.messages["integer_param"])
         if n < 1:
             raise ParameterError(self.messages["top_words"])
         return Counter(self.words).most_common(n)
@@ -685,11 +690,12 @@ class CharNgramsExtractor(Extractor):
         tokenizer: Tokenizer | None = None,
     ) -> None:
         super().__init__(tokenizer)
-        check_bool(lowercase, "lowercasing")
-        check_bool(within_words, "choice of the n-grams within the words")
-        check_integer(n, "N-gram length")
+        messages = self.messages
+        check_bool(lowercase, "lowercase", message=messages["bool_param"])
+        check_bool(within_words, "within_words", message=messages["bool_param"])
+        check_integer(n, "n", message=messages["integer_param"])
         if n < 1:
-            raise ParameterError(self.messages["ngram_len"])
+            raise ParameterError(messages["ngram_len"])
         self.n = n
         self.lowercase = lowercase
         self.within_words = within_words
@@ -751,7 +757,7 @@ class CharNgramsExtractor(Extractor):
         Raises:
             ParameterError: If the number of N-grams is not an integer or is less than 1
         """
-        check_integer(n, "number of N-grams")
+        check_integer(n, "n", message=self.messages["integer_param"])
         if n < 1:
             raise ParameterError(self.messages["top_ngrams"])
         return Counter(self.ngrams).most_common(n)
@@ -779,7 +785,7 @@ class FixedSentsExtractor(SentsExtractor):
 
     def __init__(self, sents: Sequence[str]) -> None:
         super().__init__()
-        check_words(sents, "sentences")
+        check_words(sents, "sents", message=self.messages["words_param"])
         self.sents = tuple(sents)
 
     def extract(self, text: str) -> tuple[str, ...]:
@@ -808,7 +814,7 @@ class FixedWordsExtractor(WordsExtractor):
 
     def __init__(self, words: Sequence[str]) -> None:
         super().__init__()
-        check_words(words)
+        check_words(words, message=self.messages["words_param"])
         self.words = tuple(words)
 
     def extract(self, text: str) -> tuple[str, ...]:
