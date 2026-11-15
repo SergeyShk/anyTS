@@ -15,8 +15,8 @@ Usage:
     uv run python scripts/bench.py compare OLD NEW
 
 run takes the classes of a worktree of the commit this branch starts from on master (git
-merge-base) and of this tree, in the same environment, and prints the table of both; a class
-one of them lacks has a dash.
+merge-base) and of this tree, in the same environment and in ROUNDS rounds in turn, the
+fastest of them counting, and prints the table of both; a class one of them lacks has a dash.
 """
 
 import argparse
@@ -35,7 +35,10 @@ from pathlib import Path
 from typing import Any, NamedTuple
 
 ROOT = Path(__file__).resolve().parents[1]
-REPEATS = 5
+REPEATS = 3
+# Rounds of the base and this tree in turn, so that a change of the load of the machine falls
+# on both
+ROUNDS = 3
 VOWELS = "aeiouyáéíóúüаеёиоуыэюя"
 VOWEL_GROUP = re.compile(f"[{VOWELS}]+")
 SYLLABLE = re.compile(f"[^{VOWELS}]*[{VOWELS}]+(?:[^{VOWELS}]+$)?")
@@ -216,11 +219,32 @@ def run(data: Path) -> None:
             # The anyts of the worktree comes first on the path, in the same environment
             environment = {**os.environ, "PYTHONPATH": str(tree), "PYTHONDONTWRITEBYTECODE": "1"}
             command = [sys.executable, script, "take"]
-            _take([*command, f"{folder}/base.json", "--data", str(data)], environment)
-            _take([*command, f"{folder}/this.json", "--data", str(data)], None)
+            for round_ in range(ROUNDS):
+                for side, env in (("base", environment), ("this", None)):
+                    out = f"{folder}/{side}-{round_}.json"
+                    _take([*command, out, "--data", str(data)], env)
+            for side in ("base", "this"):
+                _fastest(Path(folder), side)
             compare(Path(folder, "base.json"), Path(folder, "this.json"), ("base", "this"))
         finally:
             _git("worktree", "remove", str(tree))
+
+
+def _fastest(folder: Path, side: str) -> None:
+    """The measurements of a side over the rounds in one file: the fastest time of every class
+    and its largest memory"""
+    rounds = [
+        json.loads(path.read_text(encoding="utf-8"))["classes"]
+        for path in sorted(folder.glob(f"{side}-*.json"))
+    ]
+    classes = {
+        name: {
+            "time": min(found[name]["time"] for found in rounds),
+            "memory": max(found[name]["memory"] for found in rounds),
+        }
+        for name in rounds[0]
+    }
+    (folder / f"{side}.json").write_text(json.dumps({"classes": classes}), encoding="utf-8")
 
 
 def _git(*args: str) -> str:
