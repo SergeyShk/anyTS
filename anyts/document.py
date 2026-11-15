@@ -83,9 +83,9 @@ def to_document(
         columns and the head of the token, as the pipeline annotated it. A Doc
         with no or only partial sentence starts (a token whose is_sent_start is
         unset), as before the parser, senter or sentencizer, and without a parse
-        or a hook gets those of sentenize on its text. A string is split into tokens by tokenize and
-        into sentences by sentenize, and the default tokens fill the gaps
-        between those of tokenize. A blank line (BLANK_LINE) ends a paragraph
+        or a hook gets those of sentenize on its text. A string is split into
+        tokens by tokenize and into sentences by sentenize, and the default
+        tokens fill the gaps between those of tokenize. A blank line (BLANK_LINE) ends a paragraph
         of the document and so a sentence, of a Doc too: every part between
         blank lines goes to sentenize apart, and a sentence starts at its first
         token. Whitespace and invisible separators (the soft hyphen,
@@ -528,9 +528,9 @@ def _doc_document(doc: Doc, sentenize: Spans | None, messages: Mapping[str, str]
         return _with_sentences(document, [*hooked, *document.sentences.starts])
     if doc.has_annotation("SENT_START", require_complete=True):
         return document
-    tokens = document.tokens
-    starts = _sent_starts(document.text, tokens.starts, sentenize)
-    return _with_sentences(document, [tokens.starts[index] for index in starts])
+    token_starts = document.tokens.starts
+    starts = _sent_starts(document.text, token_starts, sentenize)
+    return _with_sentences(document, [token_starts[index] for index in starts])
 
 
 def _bare_tokens(doc: Doc, document: Document) -> set[int]:

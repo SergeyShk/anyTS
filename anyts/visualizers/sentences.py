@@ -105,9 +105,10 @@ def sentence_lengths(
         The sentences of the document of a text, a Doc or a Document
         (to_document) with their words (document_words); with an extractor
         given, a string or a Doc without sentences of its own (no start at
-        some token, no hook and no parse) is split into sentences by sents_extractor
-        and every sentence into words by words_extractor instead, the other
-        one by default, while a Doc with sentences and a Document keep theirs.
+        some token, no hook and no parse) is split into sentences by
+        sents_extractor and every sentence into words by words_extractor
+        instead, the other one by default, while a Doc with sentences and a
+        Document keep theirs.
         Ready lengths (non-negative integers in a sequence or an iterator) are
         used as they are. Sentences without words are skipped
 
