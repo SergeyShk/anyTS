@@ -8,6 +8,7 @@ from itertools import combinations, pairwise
 from math import isnan
 from typing import ClassVar
 
+import anyseg
 import numpy as np
 import pandas as pd
 import pytest
@@ -1170,6 +1171,34 @@ def test_words_of_universal_dependencies():
     words = stats.analyze(spanish_document())[0]
     assert [word.break_before for word in words] == [False] * 4
     assert words[0].tense == "Past" and words[0].mood == "Ind"
+
+
+def test_connectors_in_the_text_of_multiword_tokens():
+    """A connector with a contraction is found in the text of the tokens, at the positions of the
+    words"""
+
+    class Spanish(CohesionStats):
+        @classmethod
+        def load_connectors(cls):
+            return {
+                "al contrario": ("adversative", "primary"),
+                "del mismo modo": ("additive", "primary"),
+                "pero": ("adversative", "primary"),
+            }
+
+    text = "Al contrario, vino pero no habló. Del mismo modo calló al final."
+    document = anyseg.segment(text, lang="es")
+    forms = document.column("form")
+    document.set_columns(lemma=[form.lower() for form in forms], upos=["X"] * len(forms))
+    stats = Spanish(document)
+    assert stats.words[0][:3] == ("A", "el", "contrario")
+    assert [(c.sent, c.start, c.end, c.text) for c in stats.connector_spans] == [
+        (0, 0, 3, "al contrario"),
+        (0, 4, 5, "pero"),
+        (1, 0, 4, "del mismo modo"),
+    ]
+    words = stats.analyze(document)[0]
+    assert [word.token for word in words[:3]] == ["Al", "", None]
 
 
 def test_parse_of_a_library():

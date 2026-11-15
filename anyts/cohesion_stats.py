@@ -512,6 +512,9 @@ class CohesionWord(NamedTuple):
             as its parse (word_info of a library)
         paragraph_start (bool): Whether a line break stands between the word and the one
             before it (a blank line with blank_lines), the start of a paragraph
+        token (str|None): Text of the multiword token the word opens (del of de and el),
+            an empty string for the other words of that token, None for a word that is a
+            token of its own; the connectors are found in the text of the tokens
     """
 
     word: str
@@ -528,6 +531,7 @@ class CohesionWord(NamedTuple):
     break_before: bool = False
     connector_blocked: bool = False
     paragraph_start: bool = False
+    token: str | None = None
 
 
 class CohesionStats(Stats):
@@ -754,14 +758,8 @@ class CohesionStats(Stats):
 
         self.connector_spans = tuple(
             connector
-            for index, (words, sent) in enumerate(zip(self.words, sents, strict=True))
-            for connector in matcher._find(
-                words,
-                index,
-                [word.pos for word in sent],
-                frozenset(i for i, word in enumerate(sent) if word.break_before),
-                _blocked_positions(sent),
-            )
+            for index, sent in enumerate(sents)
+            for connector in _sentence_connectors(matcher, index, sent)
         )
         self.n_connectors = len(self.connector_spans)
         self.n_inter_connectors = sum(
@@ -795,10 +793,11 @@ class CohesionStats(Stats):
             features of word_info. A word gets break_before when a punctuation
             mark stands between it and the word before in its sentence (except a
             quote, an apostrophe, an invisible separator and a hyphen joining two
-            parts of a word), and paragraph_start when a line break (LINE_BREAK)
+            parts of a word), paragraph_start when a line break (LINE_BREAK)
             does, or a blank line (BLANK_LINE) with blank_lines, between the
-            words of the sentences; a library that reads the features another
-            way overrides it
+            words of the sentences, and the words of a multiword token get its
+            text in token; a library that reads the features another way
+            overrides it
 
         Arguments:
             source (str|Doc|Document): Data source
@@ -835,10 +834,13 @@ class CohesionStats(Stats):
                 for last, word in pairwise(sent)
                 if _is_mark_gap(text[last.end : word.start])
             }
+            tokens = _token_texts(sent, text)
             found.append(
                 [
-                    self._marked(self.word_info(word), word.index in marks, word.index in starts)
-                    for word in sent
+                    self._marked(
+                        self.word_info(word), word.index in marks, word.index in starts, token
+                    )
+                    for word, token in zip(sent, tokens, strict=True)
                 ]
             )
         return found
@@ -865,13 +867,16 @@ class CohesionStats(Stats):
         return list(sents.values())
 
     @staticmethod
-    def _marked(word: object, break_before: bool, paragraph_start: bool) -> Any:
-        """A word of word_info with a punctuation mark or a paragraph start before it, another
-        result as it is, for the check of analyze"""
-        if (break_before or paragraph_start) and isinstance(word, CohesionWord):
+    def _marked(word: object, break_before: bool, paragraph_start: bool, token: str | None) -> Any:
+        """A word of word_info with a punctuation mark or a paragraph start before it and the
+        text of its multiword token, another result as it is, for the check of analyze"""
+        if (break_before or paragraph_start or token is not None) and isinstance(
+            word, CohesionWord
+        ):
             return word._replace(
                 break_before=word.break_before or break_before,
                 paragraph_start=word.paragraph_start or paragraph_start,
+                token=token if word.token is None else word.token,
             )
         return word
 
@@ -1008,6 +1013,43 @@ def _paragraph_breaks(
             )
             breaks.append((index, words))
     return tuple(breaks)
+
+
+def _sentence_connectors(
+    matcher: ConnectorMatcher, index: int, sent: Sequence[CohesionWord]
+) -> list[Connector]:
+    """Connectors of a sentence, found in the text of its tokens: the words of a multiword token
+    are one word with the features of the first, and the positions are those of the words"""
+    firsts = [position for position, word in enumerate(sent) if word.token != ""]
+    units = [sent[position] for position in firsts]
+    found = matcher._find(
+        [word.token or word.word for word in units],
+        index,
+        [word.pos for word in units],
+        frozenset(position for position, word in enumerate(units) if word.break_before),
+        _blocked_positions(units),
+    )
+    if len(units) == len(sent):
+        return found
+    bounds = [*firsts, len(sent)]
+    return [
+        connector._replace(start=bounds[connector.start], end=bounds[connector.end])
+        for connector in found
+    ]
+
+
+def _token_texts(sent: Sequence[TreeWord], text: str) -> list[str | None]:
+    """The token of every word of a sentence: the text of the multiword token it opens, an empty
+    string for its other words, None for a word of a token of its own"""
+    spans = [(word.start, word.end) for word in sent]
+    return [
+        ""
+        if position and spans[position - 1] == span
+        else text[span[0] : span[1]]
+        if position + 1 < len(spans) and spans[position + 1] == span
+        else None
+        for position, span in enumerate(spans)
+    ]
 
 
 def _blocked_positions(sent: Sequence[CohesionWord]) -> frozenset[int]:
