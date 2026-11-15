@@ -2432,7 +2432,7 @@ True
 </table>
 <h2 id="names">Names<a class="headerlink" href="#names" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:StatsComponent-names] -->
-<p>The name of the pipe is the name of the extension: <code>nlp.add_pipe(factory, name="basic")</code> puts the statistics into <code>doc._.basic</code>. Without <code>name</code> both take the name of the factory. The extension follows the pipe when the pipeline renames it (<code>nlp.rename_pipe</code>). A name taken by an extension of another package raises <code>ParameterError</code> instead of replacing it: at <code>add_pipe</code>, or at the first document after <code>rename_pipe</code>, which renames the pipe before the component learns its name. A component taken from another pipeline (<code>add_pipe(name, source=other)</code>) is the same object in both, so under a new name it writes to that extension in the other pipeline too; a separate component comes from the factory, <code>add_pipe(factory, name=...)</code>. The same component can be added twice under different names, with different parameters. A document with no words - an empty string, whitespace, punctuation alone - passes through a component untouched, its extension left at <code>None</code>.</p>
+<p>The name of the pipe is the name of the extension: <code>nlp.add_pipe(factory, name="basic")</code> puts the statistics into <code>doc._.basic</code>. Without <code>name</code> both take the name of the factory. The extension follows the pipe when the pipeline renames it (<code>nlp.rename_pipe</code>), and an extension removed by <code>Doc.remove_extension</code> while the component lives is registered again at its next document. A name taken by an extension of another package raises <code>ParameterError</code> instead of replacing it: at <code>add_pipe</code>, or at the first document after <code>rename_pipe</code>, which renames the pipe before the component learns its name. A component taken from another pipeline (<code>add_pipe(name, source=other)</code>) is the same object in both, so under a new name it writes to that extension in the other pipeline too; a separate component comes from the factory, <code>add_pipe(factory, name=...)</code>. The same component can be added twice under different names, with different parameters. A document with no words - an empty string, whitespace, punctuation alone - passes through a component untouched, its extension left at <code>None</code>.</p>
 <!-- --8<-- [end:StatsComponent-names] -->
 
 <!-- --8<-- [start:StatsComponent-serialization] -->
@@ -2552,7 +2552,7 @@ True
 <p>With <code>preset</code> left at <code>None</code> the config of a saved pipeline holds no preset, and the pipeline takes the default of the class when it is loaded; a library that wants its default written into the config gives it in the signature of its subclass.</p>
 <p>Raises:</p>
 <ul>
-<li><code>ParameterError</code> - a <code>stats_class</code> that is not concrete, a preset that is not a string or not one of the class, an extension not named by a string;</li>
+<li><code>ParameterError</code> - a <code>stats_class</code> that is not concrete, a preset that is not a string or not one of the class, an extension not named by a string or named by an empty one;</li>
 <li><code>SourceTypeError</code> - a class without <code>basic_stats_class</code> and no <code>basic</code>;</li>
 <li><code>SourceError</code> - a document whose extension <code>basic</code> holds no basic statistics of the class.</li>
 </ul>
@@ -2684,7 +2684,7 @@ True
 </table>
 <p>Raises:</p>
 <ul>
-<li><code>ParameterError</code> - a <code>stats_class</code> that is not concrete, an extension not named by a string;</li>
+<li><code>ParameterError</code> - a <code>stats_class</code> that is not concrete, an extension not named by a string or named by an empty one;</li>
 <li><code>SourceTypeError</code> - a class without <code>basic_stats_class</code> and no <code>basic</code>;</li>
 <li><code>SourceError</code> - a document whose extension <code>basic</code> holds no basic statistics of the class.</li>
 </ul>
@@ -2712,7 +2712,7 @@ True
 <tr>
 <td style="text-align: left;"><code>stats_params</code></td>
 <td style="text-align: left;">class attribute</td>
-<td style="text-align: left;">The attributes of the component passed to the class of statistics as keyword arguments, none by default; a name the component lacks raises <code>ParameterError</code> at <code>add_pipe</code></td>
+<td style="text-align: left;">The attributes of the component passed to the class of statistics as keyword arguments, none by default; a name the component lacks raises <code>ParameterError</code> at <code>add_pipe</code>. The attribute <code>join_hyphens</code> of 0.4, which the core no longer reads, raises <code>ParameterError</code> when the class is defined: the words come from <code>parse</code> of the class of statistics</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>compute(doc)</code></td>

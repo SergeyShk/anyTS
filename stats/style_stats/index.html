@@ -2368,7 +2368,7 @@
 <p>The SEO metrics are counted on the words of the <a href="https://sergeyshk.github.io/anyTS/document/">document</a> of the source in lower case (<code>doc_words</code>), or on those of an extractor passed explicitly, used on the text. The markers are counted on the words of the document (<code>forms</code>), whatever the extractor.</p>
 <p>Raises:</p>
 <ul>
-<li><code>SourceTypeError</code> - a source that is neither a string, a <code>Doc</code> nor a <code>Document</code>, a <code>parse</code> that returns no <code>Document</code>, an extractor of another type, a list that is not a list of strings;</li>
+<li><code>SourceTypeError</code> - a source that is neither a string, a <code>Doc</code> nor a <code>Document</code>, a <code>parse</code> that returns no <code>Document</code>, a <code>doc_words</code> that returns no sequence of strings, an extractor of another type, a list that is not a list of strings;</li>
 <li><code>SourceError</code> - a source without words;</li>
 <li><code>ParameterError</code> - a <code>top_n</code> that is not an integer of at least one.</li>
 </ul>
@@ -3027,7 +3027,7 @@ Officialese cliches (per 100 words)       |   7.69
 <tr>
 <td style="text-align: left;"><code>doc_words(document)</code></td>
 <td style="text-align: left;">method</td>
-<td style="text-align: left;">Words of a document in lower case; those of <code>document_words</code> by default, overridden to normalize the forms of the words of a language</td>
+<td style="text-align: left;">Words of a document in lower case; those of <code>document_words</code> by default, overridden to normalize the forms of the words of a language; a result that is not a sequence of strings raises <code>SourceTypeError</code></td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>is_stopword(word)</code></td>

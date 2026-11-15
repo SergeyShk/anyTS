@@ -2345,7 +2345,7 @@
 <p>The phonetic statistics of a text: its sounds by class, their clusters, sequences and repetitions, and its syllables. A sound is a letter of a word by default, or a sound of its transcription when a library gives one. The data source is a text, a <code>Doc</code> object of <a href="https://github.com/explosion/spaCy">spaCy</a> or a <code>Document</code> of <a href="https://github.com/SergeyShk/anySeg">anySeg</a>; the words are those of its <a href="https://sergeyshk.github.io/anyTS/document/">document</a> in lower case (<code>doc_words</code>), or those of an extractor passed explicitly, used on the text.</p>
 <p>Raises:</p>
 <ul>
-<li><code>SourceTypeError</code> - a source that is neither a string, a <code>Doc</code> nor a <code>Document</code>, a <code>parse</code> that returns no <code>Document</code>, an extractor of another type;</li>
+<li><code>SourceTypeError</code> - a source that is neither a string, a <code>Doc</code> nor a <code>Document</code>, a <code>parse</code> that returns no <code>Document</code>, a <code>doc_words</code>, <code>syllabify</code> or <code>transcribe</code> that returns no strings, an extractor of another type;</li>
 <li><code>SourceError</code> - a source without words;</li>
 <li><code>ParameterError</code> - a window that is not an integer of at least 2.</li>
 </ul>
@@ -2849,7 +2849,7 @@ P = 1 - \frac{\binom{N-K}{w} + K \binom{N-K}{w-1}}{\binom{N}{w}}
 <tr>
 <td style="text-align: left;"><code>doc_words(document)</code></td>
 <td style="text-align: left;">method</td>
-<td style="text-align: left;">Words of a document in lower case; those of <code>document_words</code> by default, overridden to normalize the forms of the words of a language</td>
+<td style="text-align: left;">Words of a document in lower case; those of <code>document_words</code> by default, overridden to normalize the forms of the words of a language; a result that is not a sequence of strings raises <code>SourceTypeError</code></td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>parse(source)</code></td>

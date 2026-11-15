@@ -2719,7 +2719,7 @@
 <p>The syntactic statistics of a text by its dependency tree (<a href="https://dialogue-conf.org/media/4302/ivanovvv.pdf">Ivanov, Solnyshkina and Solovyev 2018</a>): the measures of the tree and of the syntactic constructions. The data source is a text, a <code>Doc</code> object of <a href="https://github.com/explosion/spaCy">spaCy</a> or a <code>Document</code> of <a href="https://github.com/SergeyShk/anySeg">anySeg</a> with a dependency parse and parts of speech; a language library parses a string in its <code>parse</code>. The tree is that of its <a href="https://sergeyshk.github.io/anyTS/document/#get_tree">document</a> (<code>get_tree</code>), and its nodes are the words of Universal Dependencies of the document with a letter or a digit: punctuation marks and symbols are none, and the tokens of the document decide what a word is. The distances are counted in positions of words. The units of L2SCA, the prepositional chains and the similarity of sentences are computed on first use, so a subclass whose <code>stats_desc</code> does not name them does not pay for them.</p>
 <p>Raises:</p>
 <ul>
-<li><code>SourceTypeError</code> - a source that is neither a string, a <code>Doc</code> nor a <code>Document</code>, a <code>parse</code> that returns no <code>Document</code>;</li>
+<li><code>SourceTypeError</code> - a source that is neither a string, a <code>Doc</code> nor a <code>Document</code>, a <code>parse</code> that returns no <code>Document</code>, a <code>find_split_predicates</code> that returns no pairs of <code>TreeWord</code> objects;</li>
 <li><code>SourceError</code> - a source without a dependency parse, without parts of speech, without lemmas when the class requires them, or without words.</li>
 </ul>
 <!-- --8<-- [end:SyntaxStats] -->
@@ -3880,6 +3880,12 @@ Ratio of nouns to verbs                                    |   0.50
 <p>The number of words in the subtree of a word: the word itself and all of its direct and indirect dependents, punctuation left out; the argument is that of <code>get_children</code>.</p>
 <!-- --8<-- [end:subtree_len] -->
 
+<!-- --8<-- [start:get_subtree] -->
+<div class="signature highlight"><pre><span></span><code><span class="n">get_subtree</span><span class="p">(</span><span class="n">word</span><span class="p">)</span>
+</code></pre></div>
+<p>The words of the subtree of a word in the order of the text: the word itself and all of its direct and indirect dependents, punctuation marks included, as the <code>subtree</code> of a spaCy token; the argument is that of <code>get_children</code>.</p>
+<!-- --8<-- [end:get_subtree] -->
+
 <h2 id="verb-forms">Verb form of a predicate<a class="headerlink" href="#verb-forms" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:predicate_form] -->
 <div class="signature highlight"><pre><span></span><code><span class="n">predicate_form</span><span class="p">(</span><span class="n">word</span><span class="p">,</span> <span class="n">auxiliary_form</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
@@ -4110,7 +4116,7 @@ Ratio of nouns to verbs                                    |   0.50
 <tr>
 <td style="text-align: left;"><code>find_split_predicates(words)</code></td>
 <td style="text-align: left;">method</td>
-<td style="text-align: left;">Pairs of a light verb and the noun that carries its meaning (<code>to make a decision</code>) among the words of the text; none by default</td>
+<td style="text-align: left;">Pairs of a light verb and the noun that carries its meaning (<code>to make a decision</code>) among the words of the text; none by default. A result that is not pairs of <code>TreeWord</code> objects raises <code>SourceTypeError</code></td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>negation_words</code></td>

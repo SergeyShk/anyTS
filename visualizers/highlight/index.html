@@ -2595,7 +2595,7 @@
 <!-- --8<-- [start:tokens_span] -->
 <div class="signature highlight"><pre><span></span><code><span class="n">tokens_span</span><span class="p">(</span><span class="n">words</span><span class="p">)</span>
 </code></pre></div>
-<p>The positions of the fragment that covers some words of the tree of a document (<code>TreeWord</code>): from the start of the first to the end of the last token of the words with a letter or a digit, so the punctuation marks and the symbols at its edges are left out.</p>
+<p>The positions of the fragment that covers some words of the tree of a document (<code>TreeWord</code>): from the start of the first to the end of the last token of the words with a letter or a digit, so the punctuation marks and the symbols at its edges are left out. Words without a letter or a digit among them raise <code>SourceError</code>.</p>
 <!-- --8<-- [end:tokens_span] -->
 
 <!-- --8<-- [start:split_segments] -->
@@ -3055,7 +3055,7 @@
 </tr>
 </tbody>
 </table>
-<p>The words and the sentences are those of the document of <code>parse</code> (<code>doc_words</code>, <code>iter_doc_sents</code>), so a blank line always ends a sentence; a sentence holds the words that start in it. <code>find</code> runs in <code>__init__</code>: a subclass stores its own parameters, checked by <code>check_params</code>, before calling the <code>__init__</code> of the base, and may find its layers with the finders of the layers. A fragment of another layer, an empty one or one outside the text raises <code>ParameterError</code>, and so does a layer that needs a column a document has not when the class is defined; a <code>find</code> that does not return <code>Highlight</code> objects and a <code>parse</code> that returns no <code>Document</code>, <code>SourceTypeError</code>.</p>
+<p>The words and the sentences are those of the document of <code>parse</code> (<code>doc_words</code>, <code>iter_doc_sents</code>), so a blank line always ends a sentence; a sentence holds the words that start in it. <code>find</code> runs in <code>__init__</code>: a subclass stores its own parameters, checked by <code>check_params</code>, before calling the <code>__init__</code> of the base, and may find its layers with the finders of the layers. A fragment of another layer, an empty one or one outside the text raises <code>ParameterError</code>, and so do, when the class is defined, a layer that needs a column a document has not and the hooks <code>iter_words</code> and <code>iter_sents</code> of 0.4, which the core no longer reads (<code>parse</code> and <code>doc_words</code> replace them); a <code>find</code> that does not return <code>Highlight</code> objects and a <code>parse</code> that returns no <code>Document</code>, <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:HighlightedText-hooks] -->
 <p>In the core the layers are empty and <code>css_prefix</code> is <code>anyts</code>.</p>
 <!-- --8<-- [start:HighlightedText-check_params] -->

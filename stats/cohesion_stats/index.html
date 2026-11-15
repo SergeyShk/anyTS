@@ -2368,7 +2368,7 @@
 <p>Raises:</p>
 <ul>
 <li><code>SourceTypeError</code> - an extractor of another type, a source that is neither a string, a <code>Doc</code> nor a <code>Document</code>, a <code>parse</code> that returns no <code>Document</code>, connectors that are not a dictionary of phrases and pairs of strings;</li>
-<li><code>SourceError</code> - a source without parts of speech, lemmas or words;</li>
+<li><code>SourceError</code> - a source without words, or without parts of speech or lemmas while <code>requires_pos</code> or <code>requires_lemmas</code> is set;</li>
 <li><code>ParameterError</code> - an unknown class or kind of a connector, a <code>blank_lines</code> that is not a <code>bool</code>.</li>
 </ul>
 <!-- --8<-- [end:CohesionStats] -->
@@ -3187,7 +3187,12 @@ Secondary connectors per 1000 words                                |  142.86
 <tr>
 <td style="text-align: left;"><code>connector_matcher_class</code></td>
 <td style="text-align: left;">class attribute</td>
-<td style="text-align: left;">Class that finds the connectors with the context rules of the language; <code>ConnectorMatcher</code> by default. A matcher with other classes or kinds gives other <code>connectors_*</code> attributes, so the subclass sets its own <code>stats_desc</code> too</td>
+<td style="text-align: left;">Class that finds the connectors with the context rules of the language; <code>ConnectorMatcher</code> by default. A matcher with other classes or kinds gives other <code>connectors_*</code> attributes, so the subclass sets its own <code>stats_desc</code> too; a class that is not a subclass of <code>ConnectorMatcher</code> raises <code>ParameterError</code> when the class is defined</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>requires_pos</code>, <code>requires_lemmas</code></td>
+<td style="text-align: left;">class attributes</td>
+<td style="text-align: left;">Whether the source must carry parts of speech and lemmas, which the default <code>word_info</code> reads; both by default. A source without them raises <code>SourceError</code> (<code>no_pos</code>, <code>no_lemmas</code>), and a library whose <code>word_info</code> annotates the words itself, such as with its own lemmatizer, turns them off and keeps <code>analyze</code></td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>temporal_features</code></td>
@@ -3225,7 +3230,7 @@ Secondary connectors per 1000 words                                |  142.86
 <tr>
 <td style="text-align: left;"><code>normalize(text)</code></td>
 <td style="text-align: left;">method</td>
-<td style="text-align: left;">Normalized form of a word and of a connector; the lower case by default</td>
+<td style="text-align: left;">Normalized form of a word and of a connector; the lower case by default. A connector it gives no string for raises <code>SourceTypeError</code></td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>blocked_after</code>, <code>blocked_before</code></td>

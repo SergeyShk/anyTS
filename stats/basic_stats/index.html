@@ -2180,7 +2180,7 @@
 <p>The words and the sentences come from the <a href="https://sergeyshk.github.io/anyTS/document/">document</a> of the source (<code>parse</code>): its tokens without punctuation marks and symbols such as <code>€</code> or <code>%</code> (<code>doc_words</code>) and its sentences; an extractor given is used on the text instead. A <code>Doc</code> keeps its sentence starts, and one with no or only partial sentence starts (a token whose <code>is_sent_start</code> is unset) gets those of <code>parse</code>. A blank line ends a sentence of every source, since it ends a paragraph of the document. A sentence without words, such as punctuation alone, is not counted.</p>
 <p>Raises:</p>
 <ul>
-<li><code>SourceTypeError</code> - a source that is neither a string, a <code>Doc</code> nor a <code>Document</code>, a <code>parse</code> that returns no <code>Document</code>, an extractor of another type;</li>
+<li><code>SourceTypeError</code> - a source that is neither a string, a <code>Doc</code> nor a <code>Document</code>, a <code>parse</code> that returns no <code>Document</code>, a <code>doc_words</code> that returns no sequence of strings, an extractor of another type;</li>
 <li><code>SourceError</code> - a source without words;</li>
 <li><code>ParameterError</code> - a threshold that is not an integer of at least one, a <code>normalize</code> that is not a <code>bool</code>.</li>
 </ul>
@@ -2557,7 +2557,7 @@ Entropy of the word lengths in syllables (bits) |   0.50
 <tr>
 <td style="text-align: left;"><code>doc_words(document)</code></td>
 <td style="text-align: left;">method</td>
-<td style="text-align: left;">The words of a document; <code>document_words</code> by default, overridden to normalize the forms of the words of a language</td>
+<td style="text-align: left;">The words of a document; <code>document_words</code> by default, overridden to normalize the forms of the words of a language; a result that is not a sequence of strings raises <code>SourceTypeError</code></td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>count_punctuations(text)</code></td>

@@ -2303,7 +2303,7 @@
 </tr>
 </tbody>
 </table>
-<p>The result is a <code>Tree</code> named tuple: <code>text</code>, <code>words</code> - the words of the document, punctuation marks included - and <code>sentences</code> - the words of every sentence.</p>
+<p>The result is a <code>Tree</code> named tuple: <code>text</code>, <code>words</code> - the words of the document, punctuation marks included - and <code>sentences</code> - the words of every sentence. Its method <code>word_at(position, end=None)</code> gives the word whose token covers a position of the text, or with <code>end</code> the first one whose token overlaps the span; the first word of a multiword token, or <code>None</code> where no word stands, as at whitespace. The word of a spaCy token is <code>tree.word_at(token.idx, token.idx + len(token))</code>: the positions of the words differ from <code>Token.i</code> where a <code>Doc</code> has tokens of whitespace, and the token of the document leaves out a separator at the edge of the token, such as a byte order mark.</p>
 <!-- --8<-- [end:get_tree] -->
 
 <!-- --8<-- [start:TreeWord] -->
@@ -2381,7 +2381,7 @@
 </tr>
 </tbody>
 </table>
-<p>In place of the attributes of a spaCy <code>Token</code>: <code>text</code> - <code>form</code>, <code>lemma_</code> - <code>lemma</code>, <code>pos_</code> - <code>upos</code>, <code>tag_</code> - <code>xpos</code>, <code>dep_</code> - <code>deprel</code>, <code>morph.get(name)</code> - <code>feats.get(name)</code> (a string), <code>i</code> - <code>index</code>, <code>idx</code> - <code>start</code>, <code>head</code> of a root - <code>None</code> instead of the token itself.</p>
+<p>In place of the attributes of a spaCy <code>Token</code>: <code>text</code> - <code>form</code>, <code>lemma_</code> - <code>lemma</code>, <code>pos_</code> - <code>upos</code>, <code>tag_</code> - <code>xpos</code>, <code>dep_</code> - <code>deprel</code>, <code>morph.get(name)</code> - <code>feats.get(name)</code> (a string), <code>i</code> - <code>index</code> (other where a <code>Doc</code> has tokens of whitespace: <code>tree.word_at(token.idx, token.idx + len(token))</code> gives the word of a token), <code>idx</code> - <code>start</code>, <code>head</code> of a root - <code>None</code> instead of the token itself, <code>subtree</code> - <code>get_subtree(word)</code> of <code>anyts.syntax_stats</code>.</p>
 <!-- --8<-- [end:TreeWord] -->
 
 <div class="tabbed-set tabbed-alternate" data-tabs="4:2"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><input id="__tabbed_4_2" name="__tabbed_4" type="radio" /><div class="tabbed-labels"><label for="__tabbed_4_1">Code</label><label for="__tabbed_4_2">Result</label></div>
