@@ -4,16 +4,27 @@ from collections.abc import Iterable, Mapping
 from itertools import pairwise
 from math import isfinite
 from numbers import Real
+from types import MappingProxyType
 from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
 from .constants import MESSAGES
 from .exceptions import ParameterError, UnknownStatError
-from .utils import check_bool, check_messages, check_number
+from .utils import _check_removed, check_bool, check_messages, check_number
 
 if TYPE_CHECKING:
     from anyseg import Document
     from pandas import DataFrame
     from spacy.tokens import Doc
+
+# Attributes of the classes of statistics of 0.4 the core no longer reads, with what replaces them
+_REMOVED_ATTRIBUTES = MappingProxyType(
+    {
+        "words_extractor_class": "parse or doc_words",
+        "sents_extractor_class": "parse",
+        "join_hyphens": "parse",
+        "doc_units": "analyze",
+    }
+)
 
 Band = TypeVar("Band")
 
@@ -44,9 +55,11 @@ class Stats:
         messages (dict[str, str]): Messages of the errors by key (MESSAGES)
 
     Raises:
-        ParameterError: When a class is defined, if its messages are incomplete or
+        ParameterError: When a class is defined, if its messages are incomplete,
             its scales are not pairs of a finite lower bound and a band with the
-            bounds descending
+            bounds descending, or it defines an attribute of 0.4 the core no
+            longer reads (words_extractor_class, sents_extractor_class,
+            join_hyphens, doc_units)
 
     Example:
         >>> from anyts.stats import Stats
@@ -72,6 +85,7 @@ class Stats:
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
         check_messages(cls.messages)
+        _check_removed(cls, _REMOVED_ATTRIBUTES, cls.messages)
         _check_scales(cls.level_scales, f"level_scales of {cls.__name__}")
 
     def parse(self, source: str | Doc | Document) -> Document:

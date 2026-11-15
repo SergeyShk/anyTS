@@ -9,7 +9,7 @@ The syntactic statistics of a text by its dependency tree ([Ivanov, Solnyshkina 
 
 Raises:
 
-- `SourceTypeError` - a source that is neither a string, a `Doc` nor a `Document`, a `parse` that returns no `Document`;
+- `SourceTypeError` - a source that is neither a string, a `Doc` nor a `Document`, a `parse` that returns no `Document`, a `find_split_predicates` that returns no pairs of `TreeWord` objects;
 - `SourceError` - a source without a dependency parse, without parts of speech, without lemmas when the class requires them, or without words.
 <!-- --8<-- [end:SyntaxStats] -->
 
@@ -716,6 +716,14 @@ subtree_len(word)
 The number of words in the subtree of a word: the word itself and all of its direct and indirect dependents, punctuation left out; the argument is that of `get_children`.
 <!-- --8<-- [end:subtree_len] -->
 
+<!-- --8<-- [start:get_subtree] -->
+``` {.python .signature}
+get_subtree(word)
+```
+
+The words of the subtree of a word in the order of the text: the word itself and all of its direct and indirect dependents, punctuation marks included, as the `subtree` of a spaCy token; the argument is that of `get_children`.
+<!-- --8<-- [end:get_subtree] -->
+
 ## Verb form of a predicate { #verb-forms }
 
 <!-- --8<-- [start:predicate_form] -->
@@ -851,7 +859,7 @@ A language library subclasses `SyntaxStats`. The hooks of a word get a `TreeWord
 | `is_passive(word)` | method | Whether a word is a passive verb form; by default `is_passive` of the module |
 | `is_agentless(word)` | method | Whether a passive form has no agent; by default the hook `is_passive` without an agent (`has_agent` of the module) |
 | `is_negation(word)` | method | Whether a word is a word of negation; by default `Polarity=Neg` or a word of `negation_words`, a conjunction excluded |
-| `find_split_predicates(words)` | method | Pairs of a light verb and the noun that carries its meaning (`to make a decision`) among the words of the text; none by default |
+| `find_split_predicates(words)` | method | Pairs of a light verb and the noun that carries its meaning (`to make a decision`) among the words of the text; none by default. A result that is not pairs of `TreeWord` objects raises `SourceTypeError` |
 | `negation_words` | class attribute | Words of negation besides `Polarity=Neg`, in lower case; none by default |
 | `subordinating_marks` | class attribute | Subordinating conjunctions in lower case, the words of a fixed expression after a space, for the hook `is_subordinating_mark` (*because*, *so that*); none by default |
 | `requires_lemmas` | class attribute | Whether the source must carry lemmas, for hooks that read them |

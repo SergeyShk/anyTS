@@ -15,6 +15,7 @@ from ..exceptions import ParameterError, SourceError, SourceTypeError
 from ..syntax_stats import get_words
 from ..utils import (
     LINE_BREAK,
+    _check_removed,
     _is_mark_gap,
     check_callable,
     check_integer,
@@ -47,6 +48,8 @@ _ANNOTATION_NAMES = {
     "xpos": "tags",
     "feats": "morphological features",
 }
+# Hooks of the highlighting of 0.4 the core no longer reads, with what replaces them
+_REMOVED_HOOKS = MappingProxyType({"iter_words": "parse or doc_words", "iter_sents": "parse"})
 
 
 class Word(NamedTuple):
@@ -128,18 +131,16 @@ def check_params(
 
 def _check_factor(value: int, key: str, messages: Mapping[str, str] = MESSAGES) -> None:
     """Checking the least number of words or syllables of a layer, its message by key"""
-    what = {
-        "long_sent_word_factor": "number of words of a long sentence",
-        "complex_syl_factor": "number of syllables of a complex word",
-    }[key]
-    check_integer(value, what)
+    check_integer(value, key, message=messages["integer_param"])
     if value < 1:
         raise ParameterError(messages[key])
 
 
-def _check_threshold(value: float, messages: Mapping[str, str] = MESSAGES) -> None:
-    """Checking the probability threshold of the alliteration"""
-    check_number(value, "threshold of the alliteration")
+def _check_threshold(
+    value: float, messages: Mapping[str, str] = MESSAGES, name: str = "alliteration_threshold"
+) -> None:
+    """Checking the probability threshold of the alliteration, a parameter of the name"""
+    check_number(value, name, message=messages["number_param"])
     if not 0 < value <= 1:
         raise ParameterError(messages["alliteration_threshold"])
 
@@ -191,7 +192,8 @@ class HighlightedText:
         ParameterError: If a layer is unknown or not allowed by the source, the
             layers are not a list of names, or find gives a fragment of another
             layer, an empty one or one outside the text; when a class is defined,
-            if a layer needs a column that a document has not
+            if a layer needs a column that a document has not, or the class defines
+            a hook of 0.4 the core no longer reads (iter_words, iter_sents)
     """
 
     layers_desc: ClassVar[Mapping[str, str]] = MappingProxyType({})
@@ -205,6 +207,7 @@ class HighlightedText:
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
         check_messages(cls.messages)
+        _check_removed(cls, _REMOVED_HOOKS, cls.messages)
         for layer, columns in cls.layer_annotations.items():
             valid = isinstance(columns, Sequence) and not isinstance(columns, str)
             unknown = (
@@ -570,8 +573,13 @@ def tokens_span(words: Iterable[TreeWord]) -> tuple[int, int]:
 
     Returns:
         tuple[int, int]: Position of the first character and position after the last one
+
+    Raises:
+        SourceError: If there is no word among the words
     """
     found = get_words(words)
+    if not found:
+        raise SourceError(MESSAGES["no_words"])
     return min(word.start for word in found), max(word.end for word in found)
 
 
@@ -930,7 +938,7 @@ def calc_alliteration_runs(
     """
     check_words(words)
     _check_frequencies(frequencies)
-    _check_threshold(threshold)
+    _check_threshold(threshold, name="threshold")
     _check_hooks((stem, "stem"), (is_transparent, "check of a transparent word"))
     return _alliteration_runs(words, frequencies, threshold, stem, is_transparent)
 
@@ -1027,7 +1035,7 @@ def find_alliteration(
             threshold in (0, 1]
     """
     _check_frequencies(frequencies)
-    _check_threshold(threshold)
+    _check_threshold(threshold, name="threshold")
     _check_hooks((stem, "stem"), (is_transparent, "check of a transparent word"), (note, "note"))
     note = note or (lambda consonant: f"alliteration on {consonant}")
     groups = [list(words)] if sents is None else group_words_by_sents(words, sents)

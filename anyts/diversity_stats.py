@@ -248,10 +248,11 @@ class DiversityStats(Stats):
             log_base,
             messages=self.messages,
         )
+        message = self.messages["words_param"]
         if not isinstance(words, Iterator):
-            check_sequence(words)
+            check_sequence(words, message=message)
         self.words = tuple(words)
-        check_words(self.words)
+        check_words(self.words, message=message)
         if not self.words:
             raise SourceError(self.messages["no_words"])
         self.window_len = window_len
@@ -1824,17 +1825,17 @@ def calc_windowed(
         SourceTypeError: If the words are not a list of strings (check_words) or the
             metric is not a function
     """
-    check_integer(window_len, "window size")
+    check_integer(window_len, "window_len", message=messages["integer_param"])
     if window_len < 1:
         raise ParameterError(messages["window_len"])
     if step is None:
         step = window_len
-    check_integer(step, "window step")
+    check_integer(step, "step", message=messages["integer_param"])
     if step < 1:
         raise ParameterError(messages["window_step"])
     if not callable(func):
         raise SourceTypeError(messages["window_metric"].format(type=type(func).__name__))
-    check_number(confidence, "confidence level")
+    check_number(confidence, "confidence", message=messages["number_param"])
     if not 0 < confidence < 1:
         raise ParameterError(messages["confidence"])
     starts = range(0, max(len(text) - window_len, 0) + 1, step)

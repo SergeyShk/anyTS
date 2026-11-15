@@ -101,12 +101,19 @@ def test_hooks_are_checked():
         to_document(TEXT, tokenize=5)
     with pytest.raises(SourceTypeError, match="sentence splitter"):
         to_document(TEXT, sentenize="split")
-    with pytest.raises(SourceTypeError, match="triples"):
+    with pytest.raises(SourceTypeError, match=r"^The tokenize must give triples .+ not \(0, 3\)$"):
         to_document(TEXT, tokenize=lambda text: [(0, 3)])
-    with pytest.raises(SourceTypeError, match="ascending integer bounds"):
+    with pytest.raises(SourceTypeError, match=r"ascending for tokenize, not \(0, 3, 'The'\)$"):
         to_document(TEXT, tokenize=lambda text: [(4, 7, "cat"), (0, 3, "The")])
-    with pytest.raises(SourceTypeError, match="must give integer bounds inside"):
+    with pytest.raises(SourceTypeError, match=r"^The sentenize must give triples"):
         to_document(TEXT, sentenize=lambda text: [(0, 99, text)])
+    with pytest.raises(SourceTypeError, match=r"^The sentenize must give triples .+ not 5$"):
+        to_document(TEXT, sentenize=lambda text: 5)
+    own = {**MESSAGES, "hook_bounds": "Own {hook}: {span}"}
+    with pytest.raises(SourceTypeError, match=r"^Own tokenize: \(0, 3\)$"):
+        to_document(TEXT, tokenize=lambda text: [(0, 3)], messages=own)
+    with pytest.raises(SourceTypeError, match=r"^Own sentenize: 5$"):
+        to_document(spacy.blank("en")("One two"), sentenize=lambda text: 5, messages=own)
 
 
 def test_document():
@@ -372,6 +379,38 @@ def test_doc_multiword_tokens():
     assert document_words(document) == ("Vino", "del", "pueblo", "Se", "fue")
 
 
+def test_word_at_a_position():
+    """The word of a token of spaCy by its position, past the tokens of whitespace, and the first
+    word of a multiword token"""
+    doc = spacy.blank("en")("Cats  sleep\n\nDogs bark")
+    tree = get_tree(to_document(doc))
+    # The positions of the words are not those of the tokens
+    assert tree.words[doc[2].i].form == "Dogs"
+    assert [tree.word_at(token.idx) for token in doc] == [
+        tree.words[0],
+        None,
+        tree.words[1],
+        None,
+        tree.words[2],
+        tree.words[3],
+    ]
+    assert tree.word_at(3).form == "Cats"
+    assert tree.word_at(4, 7) is tree.words[1]
+    assert tree.word_at(4, 6) is None
+    assert tree.word_at(6, 6) is tree.words[1]
+    assert tree.word_at(-1) is None
+    assert tree.word_at(len(doc.text)) is None
+    # The token of the document leaves out the separators at the edges of a token of spaCy
+    doc = spacy.blank("en")("\ufeffThe cat sat on the \u200bmat.")
+    tree = get_tree(to_document(doc))
+    found = [tree.word_at(token.idx, token.idx + len(token)) for token in doc]
+    assert [word.form for word in found] == ["The", "cat", "sat", "on", "the", "mat", "."]
+    assert tree.word_at(doc[0].idx) is None
+    tree = get_tree(Document.from_tokens("al cine", [0, 3], [2, 7], words={0: ["a", "el"]}))
+    assert [word.form for word in tree.words] == ["a", "el", "cine"]
+    assert tree.word_at(1) is tree.words[0]
+
+
 def test_other_sources():
     doc = spacy.blank("en")(TEXT)
     with pytest.raises(SourceTypeError, match=re.escape(MESSAGES["source_span"])):
@@ -437,7 +476,7 @@ def test_tokens_over_a_blank_line():
     with pytest.raises(SourceError, match=r"^Own token 1"):
         to_document(doc, messages=own)
     text = "One two. Three four.\n\nFive six."
-    with pytest.raises(SourceTypeError, match="tokens a document can hold: token 4: runs over"):
+    with pytest.raises(SourceTypeError, match="cannot make a document: token 4: runs over"):
         to_document(text, tokenize=lambda t: [(14, 24, t[14:24])])
 
 

@@ -165,7 +165,7 @@ The words of every sentence; the words out of the sentences are skipped.
 tokens_span(words)
 ```
 
-The positions of the fragment that covers some words of the tree of a document (`TreeWord`): from the start of the first to the end of the last token of the words with a letter or a digit, so the punctuation marks and the symbols at its edges are left out.
+The positions of the fragment that covers some words of the tree of a document (`TreeWord`): from the start of the first to the end of the last token of the words with a letter or a digit, so the punctuation marks and the symbols at its edges are left out. Words without a letter or a digit among them raise `SourceError`.
 <!-- --8<-- [end:tokens_span] -->
 
 <!-- --8<-- [start:split_segments] -->
@@ -356,7 +356,7 @@ The core has no layers of its own: a language library subclasses `HighlightedTex
 | `annotation_names` | class attribute | Names of the columns in the message of a layer a source does not allow, `dict[str, str]`; English by default |
 | `messages` | class attribute | Messages of the errors by key; `MESSAGES` by default |
 
-The words and the sentences are those of the document of `parse` (`doc_words`, `iter_doc_sents`), so a blank line always ends a sentence; a sentence holds the words that start in it. `find` runs in `__init__`: a subclass stores its own parameters, checked by `check_params`, before calling the `__init__` of the base, and may find its layers with the finders of the layers. A fragment of another layer, an empty one or one outside the text raises `ParameterError`, and so does a layer that needs a column a document has not when the class is defined; a `find` that does not return `Highlight` objects and a `parse` that returns no `Document`, `SourceTypeError`.
+The words and the sentences are those of the document of `parse` (`doc_words`, `iter_doc_sents`), so a blank line always ends a sentence; a sentence holds the words that start in it. `find` runs in `__init__`: a subclass stores its own parameters, checked by `check_params`, before calling the `__init__` of the base, and may find its layers with the finders of the layers. A fragment of another layer, an empty one or one outside the text raises `ParameterError`, and so do, when the class is defined, a layer that needs a column a document has not and the hooks `iter_words` and `iter_sents` of 0.4, which the core no longer reads (`parse` and `doc_words` replace them); a `find` that does not return `Highlight` objects and a `parse` that returns no `Document`, `SourceTypeError`.
 <!-- --8<-- [end:HighlightedText-hooks] -->
 
 In the core the layers are empty and `css_prefix` is `anyts`.

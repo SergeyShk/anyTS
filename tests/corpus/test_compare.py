@@ -473,7 +473,7 @@ def test_split_windows_with_a_tokenizer():
         ({"window": 0}, ParameterError, "^The window size must be greater than 0$"),
         ({"min_words": 0}, ParameterError, "^The smallest number of words in a window must be"),
         ({"window": 5, "min_words": 6}, ParameterError, "cannot be greater than the window$"),
-        ({"window": 2.5}, ParameterError, "size of a window must be an integer"),
+        ({"window": 2.5}, ParameterError, "^The window must be an integer, not float$"),
         ({"tokenize": 5}, SourceTypeError, "^The tokenizer must be callable, not int$"),
     ],
 )
@@ -536,8 +536,8 @@ def test_split_windows_english_marks():
 @pytest.mark.parametrize(
     ("marks", "error", "message"),
     [
-        (None, SourceTypeError, "opening marks"),
-        ([1], SourceTypeError, "opening marks"),
+        (None, SourceTypeError, "^The opening_marks must be a list of strings, not NoneType$"),
+        ([1], SourceTypeError, "^The opening_marks must be a list of strings, not int$"),
         ({"--"}, ParameterError, "must be one character, not '--'"),
     ],
 )

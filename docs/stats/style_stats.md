@@ -11,7 +11,7 @@ The SEO metrics are counted on the words of the [document](https://sergeyshk.git
 
 Raises:
 
-- `SourceTypeError` - a source that is neither a string, a `Doc` nor a `Document`, a `parse` that returns no `Document`, an extractor of another type, a list that is not a list of strings;
+- `SourceTypeError` - a source that is neither a string, a `Doc` nor a `Document`, a `parse` that returns no `Document`, a `doc_words` that returns no sequence of strings, an extractor of another type, a list that is not a list of strings;
 - `SourceError` - a source without words;
 - `ParameterError` - a `top_n` that is not an integer of at least one.
 <!-- --8<-- [end:StyleStats] -->
@@ -391,7 +391,7 @@ A language library subclasses `StyleStats`; by default the hooks know no languag
 | :--- | :--- | :---------- |
 | `compound_prepositions_list`, `parentheticals_list`, `cliches_list` | class attributes | Compound prepositions, parenthetical expressions and cliches, checked as lists of strings when the class is defined; the parameter `cliches` replaces the last |
 | `normalize(word)` | method | Normalized form of a word or a phrase, by which the lists and the keywords are compared; the lower case by default |
-| `doc_words(document)` | method | Words of a document in lower case; those of `document_words` by default, overridden to normalize the forms of the words of a language |
+| `doc_words(document)` | method | Words of a document in lower case; those of `document_words` by default, overridden to normalize the forms of the words of a language; a result that is not a sequence of strings raises `SourceTypeError` |
 | `is_stopword(word)` | method | Whether a word is a stopword of the academic nausea, when `nausea_stopwords` is not given |
 | `is_water_word(word)` | method | Whether a word is water, when `stopwords` is not given; `is_stopword` by default |
 | `is_parenthetical(word)` | method | Whether a word is a parenthetical expression by itself, outside the phrases of `parentheticals_list` |

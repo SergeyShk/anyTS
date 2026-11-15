@@ -352,10 +352,10 @@ def test_format_kwic_of_no_concordances(concordances):
 
 
 def test_kwic_checks_the_words_of_its_tokenizer():
-    with pytest.raises(SourceTypeError, match=r"^The tokenizer must give triples"):
+    with pytest.raises(SourceTypeError, match=r"^The tokenize must give triples"):
         kwic("The cat sleeps", "cat", tokenize=str.split)
 
 
 def test_kwic_checks_the_sentences_of_its_splitter():
-    with pytest.raises(SourceTypeError, match=r"^The sentence splitter must give integer bounds"):
+    with pytest.raises(SourceTypeError, match=r"^The sentenize must give triples"):
         kwic("The cat. It sleeps.", "cat it", sentenize=lambda text: [(0, 99, text)])

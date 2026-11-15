@@ -235,6 +235,10 @@ MESSAGES: Mapping[str, str] = MappingProxyType(
         "source_span": "The data source cannot be a Span: pass span.as_doc()",
         "no_words": "The data source has no words",
         "document_tokens": "The tokens of the data source cannot make a document: {error}",
+        "hook_bounds": (
+            "The {hook} must give triples of integer bounds inside the text and a string, "
+            "ascending for tokenize, not {span}"
+        ),
         "no_sentences": "The data source has no sentences",
         "sents_extractor_type": "The sentence extractor must be a SentsExtractor",
         "words_extractor_type": "The word extractor must be a WordsExtractor",
@@ -250,6 +254,7 @@ MESSAGES: Mapping[str, str] = MappingProxyType(
         "no_scale": "The metric {stat} has no scale of bands",
         "unknown_stat": "Unknown statistic: {stat}. Available statistics: {stats}",
         "unknown_norm": "Unknown reading speed norm: {norm}. Available norms: {norms}",
+        "negative_words": "The number of words cannot be negative",
         "reading_speed": "The reading speed must be greater than 0",
         "window_len": "The window size must be greater than 0",
         "window_step": "The window step must be greater than 0",
@@ -268,8 +273,10 @@ MESSAGES: Mapping[str, str] = MappingProxyType(
             "before {component}"
         ),
         "extension_name": "The name of an extension must be a string, not {type}",
+        "empty_extension": "The name of an extension cannot be empty",
         "no_stats_class": "{cls} has no concrete class of statistics in stats_class",
         "stats_param": "{cls} has no attribute {param} of stats_params",
+        "removed_attribute": "{cls} defines {name}, which is no longer read: override {replacement}",
         "foreign_extension": (
             "The extension {name} of Doc belongs to another package: give the component another name"
         ),
@@ -297,6 +304,7 @@ MESSAGES: Mapping[str, str] = MappingProxyType(
         "text_type": "A text string is expected, not {type}",
         "min_words": "The smallest number of words in a window must be greater than 0",
         "min_words_window": "The smallest number of words in a window cannot be greater than the window",
+        "mark_length": "A mark of the {param} must be one character, not {mark}",
         "sentence_lengths": "The sentence lengths must be integers",
         "negative_lengths": "The sentence lengths cannot be negative",
         "top_n": "The number of the most frequent words must be greater than 0",
@@ -329,6 +337,9 @@ MESSAGES: Mapping[str, str] = MappingProxyType(
             "The {hook} of {cls} must return sentences of CohesionWord objects, not {type}"
         ),
         "hook_syllables": "The {hook} of {cls} must return a sequence of strings, not {type}",
+        "hook_words": "The {hook} of {cls} must return a sequence of strings, not {type}",
+        "hook_word_pairs": "The {hook} of {cls} must return pairs of TreeWord objects, not {type}",
+        "hook_string": "The {hook} of {cls} must return a string, not {type}",
         "hook_sounds": "The {hook} of {cls} must return a string or strings, not {type}",
         "hook_highlights": "The {hook} of {cls} must return Highlight objects, not {type}",
         "hook_morph_words": "The {hook} of {cls} must return MorphWord objects, not {type}",
@@ -362,6 +373,10 @@ MESSAGES: Mapping[str, str] = MappingProxyType(
             "A sentence without words has no positions of the words, not {position}"
         ),
         "connector_type": "A Connector is expected, not {type}",
+        "matcher_class": (
+            "The connector_matcher_class of {cls} must be a subclass of ConnectorMatcher, "
+            "not {value}"
+        ),
         "morph_features": (
             "The feature_names of {cls} must map the names of new statistics, identifiers "
             "other than pos, tags, words and the names of the class, to the names of their "

@@ -140,8 +140,8 @@ class ConnectorMatcher:
 
     Raises:
         SourceTypeError: If the connectors are not a dictionary of a phrase and a pair
-            of strings; when a class is defined, if its rules are not collections of
-            strings or mappings of strings to them
+            of strings, or normalize does not return a string; when a class is defined,
+            if its rules are not collections of strings or mappings of strings to them
         ParameterError: If a connector has an unknown class or kind; when a class is
             defined, if a class or a kind takes the name inter or intra of the
             densities by place (CohesionStats)
@@ -233,7 +233,14 @@ class ConnectorMatcher:
             cls, kind = value
             if cls not in self.classes or kind not in self.kinds:
                 raise ParameterError(self.messages["connector_class"].format(cls=cls, kind=kind))
-            key = " ".join(self.normalize(connector).split())
+            normalized = self.normalize(connector)
+            if not isinstance(normalized, str):
+                raise SourceTypeError(
+                    self.messages["hook_string"].format(
+                        hook="normalize", cls=type(self).__name__, type=type(normalized).__name__
+                    )
+                )
+            key = " ".join(normalized.split())
             split = " ".join(key.replace("-", " ").replace(".", " ").split())
             # Tokens of UD may keep the period of each part of an abbreviation (e., g.)
             dotted = " ".join(key.replace(".", ". ").split())
@@ -625,6 +632,10 @@ class CohesionStats(Stats):
 
     Class attributes:
         connector_matcher_class (type): Class that finds the connectors (ConnectorMatcher)
+        requires_pos (bool): Whether the source must carry parts of speech, which the
+            default word_info reads
+        requires_lemmas (bool): Whether the source must carry lemmas, which the default
+            word_info reads
         temporal_features (tuple[str, ...]): Features of the verbs whose repetitions
             make the temporal cohesion: one or more of tense, mood, aspect
         stats_desc (dict[str, str]): Statistics of get_stats and their descriptions for
@@ -635,13 +646,17 @@ class CohesionStats(Stats):
             string, a Doc nor a Document object, parse does not return a Document,
             analyze does not give sentences of CohesionWord objects, or the connectors
             are not a dictionary of phrases and pairs of strings
-        SourceError: If the words of the source have no parts of speech or no lemmas
-            (analyze), or there are no words
+        SourceError: If the words of the source have no parts of speech when
+            requires_pos or no lemmas when requires_lemmas (analyze), or there are no
+            words
         ParameterError: If a connector has an unknown class or kind; when a class is
             defined, if its temporal features are not one or more distinct known ones
+            or its connector_matcher_class is not a subclass of ConnectorMatcher
     """
 
     connector_matcher_class: ClassVar[type[ConnectorMatcher]] = ConnectorMatcher
+    requires_pos: ClassVar[bool] = True
+    requires_lemmas: ClassVar[bool] = True
     temporal_features: ClassVar[tuple[str, ...]] = ("tense", "aspect")
     stats_desc: ClassVar[Mapping[str, str]] = COHESION_STATS_DESC
     _connector_matcher: ClassVar[ConnectorMatcher | None] = None
@@ -669,6 +684,11 @@ class CohesionStats(Stats):
                 cls.messages["temporal_features"].format(
                     cls=cls.__name__, features=TEMPORAL_FEATURES, value=repr(features)
                 )
+            )
+        matcher = cls.connector_matcher_class
+        if not (isinstance(matcher, type) and issubclass(matcher, ConnectorMatcher)):
+            raise ParameterError(
+                cls.messages["matcher_class"].format(cls=cls.__name__, value=repr(matcher))
             )
 
     def __init__(
@@ -809,7 +829,8 @@ class CohesionStats(Stats):
         Raises:
             SourceTypeError: If the source is neither a string, a Doc nor a Document
                 object, or parse does not return a Document
-            SourceError: If the words of the source have no parts of speech or no lemmas
+            SourceError: If the words of the source have no parts of speech when
+                requires_pos or no lemmas when requires_lemmas
         """
         with _tree_once(self._document(source)) as tree:
             return self._analyzed(tree)
@@ -820,9 +841,9 @@ class CohesionStats(Stats):
         words = [word for word in tree.words if has_words(word.form)]
         if not words:
             return []
-        if not any(word.upos for word in words):
+        if self.requires_pos and not any(word.upos for word in words):
             raise SourceError(messages["no_pos"])
-        if not any(word.lemma for word in tree.words):
+        if self.requires_lemmas and not any(word.lemma for word in tree.words):
             raise SourceError(messages["no_lemmas"])
         text = tree.text
         sents = self._sentences(words, text)

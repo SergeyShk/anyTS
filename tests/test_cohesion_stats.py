@@ -1213,6 +1213,32 @@ def test_parse_of_a_library():
         Annotated("Vino del pueblo")
 
 
+def test_own_word_info_without_annotations():
+    """A library that reads the features of the words itself turns the checks of the annotations
+    off and keeps analyze; one that extends the default word_info keeps them"""
+
+    class Lemmatized(CohesionStats):
+        requires_pos = False
+        requires_lemmas = False
+
+        def word_info(self, word):
+            lemma = word.form.lower().rstrip("s")
+            return CohesionWord(word.form, lemma, "NOUN", True, False, False, True, True)
+
+    stats = Lemmatized(text_doc(pos=False, lemmas=False))
+    assert stats.words
+    assert stats.noun_overlap_adjacent > 0
+
+    class Blocked(CohesionStats):
+        def word_info(self, word):
+            return super().word_info(word)._replace(connector_blocked=True)
+
+    with pytest.raises(SourceError, match=f"^{re.escape(MESSAGES['no_pos'])}$"):
+        Blocked(text_doc(pos=False))
+    with pytest.raises(SourceError, match=f"^{re.escape(MESSAGES['no_lemmas'])}$"):
+        Blocked(text_doc(lemmas=False))
+
+
 def test_own_analysis():
     class Words(CohesionStats):
         def analyze(self, source):

@@ -15,6 +15,7 @@ from .exceptions import ParameterError, SourceError, SourceTypeError
 from .extractors import WordsExtractor
 from .stats import Stats
 from .utils import (
+    _hook_words,
     check_integer,
     check_sequence,
     check_words,
@@ -101,8 +102,8 @@ class PhonStats(Stats, metaclass=ABCMeta):
     Raises:
         SourceTypeError: If the source is neither a string, a Doc nor a Document object,
             parse does not return a Document, the extractor is of another type, or
-            syllabify or transcribe does not return strings; when a class is defined, if
-            its classes of sounds are not collections of strings
+            doc_words, syllabify or transcribe does not return strings; when a class is
+            defined, if its classes of sounds are not collections of strings
         SourceError: If the source has no words
         ParameterError: If the window is not an integer or is below 2; when a class is
             defined, if its classes of sounds or skipped overlap
@@ -145,7 +146,7 @@ class PhonStats(Stats, metaclass=ABCMeta):
                 word.lower() for word in words_extractor.extract(_source_text(source, messages))
             )
         else:
-            words = self.doc_words(self._document(source))
+            words = _hook_words(self, "doc_words", self.doc_words(self._document(source)))
         if not words:
             raise SourceError(messages["no_words"])
         self.words = words

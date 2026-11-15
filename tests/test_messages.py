@@ -24,6 +24,7 @@ from anyts.components import (
 from anyts.constants import MESSAGES
 from anyts.corpus import sentence_rhythm, split_windows
 from anyts.diversity_stats import DiversityStats, calc_ttr, calc_windowed, check_params
+from anyts.document import to_document
 from anyts.exceptions import ParameterError, SourceError, SourceTypeError, UnknownStatError
 from anyts.lexical_stats import LexicalStats, LexicalWord
 from anyts.morph_stats import MorphStats
@@ -318,6 +319,18 @@ CASES = [
     ("connector_blocked_type", ParameterError, lambda: Matcher({}).find(["a"], blocked=[0.5])),
     ("connector_pos_type", SourceTypeError, lambda: Matcher({}).find(["and"], pos=[1])),
     ("connector_class", ParameterError, lambda: Matcher({"and": ("other", "primary")})),
+    (
+        "hook_string",
+        SourceTypeError,
+        lambda: hooked(Matcher, normalize=lambda self, word: None)(
+            {"and": ("additive", "primary")}
+        ),
+    ),
+    (
+        "matcher_class",
+        ParameterError,
+        lambda: type("Bad", (Cohesion,), {"connector_matcher_class": dict}),
+    ),
     ("connector_pos", ParameterError, lambda: Matcher({}).find(["and"], pos=[])),
     ("connector_breaks", ParameterError, lambda: Matcher({}).find(["a", "b"], breaks={2})),
     ("connector_breaks_short", ParameterError, lambda: Matcher({}).find(["a"], breaks={1})),
@@ -427,6 +440,14 @@ CASES = [
         SourceTypeError,
         lambda: hooked(Phon, syllabify=lambda self, word: None)(TEXT),
     ),
+    ("hook_words", SourceTypeError, lambda: hooked(Phon, doc_words=lambda self, d: [5])(TEXT)),
+    ("hook_words", SourceTypeError, lambda: hooked(Stats, doc_words=lambda self, d: "a")(TEXT)),
+    ("hook_words", SourceTypeError, lambda: hooked(Style, doc_words=lambda self, d: 5)(TEXT)),
+    (
+        "hook_word_pairs",
+        SourceTypeError,
+        lambda: hooked(Syntax, find_split_predicates=lambda self, words: ["ab"])(TAGGED_PARSE),
+    ),
     (
         "hook_sounds",
         SourceTypeError,
@@ -479,6 +500,13 @@ CASES = [
         ParameterError,
         lambda: check_highlight_params(1, 1, 0, messages=OWN),
     ),
+    ("removed_attribute", ParameterError, lambda: type("Old", (Stats,), {"join_hyphens": True})),
+    ("removed_attribute", ParameterError, lambda: hooked(Layers, iter_words=lambda self, t: ())),
+    (
+        "removed_attribute",
+        ParameterError,
+        lambda: type("Old", (BareComponent,), {"join_hyphens": True}),
+    ),
     (
         "stats_param",
         ParameterError,
@@ -495,6 +523,16 @@ CASES = [
         "extension_name",
         ParameterError,
         lambda: OwnReadability(spacy.blank("en"), "own_r", basic=5),
+    ),
+    (
+        "empty_extension",
+        ParameterError,
+        lambda: OwnReadability(spacy.blank("en"), "own_r", basic=""),
+    ),
+    (
+        "empty_extension",
+        ParameterError,
+        lambda: OwnUnadapted(spacy.blank("en"), "own_u", basic=""),
     ),
     ("no_basic_stats_class", SourceTypeError, lambda: OwnUnadapted(spacy.blank("en"), "own_u")),
     (
@@ -518,6 +556,29 @@ CASES = [
         lambda: OwnDiversity(spacy.blank("en"), "own_d", log_base="e"),
     ),
     ("bool_param", ParameterError, lambda: Cohesion(PARSED, blank_lines=1)),
+    ("bool_param", ParameterError, lambda: Words(filter_punct=1)),
+    ("integer_param", ParameterError, lambda: Words(min_len=1.5)),
+    ("integer_param", ParameterError, lambda: Stats(TEXT).count_words_by_letters("5")),
+    ("number_param", ParameterError, lambda: Readability(TEXT).reading_ease_to_grade("5")),
+    ("words_param", SourceTypeError, lambda: Diversity("some text")),
+    ("words_param", SourceTypeError, lambda: Words(stopwords="the")),
+    ("words_param", SourceTypeError, lambda: Style(TEXT).keyword_density(5)),
+    ("negative_words", ParameterError, lambda: calc_reading_time(-1, messages=OWN)),
+    (
+        "mark_length",
+        ParameterError,
+        lambda: split_windows(TEXT, closing_marks=["--"], messages=OWN),
+    ),
+    (
+        "hook_bounds",
+        SourceTypeError,
+        lambda: to_document(TEXT, tokenize=lambda text: 5, messages=OWN),
+    ),
+    (
+        "document_tokens",
+        SourceTypeError,
+        lambda: to_document("a\n\nb", tokenize=lambda text: [(0, 4, "a\n\nb")], messages=OWN),
+    ),
     (
         "bool_param",
         ParameterError,
@@ -565,6 +626,19 @@ def test_own_messages(key, error, call):
     pattern = re.sub(r"\\\{\w+\\\}", ".+", pattern)
     assert re.fullmatch(pattern, message)
     assert "{" not in message
+
+
+def test_messages_without_fields_are_raised_as_they_are():
+    """A message whose default has no fields may hold braces, and they come out as written"""
+    braced = {**MESSAGES, "ngram_range": "Range {n}", "sentence_lengths": "Lengths {x}"}
+
+    class BracedWords(WordsExtractor):
+        messages = braced
+
+    with pytest.raises(ParameterError, match=r"^Range \{n\}$"):
+        BracedWords(ngram_range=(1.5, 2))
+    with pytest.raises(SourceTypeError, match=r"^Lengths \{x\}$"):
+        sentence_rhythm("123", messages=braced)
 
 
 def test_messages_of_functions():

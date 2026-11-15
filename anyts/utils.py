@@ -1051,6 +1051,31 @@ def check_messages(messages: object, defaults: Mapping[str, str] = MESSAGES) -> 
             )
 
 
+def _hook_words(owner: Any, hook: str, result: object) -> tuple[str, ...]:
+    """Words a hook of a class returns, checked to be a sequence of strings, as a tuple"""
+    words = tuple(result) if isinstance(result, Iterable) and not isinstance(result, str) else None
+    if words is None or not all(map(isinstance, words, repeat(str))):
+        wrong = result if words is None else next(w for w in words if not isinstance(w, str))
+        raise SourceTypeError(
+            owner.messages["hook_words"].format(
+                hook=hook, cls=type(owner).__name__, type=type(wrong).__name__
+            )
+        )
+    return words
+
+
+def _check_removed(cls: type, removed: Mapping[str, str], messages: Mapping[str, str]) -> None:
+    """Raising ParameterError for a class with an attribute of 0.4 the core no longer reads, with
+    the hook that replaces it"""
+    for name, replacement in removed.items():
+        if hasattr(cls, name):
+            raise ParameterError(
+                messages["removed_attribute"].format(
+                    cls=cls.__name__, name=name, replacement=replacement
+                )
+            )
+
+
 def source_type_error(messages: Mapping[str, str], source: object) -> SourceTypeError:
     """
     Getting the error of a data source of a wrong type

@@ -11,6 +11,7 @@ from .exceptions import ParameterError, SourceError, SourceTypeError
 from .extractors import WordsExtractor
 from .stats import Stats
 from .utils import (
+    _hook_words,
     check_callable,
     check_integer,
     check_words,
@@ -107,9 +108,9 @@ class StyleStats(Stats):
 
     Raises:
         SourceTypeError: If the source is neither a string, a Doc nor a Document object,
-            parse does not return a Document, the extractor is of another type or a list
-            is not a list of strings; when a class is defined, if a list of its phrases is
-            not a list of strings
+            parse does not return a Document, doc_words does not return a sequence of
+            strings, the extractor is of another type or a list is not a list of strings;
+            when a class is defined, if a list of its phrases is not a list of strings
         SourceError: If the source has no words
         ParameterError: If top_n is not an integer or is below one
     """
@@ -146,7 +147,7 @@ class StyleStats(Stats):
             if words is not None:
                 check_words(words, param, ordered=False, message=messages["words_param"])
         document = self._document(source)
-        self.forms = self.doc_words(document)
+        self.forms = _hook_words(self, "doc_words", self.doc_words(document))
         self.words = words_extractor.extract(document.text) if words_extractor else self.forms
         if not self.words:
             raise SourceError(messages["no_words"])
@@ -355,7 +356,11 @@ class StyleStats(Stats):
 
         Returns:
             dict[str, float]: Density of every keyword in percent
+
+        Raises:
+            SourceTypeError: If a keyword is not a string
         """
+        check_words(keywords, "keywords", ordered=False, message=self.messages["words_param"])
         return calc_keyword_density(self.words, keywords, self.normalize)
 
     def nausea_words(self) -> dict[str, int]:
@@ -475,9 +480,11 @@ def find_nausea_words(
         >>> find_nausea_words(["cat", "and", "cat", "and", "dog"], top_n=1, stopwords=["and"])
         {'cat': 2}
     """
-    check_words(text)
+    check_words(text, "text", message=messages["words_param"])
     check_params(top_n, messages=messages)
-    stops = _stop_flags(text, stopwords, is_stopword, normalize, "check of a stopword")
+    stops = _stop_flags(
+        text, stopwords, is_stopword, normalize, "check of a stopword", messages["words_param"]
+    )
     significant = [word for word, stop in zip(text, stops, strict=True) if not stop]
     return dict(Counter(significant).most_common(top_n))
 
@@ -488,13 +495,15 @@ def _stop_flags(
     is_stopword: Callable[[str], bool] | None,
     normalize: Callable[[str], str],
     what: str,
+    message: str | None = None,
 ) -> list[bool]:
-    """Whether every word is a stopword: of the list, by its normalized form, or of the predicate"""
+    """Whether every word is a stopword: of the list, by its normalized form, or of the predicate;
+    message is that of stopwords that are not a list of strings in place of the English one"""
     check_callable(normalize, "normalization")
     if is_stopword is not None:
         check_callable(is_stopword, what)
     if stopwords is not None:
-        check_words(stopwords, "stopwords", ordered=False)
+        check_words(stopwords, "stopwords", ordered=False, message=message)
         stopwords_set = {normalize(word) for word in stopwords}
         return [normalize(word) in stopwords_set for word in text]
     if is_stopword is not None:
@@ -634,7 +643,7 @@ def calc_zipf_naturalness(
         SourceTypeError: If the words are not a list of strings
         ParameterError: If top_n is not an integer or is below one
     """
-    check_words(text)
+    check_words(text, "text", message=messages["words_param"])
     check_params(top_n, messages=messages)
     frequencies = sorted(Counter(text).values(), reverse=True)
     if not frequencies:

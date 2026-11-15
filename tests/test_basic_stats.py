@@ -205,6 +205,15 @@ def test_parse_and_doc_words():
     document = Document.from_tokens("A well-known cat.", [0, 2, 13, 16], [1, 12, 16, 17])
     assert Stats(document).n_words == 3
     assert Stats("A well-known cat.").n_words == 4
+    # Words of a generator are taken whole, others than strings fail at once
+
+    class Generated(Stats):
+        def doc_words(self, document):
+            return (word for word in super().doc_words(document) if word != "one")
+
+    assert Generated("one two; three").n_words == 2
+    with pytest.raises(SourceTypeError, match=r"^The doc_words of Broken must return a sequence"):
+        type("Broken", (Stats,), {"doc_words": lambda self, document: [1, 2]})("one two")
 
 
 def test_document_source(bs):
