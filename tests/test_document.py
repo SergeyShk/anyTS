@@ -2,6 +2,7 @@ import gc
 import pickle
 import random
 import re
+import threading
 
 import pytest
 import spacy
@@ -169,7 +170,23 @@ def test_doc_converted_once():
     assert to_document(first) is not to_document(second)
     del first, second
     gc.collect()
-    assert document_module._last_converted == []
+    assert document_module._slot() == []
+
+
+def test_tree_of_the_last_doc_converted():
+    """The tree of the document of the last Doc converted is built once; a Document passed as it
+    is, which may change, gets a tree of its own every time; threads keep their own slots"""
+    vocab = spacy.blank("en").vocab
+    doc = Doc(vocab, words=["Cats", "sleep"], heads=[1, 1], deps=["nsubj", "ROOT"])
+    tree = get_tree(to_document(doc))
+    assert get_tree(to_document(doc)) is tree
+    document = Document.from_tokens("A b", [0, 2], [1, 3])
+    assert get_tree(document) is not get_tree(document)
+    other = Doc(vocab, words=["Dogs", "bark"], heads=[1, 1], deps=["nsubj", "ROOT"])
+    thread = threading.Thread(target=lambda: get_tree(to_document(other)))
+    thread.start()
+    thread.join()
+    assert get_tree(to_document(doc)) is tree
 
 
 def test_sentences_of_a_hook():

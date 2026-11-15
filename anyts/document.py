@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import re
+import threading
 import weakref
 from bisect import bisect_left, bisect_right
 from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, Sequence
-from functools import cache
+from functools import cache, partial
 from re import Pattern
 from typing import TYPE_CHECKING, Any, NamedTuple
 
@@ -31,17 +32,29 @@ Spans = Callable[[str], Iterable[tuple[int, int, str]]]
 _WORD_SEPARATORS = "\u00ad\u200c\u200d"
 
 
-class _Converted(NamedTuple):
-    """The last Doc converted, the stamp of its annotations, the sentenize of the conversion (None
-    for a Doc with its sentences) and its document"""
+class _Converted:
+    """The last Doc a thread converted, the stamp of its annotations, the sentenize of the
+    conversion (None for a Doc with its sentences), its document and the tree of the document,
+    once one is asked"""
 
-    doc: weakref.ref[Doc]
-    stamp: tuple[bytes, str, tuple[int, ...] | None]
-    sentenize: Spans | None
-    document: Document
+    __slots__ = ("doc", "document", "sentenize", "stamp", "tree")
+
+    def __init__(
+        self,
+        doc: weakref.ref[Doc],
+        stamp: tuple[bytes, str, tuple[int, ...] | None],
+        sentenize: Spans | None,
+        document: Document,
+    ):
+        self.doc = doc
+        self.stamp = stamp
+        self.sentenize = sentenize
+        self.document = document
+        self.tree: Tree | None = None
 
 
-_last_converted: list[_Converted] = []
+# The slot of the last conversion of every thread
+_local = threading.local()
 
 
 def to_document(
@@ -262,7 +275,11 @@ def get_tree(document: Document) -> Tree:
     Description:
         The words of Universal Dependencies of the document with the columns
         lemma, upos, xpos, feats, head and deprel, linked by their heads within
-        their sentences: a word without a head (0 or None) heads its sentence
+        their sentences: a word without a head (0 or None) heads its sentence.
+        The tree of the document of the Doc a thread converted last
+        (to_document) is built once and kept with it, so the classes of one
+        Doc share it; a tree holds cycles of references, which the garbage
+        collector of Python frees
 
     Arguments:
         document (Document): Document of anySeg
@@ -290,6 +307,17 @@ def get_tree(document: Document) -> Tree:
     """
     if not is_document(document):
         raise SourceTypeError(MESSAGES["source_type"].format(type=type(document).__name__))
+    converted = next((item for item in _slot() if item.document is document), None)
+    if converted is not None and converted.tree is not None:
+        return converted.tree
+    tree = _built_tree(document)
+    if converted is not None:
+        converted.tree = tree
+    return tree
+
+
+def _built_tree(document: Document) -> Tree:
+    """Tree of a document, built anew"""
     column = document.column
     tokens = document.tokens
     sizes = {token.index: len(token.words) for token in document.multiword_tokens}
@@ -417,7 +445,8 @@ def _cached_document(doc: Doc, sentenize: Spans | None, messages: Mapping[str, s
     stamp = _doc_stamp(doc)
     if _has_sentences(doc):
         sentenize = None
-    for converted in _last_converted:
+    slot = _slot()
+    for converted in slot:
         if (
             converted.doc() is doc
             and converted.stamp == stamp
@@ -425,13 +454,21 @@ def _cached_document(doc: Doc, sentenize: Spans | None, messages: Mapping[str, s
         ):
             return converted.document
     document = _doc_document(doc, sentenize, messages)
-    _last_converted[:] = [_Converted(weakref.ref(doc, _forget), stamp, sentenize, document)]
+    slot[:] = [_Converted(weakref.ref(doc, partial(_forget, slot)), stamp, sentenize, document)]
     return document
 
 
-def _forget(ref: weakref.ref[Doc]) -> None:
-    """Dropping the document of a Doc that is gone"""
-    _last_converted[:] = [converted for converted in _last_converted if converted.doc is not ref]
+def _slot() -> list[_Converted]:
+    """The slot of the last conversion of the calling thread"""
+    slot: list[_Converted] | None = getattr(_local, "converted", None)
+    if slot is None:
+        slot = _local.converted = []
+    return slot
+
+
+def _forget(slot: list[_Converted], ref: weakref.ref[Doc]) -> None:
+    """Dropping the document and the tree of a Doc that is gone"""
+    slot[:] = [converted for converted in slot if converted.doc is not ref]
 
 
 def _doc_stamp(doc: Doc) -> tuple[bytes, str, tuple[int, ...] | None]:

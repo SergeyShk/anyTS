@@ -113,7 +113,9 @@ Checks whether a value is a `Document` object of anySeg without importing anySeg
 get_tree(document)
 ```
 
-Returns the dependency tree of a document: its words of Universal Dependencies with the columns `lemma`, `upos`, `xpos`, `feats`, `head` and `deprel`, linked by their heads within their sentences. A word without a head heads its sentence. The syntactic statistics and their language hooks read the words of this tree. A value that is not a `Document` raises `SourceTypeError`.
+Returns the dependency tree of a document: its words of Universal Dependencies with the columns `lemma`, `upos`, `xpos`, `feats`, `head` and `deprel`, linked by their heads within their sentences. A word without a head heads its sentence. The syntactic statistics and their language hooks read the words of this tree. The tree of the document of the `Doc` a thread converted last (`to_document`) is built once and kept with it, so the classes of one `Doc` share it.
+
+The words of a tree refer to each other and to the tree, so an unused tree waits for the garbage collector of Python rather than going at once: a loop over many large texts may hold several of them, and `gc.collect()` between the texts frees them. A value that is not a `Document` raises `SourceTypeError`.
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
