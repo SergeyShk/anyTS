@@ -2142,25 +2142,25 @@
 <td style="text-align: left;"><code>sents_extractor</code></td>
 <td style="text-align: left;"><code>SentsExtractor</code></td>
 <td style="text-align: left;"><code>None</code></td>
-<td style="text-align: left;">Extractor of the sentences of the text, used in place of those of the document</td>
+<td style="text-align: left;">Extractor of the sentences of a string or of a <code>Doc</code> without sentences, used in place of those of the document</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>words_extractor</code></td>
 <td style="text-align: left;"><code>WordsExtractor</code></td>
 <td style="text-align: left;"><code>None</code></td>
-<td style="text-align: left;">Extractor of the words of a sentence of the text, used in place of those of the document</td>
+<td style="text-align: left;">Extractor of the words of a sentence of a string or of a <code>Doc</code> without sentences, used in place of those of the document</td>
 </tr>
 </tbody>
 </table>
 <p>The source and the extractors raise the errors of <code>sentence_lengths</code>, and no sentences raise <code>SourceError</code>; a <code>window</code> that is not an integer of at least one, labels that <code>merge_labels</code> refuses and an <code>ax</code> that is not a matplotlib <code>Axes</code> raise <code>ParameterError</code>.</p>
 <!-- --8<-- [end:sentence_lengths_plot-parameters] -->
 
-<p>Without an extractor the sentences and the words are those of the <a href="https://sergeyshk.github.io/anyTS/document/">document</a> of the source (<code>to_document</code>); with one, the text is split by the extractors, <code>SentsExtractor()</code> and <code>WordsExtractor()</code> for the one not given.</p>
+<p>Without an extractor the sentences and the words are those of the <a href="https://sergeyshk.github.io/anyTS/document/">document</a> of the source (<code>to_document</code>); with one, a string or a <code>Doc</code> without sentences of its own (no start at some token, no hook and no parse) is split by the extractors, <code>SentsExtractor()</code> and <code>WordsExtractor()</code> for the one not given, while a <code>Doc</code> with sentences and a <code>Document</code> keep theirs.</p>
 <h2 id="sentence_lengths">Lengths of the sentences<a class="headerlink" href="#sentence_lengths" title="Permanent link">&para;</a></h2>
 <div class="signature highlight"><pre><span></span><code><span class="n">sentence_lengths</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">sents_extractor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">words_extractor</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 <!-- --8<-- [start:sentence_lengths] -->
-<p>The lengths of the sentences in words, in order: the sentences of the document of a text, a <code>Doc</code> or a <code>Document</code> (<code>to_document</code>) and their words with a letter or a digit, or, with an extractor given, the sentences and the words of the extractors on the text. Sentences without words are skipped. Ready lengths (non-negative integers in a sequence or an iterator) are used as they are. The arguments are those of <code>sentence_lengths_plot</code>.</p>
+<p>The lengths of the sentences in words, in order: the sentences of the document of a text, a <code>Doc</code> or a <code>Document</code> (<code>to_document</code>) and their words with a letter or a digit, or, with an extractor given, the sentences and the words of the extractors on the text of a string or of a <code>Doc</code> without sentences of its own (no start at some token, no hook and no parse); a <code>Doc</code> with sentences and a <code>Document</code> keep theirs. Sentences without words are skipped. Ready lengths (non-negative integers in a sequence or an iterator) are used as they are. The arguments are those of <code>sentence_lengths_plot</code>.</p>
 <p>A table, a set, a mapping, bytes, a length that is not an integer and an extractor of another type raise <code>SourceTypeError</code>, a negative length <code>SourceError</code>.</p>
 <!-- --8<-- [end:sentence_lengths] -->
 
