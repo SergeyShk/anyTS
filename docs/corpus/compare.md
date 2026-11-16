@@ -63,8 +63,8 @@ For a feature with the values $x_1 \dots x_{n_A}$ in corpus A and $y_1 \dots y_{
 | `cohen_d` | $d = (\bar{x} - \bar{y}) / s$, $s$ - the pooled standard deviation; 0.2 - a small effect, 0.5 - medium, 0.8 - large (`calc_cohen_d`) |
 | `cliff_delta` | $\delta = P(x > y) - P(x < y)$ from −1 to 1; $\lvert\delta\rvert$ < 0.147 - a negligible effect, < 0.33 - small, < 0.474 - medium, large otherwise (Romano et al. 2006; `calc_cliff_delta`) |
 | `auc` | the feature as a classifier: the share of the pairs of windows with the value in A greater than in B, ties counted as half; $\delta = 2 \cdot AUC - 1$, 0.5 - the feature does not tell the corpora apart |
-| `u`, `p_value` | the Mann-Whitney U statistic and the two-sided p-value (`scipy.stats.mannwhitneyu`) |
-| `p_holm` | the p-value with Holm's correction for the number of features (`holm_correction`) |
+| `u`, `p_value` | the Mann-Whitney U statistic and the two-sided p-value (`scipy.stats.mannwhitneyu`); with all the values of both corpora equal there is no test, and the p-value is `nan` |
+| `p_holm` | the p-value with Holm's correction for the number of features with a p-value (`holm_correction`) |
 | `n_A`, `n_B` | number of windows with a defined value |
 | `n_texts_A`, `n_texts_B` | number of texts behind those windows |
 
@@ -81,7 +81,7 @@ The columns are `anyts.corpus.COMPARISON_COLUMNS` with the suffixes `a` and `b` 
 compare_values(values_a, values_b, n_bootstrap=1000, rng=None, texts_a=None, texts_b=None)
 ```
 
-Compares two sets of values of one feature and returns one row in the order of `anyts.corpus.COMPARISON_COLUMNS`, `p_holm` left `nan`. Undefined and infinite values, missing ones (`None`, `NA`) included, are dropped with their texts.
+Compares two sets of values of one feature and returns one row in the order of `anyts.corpus.COMPARISON_COLUMNS`, `p_holm` left `nan`. Undefined and infinite values, missing ones (`None`, `NA`) included, are dropped with their texts; with all the values of both sets equal the p-value is `nan`.
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |

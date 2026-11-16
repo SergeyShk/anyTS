@@ -38,6 +38,8 @@ def test_compare_values():
     assert values[13:] == (4, 4, 4, 4)
     assert all(isnan(value) for value in compare_values(np.array([1.0]), b)[:13])
     assert compare_values(np.array([1.0]), b)[13:] == (1, 4, 1, 4)
+    # Each side constant with values that differ keeps its test
+    assert not isnan(compare_values(np.array([0.0, 0.0]), np.array([1.0, 1.0]))[11])
     texts = np.array([0, 0, 1, 1])
     assert compare_values(a, b, 100, np.random.default_rng(0), texts, texts)[13:] == (4, 4, 2, 2)
 
@@ -235,13 +237,15 @@ def test_compare_features():
     assert row["cliff_delta"] == -1.0
     assert row["auc"] == 0.0
     assert row["ci_low"] <= row["median_diff"] <= row["ci_high"]
-    assert row["p_holm"] >= row["p_value"]
     counts = (row["n_short"], row["n_long"], row["n_texts_short"], row["n_texts_long"])
     assert counts == (3, 3, 3, 3)
     assert result["n_short"].dtype.kind == "i"
     constant = result.loc["constant"]
     assert isnan(constant["cohen_d"])
     assert constant["cliff_delta"] == 0.0
+    # One value everywhere gives no test, and Holm's correction counts the other feature alone
+    assert isnan(constant["p_value"]) and isnan(constant["p_holm"])
+    assert row["p_holm"] == row["p_value"]
 
 
 def test_compare_features_seed_and_errors():
