@@ -55,7 +55,8 @@ def compare_features(
         share of the pairs of windows with A greater, ties as half; Cliff's
         delta = 2·AUC − 1), the two-sided Mann-Whitney U test and Holm's
         correction over the features. Undefined and infinite values are
-        dropped; with fewer than two values on a side the statistics are nan.
+        dropped; with fewer than two values on a side the statistics are nan,
+        and with one value in all the windows of both corpora the p-values.
         Rows go by descending absolute Cliff's delta, the features without
         statistics last. The test and the effect sizes take the windows as
         independent, so with few texts the p-values are too small. The
@@ -223,7 +224,8 @@ def compare_values(
     Comparing two sets of values of a feature
 
     Description:
-        Undefined and infinite values are dropped together with their texts
+        Undefined and infinite values are dropped together with their texts;
+        with one value in both sets the p-value is nan
 
     Arguments:
         values_a (list[float]): Values in the first corpus
@@ -254,6 +256,10 @@ def compare_values(
     if n_a < 2 or n_b < 2:
         return (*(nan,) * 13, n_a, n_b, n_texts_a, n_texts_b)
     u, p_value = mannwhitneyu(values_a, values_b, alternative="two-sided")
+    # One value in every window of both corpora gives no test: the p-value is nan, out of Holm's
+    # correction
+    if np.all(values_a == values_a[0]) and np.all(values_b == values_a[0]):
+        p_value = nan
     auc = float(u) / (n_a * n_b)
     ci_low, ci_high = bootstrap_median_diff(
         values_a, values_b, n_bootstrap, rng, texts_a=texts_a, texts_b=texts_b

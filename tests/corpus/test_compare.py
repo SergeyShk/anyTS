@@ -242,6 +242,9 @@ def test_compare_features():
     constant = result.loc["constant"]
     assert isnan(constant["cohen_d"])
     assert constant["cliff_delta"] == 0.0
+    # One value everywhere gives no test, and Holm's correction counts the other feature alone
+    assert isnan(constant["p_value"]) and isnan(constant["p_holm"])
+    assert row["p_holm"] == row["p_value"]
 
 
 def test_compare_features_seed_and_errors():
