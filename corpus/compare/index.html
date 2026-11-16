@@ -2292,11 +2292,11 @@
 </tr>
 <tr>
 <td style="text-align: left;"><code>u</code>, <code>p_value</code></td>
-<td style="text-align: left;">the Mann-Whitney U statistic and the two-sided p-value (<code>scipy.stats.mannwhitneyu</code>)</td>
+<td style="text-align: left;">the Mann-Whitney U statistic and the two-sided p-value (<code>scipy.stats.mannwhitneyu</code>); with all the values of both corpora equal there is no test, and the p-value is <code>nan</code></td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>p_holm</code></td>
-<td style="text-align: left;">the p-value with Holm's correction for the number of features (<code>holm_correction</code>)</td>
+<td style="text-align: left;">the p-value with Holm's correction for the number of features with a p-value (<code>holm_correction</code>)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>n_A</code>, <code>n_B</code></td>
@@ -2319,7 +2319,7 @@
 <!-- --8<-- [start:compare_values] -->
 <div class="signature highlight"><pre><span></span><code><span class="n">compare_values</span><span class="p">(</span><span class="n">values_a</span><span class="p">,</span> <span class="n">values_b</span><span class="p">,</span> <span class="n">n_bootstrap</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">rng</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">texts_a</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">texts_b</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
-<p>Compares two sets of values of one feature and returns one row in the order of <code>anyts.corpus.COMPARISON_COLUMNS</code>, <code>p_holm</code> left <code>nan</code>. Undefined and infinite values, missing ones (<code>None</code>, <code>NA</code>) included, are dropped with their texts.</p>
+<p>Compares two sets of values of one feature and returns one row in the order of <code>anyts.corpus.COMPARISON_COLUMNS</code>, <code>p_holm</code> left <code>nan</code>. Undefined and infinite values, missing ones (<code>None</code>, <code>NA</code>) included, are dropped with their texts; with all the values of both sets equal the p-value is <code>nan</code>.</p>
 <table>
 <thead>
 <tr>
