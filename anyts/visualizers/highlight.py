@@ -12,11 +12,13 @@ from typing import TYPE_CHECKING, Any, ClassVar, NamedTuple
 from ..constants import ALLITERATION_MIN_WORD_LEN, ALLITERATION_THRESHOLD, MESSAGES
 from ..document import _parsed, to_document
 from ..exceptions import ParameterError, SourceError, SourceTypeError
-from ..syntax_stats import get_words
+from ..syntax_stats import _get_words
 from ..utils import (
     LINE_BREAK,
     _check_removed,
     _is_mark_gap,
+    _takes_words,
+    _unchecked,
     check_callable,
     check_integer,
     check_messages,
@@ -560,6 +562,7 @@ def group_words_by_sents(words: Sequence[Word], sents: Sequence[Sent]) -> list[l
     return groups
 
 
+@_takes_words
 def tokens_span(words: Iterable[TreeWord]) -> tuple[int, int]:
     """
     Computing the positions of the fragment of a text that covers some words
@@ -575,12 +578,16 @@ def tokens_span(words: Iterable[TreeWord]) -> tuple[int, int]:
         tuple[int, int]: Position of the first character and position after the last one
 
     Raises:
+        SourceTypeError: If a word is not a TreeWord, such as a spaCy Token
         SourceError: If there is no word among the words
     """
-    found = get_words(words)
+    found = _get_words(words)
     if not found:
         raise SourceError(MESSAGES["no_words"])
     return min(word.start for word in found), max(word.end for word in found)
+
+
+_tokens_span = _unchecked(tokens_span)
 
 
 def split_segments(
@@ -890,7 +897,7 @@ def find_split_predicate_highlights(
     )
     highlights = []
     for verb, noun in pairs:
-        start, end = tokens_span([verb, noun])
+        start, end = _tokens_span([verb, noun])
         highlights.append(Highlight(start, end, "split_predicates", note(verb, noun)))
     return highlights
 

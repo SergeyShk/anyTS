@@ -83,6 +83,8 @@ def nlp():
         ("well-known", False),
         ("e\u0301", False),
         ("\ufeffStart", False),
+        ("\ud83d", True),
+        ("a\ud83d", False),
         ("٣", False),
     ],
 )
@@ -92,7 +94,7 @@ def test_is_punctuation(token, expected):
 
 def test_punctuation_categories():
     categories = {unicodedata.category(chr(code)) for code in range(sys.maxunicode + 1)}
-    assert {category for category in categories if category[0] in "PSM"} | {"Cf"} == (
+    assert {category for category in categories if category[0] in "PSM"} | {"Cf", "Cs"} == (
         _PUNCTUATION_CATEGORIES
     )
 
@@ -545,3 +547,14 @@ def test_check_bool(value):
 def test_messages_are_read_only():
     with pytest.raises(TypeError):
         MESSAGES["no_words"] = "No words"  # type: ignore[index]
+
+
+def test_check_tree_word():
+    from anyts.document import get_tree, to_document
+    from anyts.utils import check_tree_word
+
+    check_tree_word(get_tree(to_document("The cat")).words[0])
+    with pytest.raises(SourceTypeError, match=r"^A TreeWord is expected, not str$"):
+        check_tree_word("cat")
+    with pytest.raises(SourceTypeError, match=r"^Own: Token$"):
+        check_tree_word(spacy.blank("xx")("cat")[0], message="Own: {type}")

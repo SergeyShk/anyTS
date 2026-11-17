@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import Counter
 from collections.abc import Callable, Collection, Hashable, Iterable, Iterator, Mapping, Sequence
-from functools import cache, cached_property, partial, wraps
+from functools import cache, cached_property, partial
 from itertools import pairwise
 from math import nan
 from statistics import fmean, pstdev
@@ -30,13 +30,16 @@ from .document import TreeWord, get_tree
 from .exceptions import SourceError, SourceTypeError
 from .stats import Stats
 from .utils import (
+    _has_feature,
+    _is_finite_verb,
+    _is_infinitive,
+    _takes_word,
+    _takes_words,
+    _unchecked,
     check_callable,
     check_sequence,
     check_words,
-    has_feature,
     has_words,
-    is_finite_verb,
-    is_infinitive,
     safe_divide,
     safe_mean,
 )
@@ -52,18 +55,6 @@ _Function = TypeVar("_Function", bound=Callable[..., Any])
 _SUBJECT_DEPS = SUBJECT_DEPS | {"csubjpass", "nsubjpass"}
 # Features of a verb that agree with its subject
 _AGREEMENT_FEATURES = ("Person", "Number", "Gender")
-
-
-def _takes_word(function: _Function) -> _Function:
-    """A function of a word: a value that is no TreeWord raises SourceTypeError"""
-
-    @wraps(function)
-    def checked(word: object, *args: Any, **kwargs: Any) -> Any:
-        if not isinstance(word, TreeWord):
-            raise SourceTypeError(f"A TreeWord is expected, not {type(word).__name__}")
-        return function(word, *args, **kwargs)
-
-    return cast(_Function, checked)
 
 
 class SyntaxStats(Stats):
@@ -229,7 +220,7 @@ class SyntaxStats(Stats):
             raise SourceError(messages["no_lemmas"])
         spans, sents = [], []
         for span in tree.sentences:
-            if sent_words := get_words(span):
+            if sent_words := _get_words(span):
                 spans.append(span)
                 sents.append(tuple(sent_words))
         if not sents:
@@ -239,10 +230,10 @@ class SyntaxStats(Stats):
         self.n_sents = len(sents)
         self.n_words = len(words)
 
-        distances = [calc_dependency_distances(span) for span in spans]
+        distances = [_calc_dependency_distances(span) for span in spans]
         all_distances = [distance for sent in distances for distance in sent]
-        depths = [calc_tree_depth(span) for span in spans]
-        children = [[count_children(word) for word in sent] for sent in sents]
+        depths = [_calc_tree_depth(span) for span in spans]
+        children = [[_count_children(word) for word in sent] for sent in sents]
         leaves = [sum(1 for count in sent if not count) for sent in children]
         self.c_children = dict(
             sorted(Counter(count for sent in children for count in sent).items())
@@ -250,8 +241,8 @@ class SyntaxStats(Stats):
         self.c_deps = dict(sorted(Counter(word.deprel or "" for word in words).items()))
         self.n_leaves = sum(leaves)
         self.n_subtrees = self.n_words - self.n_leaves
-        finite_verbs = [word for word in words if is_finite_verb(word)]
-        chains = [length for span in spans for length in calc_coordination_chains(span)]
+        finite_verbs = [word for word in words if _is_finite_verb(word)]
+        chains = [length for span in spans for length in _calc_coordination_chains(span)]
         self.n_coordination_chains = len(chains)
         heads = [[word for word in sent if self.is_clause_head(word)] for sent in sents]
         self.n_clauses = sum(map(len, heads))
@@ -267,14 +258,14 @@ class SyntaxStats(Stats):
         nouns = [word for word in words if word.upos in ("NOUN", "PROPN")]
         self.n_nouns = len(nouns)
         participle_clauses = [
-            subtree_len(word) for word in words if self.is_participle_clause(word)
+            _subtree_len(word) for word in words if self.is_participle_clause(word)
         ]
         self.n_participle_clauses = len(participle_clauses)
         self.n_verbs = sum(1 for word in words if word.upos == "VERB")
         passive = [word for word in words if self.is_passive(word)]
         self.n_passive = len(passive)
         self.n_agentless_passive = sum(1 for word in passive if self.is_agentless(word))
-        self.n_infinitives = sum(1 for word in words if is_infinitive(word))
+        self.n_infinitives = sum(1 for word in words if _is_infinitive(word))
         self.n_negations = sum(1 for word in words if self.is_negation(word))
         split_predicates = _word_pairs(
             self, "find_split_predicates", self.find_split_predicates(words)
@@ -283,8 +274,8 @@ class SyntaxStats(Stats):
         self.split_predicates = tuple(
             f"{verb.form} {noun.form}" for verb, noun in split_predicates
         )
-        subjects = [word for word in nouns if base_dep(word) in NOMINAL_SUBJECT_DEPS]
-        objects = [word for word in nouns if base_dep(word) in OBJECT_DEPS]
+        subjects = [word for word in nouns if _base_dep(word) in NOMINAL_SUBJECT_DEPS]
+        objects = [word for word in nouns if _base_dep(word) in OBJECT_DEPS]
         self.n_nominal_subjects = len(subjects)
         self.n_preverbal_subjects = sum(1 for word in subjects if _before_head(word))
         self.n_nominal_objects = len(objects)
@@ -309,10 +300,12 @@ class SyntaxStats(Stats):
             safe_divide(len(sent), n_leaves, nan)
             for sent, n_leaves in zip(sents, leaves, strict=True)
         )
-        roots = [next((i for i, word in enumerate(sent) if is_root(word)), None) for sent in sents]
+        roots = [
+            next((i for i, word in enumerate(sent) if _is_root(word)), None) for sent in sents
+        ]
         self.words_before_root = safe_mean([i for i in roots if i is not None])
         self.verb_valency = safe_divide(
-            sum(calc_valency(word) for word in finite_verbs), len(finite_verbs), nan
+            sum(_calc_valency(word) for word in finite_verbs), len(finite_verbs), nan
         )
         self.coordination_chains_per_sent = self.n_coordination_chains / self.n_sents
         self.mean_coordination_chain_len = safe_mean(chains)
@@ -322,7 +315,7 @@ class SyntaxStats(Stats):
         self.p_complex_sents = self.n_complex_sents / self.n_sents
         self.infinitive_clauses_per_sent = self.n_infinitive_clauses / self.n_sents
         self.modifiers_per_noun = safe_divide(
-            sum(count_noun_modifiers(word) for word in nouns), self.n_nouns, nan
+            sum(_count_noun_modifiers(word) for word in nouns), self.n_nouns, nan
         )
         self.participle_clauses_per_sent = self.n_participle_clauses / self.n_sents
         self.mean_participle_clause_len = safe_mean(participle_clauses)
@@ -351,7 +344,7 @@ class SyntaxStats(Stats):
             word.index
             for sent in heads
             for word in sent
-            if base_dep(word) in MAIN_CLAUSE_DEPS and _has_mark(word, self.is_subordinating_mark)
+            if _base_dep(word) in MAIN_CLAUSE_DEPS and _has_mark(word, self.is_subordinating_mark)
         }
         firsts = _first_conjuncts(words, marked)
         infinitive_or_marked = self._infinitive_heads | marked
@@ -359,7 +352,7 @@ class SyntaxStats(Stats):
             word.index: owner
             for sent in heads
             for word in sent
-            if base_dep(word) == "conj"
+            if _base_dep(word) == "conj"
             and (first := firsts[word.index]) is not None
             and word.index not in infinitive_or_marked
             and not _shares_subject(word)
@@ -374,7 +367,7 @@ class SyntaxStats(Stats):
         for word in words:
             first = firsts[word.index]
             if (
-                base_dep(word) == "conj"
+                _base_dep(word) == "conj"
                 and first is not None
                 and word.index not in marked
                 and not self._is_periphrasis_conjunct(word)
@@ -411,13 +404,13 @@ class SyntaxStats(Stats):
                 for sent in heads
                 for word in sent
                 if (first := firsts.get(reattached.get(word.index, word).index)) is not None
-                and base_dep(first) in NOMINAL_CLAUSE_DEPS
+                and _base_dep(first) in NOMINAL_CLAUSE_DEPS
             ),
             "n_verb_phrases": sum(
                 1
                 for i in predicates
                 if i in word_of
-                and base_dep(word_of[i]) not in AUXILIARY_DEPS | {"auxpass"}
+                and _base_dep(word_of[i]) not in AUXILIARY_DEPS | {"auxpass"}
                 and not _in_periphrasis(
                     word_of[i], self.is_infinitive_periphrasis, self.auxiliary_form
                 )
@@ -451,7 +444,7 @@ class SyntaxStats(Stats):
         """Whether an infinitive conjunct makes one predicate with its head by the language check,
         a part of the verb phrase of the first conjunct a model attaches as conj (must leave),
         no member of a coordination"""
-        return predicate_form(
+        return _predicate_form(
             word, self.auxiliary_form
         ) == "Inf" and self.is_infinitive_periphrasis(word)
 
@@ -459,11 +452,11 @@ class SyntaxStats(Stats):
         """Whether a non-finite verb form is an attribute of a noun: under amod or acl, or
         coordinated to one, without an auxiliary or a copula, which L2SCA takes for a part of
         the noun phrase; one with a subject of its own stays a predicate (is_predicate)"""
-        if predicate_form(word, self.auxiliary_form) not in NONFINITE_CLAUSE_FORMS:
+        if _predicate_form(word, self.auxiliary_form) not in NONFINITE_CLAUSE_FORMS:
             return False
         first = firsts[word.index]
-        return base_dep(first if first is not None else word) in ("acl", "amod") and not any(
-            base_dep(child) in AUXILIARY_DEPS for child in word.children
+        return _base_dep(first if first is not None else word) in ("acl", "amod") and not any(
+            _base_dep(child) in AUXILIARY_DEPS for child in word.children
         )
 
     @property
@@ -524,7 +517,7 @@ class SyntaxStats(Stats):
         return [
             length
             for span in self._spans
-            for length in calc_modifier_chains(span, self.is_prep_complement)
+            for length in _calc_modifier_chains(span, self.is_prep_complement)
         ]
 
     @property
@@ -615,7 +608,7 @@ class SyntaxStats(Stats):
         Returns:
             bool: Result of the check
         """
-        return is_subordinate_clause_head(
+        return _is_subordinate_clause_head(
             word,
             self.is_clause_head,
             self.auxiliary_form,
@@ -636,7 +629,7 @@ class SyntaxStats(Stats):
         Returns:
             bool: Result of the check
         """
-        return is_infinitive_clause_head(
+        return _is_infinitive_clause_head(
             word,
             self.is_clause_head,
             self.auxiliary_form,
@@ -676,7 +669,7 @@ class SyntaxStats(Stats):
         Returns:
             bool: Result of the check
         """
-        return is_prep_complement(word)
+        return _is_prep_complement(word)
 
     def is_participle_clause(self, word: TreeWord) -> bool:
         """
@@ -693,11 +686,11 @@ class SyntaxStats(Stats):
         Returns:
             bool: Result of the check
         """
-        if not has_feature(word, "VerbForm", "Part") or is_root(word):
+        if not _has_feature(word, "VerbForm", "Part") or _is_root(word):
             return False
-        if any(base_dep(child) in AUXILIARY_DEPS for child in word.children):
+        if any(_base_dep(child) in AUXILIARY_DEPS for child in word.children):
             return False
-        return calc_valency(word) > 0
+        return _calc_valency(word) > 0
 
     def is_passive(self, word: TreeWord) -> bool:
         """
@@ -712,7 +705,7 @@ class SyntaxStats(Stats):
         Returns:
             bool: Result of the check
         """
-        return is_passive(word)
+        return _is_passive(word)
 
     def is_agentless(self, word: TreeWord) -> bool:
         """
@@ -727,7 +720,7 @@ class SyntaxStats(Stats):
         Returns:
             bool: Result of the check
         """
-        return self.is_passive(word) and not has_agent(word)
+        return self.is_passive(word) and not _has_agent(word)
 
     def is_negation(self, word: TreeWord) -> bool:
         """
@@ -745,7 +738,7 @@ class SyntaxStats(Stats):
         """
         if word.upos in ("CCONJ", "SCONJ"):
             return False
-        return has_feature(word, "Polarity", "Neg") or word.form.lower() in self.negation_words
+        return _has_feature(word, "Polarity", "Neg") or word.form.lower() in self.negation_words
 
     def find_split_predicates(self, words: Sequence[TreeWord]) -> list[tuple[TreeWord, TreeWord]]:
         """
@@ -802,7 +795,7 @@ def _word_triple(word: TreeWord) -> tuple[str, str, str]:
     while head.head is not None and head.head.index not in seen:
         head = head.head
         if _is_word(head):
-            return (head.upos or "", base_dep(word), word.upos or "")
+            return (head.upos or "", _base_dep(word), word.upos or "")
         seen.add(head.index)
     return ("", "root", word.upos or "")
 
@@ -840,13 +833,13 @@ def _is_main_clause(
         if word.index in marked:
             outcome = False
             break
-        if is_root(word):
+        if _is_root(word):
             outcome = True
             break
         parent = reattached.get(word.index)
         if parent is None:
             parent = _chain_parent(word)
-            if base_dep(word) not in MAIN_CLAUSE_DEPS:
+            if _base_dep(word) not in MAIN_CLAUSE_DEPS:
                 parent = None
         if parent is None or parent.index not in ids or parent.index in on_path:
             outcome = False
@@ -864,10 +857,11 @@ def _shares_subject(word: TreeWord) -> bool:
     to: no subject of its own, and no person, number or gender of its own either, which in a
     language that drops its subjects tell another one (llegamos y nos esperabas); the head of
     a sentence labelled conj shares none"""
-    if base_dep(word) != "conj" or word.head is None:
+    if _base_dep(word) != "conj" or word.head is None:
         return False
     if any(
-        base_dep(child) in _SUBJECT_DEPS or child.deprel == "expl" for child in get_children(word)
+        _base_dep(child) in _SUBJECT_DEPS or child.deprel == "expl"
+        for child in _get_children(word)
     ):
         return False
     head = _chain_parent(word)
@@ -879,7 +873,7 @@ def _agreement(word: TreeWord) -> dict[str, str]:
     """Person, number and gender of a predicate: those of its first auxiliary or copula that
     has them, which agree with the subject where a participle or a noun has its own (hemos
     llegado, es un equipo), else those of the word"""
-    for part in [*(child for child in word.children if base_dep(child) in AUXILIARY_DEPS), word]:
+    for part in [*(child for child in word.children if _base_dep(child) in AUXILIARY_DEPS), word]:
         found = {feature: part.feats.get(feature, "") for feature in _AGREEMENT_FEATURES}
         if any(found.values()):
             return {feature: values for feature, values in found.items() if values}
@@ -925,7 +919,7 @@ def _first_conjuncts(
             if word.index in known:
                 first = known[word.index]
                 break
-            if base_dep(word) != "conj" or word.index in starts:
+            if _base_dep(word) != "conj" or word.index in starts:
                 first = known[word.index] = word
                 break
             path.append(word.index)
@@ -945,7 +939,7 @@ def _heads_of(words: Iterable[TreeWord], relations: Collection[str]) -> set[int]
     return {
         parent.index
         for word in words
-        if base_dep(word) in relations and (parent := _chain_parent(word)) is not None
+        if _base_dep(word) in relations and (parent := _chain_parent(word)) is not None
     }
 
 
@@ -999,6 +993,7 @@ def _multiset_similarity(first: Counter[Hashable], second: Counter[Hashable]) ->
     return sum((first & second).values()) / union if union else 1.0
 
 
+@_takes_words
 def get_words(words: Iterable[TreeWord]) -> list[TreeWord]:
     """
     Getting the words of a sequence of words of the tree
@@ -1012,8 +1007,14 @@ def get_words(words: Iterable[TreeWord]) -> list[TreeWord]:
 
     Returns:
         list[TreeWord]: List of words
+
+    Raises:
+        SourceTypeError: If a word is not a TreeWord, such as a spaCy Token
     """
     return [word for word in words if _is_word(word)]
+
+
+_get_words = _unchecked(get_words)
 
 
 @_takes_word
@@ -1033,6 +1034,10 @@ def is_root(word: TreeWord) -> bool:
     return word.head is None
 
 
+_is_root = _unchecked(is_root)
+
+
+@_takes_word
 def base_dep(word: TreeWord) -> str:
     """
     Getting the syntactic relation of a word without its subtype
@@ -1047,8 +1052,14 @@ def base_dep(word: TreeWord) -> str:
 
     Returns:
         str: Base relation
+
+    Raises:
+        SourceTypeError: If the word is not a TreeWord, such as a spaCy Token
     """
     return _base_relation(word.deprel or "")
+
+
+_base_dep = _unchecked(base_dep)
 
 
 @cache
@@ -1057,6 +1068,7 @@ def _base_relation(relation: str) -> str:
     return relation.split(":")[0]
 
 
+@_takes_word
 def get_children(word: TreeWord) -> list[TreeWord]:
     """
     Getting the dependent words of a word
@@ -1066,10 +1078,17 @@ def get_children(word: TreeWord) -> list[TreeWord]:
 
     Returns:
         list[TreeWord]: List of the dependents without punctuation marks and symbols
+
+    Raises:
+        SourceTypeError: If the word is not a TreeWord, such as a spaCy Token
     """
     return [child for child in word.children if _is_word(child)]
 
 
+_get_children = _unchecked(get_children)
+
+
+@_takes_word
 def count_children(word: TreeWord) -> int:
     """
     Counting the dependent words of a word
@@ -1079,10 +1098,17 @@ def count_children(word: TreeWord) -> int:
 
     Returns:
         int: Number of dependent words (get_children)
+
+    Raises:
+        SourceTypeError: If the word is not a TreeWord, such as a spaCy Token
     """
-    return len(get_children(word))
+    return len(_get_children(word))
 
 
+_count_children = _unchecked(count_children)
+
+
+@_takes_word
 def subtree_len(word: TreeWord) -> int:
     """
     Computing the length of the subtree of a word in words
@@ -1096,10 +1122,17 @@ def subtree_len(word: TreeWord) -> int:
 
     Returns:
         int: Number of words in the subtree
+
+    Raises:
+        SourceTypeError: If the word is not a TreeWord, such as a spaCy Token
     """
     return sum(map(_is_word, _subtree(word)))
 
 
+_subtree_len = _unchecked(subtree_len)
+
+
+@_takes_word
 def get_subtree(word: TreeWord) -> list[TreeWord]:
     """
     Getting the subtree of a word
@@ -1113,8 +1146,14 @@ def get_subtree(word: TreeWord) -> list[TreeWord]:
 
     Returns:
         list[TreeWord]: Words of the subtree
+
+    Raises:
+        SourceTypeError: If the word is not a TreeWord, such as a spaCy Token
     """
     return sorted(_subtree(word), key=lambda found: found.index)
+
+
+_get_subtree = _unchecked(get_subtree)
 
 
 def _subtree(word: TreeWord) -> Iterator[TreeWord]:
@@ -1131,6 +1170,7 @@ def _subtree(word: TreeWord) -> Iterator[TreeWord]:
                 words.append(child)
 
 
+@_takes_words
 def calc_dependency_distances(words: Iterable[TreeWord]) -> list[int]:
     """
     Computing the dependency distances
@@ -1149,8 +1189,11 @@ def calc_dependency_distances(words: Iterable[TreeWord]) -> list[int]:
 
     Returns:
         list[int]: Distances in the order of the words
+
+    Raises:
+        SourceTypeError: If a word is not a TreeWord, such as a spaCy Token
     """
-    words = get_words(words)
+    words = _get_words(words)
     positions = {word.index: position for position, word in enumerate(words)}
     return [
         abs(position - positions[word.head.index])
@@ -1159,6 +1202,10 @@ def calc_dependency_distances(words: Iterable[TreeWord]) -> list[int]:
     ]
 
 
+_calc_dependency_distances = _unchecked(calc_dependency_distances)
+
+
+@_takes_words
 def calc_tree_depth(words: Iterable[TreeWord]) -> int:
     """
     Computing the depth of the dependency tree
@@ -1173,8 +1220,11 @@ def calc_tree_depth(words: Iterable[TreeWord]) -> int:
 
     Returns:
         int: Depth of the tree
+
+    Raises:
+        SourceTypeError: If a word is not a TreeWord, such as a spaCy Token
     """
-    parents = _word_parents(get_words(words))
+    parents = _word_parents(_get_words(words))
     depths: dict[int, int] = {}
     for start in range(len(parents)):
         chain: list[int] = []
@@ -1188,6 +1238,9 @@ def calc_tree_depth(words: Iterable[TreeWord]) -> int:
             depth += 1
             depths[member] = depth
     return max(depths.values(), default=0)
+
+
+_calc_tree_depth = _unchecked(calc_tree_depth)
 
 
 def _word_parents(words: Sequence[TreeWord]) -> list[int | None]:
@@ -1258,7 +1311,7 @@ def predicate_form(word: TreeWord, auxiliary_form: Callable[[TreeWord], str] | N
     auxiliaries = [
         (child, form)
         for child in word.children
-        if base_dep(child) in AUXILIARY_DEPS
+        if _base_dep(child) in AUXILIARY_DEPS
         and (form := _verb_form(child) or (auxiliary_form(child) if auxiliary_form else ""))
     ]
     if not auxiliaries:
@@ -1266,9 +1319,12 @@ def predicate_form(word: TreeWord, auxiliary_form: Callable[[TreeWord], str] | N
     if any(form == "Fin" for _, form in auxiliaries):
         return "Fin"
     auxiliary, form = auxiliaries[0]
-    if form == "Part" and not has_feature(auxiliary, "Tense", "Pres"):
+    if form == "Part" and not _has_feature(auxiliary, "Tense", "Pres"):
         return "Fin"
     return form
+
+
+_predicate_form = _unchecked(predicate_form)
 
 
 def _verb_form(word: TreeWord) -> str:
@@ -1276,6 +1332,7 @@ def _verb_form(word: TreeWord) -> str:
     return word.feats.get("VerbForm", "").split(",")[0]
 
 
+@_takes_word
 def calc_valency(word: TreeWord) -> int:
     """
     Computing the valency of a word
@@ -1289,10 +1346,17 @@ def calc_valency(word: TreeWord) -> int:
 
     Returns:
         int: Number of dependent words
+
+    Raises:
+        SourceTypeError: If the word is not a TreeWord, such as a spaCy Token
     """
-    return sum(1 for child in get_children(word) if base_dep(child) not in VALENCY_IGNORED_DEPS)
+    return sum(1 for child in _get_children(word) if _base_dep(child) not in VALENCY_IGNORED_DEPS)
 
 
+_calc_valency = _unchecked(calc_valency)
+
+
+@_takes_words
 def calc_coordination_chains(words: Iterable[TreeWord]) -> list[int]:
     """
     Computing the lengths of the coordination chains
@@ -1309,15 +1373,21 @@ def calc_coordination_chains(words: Iterable[TreeWord]) -> list[int]:
 
     Returns:
         list[int]: Lengths of the chains in the order of their first words
+
+    Raises:
+        SourceTypeError: If a word is not a TreeWord, such as a spaCy Token
     """
-    words = get_words(words)
+    words = _get_words(words)
     ids = {word.index for word in words}
     links = [
         (word.index, word.head.index)
         for word in words
-        if base_dep(word) == "conj" and word.head is not None and word.head.index in ids
+        if _base_dep(word) == "conj" and word.head is not None and word.head.index in ids
     ]
     return _chain_sizes([word.index for word in words], links)
+
+
+_calc_coordination_chains = _unchecked(calc_coordination_chains)
 
 
 def _chain_sizes(nodes: Iterable[int], links: Iterable[tuple[int, int]]) -> list[int]:
@@ -1363,8 +1433,12 @@ def is_predicate(word: TreeWord) -> bool:
         SourceTypeError: If the word is not a TreeWord
     """
     return word.upos in ("VERB", "AUX") or any(
-        base_dep(child) in SUBJECT_DEPS or base_dep(child) == "cop" for child in get_children(word)
+        _base_dep(child) in SUBJECT_DEPS or _base_dep(child) == "cop"
+        for child in _get_children(word)
     )
+
+
+_is_predicate = _unchecked(is_predicate)
 
 
 @_takes_word
@@ -1425,10 +1499,10 @@ def _is_clause_head(
         head = word.head
         if head is None:
             return True
-        form = predicate_form(word, auxiliary_form)
+        form = _predicate_form(word, auxiliary_form)
         if form in NONFINITE_CLAUSE_FORMS:
             return False
-        dep = base_dep(word)
+        dep = _base_dep(word)
         if dep != "conj":
             if dep == "xcomp":
                 if form == "Fin":
@@ -1446,7 +1520,7 @@ def _is_clause_head(
             if dep not in CLAUSE_DEPS:
                 return False
             if dep == "parataxis":
-                return is_predicate(word)
+                return _is_predicate(word)
             if dep == "csubj" and form == "Inf" and is_infinitive_periphrasis:
                 return not is_infinitive_periphrasis(word)
             return not (dep == "acl" and form == "Inf")
@@ -1455,7 +1529,7 @@ def _is_clause_head(
             # chain with a predicate of a subject of its own (he must leave and she stayed)
             if not own:
                 return False
-        elif not is_predicate(word):
+        elif not _is_predicate(word):
             return False
         own = own or (form != "Inf" and not _shares_subject(word))
         seen.add(word.index)
@@ -1541,7 +1615,7 @@ def _is_infinitive_complement(
     auxiliary_form: Callable[[TreeWord], str] | None,
 ) -> bool:
     """Infinitive under xcomp that makes no periphrasis with its head"""
-    if base_dep(word) != "xcomp" or predicate_form(word, auxiliary_form) != "Inf":
+    if _base_dep(word) != "xcomp" or _predicate_form(word, auxiliary_form) != "Inf":
         return False
     return not (is_infinitive_periphrasis is not None and is_infinitive_periphrasis(word))
 
@@ -1564,10 +1638,13 @@ def _completed_word(
         and completed.head is not None
         and completed.index not in seen
         and (
-            (base_dep(completed) == "xcomp" and predicate_form(completed, auxiliary_form) != "Fin")
+            (
+                _base_dep(completed) == "xcomp"
+                and _predicate_form(completed, auxiliary_form) != "Fin"
+            )
             or (
                 is_infinitive_periphrasis is not None
-                and base_dep(completed) in ("conj", "csubj")
+                and _base_dep(completed) in ("conj", "csubj")
                 and _in_periphrasis(completed, is_infinitive_periphrasis, auxiliary_form)
             )
         )
@@ -1596,9 +1673,9 @@ def _in_periphrasis(
     while (
         current is not None
         and current.index not in seen
-        and predicate_form(current, auxiliary_form) == "Inf"
+        and _predicate_form(current, auxiliary_form) == "Inf"
     ):
-        dep = base_dep(current)
+        dep = _base_dep(current)
         if dep in ("xcomp", "csubj", "conj") and is_infinitive_periphrasis(current):
             return True
         if dep != "conj":
@@ -1657,21 +1734,24 @@ def is_subordinate_clause_head(
     is_clause_head, is_marked = _clause_kind_hooks(
         is_clause_head, auxiliary_form, subordinating_marks, is_subordinating_mark
     )
-    if is_root(word) or not is_clause_head(word):
+    if _is_root(word) or not is_clause_head(word):
         return False
     first, dep = _clause_relation(word, is_marked, auxiliary_form)
-    if predicate_form(word, auxiliary_form) == "Inf":
+    if _predicate_form(word, auxiliary_form) == "Inf":
         return False
-    if predicate_form(first, auxiliary_form) == "Inf":
+    if _predicate_form(first, auxiliary_form) == "Inf":
         # A finite conjunct with a subject of its own, which a model attaches to an infinitive,
         # takes the kind of the clause the chain of infinitives completes
         owner = None if _shares_subject(word) else _infinitive_owner(first, auxiliary_form)
         if owner is None:
             return False
         first, dep = _clause_relation(owner, is_marked, auxiliary_form)
-        if predicate_form(first, auxiliary_form) == "Inf":
+        if _predicate_form(first, auxiliary_form) == "Inf":
             return False
-    return dep == "xcomp" or (not is_root(first) and dep in SUBORDINATE_CLAUSE_DEPS)
+    return dep == "xcomp" or (not _is_root(first) and dep in SUBORDINATE_CLAUSE_DEPS)
+
+
+_is_subordinate_clause_head = _unchecked(is_subordinate_clause_head)
 
 
 @_takes_word
@@ -1718,12 +1798,15 @@ def is_infinitive_clause_head(
     is_clause_head, is_marked = _clause_kind_hooks(
         is_clause_head, auxiliary_form, subordinating_marks, is_subordinating_mark
     )
-    if is_root(word) or not is_clause_head(word):
+    if _is_root(word) or not is_clause_head(word):
         return False
     _, dep = _clause_relation(word, is_marked, auxiliary_form)
-    return predicate_form(word, auxiliary_form) == "Inf" and (
+    return _predicate_form(word, auxiliary_form) == "Inf" and (
         dep == "xcomp" or dep in SUBORDINATE_CLAUSE_DEPS
     )
+
+
+_is_infinitive_clause_head = _unchecked(is_infinitive_clause_head)
 
 
 def _infinitive_owner(
@@ -1732,7 +1815,7 @@ def _infinitive_owner(
     """Word a chain of infinitives completes: the first word above an infinitive that is no
     infinitive, or the head of the sentence; None in a loop"""
     seen = {word.index}
-    while predicate_form(word, auxiliary_form) == "Inf" and word.head is not None:
+    while _predicate_form(word, auxiliary_form) == "Inf" and word.head is not None:
         word = word.head
         if word.index in seen:
             return None
@@ -1770,23 +1853,23 @@ def _clause_relation(
     coordinated to when it and every conjunct on the way take the mark (_inherits_mark) or
     share the subject; past a marked clause whose mark it does not take, the chain goes on as
     from that clause, to the clause it hangs on"""
-    if base_dep(word) in MAIN_CLAUSE_DEPS and _has_mark(word, is_subordinating_mark):
+    if _base_dep(word) in MAIN_CLAUSE_DEPS and _has_mark(word, is_subordinating_mark):
         return word, "advcl"
     inherits = _inherits_mark(word, auxiliary_form)
     seen: set[int] = set()
     while word.head is not None and word.index not in seen:
         passed = (
             bool(seen)
-            and base_dep(word) in MAIN_CLAUSE_DEPS
+            and _base_dep(word) in MAIN_CLAUSE_DEPS
             and _has_mark(word, is_subordinating_mark)
         )
-        if base_dep(word) != "conj" and not passed:
+        if _base_dep(word) != "conj" and not passed:
             break
         seen.add(word.index)
         word = word.head
         if (
             (inherits or passed)
-            and base_dep(word) in MAIN_CLAUSE_DEPS
+            and _base_dep(word) in MAIN_CLAUSE_DEPS
             and _has_mark(word, is_subordinating_mark)
         ):
             return word, "advcl"
@@ -1795,7 +1878,7 @@ def _clause_relation(
             if passed
             else inherits and (_shares_subject(word) or _inherits_mark(word, auxiliary_form))
         )
-    return word, base_dep(word)
+    return word, _base_dep(word)
 
 
 def _inherits_mark(word: TreeWord, auxiliary_form: Callable[[TreeWord], str] | None) -> bool:
@@ -1804,15 +1887,15 @@ def _inherits_mark(word: TreeWord, auxiliary_form: Callable[[TreeWord], str] | N
     he was tired and she slept) - its child, or a child of the clause it hangs on between the two,
     as ClearNLP attaches it; one sharing the subject or without a conjunction may be a predicate
     of the main clause a model attaches to the marked one"""
-    if predicate_form(word, auxiliary_form) == "Inf":
+    if _predicate_form(word, auxiliary_form) == "Inf":
         return True
     if _shares_subject(word):
         return False
     head = word.head
-    return any(base_dep(child) == "cc" for child in word.children) or (
+    return any(_base_dep(child) == "cc" for child in word.children) or (
         head is not None
         and any(
-            base_dep(child) == "cc" and head.index < child.index < word.index
+            _base_dep(child) == "cc" and head.index < child.index < word.index
             for child in head.children
         )
     )
@@ -1821,7 +1904,7 @@ def _inherits_mark(word: TreeWord, auxiliary_form: Callable[[TreeWord], str] | N
 def _has_mark(word: TreeWord, is_subordinating_mark: Callable[[TreeWord], bool]) -> bool:
     """Whether a word has a dependent mark that is a subordinating conjunction"""
     return any(
-        base_dep(child) == "mark" and is_subordinating_mark(child) for child in word.children
+        _base_dep(child) == "mark" and is_subordinating_mark(child) for child in word.children
     )
 
 
@@ -1867,9 +1950,9 @@ def is_subordinating_mark(word: TreeWord, subordinating_marks: Collection[str] =
 
 def _is_subordinating_mark(word: TreeWord, marks: Collection[str]) -> bool:
     """is_subordinating_mark with checked marks"""
-    if not marks or base_dep(word) != "mark":
+    if not marks or _base_dep(word) != "mark":
         return False
-    fixed = (child for child in word.children if base_dep(child) == "fixed")
+    fixed = (child for child in word.children if _base_dep(child) == "fixed")
     return " ".join(part.form.lower() for part in (word, *fixed)) in marks
 
 
@@ -1894,9 +1977,12 @@ def is_passive(word: TreeWord) -> bool:
     """
     if word.upos != "VERB":
         return False
-    return has_feature(word, "Voice", "Pass") or any(
-        child.deprel in PASSIVE_DEPS for child in get_children(word)
+    return _has_feature(word, "Voice", "Pass") or any(
+        child.deprel in PASSIVE_DEPS for child in _get_children(word)
     )
+
+
+_is_passive = _unchecked(is_passive)
 
 
 @_takes_word
@@ -1917,7 +2003,10 @@ def has_agent(word: TreeWord) -> bool:
     Raises:
         SourceTypeError: If the word is not a TreeWord
     """
-    return any(child.deprel in AGENT_DEPS for child in get_children(word))
+    return any(child.deprel in AGENT_DEPS for child in _get_children(word))
+
+
+_has_agent = _unchecked(has_agent)
 
 
 @_takes_word
@@ -1937,9 +2026,13 @@ def is_agentless(word: TreeWord) -> bool:
     Raises:
         SourceTypeError: If the word is not a TreeWord
     """
-    return is_passive(word) and not has_agent(word)
+    return _is_passive(word) and not _has_agent(word)
 
 
+_is_agentless = _unchecked(is_agentless)
+
+
+@_takes_word
 def count_noun_modifiers(word: TreeWord) -> int:
     """
     Counting the modifiers of a noun phrase
@@ -1953,8 +2046,14 @@ def count_noun_modifiers(word: TreeWord) -> int:
 
     Returns:
         int: Number of modifiers
+
+    Raises:
+        SourceTypeError: If the word is not a TreeWord, such as a spaCy Token
     """
-    return sum(1 for child in get_children(word) if base_dep(child) in NOUN_MODIFIER_DEPS)
+    return sum(1 for child in _get_children(word) if _base_dep(child) in NOUN_MODIFIER_DEPS)
+
+
+_count_noun_modifiers = _unchecked(count_noun_modifiers)
 
 
 @_takes_word
@@ -1997,21 +2096,24 @@ def is_prep_complement(word: TreeWord) -> bool:
         >>> is_prep_complement(words[4]), is_prep_complement(words[1])
         (True, False)
     """
-    relation = base_dep(word)
+    relation = _base_dep(word)
     if relation == "acl":
         return False
     children = word.children
     if relation not in PREP_COMPLEMENT_DEPS and not any(
-        base_dep(child) == "cop" or base_dep(child) in _SUBJECT_DEPS for child in children
+        _base_dep(child) == "cop" or _base_dep(child) in _SUBJECT_DEPS for child in children
     ):
         return False
-    return any(base_dep(child) == "case" and _is_adposition(child) for child in children)
+    return any(_base_dep(child) == "case" and _is_adposition(child) for child in children)
+
+
+_is_prep_complement = _unchecked(is_prep_complement)
 
 
 def _is_adposition(word: TreeWord) -> bool:
     """Whether a word is an adposition or begins one of several words (fixed)"""
     return word.upos == "ADP" or any(
-        base_dep(child) == "fixed" and child.upos == "ADP" for child in word.children
+        _base_dep(child) == "fixed" and child.upos == "ADP" for child in word.children
     )
 
 
@@ -2052,7 +2154,7 @@ def dependency_triples(words: Sequence[TreeWord]) -> list[tuple[str, str, str]]:
     """
     if not (isinstance(words, Sequence) and all(isinstance(word, TreeWord) for word in words)):
         raise SourceTypeError("The words must be a list of TreeWord objects")
-    return [_word_triple(word) for word in get_words(words)]
+    return [_word_triple(word) for word in _get_words(words)]
 
 
 def calc_edit_distance(sents: Sequence[Sequence[Hashable]]) -> float:
@@ -2136,6 +2238,7 @@ def calc_multiset_similarity(sents: Sequence[Iterable[Hashable]]) -> float:
     return _mean_multiset_similarity([Counter(iter(sent)) for sent in sents])
 
 
+@_takes_words
 def calc_modifier_chains(
     words: Iterable[TreeWord], is_modifier: Callable[[TreeWord], bool]
 ) -> list[int]:
@@ -2157,14 +2260,15 @@ def calc_modifier_chains(
         list[int]: Lengths of the chains in the order of the words
 
     Raises:
-        SourceTypeError: If is_modifier is not callable
+        SourceTypeError: If a word is not a TreeWord, such as a spaCy Token, or is_modifier
+            is not callable
     """
     if not callable(is_modifier):
         raise SourceTypeError(
             f"The check of a modifier must be callable, not {type(is_modifier).__name__}"
         )
     chains = []
-    for word in get_words(words):
+    for word in _get_words(words):
         if not is_modifier(word):
             continue
         parent = _chain_parent(word)
@@ -2173,6 +2277,9 @@ def calc_modifier_chains(
             if length >= 2:
                 chains.append(length)
     return chains
+
+
+_calc_modifier_chains = _unchecked(calc_modifier_chains)
 
 
 def _chain_parent(word: TreeWord) -> TreeWord | None:
@@ -2190,7 +2297,7 @@ def _chain_len(word: TreeWord, is_modifier: Callable[[TreeWord], bool]) -> int:
     while stack:
         current, depth = stack.pop()
         longest = max(longest, depth)
-        for child in get_children(current):
+        for child in _get_children(current):
             if child.index not in seen and is_modifier(child):
                 seen.add(child.index)
                 stack.append((child, depth + 1))

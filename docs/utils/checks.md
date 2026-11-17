@@ -220,6 +220,41 @@ A value that is not a `bool`, `0`, `1` and `"yes"` included, raises `ParameterEr
     anyts.exceptions.ParameterError: The normalization must be a bool, not str
     ```
 
+## Words of a tree { #check_tree_word }
+
+<!-- --8<-- [start:check_tree_word] -->
+``` {.python .signature}
+check_tree_word(value, *, message=None)
+```
+
+Checks that a value is a word of the tree of a document (`TreeWord`), as the functions of the tree check their words: a library calls it in a function of a word of its own.
+
+| Parameter | Type | Default | Description |
+| :-------- | :--- | :------ | :---------- |
+| `value` | `object` | - | Value to check |
+| `message` | `str` | `None` | Message of the error with the field `{type}`, the type of the value, in place of the English one |
+
+A value that is not a `TreeWord`, such as a spaCy `Token`, raises `SourceTypeError`.
+<!-- --8<-- [end:check_tree_word] -->
+
+=== "Code"
+
+    ``` python
+    import spacy
+
+    from anyts.utils import check_tree_word
+
+    check_tree_word(spacy.blank("en")("cat")[0])
+    ```
+
+=== "Result"
+
+    ```
+    Traceback (most recent call last):
+      ...
+    anyts.exceptions.SourceTypeError: A TreeWord is expected, not Token
+    ```
+
 ## Numbers { #check_number }
 
 <!-- --8<-- [start:check_number] -->
