@@ -325,8 +325,10 @@ class StyleStats(Stats):
 
     @cached_property
     def _flags(self) -> WordFlags:
-        """Flags of the forms from doc_flags, on first use"""
-        return _hook_flags(self, self.doc_flags(self._flags_document), len(self.forms))
+        """Flags of the forms from doc_flags, on first use; the document is dropped then"""
+        flags = _hook_flags(self, self.doc_flags(self._flags_document), len(self.forms))
+        del self._flags_document
+        return flags
 
     @property
     def _word_flags(self) -> WordFlags:

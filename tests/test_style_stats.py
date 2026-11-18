@@ -482,3 +482,4 @@ def test_flags_on_first_use():
     style.get_stats()
     style.markers()
     assert Counted.calls == 1
+    assert not hasattr(style, "_flags_document")
