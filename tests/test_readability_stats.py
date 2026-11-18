@@ -734,6 +734,23 @@ def test_numbers_left_out():
             cls(text, filter_nums="yes")
 
 
+def test_numbers_of_ready_basic_statistics():
+    """Ready basic statistics count the numbers as they did; a filter_nums of its own that
+    differs from theirs is an error, not ignored"""
+    text = "The cat sat on the mat in 2026. A beautiful day came in 1250000 hours!"
+    ready, unnumbered = Stats(text), Stats(text, filter_nums=True)
+    assert Unnumbered(ready).bs is ready and Readability(unnumbered).bs is unnumbered
+    assert Readability(unnumbered, filter_nums=True).bs is unnumbered
+    assert Unnumbered(ready, filter_nums=False).bs is ready
+    message = (
+        r"^filter_nums=True does not match the basic statistics given, counted with "
+        r"filter_nums=False: count them with filter_nums=True or leave the parameter out$"
+    )
+    for cls in (Readability, Unnumbered):
+        with pytest.raises(ParameterError, match=message):
+            cls(ready, filter_nums=True)
+
+
 def test_numbers_read_but_not_counted():
     """A reader reads the numbers: the reading time keeps them; a sentence of numbers alone
     holds no word"""

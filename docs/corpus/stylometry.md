@@ -25,14 +25,15 @@ A corpus that is not a mapping of lists of strings raises `SourceTypeError`; an 
 
 <!-- --8<-- [start:z_scores] -->
 ``` {.python .signature}
-z_scores(table)
+z_scores(table, *, messages=None)
 ```
 
-Standardizes the columns of a table of frequencies with the sample standard deviation, like `scale()` of R; a column with the same frequency in every text gives zeros.
+Standardizes the columns of a table of frequencies with the sample standard deviation, like `scale()` of R; a column with the same frequency in every text gives zeros. A table that is not a `DataFrame` raises `SourceTypeError`.
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
-| `table` | `DataFrame` | - | Table of relative frequencies |
+| `table` | `DataFrame` | - | Table of relative frequencies (`frequency_table`) |
+| `messages` | `dict[str, str]` | `None` | Messages of the errors by key, in place of those of the library |
 <!-- --8<-- [end:z_scores] -->
 
 <!-- --8<-- [start:delta] -->

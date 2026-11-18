@@ -66,7 +66,7 @@ Raises:
 | `source` | `str` / `Doc` / `Document` / `BasicStats` | - | Data source (a string, a Doc or a Document object, or ready basic statistics) |
 | `sents_extractor` | `SentsExtractor` | `None` | Sentence extraction tool, not used for ready basic statistics |
 | `words_extractor` | `WordsExtractor` | `None` | Word extraction tool, not used for ready basic statistics |
-| `filter_nums` | `bool` | `None` | Leave out the numbers among the words; `None` - the class attribute `filter_nums`; not used for ready basic statistics |
+| `filter_nums` | `bool` | `None` | Leave out the numbers among the words; `None` - the class attribute `filter_nums`, for ready basic statistics - as in them; a value that differs from theirs raises `ParameterError` |
 <!-- --8<-- [end:UnadaptedReadabilityStats-parameters] -->
 
 ## Attributes

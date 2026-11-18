@@ -40,6 +40,7 @@ from anyts.corpus import (
     rolling_delta,
     sentence_rhythm,
     split_windows,
+    z_scores,
     zeta_segments,
 )
 from anyts.diversity_stats import DiversityStats, calc_ttr, calc_windowed, check_params
@@ -286,6 +287,8 @@ CASES = [
     ("unknown_preset", ParameterError, lambda: Readability(TEXT, preset="unknown")),
     ("basic_stats_type", SourceTypeError, lambda: Readability(OtherStats(TEXT))),
     ("basic_stats_type", SourceTypeError, lambda: Unadapted(OtherStats(TEXT))),
+    ("basic_filter_nums", ParameterError, lambda: Readability(Stats(TEXT), filter_nums=True)),
+    ("basic_filter_nums", ParameterError, lambda: Unadapted(Stats(TEXT), filter_nums=True)),
     ("no_basic_stats_class", SourceTypeError, lambda: BareUnadapted(TEXT)),
     (
         "no_sentences",
@@ -724,6 +727,7 @@ CASES = [
     ("param_words", SourceError, lambda: zeta_segments({"c": ["a"]}, [], ["b"], messages=OWN)),
     ("corpus_words", SourceError, lambda: zeta_segments({"c": []}, ["a"], ["b"], messages=OWN)),
     ("features_type", SourceTypeError, lambda: compare_features([1], [1], messages=OWN)),
+    ("frequency_table_type", SourceTypeError, lambda: z_scores({"a": ["b"]}, messages=OWN)),
     (
         "feature_names",
         SourceTypeError,

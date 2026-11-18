@@ -264,12 +264,13 @@ def format_kwic(
            the  cat  eats
     """
     messages = _messages(messages)
-    check_integer(width, "width", message=messages["integer_param"])
-    if width < 1:
-        raise ParameterError(messages["positive_param"].format(param="width"))
+    # The concordances before the width: print_kwic(text, "cat") mixes up the arguments
     given: object = concordances
     if isinstance(given, str) or not isinstance(given, Iterable):
         raise SourceTypeError(messages["concordances_type"].format(type=type(given).__name__))
+    check_integer(width, "width", message=messages["integer_param"])
+    if width < 1:
+        raise ParameterError(messages["positive_param"].format(param="width"))
     lines = [
         [unicodedata.normalize("NFC", part) for part in (line.left, line.keyword, line.right)]
         for line in concordances

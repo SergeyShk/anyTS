@@ -52,7 +52,7 @@ class UnadaptedReadabilityStats(Stats):
         words_extractor (WordsExtractor): Word extraction tool, not used for ready
             basic statistics
         filter_nums (bool): Leave out the numbers among the words; None - the class
-            attribute filter_nums; not used for ready basic statistics
+            attribute filter_nums, for ready basic statistics - as in them
 
     Attributes:
         bs (BasicStats): Basic statistics of the text
@@ -126,9 +126,11 @@ class UnadaptedReadabilityStats(Stats):
         words_extractor: WordsExtractor | None = None,
         filter_nums: bool | None = None,
     ):
-        if filter_nums is None:
-            filter_nums = self.filter_nums
-        check_bool(filter_nums, "filter_nums", message=self.messages["bool_param"])
+        check_bool(
+            self.filter_nums if filter_nums is None else filter_nums,
+            "filter_nums",
+            message=self.messages["bool_param"],
+        )
         self.bs = _read_basic_stats(
             self, source, self.basic_stats_class, sents_extractor, words_extractor, filter_nums
         )
