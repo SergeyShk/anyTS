@@ -882,7 +882,8 @@ def find_split_predicate_highlights(
         list[Highlight]: Fragments of the layer split_predicates
 
     Raises:
-        SourceTypeError: If note is not callable
+        SourceTypeError: If note is not callable or a word of a pair is not a TreeWord, such
+            as a spaCy Token
     """
     _check_hooks((note, "note"))
     note = note or (
