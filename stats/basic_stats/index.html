@@ -2201,7 +2201,7 @@
 
 
 <h1 id="basic-statistics">Basic statistics<a class="headerlink" href="#basic-statistics" title="Permanent link">&para;</a></h1>
-<div class="signature highlight"><pre><span></span><code><span class="n">BasicStats</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">sents_extractor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">words_extractor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">complex_syl_factor</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">long_word_letter_factor</span><span class="o">=</span><span class="mi">7</span><span class="p">)</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">BasicStats</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">sents_extractor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">words_extractor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">complex_syl_factor</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">long_word_letter_factor</span><span class="o">=</span><span class="mi">7</span><span class="p">,</span> <span class="n">filter_nums</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 </code></pre></div>
 <!-- --8<-- [start:BasicStats] -->
 <p>The basic statistics of a text: the counts of its sentences, words, characters, syllables and punctuation marks and the distributions of its words. The data source is a text, a <code>Doc</code> object of <a href="https://github.com/explosion/spaCy">spaCy</a> or a <code>Document</code> of <a href="https://github.com/SergeyShk/anySeg">anySeg</a>. Letters are counted by <code>str.isalpha</code>, so digits, hyphens and marks inside a word are not letters.</p>
@@ -2302,9 +2302,15 @@ Entropy of the word lengths in syllables (bits) |   0.50
 <td style="text-align: left;"><code>LONG_WORD_LETTER_FACTOR</code></td>
 <td style="text-align: left;">Minimum number of letters in a long word</td>
 </tr>
+<tr>
+<td style="text-align: left;"><code>filter_nums</code></td>
+<td style="text-align: left;"><code>bool</code></td>
+<td style="text-align: left;"><code>False</code></td>
+<td style="text-align: left;">Leave out the numbers (<code>number_pattern</code>) among the words</td>
+</tr>
 </tbody>
 </table>
-<p>The object keeps <code>normalize</code>, <code>complex_syl_factor</code> and <code>long_word_letter_factor</code> under their names.</p>
+<p>The object keeps <code>normalize</code>, <code>complex_syl_factor</code>, <code>long_word_letter_factor</code> and <code>filter_nums</code> under their names, and the numbers it left out in <code>n_numbers</code>.</p>
 <!-- --8<-- [end:BasicStats-parameters] -->
 
 <p>The thresholds of the core are <code>COMPLEX_SYL_FACTOR = 3</code> and <code>LONG_WORD_LETTER_FACTOR = 7</code> of <code>anyts.constants</code>.</p>
@@ -2596,6 +2602,11 @@ Entropy of the word lengths in syllables (bits) |   0.50
 <td style="text-align: left;"><code>stats_desc</code></td>
 <td style="text-align: left;">class attribute</td>
 <td style="text-align: left;">The counts of <code>get_stats</code> with their descriptions for <code>print_stats</code>; <code>anyts.constants.BASIC_STATS_DESC</code> by default</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>number_pattern</code></td>
+<td style="text-align: left;">class attribute</td>
+<td style="text-align: left;">Number of the language for <code>filter_nums</code>, matched against the whole word in lower case; <code>NUMBER_PATTERN</code> of <code>anyts.utils</code> by default</td>
 </tr>
 </tbody>
 </table>

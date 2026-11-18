@@ -2433,7 +2433,7 @@
 
 
 <h1 id="unadapted-readability-formulas">Unadapted readability formulas<a class="headerlink" href="#unadapted-readability-formulas" title="Permanent link">&para;</a></h1>
-<div class="signature highlight"><pre><span></span><code><span class="n">UnadaptedReadabilityStats</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">sents_extractor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">words_extractor</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">UnadaptedReadabilityStats</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">sents_extractor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">words_extractor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_nums</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 <!-- --8<-- [start:UnadaptedReadabilityStats] -->
 <p>Readability formulas made for English, German or Italian, computed from the basic statistics of a text with the coefficients they were published with (Linsear Write in the form of textstat), without a calibration for its language. Their values compare texts of one language with each other; they are no grade levels of another language. A word without syllables (a number, a preposition of one consonant) counts as monosyllabic in FORCAST and the Wiener Sachtextformeln and as easy in Linsear Write, as in textstat. The data source is a text, a <code>Doc</code> object of <a href="https://github.com/explosion/spaCy">spaCy</a>, a <code>Document</code> of <a href="https://github.com/SergeyShk/anySeg">anySeg</a> or a ready <code>BasicStats</code> object, as for <code>ReadabilityStats</code>.</p>
@@ -2518,6 +2518,12 @@ Wheeler-Smith index          |  20.00
 <td style="text-align: left;"><code>WordsExtractor</code></td>
 <td style="text-align: left;"><code>None</code></td>
 <td style="text-align: left;">Word extraction tool, not used for ready basic statistics</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>filter_nums</code></td>
+<td style="text-align: left;"><code>bool</code></td>
+<td style="text-align: left;"><code>None</code></td>
+<td style="text-align: left;">Leave out the numbers among the words; <code>None</code> - the class attribute <code>filter_nums</code>; not used for ready basic statistics</td>
 </tr>
 </tbody>
 </table>
@@ -3119,6 +3125,11 @@ r = \frac{\textrm{Easy words} + 3 \times \textrm{Hard words}}{\textrm{Sentences}
 <td style="text-align: left;"><code>basic_stats_class</code></td>
 <td style="text-align: left;">class attribute</td>
 <td style="text-align: left;">Basic statistics of a string, a <code>Doc</code> or a <code>Document</code>, the class with the syllables of the language; without it the source must be a <code>BasicStats</code> object</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>filter_nums</code></td>
+<td style="text-align: left;">class attribute</td>
+<td style="text-align: left;">Whether the numbers are left out of the words by default; <code>False</code> in the core</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>complex_syl_factor</code>, <code>long_word_letter_factor</code>, <code>mini_word_letters</code></td>

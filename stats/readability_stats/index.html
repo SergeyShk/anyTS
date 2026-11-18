@@ -2511,7 +2511,7 @@
 
 
 <h1 id="readability-metrics">Readability metrics<a class="headerlink" href="#readability-metrics" title="Permanent link">&para;</a></h1>
-<div class="signature highlight"><pre><span></span><code><span class="n">ReadabilityStats</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">sents_extractor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">words_extractor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">preset</span><span class="o">=</span><span class="s1">'original'</span><span class="p">)</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">ReadabilityStats</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">sents_extractor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">words_extractor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">preset</span><span class="o">=</span><span class="s1">'original'</span><span class="p">,</span> <span class="n">filter_nums</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 <!-- --8<-- [start:ReadabilityStats] -->
 <p>The <a href="https://en.wikipedia.org/wiki/Readability">readability</a> metrics of a text from its basic statistics: the mean sentence length in words, the mean word length in syllables or letters, the share of polysyllabic and of long words and the variability of word length. The data source is a text, a <code>Doc</code> object of <a href="https://github.com/explosion/spaCy">spaCy</a>, a <code>Document</code> of <a href="https://github.com/SergeyShk/anySeg">anySeg</a> or ready basic statistics, which are reused as they are; the extractors are passed on to the basic statistics of the other sources. The formulas count only the letters of the counted words, so a word extractor that drops words does not lengthen the mean word.</p>
@@ -2599,6 +2599,12 @@ Reading time (min)          |   0.04
 <td style="text-align: left;"><code>str</code></td>
 <td style="text-align: left;"><code>'original'</code></td>
 <td style="text-align: left;">Coefficient preset</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>filter_nums</code></td>
+<td style="text-align: left;"><code>bool</code></td>
+<td style="text-align: left;"><code>None</code></td>
+<td style="text-align: left;">Leave out the numbers among the words; <code>None</code> - the class attribute <code>filter_nums</code>; not used for ready basic statistics</td>
 </tr>
 </tbody>
 </table>
@@ -3589,6 +3595,11 @@ a \cdot \left(\frac{\textrm{Number of words}}{\textrm{Number of sentences}} + \f
 <td style="text-align: left;"><code>basic_stats_class</code></td>
 <td style="text-align: left;">class attribute</td>
 <td style="text-align: left;">Its subclass of <code>BasicStats</code> for a string, a <code>Doc</code> or a <code>Document</code>; without it the source must be a <code>BasicStats</code> object</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>filter_nums</code></td>
+<td style="text-align: left;">class attribute</td>
+<td style="text-align: left;">Whether the numbers are left out of the words by default; <code>False</code> in the core</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>presets</code></td>
