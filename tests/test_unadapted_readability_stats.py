@@ -38,8 +38,7 @@ class Unadapted(UnadaptedReadabilityStats):
 
 @pytest.fixture(scope="module")
 def stats():
-    # With the numbers, so that a word without syllables reaches the formulas
-    return Unadapted(TEXT, filter_nums=False)
+    return Unadapted(TEXT)
 
 
 def test_formulas_over_the_basic_statistics(stats):
@@ -250,3 +249,7 @@ def test_component_errors():
         ParameterError, match=r"^The name of an extension must be a string, not int$"
     ):
         UnadaptedReadabilityStatsComponent(nlp, "anyts_test_unadapted_core", basic=5)
+
+
+def test_numbers_left_out(stats):
+    assert Unadapted(TEXT, filter_nums=True).bs.n_words == stats.bs.n_words - 1

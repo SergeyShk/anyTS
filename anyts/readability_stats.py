@@ -495,7 +495,9 @@ def _read_basic_stats(
     elif basic_stats_class is None:
         raise SourceTypeError(messages["no_basic_stats_class"].format(cls=type(stats).__name__))
     else:
-        bs = basic_stats_class(source, sents_extractor, words_extractor, filter_nums=filter_nums)
+        # Only when set, so a basic_stats_class without the parameter keeps working
+        extra = {"filter_nums": True} if filter_nums else {}
+        bs = basic_stats_class(source, sents_extractor, words_extractor, **extra)
     if not bs.n_sents:
         raise SourceError(messages["no_sentences"])
     return bs
