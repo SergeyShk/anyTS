@@ -43,6 +43,8 @@ from anyts.syntax_stats import (
     predicate_form,
     subtree_len,
 )
+from anyts.utils import has_feature, is_finite_verb, is_infinitive
+from anyts.visualizers.highlight import tokens_span
 
 VOCAB = spacy.blank("xx").vocab
 
@@ -2665,6 +2667,16 @@ def test_copula_makes_a_predicate():
         is_agentless,
         is_prep_complement,
         is_root,
+        base_dep,
+        get_children,
+        count_children,
+        subtree_len,
+        get_subtree,
+        calc_valency,
+        count_noun_modifiers,
+        has_feature,
+        is_finite_verb,
+        is_infinitive,
     ],
 )
 def test_checks_of_a_word(check):
@@ -2676,6 +2688,27 @@ def test_checks_of_a_word(check):
     leaf = parse(["came"], [0], ["ROOT"])[0]
     with pytest.raises(SourceTypeError, match=r"^A TreeWord is expected, not Token$"):
         check(leaf)
+
+
+@pytest.mark.parametrize(
+    "check",
+    [get_words, calc_dependency_distances, calc_tree_depth, calc_coordination_chains, tokens_span],
+)
+def test_checks_of_words(check):
+    """A sequence with an item that is no word of the tree, such as a parsed Doc, is refused"""
+    doc = parse(["He", "came"], [1, 1], ["nsubj", "ROOT"])
+    with pytest.raises(SourceTypeError, match=r"^A TreeWord is expected, not Token$"):
+        check(doc)
+    with pytest.raises(SourceTypeError, match=r"^A TreeWord is expected, not str$"):
+        check("he came")
+    # An iterator of words is read once
+    assert check(iter(tree(doc))) == check(tree(doc))
+
+
+def test_checks_of_modifier_chains():
+    doc = parse(["He", "came"], [1, 1], ["nsubj", "ROOT"])
+    with pytest.raises(SourceTypeError, match=r"^A TreeWord is expected, not Token$"):
+        calc_modifier_chains(doc, lambda word: False)
 
 
 def test_error_of_a_hook_on_a_word():

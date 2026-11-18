@@ -165,7 +165,7 @@ The words of every sentence; the words out of the sentences are skipped.
 tokens_span(words)
 ```
 
-The positions of the fragment that covers some words of the tree of a document (`TreeWord`): from the start of the first to the end of the last token of the words with a letter or a digit, so the punctuation marks and the symbols at its edges are left out. Words without a letter or a digit among them raise `SourceError`.
+The positions of the fragment that covers some words of the tree of a document (`TreeWord`): from the start of the first to the end of the last token of the words with a letter or a digit, so the punctuation marks and the symbols at its edges are left out. Words without a letter or a digit among them raise `SourceError`, and a word that is no `TreeWord` - `SourceTypeError`.
 <!-- --8<-- [end:tokens_span] -->
 
 <!-- --8<-- [start:split_segments] -->

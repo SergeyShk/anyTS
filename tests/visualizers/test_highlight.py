@@ -599,6 +599,9 @@ def test_find_split_predicate_highlights():
         find_split_predicate_highlights([tuple(bare)])[0].note == "split predicate: made decision"
     )
     assert find_split_predicate_highlights([]) == []
+    # The pairs come from the caller: spaCy tokens are refused
+    with pytest.raises(SourceTypeError, match=r"^A TreeWord is expected, not Token$"):
+        find_split_predicate_highlights([(doc[1], doc[3])])
 
 
 FREQUENCIES = {"s": 0.06, "t": 0.09, "z": 0.001}

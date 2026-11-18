@@ -7,7 +7,7 @@ import threading
 import unicodedata
 from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, Sequence, Set, Sized
 from contextlib import contextmanager
-from functools import lru_cache
+from functools import lru_cache, wraps
 from importlib import import_module
 from itertools import repeat
 from numbers import Integral, Real
@@ -15,7 +15,7 @@ from re import Pattern
 from statistics import StatisticsError, fmean
 from string import Formatter
 from types import FrameType, ModuleType
-from typing import TYPE_CHECKING, Any, TypeGuard
+from typing import TYPE_CHECKING, Any, TypeGuard, TypeVar, cast
 
 from .constants import MESSAGES
 from .exceptions import ParameterError, SourceError, SourceTypeError
@@ -27,9 +27,28 @@ if TYPE_CHECKING:
 
     from .document import TreeWord
 
-# Punctuation, symbols, combining marks and invisible format characters
+_WordFunction = TypeVar("_WordFunction", bound=Callable[..., Any])
+
+# Punctuation, symbols, combining marks, invisible format characters and lone surrogates
 _PUNCTUATION_CATEGORIES = frozenset(
-    ("Pc", "Pd", "Ps", "Pe", "Pi", "Pf", "Po", "Sm", "Sc", "Sk", "So", "Mn", "Mc", "Me", "Cf")
+    (
+        "Pc",
+        "Pd",
+        "Ps",
+        "Pe",
+        "Pi",
+        "Pf",
+        "Po",
+        "Sm",
+        "Sc",
+        "Sk",
+        "So",
+        "Mn",
+        "Mc",
+        "Me",
+        "Cf",
+        "Cs",
+    )
 )
 
 # A signed number with separators and an optional percent sign: -5, 1990-1995, 1,500.50, 10%,
@@ -70,8 +89,9 @@ def is_punctuation(token: str) -> bool:
 
     Description:
         Characters of the Unicode categories P (punctuation), S (symbols),
-        M (combining marks) and Cf (invisible format characters such as the
-        zero-width space), so "?!", "€", "№" and an empty token are punctuation,
+        M (combining marks), Cf (invisible format characters such as the
+        zero-width space) and Cs (a lone surrogate, as a string decoded from
+        JSON may hold), so "?!", "€", "№" and an empty token are punctuation,
         and a token with a letter or a digit is not. The results are cached, so
         the function is meant for tokens, not whole texts
 
@@ -521,6 +541,59 @@ def is_document(value: object) -> TypeGuard[Document]:
     return document is not None and isinstance(value, document)
 
 
+def _takes_word(function: _WordFunction) -> _WordFunction:
+    """A function of a word: a value that is no TreeWord raises SourceTypeError; the module
+    calls the unchecked function (unchecked) on the words of its trees"""
+
+    @wraps(function)
+    def checked(word: object, *args: Any, **kwargs: Any) -> Any:
+        check_tree_word(word)
+        return function(word, *args, **kwargs)
+
+    checked.__unchecked__ = function  # type: ignore[attr-defined]
+    return cast(_WordFunction, checked)
+
+
+def _takes_words(function: _WordFunction) -> _WordFunction:
+    """A function of a sequence of words: an item that is no TreeWord raises SourceTypeError,
+    and an iterator is read once"""
+
+    @wraps(function)
+    def checked(words: Iterable[object], *args: Any, **kwargs: Any) -> Any:
+        words = list(words)
+        for word in words:
+            check_tree_word(word)
+        return function(words, *args, **kwargs)
+
+    checked.__unchecked__ = function  # type: ignore[attr-defined]
+    return cast(_WordFunction, checked)
+
+
+def unchecked(function: _WordFunction) -> _WordFunction:
+    """
+    Getting a function of a word or of words of the tree without the check of its words
+
+    Description:
+        The functions of the tree check that they get TreeWord objects
+        (check_tree_word). A library calls their unchecked versions on the words
+        it takes from a tree itself, where the check would cost a call for every
+        word; any other function comes back as it is
+
+    Arguments:
+        function (Callable): Function of the tree
+
+    Returns:
+        Callable: Function without the check
+
+    Example:
+        >>> from anyts.syntax_stats import base_dep
+        >>> from anyts.utils import unchecked
+        >>> fast_base_dep = unchecked(base_dep)
+    """
+    return cast(_WordFunction, getattr(function, "__unchecked__", function))
+
+
+@_takes_word
 def has_feature(word: TreeWord, field: str, value: str) -> bool:
     """
     Checking whether a word carries a morphological feature with a given value
@@ -532,11 +605,18 @@ def has_feature(word: TreeWord, field: str, value: str) -> bool:
 
     Returns:
         bool: Result of the check
+
+    Raises:
+        SourceTypeError: If the word is not a TreeWord, such as a spaCy Token
     """
     values = word.feats.get(field)
     return values is not None and value in values.split(",")
 
 
+_has_feature = unchecked(has_feature)
+
+
+@_takes_word
 def is_finite_verb(word: TreeWord) -> bool:
     """
     Checking whether a word is a finite form of a verb
@@ -546,10 +626,17 @@ def is_finite_verb(word: TreeWord) -> bool:
 
     Returns:
         bool: Result of the check
+
+    Raises:
+        SourceTypeError: If the word is not a TreeWord, such as a spaCy Token
     """
-    return word.upos == "VERB" and has_feature(word, "VerbForm", "Fin")
+    return word.upos == "VERB" and _has_feature(word, "VerbForm", "Fin")
 
 
+_is_finite_verb = unchecked(is_finite_verb)
+
+
+@_takes_word
 def is_infinitive(word: TreeWord) -> bool:
     """
     Checking whether a word is an infinitive
@@ -559,8 +646,14 @@ def is_infinitive(word: TreeWord) -> bool:
 
     Returns:
         bool: Result of the check
+
+    Raises:
+        SourceTypeError: If the word is not a TreeWord, such as a spaCy Token
     """
-    return has_feature(word, "VerbForm", "Inf")
+    return _has_feature(word, "VerbForm", "Inf")
+
+
+_is_infinitive = unchecked(is_infinitive)
 
 
 def safe_divide(num: float | int, den: float | int, default: float | int = 0) -> float:
@@ -854,6 +947,40 @@ def check_bool(value: object, what: str, *, message: str | None = None) -> None:
             if message is None
             else message.format(type=kind, param=what)
         )
+
+
+def check_tree_word(value: object, *, message: str | None = None) -> None:
+    """
+    Checking that a value is a word of the tree of a document
+
+    Arguments:
+        value (object): Value to check
+        message (str): Message of the error with the field {type}, the type of the value,
+            in place of the English one
+
+    Raises:
+        SourceTypeError: If the value is not a TreeWord, such as a spaCy Token
+
+    Example:
+        >>> from anyts.utils import check_tree_word
+        >>> check_tree_word("cat")
+        Traceback (most recent call last):
+        ...
+        anyts.exceptions.SourceTypeError: A TreeWord is expected, not str
+    """
+    if not isinstance(value, _tree_word_class()):
+        kind = type(value).__name__
+        raise SourceTypeError(
+            f"A TreeWord is expected, not {kind}" if message is None else message.format(type=kind)
+        )
+
+
+@lru_cache(maxsize=1)
+def _tree_word_class() -> type[TreeWord]:
+    """The class TreeWord, imported once at the first check: the document imports this module"""
+    from .document import TreeWord
+
+    return TreeWord
 
 
 def check_number(value: object, what: str, *, message: str | None = None) -> None:

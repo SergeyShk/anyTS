@@ -220,6 +220,55 @@ A value that is not a `bool`, `0`, `1` and `"yes"` included, raises `ParameterEr
     anyts.exceptions.ParameterError: The normalization must be a bool, not str
     ```
 
+## Words of a tree { #check_tree_word }
+
+<!-- --8<-- [start:check_tree_word] -->
+``` {.python .signature}
+check_tree_word(value, *, message=None)
+```
+
+Checks that a value is a word of the tree of a document (`TreeWord`), as the functions of the tree check their words: a library calls it in a function of a word of its own.
+
+| Parameter | Type | Default | Description |
+| :-------- | :--- | :------ | :---------- |
+| `value` | `object` | - | Value to check |
+| `message` | `str` | `None` | Message of the error with the field `{type}`, the type of the value, in place of the English one |
+
+A value that is not a `TreeWord`, such as a spaCy `Token`, raises `SourceTypeError`.
+<!-- --8<-- [end:check_tree_word] -->
+
+=== "Code"
+
+    ``` python
+    import spacy
+
+    from anyts.utils import check_tree_word
+
+    check_tree_word(spacy.blank("en")("cat")[0])
+    ```
+
+=== "Result"
+
+    ```
+    Traceback (most recent call last):
+      ...
+    anyts.exceptions.SourceTypeError: A TreeWord is expected, not Token
+    ```
+
+## Functions without the check { #unchecked }
+
+<!-- --8<-- [start:unchecked] -->
+``` {.python .signature}
+unchecked(function)
+```
+
+The function of a word or of words of the tree without the check of its words (`check_tree_word`), and any other function as it is. A library calls it on the words it takes from a tree itself, where the check would cost a call for every word.
+
+| Parameter | Type | Default | Description |
+| :-------- | :--- | :------ | :---------- |
+| `function` | `Callable` | - | Function of the tree |
+<!-- --8<-- [end:unchecked] -->
+
 ## Numbers { #check_number }
 
 <!-- --8<-- [start:check_number] -->
