@@ -1,6 +1,6 @@
 # spaCy objects
 
-Checks of spaCy objects without importing spaCy and the morphology of the words of the [tree of a document](https://sergeyshk.github.io/anyTS/document/#get_tree).
+Checks of spaCy objects without importing spaCy and the morphology of the words of the [tree of a document](https://sergeyshk.github.io/anyTS/document/#get_tree). The functions of a word take a `TreeWord`: another value, such as a spaCy `Token`, raises `SourceTypeError`.
 
 ## Doc, Span, Token and Language objects { #is_doc-is_span }
 

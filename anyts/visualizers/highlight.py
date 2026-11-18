@@ -18,7 +18,6 @@ from ..utils import (
     _check_removed,
     _is_mark_gap,
     _takes_words,
-    _unchecked,
     check_callable,
     check_integer,
     check_messages,
@@ -587,9 +586,6 @@ def tokens_span(words: Iterable[TreeWord]) -> tuple[int, int]:
     return min(word.start for word in found), max(word.end for word in found)
 
 
-_tokens_span = _unchecked(tokens_span)
-
-
 def split_segments(
     length: int, highlights: Sequence[Highlight]
 ) -> Iterator[tuple[int, int, list[Highlight]]]:
@@ -897,7 +893,7 @@ def find_split_predicate_highlights(
     )
     highlights = []
     for verb, noun in pairs:
-        start, end = _tokens_span([verb, noun])
+        start, end = tokens_span([verb, noun])
         highlights.append(Highlight(start, end, "split_predicates", note(verb, noun)))
     return highlights
 

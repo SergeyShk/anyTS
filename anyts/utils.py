@@ -543,7 +543,7 @@ def is_document(value: object) -> TypeGuard[Document]:
 
 def _takes_word(function: _WordFunction) -> _WordFunction:
     """A function of a word: a value that is no TreeWord raises SourceTypeError; the module
-    calls the unchecked function (_unchecked) on the words of its trees"""
+    calls the unchecked function (unchecked) on the words of its trees"""
 
     @wraps(function)
     def checked(word: object, *args: Any, **kwargs: Any) -> Any:
@@ -569,8 +569,27 @@ def _takes_words(function: _WordFunction) -> _WordFunction:
     return cast(_WordFunction, checked)
 
 
-def _unchecked(function: _WordFunction) -> _WordFunction:
-    """A function of words without the check of _takes_word or _takes_words"""
+def unchecked(function: _WordFunction) -> _WordFunction:
+    """
+    Getting a function of a word or of words of the tree without the check of its words
+
+    Description:
+        The functions of the tree check that they get TreeWord objects
+        (check_tree_word). A library calls their unchecked versions on the words
+        it takes from a tree itself, where the check would cost a call for every
+        word; any other function comes back as it is
+
+    Arguments:
+        function (Callable): Function of the tree
+
+    Returns:
+        Callable: Function without the check
+
+    Example:
+        >>> from anyts.syntax_stats import base_dep
+        >>> from anyts.utils import unchecked
+        >>> fast_base_dep = unchecked(base_dep)
+    """
     return cast(_WordFunction, getattr(function, "__unchecked__", function))
 
 
@@ -594,7 +613,7 @@ def has_feature(word: TreeWord, field: str, value: str) -> bool:
     return values is not None and value in values.split(",")
 
 
-_has_feature = _unchecked(has_feature)
+_has_feature = unchecked(has_feature)
 
 
 @_takes_word
@@ -614,7 +633,7 @@ def is_finite_verb(word: TreeWord) -> bool:
     return word.upos == "VERB" and _has_feature(word, "VerbForm", "Fin")
 
 
-_is_finite_verb = _unchecked(is_finite_verb)
+_is_finite_verb = unchecked(is_finite_verb)
 
 
 @_takes_word
@@ -634,7 +653,7 @@ def is_infinitive(word: TreeWord) -> bool:
     return _has_feature(word, "VerbForm", "Inf")
 
 
-_is_infinitive = _unchecked(is_infinitive)
+_is_infinitive = unchecked(is_infinitive)
 
 
 def safe_divide(num: float | int, den: float | int, default: float | int = 0) -> float:
@@ -949,13 +968,19 @@ def check_tree_word(value: object, *, message: str | None = None) -> None:
         ...
         anyts.exceptions.SourceTypeError: A TreeWord is expected, not str
     """
-    from .document import TreeWord
-
-    if not isinstance(value, TreeWord):
+    if not isinstance(value, _tree_word_class()):
         kind = type(value).__name__
         raise SourceTypeError(
             f"A TreeWord is expected, not {kind}" if message is None else message.format(type=kind)
         )
+
+
+@lru_cache(maxsize=1)
+def _tree_word_class() -> type[TreeWord]:
+    """The class TreeWord, imported once at the first check: the document imports this module"""
+    from .document import TreeWord
+
+    return TreeWord
 
 
 def check_number(value: object, what: str, *, message: str | None = None) -> None:

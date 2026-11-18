@@ -296,7 +296,7 @@ Checks whether a word heads a clause: the head of the sentence or a word with `c
 | `is_infinitive_periphrasis` | `Callable[[TreeWord], bool]` | `None` | Whether an infinitive makes one predicate with its head; none by default |
 | `auxiliary_form` | `Callable[[TreeWord], str]` | `None` | Verb form of an auxiliary without `VerbForm` (`predicate_form`); none by default |
 
-A value that is not a `TreeWord` and a check of a periphrasis or a form of an auxiliary that is not callable raise `SourceTypeError`.
+A check of a periphrasis or a form of an auxiliary that is not callable raises `SourceTypeError`.
 <!-- --8<-- [end:is_clause_head] -->
 
 <!-- --8<-- [start:is_infinitive_clause] -->
@@ -313,7 +313,7 @@ Checks whether an infinitive complement heads a clause of its own: an infinitive
 | `is_clause_head` | `Callable[[TreeWord], bool]` | `None` | Whether a word heads a clause; `is_clause_head` of the module with the hooks of this check if not given |
 | `auxiliary_form` | `Callable[[TreeWord], str]` | `None` | Verb form of an auxiliary without `VerbForm` (`predicate_form`); none by default |
 
-A value that is not a `TreeWord` and a check or a form of an auxiliary that is not callable raise `SourceTypeError`.
+A check or a form of an auxiliary that is not callable raises `SourceTypeError`.
 <!-- --8<-- [end:is_infinitive_clause] -->
 
 </div>
@@ -340,7 +340,7 @@ Checks whether a word heads a subordinate clause: a clause head by the check `is
 | `subordinating_marks` | `Collection[str]` | `()` | Subordinating conjunctions in lower case, the words of a fixed expression after a space; none by default |
 | `is_subordinating_mark` | `Callable[[TreeWord], bool]` | `None` | Whether a mark is a subordinating conjunction; `is_subordinating_mark` of the module with `subordinating_marks` if not given |
 
-A value that is not a `TreeWord`, a check or a form of an auxiliary that is not callable and marks that are not a collection of strings raise `SourceTypeError`.
+A check or a form of an auxiliary that is not callable and marks that are not a collection of strings raise `SourceTypeError`.
 <!-- --8<-- [end:is_subordinate_clause_head] -->
 
 <!-- --8<-- [start:is_subordinating_mark] -->
@@ -355,7 +355,7 @@ Checks whether a mark is a subordinating conjunction: a word with the relation `
 | `word` | `TreeWord` | - | Word of the tree |
 | `subordinating_marks` | `Collection[str]` | `()` | Subordinating conjunctions in lower case, the words of a fixed expression after a space; none by default |
 
-A value that is not a `TreeWord` and marks that are not a collection of strings raise `SourceTypeError`.
+Marks that are not a collection of strings raise `SourceTypeError`.
 <!-- --8<-- [end:is_subordinating_mark] -->
 
 </div>
@@ -382,7 +382,7 @@ Checks whether a word heads an infinitive clause: a clause head by the check `is
 | `subordinating_marks` | `Collection[str]` | `()` | Subordinating conjunctions in lower case, the words of a fixed expression after a space; none by default |
 | `is_subordinating_mark` | `Callable[[TreeWord], bool]` | `None` | Whether a mark is a subordinating conjunction; `is_subordinating_mark` of the module with `subordinating_marks` if not given |
 
-A value that is not a `TreeWord`, a check or a form of an auxiliary that is not callable and marks that are not a collection of strings raise `SourceTypeError`.
+A check or a form of an auxiliary that is not callable and marks that are not a collection of strings raise `SourceTypeError`.
 <!-- --8<-- [end:is_infinitive_clause_head] -->
 
 </div>
@@ -455,8 +455,6 @@ Checks whether a word is a complement with a preposition: a word with the relati
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
 | `word` | `TreeWord` | - | Word of the tree |
-
-A value that is not a `TreeWord` raises `SourceTypeError`.
 <!-- --8<-- [end:is_prep_complement] -->
 
 </div>
@@ -491,8 +489,6 @@ Checks whether a word is a passive verb form: a verb with `Voice=Pass` or a depe
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
 | `word` | `TreeWord` | - | Word of the tree |
-
-A value that is not a `TreeWord` raises `SourceTypeError`.
 <!-- --8<-- [end:is_passive] -->
 
 <!-- --8<-- [start:has_agent] -->
@@ -665,7 +661,7 @@ The words of a sequence of words of the tree in their order: those with a letter
 is_root(word)
 ```
 
-Checks whether a word is the head of its sentence: it has no head. A value that is no `TreeWord`, such as a spaCy `Token`, raises `SourceTypeError`.
+Checks whether a word is the head of its sentence: it has no head.
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
@@ -738,7 +734,7 @@ The verb form of a predicate by the forms (`VerbForm`) of its auxiliaries and co
 | `word` | `TreeWord` | - | Word of the tree |
 | `auxiliary_form` | `Callable[[TreeWord], str]` | `None` | Verb form of an auxiliary without `VerbForm` |
 
-A value that is not a `TreeWord` and a hook that is not callable raise `SourceTypeError`.
+A hook that is not callable raises `SourceTypeError`.
 <!-- --8<-- [end:predicate_form] -->
 
 === "Code"
@@ -791,8 +787,6 @@ Checks whether a word can be the predicate of its clause: a verb (`VERB`, `AUX`)
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
 | `word` | `TreeWord` | - | Word of the tree |
-
-A value that is not a `TreeWord` raises `SourceTypeError`.
 <!-- --8<-- [end:is_predicate] -->
 
 ## Chains of modifiers { #calc_modifier_chains }

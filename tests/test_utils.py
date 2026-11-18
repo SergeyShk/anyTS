@@ -550,7 +550,6 @@ def test_messages_are_read_only():
 
 
 def test_check_tree_word():
-    from anyts.document import get_tree, to_document
     from anyts.utils import check_tree_word
 
     check_tree_word(get_tree(to_document("The cat")).words[0])
@@ -558,3 +557,16 @@ def test_check_tree_word():
         check_tree_word("cat")
     with pytest.raises(SourceTypeError, match=r"^Own: Token$"):
         check_tree_word(spacy.blank("xx")("cat")[0], message="Own: {type}")
+
+
+def test_unchecked():
+    from anyts.syntax_stats import base_dep, get_words
+    from anyts.utils import unchecked
+
+    word = get_tree(to_document("The cat")).words[0]
+    assert unchecked(base_dep)(word) == base_dep(word)
+    assert unchecked(get_words)([word]) == get_words([word])
+    # A spaCy token passes the unchecked function to the attribute it lacks
+    with pytest.raises(AttributeError):
+        unchecked(base_dep)(spacy.blank("xx")("cat")[0])
+    assert unchecked(len) is len

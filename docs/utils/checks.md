@@ -255,6 +255,20 @@ A value that is not a `TreeWord`, such as a spaCy `Token`, raises `SourceTypeErr
     anyts.exceptions.SourceTypeError: A TreeWord is expected, not Token
     ```
 
+## Functions without the check { #unchecked }
+
+<!-- --8<-- [start:unchecked] -->
+``` {.python .signature}
+unchecked(function)
+```
+
+The function of a word or of words of the tree without the check of its words (`check_tree_word`), and any other function as it is. A library calls it on the words it takes from a tree itself, where the check would cost a call for every word.
+
+| Parameter | Type | Default | Description |
+| :-------- | :--- | :------ | :---------- |
+| `function` | `Callable` | - | Function of the tree |
+<!-- --8<-- [end:unchecked] -->
+
 ## Numbers { #check_number }
 
 <!-- --8<-- [start:check_number] -->

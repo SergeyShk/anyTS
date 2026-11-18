@@ -35,13 +35,13 @@ from .utils import (
     _is_infinitive,
     _takes_word,
     _takes_words,
-    _unchecked,
     check_callable,
     check_sequence,
     check_words,
     has_words,
     safe_divide,
     safe_mean,
+    unchecked,
 )
 
 if TYPE_CHECKING:
@@ -1014,7 +1014,7 @@ def get_words(words: Iterable[TreeWord]) -> list[TreeWord]:
     return [word for word in words if _is_word(word)]
 
 
-_get_words = _unchecked(get_words)
+_get_words = unchecked(get_words)
 
 
 @_takes_word
@@ -1034,7 +1034,7 @@ def is_root(word: TreeWord) -> bool:
     return word.head is None
 
 
-_is_root = _unchecked(is_root)
+_is_root = unchecked(is_root)
 
 
 @_takes_word
@@ -1059,7 +1059,7 @@ def base_dep(word: TreeWord) -> str:
     return _base_relation(word.deprel or "")
 
 
-_base_dep = _unchecked(base_dep)
+_base_dep = unchecked(base_dep)
 
 
 @cache
@@ -1085,7 +1085,7 @@ def get_children(word: TreeWord) -> list[TreeWord]:
     return [child for child in word.children if _is_word(child)]
 
 
-_get_children = _unchecked(get_children)
+_get_children = unchecked(get_children)
 
 
 @_takes_word
@@ -1105,7 +1105,7 @@ def count_children(word: TreeWord) -> int:
     return len(_get_children(word))
 
 
-_count_children = _unchecked(count_children)
+_count_children = unchecked(count_children)
 
 
 @_takes_word
@@ -1129,7 +1129,7 @@ def subtree_len(word: TreeWord) -> int:
     return sum(map(_is_word, _subtree(word)))
 
 
-_subtree_len = _unchecked(subtree_len)
+_subtree_len = unchecked(subtree_len)
 
 
 @_takes_word
@@ -1153,7 +1153,7 @@ def get_subtree(word: TreeWord) -> list[TreeWord]:
     return sorted(_subtree(word), key=lambda found: found.index)
 
 
-_get_subtree = _unchecked(get_subtree)
+_get_subtree = unchecked(get_subtree)
 
 
 def _subtree(word: TreeWord) -> Iterator[TreeWord]:
@@ -1202,7 +1202,7 @@ def calc_dependency_distances(words: Iterable[TreeWord]) -> list[int]:
     ]
 
 
-_calc_dependency_distances = _unchecked(calc_dependency_distances)
+_calc_dependency_distances = unchecked(calc_dependency_distances)
 
 
 @_takes_words
@@ -1240,7 +1240,7 @@ def calc_tree_depth(words: Iterable[TreeWord]) -> int:
     return max(depths.values(), default=0)
 
 
-_calc_tree_depth = _unchecked(calc_tree_depth)
+_calc_tree_depth = unchecked(calc_tree_depth)
 
 
 def _word_parents(words: Sequence[TreeWord]) -> list[int | None]:
@@ -1324,7 +1324,7 @@ def predicate_form(word: TreeWord, auxiliary_form: Callable[[TreeWord], str] | N
     return form
 
 
-_predicate_form = _unchecked(predicate_form)
+_predicate_form = unchecked(predicate_form)
 
 
 def _verb_form(word: TreeWord) -> str:
@@ -1353,7 +1353,7 @@ def calc_valency(word: TreeWord) -> int:
     return sum(1 for child in _get_children(word) if _base_dep(child) not in VALENCY_IGNORED_DEPS)
 
 
-_calc_valency = _unchecked(calc_valency)
+_calc_valency = unchecked(calc_valency)
 
 
 @_takes_words
@@ -1387,7 +1387,7 @@ def calc_coordination_chains(words: Iterable[TreeWord]) -> list[int]:
     return _chain_sizes([word.index for word in words], links)
 
 
-_calc_coordination_chains = _unchecked(calc_coordination_chains)
+_calc_coordination_chains = unchecked(calc_coordination_chains)
 
 
 def _chain_sizes(nodes: Iterable[int], links: Iterable[tuple[int, int]]) -> list[int]:
@@ -1438,7 +1438,7 @@ def is_predicate(word: TreeWord) -> bool:
     )
 
 
-_is_predicate = _unchecked(is_predicate)
+_is_predicate = unchecked(is_predicate)
 
 
 @_takes_word
@@ -1751,7 +1751,7 @@ def is_subordinate_clause_head(
     return dep == "xcomp" or (not _is_root(first) and dep in SUBORDINATE_CLAUSE_DEPS)
 
 
-_is_subordinate_clause_head = _unchecked(is_subordinate_clause_head)
+_is_subordinate_clause_head = unchecked(is_subordinate_clause_head)
 
 
 @_takes_word
@@ -1806,7 +1806,7 @@ def is_infinitive_clause_head(
     )
 
 
-_is_infinitive_clause_head = _unchecked(is_infinitive_clause_head)
+_is_infinitive_clause_head = unchecked(is_infinitive_clause_head)
 
 
 def _infinitive_owner(
@@ -1982,7 +1982,7 @@ def is_passive(word: TreeWord) -> bool:
     )
 
 
-_is_passive = _unchecked(is_passive)
+_is_passive = unchecked(is_passive)
 
 
 @_takes_word
@@ -2006,7 +2006,7 @@ def has_agent(word: TreeWord) -> bool:
     return any(child.deprel in AGENT_DEPS for child in _get_children(word))
 
 
-_has_agent = _unchecked(has_agent)
+_has_agent = unchecked(has_agent)
 
 
 @_takes_word
@@ -2029,7 +2029,7 @@ def is_agentless(word: TreeWord) -> bool:
     return _is_passive(word) and not _has_agent(word)
 
 
-_is_agentless = _unchecked(is_agentless)
+_is_agentless = unchecked(is_agentless)
 
 
 @_takes_word
@@ -2053,7 +2053,7 @@ def count_noun_modifiers(word: TreeWord) -> int:
     return sum(1 for child in _get_children(word) if _base_dep(child) in NOUN_MODIFIER_DEPS)
 
 
-_count_noun_modifiers = _unchecked(count_noun_modifiers)
+_count_noun_modifiers = unchecked(count_noun_modifiers)
 
 
 @_takes_word
@@ -2107,7 +2107,7 @@ def is_prep_complement(word: TreeWord) -> bool:
     return any(_base_dep(child) == "case" and _is_adposition(child) for child in children)
 
 
-_is_prep_complement = _unchecked(is_prep_complement)
+_is_prep_complement = unchecked(is_prep_complement)
 
 
 def _is_adposition(word: TreeWord) -> bool:
@@ -2279,7 +2279,7 @@ def calc_modifier_chains(
     return chains
 
 
-_calc_modifier_chains = _unchecked(calc_modifier_chains)
+_calc_modifier_chains = unchecked(calc_modifier_chains)
 
 
 def _chain_parent(word: TreeWord) -> TreeWord | None:
