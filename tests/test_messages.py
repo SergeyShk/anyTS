@@ -639,6 +639,12 @@ CASES = [
     ),
     # The corpus functions take the messages of a library as a parameter
     ("callable_param", SourceTypeError, lambda: kwic(TEXT, "cat", fold=5, messages=OWN)),
+    ("callable_param", SourceTypeError, lambda: kwic(TEXT, "cat", tokenize=5, messages=OWN)),
+    (
+        "hook_bounds",
+        SourceTypeError,
+        lambda: split_windows(TEXT, tokenize=str.split, messages=OWN),
+    ),
     ("negative_param", ParameterError, lambda: kwic(TEXT, "cat", window=-1, messages=OWN)),
     ("positive_param", ParameterError, lambda: format_kwic([], width=0, messages=OWN)),
     ("keyword_type", SourceTypeError, lambda: kwic(TEXT, 5, messages=OWN)),
@@ -687,6 +693,12 @@ CASES = [
     ),
     ("target_counts", SourceTypeError, lambda: keyness({"a": 1.5}, WORDS, messages=OWN)),
     ("corpus_type", SourceTypeError, lambda: frequency_table([1], messages=OWN)),
+    ("text_words", SourceTypeError, lambda: frequency_table({"a": "x"}, messages=OWN)),
+    (
+        "text_doc",
+        SourceTypeError,
+        lambda: frequency_table({"a": spacy.blank("en")(TEXT)}, messages=OWN),
+    ),
     ("corpus_texts", SourceError, lambda: frequency_table({}, messages=OWN)),
     ("corpus_empty_text", SourceError, lambda: frequency_table({"a": []}, messages=OWN)),
     ("culling_share", ParameterError, lambda: frequency_table(UNITS, culling=2, messages=OWN)),

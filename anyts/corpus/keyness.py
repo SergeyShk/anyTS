@@ -285,7 +285,7 @@ def _check_words_or_counts(
         _check_word_list(words, what, messages)
         return
     for text in words:
-        _check_word_list(text, what, messages)
+        _check_word_list(text, what, messages, text=True)
 
 
 def _check_reference(reference: FrequencyReference, messages: Mapping[str, str]) -> None:

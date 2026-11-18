@@ -124,8 +124,8 @@ def _sizes(n_words: int, parts: int | Sequence[int], messages: Mapping[str, str]
     if not isinstance(parts, Iterable) or isinstance(parts, Set | Mapping | Iterator | str):
         raise ParameterError(messages["parts_type"])
     sizes = list(parts)
-    for size in sizes:
-        check_integer(size, "parts", message=messages["integer_param"])
+    if any(isinstance(size, bool) or not isinstance(size, Integral) for size in sizes):
+        raise ParameterError(messages["parts_type"])
     if len(sizes) < 2 or sum(sizes) != n_words or min(sizes) < 1:
         raise ParameterError(messages["parts_sizes"])
     return sizes

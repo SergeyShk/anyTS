@@ -333,7 +333,7 @@ def _check_corpus(
     if not corpus:
         raise SourceError(messages["corpus_texts"].format(param=what))
     for units in corpus.values():
-        _check_word_list(units, what, messages)
+        _check_word_list(units, what, messages, text=True)
     if any(len(units) == 0 for units in corpus.values()):
         raise SourceError(messages["corpus_empty_text"].format(param=what))
 
@@ -671,7 +671,7 @@ def _segments(
     if len(texts) and all(isinstance(text, str) for text in texts):
         texts = [texts]  # type: ignore[list-item]
     for text in texts:
-        _check_word_list(text, what, messages)
+        _check_word_list(text, what, messages, text=True)
         if not len(text):
             continue
         for segment in np.array_split(
@@ -758,7 +758,7 @@ def zeta_segments(
         markers.append(set(words))
     rows = []
     for name, texts in corpora.items():
-        _check_word_list(texts, "corpora", messages, items=False)
+        _check_word_list(texts, "corpora", messages, items=False, text=True)
         segments = list(_segments(texts, segment_size, "corpora", messages))
         if not segments:
             raise SourceError(messages["corpus_words"].format(name=name))

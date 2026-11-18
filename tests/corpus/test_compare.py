@@ -566,5 +566,5 @@ def test_sentence_rhythm_of_bools_and_negative_lengths():
     "tokenize", [str.split, lambda text: [(3, 1, "a")], lambda text: [(0, 99, "a")]]
 )
 def test_split_windows_checks_the_words_of_its_tokenizer(tokenize):
-    with pytest.raises(SourceTypeError, match=r"^The tokenizer must "):
+    with pytest.raises(SourceTypeError, match=r"^The tokenize must "):
         split_windows("one two three", 2, tokenize=tokenize)

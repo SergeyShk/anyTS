@@ -1385,12 +1385,16 @@ def _check_word_list(
     *,
     ordered: bool = True,
     items: bool = True,
+    text: bool = False,
 ) -> None:
-    """check_words (check_sequence without items) with the messages of a library; a Doc or a
-    Span gets the hint of WordsExtractor"""
+    """check_words (check_sequence without items) with the messages of a library, of the
+    parameter or, with text, of one of its texts; a Doc or a Span gets the hint of
+    WordsExtractor"""
     if is_doc(value) or is_span(value):
-        raise SourceTypeError(messages["words_doc"].format(param=what, type=type(value).__name__))
+        key = "text_doc" if text else "words_doc"
+        raise SourceTypeError(messages[key].format(param=what, type=type(value).__name__))
+    message = messages["text_words" if text else "words_param"]
     if items:
-        check_words(value, what, ordered, message=messages["words_param"])  # type: ignore[arg-type]
+        check_words(value, what, ordered, message=message)  # type: ignore[arg-type]
     else:
-        check_sequence(value, what, ordered, message=messages["words_param"])
+        check_sequence(value, what, ordered, message=message)

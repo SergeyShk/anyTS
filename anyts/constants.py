@@ -397,6 +397,8 @@ MESSAGES: Mapping[str, str] = MappingProxyType(
         ),
         "texts_type": "A list of texts is expected, not {type}",
         "words_doc": "The {param} must be a list of strings, not {type}: extract the words with WordsExtractor",
+        "text_words": "A text of the {param} must be a list of strings, not {type}",
+        "text_doc": "A text of the {param} must be a list of strings, not {type}: extract the words with WordsExtractor",
         "callable_param": "The {param} must be callable, not {type}",
         "negative_param": "The {param} cannot be negative",
         "positive_param": "The {param} must be greater than 0",

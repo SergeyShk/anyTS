@@ -10,6 +10,7 @@ import pandas as pd
 from scipy.stats import mannwhitneyu
 
 from ..constants import CLOSING_MARKS, OPENING_MARKS, SYMMETRIC_MARKS
+from ..document import _spans_error
 from ..exceptions import ParameterError, SourceTypeError
 from ..extractors import _check_spans, _iter_words
 from ..utils import (
@@ -660,7 +661,11 @@ def split_windows(
     if min_words is None:
         min_words = 1 if window is None else window
     found = (
-        _iter_words(text) if tokenize is None else _check_spans(tokenize(text), text, "tokenizer")
+        _iter_words(text)
+        if tokenize is None
+        else _check_spans(
+            tokenize(text), text, "tokenizer", error=_spans_error("tokenize", messages)
+        )
     )
     words = [(start, end) for start, end, _ in found]
     if not words:
