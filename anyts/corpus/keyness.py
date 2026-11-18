@@ -11,6 +11,7 @@ from ..exceptions import ParameterError, SourceError, SourceTypeError
 from ..utils import (
     _check_frequency,
     _check_word_list,
+    _holds_texts,
     _messages,
     check_bool,
     check_callable,
@@ -263,13 +264,6 @@ def _has_units(units: Sequence[str] | Mapping[str, float]) -> bool:
     if isinstance(units, Mapping):
         return any(count > 0 for count in units.values())
     return len(units) > 0
-
-
-def _holds_texts(words: Iterable[object]) -> bool:
-    """Whether a corpus is a list of texts by its first item, a sequence of its own rather than
-    a word or a spaCy token; the checks of the words refuse a list of both"""
-    first = next(iter(words), None)
-    return not isinstance(first, str) and isinstance(first, Iterable)
 
 
 def _check_words_or_counts(

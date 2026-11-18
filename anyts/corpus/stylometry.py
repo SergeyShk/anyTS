@@ -11,12 +11,12 @@ from ..constants import DELTA_VARIANTS
 from ..exceptions import ParameterError, SourceError, SourceTypeError
 from ..utils import (
     _check_word_list,
+    _holds_texts,
     _messages,
     _sliceable,
     check_integer,
     check_number,
 )
-from .keyness import _holds_texts
 
 _ZERO_SEGMENTS = 0.5
 

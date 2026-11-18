@@ -1398,3 +1398,10 @@ def _check_word_list(
         check_words(value, what, ordered, message=message)  # type: ignore[arg-type]
     else:
         check_sequence(value, what, ordered, message=message)
+
+
+def _holds_texts(words: Iterable[object]) -> bool:
+    """Whether a corpus is a list of texts by its first item, a sequence of its own rather than
+    a word or a spaCy token; the checks of the words refuse a list of both"""
+    first = next(iter(words), None)
+    return not isinstance(first, str) and isinstance(first, Iterable)
