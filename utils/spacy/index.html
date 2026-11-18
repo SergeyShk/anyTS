@@ -2135,7 +2135,7 @@
 
 
 <h1 id="spacy-objects">spaCy objects<a class="headerlink" href="#spacy-objects" title="Permanent link">&para;</a></h1>
-<p>Checks of spaCy objects without importing spaCy and the morphology of the words of the <a href="https://sergeyshk.github.io/anyTS/document/#get_tree">tree of a document</a>.</p>
+<p>Checks of spaCy objects without importing spaCy and the morphology of the words of the <a href="https://sergeyshk.github.io/anyTS/document/#get_tree">tree of a document</a>. The functions of a word take a <code>TreeWord</code>: another value, such as a spaCy <code>Token</code>, raises <code>SourceTypeError</code>.</p>
 <h2 id="is_doc-is_span">Doc, Span, Token and Language objects<a class="headerlink" href="#is_doc-is_span" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:is_doc] -->
 <div class="signature highlight"><pre><span></span><code><span class="n">is_doc</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>

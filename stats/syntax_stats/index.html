@@ -3364,7 +3364,7 @@ Ratio of nouns to verbs                                    |   0.50
 </tr>
 </tbody>
 </table>
-<p>A value that is not a <code>TreeWord</code> and a check of a periphrasis or a form of an auxiliary that is not callable raise <code>SourceTypeError</code>.</p>
+<p>A check of a periphrasis or a form of an auxiliary that is not callable raises <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:is_clause_head] -->
 <!-- --8<-- [start:is_infinitive_clause] -->
 <div class="signature highlight"><pre><span></span><code><span class="n">is_infinitive_clause</span><span class="p">(</span><span class="n">word</span><span class="p">,</span> <span class="n">is_infinitive_periphrasis</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">is_clause_head</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">auxiliary_form</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
@@ -3406,7 +3406,7 @@ Ratio of nouns to verbs                                    |   0.50
 </tr>
 </tbody>
 </table>
-<p>A value that is not a <code>TreeWord</code> and a check or a form of an auxiliary that is not callable raise <code>SourceTypeError</code>.</p>
+<p>A check or a form of an auxiliary that is not callable raises <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:is_infinitive_clause] -->
 </div>
 <div class="metric-card">
@@ -3458,7 +3458,7 @@ Ratio of nouns to verbs                                    |   0.50
 </tr>
 </tbody>
 </table>
-<p>A value that is not a <code>TreeWord</code>, a check or a form of an auxiliary that is not callable and marks that are not a collection of strings raise <code>SourceTypeError</code>.</p>
+<p>A check or a form of an auxiliary that is not callable and marks that are not a collection of strings raise <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:is_subordinate_clause_head] -->
 <!-- --8<-- [start:is_subordinating_mark] -->
 <div class="signature highlight"><pre><span></span><code><span class="n">is_subordinating_mark</span><span class="p">(</span><span class="n">word</span><span class="p">,</span> <span class="n">subordinating_marks</span><span class="o">=</span><span class="p">())</span>
@@ -3488,7 +3488,7 @@ Ratio of nouns to verbs                                    |   0.50
 </tr>
 </tbody>
 </table>
-<p>A value that is not a <code>TreeWord</code> and marks that are not a collection of strings raise <code>SourceTypeError</code>.</p>
+<p>Marks that are not a collection of strings raise <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:is_subordinating_mark] -->
 </div>
 <div class="metric-card">
@@ -3540,7 +3540,7 @@ Ratio of nouns to verbs                                    |   0.50
 </tr>
 </tbody>
 </table>
-<p>A value that is not a <code>TreeWord</code>, a check or a form of an auxiliary that is not callable and marks that are not a collection of strings raise <code>SourceTypeError</code>.</p>
+<p>A check or a form of an auxiliary that is not callable and marks that are not a collection of strings raise <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:is_infinitive_clause_head] -->
 </div>
 <div class="metric-card">
@@ -3618,7 +3618,6 @@ Ratio of nouns to verbs                                    |   0.50
 </tr>
 </tbody>
 </table>
-<p>A value that is not a <code>TreeWord</code> raises <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:is_prep_complement] -->
 </div>
 <div class="metric-card">
@@ -3653,7 +3652,6 @@ Ratio of nouns to verbs                                    |   0.50
 </tr>
 </tbody>
 </table>
-<p>A value that is not a <code>TreeWord</code> raises <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:is_passive] -->
 <!-- --8<-- [start:has_agent] -->
 <div class="signature highlight"><pre><span></span><code><span class="n">has_agent</span><span class="p">(</span><span class="n">word</span><span class="p">)</span>
@@ -3795,7 +3793,7 @@ Ratio of nouns to verbs                                    |   0.50
 </div>
 <h2 id="methods">Methods<a class="headerlink" href="#methods" title="Permanent link">&para;</a></h2>
 <p>The methods <code>get_stats</code>, <code>to_dataframe</code>, <code>print_stats</code> and <code>describe</code> are those of the <a href="../stats/">statistics interface</a>.</p>
-<p>The functions of the tree take the words of the tree of a document (<code>TreeWord</code> of <a href="../../document/#get_tree"><code>get_tree</code></a>): a word, or a sequence of them such as a sentence of the tree, whose words are those of <code>get_words</code>. They read the relations that Universal Dependencies and the ClearNLP labels of the English models share: the head of a word, <code>cc</code>, <code>conj</code>, <code>parataxis</code>, <code>punct</code> and <code>aux</code>, the subjects <code>nsubj</code> and <code>csubj</code>, the modifiers of a noun <code>amod</code>, <code>det</code>, <code>nmod</code>, <code>nummod</code> and <code>acl</code>, the clause relations <code>ccomp</code>, <code>advcl</code> and <code>xcomp</code>, and the root; the copula <code>cop</code> of <code>predicate_form</code> and <code>is_predicate</code> exists in Universal Dependencies alone. The passive and its agent (<code>is_passive</code>, <code>has_agent</code>) and the order of the subjects and the objects read the relations of both schemes (<code>PASSIVE_DEPS</code>, <code>AGENT_DEPS</code>, <code>NOMINAL_SUBJECT_DEPS</code>, <code>OBJECT_DEPS</code>); the prepositional complements of <code>is_prep_complement</code> read Universal Dependencies alone. Everything else is up to a language library.</p>
+<p>The functions of the tree take the words of the tree of a document (<code>TreeWord</code> of <a href="../../document/#get_tree"><code>get_tree</code></a>): a word, or a sequence of them such as a sentence of the tree, whose words are those of <code>get_words</code>. A value that is no <code>TreeWord</code>, such as a spaCy <code>Token</code>, or a sequence with one raises <code>SourceTypeError</code>. They read the relations that Universal Dependencies and the ClearNLP labels of the English models share: the head of a word, <code>cc</code>, <code>conj</code>, <code>parataxis</code>, <code>punct</code> and <code>aux</code>, the subjects <code>nsubj</code> and <code>csubj</code>, the modifiers of a noun <code>amod</code>, <code>det</code>, <code>nmod</code>, <code>nummod</code> and <code>acl</code>, the clause relations <code>ccomp</code>, <code>advcl</code> and <code>xcomp</code>, and the root; the copula <code>cop</code> of <code>predicate_form</code> and <code>is_predicate</code> exists in Universal Dependencies alone. The passive and its agent (<code>is_passive</code>, <code>has_agent</code>) and the order of the subjects and the objects read the relations of both schemes (<code>PASSIVE_DEPS</code>, <code>AGENT_DEPS</code>, <code>NOMINAL_SUBJECT_DEPS</code>, <code>OBJECT_DEPS</code>); the prepositional complements of <code>is_prep_complement</code> read Universal Dependencies alone. Everything else is up to a language library.</p>
 <h2 id="get_words">Words of a sequence<a class="headerlink" href="#get_words" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:get_words] -->
 <div class="signature highlight"><pre><span></span><code><span class="n">get_words</span><span class="p">(</span><span class="n">words</span><span class="p">)</span>
@@ -3825,7 +3823,7 @@ Ratio of nouns to verbs                                    |   0.50
 <!-- --8<-- [start:is_root] -->
 <div class="signature highlight"><pre><span></span><code><span class="n">is_root</span><span class="p">(</span><span class="n">word</span><span class="p">)</span>
 </code></pre></div>
-<p>Checks whether a word is the head of its sentence: it has no head. A value that is no <code>TreeWord</code>, such as a spaCy <code>Token</code>, raises <code>SourceTypeError</code>.</p>
+<p>Checks whether a word is the head of its sentence: it has no head.</p>
 <table>
 <thead>
 <tr>
@@ -3943,7 +3941,7 @@ Ratio of nouns to verbs                                    |   0.50
 </tr>
 </tbody>
 </table>
-<p>A value that is not a <code>TreeWord</code> and a hook that is not callable raise <code>SourceTypeError</code>.</p>
+<p>A hook that is not callable raises <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:predicate_form] -->
 
 <div class="tabbed-set tabbed-alternate" data-tabs="3:2"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Code</label><label for="__tabbed_3_2">Result</label></div>
@@ -4007,7 +4005,6 @@ Ratio of nouns to verbs                                    |   0.50
 </tr>
 </tbody>
 </table>
-<p>A value that is not a <code>TreeWord</code> raises <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:is_predicate] -->
 
 <h2 id="calc_modifier_chains">Chains of modifiers<a class="headerlink" href="#calc_modifier_chains" title="Permanent link">&para;</a></h2>

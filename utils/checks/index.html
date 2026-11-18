@@ -2017,6 +2017,28 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#check_tree_word" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Words of a tree
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#unchecked" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Functions without the check
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#check_number" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2196,6 +2218,28 @@
     <span class="md-ellipsis">
       
         Bools
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#check_tree_word" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Words of a tree
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#unchecked" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Functions without the check
       
     </span>
   </a>
@@ -2579,6 +2623,81 @@ anyts.exceptions.ParameterError: The normalization must be a bool, not str
 </div>
 </div>
 </div>
+<h2 id="check_tree_word">Words of a tree<a class="headerlink" href="#check_tree_word" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:check_tree_word] -->
+<div class="signature highlight"><pre><span></span><code><span class="n">check_tree_word</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+</code></pre></div>
+<p>Checks that a value is a word of the tree of a document (<code>TreeWord</code>), as the functions of the tree check their words: a library calls it in a function of a word of its own.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Parameter</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Default</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>value</code></td>
+<td style="text-align: left;"><code>object</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Value to check</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>message</code></td>
+<td style="text-align: left;"><code>str</code></td>
+<td style="text-align: left;"><code>None</code></td>
+<td style="text-align: left;">Message of the error with the field <code>{type}</code>, the type of the value, in place of the English one</td>
+</tr>
+</tbody>
+</table>
+<p>A value that is not a <code>TreeWord</code>, such as a spaCy <code>Token</code>, raises <code>SourceTypeError</code>.</p>
+<!-- --8<-- [end:check_tree_word] -->
+
+<div class="tabbed-set tabbed-alternate" data-tabs="7:2"><input checked="checked" id="__tabbed_7_1" name="__tabbed_7" type="radio" /><input id="__tabbed_7_2" name="__tabbed_7" type="radio" /><div class="tabbed-labels"><label for="__tabbed_7_1">Code</label><label for="__tabbed_7_2">Result</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">spacy</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">anyts.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">check_tree_word</span>
+
+<span class="n">check_tree_word</span><span class="p">(</span><span class="n">spacy</span><span class="o">.</span><span class="n">blank</span><span class="p">(</span><span class="s2">"en"</span><span class="p">)(</span><span class="s2">"cat"</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>Traceback (most recent call last):
+  ...
+anyts.exceptions.SourceTypeError: A TreeWord is expected, not Token
+</code></pre></div>
+</div>
+</div>
+</div>
+<h2 id="unchecked">Functions without the check<a class="headerlink" href="#unchecked" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:unchecked] -->
+<div class="signature highlight"><pre><span></span><code><span class="n">unchecked</span><span class="p">(</span><span class="n">function</span><span class="p">)</span>
+</code></pre></div>
+<p>The function of a word or of words of the tree without the check of its words (<code>check_tree_word</code>), and any other function as it is. A library calls it on the words it takes from a tree itself, where the check would cost a call for every word.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Parameter</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Default</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>function</code></td>
+<td style="text-align: left;"><code>Callable</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Function of the tree</td>
+</tr>
+</tbody>
+</table>
+<!-- --8<-- [end:unchecked] -->
+
 <h2 id="check_number">Numbers<a class="headerlink" href="#check_number" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:check_number] -->
 <div class="signature highlight"><pre><span></span><code><span class="n">check_number</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">what</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
@@ -2617,7 +2736,7 @@ anyts.exceptions.ParameterError: The normalization must be a bool, not str
 <p>A value that is not a finite real number - a <code>bool</code>, a string, <code>None</code>, <code>nan</code>, an infinity - raises <code>ParameterError</code>.</p>
 <!-- --8<-- [end:check_number] -->
 
-<div class="tabbed-set tabbed-alternate" data-tabs="7:2"><input checked="checked" id="__tabbed_7_1" name="__tabbed_7" type="radio" /><input id="__tabbed_7_2" name="__tabbed_7" type="radio" /><div class="tabbed-labels"><label for="__tabbed_7_1">Code</label><label for="__tabbed_7_2">Result</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="8:2"><input checked="checked" id="__tabbed_8_1" name="__tabbed_8" type="radio" /><input id="__tabbed_8_2" name="__tabbed_8" type="radio" /><div class="tabbed-labels"><label for="__tabbed_8_1">Code</label><label for="__tabbed_8_2">Result</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">check_number</span>
@@ -2670,7 +2789,7 @@ anyts.exceptions.ParameterError: The confidence level must be a finite number, n
 <p>A value that cannot be called raises <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:check_callable] -->
 
-<div class="tabbed-set tabbed-alternate" data-tabs="8:2"><input checked="checked" id="__tabbed_8_1" name="__tabbed_8" type="radio" /><input id="__tabbed_8_2" name="__tabbed_8" type="radio" /><div class="tabbed-labels"><label for="__tabbed_8_1">Code</label><label for="__tabbed_8_2">Result</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="9:2"><input checked="checked" id="__tabbed_9_1" name="__tabbed_9" type="radio" /><input id="__tabbed_9_2" name="__tabbed_9" type="radio" /><div class="tabbed-labels"><label for="__tabbed_9_1">Code</label><label for="__tabbed_9_2">Result</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">check_callable</span>
