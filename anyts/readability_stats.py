@@ -28,7 +28,7 @@ from .exceptions import ParameterError, SourceError, SourceTypeError
 from .extractors import SentsExtractor, WordsExtractor
 from .stats import Stats, _check_scale, _check_scales
 from .stats import scale_level as scale_level
-from .utils import check_integer, check_number, safe_divide
+from .utils import check_bool, check_integer, check_number, safe_divide
 
 if TYPE_CHECKING:
     from anyseg import Document
@@ -55,6 +55,8 @@ class ReadabilityStats(Stats):
         words_extractor (WordsExtractor): Word extraction tool, not used for ready
             basic statistics
         preset (str): Coefficient preset
+        filter_nums (bool): Leave out the numbers among the words, which have no
+            syllables and would lower the grade; not used for ready basic statistics
 
     Attributes:
         bs (BasicStats): Basic statistics of the text
@@ -123,7 +125,8 @@ class ReadabilityStats(Stats):
             is of another type, or a class without basic_stats_class is given another
             source
         SourceError: If the source has no words or no sentences
-        ParameterError: If the coefficient preset is not a string or is unknown; when
+        ParameterError: If the coefficient preset is not a string or is unknown or
+            filter_nums is not a bool; when
             a class is defined, if its scales of a preset name an unknown preset, a
             scale or a scale of grades is not one of scale_level with finite grades, its
             school stages are not ascending quadruples of two years and two strings, or
@@ -183,8 +186,10 @@ class ReadabilityStats(Stats):
         sents_extractor: SentsExtractor | None = None,
         words_extractor: WordsExtractor | None = None,
         preset: str = "original",
+        filter_nums: bool = True,
     ):
         messages = self.messages
+        check_bool(filter_nums, "filter_nums", message=messages["bool_param"])
         if not isinstance(preset, str):
             raise ParameterError(messages["preset_type"].format(type=type(preset).__name__))
         if preset not in self.presets:
@@ -194,7 +199,7 @@ class ReadabilityStats(Stats):
         self._preset = preset
         self.coefficients = dict(self.presets[preset])
         self.bs = _read_basic_stats(
-            self, source, self.basic_stats_class, sents_extractor, words_extractor
+            self, source, self.basic_stats_class, sents_extractor, words_extractor, filter_nums
         )
 
     @property
@@ -445,6 +450,7 @@ def _read_basic_stats(
     basic_stats_class: type[BasicStats] | None,
     sents_extractor: SentsExtractor | None = None,
     words_extractor: WordsExtractor | None = None,
+    filter_nums: bool = True,
 ) -> BasicStats:
     """
     Getting the basic statistics of the source of a class of readability
@@ -461,6 +467,7 @@ def _read_basic_stats(
             a Document
         sents_extractor (SentsExtractor): Sentence extraction tool
         words_extractor (WordsExtractor): Word extraction tool
+        filter_nums (bool): Leave out the numbers among the words
 
     Returns:
         BasicStats: Basic statistics with sentences
@@ -484,7 +491,7 @@ def _read_basic_stats(
     elif basic_stats_class is None:
         raise SourceTypeError(messages["no_basic_stats_class"].format(cls=type(stats).__name__))
     else:
-        bs = basic_stats_class(source, sents_extractor, words_extractor)
+        bs = basic_stats_class(source, sents_extractor, words_extractor, filter_nums=filter_nums)
     if not bs.n_sents:
         raise SourceError(messages["no_sentences"])
     return bs

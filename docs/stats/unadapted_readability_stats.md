@@ -1,7 +1,7 @@
 # Unadapted readability formulas
 
 ``` {.python .signature}
-UnadaptedReadabilityStats(source, sents_extractor=None, words_extractor=None)
+UnadaptedReadabilityStats(source, sents_extractor=None, words_extractor=None, filter_nums=True)
 ```
 
 <!-- --8<-- [start:UnadaptedReadabilityStats] -->
@@ -66,6 +66,7 @@ Raises:
 | `source` | `str` / `Doc` / `Document` / `BasicStats` | - | Data source (a string, a Doc or a Document object, or ready basic statistics) |
 | `sents_extractor` | `SentsExtractor` | `None` | Sentence extraction tool, not used for ready basic statistics |
 | `words_extractor` | `WordsExtractor` | `None` | Word extraction tool, not used for ready basic statistics |
+| `filter_nums` | `bool` | `True` | Leave out the numbers among the words, as `ReadabilityStats` does |
 <!-- --8<-- [end:UnadaptedReadabilityStats-parameters] -->
 
 ## Attributes

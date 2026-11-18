@@ -38,7 +38,8 @@ class Unadapted(UnadaptedReadabilityStats):
 
 @pytest.fixture(scope="module")
 def stats():
-    return Unadapted(TEXT)
+    # With the numbers, so that a word without syllables reaches the formulas
+    return Unadapted(TEXT, filter_nums=False)
 
 
 def test_formulas_over_the_basic_statistics(stats):

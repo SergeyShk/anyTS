@@ -709,3 +709,27 @@ def test_scales_of_readability_checked_at_class_definition(attributes, message):
 def test_grade_functions_check_their_scales(call, error, message):
     with pytest.raises(error, match=message):
         call()
+
+
+def test_numbers_left_out():
+    """A number has no syllables and would lower the grade: the formulas leave it out by
+    default, the basic statistics keep it"""
+    text = "The cat sat on the mat in 2026. A beautiful day came in 1250000 hours!"
+    words = Stats(text).n_words
+    assert Readability(text).bs.n_words == words - 2
+    assert Readability(text, filter_nums=False).bs.n_words == words
+    ready = Stats(text)
+    assert Readability(ready).bs is ready
+    assert Stats(text, filter_nums=True).n_words == words - 2
+    with pytest.raises(SourceError):
+        Readability("2026. 1250000!")
+    for cls in (Readability, Stats):
+        with pytest.raises(ParameterError, match=r"^The filter_nums must be a bool, not str$"):
+            cls(text, filter_nums="yes")
+
+
+def test_number_pattern_of_a_library():
+    class Roman(Stats):
+        number_pattern = re.compile(r"\d+|[ivx]+")
+
+    assert Roman("Chapter iv has 10 pages.", filter_nums=True).n_words == 3
