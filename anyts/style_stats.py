@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections import Counter
 from collections.abc import Callable, Collection, Mapping, Sequence
 from math import nan, sqrt
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, NamedTuple
 
 from .constants import MESSAGES, NAUSEA_TOP_N, STYLE_STATS_DESC
 from .document import document_words
@@ -25,6 +25,26 @@ if TYPE_CHECKING:
     from spacy.tokens import Doc
 
 Expander = Callable[[Sequence[str], Collection[str]], Mapping[str, str]]
+
+
+class WordFlags(NamedTuple):
+    """
+    Flags of the words of a document by position
+
+    Description:
+        One boolean per word of doc_words for a check; a check left None is
+        decided by its predicate on the word
+
+    Attributes:
+        stopword (tuple[bool]|None): Whether every word is a stopword of the academic nausea
+        water (tuple[bool]|None): Whether every word is water
+        parenthetical (tuple[bool]|None): Whether every word is a parenthetical expression
+            by itself
+    """
+
+    stopword: Sequence[bool] | None = None
+    water: Sequence[bool] | None = None
+    parenthetical: Sequence[bool] | None = None
 
 
 def check_params(top_n: int, *, messages: Mapping[str, str] = MESSAGES) -> None:
@@ -56,7 +76,9 @@ class StyleStats(Stats):
         phrases, the nouns and the norms of the services (level_scales)
         The words are those of the document of parse in lower case (doc_words),
         or those of an extractor given on its text. The markers are counted on
-        the words of the document (forms), whatever the extractor.
+        the words of the document (forms), whatever the extractor. The flags of
+        doc_flags replace the predicates on the forms and on the words that are
+        the forms.
         get_stats, to_dataframe, print_stats and describe come from Stats
 
     Arguments:
@@ -72,6 +94,7 @@ class StyleStats(Stats):
     Attributes:
         words (tuple[str]): Words of the SEO metrics
         forms (tuple[str]): Word forms in lower case, of the markers
+        flags (WordFlags): Flags of the forms
         stopwords (tuple[str]|None): Words of water
         nausea_stopwords (tuple[str]|None): Stopwords of the academic nausea
         top_n (int): Number of the most frequent words
@@ -89,6 +112,7 @@ class StyleStats(Stats):
     Methods:
         normalize: Normalized form of a word
         doc_words: Words of a document in lower case
+        doc_flags: Flags of the words of a document
         is_stopword: Whether a word is a stopword of the academic nausea
         is_water_word: Whether a word is water
         is_parenthetical: Whether a word is a parenthetical expression by itself
@@ -109,7 +133,7 @@ class StyleStats(Stats):
     Raises:
         SourceTypeError: If the source is neither a string, a Doc nor a Document object,
             parse does not return a Document, doc_words does not return a sequence of
-            strings, the extractor is of another type or a list is not a list of strings;
+            strings, doc_flags does not return WordFlags of a boolean per word, the extractor is of another type or a list is not a list of strings;
             when a class is defined, if a list of its phrases is not a list of strings
         SourceError: If the source has no words
         ParameterError: If top_n is not an integer or is below one
@@ -151,6 +175,8 @@ class StyleStats(Stats):
         self.words = words_extractor.extract(document.text) if words_extractor else self.forms
         if not self.words:
             raise SourceError(messages["no_words"])
+        self.flags = _hook_flags(self, self.doc_flags(document), len(self.forms))
+        self._word_flags = self.flags if words_extractor is None else WordFlags()
         self.stopwords = in_order(stopwords) if stopwords is not None else None
         self.nausea_stopwords = (
             in_order(nausea_stopwords) if nausea_stopwords is not None else None
@@ -191,6 +217,22 @@ class StyleStats(Stats):
             tuple[str]: Words
         """
         return tuple(word.lower() for word in document_words(document))
+
+    def doc_flags(self, document: Document) -> WordFlags:
+        """
+        Getting the flags of the words of a document
+
+        Description:
+            None by default, so the predicates decide by the word; a library with
+            a parse in context gives them by position, for the words of doc_words
+
+        Arguments:
+            document (Document): Document of anySeg
+
+        Returns:
+            WordFlags: Flags of the words
+        """
+        return WordFlags()
 
     def is_stopword(self, word: str) -> bool:
         """
@@ -292,6 +334,7 @@ class StyleStats(Stats):
             self.top_n,
             self.nausea_stopwords,
             is_stopword=self.is_stopword,
+            flags=self._word_flags.stopword,
             normalize=self.normalize,
             messages=self.messages,
         )
@@ -299,7 +342,11 @@ class StyleStats(Stats):
     @property
     def water(self) -> float:
         return calc_water(
-            self.words, self.stopwords, is_water_word=self.is_water_word, normalize=self.normalize
+            self.words,
+            self.stopwords,
+            is_water_word=self.is_water_word,
+            flags=self._word_flags.water,
+            normalize=self.normalize,
         )
 
     @property
@@ -326,6 +373,7 @@ class StyleStats(Stats):
             self.forms,
             self.parentheticals_list,
             is_parenthetical=self.is_parenthetical,
+            flags=self.flags.parenthetical,
             expand=self.expand_phrases,
             normalize=self.normalize,
         )
@@ -376,6 +424,7 @@ class StyleStats(Stats):
             self.top_n,
             self.nausea_stopwords,
             is_stopword=self.is_stopword,
+            flags=self._word_flags.stopword,
             normalize=self.normalize,
             messages=self.messages,
         )
@@ -399,6 +448,7 @@ class StyleStats(Stats):
                 forms,
                 self.parentheticals_list,
                 is_parenthetical=self.is_parenthetical,
+                flags=self.flags.parenthetical,
                 expand=self.expand_phrases,
                 normalize=self.normalize,
             ),
@@ -447,6 +497,7 @@ def find_nausea_words(
     stopwords: Collection[str] | None = None,
     *,
     is_stopword: Callable[[str], bool] | None = None,
+    flags: Sequence[bool] | None = None,
     normalize: Callable[[str], str] = str.lower,
     messages: Mapping[str, str] = MESSAGES,
 ) -> dict[str, int]:
@@ -456,14 +507,15 @@ def find_nausea_words(
     Description:
         The top_n most frequent words without the stopwords, the most frequent
         first, ties in the order of the text. A stopword is a word of stopwords
-        by its normalized form or, without the list, one is_stopword accepts;
-        without both there are none
+        by its normalized form or, without the list, one of the flags or
+        is_stopword accepts; without them there are none
 
     Arguments:
         text (list[str]): List of words
         top_n (int): Number of the most frequent words
         stopwords (list[str]|set[str]): Stopwords
         is_stopword (callable): Whether a word is a stopword
+        flags (list[bool]): Whether every word is a stopword, in place of is_stopword
         normalize (callable): Normalized form of a word, the lower case by default
         messages (dict[str, str]): Messages of the errors by key (MESSAGES)
 
@@ -471,9 +523,10 @@ def find_nausea_words(
         dict[str, int]: Occurrences of every word
 
     Raises:
-        SourceTypeError: If the words or the stopwords are not a list of strings, or
-            is_stopword or normalize is not callable
-        ParameterError: If top_n is not an integer or is below one
+        SourceTypeError: If the words or the stopwords are not a list of strings, the
+            flags are not a list of booleans, or is_stopword or normalize is not callable
+        ParameterError: If top_n is not an integer or is below one, or the flags are not
+            one per word
 
     Example:
         >>> from anyts.style_stats import find_nausea_words
@@ -483,7 +536,13 @@ def find_nausea_words(
     check_words(text, "text", message=messages["words_param"])
     check_params(top_n, messages=messages)
     stops = _stop_flags(
-        text, stopwords, is_stopword, normalize, "check of a stopword", messages["words_param"]
+        text,
+        stopwords,
+        is_stopword,
+        flags,
+        normalize,
+        "check of a stopword",
+        messages["words_param"],
     )
     significant = [word for word, stop in zip(text, stops, strict=True) if not stop]
     return dict(Counter(significant).most_common(top_n))
@@ -493,19 +552,25 @@ def _stop_flags(
     text: Sequence[str],
     stopwords: Collection[str] | None,
     is_stopword: Callable[[str], bool] | None,
+    flags: Sequence[bool] | None,
     normalize: Callable[[str], str],
     what: str,
     message: str | None = None,
 ) -> list[bool]:
-    """Whether every word is a stopword: of the list, by its normalized form, or of the predicate;
-    message is that of stopwords that are not a list of strings in place of the English one"""
+    """Whether every word is a stopword: of the list, by its normalized form, of the flags or of
+    the predicate; message is that of stopwords that are not a list of strings in place of the
+    English one"""
     check_callable(normalize, "normalization")
     if is_stopword is not None:
         check_callable(is_stopword, what)
+    if flags is not None:
+        _check_flags(flags, len(text))
     if stopwords is not None:
         check_words(stopwords, "stopwords", ordered=False, message=message)
         stopwords_set = {normalize(word) for word in stopwords}
         return [normalize(word) in stopwords_set for word in text]
+    if flags is not None:
+        return list(flags)
     if is_stopword is not None:
         return [is_stopword(word) for word in text]
     return [False] * len(text)
@@ -517,6 +582,7 @@ def calc_academic_nausea(
     stopwords: Collection[str] | None = None,
     *,
     is_stopword: Callable[[str], bool] | None = None,
+    flags: Sequence[bool] | None = None,
     normalize: Callable[[str], str] = str.lower,
     messages: Mapping[str, str] = MESSAGES,
 ) -> float:
@@ -535,6 +601,7 @@ def calc_academic_nausea(
         top_n (int): Number of the most frequent words
         stopwords (list[str]|set[str]): Stopwords
         is_stopword (callable): Whether a word is a stopword, without the list
+        flags (list[bool]): Whether every word is a stopword, in place of is_stopword
         normalize (callable): Normalized form of a word, the lower case by default
         messages (dict[str, str]): Messages of the errors by key (MESSAGES)
 
@@ -542,12 +609,19 @@ def calc_academic_nausea(
         float: Value of the nausea in percent
 
     Raises:
-        SourceTypeError: If the words or the stopwords are not a list of strings, or
-            is_stopword or normalize is not callable
-        ParameterError: If top_n is not an integer or is below one
+        SourceTypeError: If the words or the stopwords are not a list of strings, the
+            flags are not a list of booleans, or is_stopword or normalize is not callable
+        ParameterError: If top_n is not an integer or is below one, or the flags are not
+            one per word
     """
     found = find_nausea_words(
-        text, top_n, stopwords, is_stopword=is_stopword, normalize=normalize, messages=messages
+        text,
+        top_n,
+        stopwords,
+        is_stopword=is_stopword,
+        flags=flags,
+        normalize=normalize,
+        messages=messages,
     )
     return safe_divide(100 * sum(found.values()), len(text))
 
@@ -557,6 +631,7 @@ def calc_water(
     stopwords: Collection[str] | None = None,
     *,
     is_water_word: Callable[[str], bool] | None = None,
+    flags: Sequence[bool] | None = None,
     normalize: Callable[[str], str] = str.lower,
 ) -> float:
     """
@@ -564,8 +639,8 @@ def calc_water(
 
     Description:
         The share of the words without content in percent (Text.ru): the words
-        of stopwords by their normalized forms or, without the list, those
-        is_water_word accepts
+        of stopwords by their normalized forms or, without the list, those the
+        flags or is_water_word accept
 
     References:
         https://text.ru/seo
@@ -574,20 +649,20 @@ def calc_water(
         text (list[str]): List of words
         stopwords (list[str]|set[str]): Words of water
         is_water_word (callable): Whether a word is water, without the list
+        flags (list[bool]): Whether every word is water, in place of is_water_word
         normalize (callable): Normalized form of a word, the lower case by default
 
     Returns:
         float: Value of the water content in percent
 
     Raises:
-        SourceTypeError: If the words or the stopwords are not a list of strings, or
-            is_water_word or normalize is not callable
+        SourceTypeError: If the words or the stopwords are not a list of strings, the
+            flags are not a list of booleans, or is_water_word or normalize is not callable
+        ParameterError: If the flags are not one per word
     """
     check_words(text)
-    return safe_divide(
-        100 * sum(_stop_flags(text, stopwords, is_water_word, normalize, "check of a water word")),
-        len(text),
-    )
+    water = _stop_flags(text, stopwords, is_water_word, flags, normalize, "check of a water word")
+    return safe_divide(100 * sum(water), len(text))
 
 
 def calc_spam(text: Sequence[str]) -> float:
@@ -752,6 +827,7 @@ def find_parentheticals(
     phrases: Collection[str] = (),
     *,
     is_parenthetical: Callable[[str], bool] | None = None,
+    flags: Sequence[bool] | None = None,
     expand: Expander | None = None,
     normalize: Callable[[str], str] = str.lower,
 ) -> list[tuple[int, int]]:
@@ -760,14 +836,16 @@ def find_parentheticals(
 
     Description:
         The phrases of the list (spelled out by expand, as in
-        calc_phrase_density) and the single words accepted by is_parenthetical
-        outside the phrases found
+        calc_phrase_density) and the single words accepted by the flags or
+        is_parenthetical outside the phrases found
 
     Arguments:
         text (list[str]): List of words
         phrases (list[str]|set[str]): Parenthetical phrases, words separated by spaces
         is_parenthetical (callable): Whether a word is a parenthetical expression by
             itself; none by default
+        flags (list[bool]): Whether every word is a parenthetical expression by itself,
+            in place of is_parenthetical
         expand (callable): Variants of the phrases in the forms of the text with the
             phrase of each; the phrases as they are by default
         normalize (callable): Normalized form of a word and of a phrase, the lower
@@ -777,8 +855,10 @@ def find_parentheticals(
         list[tuple[int, int]]: Bounds of the expressions as slices of the words, in order
 
     Raises:
-        SourceTypeError: If the words or the phrases are not a list of strings, or
-            is_parenthetical, expand or normalize is not callable
+        SourceTypeError: If the words or the phrases are not a list of strings, the flags
+            are not a list of booleans, or is_parenthetical, expand or normalize is not
+            callable
+        ParameterError: If the flags are not one per word
 
     Example:
         >>> from anyts.style_stats import find_parentheticals
@@ -795,15 +875,19 @@ def find_parentheticals(
     ):
         if hook is not None:
             check_callable(hook, what)
+    if flags is not None:
+        _check_flags(flags, len(text))
     variants = expand(text, phrases) if expand is not None else phrases
     spans = find_phrases(text, variants, normalize)
-    if is_parenthetical is None:
-        return spans
+    if flags is None:
+        if is_parenthetical is None:
+            return spans
+        flags = [is_parenthetical(word) for word in text]
     covered = {position for start, end in spans for position in range(start, end)}
     singles = [
         (position, position + 1)
-        for position, word in enumerate(text)
-        if position not in covered and is_parenthetical(word)
+        for position, flag in enumerate(flags)
+        if flag and position not in covered
     ]
     return sorted(spans + singles)
 
@@ -813,6 +897,7 @@ def calc_parentheticals(
     phrases: Collection[str] = (),
     *,
     is_parenthetical: Callable[[str], bool] | None = None,
+    flags: Sequence[bool] | None = None,
     expand: Expander | None = None,
     normalize: Callable[[str], str] = str.lower,
 ) -> float:
@@ -827,6 +912,8 @@ def calc_parentheticals(
         phrases (list[str]|set[str]): Parenthetical phrases, words separated by spaces
         is_parenthetical (callable): Whether a word is a parenthetical expression by
             itself; none by default
+        flags (list[bool]): Whether every word is a parenthetical expression by itself,
+            in place of is_parenthetical
         expand (callable): Variants of the phrases in the forms of the text with the
             phrase of each; the phrases as they are by default
         normalize (callable): Normalized form of a word and of a phrase, the lower
@@ -836,10 +923,58 @@ def calc_parentheticals(
         float: Parenthetical expressions per 100 words
 
     Raises:
-        SourceTypeError: If the words or the phrases are not a list of strings, or
-            is_parenthetical, expand or normalize is not callable
+        SourceTypeError: If the words or the phrases are not a list of strings, the flags
+            are not a list of booleans, or is_parenthetical, expand or normalize is not
+            callable
+        ParameterError: If the flags are not one per word
     """
     spans = find_parentheticals(
-        text, phrases, is_parenthetical=is_parenthetical, expand=expand, normalize=normalize
+        text,
+        phrases,
+        is_parenthetical=is_parenthetical,
+        flags=flags,
+        expand=expand,
+        normalize=normalize,
     )
     return safe_divide(len(spans), len(text)) * 100
+
+
+def _check_flags(flags: object, size: int) -> None:
+    """Checking that the flags are a sequence of booleans, one per word of the size"""
+    problem = _flags_problem(flags, size)
+    if problem.isdigit():
+        raise ParameterError(f"The flags must be one per word: {problem} for {size} words")
+    if problem:
+        raise SourceTypeError(f"The flags must be a list of booleans, not {problem}")
+
+
+def _hook_flags(owner: StyleStats, flags: object, size: int) -> WordFlags:
+    """Flags of doc_flags, checked to be WordFlags of a boolean per word, with tuples"""
+    wrong = type(flags).__name__
+    if isinstance(flags, WordFlags):
+        wrong = next(
+            (
+                f"{problem} in {name}"
+                for name, values in zip(WordFlags._fields, flags, strict=True)
+                if values is not None and (problem := _flags_problem(values, size))
+            ),
+            "",
+        )
+        if not wrong:
+            return WordFlags(*(None if values is None else tuple(values) for values in flags))
+    raise SourceTypeError(
+        owner.messages["hook_flags"].format(
+            hook="doc_flags", cls=type(owner).__name__, size=size, value=wrong
+        )
+    )
+
+
+def _flags_problem(values: object, size: int) -> str:
+    """What is wrong with flags that must be a sequence of booleans of the size, empty if nothing:
+    the type of the flags or of a flag, or their number"""
+    if isinstance(values, str) or not isinstance(values, Sequence):
+        return type(values).__name__
+    other = [value for value in values if not isinstance(value, bool)]
+    if other:
+        return type(other[0]).__name__
+    return "" if len(values) == size else str(len(values))
