@@ -257,6 +257,10 @@ def test_print_kwic(capsys):
         SourceTypeError, match=r"^An iterable of concordances is expected, not str$"
     ):
         print_kwic(text, "cat")
+    with pytest.raises(
+        SourceTypeError, match=r"^An iterable of concordances is expected, not Token$"
+    ):
+        print_kwic(spacy.blank("xx")(text), "cat")
 
 
 def test_kwic_byte_order_mark():

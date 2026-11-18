@@ -89,7 +89,8 @@ class UnadaptedReadabilityStats(Stats):
             is of another type, or a class without basic_stats_class is given another
             source
         SourceError: If the source has no words or no sentences
-        ParameterError: If filter_nums is not a bool; when a class is defined, if a
+        ParameterError: If filter_nums is not a bool or differs from that of the ready
+            basic statistics; when a class is defined, if a
             factor is not an integer of
             at least one or basic_stats_class is neither a subclass of BasicStats
             nor None

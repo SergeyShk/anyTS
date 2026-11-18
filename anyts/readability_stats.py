@@ -28,7 +28,7 @@ from .exceptions import ParameterError, SourceError, SourceTypeError
 from .extractors import SentsExtractor, WordsExtractor
 from .stats import Stats, _check_scale, _check_scales
 from .stats import scale_level as scale_level
-from .utils import check_bool, check_integer, check_number, safe_divide
+from .utils import _messages, check_bool, check_integer, check_number, safe_divide
 
 if TYPE_CHECKING:
     from anyseg import Document
@@ -126,8 +126,8 @@ class ReadabilityStats(Stats):
             is of another type, or a class without basic_stats_class is given another
             source
         SourceError: If the source has no words or no sentences
-        ParameterError: If the coefficient preset is not a string or is unknown or
-            filter_nums is not a bool; when
+        ParameterError: If the coefficient preset is not a string or is unknown,
+            filter_nums is not a bool or differs from that of the ready basic statistics; when
             a class is defined, if its scales of a preset name an unknown preset, a
             scale or a scale of grades is not one of scale_level with finite grades, its
             school stages are not ascending quadruples of two years and two strings, or
@@ -1004,6 +1004,7 @@ def calc_reading_time(
         ParameterError: If the number of words is not an integer or is negative, or
             the reading speed is not a positive number
     """
+    messages = _messages(messages)
     check_integer(n_words, "n_words", message=messages["integer_param"])
     if n_words < 0:
         raise ParameterError(messages["negative_words"])

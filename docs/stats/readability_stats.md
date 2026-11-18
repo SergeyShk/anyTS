@@ -63,8 +63,8 @@ A subclass with the basic statistics of a language - here the syllables are the 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
 | `source` | `str` / `Doc` / `Document` / `BasicStats` | - | Data source (a string, a Doc or a Document object, or ready basic statistics) |
-| `sents_extractor` | `SentsExtractor` | `None` | Sentence extraction tool |
-| `words_extractor` | `WordsExtractor` | `None` | Word extraction tool |
+| `sents_extractor` | `SentsExtractor` | `None` | Sentence extraction tool, not used for ready basic statistics |
+| `words_extractor` | `WordsExtractor` | `None` | Word extraction tool, not used for ready basic statistics |
 | `preset` | `str` | `'original'` | Coefficient preset |
 | `filter_nums` | `bool` | `None` | Leave out the numbers among the words; `None` - the class attribute `filter_nums`, for ready basic statistics - as in them; a value that differs from theirs raises `ParameterError` |
 

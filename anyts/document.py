@@ -15,6 +15,7 @@ from .exceptions import SourceError, SourceTypeError
 from .extractors import _check_spans, _sentence_spans, _word_pattern
 from .utils import (
     BLANK_LINE,
+    _messages,
     _separators,
     check_callable,
     has_words,
@@ -125,6 +126,7 @@ def to_document(
         >>> [sentence.text for sentence in document.sentences]
         ['The cat sat.', 'It slept!', 'The end']
     """
+    messages = _messages(messages)
     for hook, what in ((tokenize, "tokenize"), (sentenize, "sentenize")):
         if hook is not None:
             check_callable(hook, what, message=messages["callable_param"])

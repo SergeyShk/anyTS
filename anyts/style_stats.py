@@ -13,6 +13,7 @@ from .extractors import WordsExtractor
 from .stats import Stats
 from .utils import (
     _hook_words,
+    _messages,
     check_callable,
     check_integer,
     check_words,
@@ -60,6 +61,7 @@ def check_params(top_n: int, *, messages: Mapping[str, str] = MESSAGES) -> None:
         ParameterError: If the number of the most frequent words is not an integer or is
             below one
     """
+    messages = _messages(messages)
     check_integer(top_n, "top_n", message=messages["integer_param"])
     if top_n < 1:
         raise ParameterError(messages["top_n"])
@@ -545,6 +547,7 @@ def find_nausea_words(
         >>> find_nausea_words(["cat", "and", "cat", "and", "dog"], top_n=1, stopwords=["and"])
         {'cat': 2}
     """
+    messages = _messages(messages)
     check_words(text, "text", message=messages["words_param"])
     check_params(top_n, messages=messages)
     stops = _stop_flags(
@@ -626,6 +629,7 @@ def calc_academic_nausea(
         ParameterError: If top_n is not an integer or is below one, or the flags are not
             one per word
     """
+    messages = _messages(messages)
     found = find_nausea_words(
         text,
         top_n,
@@ -730,6 +734,7 @@ def calc_zipf_naturalness(
         SourceTypeError: If the words are not a list of strings
         ParameterError: If top_n is not an integer or is below one
     """
+    messages = _messages(messages)
     check_words(text, "text", message=messages["words_param"])
     check_params(top_n, messages=messages)
     frequencies = sorted(Counter(text).values(), reverse=True)

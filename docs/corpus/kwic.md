@@ -92,7 +92,7 @@ Aligns the lines on the keyword in a text, one line per occurrence: the left con
 | `width` | `int` | `40` | Width of a context in characters |
 | `messages` | `dict[str, str]` | `None` | Messages of the errors by key, in place of those of the library |
 
-Lines that are a string or cannot be iterated raise `SourceTypeError`, and a `width` that is not an integer of at least one `ParameterError`.
+Lines that are a string, cannot be iterated or are not concordances raise `SourceTypeError`, and a `width` that is not an integer of at least one `ParameterError`.
 <!-- --8<-- [end:format_kwic] -->
 
 <!-- --8<-- [start:print_kwic] -->
