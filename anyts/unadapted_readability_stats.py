@@ -14,7 +14,7 @@ from .constants import (
 from .exceptions import ParameterError
 from .readability_stats import _read_basic_stats, _word_letters
 from .stats import Stats
-from .utils import check_integer, safe_divide
+from .utils import check_bool, check_integer, safe_divide
 
 if TYPE_CHECKING:
     from anyseg import Document
@@ -51,6 +51,8 @@ class UnadaptedReadabilityStats(Stats):
             ready basic statistics
         words_extractor (WordsExtractor): Word extraction tool, not used for ready
             basic statistics
+        filter_nums (bool): Leave out the numbers among the words; None - the class
+            attribute filter_nums; not used for ready basic statistics
 
     Attributes:
         bs (BasicStats): Basic statistics of the text
@@ -68,6 +70,7 @@ class UnadaptedReadabilityStats(Stats):
         wheeler_smith (float): Wheeler-Smith index
 
     Class attributes:
+        filter_nums (bool): Whether the numbers are left out by default, False
         basic_stats_class (type[BasicStats]): Basic statistics of a string, a Doc or a Document;
             without it the source must be a BasicStats object
         complex_syl_factor (int): Minimum number of syllables of a hard word
@@ -86,7 +89,8 @@ class UnadaptedReadabilityStats(Stats):
             is of another type, or a class without basic_stats_class is given another
             source
         SourceError: If the source has no words or no sentences
-        ParameterError: When a class is defined, if a factor is not an integer of
+        ParameterError: If filter_nums is not a bool; when a class is defined, if a
+            factor is not an integer of
             at least one or basic_stats_class is neither a subclass of BasicStats
             nor None
     """
@@ -96,6 +100,7 @@ class UnadaptedReadabilityStats(Stats):
     long_word_letter_factor: ClassVar[int] = LIX_LONG_WORD_LETTER_FACTOR
     mini_word_letters: ClassVar[int] = EFLAW_MINI_WORD_LETTERS
     stats_desc: ClassVar[Mapping[str, str]] = UNADAPTED_READABILITY_STATS_DESC
+    filter_nums: ClassVar[bool] = False
     stats_headers: ClassVar[tuple[str, str]] = ("Metric", "Value")
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
@@ -119,9 +124,13 @@ class UnadaptedReadabilityStats(Stats):
         source: str | Doc | Document | BasicStats,
         sents_extractor: SentsExtractor | None = None,
         words_extractor: WordsExtractor | None = None,
+        filter_nums: bool | None = None,
     ):
+        if filter_nums is None:
+            filter_nums = self.filter_nums
+        check_bool(filter_nums, "filter_nums", message=self.messages["bool_param"])
         self.bs = _read_basic_stats(
-            self, source, self.basic_stats_class, sents_extractor, words_extractor
+            self, source, self.basic_stats_class, sents_extractor, words_extractor, filter_nums
         )
 
     @property

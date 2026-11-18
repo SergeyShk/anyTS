@@ -1,7 +1,7 @@
 # Basic statistics
 
 ``` {.python .signature}
-BasicStats(source, sents_extractor=None, words_extractor=None, normalize=False, complex_syl_factor=3, long_word_letter_factor=7)
+BasicStats(source, sents_extractor=None, words_extractor=None, normalize=False, complex_syl_factor=3, long_word_letter_factor=7, filter_nums=False)
 ```
 
 <!-- --8<-- [start:BasicStats] -->
@@ -68,8 +68,9 @@ A subclass with the syllables of a language - here the groups of vowels, a rough
 | `normalize` | `bool` | `False` | Compute normalized statistics |
 | `complex_syl_factor` | `int` | `COMPLEX_SYL_FACTOR` | Minimum number of syllables in a complex word |
 | `long_word_letter_factor` | `int` | `LONG_WORD_LETTER_FACTOR` | Minimum number of letters in a long word |
+| `filter_nums` | `bool` | `False` | Leave out the numbers (`number_pattern`) among the words |
 
-The object keeps `normalize`, `complex_syl_factor` and `long_word_letter_factor` under their names.
+The object keeps `normalize`, `complex_syl_factor`, `long_word_letter_factor` and `filter_nums` under their names, and the numbers it left out in `n_numbers`.
 <!-- --8<-- [end:BasicStats-parameters] -->
 
 The thresholds of the core are `COMPLEX_SYL_FACTOR = 3` and `LONG_WORD_LETTER_FACTOR = 7` of `anyts.constants`.
@@ -213,6 +214,7 @@ A language library subclasses `BasicStats`:
 | `doc_words(document)` | method | The words of a document; `document_words` by default, overridden to normalize the forms of the words of a language; a result that is not a sequence of strings raises `SourceTypeError` |
 | `count_punctuations(text)` | method | The punctuation marks by type; `count_punctuations` of the module by default |
 | `stats_desc` | class attribute | The counts of `get_stats` with their descriptions for `print_stats`; `anyts.constants.BASIC_STATS_DESC` by default |
+| `number_pattern` | class attribute | Number of the language for `filter_nums`, matched against the whole word in lower case; `NUMBER_PATTERN` of `anyts.utils` by default |
 
 The other hooks, `parse`, `stats_headers`, `level_scales` and `messages`, come from `Stats`. The thresholds of the complex and the long words are parameters; a library sets its own defaults in its `__init__` and passes them on.
 <!-- --8<-- [end:BasicStats-hooks] -->

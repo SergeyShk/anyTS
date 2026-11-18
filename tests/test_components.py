@@ -20,6 +20,7 @@ from anyts.components import (
     StatsComponent,
     StyleStatsComponent,
     SyntaxStatsComponent,
+    UnadaptedReadabilityStatsComponent,
 )
 from anyts.constants import MATTR_WINDOW_LEN, NAUSEA_TOP_N, PHON_WINDOW_LEN
 from anyts.diversity_stats import check_params
@@ -29,6 +30,7 @@ from anyts.morph_stats import MorphStats
 from anyts.readability_stats import ReadabilityStats
 from anyts.style_stats import StyleStats
 from anyts.syntax_stats import SyntaxStats
+from anyts.unadapted_readability_stats import UnadaptedReadabilityStats
 
 
 @Language.factory("anyts_test_diversity")
@@ -530,3 +532,35 @@ def test_component_renamed_to_an_extension_of_another_package(nlp):
         assert Doc(nlp.vocab, words=["a"])._.anyts_test_taken == 0.5
     finally:
         Doc.remove_extension("anyts_test_taken")
+
+
+class Syllabic(BasicStats):
+    def count_syllables(self, word):
+        return max(1, sum(char in "aeiouy" for char in word.lower()))
+
+
+class UnnumberedReadability(ReadabilityStats):
+    basic_stats_class = Syllabic
+    filter_nums = True
+
+
+class UnnumberedUnadapted(UnadaptedReadabilityStats):
+    basic_stats_class = Syllabic
+    filter_nums = True
+
+
+@pytest.mark.parametrize(
+    ("component", "stats_class"),
+    [
+        (ReadabilityStatsComponent, UnnumberedReadability),
+        (UnadaptedReadabilityStatsComponent, UnnumberedUnadapted),
+    ],
+)
+def test_readability_components_without_numbers(component, stats_class):
+    """A class that leaves the numbers out has nothing to read in a document of numbers alone"""
+    unnumbered = type("Unnumbered", (component,), {"stats_class": stats_class})
+    nlp = spacy.blank("xx")
+    pipe = unnumbered(nlp, "unnumbered")
+    assert not pipe.accepts(nlp("2026."))
+    assert pipe.accepts(nlp("The cat sat in 2026."))
+    assert pipe(nlp("2026."))._.unnumbered is None

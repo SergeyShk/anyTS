@@ -22,12 +22,14 @@ from .extractors import SentsExtractor, WordsExtractor
 from .stats import Stats
 from .utils import (
     LINE_BREAK,
+    NUMBER_PATTERN,
     _hook_words,
     check_bool,
     check_integer,
     check_words,
     count_letters,
     has_words,
+    is_number,
     shannon_entropy,
 )
 
@@ -156,11 +158,14 @@ class BasicStats(Stats, metaclass=ABCMeta):
         normalize (bool): Compute the normalized statistics
         complex_syl_factor (int): Minimum number of syllables in a complex word
         long_word_letter_factor (int): Minimum number of letters in a long word
+        filter_nums (bool): Leave out the numbers (number_pattern) among the words
 
     Attributes:
         normalize (bool): Whether the normalized statistics are computed
         complex_syl_factor (int): Minimum number of syllables in a complex word
         long_word_letter_factor (int): Minimum number of letters in a long word
+        filter_nums (bool): Whether the numbers are left out
+        n_numbers (int): Numbers left out of the words
         c_letters (dict[int, int]): Distribution of words by number of letters
         c_syllables (dict[int, int]): Distribution of words by number of syllables
         letters_entropy, syllables_entropy (float): Shannon entropy in bits of the
@@ -199,17 +204,19 @@ class BasicStats(Stats, metaclass=ABCMeta):
 
     Class attributes:
         stats_desc (dict[str, str]): Counts of get_stats and their descriptions for print_stats
+        number_pattern (Pattern): Number of the language for filter_nums (NUMBER_PATTERN)
 
     Raises:
         SourceTypeError: If the source is neither a string, a Doc nor a Document object,
             parse does not return a Document, doc_words does not return a sequence of
             strings, or an extractor is of another type
         SourceError: If the source has no words
-        ParameterError: If a factor is not an integer or is below one, or normalize is
-            not a bool
+        ParameterError: If a factor is not an integer or is below one, or normalize or
+            filter_nums is not a bool
     """
 
     stats_desc: ClassVar[Mapping[str, str]] = BASIC_STATS_DESC
+    number_pattern: ClassVar[Pattern[str]] = NUMBER_PATTERN
 
     def __init__(
         self,
@@ -219,10 +226,12 @@ class BasicStats(Stats, metaclass=ABCMeta):
         normalize: bool = False,
         complex_syl_factor: int = COMPLEX_SYL_FACTOR,
         long_word_letter_factor: int = LONG_WORD_LETTER_FACTOR,
+        filter_nums: bool = False,
     ):
         messages = self.messages
         _check_extractors(sents_extractor, words_extractor, messages)
         check_bool(normalize, "normalize", message=messages["bool_param"])
+        check_bool(filter_nums, "filter_nums", message=messages["bool_param"])
         _check_factor(complex_syl_factor, "complex_syl_factor", messages)
         _check_factor(long_word_letter_factor, "long_word_letter_factor", messages)
         sents: Iterable[str]
@@ -242,17 +251,27 @@ class BasicStats(Stats, metaclass=ABCMeta):
                 if words_extractor is not None
                 else _hook_words(self, "doc_words", self.doc_words(document))
             )
+        n_all = len(words)
+        if filter_nums:
+            words = tuple(word for word in words if not is_number(word, self.number_pattern))
         if not words:
             raise SourceError(messages["no_words"])
 
         self.normalize = normalize
+        self.filter_nums = filter_nums
+        self.n_numbers = n_all - len(words)
         self.complex_syl_factor = complex_syl_factor
         self.long_word_letter_factor = long_word_letter_factor
         letters_per_word = tuple(count_letters(word) for word in words)
         syllables_per_word = tuple(self.count_syllables(word) for word in words)
         self.c_letters = dict(sorted(Counter(letters_per_word).items()))
         self.c_syllables = dict(sorted(Counter(syllables_per_word).items()))
-        self.n_sents = sum(1 for sent in sents if has_words(sent))
+        # Without the numbers a sentence of numbers alone (an item "1." of a list) holds no word
+        self.n_sents = sum(
+            1
+            for sent in sents
+            if has_words(sent) and (not filter_nums or any(char.isalpha() for char in sent))
+        )
         self.n_words = len(words)
         self.n_unique_words = len({word.lower() for word in words})
         self.n_long_words = self.count_words_by_letters(long_word_letter_factor)

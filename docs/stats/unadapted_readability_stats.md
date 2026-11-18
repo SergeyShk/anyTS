@@ -1,7 +1,7 @@
 # Unadapted readability formulas
 
 ``` {.python .signature}
-UnadaptedReadabilityStats(source, sents_extractor=None, words_extractor=None)
+UnadaptedReadabilityStats(source, sents_extractor=None, words_extractor=None, filter_nums=None)
 ```
 
 <!-- --8<-- [start:UnadaptedReadabilityStats] -->
@@ -66,6 +66,7 @@ Raises:
 | `source` | `str` / `Doc` / `Document` / `BasicStats` | - | Data source (a string, a Doc or a Document object, or ready basic statistics) |
 | `sents_extractor` | `SentsExtractor` | `None` | Sentence extraction tool, not used for ready basic statistics |
 | `words_extractor` | `WordsExtractor` | `None` | Word extraction tool, not used for ready basic statistics |
+| `filter_nums` | `bool` | `None` | Leave out the numbers among the words; `None` - the class attribute `filter_nums`; not used for ready basic statistics |
 <!-- --8<-- [end:UnadaptedReadabilityStats-parameters] -->
 
 ## Attributes
@@ -430,6 +431,7 @@ A language library subclasses `UnadaptedReadabilityStats`:
 | Hook | Kind | Description |
 | :--- | :--- | :---------- |
 | `basic_stats_class` | class attribute | Basic statistics of a string, a `Doc` or a `Document`, the class with the syllables of the language; without it the source must be a `BasicStats` object |
+| `filter_nums` | class attribute | Whether the numbers are left out of the words by default; `False` in the core |
 | `complex_syl_factor`, `long_word_letter_factor`, `mini_word_letters` | class attributes | Least syllables of a hard word (3), least letters of a long word (7), most letters of a mini word of EFLAW (`EFLAW_MINI_WORD_LETTERS`, 3) |
 | `stats_desc`, `stats_headers` | class attributes | Metrics of `get_stats` with their descriptions (`UNADAPTED_READABILITY_STATS_DESC` by default), headers of the columns for `print_stats` |
 | `messages` | class attribute | Messages of the errors by key; `MESSAGES` by default |

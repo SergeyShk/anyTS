@@ -322,6 +322,9 @@ class ReadabilityStatsComponent(StatsComponent):
         self.basic = basic
         super().__init__(nlp, name)
 
+    def accepts(self, doc: Doc) -> bool:
+        return _readability_accepts(self, doc)
+
     def compute(self, doc: Doc) -> Any:
         stats_class = self._stats_class()
         source: Any = doc
@@ -332,6 +335,16 @@ class ReadabilityStatsComponent(StatsComponent):
         if self.preset is None:
             return stats_class(source)
         return stats_class(source, preset=self.preset)
+
+
+def _readability_accepts(component: Any, doc: Doc) -> bool:
+    """A word of a document for the readability of a component: with filter_nums of its class
+    computed from the document, a word other than a number"""
+    stats_class = component._stats_class()
+    if component.basic is not None or not getattr(stats_class, "filter_nums", False):
+        return bool(StatsComponent.accepts(component, doc))
+    pattern = stats_class.basic_stats_class.number_pattern
+    return any(has_words(token.text) and not is_number(token.text, pattern) for token in doc)
 
 
 def _check_basic(basic: str | None, messages: Mapping[str, str]) -> None:
@@ -630,6 +643,9 @@ class UnadaptedReadabilityStatsComponent(StatsComponent):
         _check_basic(basic, messages)
         self.basic = basic
         super().__init__(nlp, name)
+
+    def accepts(self, doc: Doc) -> bool:
+        return _readability_accepts(self, doc)
 
     def compute(self, doc: Doc) -> Any:
         stats_class = self._stats_class()

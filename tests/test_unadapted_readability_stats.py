@@ -249,3 +249,7 @@ def test_component_errors():
         ParameterError, match=r"^The name of an extension must be a string, not int$"
     ):
         UnadaptedReadabilityStatsComponent(nlp, "anyts_test_unadapted_core", basic=5)
+
+
+def test_numbers_left_out(stats):
+    assert Unadapted(TEXT, filter_nums=True).bs.n_words == stats.bs.n_words - 1
