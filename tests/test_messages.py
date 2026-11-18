@@ -40,6 +40,7 @@ from anyts.corpus import (
     rolling_delta,
     sentence_rhythm,
     split_windows,
+    z_scores,
     zeta_segments,
 )
 from anyts.diversity_stats import DiversityStats, calc_ttr, calc_windowed, check_params
@@ -286,6 +287,8 @@ CASES = [
     ("unknown_preset", ParameterError, lambda: Readability(TEXT, preset="unknown")),
     ("basic_stats_type", SourceTypeError, lambda: Readability(OtherStats(TEXT))),
     ("basic_stats_type", SourceTypeError, lambda: Unadapted(OtherStats(TEXT))),
+    ("basic_filter_nums", ParameterError, lambda: Readability(Stats(TEXT), filter_nums=True)),
+    ("basic_filter_nums", ParameterError, lambda: Unadapted(Stats(TEXT), filter_nums=True)),
     ("no_basic_stats_class", SourceTypeError, lambda: BareUnadapted(TEXT)),
     (
         "no_sentences",
@@ -724,6 +727,7 @@ CASES = [
     ("param_words", SourceError, lambda: zeta_segments({"c": ["a"]}, [], ["b"], messages=OWN)),
     ("corpus_words", SourceError, lambda: zeta_segments({"c": []}, ["a"], ["b"], messages=OWN)),
     ("features_type", SourceTypeError, lambda: compare_features([1], [1], messages=OWN)),
+    ("frequency_table_type", SourceTypeError, lambda: z_scores({"a": ["b"]}, messages=OWN)),
     (
         "feature_names",
         SourceTypeError,
@@ -855,3 +859,17 @@ def test_doubled_braces():
 
     with pytest.raises(SourceError, match=r"^\{No\} words$"):
         Braces([])
+
+
+def test_partial_messages_of_functions():
+    """Functions with MESSAGES by default take messages of some keys too: a valid call works,
+    a given key is used"""
+    from anyts.style_stats import calc_zipf_naturalness, find_nausea_words
+
+    partial = {"reading_speed": "The speed is not positive"}
+    assert calc_reading_time(100, messages=partial) == calc_reading_time(100)
+    assert find_nausea_words(["a", "b", "a"], messages=partial) == {"a": 2, "b": 1}
+    assert calc_zipf_naturalness(["a"] * 4 + ["b"] * 2, messages=partial) == 100.0
+    assert to_document("A cat.", messages=partial).text == "A cat."
+    with pytest.raises(ParameterError, match=r"^The speed is not positive$"):
+        calc_reading_time(100, 0, messages=partial)

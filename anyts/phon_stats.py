@@ -16,6 +16,7 @@ from .extractors import WordsExtractor
 from .stats import Stats
 from .utils import (
     _hook_words,
+    _messages,
     check_integer,
     check_sequence,
     check_words,
@@ -39,6 +40,7 @@ def check_params(window_len: int, *, messages: Mapping[str, str] = MESSAGES) -> 
     Raises:
         ParameterError: If the window is not an integer or is below 2
     """
+    messages = _messages(messages)
     check_integer(window_len, "window_len", message=messages["integer_param"])
     if window_len < 2:
         raise ParameterError(messages["phon_window_len"])

@@ -227,3 +227,12 @@ def test_equal_scores_go_by_frequency():
     # Dice of b c and of c a are both 2/3, one of them a rounding error above
     found = collocations(["b", "b", "b", "c", "c", "c", "a", "a"], window=3, measure="dice")
     assert [(c.left, c.right, c.freq_pair) for c in found[:2]] == [("b", "c", 6), ("c", "a", 5)]
+
+
+def test_partial_messages():
+    """Messages of some keys only: the others come from MESSAGES, a valid call works"""
+    words = ["the", "cat", "sat", "on", "the", "mat", "and", "the", "cat", "slept"]
+    messages = {"association_measure": "No measure {measure}"}
+    assert collocations(words, messages=messages) == collocations(words)
+    with pytest.raises(ParameterError, match=r"^No measure x$"):
+        collocations(words, measure="x", messages=messages)

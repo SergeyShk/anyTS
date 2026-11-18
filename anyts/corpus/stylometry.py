@@ -127,7 +127,7 @@ def _check_mapping(corpus: object, what: str, messages: Mapping[str, str]) -> No
         )
 
 
-def z_scores(table: pd.DataFrame) -> pd.DataFrame:
+def z_scores(table: pd.DataFrame, *, messages: Mapping[str, str] | None = None) -> pd.DataFrame:
     """
     Standardizing a table of frequencies by column
 
@@ -136,10 +136,14 @@ def z_scores(table: pd.DataFrame) -> pd.DataFrame:
         the same frequency in every text gives zeros
 
     Arguments:
-        table (DataFrame): Table of relative frequencies
+        table (DataFrame): Table of relative frequencies (frequency_table)
+        messages (dict[str, str]): Messages of the errors by key; MESSAGES by default
 
     Returns:
         DataFrame: Table of z-scores
+
+    Raises:
+        SourceTypeError: If the table is not a DataFrame
 
     Example:
         >>> from anyts.corpus import frequency_table, z_scores
@@ -149,6 +153,10 @@ def z_scores(table: pd.DataFrame) -> pd.DataFrame:
         A  0.707  0.0
         B -0.707  0.0
     """
+    if not isinstance(table, pd.DataFrame):
+        raise SourceTypeError(
+            _messages(messages)["frequency_table_type"].format(type=type(table).__name__)
+        )
     constant = _constant_columns(table)
     scaled = (table - table.mean(axis=0)) / table.std(axis=0, ddof=1).where(~constant, 1.0)
     scaled.loc[:, constant] = 0.0

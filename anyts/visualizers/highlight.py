@@ -17,6 +17,7 @@ from ..utils import (
     LINE_BREAK,
     _check_removed,
     _is_mark_gap,
+    _messages,
     _takes_words,
     check_callable,
     check_integer,
@@ -125,6 +126,7 @@ def check_params(
         ParameterError: If a number is not an integer of at least one, or the
             threshold does not lie in the interval (0, 1]
     """
+    messages = _messages(messages)
     _check_factor(long_sent_word_factor, "long_sent_word_factor", messages)
     _check_factor(complex_syl_factor, "complex_syl_factor", messages)
     _check_threshold(alliteration_threshold, messages)

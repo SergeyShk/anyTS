@@ -23,6 +23,7 @@ from .constants import (
 from .exceptions import ParameterError, SourceError, SourceTypeError, UnknownStatError
 from .stats import Stats
 from .utils import (
+    _messages,
     _sliceable,
     check_counts,
     check_integer,
@@ -98,6 +99,7 @@ def check_params(
     Raises:
         ParameterError: If a parameter is not a number of its type or is out of range
     """
+    messages = _messages(messages)
     check_integer(window_len, "window_len", message=messages["integer_param"])
     if window_len < 1:
         raise ParameterError(messages["window_len"])
@@ -1825,6 +1827,7 @@ def calc_windowed(
         SourceTypeError: If the words are not a list of strings (check_words) or the
             metric is not a function
     """
+    messages = _messages(messages)
     check_integer(window_len, "window_len", message=messages["integer_param"])
     if window_len < 1:
         raise ParameterError(messages["window_len"])

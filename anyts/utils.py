@@ -1374,8 +1374,10 @@ def make_lazy(name: str, modules: Mapping[str, str]) -> None:
 
 
 def _messages(messages: Mapping[str, str] | None) -> Mapping[str, str]:
-    """Messages of the errors of a function: those given, MESSAGES for None"""
-    return MESSAGES if messages is None else messages
+    """Messages of the errors of a function: MESSAGES with those given over them"""
+    if messages is None:
+        return MESSAGES
+    return {**MESSAGES, **messages} if isinstance(messages, Mapping) else messages
 
 
 def _check_word_list(

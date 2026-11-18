@@ -247,6 +247,9 @@ MESSAGES: Mapping[str, str] = MappingProxyType(
         "preset_type": "The preset must be a string, not {type}",
         "unknown_preset": "Unknown coefficient preset: {preset}. Available presets: {presets}",
         "basic_stats_type": "The basic statistics must be a {expected} object, not {type}",
+        "basic_filter_nums": "filter_nums={filter_nums} does not match the basic statistics given, "
+        "counted with filter_nums={basic}: count them with filter_nums={filter_nums} or leave "
+        "the parameter out",
         "no_basic_stats_class": (
             "{cls} has no basic_stats_class, the data source must be a BasicStats object"
         ),
@@ -442,6 +445,7 @@ MESSAGES: Mapping[str, str] = MappingProxyType(
         "param_words": "There are no {param} words",
         "corpus_words": "The corpus {name} has no words",
         "features_type": "The features must be a DataFrame, not {type}",
+        "frequency_table_type": "The table of frequencies must be a DataFrame, not {type}",
         "feature_names": "The names of the features must be distinct",
         "feature_numeric": "The feature {name} must be numeric",
         "corpus_labels": "The names of the corpora must be two strings that give distinct columns",

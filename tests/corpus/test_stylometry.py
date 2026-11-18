@@ -69,6 +69,14 @@ def test_z_scores():
     assert constant["b"].tolist() == pytest.approx([sqrt(2) / 2, -sqrt(2) / 2])
 
 
+def test_z_scores_of_a_corpus():
+    """A corpus in place of the table of frequencies"""
+    with pytest.raises(
+        SourceTypeError, match=r"^The table of frequencies must be a DataFrame, not dict$"
+    ):
+        z_scores(corpus)
+
+
 def test_constant_column_with_float_noise():
     # 0.1 in three texts: the rounding of the mean leaves a deviation of noise and not zero
     reference = {

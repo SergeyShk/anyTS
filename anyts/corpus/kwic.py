@@ -254,7 +254,7 @@ def format_kwic(
         str: Concordance as text
 
     Raises:
-        SourceTypeError: If the concordances are a string or not iterable
+        SourceTypeError: If the concordances are a string, not iterable or hold a non-Concordance
         ParameterError: If the width of a context is not an integer or is below one
 
     Example:
@@ -264,12 +264,17 @@ def format_kwic(
            the  cat  eats
     """
     messages = _messages(messages)
-    check_integer(width, "width", message=messages["integer_param"])
-    if width < 1:
-        raise ParameterError(messages["positive_param"].format(param="width"))
+    # The concordances before the width: print_kwic(text, "cat") mixes up the arguments
     given: object = concordances
     if isinstance(given, str) or not isinstance(given, Iterable):
         raise SourceTypeError(messages["concordances_type"].format(type=type(given).__name__))
+    concordances = list(concordances)
+    for line in concordances:
+        if not isinstance(line, Concordance):
+            raise SourceTypeError(messages["concordances_type"].format(type=type(line).__name__))
+    check_integer(width, "width", message=messages["integer_param"])
+    if width < 1:
+        raise ParameterError(messages["positive_param"].format(param="width"))
     lines = [
         [unicodedata.normalize("NFC", part) for part in (line.left, line.keyword, line.right)]
         for line in concordances
@@ -296,7 +301,7 @@ def print_kwic(
         messages (dict[str, str]): Messages of the errors by key; MESSAGES by default
 
     Raises:
-        SourceTypeError: If the concordances are a string or not iterable
+        SourceTypeError: If the concordances are a string, not iterable or hold a non-Concordance
         ParameterError: If the width of a context is not an integer or is below one
     """
     print(format_kwic(concordances, width, messages=messages))

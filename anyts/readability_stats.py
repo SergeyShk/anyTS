@@ -28,7 +28,7 @@ from .exceptions import ParameterError, SourceError, SourceTypeError
 from .extractors import SentsExtractor, WordsExtractor
 from .stats import Stats, _check_scale, _check_scales
 from .stats import scale_level as scale_level
-from .utils import check_bool, check_integer, check_number, safe_divide
+from .utils import _messages, check_bool, check_integer, check_number, safe_divide
 
 if TYPE_CHECKING:
     from anyseg import Document
@@ -56,7 +56,7 @@ class ReadabilityStats(Stats):
             basic statistics
         preset (str): Coefficient preset
         filter_nums (bool): Leave out the numbers among the words; None - the class
-            attribute filter_nums; not used for ready basic statistics
+            attribute filter_nums, for ready basic statistics - as in them
 
     Attributes:
         bs (BasicStats): Basic statistics of the text
@@ -126,8 +126,8 @@ class ReadabilityStats(Stats):
             is of another type, or a class without basic_stats_class is given another
             source
         SourceError: If the source has no words or no sentences
-        ParameterError: If the coefficient preset is not a string or is unknown or
-            filter_nums is not a bool; when
+        ParameterError: If the coefficient preset is not a string or is unknown,
+            filter_nums is not a bool or differs from that of the ready basic statistics; when
             a class is defined, if its scales of a preset name an unknown preset, a
             scale or a scale of grades is not one of scale_level with finite grades, its
             school stages are not ascending quadruples of two years and two strings, or
@@ -191,9 +191,11 @@ class ReadabilityStats(Stats):
         filter_nums: bool | None = None,
     ):
         messages = self.messages
-        if filter_nums is None:
-            filter_nums = self.filter_nums
-        check_bool(filter_nums, "filter_nums", message=messages["bool_param"])
+        check_bool(
+            self.filter_nums if filter_nums is None else filter_nums,
+            "filter_nums",
+            message=messages["bool_param"],
+        )
         if not isinstance(preset, str):
             raise ParameterError(messages["preset_type"].format(type=type(preset).__name__))
         if preset not in self.presets:
@@ -454,7 +456,7 @@ def _read_basic_stats(
     basic_stats_class: type[BasicStats] | None,
     sents_extractor: SentsExtractor | None = None,
     words_extractor: WordsExtractor | None = None,
-    filter_nums: bool = False,
+    filter_nums: bool | None = None,
 ) -> BasicStats:
     """
     Getting the basic statistics of the source of a class of readability
@@ -471,7 +473,8 @@ def _read_basic_stats(
             a Document
         sents_extractor (SentsExtractor): Sentence extraction tool
         words_extractor (WordsExtractor): Word extraction tool
-        filter_nums (bool): Leave out the numbers among the words
+        filter_nums (bool): Leave out the numbers among the words; None - the attribute
+            filter_nums of the class, for a BasicStats object - as in it
 
     Returns:
         BasicStats: Basic statistics with sentences
@@ -480,6 +483,7 @@ def _read_basic_stats(
         SourceTypeError: If the basic statistics are of another class, an extractor is
             of another type, or another source comes without basic_stats_class
         SourceError: If the source has no words or no sentences
+        ParameterError: If filter_nums does not match the BasicStats object given
     """
     messages = stats.messages
     _check_extractors(sents_extractor, words_extractor, messages)
@@ -491,10 +495,18 @@ def _read_basic_stats(
                     expected=expected.__name__, type=type(source).__name__
                 )
             )
+        if filter_nums is not None and filter_nums != source.filter_nums:
+            raise ParameterError(
+                messages["basic_filter_nums"].format(
+                    filter_nums=filter_nums, basic=source.filter_nums
+                )
+            )
         bs = source
     elif basic_stats_class is None:
         raise SourceTypeError(messages["no_basic_stats_class"].format(cls=type(stats).__name__))
     else:
+        if filter_nums is None:
+            filter_nums = getattr(stats, "filter_nums", False)
         # Only when set, so a basic_stats_class without the parameter keeps working
         extra = {"filter_nums": True} if filter_nums else {}
         bs = basic_stats_class(source, sents_extractor, words_extractor, **extra)
@@ -992,6 +1004,7 @@ def calc_reading_time(
         ParameterError: If the number of words is not an integer or is negative, or
             the reading speed is not a positive number
     """
+    messages = _messages(messages)
     check_integer(n_words, "n_words", message=messages["integer_param"])
     if n_words < 0:
         raise ParameterError(messages["negative_words"])

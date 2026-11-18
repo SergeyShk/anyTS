@@ -252,6 +252,15 @@ def test_print_kwic(capsys):
     lines = kwic(text, "cat", window=2)
     print_kwic(lines, width=10)
     assert capsys.readouterr().out == format_kwic(lines, width=10) + "\n"
+    # A text in place of the concordances: the error names them, not the width
+    with pytest.raises(
+        SourceTypeError, match=r"^An iterable of concordances is expected, not str$"
+    ):
+        print_kwic(text, "cat")
+    with pytest.raises(
+        SourceTypeError, match=r"^An iterable of concordances is expected, not Token$"
+    ):
+        print_kwic(spacy.blank("xx")(text), "cat")
 
 
 def test_kwic_byte_order_mark():
