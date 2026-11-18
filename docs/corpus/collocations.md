@@ -2,7 +2,7 @@
 
 <!-- --8<-- [start:collocations] -->
 ``` {.python .signature}
-collocations(words, window=5, measure='logdice', min_freq=2, node=None, top_n=None, side=None)
+collocations(words, window=5, measure='logdice', min_freq=2, node=None, top_n=None, side=None, *, messages=None)
 ```
 
 Collocation extraction - pairs of words that occur together more often than independence would give: fixed expressions, terminology, the combinatorics of a word. The measures of association are those of [Sketch Engine](https://www.sketchengine.eu/wp-content/uploads/ske-statistics.pdf) and of [`nltk.metrics.association`](https://www.nltk.org/api/nltk.metrics.association.html).
@@ -49,6 +49,7 @@ Words are compared as they are: case, lemmatization and stop words belong to the
 | `node` | `str` | `None` | Word whose combinatorics is needed; `None` - every pair |
 | `top_n` | `int` | `None` | Number of collocations; `None` - all of them |
 | `side` | `str` | `None` | With a node, the side of its collocates: `"left"` or `"right"`; `None` - both |
+| `messages` | `dict[str, str]` | `None` | Messages of the errors by key, in place of those of the library |
 
 Words that are not a list of strings raise `SourceTypeError`, and no words `SourceError`. An unknown measure, a `window` or a `top_n` that is not an integer of at least one, a `min_freq` that is not an integer, a `node` that is not a string, and a `side` other than `"left"` and `"right"` or without a node raise `ParameterError`.
 <!-- --8<-- [end:collocations-parameters] -->

@@ -366,13 +366,13 @@ def test_check_keyness_params_valid():
             r"^The frequencies must be finite and not negative",
         ),
         ({"counts": {"cat": "5"}}, SourceTypeError, r"^The frequencies must be numbers, not str$"),
-        ({"size": nan}, ParameterError, r"^The size of the reference must be a finite number"),
-        ({"size": -14}, ParameterError, r"^The size of the reference cannot be negative$"),
-        ({"size": "x"}, ParameterError, r"^The size of the reference must be a number, not str$"),
-        ({"missing": nan}, ParameterError, r"^The frequency of a missing key must be a finite"),
-        ({"missing": -1}, ParameterError, r"^The frequency of a missing key cannot be negative$"),
-        ({"key": 1}, SourceTypeError, r"^The key of a word must be callable, not int$"),
-        ({"keep": "x"}, SourceTypeError, r"^The filter of the words must be callable, not str$"),
+        ({"size": nan}, ParameterError, r"^The size must be a number, not nan$"),
+        ({"size": -14}, ParameterError, r"^The size cannot be negative$"),
+        ({"size": "x"}, ParameterError, r"^The size must be a number, not str$"),
+        ({"missing": nan}, ParameterError, r"^The missing must be a number, not nan$"),
+        ({"missing": -1}, ParameterError, r"^The missing cannot be negative$"),
+        ({"key": 1}, SourceTypeError, r"^The key must be callable, not int$"),
+        ({"keep": "x"}, SourceTypeError, r"^The keep must be callable, not str$"),
     ],
 )
 def test_frequency_reference_checks_its_fields(fields, error, message):
@@ -383,9 +383,9 @@ def test_frequency_reference_checks_its_fields(fields, error, message):
 
 @pytest.mark.parametrize("positive", ["yes", 0.5, None, 1])
 def test_positive_must_be_a_bool(positive):
-    with pytest.raises(ParameterError, match=r"^The choice of the positive keywords must be"):
+    with pytest.raises(ParameterError, match=r"^The positive must be"):
         keyness(["cat", "cat"], ["dog"], positive=positive)
-    with pytest.raises(ParameterError, match=r"^The choice of the positive keywords must be"):
+    with pytest.raises(ParameterError, match=r"^The positive must be"):
         check_keyness_params(positive=positive)
 
 
@@ -428,7 +428,9 @@ def test_keyness_of_ngrams():
     # A list of tokens or numbers is no list of texts
     doc = spacy.blank("en")("the black cat")
     for corpus, name in ((list(doc), "Token"), ([1, 2], "int")):
-        with pytest.raises(SourceTypeError, match=f"^The words must be strings, not {name}$"):
+        with pytest.raises(
+            SourceTypeError, match=f"^The target must be a list of strings, not {name}$"
+        ):
             keyness(corpus, reference)
     # The n-grams of a corpus of several texts do not run across them
     letters = [["dear", "anna", "yours", "ivan"]] * 3
@@ -444,9 +446,9 @@ def test_keyness_of_ngrams():
         [word for letter in letters for word in letter], ["dear", "bob"] * 6
     )
     for n in (0, -1):
-        with pytest.raises(ParameterError, match=r"^The length of the n-grams must be at least 1"):
+        with pytest.raises(ParameterError, match=r"^The n must be greater than 0$"):
             keyness(target, reference, n=n)
-        with pytest.raises(ParameterError, match=r"^The length of the n-grams must be at least 1"):
+        with pytest.raises(ParameterError, match=r"^The n must be greater than 0$"):
             check_keyness_params(n=n)
     with pytest.raises(ParameterError):
         keyness(target, reference, n=1.5)

@@ -9,10 +9,18 @@ import numpy as np
 import pandas as pd
 from scipy.stats import mannwhitneyu
 
-from ..constants import CLOSING_MARKS, MESSAGES, OPENING_MARKS, SYMMETRIC_MARKS
+from ..constants import CLOSING_MARKS, OPENING_MARKS, SYMMETRIC_MARKS
 from ..exceptions import ParameterError, SourceTypeError
 from ..extractors import _check_spans, _iter_words
-from ..utils import _sliceable, check_integer, check_number, check_sequence, check_words
+from ..utils import (
+    _messages,
+    _sliceable,
+    check_callable,
+    check_integer,
+    check_number,
+    check_sequence,
+    check_words,
+)
 from .kwic import Tokenizer
 
 Values = Sequence[float] | np.ndarray[Any, Any]
@@ -45,6 +53,8 @@ def compare_features(
     labels: tuple[str, str] = ("A", "B"),
     n_bootstrap: int = 1000,
     seed: int | np.random.Generator | None = 0,
+    *,
+    messages: Mapping[str, str] | None = None,
 ) -> pd.DataFrame:
     """
     Comparing two corpora by the tables of the features of their windows
@@ -76,6 +86,7 @@ def compare_features(
         n_bootstrap (int): Number of bootstrap samples
         seed (int|Generator): Seed of the random number generator or the
             generator itself; None - a random one
+        messages (dict[str, str]): Messages of the errors by key; MESSAGES by default
 
     Returns:
         DataFrame: Features × statistics of the comparison (COMPARISON_COLUMNS
@@ -86,16 +97,19 @@ def compare_features(
             column or has a column that is not numeric
         ParameterError: If the parameters fail check_comparison_params
     """
-    check_comparison_params(labels, n_bootstrap, seed)
+    messages = _messages(messages)
+    check_comparison_params(labels, n_bootstrap, seed, messages=messages)
     for table in (table_a, table_b):
-        _check_table(table)
+        _check_table(table, messages)
     base = seed if isinstance(seed, Integral) else np.random.default_rng(seed).integers(2**63)
     rows = {}
     for name in table_a.columns.union(table_b.columns, sort=False):
         values_a, texts_a = _column(table_a, name)
         values_b, texts_b = _column(table_b, name)
         rng = np.random.default_rng([int(base), zlib.crc32(str(name).encode())])
-        rows[name] = compare_values(values_a, values_b, n_bootstrap, rng, texts_a, texts_b)
+        rows[name] = compare_values(
+            values_a, values_b, n_bootstrap, rng, texts_a, texts_b, messages=messages
+        )
     result = pd.DataFrame.from_dict(rows, orient="index", columns=list(COMPARISON_COLUMNS))
     result["p_holm"] = holm_correction(result["p_value"].to_numpy(dtype=float))
     result = result.iloc[(-result["cliff_delta"].abs()).fillna(np.inf).argsort(kind="stable")]
@@ -126,7 +140,7 @@ def _column(table: pd.DataFrame, name: str) -> tuple[np.ndarray, np.ndarray | No
     return table[name].to_numpy(dtype=float, na_value=nan), texts
 
 
-def _check_table(table: object) -> None:
+def _check_table(table: object, messages: Mapping[str, str]) -> None:
     """
     Checking a table of features: a DataFrame of distinct numeric columns
 
@@ -137,9 +151,9 @@ def _check_table(table: object) -> None:
         are not
     """
     if not isinstance(table, pd.DataFrame):
-        raise SourceTypeError(f"The features must be a DataFrame, not {type(table).__name__}")
+        raise SourceTypeError(messages["features_type"].format(type=type(table).__name__))
     if not table.columns.is_unique:
-        raise SourceTypeError("The names of the features must be distinct")
+        raise SourceTypeError(messages["feature_names"])
     for name, column in table.items():
         numeric = pd.api.types.is_numeric_dtype(column) and not pd.api.types.is_complex_dtype(
             column
@@ -148,13 +162,15 @@ def _check_table(table: object) -> None:
             column.dtype == object
             and all(value is None or value is pd.NA or isinstance(value, Real) for value in column)
         ):
-            raise SourceTypeError(f"The feature {name} must be numeric")
+            raise SourceTypeError(messages["feature_numeric"].format(name=name))
 
 
 def check_comparison_params(
     labels: tuple[str, str] = ("A", "B"),
     n_bootstrap: int = 1000,
     seed: int | np.random.Generator | None = 0,
+    *,
+    messages: Mapping[str, str] | None = None,
 ) -> None:
     """
     Checking the parameters of compare_features
@@ -169,6 +185,7 @@ def check_comparison_params(
         n_bootstrap (int): Number of bootstrap samples
         seed (int|Generator): Seed of the random number generator or the
             generator itself; None - a random one
+        messages (dict[str, str]): Messages of the errors by key; MESSAGES by default
 
     Raises:
         ParameterError: If the names are not two strings that give distinct
@@ -182,34 +199,31 @@ def check_comparison_params(
         ...
         anyts.exceptions.ParameterError: The names of the corpora must be two strings that give distinct columns
     """
+    messages = _messages(messages)
     names = (
         ()
         if isinstance(labels, str | Set | Mapping | Iterator) or not isinstance(labels, Iterable)
         else tuple(labels)
     )
     if len(names) != 2 or not all(isinstance(name, str) for name in names):
-        raise ParameterError(
-            "The names of the corpora must be two strings that give distinct columns"
-        )
+        raise ParameterError(messages["corpus_labels"])
     renamed = _labelled_columns(names)
     if len({renamed.get(column, column) for column in COMPARISON_COLUMNS}) != len(
         COMPARISON_COLUMNS
     ):
-        raise ParameterError(
-            "The names of the corpora must be two strings that give distinct columns"
-        )
-    _check_n_bootstrap(n_bootstrap)
+        raise ParameterError(messages["corpus_labels"])
+    _check_n_bootstrap(n_bootstrap, messages)
     if seed is not None and not isinstance(seed, np.random.Generator):
-        check_integer(seed, "seed")
+        check_integer(seed, "seed", message=messages["integer_param"])
         if seed < 0:
-            raise ParameterError("The seed must not be negative")
+            raise ParameterError(messages["negative_param"].format(param="seed"))
 
 
-def _check_n_bootstrap(n_bootstrap: int) -> None:
+def _check_n_bootstrap(n_bootstrap: int, messages: Mapping[str, str]) -> None:
     """Checking the number of bootstrap samples: an integer of at least one"""
-    check_integer(n_bootstrap, "number of bootstrap samples")
+    check_integer(n_bootstrap, "n_bootstrap", message=messages["integer_param"])
     if n_bootstrap < 1:
-        raise ParameterError("The number of bootstrap samples must be greater than 0")
+        raise ParameterError(messages["positive_param"].format(param="n_bootstrap"))
 
 
 def compare_values(
@@ -219,6 +233,8 @@ def compare_values(
     rng: np.random.Generator | None = None,
     texts_a: Values | None = None,
     texts_b: Values | None = None,
+    *,
+    messages: Mapping[str, str] | None = None,
 ) -> tuple[float, ...]:
     """
     Comparing two sets of values of a feature
@@ -235,6 +251,7 @@ def compare_values(
         texts_a (list): Texts of the values in the first corpus for the
             bootstrap; None - every value a text of its own
         texts_b (list): Texts of the values in the second corpus
+        messages (dict[str, str]): Messages of the errors by key; MESSAGES by default
 
     Returns:
         tuple[float, ...]: Values in the order of COMPARISON_COLUMNS, p_holm - nan
@@ -246,10 +263,11 @@ def compare_values(
             and are not as many as the values, or the generator is not a numpy
             Generator
     """
-    _check_n_bootstrap(n_bootstrap)
-    _check_rng(rng)
-    values_a, texts_a = _finite(values_a, texts_a)
-    values_b, texts_b = _finite(values_b, texts_b)
+    messages = _messages(messages)
+    _check_n_bootstrap(n_bootstrap, messages)
+    _check_rng(rng, messages)
+    values_a, texts_a = _finite(values_a, texts_a, "values_a", messages)
+    values_b, texts_b = _finite(values_b, texts_b, "values_b", messages)
     n_a, n_b = len(values_a), len(values_b)
     n_texts_a = n_a if texts_a is None else len(np.unique(texts_a))
     n_texts_b = n_b if texts_b is None else len(np.unique(texts_b))
@@ -284,25 +302,25 @@ def compare_values(
     )
 
 
-def _check_rng(rng: object) -> None:
+def _check_rng(rng: object, messages: Mapping[str, str]) -> None:
     """Checking that a random number generator is a numpy Generator or None"""
     if rng is not None and not isinstance(rng, np.random.Generator):
-        raise ParameterError(
-            f"The random number generator must be a numpy Generator, not {type(rng).__name__}"
-        )
+        raise ParameterError(messages["rng_type"].format(type=type(rng).__name__))
 
 
-def _finite(values: Values, texts: Values | None) -> tuple[np.ndarray, np.ndarray | None]:
+def _finite(
+    values: Values, texts: Values | None, what: str, messages: Mapping[str, str]
+) -> tuple[np.ndarray, np.ndarray | None]:
     """
     Finite values and their texts
     """
-    array = _as_values(values)
-    _check_texts(array, texts)
+    array = _as_values(values, what, messages)
+    _check_texts(array, texts, messages)
     finite = np.isfinite(array)
     return array[finite], None if texts is None else np.asarray(texts)[finite]
 
 
-def _as_values(values: Iterable[Any], what: str = "values") -> np.ndarray:
+def _as_values(values: Iterable[Any], what: str, messages: Mapping[str, str]) -> np.ndarray:
     """
     Values as an array of floats, a missing value (None, NA) taken for nan
 
@@ -310,8 +328,8 @@ def _as_values(values: Iterable[Any], what: str = "values") -> np.ndarray:
         SourceTypeError: If the values are not a flat list of numbers and missing
             values (bools, strings and complex numbers are not numbers here)
     """
-    check_sequence(values, what)
-    error = SourceTypeError(f"The {what} must be a flat list of numbers")
+    check_sequence(values, what, message=messages["values_type"])
+    error = SourceTypeError(messages["values_type"].format(param=what, type=type(values).__name__))
     try:
         array = np.asarray(values if hasattr(values, "__array__") else list(values))
     except ValueError as e:
@@ -332,28 +350,31 @@ def _as_values(values: Iterable[Any], what: str = "values") -> np.ndarray:
     raise error
 
 
-def _check_texts(values: Values, texts: Values | None) -> None:
+def _check_texts(values: Values, texts: Values | None, messages: Mapping[str, str]) -> None:
     """Checking that the texts of the values are labels of one type, as many as the values"""
     if texts is None:
         return
-    check_sequence(texts, "texts")
+    check_sequence(texts, "texts", message=messages["texts_type"])
     if len(texts) != len(values):
-        raise ParameterError(
-            f"The texts must match the values one to one: {len(texts)} texts, {len(values)} values"
-        )
+        raise ParameterError(messages["texts_values"].format(texts=len(texts), values=len(values)))
     kinds = {
         str if isinstance(text, str) else Number if isinstance(text, Number) else type(text)
         for text in texts
     }
     if len(kinds) > 1:
-        raise SourceTypeError("The texts must be labels of one type")
+        raise SourceTypeError(messages["texts_labels"])
     try:
         np.unique(np.asarray(texts))
     except TypeError as e:
-        raise SourceTypeError("The texts must be labels of one type") from e
+        raise SourceTypeError(messages["texts_labels"]) from e
 
 
-def calc_cohen_d(values_a: Values, values_b: Values) -> float:
+def calc_cohen_d(
+    values_a: Values,
+    values_b: Values,
+    *,
+    messages: Mapping[str, str] | None = None,
+) -> float:
     """
     Computing Cohen's d - the standardized difference of the means
 
@@ -365,6 +386,7 @@ def calc_cohen_d(values_a: Values, values_b: Values) -> float:
     Arguments:
         values_a (list[float]): Values in the first corpus
         values_b (list[float]): Values in the second corpus
+        messages (dict[str, str]): Messages of the errors by key; MESSAGES by default
 
     Returns:
         float: Cohen's d, nan with fewer than two values on a side or a zero variance
@@ -377,8 +399,9 @@ def calc_cohen_d(values_a: Values, values_b: Values) -> float:
         >>> round(calc_cohen_d([2, 4, 6, 8], [1, 3, 5, 7]), 3)
         0.387
     """
-    a = _as_values(values_a)
-    b = _as_values(values_b)
+    messages = _messages(messages)
+    a = _as_values(values_a, "values_a", messages)
+    b = _as_values(values_b, "values_b", messages)
     if len(a) < 2 or len(b) < 2:
         return nan
     pooled = ((len(a) - 1) * a.var(ddof=1) + (len(b) - 1) * b.var(ddof=1)) / (len(a) + len(b) - 2)
@@ -387,7 +410,12 @@ def calc_cohen_d(values_a: Values, values_b: Values) -> float:
     return float((a.mean() - b.mean()) / sqrt(pooled))
 
 
-def calc_cliff_delta(values_a: Values, values_b: Values) -> float:
+def calc_cliff_delta(
+    values_a: Values,
+    values_b: Values,
+    *,
+    messages: Mapping[str, str] | None = None,
+) -> float:
     """
     Computing Cliff's delta - a probabilistic effect size
 
@@ -400,6 +428,7 @@ def calc_cliff_delta(values_a: Values, values_b: Values) -> float:
     Arguments:
         values_a (list[float]): Values in the first corpus
         values_b (list[float]): Values in the second corpus
+        messages (dict[str, str]): Messages of the errors by key; MESSAGES by default
 
     Returns:
         float: Cliff's delta, nan for an empty set or an undefined value
@@ -412,8 +441,9 @@ def calc_cliff_delta(values_a: Values, values_b: Values) -> float:
         >>> calc_cliff_delta([2, 4, 6, 8], [1, 3, 5, 7])
         0.25
     """
-    a = _as_values(values_a)
-    b = np.sort(_as_values(values_b))
+    messages = _messages(messages)
+    a = _as_values(values_a, "values_a", messages)
+    b = np.sort(_as_values(values_b, "values_b", messages))
     if not len(a) or not len(b) or np.isnan(a).any() or np.isnan(b).any():
         return nan
     greater = np.searchsorted(b, a, "left").sum()
@@ -429,6 +459,8 @@ def bootstrap_median_diff(
     confidence: float = 0.95,
     texts_a: Values | None = None,
     texts_b: Values | None = None,
+    *,
+    messages: Mapping[str, str] | None = None,
 ) -> tuple[float, float]:
     """
     Computing the percentile bootstrap interval of the difference of the medians
@@ -448,6 +480,7 @@ def bootstrap_median_diff(
         texts_a (list): Texts of the values in the first corpus; None - every
             value is resampled on its own
         texts_b (list): Texts of the values in the second corpus
+        messages (dict[str, str]): Messages of the errors by key; MESSAGES by default
 
     Returns:
         tuple[float, float]: Lower and upper bounds, nan for an empty set or,
@@ -464,15 +497,16 @@ def bootstrap_median_diff(
         >>> bootstrap_median_diff([3.0, 3.0, 3.0], [1.0, 1.0, 1.0], n_bootstrap=10)
         (2.0, 2.0)
     """
-    _check_n_bootstrap(n_bootstrap)
-    check_number(confidence, "confidence level")
+    messages = _messages(messages)
+    _check_n_bootstrap(n_bootstrap, messages)
+    check_number(confidence, "confidence", message=messages["number_param"])
     if not 0 < confidence < 1:
-        raise ParameterError("The confidence level must lie in the interval (0, 1)")
-    _check_rng(rng)
-    a = _as_values(values_a)
-    b = _as_values(values_b)
-    _check_texts(a, texts_a)
-    _check_texts(b, texts_b)
+        raise ParameterError(messages["confidence"])
+    _check_rng(rng, messages)
+    a = _as_values(values_a, "values_a", messages)
+    b = _as_values(values_b, "values_b", messages)
+    _check_texts(a, texts_a, messages)
+    _check_texts(b, texts_b, messages)
     if not len(a) or not len(b):
         return nan, nan
     if any(texts is not None and len(np.unique(texts)) < 2 for texts in (texts_a, texts_b)):
@@ -511,7 +545,11 @@ def _resampled_medians(
     return np.asarray((ordered[lower] + ordered[upper]) / 2)
 
 
-def holm_correction(p_values: Sequence[float]) -> np.ndarray:
+def holm_correction(
+    p_values: Sequence[float],
+    *,
+    messages: Mapping[str, str] | None = None,
+) -> np.ndarray:
     """
     Holm's correction for multiple comparisons
 
@@ -522,6 +560,7 @@ def holm_correction(p_values: Sequence[float]) -> np.ndarray:
 
     Arguments:
         p_values (list[float]): p-values
+        messages (dict[str, str]): Messages of the errors by key; MESSAGES by default
 
     Returns:
         ndarray: Corrected p-values in the original order
@@ -535,10 +574,11 @@ def holm_correction(p_values: Sequence[float]) -> np.ndarray:
         >>> holm_correction([0.01, 0.04, 0.03]).round(3).tolist()
         [0.03, 0.06, 0.06]
     """
-    values = _as_values(p_values, "p-values")
+    messages = _messages(messages)
+    values = _as_values(p_values, "p_values", messages)
     defined = np.flatnonzero(~np.isnan(values))
     if ((values[defined] < 0) | (values[defined] > 1)).any():
-        raise ParameterError("The p-values must lie within [0, 1]")
+        raise ParameterError(messages["p_values"])
     adjusted = np.full(len(values), nan)
     if not len(defined):
         return adjusted
@@ -558,7 +598,7 @@ def split_windows(
     opening_marks: Collection[str] = OPENING_MARKS,
     symmetric_marks: Collection[str] = SYMMETRIC_MARKS,
     closing_marks: Collection[str] = CLOSING_MARKS,
-    messages: Mapping[str, str] = MESSAGES,
+    messages: Mapping[str, str] | None = None,
 ) -> list[str]:
     """
     Splitting a text into windows of words
@@ -584,7 +624,7 @@ def split_windows(
         symmetric_marks (collection[str]): Opening marks that close a phrase as well
             (SYMMETRIC_MARKS)
         closing_marks (collection[str]): Marks that close a phrase (CLOSING_MARKS)
-        messages (dict[str, str]): Messages of the errors by key (MESSAGES)
+        messages (dict[str, str]): Messages of the errors by key; MESSAGES by default
 
     Returns:
         list[str]: Windows of the text; an empty list for a text without words or
@@ -605,11 +645,12 @@ def split_windows(
         >>> split_windows("One two three four five", 2, min_words=1)
         ['One two', 'three four', 'five']
     """
+    messages = _messages(messages)
     if not isinstance(text, str):
         raise SourceTypeError(messages["text_type"].format(type=type(text).__name__))
     _check_windows(window, min_words, messages)
-    if tokenize is not None and not callable(tokenize):
-        raise SourceTypeError(f"The tokenizer must be callable, not {type(tokenize).__name__}")
+    if tokenize is not None:
+        check_callable(tokenize, "tokenize", message=messages["callable_param"])
     for marks, name in (
         (opening_marks, "opening_marks"),
         (symmetric_marks, "symmetric_marks"),
@@ -662,9 +703,7 @@ def _check_marks(marks: Collection[str], name: str, messages: Mapping[str, str])
             raise ParameterError(messages["mark_length"].format(param=name, mark=repr(mark)))
 
 
-def _check_windows(
-    window: int | None, min_words: int | None, messages: Mapping[str, str] = MESSAGES
-) -> None:
+def _check_windows(window: int | None, min_words: int | None, messages: Mapping[str, str]) -> None:
     """Checking the size of a window and the smallest number of words in it"""
     if window is not None:
         check_integer(window, "window", message=messages["integer_param"])
@@ -679,7 +718,7 @@ def _check_windows(
 
 
 def sentence_rhythm(
-    lengths: Sequence[int], *, messages: Mapping[str, str] = MESSAGES
+    lengths: Sequence[int], *, messages: Mapping[str, str] | None = None
 ) -> dict[str, float]:
     """
     Computing the features of the rhythm of the sentences
@@ -694,7 +733,7 @@ def sentence_rhythm(
 
     Arguments:
         lengths (list[int]): Lengths of the sentences in words
-        messages (dict[str, str]): Messages of the errors by key (MESSAGES)
+        messages (dict[str, str]): Messages of the errors by key; MESSAGES by default
 
     Returns:
         dict[str, float]: Features sents_mean, sents_std, sents_cv, sents_autocorr
@@ -708,6 +747,7 @@ def sentence_rhythm(
         >>> {key: round(value, 3) for key, value in sentence_rhythm([4, 8, 2, 7]).items()}
         {'sents_mean': 5.25, 'sents_std': 2.754, 'sents_cv': 0.525, 'sents_autocorr': -0.794}
     """
+    messages = _messages(messages)
     try:
         check_sequence(lengths, "lengths")
     except SourceTypeError:

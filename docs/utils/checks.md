@@ -115,7 +115,7 @@ A value that is not a string raises `SourceTypeError`.
 
 <!-- --8<-- [start:check_counts] -->
 ``` {.python .signature}
-check_counts(value)
+check_counts(value, *, messages=None)
 ```
 
 Checks that an argument is a counter - a mapping of words to their frequencies, such as a `Counter`.
@@ -123,6 +123,7 @@ Checks that an argument is a counter - a mapping of words to their frequencies, 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
 | `value` | `object` | - | Value to check |
+| `messages` | `dict[str, str]` | `None` | Messages of the errors by key; `MESSAGES` by default |
 
 A value that is not a mapping, a word that is not a string or a frequency that is not a number raises `SourceTypeError`, and a negative, `nan` or infinite frequency `SourceError`.
 <!-- --8<-- [end:check_counts] -->
@@ -312,7 +313,7 @@ A value that is not a finite real number - a `bool`, a string, `None`, `nan`, an
 
 <!-- --8<-- [start:check_callable] -->
 ``` {.python .signature}
-check_callable(value, what)
+check_callable(value, what, *, message=None)
 ```
 
 Checks that an argument is a function, such as a hook a function of the core takes as a parameter.
@@ -321,6 +322,7 @@ Checks that an argument is a function, such as a hook a function of the core tak
 | :-------- | :--- | :------ | :---------- |
 | `value` | `object` | - | Value to check |
 | `what` | `str` | - | Name of the argument, for the message of the error |
+| `message` | `str` | `None` | Message of the error with the fields `{type}`, the type of the value, and `{param}`, the `what`, in place of the English one |
 
 A value that cannot be called raises `SourceTypeError`.
 <!-- --8<-- [end:check_callable] -->

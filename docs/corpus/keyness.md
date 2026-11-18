@@ -1,7 +1,7 @@
 # Keywords
 
 ``` {.python .signature}
-keyness(target, reference, measure='log_likelihood', min_freq=1, positive=True, top_n=None, n=1)
+keyness(target, reference, measure='log_likelihood', min_freq=1, positive=True, top_n=None, n=1, *, messages=None)
 ```
 
 <!-- --8<-- [start:keyness] -->
@@ -51,13 +51,14 @@ The reference may be a list of words, a mapping of frequencies (its size is the 
 | `positive` | `bool` | `True` | Positive keywords (more frequent in the target corpus) or negative ones (more frequent in the reference) |
 | `top_n` | `int` | `None` | Number of keywords; `None` - all of them |
 | `n` | `int` | `1` | Length of the n-grams of the words of every text; `1` - the words |
+| `messages` | `dict[str, str]` | `None` | Messages of the errors by key, in place of those of the library |
 
 The parameters and the target corpus are checked by `check_keyness_params`; an `n` above 1 with frequencies or a `FrequencyReference` raises `ParameterError`. A reference that is not a list of strings, a list of such lists, a counter or a `FrequencyReference` raises `SourceTypeError`, and a negative, `nan` or infinite frequency of a counter and a corpus without words, or shorter than `n` words, raise `SourceError`.
 <!-- --8<-- [end:keyness-parameters] -->
 
 <!-- --8<-- [start:check_keyness_params] -->
 ``` {.python .signature}
-check_keyness_params(measure='log_likelihood', min_freq=1, top_n=None, target=None, n=1, positive=True)
+check_keyness_params(measure='log_likelihood', min_freq=1, top_n=None, target=None, n=1, positive=True, *, messages=None)
 ```
 
 Checks the parameters of `keyness` before a frequency dictionary is read: it raises `ParameterError` unless the measure is one of `KEYNESS_MEASURES`, the minimum frequency is an integer, the number of keywords is `None` or an integer of at least one, the length of the n-grams `n` is an integer of at least one and `positive` is a `bool`. With `target` it also raises `SourceTypeError` unless the target corpus is a list of strings, a list of such lists or a mapping of strings to whole frequencies, and `SourceError` for a negative, nan or infinite frequency.
