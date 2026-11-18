@@ -2620,7 +2620,7 @@ Officialese cliches (per 100 words)       |   7.69
 <h3 id="academic_nausea">Academic nausea<a class="headerlink" href="#academic_nausea" title="Permanent link">&para;</a></h3>
 <p class="metric-meta"><code>academic_nausea</code> · <code>nausea_words()</code> · <a href="https://advego.com/text/seo/">Advego</a></p>
 <!-- --8<-- [start:calc_academic_nausea] -->
-<div class="signature highlight"><pre><span></span><code><span class="n">calc_academic_nausea</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">top_n</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">stopwords</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">is_stopword</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="nb">str</span><span class="o">.</span><span class="n">lower</span><span class="p">,</span> <span class="n">messages</span><span class="o">=</span><span class="n">MESSAGES</span><span class="p">)</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">calc_academic_nausea</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">top_n</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">stopwords</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">is_stopword</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">flags</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="nb">str</span><span class="o">.</span><span class="n">lower</span><span class="p">,</span> <span class="n">messages</span><span class="o">=</span><span class="n">MESSAGES</span><span class="p">)</span>
 </code></pre></div>
 <p>The share of the occurrences of the <code>top_n</code> most frequent significant words among all the words, in percent. Without the stopwords the most frequent words of any text would be its conjunctions and prepositions.</p>
 <div class="arithmatex">\[
@@ -2661,6 +2661,12 @@ Officialese cliches (per 100 words)       |   7.69
 <td style="text-align: left;">Whether a word is a stopword, without the list</td>
 </tr>
 <tr>
+<td style="text-align: left;"><code>flags</code></td>
+<td style="text-align: left;"><code>list[bool]</code></td>
+<td style="text-align: left;"><code>None</code></td>
+<td style="text-align: left;">Whether every word is a stopword, in place of <code>is_stopword</code></td>
+</tr>
+<tr>
 <td style="text-align: left;"><code>normalize</code></td>
 <td style="text-align: left;"><code>Callable</code></td>
 <td style="text-align: left;"><code>str.lower</code></td>
@@ -2677,9 +2683,9 @@ Officialese cliches (per 100 words)       |   7.69
 <p>A <code>top_n</code> that is not an integer of at least one raises <code>ParameterError</code>.</p>
 <!-- --8<-- [end:calc_academic_nausea] -->
 <!-- --8<-- [start:find_nausea_words] -->
-<div class="signature highlight"><pre><span></span><code><span class="n">find_nausea_words</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">top_n</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">stopwords</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">is_stopword</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="nb">str</span><span class="o">.</span><span class="n">lower</span><span class="p">,</span> <span class="n">messages</span><span class="o">=</span><span class="n">MESSAGES</span><span class="p">)</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">find_nausea_words</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">top_n</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">stopwords</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">is_stopword</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">flags</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="nb">str</span><span class="o">.</span><span class="n">lower</span><span class="p">,</span> <span class="n">messages</span><span class="o">=</span><span class="n">MESSAGES</span><span class="p">)</span>
 </code></pre></div>
-<p>The <code>top_n</code> most frequent words without the stopwords, those the academic nausea counts, with their occurrences: the most frequent first, words of equal frequency in the order of the text. A stopword is a word of <code>stopwords</code> by its normalized form or, without the list, a word <code>is_stopword</code> accepts; without both there are no stopwords.</p>
+<p>The <code>top_n</code> most frequent words without the stopwords, those the academic nausea counts, with their occurrences: the most frequent first, words of equal frequency in the order of the text. A stopword is a word of <code>stopwords</code> by its normalized form or, without the list, a word of the <code>flags</code> or <code>is_stopword</code> accepts; without them there are no stopwords.</p>
 <table>
 <thead>
 <tr>
@@ -2715,6 +2721,12 @@ Officialese cliches (per 100 words)       |   7.69
 <td style="text-align: left;">Whether a word is a stopword, without the list</td>
 </tr>
 <tr>
+<td style="text-align: left;"><code>flags</code></td>
+<td style="text-align: left;"><code>list[bool]</code></td>
+<td style="text-align: left;"><code>None</code></td>
+<td style="text-align: left;">Whether every word is a stopword, in place of <code>is_stopword</code></td>
+</tr>
+<tr>
 <td style="text-align: left;"><code>normalize</code></td>
 <td style="text-align: left;"><code>Callable</code></td>
 <td style="text-align: left;"><code>str.lower</code></td>
@@ -2735,9 +2747,9 @@ Officialese cliches (per 100 words)       |   7.69
 <h3 id="water">Water content<a class="headerlink" href="#water" title="Permanent link">&para;</a></h3>
 <p class="metric-meta"><code>water</code> · <a href="https://text.ru/seo">Text.ru</a></p>
 <!-- --8<-- [start:calc_water] -->
-<div class="signature highlight"><pre><span></span><code><span class="n">calc_water</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">stopwords</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">is_water_word</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="nb">str</span><span class="o">.</span><span class="n">lower</span><span class="p">)</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">calc_water</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">stopwords</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">is_water_word</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">flags</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="nb">str</span><span class="o">.</span><span class="n">lower</span><span class="p">)</span>
 </code></pre></div>
-<p>The share of the words without content, in percent: the words of <code>stopwords</code> by their normalized forms or, without the list, those <code>is_water_word</code> accepts.</p>
+<p>The share of the words without content, in percent: the words of <code>stopwords</code> by their normalized forms or, without the list, those the <code>flags</code> or <code>is_water_word</code> accept.</p>
 <div class="arithmatex">\[
 100 \cdot \frac{\textrm{Number of water words}}{\textrm{Number of words}}
 \]</div>
@@ -2768,6 +2780,12 @@ Officialese cliches (per 100 words)       |   7.69
 <td style="text-align: left;"><code>Callable</code></td>
 <td style="text-align: left;"><code>None</code></td>
 <td style="text-align: left;">Whether a word is water, without the list</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>flags</code></td>
+<td style="text-align: left;"><code>list[bool]</code></td>
+<td style="text-align: left;"><code>None</code></td>
+<td style="text-align: left;">Whether every word is water, in place of <code>is_water_word</code></td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>normalize</code></td>
@@ -2911,9 +2929,9 @@ Officialese cliches (per 100 words)       |   7.69
 <h3 id="parentheticals">Parenthetical expressions<a class="headerlink" href="#parentheticals" title="Permanent link">&para;</a></h3>
 <p class="metric-meta"><code>parentheticals</code></p>
 <!-- --8<-- [start:find_parentheticals] -->
-<div class="signature highlight"><pre><span></span><code><span class="n">find_parentheticals</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">phrases</span><span class="o">=</span><span class="p">(),</span> <span class="o">*</span><span class="p">,</span> <span class="n">is_parenthetical</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">expand</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="nb">str</span><span class="o">.</span><span class="n">lower</span><span class="p">)</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">find_parentheticals</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">phrases</span><span class="o">=</span><span class="p">(),</span> <span class="o">*</span><span class="p">,</span> <span class="n">is_parenthetical</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">flags</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">expand</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="nb">str</span><span class="o">.</span><span class="n">lower</span><span class="p">)</span>
 </code></pre></div>
-<p>The parenthetical expressions of a text: the phrases of the list, spelled out by <code>expand</code> as in <code>calc_phrase_density</code>, and the single words accepted by <code>is_parenthetical</code> outside the phrases found. The result is their bounds as slices of the words, in order. <code>StyleStats</code> counts its <code>parentheticals</code> and finds their markers this way, with its hooks.</p>
+<p>The parenthetical expressions of a text: the phrases of the list, spelled out by <code>expand</code> as in <code>calc_phrase_density</code>, and the single words accepted by the <code>flags</code> or <code>is_parenthetical</code> outside the phrases found. The result is their bounds as slices of the words, in order. <code>StyleStats</code> counts its <code>parentheticals</code> and finds their markers this way, with its hooks.</p>
 <table>
 <thead>
 <tr>
@@ -2943,6 +2961,12 @@ Officialese cliches (per 100 words)       |   7.69
 <td style="text-align: left;">Whether a word is a parenthetical expression by itself; none by default</td>
 </tr>
 <tr>
+<td style="text-align: left;"><code>flags</code></td>
+<td style="text-align: left;"><code>list[bool]</code></td>
+<td style="text-align: left;"><code>None</code></td>
+<td style="text-align: left;">Whether every word is a parenthetical expression by itself, in place of <code>is_parenthetical</code></td>
+</tr>
+<tr>
 <td style="text-align: left;"><code>expand</code></td>
 <td style="text-align: left;"><code>Callable</code></td>
 <td style="text-align: left;"><code>None</code></td>
@@ -2956,10 +2980,9 @@ Officialese cliches (per 100 words)       |   7.69
 </tr>
 </tbody>
 </table>
-<p>Words or phrases that are not a list of strings and hooks that cannot be called raise <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:find_parentheticals] -->
 <!-- --8<-- [start:calc_parentheticals] -->
-<div class="signature highlight"><pre><span></span><code><span class="n">calc_parentheticals</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">phrases</span><span class="o">=</span><span class="p">(),</span> <span class="o">*</span><span class="p">,</span> <span class="n">is_parenthetical</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">expand</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="nb">str</span><span class="o">.</span><span class="n">lower</span><span class="p">)</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">calc_parentheticals</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">phrases</span><span class="o">=</span><span class="p">(),</span> <span class="o">*</span><span class="p">,</span> <span class="n">is_parenthetical</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">flags</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">expand</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="nb">str</span><span class="o">.</span><span class="n">lower</span><span class="p">)</span>
 </code></pre></div>
 <p>The expressions of <code>find_parentheticals</code> with the same arguments per 100 words.</p>
 <!-- --8<-- [end:calc_parentheticals] -->
@@ -3003,7 +3026,7 @@ Officialese cliches (per 100 words)       |   7.69
 </table>
 <!-- --8<-- [end:calc_keyword_density] -->
 </div>
-<p>The functions check their words: words, stopwords, keywords and phrases that are not a list of strings, and hooks that cannot be called, raise <code>SourceTypeError</code>.</p>
+<p>The functions check their words: words, stopwords, keywords and phrases that are not a list of strings, flags that are not a list of booleans and hooks that cannot be called raise <code>SourceTypeError</code>, flags that are not one per word - <code>ParameterError</code>.</p>
 <h2 id="methods">Methods<a class="headerlink" href="#methods" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:StyleStats-keyword_density] -->
 <p><code>keyword_density(*keywords)</code> gives the density of keywords and phrases in percent (<code>calc_keyword_density</code> with <code>normalize</code> of the class), <code>nausea_words()</code> the most frequent significant words of the academic nausea with their occurrences (<code>find_nausea_words</code>).</p>
@@ -3056,6 +3079,11 @@ Officialese cliches (per 100 words)       |   7.69
 <td style="text-align: left;"><code>doc_words(document)</code></td>
 <td style="text-align: left;">method</td>
 <td style="text-align: left;">Words of a document in lower case; those of <code>document_words</code> by default, overridden to normalize the forms of the words of a language; a result that is not a sequence of strings raises <code>SourceTypeError</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>doc_flags(document)</code></td>
+<td style="text-align: left;">method</td>
+<td style="text-align: left;">Flags of the words of <code>doc_words</code> by position as <code>WordFlags</code> - <code>stopword</code>, <code>water</code>, <code>parenthetical</code>, a tuple of booleans or <code>None</code> each; they replace the predicates below on the forms and on the words, when the words are the forms. None by default; a library with a parse in context gives them. A result that is not <code>WordFlags</code> of a boolean per word raises <code>SourceTypeError</code></td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>is_stopword(word)</code></td>
