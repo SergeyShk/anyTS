@@ -338,6 +338,10 @@ MESSAGES: Mapping[str, str] = MappingProxyType(
         ),
         "hook_syllables": "The {hook} of {cls} must return a sequence of strings, not {type}",
         "hook_words": "The {hook} of {cls} must return a sequence of strings, not {type}",
+        "hook_flags": (
+            "The {hook} of {cls} must return WordFlags of {size} booleans in every check, "
+            "not {value}"
+        ),
         "hook_word_pairs": "The {hook} of {cls} must return pairs of TreeWord objects, not {type}",
         "hook_string": "The {hook} of {cls} must return a string, not {type}",
         "hook_sounds": "The {hook} of {cls} must return a string or strings, not {type}",

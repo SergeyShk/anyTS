@@ -128,7 +128,7 @@ $$
 
 <!-- --8<-- [start:calc_academic_nausea] -->
 ``` {.python .signature}
-calc_academic_nausea(text, top_n=10, stopwords=None, *, is_stopword=None, normalize=str.lower, messages=MESSAGES)
+calc_academic_nausea(text, top_n=10, stopwords=None, *, is_stopword=None, flags=None, normalize=str.lower, messages=MESSAGES)
 ```
 
 The share of the occurrences of the `top_n` most frequent significant words among all the words, in percent. Without the stopwords the most frequent words of any text would be its conjunctions and prepositions.
@@ -143,6 +143,7 @@ $$
 | `top_n` | `int` | `10` | Number of the most frequent words (`NAUSEA_TOP_N`) |
 | `stopwords` | `list[str]` | `None` | Stopwords |
 | `is_stopword` | `Callable` | `None` | Whether a word is a stopword, without the list |
+| `flags` | `list[bool]` | `None` | Whether every word is a stopword, in place of `is_stopword` |
 | `normalize` | `Callable` | `str.lower` | Normalized form of a word |
 | `messages` | `dict[str, str]` | `MESSAGES` | Messages of the errors by key |
 
@@ -151,10 +152,10 @@ A `top_n` that is not an integer of at least one raises `ParameterError`.
 
 <!-- --8<-- [start:find_nausea_words] -->
 ``` {.python .signature}
-find_nausea_words(text, top_n=10, stopwords=None, *, is_stopword=None, normalize=str.lower, messages=MESSAGES)
+find_nausea_words(text, top_n=10, stopwords=None, *, is_stopword=None, flags=None, normalize=str.lower, messages=MESSAGES)
 ```
 
-The `top_n` most frequent words without the stopwords, those the academic nausea counts, with their occurrences: the most frequent first, words of equal frequency in the order of the text. A stopword is a word of `stopwords` by its normalized form or, without the list, a word `is_stopword` accepts; without both there are no stopwords.
+The `top_n` most frequent words without the stopwords, those the academic nausea counts, with their occurrences: the most frequent first, words of equal frequency in the order of the text. A stopword is a word of `stopwords` by its normalized form or, without the list, a word of the `flags` or `is_stopword` accepts; without them there are no stopwords.
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
@@ -162,6 +163,7 @@ The `top_n` most frequent words without the stopwords, those the academic nausea
 | `top_n` | `int` | `10` | Number of the most frequent words (`NAUSEA_TOP_N`) |
 | `stopwords` | `list[str]` | `None` | Stopwords |
 | `is_stopword` | `Callable` | `None` | Whether a word is a stopword, without the list |
+| `flags` | `list[bool]` | `None` | Whether every word is a stopword, in place of `is_stopword` |
 | `normalize` | `Callable` | `str.lower` | Normalized form of a word |
 | `messages` | `dict[str, str]` | `MESSAGES` | Messages of the errors by key |
 
@@ -179,10 +181,10 @@ A `top_n` that is not an integer of at least one raises `ParameterError`.
 
 <!-- --8<-- [start:calc_water] -->
 ``` {.python .signature}
-calc_water(text, stopwords=None, *, is_water_word=None, normalize=str.lower)
+calc_water(text, stopwords=None, *, is_water_word=None, flags=None, normalize=str.lower)
 ```
 
-The share of the words without content, in percent: the words of `stopwords` by their normalized forms or, without the list, those `is_water_word` accepts.
+The share of the words without content, in percent: the words of `stopwords` by their normalized forms or, without the list, those the `flags` or `is_water_word` accept.
 
 $$
 100 \cdot \frac{\textrm{Number of water words}}{\textrm{Number of words}}
@@ -193,6 +195,7 @@ $$
 | `text` | `list[str]` | - | List of words |
 | `stopwords` | `list[str]` | `None` | Words of water |
 | `is_water_word` | `Callable` | `None` | Whether a word is water, without the list |
+| `flags` | `list[bool]` | `None` | Whether every word is water, in place of `is_water_word` |
 | `normalize` | `Callable` | `str.lower` | Normalized form of a word |
 <!-- --8<-- [end:calc_water] -->
 
@@ -302,25 +305,24 @@ $$
 
 <!-- --8<-- [start:find_parentheticals] -->
 ``` {.python .signature}
-find_parentheticals(text, phrases=(), *, is_parenthetical=None, expand=None, normalize=str.lower)
+find_parentheticals(text, phrases=(), *, is_parenthetical=None, flags=None, expand=None, normalize=str.lower)
 ```
 
-The parenthetical expressions of a text: the phrases of the list, spelled out by `expand` as in `calc_phrase_density`, and the single words accepted by `is_parenthetical` outside the phrases found. The result is their bounds as slices of the words, in order. `StyleStats` counts its `parentheticals` and finds their markers this way, with its hooks.
+The parenthetical expressions of a text: the phrases of the list, spelled out by `expand` as in `calc_phrase_density`, and the single words accepted by the `flags` or `is_parenthetical` outside the phrases found. The result is their bounds as slices of the words, in order. `StyleStats` counts its `parentheticals` and finds their markers this way, with its hooks.
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
 | `text` | `list[str]` | - | List of words |
 | `phrases` | `list[str]` | `()` | Parenthetical phrases, words separated by spaces |
 | `is_parenthetical` | `Callable[[str], bool]` | `None` | Whether a word is a parenthetical expression by itself; none by default |
+| `flags` | `list[bool]` | `None` | Whether every word is a parenthetical expression by itself, in place of `is_parenthetical` |
 | `expand` | `Callable` | `None` | Variants of the phrases in the forms of the text with the phrase of each; the phrases as they are by default |
 | `normalize` | `Callable[[str], str]` | `str.lower` | Normalized form of a word and of a phrase |
-
-Words or phrases that are not a list of strings and hooks that cannot be called raise `SourceTypeError`.
 <!-- --8<-- [end:find_parentheticals] -->
 
 <!-- --8<-- [start:calc_parentheticals] -->
 ``` {.python .signature}
-calc_parentheticals(text, phrases=(), *, is_parenthetical=None, expand=None, normalize=str.lower)
+calc_parentheticals(text, phrases=(), *, is_parenthetical=None, flags=None, expand=None, normalize=str.lower)
 ```
 
 The expressions of `find_parentheticals` with the same arguments per 100 words.
@@ -351,7 +353,7 @@ The occurrences of every keyword per 100 words. A keyword of several words separ
 
 </div>
 
-The functions check their words: words, stopwords, keywords and phrases that are not a list of strings, and hooks that cannot be called, raise `SourceTypeError`.
+The functions check their words: words, stopwords, keywords and phrases that are not a list of strings, flags that are not a list of booleans and hooks that cannot be called raise `SourceTypeError`, flags that are not one per word - `ParameterError`.
 
 ## Methods
 
@@ -392,6 +394,7 @@ A language library subclasses `StyleStats`; by default the hooks know no languag
 | `compound_prepositions_list`, `parentheticals_list`, `cliches_list` | class attributes | Compound prepositions, parenthetical expressions and cliches, checked as lists of strings when the class is defined; the parameter `cliches` replaces the last |
 | `normalize(word)` | method | Normalized form of a word or a phrase, by which the lists and the keywords are compared; the lower case by default |
 | `doc_words(document)` | method | Words of a document in lower case; those of `document_words` by default, overridden to normalize the forms of the words of a language; a result that is not a sequence of strings raises `SourceTypeError` |
+| `doc_flags(document)` | method | Flags of the words of `doc_words` by position as `WordFlags` - `stopword`, `water`, `parenthetical`, a tuple of booleans or `None` each; they replace the predicates below on the forms and on the words, when the words are the forms. None by default; a library with a parse in context gives them. A result that is not `WordFlags` of a boolean per word raises `SourceTypeError` |
 | `is_stopword(word)` | method | Whether a word is a stopword of the academic nausea, when `nausea_stopwords` is not given |
 | `is_water_word(word)` | method | Whether a word is water, when `stopwords` is not given; `is_stopword` by default |
 | `is_parenthetical(word)` | method | Whether a word is a parenthetical expression by itself, outside the phrases of `parentheticals_list` |

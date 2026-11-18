@@ -12,6 +12,7 @@ from anyts.exceptions import ParameterError, SourceError, SourceTypeError, Unkno
 from anyts.extractors import WordsExtractor
 from anyts.style_stats import (
     StyleStats,
+    WordFlags,
     calc_academic_nausea,
     calc_classic_nausea,
     calc_keyword_density,
@@ -366,3 +367,119 @@ def test_parentheticals_of_the_module(style):
     for hook in ("is_parenthetical", "expand"):
         with pytest.raises(SourceTypeError):
             find_parentheticals(forms, **{hook: "no"})
+
+
+def test_flags_of_the_functions():
+    words = ["the", "cat", "and", "the", "dog"]
+    flags = [True, False, False, True, False]
+    assert calc_water(words, flags=flags) == 40.0
+    assert calc_water(words, is_water_word=lambda word: True, flags=flags) == 40.0
+    assert calc_water(words, ["and"], flags=flags) == 20.0
+    assert find_nausea_words(words, 2, flags=flags) == {"cat": 1, "and": 1}
+    assert calc_academic_nausea(words, 2, flags=flags) == 40.0
+    marks = [False, False, True, False, True]
+    assert find_parentheticals(words, ["and the"], flags=marks) == [(2, 4), (4, 5)]
+    found = find_parentheticals(words, is_parenthetical=lambda word: True, flags=marks)
+    assert found == [(2, 3), (4, 5)]
+    assert calc_parentheticals(words, ["and the"], flags=marks) == 40.0
+
+
+@pytest.mark.parametrize(
+    ("flags", "error", "match"),
+    [
+        ("yes", SourceTypeError, "list of booleans, not str$"),
+        ([1, 0, 0], SourceTypeError, "list of booleans, not int$"),
+        ([True], ParameterError, "one per word: 1 for 3 words$"),
+    ],
+)
+def test_functions_check_their_flags(flags, error, match):
+    words = ["the", "cat", "ran"]
+    calls = [
+        lambda: calc_water(words, flags=flags),
+        lambda: find_nausea_words(words, flags=flags),
+        lambda: calc_academic_nausea(words, flags=flags),
+        lambda: find_parentheticals(words, flags=flags),
+        lambda: calc_parentheticals(words, flags=flags),
+    ]
+    for call in calls:
+        with pytest.raises(error, match=match):
+            call()
+
+
+class ContextStyle(StyleStats):
+    """Flags in context: "like" is a stopword and water before "that", the first "well" is
+    parenthetical"""
+
+    def doc_flags(self, document):
+        words = self.doc_words(document)
+        stop = tuple(
+            word in STOPWORDS or (word == "like" and following == "that")
+            for word, following in zip(words, (*words[1:], ""), strict=True)
+        )
+        first = tuple(position == 0 and word == "well" for position, word in enumerate(words))
+        return WordFlags(stopword=list(stop), water=stop, parenthetical=first)
+
+
+CONTEXT_TEXT = "Well, I like it like that, well"
+
+
+def test_flags_of_a_subclass():
+    style = ContextStyle(CONTEXT_TEXT)
+    assert style._flags == WordFlags(
+        (False, False, False, True, True, False, False),
+        (False, False, False, True, True, False, False),
+        (True, False, False, False, False, False, False),
+    )
+    assert style.water == pytest.approx(100 * 2 / 7)
+    assert style.nausea_words() == {"well": 2, "i": 1, "like": 1, "that": 1}
+    assert style.academic_nausea == pytest.approx(100 * 5 / 7)
+    assert style.parentheticals == pytest.approx(100 / 7)
+    assert style.markers()["parentheticals"] == ("well",)
+    assert ContextStyle(CONTEXT_TEXT, stopwords=["i"]).water == pytest.approx(100 / 7)
+    assert StyleStats(CONTEXT_TEXT)._flags == WordFlags()
+
+
+def test_flags_of_the_forms_only():
+    style = ContextStyle(CONTEXT_TEXT, words_extractor=WordsExtractor())
+    assert style.water == 0.0
+    assert style.nausea_words()["it"] == 1
+    assert style.parentheticals == pytest.approx(100 / 7)
+
+
+@pytest.mark.parametrize(
+    ("flags", "value"),
+    [
+        (None, "NoneType"),
+        ((True,) * 7, "tuple"),
+        (WordFlags(stopword=(True,)), "1 in stopword"),
+        (WordFlags(water="abcdefg"), "str in water"),
+        (WordFlags(parenthetical=[1] * 7), "int in parenthetical"),
+    ],
+)
+def test_flags_hook_checked(flags, value):
+    class Wrong(StyleStats):
+        def doc_flags(self, document):
+            return flags
+
+    message = (
+        f"doc_flags of Wrong must return WordFlags of 7 booleans in every check, not {value}$"
+    )
+    with pytest.raises(SourceTypeError, match=message):
+        Wrong(CONTEXT_TEXT).get_stats()
+
+
+def test_flags_on_first_use():
+    class Counted(ContextStyle):
+        calls = 0
+
+        def doc_flags(self, document):
+            Counted.calls += 1
+            return super().doc_flags(document)
+
+    style = Counted(CONTEXT_TEXT)
+    style.keyword_density("well")
+    assert Counted.calls == 0
+    style.get_stats()
+    style.markers()
+    assert Counted.calls == 1
+    assert not hasattr(style, "_flags_document")
