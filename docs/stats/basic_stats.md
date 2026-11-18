@@ -70,7 +70,7 @@ A subclass with the syllables of a language - here the groups of vowels, a rough
 | `long_word_letter_factor` | `int` | `LONG_WORD_LETTER_FACTOR` | Minimum number of letters in a long word |
 | `filter_nums` | `bool` | `False` | Leave out the numbers (`number_pattern`) among the words |
 
-The object keeps `normalize`, `complex_syl_factor` and `long_word_letter_factor` under their names.
+The object keeps `normalize`, `complex_syl_factor`, `long_word_letter_factor` and `filter_nums` under their names, and the numbers it left out in `n_numbers`.
 <!-- --8<-- [end:BasicStats-parameters] -->
 
 The thresholds of the core are `COMPLEX_SYL_FACTOR = 3` and `LONG_WORD_LETTER_FACTOR = 7` of `anyts.constants`.

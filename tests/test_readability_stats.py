@@ -711,21 +711,38 @@ def test_grade_functions_check_their_scales(call, error, message):
         call()
 
 
+class Unnumbered(Readability):
+    filter_nums = True
+
+
 def test_numbers_left_out():
-    """A number has no syllables and would lower the grade: the formulas leave it out by
-    default, the basic statistics keep it"""
+    """The class attribute filter_nums sets the default of the parameter; the basic statistics
+    keep the numbers unless asked"""
     text = "The cat sat on the mat in 2026. A beautiful day came in 1250000 hours!"
     words = Stats(text).n_words
-    assert Readability(text).bs.n_words == words - 2
-    assert Readability(text, filter_nums=False).bs.n_words == words
+    assert Readability(text).bs.n_words == words
+    assert Readability(text, filter_nums=True).bs.n_words == words - 2
+    assert Unnumbered(text).bs.n_words == words - 2
+    assert Unnumbered(text, filter_nums=False).bs.n_words == words
     ready = Stats(text)
-    assert Readability(ready).bs is ready
+    assert Unnumbered(ready).bs is ready
     assert Stats(text, filter_nums=True).n_words == words - 2
     with pytest.raises(SourceError):
-        Readability("2026. 1250000!")
+        Unnumbered("2026. 1250000!")
     for cls in (Readability, Stats):
         with pytest.raises(ParameterError, match=r"^The filter_nums must be a bool, not str$"):
             cls(text, filter_nums="yes")
+
+
+def test_numbers_read_but_not_counted():
+    """A reader reads the numbers: the reading time keeps them; a sentence of numbers alone
+    holds no word"""
+    text = "1. The cat sat on the mat in 2026.\n2. A beautiful day came!"
+    kept, left = Readability(text), Unnumbered(text)
+    assert left.bs.n_numbers == 3 and kept.bs.n_numbers == 0
+    assert left.reading_time == kept.reading_time
+    assert left.reading_time_by_speed(100) == kept.reading_time_by_speed(100)
+    assert left.bs.n_sents < kept.bs.n_sents
 
 
 def test_number_pattern_of_a_library():

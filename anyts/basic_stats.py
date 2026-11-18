@@ -165,6 +165,7 @@ class BasicStats(Stats, metaclass=ABCMeta):
         complex_syl_factor (int): Minimum number of syllables in a complex word
         long_word_letter_factor (int): Minimum number of letters in a long word
         filter_nums (bool): Whether the numbers are left out
+        n_numbers (int): Numbers left out of the words
         c_letters (dict[int, int]): Distribution of words by number of letters
         c_syllables (dict[int, int]): Distribution of words by number of syllables
         letters_entropy, syllables_entropy (float): Shannon entropy in bits of the
@@ -250,6 +251,7 @@ class BasicStats(Stats, metaclass=ABCMeta):
                 if words_extractor is not None
                 else _hook_words(self, "doc_words", self.doc_words(document))
             )
+        n_all = len(words)
         if filter_nums:
             words = tuple(word for word in words if not is_number(word, self.number_pattern))
         if not words:
@@ -257,13 +259,19 @@ class BasicStats(Stats, metaclass=ABCMeta):
 
         self.normalize = normalize
         self.filter_nums = filter_nums
+        self.n_numbers = n_all - len(words)
         self.complex_syl_factor = complex_syl_factor
         self.long_word_letter_factor = long_word_letter_factor
         letters_per_word = tuple(count_letters(word) for word in words)
         syllables_per_word = tuple(self.count_syllables(word) for word in words)
         self.c_letters = dict(sorted(Counter(letters_per_word).items()))
         self.c_syllables = dict(sorted(Counter(syllables_per_word).items()))
-        self.n_sents = sum(1 for sent in sents if has_words(sent))
+        # Without the numbers a sentence of numbers alone (an item "1." of a list) holds no word
+        self.n_sents = sum(
+            1
+            for sent in sents
+            if has_words(sent) and (not filter_nums or any(char.isalpha() for char in sent))
+        )
         self.n_words = len(words)
         self.n_unique_words = len({word.lower() for word in words})
         self.n_long_words = self.count_words_by_letters(long_word_letter_factor)

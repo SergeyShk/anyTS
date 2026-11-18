@@ -55,8 +55,8 @@ class ReadabilityStats(Stats):
         words_extractor (WordsExtractor): Word extraction tool, not used for ready
             basic statistics
         preset (str): Coefficient preset
-        filter_nums (bool): Leave out the numbers among the words, which have no
-            syllables and would lower the grade; not used for ready basic statistics
+        filter_nums (bool): Leave out the numbers among the words; None - the class
+            attribute filter_nums; not used for ready basic statistics
 
     Attributes:
         bs (BasicStats): Basic statistics of the text
@@ -87,6 +87,7 @@ class ReadabilityStats(Stats):
         reading_time_by_norm: Reading times at the speeds of a norm
 
     Class attributes:
+        filter_nums (bool): Whether the numbers are left out by default, False
         basic_stats_class (type[BasicStats]): Basic statistics of a string, a Doc or a Document;
             without it the source must be a BasicStats object
         presets (dict[str, dict[str, tuple[float, ...]]]): Coefficients of the formulas
@@ -137,6 +138,7 @@ class ReadabilityStats(Stats):
     presets: ClassVar[Mapping[str, Mapping[str, tuple[float, ...]]]] = READABILITY_PRESETS
     grade_stats: ClassVar[tuple[str, ...]] = READABILITY_GRADE_STATS
     stats_desc: ClassVar[Mapping[str, str]] = READABILITY_STATS_DESC
+    filter_nums: ClassVar[bool] = False
     stats_headers: ClassVar[tuple[str, str]] = ("Metric", "Value")
     smog_complex_syl_factor: ClassVar[int] = SMOG_COMPLEX_SYL_FACTOR
     lix_long_word_letter_factor: ClassVar[int] = LIX_LONG_WORD_LETTER_FACTOR
@@ -186,9 +188,11 @@ class ReadabilityStats(Stats):
         sents_extractor: SentsExtractor | None = None,
         words_extractor: WordsExtractor | None = None,
         preset: str = "original",
-        filter_nums: bool = True,
+        filter_nums: bool | None = None,
     ):
         messages = self.messages
+        if filter_nums is None:
+            filter_nums = self.filter_nums
         check_bool(filter_nums, "filter_nums", message=messages["bool_param"])
         if not isinstance(preset, str):
             raise ParameterError(messages["preset_type"].format(type=type(preset).__name__))
@@ -284,7 +288,7 @@ class ReadabilityStats(Stats):
 
     @property
     def reading_time(self) -> float:
-        return calc_reading_time(self.bs.n_words, self.reading_speed, messages=self.messages)
+        return calc_reading_time(_read_words(self.bs), self.reading_speed, messages=self.messages)
 
     def reading_ease_to_grade(self, flesch_reading_easy: float) -> float:
         """
@@ -417,7 +421,7 @@ class ReadabilityStats(Stats):
         Raises:
             ParameterError: If the reading speed is not a positive number
         """
-        return calc_reading_time(self.bs.n_words, wpm, messages=self.messages)
+        return calc_reading_time(_read_words(self.bs), wpm, messages=self.messages)
 
     def reading_time_by_norm(self, norm: str) -> tuple[float, ...]:
         """
@@ -439,7 +443,7 @@ class ReadabilityStats(Stats):
                 )
             )
         return tuple(
-            calc_reading_time(self.bs.n_words, wpm, messages=self.messages)
+            calc_reading_time(_read_words(self.bs), wpm, messages=self.messages)
             for wpm in self.reading_speed_norms[norm]
         )
 
@@ -450,7 +454,7 @@ def _read_basic_stats(
     basic_stats_class: type[BasicStats] | None,
     sents_extractor: SentsExtractor | None = None,
     words_extractor: WordsExtractor | None = None,
-    filter_nums: bool = True,
+    filter_nums: bool = False,
 ) -> BasicStats:
     """
     Getting the basic statistics of the source of a class of readability
@@ -495,6 +499,11 @@ def _read_basic_stats(
     if not bs.n_sents:
         raise SourceError(messages["no_sentences"])
     return bs
+
+
+def _read_words(bs: BasicStats) -> int:
+    """Words a reader reads: the numbers left out of the formulas included"""
+    return bs.n_words + bs.n_numbers
 
 
 def _word_letters(bs: BasicStats) -> int:

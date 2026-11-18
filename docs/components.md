@@ -152,7 +152,7 @@ ReadabilityStatsComponent(nlp, name, preset=None, basic=None)
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
 | `preset` | `str` | `None` | Preset of the coefficients, one of the presets of the class; the default of the class if `None` |
-| `basic` | `str` | `None` | Extension of a component of the basic statistics to reuse instead of computing them again |
+| `basic` | `str` | `None` | Extension of a component of the basic statistics to reuse instead of computing them again; its words are taken as they are, the numbers included |
 
 With `preset` left at `None` the config of a saved pipeline holds no preset, and the pipeline takes the default of the class when it is loaded; a library that wants its default written into the config gives it in the signature of its subclass.
 
@@ -267,7 +267,7 @@ UnadaptedReadabilityStatsComponent(nlp, name, basic=None)
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
-| `basic` | `str` | `None` | Extension of a component of the basic statistics to reuse instead of computing them again |
+| `basic` | `str` | `None` | Extension of a component of the basic statistics to reuse instead of computing them again; its words are taken as they are, the numbers included |
 
 Raises:
 
