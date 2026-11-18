@@ -2466,7 +2466,7 @@ anyts.exceptions.SourceTypeError: The word must be a string, not list
 </div>
 <h2 id="check_counts">Counters<a class="headerlink" href="#check_counts" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:check_counts] -->
-<div class="signature highlight"><pre><span></span><code><span class="n">check_counts</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">check_counts</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">messages</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 <p>Checks that an argument is a counter - a mapping of words to their frequencies, such as a <code>Counter</code>.</p>
 <table>
@@ -2484,6 +2484,12 @@ anyts.exceptions.SourceTypeError: The word must be a string, not list
 <td style="text-align: left;"><code>object</code></td>
 <td style="text-align: left;">-</td>
 <td style="text-align: left;">Value to check</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>messages</code></td>
+<td style="text-align: left;"><code>dict[str, str]</code></td>
+<td style="text-align: left;"><code>None</code></td>
+<td style="text-align: left;">Messages of the errors by key; <code>MESSAGES</code> by default</td>
 </tr>
 </tbody>
 </table>
@@ -2759,7 +2765,7 @@ anyts.exceptions.ParameterError: The confidence level must be a finite number, n
 </div>
 <h2 id="check_callable">Functions<a class="headerlink" href="#check_callable" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:check_callable] -->
-<div class="signature highlight"><pre><span></span><code><span class="n">check_callable</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">what</span><span class="p">)</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">check_callable</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">what</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 <p>Checks that an argument is a function, such as a hook a function of the core takes as a parameter.</p>
 <table>
@@ -2783,6 +2789,12 @@ anyts.exceptions.ParameterError: The confidence level must be a finite number, n
 <td style="text-align: left;"><code>str</code></td>
 <td style="text-align: left;">-</td>
 <td style="text-align: left;">Name of the argument, for the message of the error</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>message</code></td>
+<td style="text-align: left;"><code>str</code></td>
+<td style="text-align: left;"><code>None</code></td>
+<td style="text-align: left;">Message of the error with the fields <code>{type}</code>, the type of the value, and <code>{param}</code>, the <code>what</code>, in place of the English one</td>
 </tr>
 </tbody>
 </table>

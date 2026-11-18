@@ -2157,7 +2157,7 @@
 
 
 <h1 id="kwic-concordance">KWIC concordance<a class="headerlink" href="#kwic-concordance" title="Permanent link">&para;</a></h1>
-<div class="signature highlight"><pre><span></span><code><span class="n">kwic</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">keyword</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">by_lemma</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">ignore_case</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">tokenize</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">lemmatize</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fold</span><span class="o">=</span><span class="nb">str</span><span class="o">.</span><span class="n">lower</span><span class="p">,</span> <span class="n">sentenize</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">kwic</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">keyword</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">by_lemma</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">ignore_case</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">tokenize</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">lemmatize</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fold</span><span class="o">=</span><span class="nb">str</span><span class="o">.</span><span class="n">lower</span><span class="p">,</span> <span class="n">sentenize</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">messages</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 <!-- --8<-- [start:kwic] -->
 <p>A KWIC concordance (keyword in context) - every occurrence of a word or a phrase with its context on both sides. Occurrences are found among the words of the text by the word form, ignoring case or respecting it (<code>ignore_case=False</code>), or by the lemma (<code>by_lemma=True</code>); the keyword is lemmatized as a string, so with a lemmatizer a phrase may be written in any form and without one it is given by lemmas. The words are those of the <a href="https://sergeyshk.github.io/anyTS/document/">document</a> of the text - the tokens of a string by the tokenizer, of a <code>Doc</code> or of a <code>Document</code> by their own - and the keyword is split as a string: a tokenizer that splits a string as the pipeline does finds the same in both. A word has a letter or a digit, so punctuation and symbols are not words; forms are compared in the composed form of Unicode (NFC), without soft hyphens, and forms and lemmas without the final period of a word with a letter: a tokenizer by Universal Dependencies leaves the period of an abbreviation to it inside a sentence and splits it off at the end, so the keyword <code>Sr.</code> finds the word of <code>El Sr. García vino</code> and <code>EE. UU.</code> the words of <code>Viajó a EE. UU. en mayo</code>.</p>
@@ -2291,7 +2291,7 @@
 
 <h2 id="format_kwic">Aligned lines<a class="headerlink" href="#format_kwic" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:format_kwic] -->
-<div class="signature highlight"><pre><span></span><code><span class="n">format_kwic</span><span class="p">(</span><span class="n">concordances</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">40</span><span class="p">)</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">format_kwic</span><span class="p">(</span><span class="n">concordances</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">messages</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 <p>Aligns the lines on the keyword in a text, one line per occurrence: the left context is cut on the left and aligned to the right, the right one cut on the right. The lines may come from any iterable and are taken in the composed form of Unicode (NFC), so the widths count characters as shown.</p>
 <table>
@@ -2316,13 +2316,19 @@
 <td style="text-align: left;"><code>40</code></td>
 <td style="text-align: left;">Width of a context in characters</td>
 </tr>
+<tr>
+<td style="text-align: left;"><code>messages</code></td>
+<td style="text-align: left;"><code>dict[str, str]</code></td>
+<td style="text-align: left;"><code>None</code></td>
+<td style="text-align: left;">Messages of the errors by key, in place of those of the library</td>
+</tr>
 </tbody>
 </table>
 <p>Lines that are a string or cannot be iterated raise <code>SourceTypeError</code>, and a <code>width</code> that is not an integer of at least one <code>ParameterError</code>.</p>
 <!-- --8<-- [end:format_kwic] -->
 
 <!-- --8<-- [start:print_kwic] -->
-<div class="signature highlight"><pre><span></span><code><span class="n">print_kwic</span><span class="p">(</span><span class="n">concordances</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">40</span><span class="p">)</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">print_kwic</span><span class="p">(</span><span class="n">concordances</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">messages</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 <p>Prints the result of <code>format_kwic</code>.</p>
 <!-- --8<-- [end:print_kwic] -->
@@ -2365,6 +2371,12 @@
 <td style="text-align: left;"><code>Callable</code></td>
 <td style="text-align: left;"><code>None</code></td>
 <td style="text-align: left;">The sentences, as triples of the start, the end and the text in any order, of a string, of the keyword and of the text of a <code>Doc</code> with no or only partial sentence starts (a token whose <code>is_sent_start</code> is unset); those of <code>SentsExtractor</code> by default</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>messages</code></td>
+<td style="text-align: left;"><code>dict[str, str]</code></td>
+<td style="text-align: left;"><code>None</code></td>
+<td style="text-align: left;">Messages of the errors by key, in place of those of the library</td>
 </tr>
 </tbody>
 </table>
