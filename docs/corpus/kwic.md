@@ -1,7 +1,7 @@
 # KWIC concordance
 
 ``` {.python .signature}
-kwic(source, keyword, window=5, by_lemma=False, ignore_case=True, tokenize=None, lemmatize=None, fold=str.lower, sentenize=None)
+kwic(source, keyword, window=5, by_lemma=False, ignore_case=True, tokenize=None, lemmatize=None, fold=str.lower, sentenize=None, *, messages=None)
 ```
 
 <!-- --8<-- [start:kwic] -->
@@ -81,7 +81,7 @@ A list of `Concordance` named tuples in the order of the text.
 
 <!-- --8<-- [start:format_kwic] -->
 ``` {.python .signature}
-format_kwic(concordances, width=40)
+format_kwic(concordances, width=40, *, messages=None)
 ```
 
 Aligns the lines on the keyword in a text, one line per occurrence: the left context is cut on the left and aligned to the right, the right one cut on the right. The lines may come from any iterable and are taken in the composed form of Unicode (NFC), so the widths count characters as shown.
@@ -90,13 +90,14 @@ Aligns the lines on the keyword in a text, one line per occurrence: the left con
 | :-------- | :--- | :------ | :---------- |
 | `concordances` | `list[Concordance]` | - | Lines of a concordance |
 | `width` | `int` | `40` | Width of a context in characters |
+| `messages` | `dict[str, str]` | `None` | Messages of the errors by key, in place of those of the library |
 
 Lines that are a string or cannot be iterated raise `SourceTypeError`, and a `width` that is not an integer of at least one `ParameterError`.
 <!-- --8<-- [end:format_kwic] -->
 
 <!-- --8<-- [start:print_kwic] -->
 ``` {.python .signature}
-print_kwic(concordances, width=40)
+print_kwic(concordances, width=40, *, messages=None)
 ```
 
 Prints the result of `format_kwic`.
@@ -116,6 +117,7 @@ The language enters through four parameters:
 | `lemmatize` | `Callable` | `None` | The lemmas of a word, given its text and its words of Universal Dependencies (`Word` objects of anySeg; none for the keyword), or one lemma as a string; a word matches when one of its lemmas is one of those of the keyword |
 | `fold` | `Callable` | `str.lower` | The folding of a word form (with `ignore_case`) or a lemma before the comparison, such as the letters a language takes for the same |
 | `sentenize` | `Callable` | `None` | The sentences, as triples of the start, the end and the text in any order, of a string, of the keyword and of the text of a `Doc` with no or only partial sentence starts (a token whose `is_sent_start` is unset); those of `SentsExtractor` by default |
+| `messages` | `dict[str, str]` | `None` | Messages of the errors by key, in place of those of the library |
 
 A `tokenize` that does not give the tokens in order as triples of integer bounds within the string and a string raises `SourceTypeError`, and so does a `sentenize` whose triples do not lie within it. By default the lemmas of a word are the word itself and, for a token of one word of Universal Dependencies with a lemma, that lemma: a word is found by its own form, and a `Doc` of a pipeline with a lemmatizer by its lemmas.
 <!-- --8<-- [end:kwic-hooks] -->

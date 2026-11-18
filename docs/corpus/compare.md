@@ -2,7 +2,7 @@
 
 <!-- --8<-- [start:compare_features] -->
 ``` {.python .signature}
-compare_features(table_a, table_b, labels=('A', 'B'), n_bootstrap=1000, seed=0)
+compare_features(table_a, table_b, labels=('A', 'B'), n_bootstrap=1000, seed=0, *, messages=None)
 ```
 
 Compares two corpora feature by feature. Each corpus is a table of the features of its windows, parts of the texts of about equal size, so the features do not depend on text length. The result has one row per column, by descending absolute Cliff's delta, the features without statistics last. The bootstrap resamples whole texts by the index level `text`; without it every row is a text of its own. Every feature has a generator of its own, from the seed and the name of the feature, so its interval does not change with the other columns. A column missing from one table gives `nan`.
@@ -39,13 +39,14 @@ Compares two corpora feature by feature. Each corpus is a table of the features 
 | `labels` | `tuple[str, str]` | `('A', 'B')` | Names of the corpora for the columns, two strings that give distinct columns |
 | `n_bootstrap` | `int` | `1000` | Number of bootstrap samples |
 | `seed` | `int` / `Generator` | `0` | Seed of the random number generator, a non-negative integer, or a numpy `Generator`; `None` - a random one |
+| `messages` | `dict[str, str]` | `None` | Messages of the errors by key, in place of those of the library |
 
 A table that is not a `DataFrame`, repeats the name of a column or has a column that is not numeric raises `SourceTypeError`; the other parameters are checked by `check_comparison_params`.
 <!-- --8<-- [end:compare_features-parameters] -->
 
 <!-- --8<-- [start:check_comparison_params] -->
 ``` {.python .signature}
-check_comparison_params(labels=('A', 'B'), n_bootstrap=1000, seed=0)
+check_comparison_params(labels=('A', 'B'), n_bootstrap=1000, seed=0, *, messages=None)
 ```
 
 Checks the parameters of `compare_features` before the texts are processed: it raises `ParameterError` unless the labels are two strings that give distinct columns (`("diff", "B")` would repeat `median_diff`), the number of bootstrap samples is an integer of at least one and the seed is `None`, a non-negative integer or a numpy `Generator`.
@@ -78,7 +79,7 @@ The columns are `anyts.corpus.COMPARISON_COLUMNS` with the suffixes `a` and `b` 
 
 <!-- --8<-- [start:compare_values] -->
 ``` {.python .signature}
-compare_values(values_a, values_b, n_bootstrap=1000, rng=None, texts_a=None, texts_b=None)
+compare_values(values_a, values_b, n_bootstrap=1000, rng=None, texts_a=None, texts_b=None, *, messages=None)
 ```
 
 Compares two sets of values of one feature and returns one row in the order of `anyts.corpus.COMPARISON_COLUMNS`, `p_holm` left `nan`. Undefined and infinite values, missing ones (`None`, `NA`) included, are dropped with their texts; with all the values of both sets equal the p-value is `nan`.
@@ -91,13 +92,14 @@ Compares two sets of values of one feature and returns one row in the order of `
 | `rng` | `Generator` | `None` | Random number generator of numpy; `None` - a new one without a seed |
 | `texts_a` | `list` | `None` | Texts of the values in the first corpus for the bootstrap; `None` - every value a text of its own |
 | `texts_b` | `list` | `None` | Texts of the values in the second corpus |
+| `messages` | `dict[str, str]` | `None` | Messages of the errors by key, in place of those of the library |
 
 A value that is neither a number nor a missing one, values that are not a flat list and texts that are not labels of one type raise `SourceTypeError`; an `n_bootstrap` that is not an integer of at least one, texts not as many as the values and an `rng` that is not a numpy `Generator` raise `ParameterError`.
 <!-- --8<-- [end:compare_values] -->
 
 <!-- --8<-- [start:calc_cohen_d] -->
 ``` {.python .signature}
-calc_cohen_d(values_a, values_b)
+calc_cohen_d(values_a, values_b, *, messages=None)
 ```
 
 Cohen's d with the pooled sample variances (ddof=1); `nan` with fewer than two values on a side or without spread.
@@ -106,13 +108,14 @@ Cohen's d with the pooled sample variances (ddof=1); `nan` with fewer than two v
 | :-------- | :--- | :------ | :---------- |
 | `values_a` | `list[float]` | - | Values in the first corpus |
 | `values_b` | `list[float]` | - | Values in the second corpus |
+| `messages` | `dict[str, str]` | `None` | Messages of the errors by key, in place of those of the library |
 
 A value that is neither a number nor a missing one (`None`, `NA`) and values that are not a flat list raise `SourceTypeError`.
 <!-- --8<-- [end:calc_cohen_d] -->
 
 <!-- --8<-- [start:calc_cliff_delta] -->
 ``` {.python .signature}
-calc_cliff_delta(values_a, values_b)
+calc_cliff_delta(values_a, values_b, *, messages=None)
 ```
 
 Cliff's delta, the share of the pairs where the first value is greater minus the share where it is smaller; `nan` for an empty set or an undefined value. Computed by sorting, in $O((n_A + n_B) \log n_B)$ time and linear memory.
@@ -121,13 +124,14 @@ Cliff's delta, the share of the pairs where the first value is greater minus the
 | :-------- | :--- | :------ | :---------- |
 | `values_a` | `list[float]` | - | Values in the first corpus |
 | `values_b` | `list[float]` | - | Values in the second corpus |
+| `messages` | `dict[str, str]` | `None` | Messages of the errors by key, in place of those of the library |
 
 A value that is neither a number nor a missing one (`None`, `NA`) and values that are not a flat list raise `SourceTypeError`.
 <!-- --8<-- [end:calc_cliff_delta] -->
 
 <!-- --8<-- [start:bootstrap_median_diff] -->
 ``` {.python .signature}
-bootstrap_median_diff(values_a, values_b, n_bootstrap=1000, rng=None, confidence=0.95, texts_a=None, texts_b=None)
+bootstrap_median_diff(values_a, values_b, n_bootstrap=1000, rng=None, confidence=0.95, texts_a=None, texts_b=None, *, messages=None)
 ```
 
 The percentile bootstrap interval of the difference of the medians. With `texts_a` and `texts_b` whole texts are resampled, the median of a draw taken over the values of its texts; with fewer than two texts on a side the interval is `nan`.
@@ -141,13 +145,14 @@ The percentile bootstrap interval of the difference of the medians. With `texts_
 | `confidence` | `float` | `0.95` | Confidence level |
 | `texts_a` | `list` | `None` | Texts of the values in the first corpus; `None` - every value is resampled on its own |
 | `texts_b` | `list` | `None` | Texts of the values in the second corpus |
+| `messages` | `dict[str, str]` | `None` | Messages of the errors by key, in place of those of the library |
 
 A value that is neither a number nor a missing one, values that are not a flat list and texts that are not labels of one type raise `SourceTypeError`; an `n_bootstrap` that is not an integer of at least one, a `confidence` that is not a number in (0, 1), texts not as many as the values and an `rng` that is not a numpy `Generator` raise `ParameterError`.
 <!-- --8<-- [end:bootstrap_median_diff] -->
 
 <!-- --8<-- [start:holm_correction] -->
 ``` {.python .signature}
-holm_correction(p_values)
+holm_correction(p_values, *, messages=None)
 ```
 
 Holm's correction for multiple comparisons: the p-values are sorted in ascending order, the i-th is multiplied by (m − i + 1), where m is the number of defined values, then the running maximum is taken and capped at one; `nan` stays `nan`.
@@ -155,6 +160,7 @@ Holm's correction for multiple comparisons: the p-values are sorted in ascending
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
 | `p_values` | `list[float]` | - | p-values |
+| `messages` | `dict[str, str]` | `None` | Messages of the errors by key, in place of those of the library |
 
 A p-value that is neither a number nor a missing one and p-values that are not a flat list raise `SourceTypeError`, and a p-value outside [0, 1] `ParameterError`.
 <!-- --8<-- [end:holm_correction] -->
@@ -180,7 +186,7 @@ A p-value that is neither a number nor a missing one and p-values that are not a
 ## Windows of a text { #split_windows }
 
 ``` {.python .signature}
-split_windows(text, window=1000, min_words=None, *, tokenize=None, opening_marks=OPENING_MARKS, symmetric_marks=SYMMETRIC_MARKS, closing_marks=CLOSING_MARKS, messages=MESSAGES)
+split_windows(text, window=1000, min_words=None, *, tokenize=None, opening_marks=OPENING_MARKS, symmetric_marks=SYMMETRIC_MARKS, closing_marks=CLOSING_MARKS, messages=None)
 ```
 
 <!-- --8<-- [start:split_windows] -->
@@ -195,7 +201,7 @@ Cuts a text into consecutive windows of exactly `window` words, so the features 
 | `opening_marks` | `Collection[str]` | `OPENING_MARKS` | Marks that open a phrase |
 | `symmetric_marks` | `Collection[str]` | `SYMMETRIC_MARKS` | Opening marks that close a phrase as well |
 | `closing_marks` | `Collection[str]` | `CLOSING_MARKS` | Marks that close a phrase |
-| `messages` | `dict[str, str]` | `MESSAGES` | Messages of the errors by key |
+| `messages` | `dict[str, str]` | `None` | Messages of the errors by key, in place of those of the library |
 
 A text that is not a string, a tokenizer that is not callable or does not give the words in order as triples of integer bounds within the text and a string, and marks that are not a collection of strings raise `SourceTypeError`, a window or `min_words` that is not an integer of at least one, `min_words` above the window and a mark of more than one character `ParameterError`. A text without words or shorter than `min_words` gives an empty list.
 <!-- --8<-- [end:split_windows] -->
@@ -221,7 +227,7 @@ The marks of the core are those of `anyts.constants`: quotes, brackets and dashe
 ## Rhythm of the sentences { #sentence_rhythm }
 
 ``` {.python .signature}
-sentence_rhythm(lengths, *, messages=MESSAGES)
+sentence_rhythm(lengths, *, messages=None)
 ```
 
 <!-- --8<-- [start:sentence_rhythm] -->
@@ -230,7 +236,7 @@ Gives the rhythm of the sentences from their lengths in words: the mean `sents_m
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
 | `lengths` | `list[int]` | - | Lengths of the sentences in words |
-| `messages` | `dict[str, str]` | `MESSAGES` | Messages of the errors by key |
+| `messages` | `dict[str, str]` | `None` | Messages of the errors by key, in place of those of the library |
 
 Lengths that are not a list of integers raise `SourceTypeError`, a negative length `ParameterError`.
 <!-- --8<-- [end:sentence_rhythm] -->

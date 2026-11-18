@@ -9,7 +9,14 @@ from scipy.spatial.distance import cdist, jensenshannon, pdist, squareform
 
 from ..constants import DELTA_VARIANTS
 from ..exceptions import ParameterError, SourceError, SourceTypeError
-from ..utils import _sliceable, check_integer, check_number, check_sequence, check_words
+from ..utils import (
+    _check_word_list,
+    _holds_texts,
+    _messages,
+    _sliceable,
+    check_integer,
+    check_number,
+)
 
 _ZERO_SEGMENTS = 0.5
 
@@ -34,7 +41,11 @@ class ZetaScore(NamedTuple):
 
 
 def frequency_table(
-    corpus: Mapping[str, Sequence[str]], n_mfw: int | None = 100, culling: float = 0.0
+    corpus: Mapping[str, Sequence[str]],
+    n_mfw: int | None = 100,
+    culling: float = 0.0,
+    *,
+    messages: Mapping[str, str] | None = None,
 ) -> pd.DataFrame:
     """
     Building the table of relative frequencies of the most frequent units of a corpus
@@ -50,6 +61,7 @@ def frequency_table(
         corpus (dict[str, list[str]]): Units of the texts by the names of the texts
         n_mfw (int): Number of the most frequent units; None - all of them
         culling (float): Smallest share of the texts a unit occurs in
+        messages (dict[str, str]): Messages of the errors by key; MESSAGES by default
 
     Returns:
         DataFrame: Table of relative frequencies
@@ -69,14 +81,9 @@ def frequency_table(
         A  0.4  0.2
         B  0.2  0.2
     """
-    _check_mapping(corpus, "corpus")
-    if not corpus:
-        raise SourceError("The corpus has no texts")
-    for units in corpus.values():
-        check_words(units, "units of a text")
-    if any(len(units) == 0 for units in corpus.values()):
-        raise SourceError("The corpus holds a text without units")
-    _check_selection(n_mfw, culling)
+    messages = _messages(messages)
+    _check_corpus(corpus, "corpus", messages)
+    _check_selection(n_mfw, culling, messages)
     rows = {
         name: {unit: count / len(units) for unit, count in Counter(units).items()}
         for name, units in corpus.items()
@@ -96,28 +103,27 @@ def frequency_table(
     if n_mfw:
         selected = selected[:n_mfw]
     if not selected:
-        raise SourceError("No unit is left after culling")
+        raise SourceError(messages["culled_units"])
     columns = {unit: [row.get(unit, 0.0) for row in rows.values()] for unit in selected}
     return pd.DataFrame(columns, index=list(rows))
 
 
-def _check_selection(n_mfw: object, culling: object) -> None:
+def _check_selection(n_mfw: object, culling: object, messages: Mapping[str, str]) -> None:
     """Checking the number of the most frequent units and the share for culling"""
-    check_number(culling, "share of texts for culling")
+    check_number(culling, "culling", message=messages["number_param"])
     if not 0 <= culling <= 1:  # type: ignore[operator]  # a number after check_number
-        raise ParameterError("The share of texts for culling must lie between 0 and 1")
+        raise ParameterError(messages["culling_share"])
     if n_mfw is not None:
-        check_integer(n_mfw, "number of the most frequent units")
+        check_integer(n_mfw, "n_mfw", message=messages["integer_param"])
     if n_mfw is not None and n_mfw < 1:  # type: ignore[operator]  # an integer after check_integer
-        raise ParameterError("The number of the most frequent units must be greater than 0")
+        raise ParameterError(messages["positive_param"].format(param="n_mfw"))
 
 
-def _check_mapping(corpus: object, what: str) -> None:
+def _check_mapping(corpus: object, what: str, messages: Mapping[str, str]) -> None:
     """Checking that a corpus is a mapping of the names of its texts to their units"""
     if not isinstance(corpus, Mapping):
         raise SourceTypeError(
-            f"The {what} must be a mapping of the names of the texts to their units, "
-            f"not {type(corpus).__name__}"
+            messages["corpus_type"].format(param=what, type=type(corpus).__name__)
         )
 
 
@@ -159,6 +165,8 @@ def delta(
     n_mfw: int | None = 100,
     variant: str = "burrows",
     culling: float = 0.0,
+    *,
+    messages: Mapping[str, str] | None = None,
 ) -> pd.DataFrame:
     """
     Computing the distances between texts by Burrows's Delta and its variants
@@ -182,6 +190,7 @@ def delta(
         n_mfw (int): Number of the most frequent units; None - all of them
         variant (str): Variant of Delta of DELTA_VARIANTS
         culling (float): Smallest share of the texts a unit occurs in
+        messages (dict[str, str]): Messages of the errors by key; MESSAGES by default
 
     Returns:
         DataFrame: Symmetric matrix of distances with the names of the texts
@@ -205,12 +214,12 @@ def delta(
         B  1.299  0.000  0.866
         C  1.299  0.866  0.000
     """
-    if not isinstance(variant, str) or variant not in DELTA_VARIANTS:
-        raise ParameterError(f"Unknown variant of Delta: {variant}")
-    _check_mapping(corpus, "corpus")
+    messages = _messages(messages)
+    _check_variant(variant, messages)
+    _check_mapping(corpus, "corpus", messages)
     if len(corpus) < 3:
-        raise SourceError("The distances need at least three texts")
-    scores = z_scores(frequency_table(corpus, n_mfw, culling))
+        raise SourceError(messages["delta_texts"])
+    scores = z_scores(frequency_table(corpus, n_mfw, culling, messages=messages))
     distances = squareform(_delta_distances(scores.to_numpy(), None, variant))
     return pd.DataFrame(distances, index=scores.index, columns=scores.index)
 
@@ -251,6 +260,8 @@ def delta_profiles(
     variant: str = "burrows",
     culling: float = 0.0,
     statistics: Mapping[str, Sequence[str]] | None = None,
+    *,
+    messages: Mapping[str, str] | None = None,
 ) -> pd.DataFrame:
     """
     Computing the distances by Delta from texts to reference texts
@@ -272,6 +283,7 @@ def delta_profiles(
         culling (float): Smallest share of the texts a unit occurs in
         statistics (dict[str, list[str]]): Texts for the list of units and the
             statistics of the scaling; None - the reference texts
+        messages (dict[str, str]): Messages of the errors by key; MESSAGES by default
 
     Returns:
         DataFrame: Distances, rows - the texts under test, columns - the reference texts
@@ -294,18 +306,18 @@ def delta_profiles(
              A      B      C
         ?  0.0  1.299  1.299
     """
-    if not isinstance(variant, str) or variant not in DELTA_VARIANTS:
-        raise ParameterError(f"Unknown variant of Delta: {variant}")
-    _check_mapping(reference, "reference corpus")
-    _check_mapping(samples, "tested corpus")
+    messages = _messages(messages)
+    _check_variant(variant, messages)
+    _check_mapping(reference, "reference", messages)
+    _check_mapping(samples, "samples", messages)
     if statistics is not None:
-        _check_mapping(statistics, "corpus of the statistics")
+        _check_mapping(statistics, "statistics", messages)
     basis = reference if statistics is None else statistics
     if len(basis) < 3:
-        raise SourceError("The statistics of the scaling need at least three texts")
-    _check_corpus(reference, "reference")
-    _check_corpus(samples, "tested")
-    table = frequency_table(basis, n_mfw, culling)
+        raise SourceError(messages["scaling_texts"])
+    _check_corpus(reference, "reference", messages)
+    _check_corpus(samples, "samples", messages)
+    table = frequency_table(basis, n_mfw, culling, messages=messages)
     scores = [
         _scale(_relative_frequencies(corpus, table.columns), table)
         for corpus in (reference, samples)
@@ -314,15 +326,23 @@ def delta_profiles(
     return pd.DataFrame(distances, index=list(samples), columns=list(reference))
 
 
-def _check_corpus(corpus: Mapping[str, Sequence[str]], what: str) -> None:
+def _check_corpus(
+    corpus: Mapping[str, Sequence[str]], what: str, messages: Mapping[str, str]
+) -> None:
     """Checking that a corpus has texts, all of them sequences with units"""
-    _check_mapping(corpus, f"{what} corpus")
+    _check_mapping(corpus, what, messages)
     if not corpus:
-        raise SourceError(f"There are no {what} texts")
+        raise SourceError(messages["corpus_texts"].format(param=what))
     for units in corpus.values():
-        check_words(units, "units of a text")
+        _check_word_list(units, what, messages, text=True)
     if any(len(units) == 0 for units in corpus.values()):
-        raise SourceError(f"One of the {what} texts has no units")
+        raise SourceError(messages["corpus_empty_text"].format(param=what))
+
+
+def _check_variant(variant: object, messages: Mapping[str, str]) -> None:
+    """Checking that a variant of Delta is one of DELTA_VARIANTS"""
+    if not isinstance(variant, str) or variant not in DELTA_VARIANTS:
+        raise ParameterError(messages["delta_variant"].format(variant=variant))
 
 
 def _relative_frequencies(corpus: Mapping[str, Sequence[str]], columns: pd.Index) -> pd.DataFrame:
@@ -352,6 +372,8 @@ def rolling_delta(
     variant: str = "burrows",
     culling: float = 0.0,
     statistics: Mapping[str, Sequence[str]] | None = None,
+    *,
+    messages: Mapping[str, str] | None = None,
 ) -> pd.DataFrame:
     """
     Computing the distances by Delta from the windows of a text to reference texts
@@ -380,6 +402,7 @@ def rolling_delta(
         culling (float): Smallest share of the windows a unit occurs in
         statistics (dict[str, list[str]]): Texts whose windows give the list of
             units and the statistics of the scaling; None - the reference texts
+        messages (dict[str, str]): Messages of the errors by key; MESSAGES by default
 
     Returns:
         DataFrame: Distances, rows - the windows of the text by the position of
@@ -410,32 +433,32 @@ def rolling_delta(
         6  1.021  0.408
         8  1.633  0.204
     """
-    if not isinstance(variant, str) or variant not in DELTA_VARIANTS:
-        raise ParameterError(f"Unknown variant of Delta: {variant}")
-    for value, what in ((window, "size of a window"), (step, "step")):
-        check_integer(value, what)
+    messages = _messages(messages)
+    _check_variant(variant, messages)
+    for value, what in ((window, "window"), (step, "step")):
+        check_integer(value, what, message=messages["integer_param"])
         if value < 1:
-            raise ParameterError(f"The {what} must be greater than 0")
+            raise ParameterError(messages["positive_param"].format(param=what))
     if step > window:
-        raise ParameterError("The step must not exceed the size of a window")
-    _check_selection(n_mfw, culling)
-    _check_corpus(reference, "reference")
+        raise ParameterError(messages["step_window"])
+    _check_selection(n_mfw, culling, messages)
+    _check_corpus(reference, "reference", messages)
     if statistics is None and len(reference) < 2:
-        raise SourceError("The rolling Delta needs at least two reference texts")
-    check_words(text, "units of the text")
+        raise SourceError(messages["rolling_texts"])
+    _check_word_list(text, "text", messages)
     if statistics is not None:
-        _check_corpus(statistics, "statistics")
+        _check_corpus(statistics, "statistics", messages)
     for corpus, what in ((reference, "reference"), (statistics or {}, "statistics")):
         if any(len(units) < window for units in corpus.values()):
-            raise SourceError(f"One of the {what} texts is shorter than a window")
+            raise SourceError(messages["corpus_short_text"].format(param=what))
     if len(text) < window:
-        raise SourceError("The text is shorter than a window")
+        raise SourceError(messages["short_text"])
     basis = [
         _sliceable(units) for units in (reference if statistics is None else statistics).values()
     ]
     if sum(len(_window_starts(len(units), window, step)) for units in basis) < 3:
-        raise SourceError("The statistics of the scaling need at least three windows")
-    columns = _window_units(basis, window, step, n_mfw, culling)
+        raise SourceError(messages["scaling_windows"])
+    columns = _window_units(basis, window, step, n_mfw, culling, messages)
     table = np.vstack([_window_frequencies(units, columns, window, step) for units in basis])
     mean = table.mean(axis=0)
     constant = table.max(axis=0) == table.min(axis=0)
@@ -460,7 +483,12 @@ def _window_starts(length: int, window: int, step: int) -> range:
 
 
 def _window_units(
-    texts: Sequence[Sequence[str]], window: int, step: int, n_mfw: int | None, culling: float
+    texts: Sequence[Sequence[str]],
+    window: int,
+    step: int,
+    n_mfw: int | None,
+    culling: float,
+    messages: Mapping[str, str],
 ) -> list[str]:
     """
     The most frequent units of the windows of texts, as frequency_table of the windows gives
@@ -505,7 +533,7 @@ def _window_units(
     if n_mfw:
         kept = kept[:n_mfw]
     if not kept:
-        raise SourceError("No unit is left after culling")
+        raise SourceError(messages["culled_units"])
     return [names[code] for code in kept]
 
 
@@ -547,6 +575,8 @@ def zeta(
     comparison: Sequence[str] | Sequence[Sequence[str]],
     segment_size: int = 2000,
     top_n: int | None = None,
+    *,
+    messages: Mapping[str, str] | None = None,
 ) -> list[ZetaScore]:
     """
     Computing Zeta - the markers of preferred and avoided words
@@ -570,6 +600,7 @@ def zeta(
         comparison (list[str]|list[list[str]]): Words of the comparison corpus
         segment_size (int): Size of a segment in words
         top_n (int): Number of words from the start of the list; None - all of them
+        messages (dict[str, str]): Messages of the errors by key; MESSAGES by default
 
     Returns:
         list[ZetaScore]: Words by descending Zeta, by descending logarithmic Zeta
@@ -587,19 +618,20 @@ def zeta(
         >>> [(score.word, score.zeta) for score in zeta(target, comparison, segment_size=3, top_n=2)]
         [('cat', 1.0), ('sleeps', 0.5)]
     """
-    check_integer(segment_size, "size of a segment")
-    if segment_size < 1:
-        raise ParameterError("The size of a segment must be greater than 0")
+    messages = _messages(messages)
+    _check_segment_size(segment_size, messages)
     if top_n is not None:
-        check_integer(top_n, "number of words")
+        check_integer(top_n, "top_n", message=messages["integer_param"])
     if top_n is not None and top_n < 1:
-        raise ParameterError("The number of words must be greater than 0")
-    check_sequence(target)
-    check_sequence(comparison)
-    presence_target, n_target = _segment_presence(target, segment_size)
-    presence_comparison, n_comparison = _segment_presence(comparison, segment_size)
+        raise ParameterError(messages["positive_param"].format(param="top_n"))
+    _check_word_list(target, "target", messages, items=False)
+    _check_word_list(comparison, "comparison", messages, items=False)
+    presence_target, n_target = _segment_presence(target, segment_size, "target", messages)
+    presence_comparison, n_comparison = _segment_presence(
+        comparison, segment_size, "comparison", messages
+    )
     if not n_target or not n_comparison:
-        raise SourceError("The data source has no words")
+        raise SourceError(messages["no_words"])
     scores = []
     for word in set(presence_target) | set(presence_comparison):
         dp_target = presence_target.get(word, 0) / n_target
@@ -616,25 +648,31 @@ def zeta(
 
 
 def _segment_presence(
-    texts: Sequence[str] | Sequence[Sequence[str]], segment_size: int
+    texts: Sequence[str] | Sequence[Sequence[str]],
+    segment_size: int,
+    what: str,
+    messages: Mapping[str, str],
 ) -> tuple[Counter[str], int]:
     """Number of the segments every word occurs in and the number of the segments"""
     presence: Counter[str] = Counter()
     n_segments = 0
-    for segment in _segments(texts, segment_size):
+    for segment in _segments(texts, segment_size, what, messages):
         presence.update(segment)
         n_segments += 1
     return presence, n_segments
 
 
 def _segments(
-    texts: Sequence[str] | Sequence[Sequence[str]], segment_size: int
+    texts: Sequence[str] | Sequence[Sequence[str]],
+    segment_size: int,
+    what: str,
+    messages: Mapping[str, str],
 ) -> Iterator[set[str]]:
     """Words of every segment of one text or of a list of texts"""
-    if len(texts) and all(isinstance(text, str) for text in texts):
+    if not _holds_texts(texts):
         texts = [texts]  # type: ignore[list-item]
     for text in texts:
-        check_words(text, "words of a text")
+        _check_word_list(text, what, messages, text=True)
         if not len(text):
             continue
         for segment in np.array_split(
@@ -644,11 +682,20 @@ def _segments(
             yield set(segment.tolist())
 
 
+def _check_segment_size(segment_size: object, messages: Mapping[str, str]) -> None:
+    """Checking the size of a segment: an integer of at least one"""
+    check_integer(segment_size, "segment_size", message=messages["integer_param"])
+    if segment_size < 1:  # type: ignore[operator]  # an integer after check_integer
+        raise ParameterError(messages["positive_param"].format(param="segment_size"))
+
+
 def zeta_segments(
     corpora: Mapping[str, Sequence[str] | Sequence[Sequence[str]]],
     preferred: Collection[str],
     avoided: Collection[str],
     segment_size: int = 2000,
+    *,
+    messages: Mapping[str, str] | None = None,
 ) -> pd.DataFrame:
     """
     Computing the shares of the markers of Zeta in the segments of corpora
@@ -668,6 +715,7 @@ def zeta_segments(
             of the list of zeta
         avoided (collection[str]): Words the target corpus avoids - the end of the list
         segment_size (int): Size of a segment in words
+        messages (dict[str, str]): Messages of the errors by key; MESSAGES by default
 
     Returns:
         DataFrame: Segments in the order of the corpora and of their texts;
@@ -697,28 +745,24 @@ def zeta_segments(
         3    dog        0.0      1.0
         4      ?        0.5      0.5
     """
-    check_integer(segment_size, "size of a segment")
-    if segment_size < 1:
-        raise ParameterError("The size of a segment must be greater than 0")
+    messages = _messages(messages)
+    _check_segment_size(segment_size, messages)
     if not isinstance(corpora, Mapping):
-        raise SourceTypeError(
-            f"The corpora must be a mapping of their names to their words, "
-            f"not {type(corpora).__name__}"
-        )
+        raise SourceTypeError(messages["corpora_type"].format(type=type(corpora).__name__))
     if not corpora:
-        raise SourceError("There are no corpora")
+        raise SourceError(messages["no_corpora"])
     markers = []
     for words, what in ((preferred, "preferred"), (avoided, "avoided")):
-        check_words(words, f"{what} words", ordered=False)
+        _check_word_list(words, what, messages, ordered=False)
         if not len(words):
-            raise SourceError(f"There are no {what} words")
+            raise SourceError(messages["param_words"].format(param=what))
         markers.append(set(words))
     rows = []
     for name, texts in corpora.items():
-        check_sequence(texts)
-        segments = list(_segments(texts, segment_size))
+        _check_word_list(texts, "corpora", messages, items=False, text=True)
+        segments = list(_segments(texts, segment_size, "corpora", messages))
         if not segments:
-            raise SourceError(f"The corpus {name} has no words")
+            raise SourceError(messages["corpus_words"].format(name=name))
         rows += [
             (
                 name,
@@ -730,7 +774,13 @@ def zeta_segments(
     return pd.DataFrame(rows, columns=["corpus", "preferred", "avoided"])
 
 
-def kilgarriff_chi2(words_a: Sequence[str], words_b: Sequence[str], n_mfw: int = 500) -> float:
+def kilgarriff_chi2(
+    words_a: Sequence[str],
+    words_b: Sequence[str],
+    n_mfw: int = 500,
+    *,
+    messages: Mapping[str, str] | None = None,
+) -> float:
     """
     Computing Kilgarriff's chi-square distance between two corpora
 
@@ -748,6 +798,7 @@ def kilgarriff_chi2(words_a: Sequence[str], words_b: Sequence[str], n_mfw: int =
         words_a (list[str]): Words of the first corpus
         words_b (list[str]): Words of the second corpus
         n_mfw (int): Number of the most frequent words of the joint corpus
+        messages (dict[str, str]): Messages of the errors by key; MESSAGES by default
 
     Returns:
         float: Value of the chi-square
@@ -762,17 +813,18 @@ def kilgarriff_chi2(words_a: Sequence[str], words_b: Sequence[str], n_mfw: int =
         >>> round(kilgarriff_chi2(["the", "cat", "the"], ["the", "dog", "a"], n_mfw=1), 3)
         0.333
     """
-    check_integer(n_mfw, "number of the most frequent words")
+    messages = _messages(messages)
+    check_integer(n_mfw, "n_mfw", message=messages["integer_param"])
     if n_mfw < 1:
-        raise ParameterError("The number of the most frequent words must be greater than 0")
-    check_words(words_a)
-    check_words(words_b)
+        raise ParameterError(messages["positive_param"].format(param="n_mfw"))
+    _check_word_list(words_a, "words_a", messages)
+    _check_word_list(words_b, "words_b", messages)
     counts_a = Counter(words_a)
     counts_b = Counter(words_b)
     size_a = sum(counts_a.values())
     size_b = sum(counts_b.values())
     if not size_a or not size_b:
-        raise SourceError("The data source has no words")
+        raise SourceError(messages["no_words"])
     joint = counts_a + counts_b
     words = sorted(joint, key=lambda word: (-joint[word], word))[:n_mfw]
     total = size_a + size_b
@@ -785,7 +837,11 @@ def kilgarriff_chi2(words_a: Sequence[str], words_b: Sequence[str], n_mfw: int =
     return chi2
 
 
-def mendenhall_curve(words: Sequence[str]) -> dict[int, float]:
+def mendenhall_curve(
+    words: Sequence[str],
+    *,
+    messages: Mapping[str, str] | None = None,
+) -> dict[int, float]:
     """
     Computing the Mendenhall curve - the distribution of the words by length
 
@@ -794,6 +850,7 @@ def mendenhall_curve(words: Sequence[str]) -> dict[int, float]:
 
     Arguments:
         words (list[str]): Words of the text
+        messages (dict[str, str]): Messages of the errors by key; MESSAGES by default
 
     Returns:
         dict[int, float]: Shares of the words by length, by ascending length
@@ -807,14 +864,20 @@ def mendenhall_curve(words: Sequence[str]) -> dict[int, float]:
         >>> mendenhall_curve(["an", "idea", "a", "an", "image"])
         {1: 0.2, 2: 0.4, 4: 0.2, 5: 0.2}
     """
-    check_words(words)
+    messages = _messages(messages)
+    _check_word_list(words, "words", messages)
     if not len(words):
-        raise SourceError("The data source has no words")
+        raise SourceError(messages["no_words"])
     counts = Counter(len(word) for word in words)
     return {length: counts[length] / len(words) for length in sorted(counts)}
 
 
-def mendenhall_distance(words_a: Sequence[str], words_b: Sequence[str]) -> float:
+def mendenhall_distance(
+    words_a: Sequence[str],
+    words_b: Sequence[str],
+    *,
+    messages: Mapping[str, str] | None = None,
+) -> float:
     """
     Computing the distance between the Mendenhall curves of two texts
 
@@ -825,6 +888,7 @@ def mendenhall_distance(words_a: Sequence[str], words_b: Sequence[str]) -> float
     Arguments:
         words_a (list[str]): Words of the first text
         words_b (list[str]): Words of the second text
+        messages (dict[str, str]): Messages of the errors by key; MESSAGES by default
 
     Returns:
         float: Jensen-Shannon distance
@@ -838,8 +902,8 @@ def mendenhall_distance(words_a: Sequence[str], words_b: Sequence[str]) -> float
         >>> mendenhall_distance(["the", "cat"], ["a", "house"])
         1.0
     """
-    curve_a = mendenhall_curve(words_a)
-    curve_b = mendenhall_curve(words_b)
+    curve_a = mendenhall_curve(words_a, messages=messages)
+    curve_b = mendenhall_curve(words_b, messages=messages)
     lengths = sorted(set(curve_a) | set(curve_b))
     return float(
         jensenshannon(

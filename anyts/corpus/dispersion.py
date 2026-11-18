@@ -7,7 +7,7 @@ from typing import NamedTuple
 import numpy as np
 
 from ..exceptions import ParameterError, SourceError
-from ..utils import check_integer, check_words
+from ..utils import _check_word_list, _messages, check_integer
 
 
 class Dispersion(NamedTuple):
@@ -42,6 +42,8 @@ def dispersion(
     parts: int | Sequence[int] = 10,
     word: str | None = None,
     min_freq: int = 1,
+    *,
+    messages: Mapping[str, str] | None = None,
 ) -> list[Dispersion]:
     """
     Computing the dispersion of words over the parts of a text
@@ -64,6 +66,7 @@ def dispersion(
         parts (int|list[int]): Number of parts or sizes of the parts
         word (str): Word whose dispersion is needed; None - every word
         min_freq (int): Minimum frequency of a word
+        messages (dict[str, str]): Messages of the errors by key; MESSAGES by default
 
     Returns:
         list[Dispersion]: Dispersion of the words by descending frequency; for a
@@ -84,13 +87,14 @@ def dispersion(
         >>> result.freq, round(result.dp, 3)
         (2, 0.455)
     """
-    check_integer(min_freq, "minimum frequency")
+    messages = _messages(messages)
+    check_integer(min_freq, "min_freq", message=messages["integer_param"])
     if word is not None and not isinstance(word, str):
-        raise ParameterError(f"The word must be a string, not {type(word).__name__}")
-    check_words(words)
+        raise ParameterError(messages["word_type"].format(type=type(word).__name__))
+    _check_word_list(words, "words", messages)
     if not len(words):
-        raise SourceError("The data source has no words")
-    sizes = _sizes(len(words), parts)
+        raise SourceError(messages["no_words"])
+    sizes = _sizes(len(words), parts, messages)
     total = Counter(words)
     targets = [word] if word is not None else [w for w, f in total.most_common() if f >= min_freq]
     vocabulary = {target: index for index, target in enumerate(targets)}
@@ -111,21 +115,19 @@ def dispersion(
     ]
 
 
-def _sizes(n_words: int, parts: int | Sequence[int]) -> list[int]:
+def _sizes(n_words: int, parts: int | Sequence[int], messages: Mapping[str, str]) -> list[int]:
     if isinstance(parts, Integral):
         n_parts = int(parts)
         if not 2 <= n_parts <= n_words:
-            raise ParameterError("There must be at least two parts and no more parts than words")
+            raise ParameterError(messages["parts_number"])
         return [len(part) for part in np.array_split(np.arange(n_words), n_parts)]
     if not isinstance(parts, Iterable) or isinstance(parts, Set | Mapping | Iterator | str):
-        raise ParameterError(
-            "The number of parts must be an integer and the sizes of the parts a list of integers"
-        )
+        raise ParameterError(messages["parts_type"])
     sizes = list(parts)
-    for size in sizes:
-        check_integer(size, "size of a part")
+    if any(isinstance(size, bool) or not isinstance(size, Integral) for size in sizes):
+        raise ParameterError(messages["parts_type"])
     if len(sizes) < 2 or sum(sizes) != n_words or min(sizes) < 1:
-        raise ParameterError("The sizes of the parts must be positive and add up to the words")
+        raise ParameterError(messages["parts_sizes"])
     return sizes
 
 

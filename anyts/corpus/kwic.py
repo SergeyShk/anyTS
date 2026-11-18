@@ -3,12 +3,12 @@ from __future__ import annotations
 import re
 import unicodedata
 from bisect import bisect_right
-from collections.abc import Callable, Iterable, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from typing import TYPE_CHECKING, NamedTuple
 
 from ..document import to_document
 from ..exceptions import ParameterError, SourceTypeError
-from ..utils import BLANK_LINE, check_bool, check_integer, has_words
+from ..utils import BLANK_LINE, _messages, check_bool, check_callable, check_integer, has_words
 
 if TYPE_CHECKING:
     from anyseg import Document, Word
@@ -51,6 +51,8 @@ def kwic(
     lemmatize: Lemmatizer | None = None,
     fold: Callable[[str], str] = str.lower,
     sentenize: Sentenizer | None = None,
+    *,
+    messages: Mapping[str, str] | None = None,
 ) -> list[Concordance]:
     """
     Building a KWIC concordance (keyword in context)
@@ -89,6 +91,7 @@ def kwic(
         sentenize (callable): Sentences of a string, of the keyword and of the
             text of a Doc without sentences, as triples of the start, the end and
             the text; those of SentsExtractor by default
+        messages (dict[str, str]): Messages of the errors by key; MESSAGES by default
 
     Returns:
         list[Concordance]: Occurrences in the order of the text
@@ -109,26 +112,26 @@ def kwic(
         >>> kwic(text, "cats", window=2)[0]
         Concordance(start=20, end=24, left='sleeps. The', keyword='cats', right='play in')
     """
+    messages = _messages(messages)
     if not isinstance(keyword, str):
-        raise SourceTypeError(f"The keyword must be a string, not {type(keyword).__name__}")
-    if lemmatize is not None and not callable(lemmatize):
-        raise SourceTypeError(f"The lemmatizer must be callable, not {type(lemmatize).__name__}")
-    if not callable(fold):
-        raise SourceTypeError(f"The folding must be callable, not {type(fold).__name__}")
-    key_words = _words(to_document(keyword, tokenize, sentenize))
+        raise SourceTypeError(messages["keyword_type"].format(type=type(keyword).__name__))
+    if lemmatize is not None:
+        check_callable(lemmatize, "lemmatize", message=messages["callable_param"])
+    check_callable(fold, "fold", message=messages["callable_param"])
+    key_words = _words(to_document(keyword, tokenize, sentenize, messages=messages))
     if not key_words:
-        raise ParameterError("The keyword is not set")
+        raise ParameterError(messages["no_keyword"])
     key_gaps = [
         key_words[index].sentence != key_words[index - 1].sentence
         or bool(_BOUNDARY.search(keyword, key_words[index - 1].end, key_words[index].start))
         for index in range(1, len(key_words))
     ]
-    check_integer(window, "window")
-    check_bool(by_lemma, "comparison by the lemmas")
-    check_bool(ignore_case, "folding of the case")
+    check_integer(window, "window", message=messages["integer_param"])
+    check_bool(by_lemma, "by_lemma", message=messages["bool_param"])
+    check_bool(ignore_case, "ignore_case", message=messages["bool_param"])
     if window < 0:
-        raise ParameterError("The window cannot be negative")
-    document = to_document(source, tokenize, sentenize)
+        raise ParameterError(messages["negative_param"].format(param="window"))
+    document = to_document(source, tokenize, sentenize, messages=messages)
     text = document.text
     words = _words(document)
     lemmas = lemmatize or _lemmas
@@ -228,7 +231,12 @@ def _lemmas(word: str, words: Sequence[Word]) -> tuple[str, ...]:
     return (word, lemma) if lemma else (word,)
 
 
-def format_kwic(concordances: Iterable[Concordance], width: int = 40) -> str:
+def format_kwic(
+    concordances: Iterable[Concordance],
+    width: int = 40,
+    *,
+    messages: Mapping[str, str] | None = None,
+) -> str:
     """
     Formatting a concordance aligned on the keyword
 
@@ -240,6 +248,7 @@ def format_kwic(concordances: Iterable[Concordance], width: int = 40) -> str:
     Arguments:
         concordances (list[Concordance]): Lines of the concordance
         width (int): Width of a context in characters
+        messages (dict[str, str]): Messages of the errors by key; MESSAGES by default
 
     Returns:
         str: Concordance as text
@@ -254,16 +263,13 @@ def format_kwic(concordances: Iterable[Concordance], width: int = 40) -> str:
            The  cat  sleeps
            the  cat  eats
     """
-    check_integer(width, "width of a context")
+    messages = _messages(messages)
+    check_integer(width, "width", message=messages["integer_param"])
     if width < 1:
-        raise ParameterError("The width of a context must be greater than 0")
+        raise ParameterError(messages["positive_param"].format(param="width"))
     given: object = concordances
-    if isinstance(given, str):
-        raise SourceTypeError("An iterable of concordances is expected, not a string")
-    if not isinstance(given, Iterable):
-        raise SourceTypeError(
-            f"An iterable of concordances is expected, not {type(given).__name__}"
-        )
+    if isinstance(given, str) or not isinstance(given, Iterable):
+        raise SourceTypeError(messages["concordances_type"].format(type=type(given).__name__))
     lines = [
         [unicodedata.normalize("NFC", part) for part in (line.left, line.keyword, line.right)]
         for line in concordances
@@ -275,16 +281,22 @@ def format_kwic(concordances: Iterable[Concordance], width: int = 40) -> str:
     )
 
 
-def print_kwic(concordances: Iterable[Concordance], width: int = 40) -> None:
+def print_kwic(
+    concordances: Iterable[Concordance],
+    width: int = 40,
+    *,
+    messages: Mapping[str, str] | None = None,
+) -> None:
     """
     Printing a concordance aligned on the keyword
 
     Arguments:
         concordances (list[Concordance]): Lines of the concordance
         width (int): Width of a context in characters
+        messages (dict[str, str]): Messages of the errors by key; MESSAGES by default
 
     Raises:
         SourceTypeError: If the concordances are a string or not iterable
         ParameterError: If the width of a context is not an integer or is below one
     """
-    print(format_kwic(concordances, width))
+    print(format_kwic(concordances, width, messages=messages))

@@ -125,9 +125,9 @@ def to_document(
         >>> [sentence.text for sentence in document.sentences]
         ['The cat sat.', 'It slept!', 'The end']
     """
-    for hook, what in ((tokenize, "tokenizer"), (sentenize, "sentence splitter")):
+    for hook, what in ((tokenize, "tokenize"), (sentenize, "sentenize")):
         if hook is not None:
-            check_callable(hook, what)
+            check_callable(hook, what, message=messages["callable_param"])
     if is_document(source):
         return source
     if is_doc(source):

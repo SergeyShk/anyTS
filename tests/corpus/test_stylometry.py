@@ -322,9 +322,9 @@ def test_rolling_delta_errors():
     with pytest.raises(ParameterError, match=r"^Unknown variant of Delta: manhattan$"):
         rolling_delta(corpus, text, 8, 3, variant="manhattan")
     for window, step, message in (
-        (0, 1, r"^The size of a window must be greater than 0$"),
+        (0, 1, r"^The window must be greater than 0$"),
         (8, 0, r"^The step must be greater than 0$"),
-        (8.0, 3, r"^The size of a window must be an integer, not float$"),
+        (8.0, 3, r"^The window must be an integer, not float$"),
         (8, "3", r"^The step must be an integer, not str$"),
         (8, 9, r"^The step must not exceed the size of a window$"),
     ):
@@ -378,9 +378,9 @@ def test_zeta_errors():
         zeta(corpus["A"], [[]])
     with pytest.raises(ParameterError):
         zeta(corpus["A"], corpus["B"], top_n=0)
-    with pytest.raises(ParameterError, match=r"^The size of a segment must be an integer"):
+    with pytest.raises(ParameterError, match=r"^The segment_size must be an integer"):
         zeta(corpus["A"], corpus["B"], segment_size=5.0)
-    with pytest.raises(ParameterError, match=r"^The number of words must be an integer"):
+    with pytest.raises(ParameterError, match=r"^The top_n must be an integer"):
         zeta(corpus["A"], corpus["B"], top_n=2.0)
     with pytest.raises(SourceTypeError):
         zeta(texts["A"], corpus["B"])
@@ -424,9 +424,9 @@ def test_zeta_segments():
 
 def test_zeta_segments_errors():
     corpora = {"A": corpus["A"]}
-    with pytest.raises(ParameterError, match=r"^The size of a segment must be greater than 0$"):
+    with pytest.raises(ParameterError, match=r"^The segment_size must be greater than 0$"):
         zeta_segments(corpora, ["ab"], ["ac"], segment_size=0)
-    with pytest.raises(ParameterError, match=r"^The size of a segment must be an integer"):
+    with pytest.raises(ParameterError, match=r"^The segment_size must be an integer"):
         zeta_segments(corpora, ["ab"], ["ac"], segment_size=5.0)
     with pytest.raises(SourceTypeError, match=r"^The corpora must be a mapping of their names"):
         zeta_segments([corpus["A"]], ["ab"], ["ac"])
@@ -527,3 +527,13 @@ def test_frequency_table_ties_do_not_depend_on_the_order_of_the_texts():
         distances = delta(corpus, n_mfw=2, variant=variant)
         backwards = delta(reversed_corpus, n_mfw=2, variant=variant)
         assert distances.loc["A", "C"] == backwards.loc["A", "C"]
+
+
+def test_zeta_names_a_word_that_is_no_string():
+    """A list of words with a missing value is one text: the error names the value, not the list"""
+    with pytest.raises(
+        SourceTypeError, match=r"^A text of the target must be a list of strings, not float$"
+    ):
+        zeta(["the", "cat", float("nan"), "sat"], ["the", "dog"])
+    with pytest.raises(SourceTypeError, match=r"not float$"):
+        zeta_segments({"A": ["the", float("nan")]}, ["the"], ["dog"])

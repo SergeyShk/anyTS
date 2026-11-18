@@ -853,12 +853,13 @@ def check_word(value: object, what: str = "word") -> None:
         raise SourceTypeError(f"The {what} must be a string, not {type(value).__name__}")
 
 
-def check_counts(value: object) -> None:
+def check_counts(value: object, *, messages: Mapping[str, str] | None = None) -> None:
     """
     Checking that an argument is a counter: a mapping of words to their frequencies
 
     Arguments:
         value (object): Value to check
+        messages (dict[str, str]): Messages of the errors by key; MESSAGES by default
 
     Raises:
         SourceTypeError: If the value is not a mapping, a word is not a string
@@ -874,15 +875,22 @@ def check_counts(value: object) -> None:
         ...
         anyts.exceptions.SourceTypeError: The frequencies must be numbers, not str
     """
+    messages = _messages(messages)
     if not isinstance(value, Mapping):
-        raise SourceTypeError(f"A mapping of frequencies is expected, not {type(value).__name__}")
+        raise SourceTypeError(messages["counts_type"].format(type=type(value).__name__))
     for word, count in value.items():
         if not isinstance(word, str):
-            raise SourceTypeError(f"The words must be strings, not {type(word).__name__}")
-        if isinstance(count, bool) or not isinstance(count, Real):
-            raise SourceTypeError(f"The frequencies must be numbers, not {type(count).__name__}")
-        if not math.isfinite(count) or count < 0:
-            raise SourceError(f"The frequencies must be finite and not negative, not {count}")
+            raise SourceTypeError(messages["counts_words"].format(type=type(word).__name__))
+        _check_frequency(count, messages)
+
+
+def _check_frequency(value: object, messages: Mapping[str, str]) -> float:
+    """A frequency checked to be a finite number that is not negative"""
+    if isinstance(value, bool) or not isinstance(value, Real):
+        raise SourceTypeError(messages["frequency_type"].format(type=type(value).__name__))
+    if not math.isfinite(value) or value < 0:
+        raise SourceError(messages["frequency_value"].format(value=value))
+    return float(value)
 
 
 def check_integer(value: object, what: str, *, message: str | None = None) -> None:
@@ -1022,13 +1030,15 @@ def check_number(value: object, what: str, *, message: str | None = None) -> Non
         )
 
 
-def check_callable(value: object, what: str) -> None:
+def check_callable(value: object, what: str, *, message: str | None = None) -> None:
     """
     Checking that an argument is a function, such as a hook passed as a parameter
 
     Arguments:
         value (object): Value to check
         what (str): Name of the argument, for the message of the error
+        message (str): Message of the error with the fields {type}, the type of the value,
+            and {param}, what, in place of the English one
 
     Raises:
         SourceTypeError: If the value cannot be called
@@ -1042,7 +1052,12 @@ def check_callable(value: object, what: str) -> None:
         anyts.exceptions.SourceTypeError: The normalization must be callable, not str
     """
     if not callable(value):
-        raise SourceTypeError(f"The {what} must be callable, not {type(value).__name__}")
+        kind = type(value).__name__
+        raise SourceTypeError(
+            f"The {what} must be callable, not {kind}"
+            if message is None
+            else message.format(type=kind, param=what)
+        )
 
 
 def merge_labels(
@@ -1356,3 +1371,37 @@ def make_lazy(name: str, modules: Mapping[str, str]) -> None:
             )
     vars(package)["_MODULES"] = dict(modules)
     package.__class__ = LazyPackage
+
+
+def _messages(messages: Mapping[str, str] | None) -> Mapping[str, str]:
+    """Messages of the errors of a function: those given, MESSAGES for None"""
+    return MESSAGES if messages is None else messages
+
+
+def _check_word_list(
+    value: object,
+    what: str,
+    messages: Mapping[str, str],
+    *,
+    ordered: bool = True,
+    items: bool = True,
+    text: bool = False,
+) -> None:
+    """check_words (check_sequence without items) with the messages of a library, of the
+    parameter or, with text, of one of its texts; a Doc or a Span gets the hint of
+    WordsExtractor"""
+    if is_doc(value) or is_span(value):
+        key = "text_doc" if text else "words_doc"
+        raise SourceTypeError(messages[key].format(param=what, type=type(value).__name__))
+    message = messages["text_words" if text else "words_param"]
+    if items:
+        check_words(value, what, ordered, message=message)  # type: ignore[arg-type]
+    else:
+        check_sequence(value, what, ordered, message=message)
+
+
+def _holds_texts(words: Iterable[object]) -> bool:
+    """Whether a corpus is a list of texts by its first item, a sequence of its own rather than
+    a word or a spaCy token; the checks of the words refuse a list of both"""
+    first = next(iter(words), None)
+    return not isinstance(first, str) and isinstance(first, Iterable)

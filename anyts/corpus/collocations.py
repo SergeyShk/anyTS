@@ -1,11 +1,11 @@
 from collections import Counter
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from math import isnan, log, log2, nan, sqrt
 from typing import NamedTuple
 
 from ..constants import COLLOCATION_MEASURES
 from ..exceptions import ParameterError, SourceError
-from ..utils import _sliceable, check_integer, check_words
+from ..utils import _check_word_list, _messages, _sliceable, check_integer
 
 
 class Collocation(NamedTuple):
@@ -37,6 +37,8 @@ def collocations(
     node: str | None = None,
     top_n: int | None = None,
     side: str | None = None,
+    *,
+    messages: Mapping[str, str] | None = None,
 ) -> list[Collocation]:
     """
     Finding the collocations of a sequence of words
@@ -63,6 +65,7 @@ def collocations(
         top_n (int): Number of collocations; None - all of them
         side (str): With a node, its collocates on one side only: "left" before it,
             "right" after it; None - on both
+        messages (dict[str, str]): Messages of the errors by key; MESSAGES by default
 
     Returns:
         list[Collocation]: Collocations by descending measure and frequency of the
@@ -81,25 +84,26 @@ def collocations(
         >>> [(c.left, c.right, c.freq_pair) for c in collocations(words, window=1)]
         [('red', 'wine', 2)]
     """
+    messages = _messages(messages)
     if not isinstance(measure, str) or measure not in COLLOCATION_MEASURES:
-        raise ParameterError(f"Unknown measure of association: {measure}")
-    check_integer(window, "window")
+        raise ParameterError(messages["association_measure"].format(measure=measure))
+    check_integer(window, "window", message=messages["integer_param"])
     if window < 1:
-        raise ParameterError("The window must be at least one")
+        raise ParameterError(messages["positive_param"].format(param="window"))
     if top_n is not None:
-        check_integer(top_n, "number of collocations")
+        check_integer(top_n, "top_n", message=messages["integer_param"])
     if top_n is not None and top_n < 1:
-        raise ParameterError("The number of collocations must be greater than 0")
-    check_integer(min_freq, "minimum frequency")
+        raise ParameterError(messages["positive_param"].format(param="top_n"))
+    check_integer(min_freq, "min_freq", message=messages["integer_param"])
     if node is not None and not isinstance(node, str):
-        raise ParameterError(f"The node must be a string, not {type(node).__name__}")
+        raise ParameterError(messages["node_type"].format(type=type(node).__name__))
     if side is not None and side not in ("left", "right"):
-        raise ParameterError(f"The side must be left or right, not {side!r}")
+        raise ParameterError(messages["collocation_side"].format(side=repr(side)))
     if side is not None and node is None:
-        raise ParameterError("A side needs a node")
-    check_words(words)
+        raise ParameterError(messages["side_node"])
+    _check_word_list(words, "words", messages)
     if not len(words):
-        raise SourceError("The data source has no words")
+        raise SourceError(messages["no_words"])
     words = _sliceable(words)
     calc = _MEASURES[measure]
     n_words = len(words)

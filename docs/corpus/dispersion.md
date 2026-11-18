@@ -2,7 +2,7 @@
 
 <!-- --8<-- [start:dispersion] -->
 ``` {.python .signature}
-dispersion(words, parts=10, word=None, min_freq=1)
+dispersion(words, parts=10, word=None, min_freq=1, *, messages=None)
 ```
 
 The dispersion of a word is how evenly it is spread over the parts of a text or of a corpus. Frequency does not tell a word occurring once in every chapter from one gathered in a single chapter; the measures of dispersion ([Gries 2008](https://www.stgries.info/research/2008_STG_Dispersion_IJCL.pdf), [2020](https://www.stgries.info/research/2020_STG_Dispersion_PHCL.pdf)) complement it.
@@ -49,6 +49,7 @@ Words are compared as they are: case and lemmatization belong to the word extrac
 | `parts` | `int` / `list[int]` | `10` | Number of parts (from 2 to the number of words) or sizes of the parts |
 | `word` | `str` | `None` | Word whose dispersion is needed; `None` - every word |
 | `min_freq` | `int` | `1` | Minimum frequency of a word |
+| `messages` | `dict[str, str]` | `None` | Messages of the errors by key, in place of those of the library |
 
 Words that are not a list of strings raise `SourceTypeError`, and no words `SourceError`. A `parts` that is neither an integer from 2 to the number of words nor two or more positive integers adding up to it, a `word` that is not a string and a `min_freq` that is not an integer raise `ParameterError`.
 <!-- --8<-- [end:dispersion-parameters] -->

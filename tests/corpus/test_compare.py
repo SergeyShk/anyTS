@@ -6,6 +6,7 @@ import pandas as pd
 import pytest
 from scipy.stats import mannwhitneyu
 
+from anyts.constants import MESSAGES
 from anyts.corpus import (
     bootstrap_median_diff,
     calc_cliff_delta,
@@ -208,7 +209,7 @@ def test_generator_and_confidence_checked():
         compare_values([1.0, 2.0], [1.0, 3.0], rng=0)
     with pytest.raises(ParameterError, match=r"must be a numpy Generator, not int$"):
         bootstrap_median_diff([1.0, 2.0], [1.0, 3.0], rng=0)
-    with pytest.raises(ParameterError, match=r"^The confidence level must be a number"):
+    with pytest.raises(ParameterError, match=r"^The confidence must be a number"):
         bootstrap_median_diff([1.0, 2.0], [1.0, 3.0], confidence=None)
 
 
@@ -251,11 +252,11 @@ def test_compare_features():
 def test_compare_features_seed_and_errors():
     first = compare_features(SHORT, LONG, n_bootstrap=50, seed=1)
     assert first.equals(compare_features(SHORT, LONG, n_bootstrap=50, seed=1))
-    with pytest.raises(ParameterError, match=r"^The number of bootstrap samples"):
+    with pytest.raises(ParameterError, match=r"^The n_bootstrap must be greater than 0$"):
         compare_features(SHORT, LONG, n_bootstrap=0)
     with pytest.raises(ParameterError, match=r"must be an integer, not float$"):
         compare_features(SHORT, LONG, n_bootstrap=50.0)
-    with pytest.raises(ParameterError, match=r"^The seed must not be negative$"):
+    with pytest.raises(ParameterError, match=r"^The seed cannot be negative$"):
         compare_features(SHORT, LONG, seed=-1)
     with pytest.raises(ParameterError, match=r"^The names of the corpora"):
         compare_features(SHORT, LONG, labels=("A", "A"))
@@ -353,7 +354,7 @@ def test_texts_match_the_values(texts):
 
 
 def test_compare_values_checks_first():
-    with pytest.raises(ParameterError, match="number of bootstrap samples"):
+    with pytest.raises(ParameterError, match="n_bootstrap"):
         compare_values([1.0], [2.0], n_bootstrap=0)
     for texts in ((text for text in "abc"), "abc"):
         with pytest.raises(SourceTypeError, match="A list of texts is expected"):
@@ -368,8 +369,8 @@ def test_compare_values_checks_first():
 def test_feature_columns():
     table = pd.DataFrame({"x": [1.0, 2.0]})
     with pytest.raises(SourceTypeError, match="must be numeric"):
-        _check_table(table.assign(x=[1 + 1j, 2 + 0j]))
-    _check_table(table.assign(x=pd.Series([1.0, pd.NA], dtype=object)))
+        _check_table(table.assign(x=[1 + 1j, 2 + 0j]), MESSAGES)
+    _check_table(table.assign(x=pd.Series([1.0, pd.NA], dtype=object)), MESSAGES)
 
 
 WINDOW_TEXT = (
@@ -478,7 +479,7 @@ def test_split_windows_with_a_tokenizer():
         ({"min_words": 0}, ParameterError, "^The smallest number of words in a window must be"),
         ({"window": 5, "min_words": 6}, ParameterError, "cannot be greater than the window$"),
         ({"window": 2.5}, ParameterError, "^The window must be an integer, not float$"),
-        ({"tokenize": 5}, SourceTypeError, "^The tokenizer must be callable, not int$"),
+        ({"tokenize": 5}, SourceTypeError, "^The tokenize must be callable, not int$"),
     ],
 )
 def test_split_windows_errors(kwargs, error, message):
@@ -565,5 +566,5 @@ def test_sentence_rhythm_of_bools_and_negative_lengths():
     "tokenize", [str.split, lambda text: [(3, 1, "a")], lambda text: [(0, 99, "a")]]
 )
 def test_split_windows_checks_the_words_of_its_tokenizer(tokenize):
-    with pytest.raises(SourceTypeError, match=r"^The tokenizer must "):
+    with pytest.raises(SourceTypeError, match=r"^The tokenize must "):
         split_windows("one two three", 2, tokenize=tokenize)

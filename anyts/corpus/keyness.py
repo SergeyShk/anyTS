@@ -1,7 +1,6 @@
 from collections import Counter
 from collections.abc import Callable, Iterable, Mapping, Sequence
-from math import inf, isfinite, isnan, log, log2, nan
-from numbers import Real
+from math import inf, isnan, log, log2, nan
 from typing import Any, NamedTuple, cast
 
 import numpy as np
@@ -10,19 +9,18 @@ from scipy.stats import chi2 as chi2_distribution
 from ..constants import KEYNESS_MEASURES
 from ..exceptions import ParameterError, SourceError, SourceTypeError
 from ..utils import (
+    _check_frequency,
+    _check_word_list,
+    _holds_texts,
+    _messages,
     check_bool,
     check_callable,
     check_counts,
     check_integer,
     check_number,
-    check_sequence,
-    check_words,
 )
 
 _ZERO_ADJUSTMENT = 0.5
-_FREQUENCIES_OF_NGRAMS = (
-    "The n-grams need the words of the corpora: frequencies of n-grams go with n=1, not n={n}"
-)
 
 
 class FrequencyReference(NamedTuple):
@@ -89,6 +87,8 @@ def keyness(
     positive: bool = True,
     top_n: int | None = None,
     n: int = 1,
+    *,
+    messages: Mapping[str, str] | None = None,
 ) -> list[Keyword]:
     """
     Finding the keywords of a target corpus against a reference one
@@ -122,6 +122,7 @@ def keyness(
         top_n (int): Number of keywords; None - all of them
         n (int): Length of the n-grams of the words of every text, joined by
             underscores as the n-grams of WordsExtractor; 1 - the words
+        messages (dict[str, str]): Messages of the errors by key; MESSAGES by default
 
     Returns:
         list[Keyword]: Keywords by descending keyness, then by descending
@@ -147,37 +148,35 @@ def keyness(
         >>> [(k.word, round(k.g2, 2)) for k in keyness(target, reference)]
         [('cat', 2.77)]
     """
-    check_keyness_params(measure, min_freq, top_n, n=n, positive=positive)
-    _check_target(target)
-    units = _ngrams(target, n)
+    messages = _messages(messages)
+    check_keyness_params(measure, min_freq, top_n, n=n, positive=positive, messages=messages)
+    _check_target(target, messages)
+    units = _ngrams(target, n, messages)
     counts_reference: Mapping[str, float]
     keep = None
     if isinstance(reference, FrequencyReference):
         if n > 1:
-            raise ParameterError(
-                "A FrequencyReference holds words: the n-grams need lists of words, "
-                "and frequencies of n-grams go with n=1"
-            )
-        _check_reference(reference)
+            raise ParameterError(messages["reference_ngrams"])
+        _check_reference(reference, messages)
         counts_target = _count(units, key=reference.key, keep=reference.keep)
         size_reference = float(reference.size)
         counts_reference = reference.counts
         missing = float(reference.missing)
         keep = reference.keep
     else:
-        _check_words_or_counts(reference)
+        _check_words_or_counts(reference, "reference", messages)
         counts_target = _count(units)
-        counts_reference = _count(_ngrams(reference, n))
+        counts_reference = _count(_ngrams(reference, n, messages))
         size_reference = float(sum(counts_reference.values()))
         missing = 0.0
     size_target = float(sum(counts_target.values()))
     if not size_target:
-        raise SourceError(_empty_reason(target, units, n))
+        raise SourceError(_empty_reason(target, units, n, messages))
     if not size_reference:
         raise SourceError(
-            "The data source has no words"
+            messages["no_words"]
             if isinstance(reference, FrequencyReference)
-            else _empty_reason(reference, counts_reference, n)
+            else _empty_reason(reference, counts_reference, n, messages)
         )
     calc = _MEASURES[measure]
     rows = []
@@ -188,7 +187,7 @@ def keyness(
         candidates = counts_reference if keep is None else filter(keep, counts_reference)
     for word in candidates:
         a = counts_target.get(word, 0)
-        b = _reference_frequency(counts_reference, word, missing)
+        b = _check_frequency(counts_reference.get(word, missing), messages)
         ipm_target = a / size_target * 1e6
         ipm_reference = b / size_reference * 1e6
         if ipm_target == ipm_reference or (ipm_target > ipm_reference) != positive:
@@ -226,13 +225,15 @@ def keyness(
 
 
 def _ngrams(
-    words: Sequence[str] | Sequence[Sequence[str]] | Mapping[str, float], n: int
+    words: Sequence[str] | Sequence[Sequence[str]] | Mapping[str, float],
+    n: int,
+    messages: Mapping[str, str],
 ) -> Sequence[str] | Mapping[str, float]:
     """The n-grams of the words of every text joined by underscores, in one list; a mapping as
     it is, but for n above 1"""
     if isinstance(words, Mapping):
         if n > 1:
-            raise ParameterError(_FREQUENCIES_OF_NGRAMS.format(n=n))
+            raise ParameterError(messages["ngram_frequencies"].format(n=n))
         return words
     if not _holds_texts(words):
         if n == 1:
@@ -247,14 +248,15 @@ def _empty_reason(
     corpus: Sequence[str] | Sequence[Sequence[str]] | Mapping[str, float],
     units: Sequence[str] | Mapping[str, float],
     n: int,
+    messages: Mapping[str, str],
 ) -> str:
     """Why a corpus gives no frequencies: the units a reference does not keep, texts
     shorter than n words, or no words at all"""
     if _has_units(units):
-        return "The data source has no words the reference keeps"
-    if n > 1 and _has_units(_ngrams(corpus, 1)):
-        return f"The data source has no n-grams: its texts are shorter than {n} words"
-    return "The data source has no words"
+        return messages["no_kept_words"]
+    if n > 1 and _has_units(_ngrams(corpus, 1, messages)):
+        return messages["short_texts"].format(n=n)
+    return messages["no_words"]
 
 
 def _has_units(units: Sequence[str] | Mapping[str, float]) -> bool:
@@ -264,63 +266,44 @@ def _has_units(units: Sequence[str] | Mapping[str, float]) -> bool:
     return len(units) > 0
 
 
-def _holds_texts(words: Iterable[object]) -> bool:
-    """Whether a corpus is a list of texts by its first item, a sequence of its own rather than
-    a word or a spaCy token; the checks of the words refuse a list of both"""
-    first = next(iter(words), None)
-    return not isinstance(first, str) and isinstance(first, Iterable)
-
-
-def _reference_frequency(counts: Mapping[str, float], word: str, missing: float) -> float:
-    """Frequency of a word in the reference, checked as it is read and not the whole dictionary"""
-    frequency: object = counts.get(word, missing)
-    if isinstance(frequency, bool) or not isinstance(frequency, Real):
-        raise SourceTypeError(f"The frequencies must be numbers, not {type(frequency).__name__}")
-    if not isfinite(frequency) or frequency < 0:
-        raise SourceError(f"The frequencies must be finite and not negative, not {frequency}")
-    return float(frequency)
-
-
-def _check_words_or_counts(words: Iterable[object]) -> None:
+def _check_words_or_counts(
+    words: Iterable[object], what: str, messages: Mapping[str, str]
+) -> None:
     """Checking the words of a corpus given as a list (check_words), a list of such lists or a
     counter (check_counts)"""
     if isinstance(words, Mapping):
-        check_counts(words)
+        check_counts(words, messages=messages)
         return
-    check_sequence(words)
+    _check_word_list(words, what, messages, items=False)
     if not _holds_texts(words):
-        check_words(words)
+        _check_word_list(words, what, messages)
         return
     for text in words:
-        check_words(cast(Iterable[object], text), "words of a text")
+        _check_word_list(text, what, messages, text=True)
 
 
-def _check_reference(reference: FrequencyReference) -> None:
+def _check_reference(reference: FrequencyReference, messages: Mapping[str, str]) -> None:
     """Checking the fields of a reference corpus given by its frequencies"""
     if not isinstance(reference.counts, Mapping):
         raise SourceTypeError(
-            "The frequencies of the reference must be a mapping, "
-            f"not {type(reference.counts).__name__}"
+            messages["reference_counts"].format(type=type(reference.counts).__name__)
         )
-    for value, what in (
-        (reference.size, "size of the reference"),
-        (reference.missing, "frequency of a missing key"),
-    ):
-        check_number(value, what)
+    for value, what in ((reference.size, "size"), (reference.missing, "missing")):
+        check_number(value, what, message=messages["number_param"])
         if value < 0:
-            raise ParameterError(f"The {what} cannot be negative")
-    for hook, what in ((reference.key, "key of a word"), (reference.keep, "filter of the words")):
+            raise ParameterError(messages["negative_param"].format(param=what))
+    for hook, what in ((reference.key, "key"), (reference.keep, "keep")):
         if hook is not None:
-            check_callable(hook, what)
+            check_callable(hook, what, message=messages["callable_param"])
 
 
-def _check_target(target: Iterable[object]) -> None:
+def _check_target(target: Iterable[object], messages: Mapping[str, str]) -> None:
     """Checking that the target corpus is a list of words or a mapping of words to whole frequencies"""
-    _check_words_or_counts(target)
+    _check_words_or_counts(target, "target", messages)
     if isinstance(target, Mapping) and not all(
         float(count).is_integer() for count in target.values()
     ):
-        raise SourceTypeError("The frequencies of the target corpus must be whole numbers")
+        raise SourceTypeError(messages["target_counts"])
 
 
 def _count(
@@ -347,6 +330,8 @@ def check_keyness_params(
     target: Sequence[str] | Sequence[Sequence[str]] | Mapping[str, int] | None = None,
     n: int = 1,
     positive: bool = True,
+    *,
+    messages: Mapping[str, str] | None = None,
 ) -> None:
     """
     Checking the parameters of keyness
@@ -364,6 +349,7 @@ def check_keyness_params(
             checked
         n (int): Length of the n-grams
         positive (bool): Positive keywords (True) or negative ones (False)
+        messages (dict[str, str]): Messages of the errors by key; MESSAGES by default
 
     Raises:
         ParameterError: If the measure is unknown, the minimum frequency, the
@@ -380,19 +366,20 @@ def check_keyness_params(
         ...
         anyts.exceptions.ParameterError: Unknown measure of keyness: tf_idf
     """
+    messages = _messages(messages)
     if not isinstance(measure, str) or measure not in KEYNESS_MEASURES:
-        raise ParameterError(f"Unknown measure of keyness: {measure}")
-    check_integer(min_freq, "minimum frequency")
+        raise ParameterError(messages["keyness_measure"].format(measure=measure))
+    check_integer(min_freq, "min_freq", message=messages["integer_param"])
     if top_n is not None:
-        check_integer(top_n, "number of keywords")
+        check_integer(top_n, "top_n", message=messages["integer_param"])
     if top_n is not None and top_n < 1:
-        raise ParameterError("The number of keywords must be greater than 0")
-    check_integer(n, "length of the n-grams")
+        raise ParameterError(messages["positive_param"].format(param="top_n"))
+    check_integer(n, "n", message=messages["integer_param"])
     if n < 1:
-        raise ParameterError(f"The length of the n-grams must be at least 1, not {n}")
-    check_bool(positive, "choice of the positive keywords")
+        raise ParameterError(messages["positive_param"].format(param="n"))
+    check_bool(positive, "positive", message=messages["bool_param"])
     if target is not None:
-        _check_target(target)
+        _check_target(target, messages)
 
 
 def calc_log_likelihood(a: float, b: float, c: float, d: float) -> float:

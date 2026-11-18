@@ -97,9 +97,9 @@ def test_sentenize():
 
 
 def test_hooks_are_checked():
-    with pytest.raises(SourceTypeError, match="tokenizer"):
+    with pytest.raises(SourceTypeError, match=r"^The tokenize must be callable, not int$"):
         to_document(TEXT, tokenize=5)
-    with pytest.raises(SourceTypeError, match="sentence splitter"):
+    with pytest.raises(SourceTypeError, match=r"^The sentenize must be callable, not str$"):
         to_document(TEXT, sentenize="split")
     with pytest.raises(SourceTypeError, match=r"^The tokenize must give triples .+ not \(0, 3\)$"):
         to_document(TEXT, tokenize=lambda text: [(0, 3)])

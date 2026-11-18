@@ -3,6 +3,7 @@ import re
 from pathlib import Path
 from typing import ClassVar
 
+import pandas as pd
 import pytest
 import spacy
 from spacy.tokens import Doc
@@ -22,7 +23,25 @@ from anyts.components import (
     UnadaptedReadabilityStatsComponent,
 )
 from anyts.constants import MESSAGES
-from anyts.corpus import sentence_rhythm, split_windows
+from anyts.corpus import (
+    FrequencyReference,
+    bootstrap_median_diff,
+    check_comparison_params,
+    collocations,
+    compare_features,
+    delta,
+    delta_profiles,
+    dispersion,
+    format_kwic,
+    frequency_table,
+    holm_correction,
+    keyness,
+    kwic,
+    rolling_delta,
+    sentence_rhythm,
+    split_windows,
+    zeta_segments,
+)
 from anyts.diversity_stats import DiversityStats, calc_ttr, calc_windowed, check_params
 from anyts.document import to_document
 from anyts.exceptions import ParameterError, SourceError, SourceTypeError, UnknownStatError
@@ -33,13 +52,18 @@ from anyts.readability_stats import ReadabilityStats, calc_reading_time
 from anyts.style_stats import StyleStats
 from anyts.syntax_stats import SyntaxStats
 from anyts.unadapted_readability_stats import UnadaptedReadabilityStats
-from anyts.utils import check_messages
+from anyts.utils import check_counts, check_messages
 from anyts.visualizers.highlight import Highlight, HighlightedText
 from anyts.visualizers.highlight import check_params as check_highlight_params
 
 # Messages of a language library: every message differs from the default and keeps its fields
 OWN = {key: f"Own: {message}" for key, message in MESSAGES.items()}
 TEXT = "The cat sleeps on the mat. The dog barks."
+WORDS = ["the", "cat", "sleeps", "the", "cat"]
+UNITS = {"a": ["x"], "b": ["y"]}
+TEN = ["a"] * 10
+LONG = {"A": TEN, "B": TEN}
+FEATURES = pd.DataFrame({"a": [1.0, 2.0]})
 
 
 class Stats(BasicStats):
@@ -613,6 +637,124 @@ CASES = [
         ParameterError,
         lambda: type("Bad", (Phon,), {"vowels": frozenset("a"), "skipped": frozenset("a")}),
     ),
+    # The corpus functions take the messages of a library as a parameter
+    ("callable_param", SourceTypeError, lambda: kwic(TEXT, "cat", fold=5, messages=OWN)),
+    ("callable_param", SourceTypeError, lambda: kwic(TEXT, "cat", tokenize=5, messages=OWN)),
+    (
+        "hook_bounds",
+        SourceTypeError,
+        lambda: split_windows(TEXT, tokenize=str.split, messages=OWN),
+    ),
+    ("negative_param", ParameterError, lambda: kwic(TEXT, "cat", window=-1, messages=OWN)),
+    ("positive_param", ParameterError, lambda: format_kwic([], width=0, messages=OWN)),
+    ("keyword_type", SourceTypeError, lambda: kwic(TEXT, 5, messages=OWN)),
+    ("no_keyword", ParameterError, lambda: kwic(TEXT, "?!", messages=OWN)),
+    ("concordances_type", SourceTypeError, lambda: format_kwic("x", messages=OWN)),
+    ("counts_type", SourceTypeError, lambda: check_counts([("a", 1)], messages=OWN)),
+    ("counts_words", SourceTypeError, lambda: check_counts({1: 2}, messages=OWN)),
+    ("frequency_type", SourceTypeError, lambda: check_counts({"a": "2"}, messages=OWN)),
+    ("frequency_value", SourceError, lambda: check_counts({"a": -1}, messages=OWN)),
+    ("words_doc", SourceTypeError, lambda: collocations(spacy.blank("en")(TEXT), messages=OWN)),
+    (
+        "association_measure",
+        ParameterError,
+        lambda: collocations(WORDS, measure="x", messages=OWN),
+    ),
+    ("node_type", ParameterError, lambda: collocations(WORDS, node=5, messages=OWN)),
+    (
+        "collocation_side",
+        ParameterError,
+        lambda: collocations(WORDS, node="cat", side="up", messages=OWN),
+    ),
+    ("side_node", ParameterError, lambda: collocations(WORDS, side="left", messages=OWN)),
+    ("word_type", ParameterError, lambda: dispersion(WORDS, word=5, messages=OWN)),
+    ("parts_number", ParameterError, lambda: dispersion(WORDS, parts=1, messages=OWN)),
+    ("parts_type", ParameterError, lambda: dispersion(WORDS, parts="x", messages=OWN)),
+    ("parts_sizes", ParameterError, lambda: dispersion(WORDS, parts=[1, 1], messages=OWN)),
+    ("keyness_measure", ParameterError, lambda: keyness(WORDS, WORDS, "x", messages=OWN)),
+    (
+        "reference_ngrams",
+        ParameterError,
+        lambda: keyness(WORDS, FrequencyReference({"a": 1.0}, 10.0), n=2, messages=OWN),
+    ),
+    ("ngram_frequencies", ParameterError, lambda: keyness({"a": 1}, WORDS, n=2, messages=OWN)),
+    (
+        "no_kept_words",
+        SourceError,
+        lambda: keyness(
+            WORDS, FrequencyReference({"a": 1.0}, 10.0, keep=lambda word: False), messages=OWN
+        ),
+    ),
+    ("short_texts", SourceError, lambda: keyness([["a"]], [["a", "b"]], n=2, messages=OWN)),
+    (
+        "reference_counts",
+        SourceTypeError,
+        lambda: keyness(WORDS, FrequencyReference([1], 10.0), messages=OWN),
+    ),
+    ("target_counts", SourceTypeError, lambda: keyness({"a": 1.5}, WORDS, messages=OWN)),
+    ("corpus_type", SourceTypeError, lambda: frequency_table([1], messages=OWN)),
+    ("text_words", SourceTypeError, lambda: frequency_table({"a": "x"}, messages=OWN)),
+    (
+        "text_doc",
+        SourceTypeError,
+        lambda: frequency_table({"a": spacy.blank("en")(TEXT)}, messages=OWN),
+    ),
+    ("corpus_texts", SourceError, lambda: frequency_table({}, messages=OWN)),
+    ("corpus_empty_text", SourceError, lambda: frequency_table({"a": []}, messages=OWN)),
+    ("culling_share", ParameterError, lambda: frequency_table(UNITS, culling=2, messages=OWN)),
+    ("culled_units", SourceError, lambda: frequency_table(UNITS, culling=1, messages=OWN)),
+    ("delta_variant", ParameterError, lambda: delta(UNITS, variant="x", messages=OWN)),
+    ("delta_texts", SourceError, lambda: delta(UNITS, messages=OWN)),
+    ("scaling_texts", SourceError, lambda: delta_profiles(UNITS, UNITS, messages=OWN)),
+    ("step_window", ParameterError, lambda: rolling_delta(LONG, TEN, 5, 6, messages=OWN)),
+    ("rolling_texts", SourceError, lambda: rolling_delta({"A": TEN}, TEN, 5, 1, messages=OWN)),
+    (
+        "corpus_short_text",
+        SourceError,
+        lambda: rolling_delta({"A": TEN[:3], "B": TEN[:3]}, TEN, 5, 1, messages=OWN),
+    ),
+    ("short_text", SourceError, lambda: rolling_delta(LONG, TEN[:3], 5, 1, messages=OWN)),
+    (
+        "scaling_windows",
+        SourceError,
+        lambda: rolling_delta({"A": TEN[:5], "B": TEN[:5]}, TEN, 5, 5, messages=OWN),
+    ),
+    ("corpora_type", SourceTypeError, lambda: zeta_segments([1], ["a"], ["b"], messages=OWN)),
+    ("no_corpora", SourceError, lambda: zeta_segments({}, ["a"], ["b"], messages=OWN)),
+    ("param_words", SourceError, lambda: zeta_segments({"c": ["a"]}, [], ["b"], messages=OWN)),
+    ("corpus_words", SourceError, lambda: zeta_segments({"c": []}, ["a"], ["b"], messages=OWN)),
+    ("features_type", SourceTypeError, lambda: compare_features([1], [1], messages=OWN)),
+    (
+        "feature_names",
+        SourceTypeError,
+        lambda: compare_features(
+            pd.DataFrame([[1, 2]], columns=["a", "a"]), FEATURES, messages=OWN
+        ),
+    ),
+    (
+        "feature_numeric",
+        SourceTypeError,
+        lambda: compare_features(pd.DataFrame({"a": ["x"]}), FEATURES, messages=OWN),
+    ),
+    ("corpus_labels", ParameterError, lambda: check_comparison_params(("A", "A"), messages=OWN)),
+    ("rng_type", ParameterError, lambda: bootstrap_median_diff([1], [1], rng=5, messages=OWN)),
+    ("values_type", SourceTypeError, lambda: holm_correction(["a"], messages=OWN)),
+    (
+        "texts_type",
+        SourceTypeError,
+        lambda: bootstrap_median_diff([1], [1], texts_a="a", messages=OWN),
+    ),
+    (
+        "texts_values",
+        ParameterError,
+        lambda: bootstrap_median_diff([1, 2], [1], texts_a=["a"], messages=OWN),
+    ),
+    (
+        "texts_labels",
+        SourceTypeError,
+        lambda: bootstrap_median_diff([1, 2], [1], texts_a=["a", 1], messages=OWN),
+    ),
+    ("p_values", ParameterError, lambda: holm_correction([2.0], messages=OWN)),
 ]
 
 
