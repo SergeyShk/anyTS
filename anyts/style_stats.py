@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections import Counter
 from collections.abc import Callable, Collection, Mapping, Sequence
+from functools import cached_property
 from math import nan, sqrt
 from typing import TYPE_CHECKING, Any, ClassVar, NamedTuple
 
@@ -94,7 +95,6 @@ class StyleStats(Stats):
     Attributes:
         words (tuple[str]): Words of the SEO metrics
         forms (tuple[str]): Word forms in lower case, of the markers
-        flags (WordFlags): Flags of the forms
         stopwords (tuple[str]|None): Words of water
         nausea_stopwords (tuple[str]|None): Stopwords of the academic nausea
         top_n (int): Number of the most frequent words
@@ -133,7 +133,7 @@ class StyleStats(Stats):
     Raises:
         SourceTypeError: If the source is neither a string, a Doc nor a Document object,
             parse does not return a Document, doc_words does not return a sequence of
-            strings, doc_flags does not return WordFlags of a boolean per word, the extractor is of another type or a list is not a list of strings;
+            strings, the extractor is of another type or a list is not a list of strings;
             when a class is defined, if a list of its phrases is not a list of strings
         SourceError: If the source has no words
         ParameterError: If top_n is not an integer or is below one
@@ -175,8 +175,8 @@ class StyleStats(Stats):
         self.words = words_extractor.extract(document.text) if words_extractor else self.forms
         if not self.words:
             raise SourceError(messages["no_words"])
-        self.flags = _hook_flags(self, self.doc_flags(document), len(self.forms))
-        self._word_flags = self.flags if words_extractor is None else WordFlags()
+        self._flags_document = document
+        self._extracted = words_extractor is not None
         self.stopwords = in_order(stopwords) if stopwords is not None else None
         self.nausea_stopwords = (
             in_order(nausea_stopwords) if nausea_stopwords is not None else None
@@ -230,7 +230,7 @@ class StyleStats(Stats):
             document (Document): Document of anySeg
 
         Returns:
-            WordFlags: Flags of the words
+            WordFlags: Flags of the words, read on the first use of a metric that needs them
         """
         return WordFlags()
 
@@ -323,6 +323,16 @@ class StyleStats(Stats):
         """
         return False
 
+    @cached_property
+    def _flags(self) -> WordFlags:
+        """Flags of the forms from doc_flags, on first use"""
+        return _hook_flags(self, self.doc_flags(self._flags_document), len(self.forms))
+
+    @property
+    def _word_flags(self) -> WordFlags:
+        """Flags of the words: those of the forms, none for the words of an extractor"""
+        return WordFlags() if self._extracted else self._flags
+
     @property
     def classic_nausea(self) -> float:
         return calc_classic_nausea(self.words)
@@ -373,7 +383,7 @@ class StyleStats(Stats):
             self.forms,
             self.parentheticals_list,
             is_parenthetical=self.is_parenthetical,
-            flags=self.flags.parenthetical,
+            flags=self._flags.parenthetical,
             expand=self.expand_phrases,
             normalize=self.normalize,
         )
@@ -448,7 +458,7 @@ class StyleStats(Stats):
                 forms,
                 self.parentheticals_list,
                 is_parenthetical=self.is_parenthetical,
-                flags=self.flags.parenthetical,
+                flags=self._flags.parenthetical,
                 expand=self.expand_phrases,
                 normalize=self.normalize,
             ),

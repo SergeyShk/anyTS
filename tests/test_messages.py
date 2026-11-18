@@ -443,7 +443,11 @@ CASES = [
     ("hook_words", SourceTypeError, lambda: hooked(Phon, doc_words=lambda self, d: [5])(TEXT)),
     ("hook_words", SourceTypeError, lambda: hooked(Stats, doc_words=lambda self, d: "a")(TEXT)),
     ("hook_words", SourceTypeError, lambda: hooked(Style, doc_words=lambda self, d: 5)(TEXT)),
-    ("hook_flags", SourceTypeError, lambda: hooked(Style, doc_flags=lambda self, d: 5)(TEXT)),
+    (
+        "hook_flags",
+        SourceTypeError,
+        lambda: hooked(Style, doc_flags=lambda self, d: 5)(TEXT).water,
+    ),
     (
         "hook_word_pairs",
         SourceTypeError,

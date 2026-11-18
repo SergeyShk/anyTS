@@ -11,7 +11,7 @@ The SEO metrics are counted on the words of the [document](https://sergeyshk.git
 
 Raises:
 
-- `SourceTypeError` - a source that is neither a string, a `Doc` nor a `Document`, a `parse` that returns no `Document`, a `doc_words` that returns no sequence of strings, a `doc_flags` that returns no `WordFlags` of a boolean per word, an extractor of another type, a list that is not a list of strings;
+- `SourceTypeError` - a source that is neither a string, a `Doc` nor a `Document`, a `parse` that returns no `Document`, a `doc_words` that returns no sequence of strings, an extractor of another type, a list that is not a list of strings;
 - `SourceError` - a source without words;
 - `ParameterError` - a `top_n` that is not an integer of at least one.
 <!-- --8<-- [end:StyleStats] -->
@@ -72,7 +72,6 @@ A set of words is taken in sorted order.
 | :-------- | :--- | :---------- |
 | `words` | `tuple[str]` | Words of the SEO metrics |
 | `forms` | `tuple[str]` | Word forms in lower case, of the markers |
-| `flags` | `WordFlags` | Flags of the forms from `doc_flags` |
 
 The metrics are properties computed on each access.
 <!-- --8<-- [end:StyleStats-attributes] -->
@@ -319,8 +318,6 @@ The parenthetical expressions of a text: the phrases of the list, spelled out by
 | `flags` | `list[bool]` | `None` | Whether every word is a parenthetical expression by itself, in place of `is_parenthetical` |
 | `expand` | `Callable` | `None` | Variants of the phrases in the forms of the text with the phrase of each; the phrases as they are by default |
 | `normalize` | `Callable[[str], str]` | `str.lower` | Normalized form of a word and of a phrase |
-
-Words or phrases that are not a list of strings, flags that are not a list of booleans and hooks that cannot be called raise `SourceTypeError`, flags that are not one per word - `ParameterError`.
 <!-- --8<-- [end:find_parentheticals] -->
 
 <!-- --8<-- [start:calc_parentheticals] -->

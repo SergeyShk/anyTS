@@ -425,7 +425,7 @@ CONTEXT_TEXT = "Well, I like it like that, well"
 
 def test_flags_of_a_subclass():
     style = ContextStyle(CONTEXT_TEXT)
-    assert style.flags == WordFlags(
+    assert style._flags == WordFlags(
         (False, False, False, True, True, False, False),
         (False, False, False, True, True, False, False),
         (True, False, False, False, False, False, False),
@@ -436,7 +436,7 @@ def test_flags_of_a_subclass():
     assert style.parentheticals == pytest.approx(100 / 7)
     assert style.markers()["parentheticals"] == ("well",)
     assert ContextStyle(CONTEXT_TEXT, stopwords=["i"]).water == pytest.approx(100 / 7)
-    assert StyleStats(CONTEXT_TEXT).flags == WordFlags()
+    assert StyleStats(CONTEXT_TEXT)._flags == WordFlags()
 
 
 def test_flags_of_the_forms_only():
@@ -465,4 +465,20 @@ def test_flags_hook_checked(flags, value):
         f"doc_flags of Wrong must return WordFlags of 7 booleans in every check, not {value}$"
     )
     with pytest.raises(SourceTypeError, match=message):
-        Wrong(CONTEXT_TEXT)
+        Wrong(CONTEXT_TEXT).get_stats()
+
+
+def test_flags_on_first_use():
+    class Counted(ContextStyle):
+        calls = 0
+
+        def doc_flags(self, document):
+            Counted.calls += 1
+            return super().doc_flags(document)
+
+    style = Counted(CONTEXT_TEXT)
+    style.keyword_density("well")
+    assert Counted.calls == 0
+    style.get_stats()
+    style.markers()
+    assert Counted.calls == 1
