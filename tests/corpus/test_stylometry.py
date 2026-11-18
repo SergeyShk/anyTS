@@ -527,3 +527,13 @@ def test_frequency_table_ties_do_not_depend_on_the_order_of_the_texts():
         distances = delta(corpus, n_mfw=2, variant=variant)
         backwards = delta(reversed_corpus, n_mfw=2, variant=variant)
         assert distances.loc["A", "C"] == backwards.loc["A", "C"]
+
+
+def test_zeta_names_a_word_that_is_no_string():
+    """A list of words with a missing value is one text: the error names the value, not the list"""
+    with pytest.raises(
+        SourceTypeError, match=r"^A text of the target must be a list of strings, not float$"
+    ):
+        zeta(["the", "cat", float("nan"), "sat"], ["the", "dog"])
+    with pytest.raises(SourceTypeError, match=r"not float$"):
+        zeta_segments({"A": ["the", float("nan")]}, ["the"], ["dog"])

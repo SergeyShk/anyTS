@@ -16,6 +16,7 @@ from ..utils import (
     check_integer,
     check_number,
 )
+from .keyness import _holds_texts
 
 _ZERO_SEGMENTS = 0.5
 
@@ -668,7 +669,7 @@ def _segments(
     messages: Mapping[str, str],
 ) -> Iterator[set[str]]:
     """Words of every segment of one text or of a list of texts"""
-    if len(texts) and all(isinstance(text, str) for text in texts):
+    if not _holds_texts(texts):
         texts = [texts]  # type: ignore[list-item]
     for text in texts:
         _check_word_list(text, what, messages, text=True)
