@@ -83,7 +83,7 @@ The band is found by [`scale_level`](readability_stats.md#scale_level); `Readabi
 ## Parts of a text { #by_parts }
 
 <!-- --8<-- [start:Stats-by_parts] -->
-`by_parts(source, parts="sentences", **params)`, a class method, returns the statistics of every sentence (`parts="sentences"`) or paragraph (`"paragraphs"`) of a data source as a `DataFrame`: a row per part, indexed by its number, with its `start` and `end` in the text of the document and its flat statistics, joined by `stats_dataframe`. The source is parsed once, by `parse` of an object of the class made without `__init__`, and the class with the parameters `params` counts the document of every part ([`document_part`](https://sergeyshk.github.io/anyTS/document/#document_part)); the classes of readability parse as their `basic_stats_class`. A part without words, such as a line of asterisks, keeps its row without statistics. The numbers of the words and the sentences of the parts add up to those of the whole text, while the unique words, the shares and the means are those of every part.
+`by_parts(source, parts="sentences", **params)`, a class method, returns the statistics of every sentence (`parts="sentences"`) or paragraph (`"paragraphs"`) of a data source as a `DataFrame`: a row per part, indexed by its number, with its `start` and `end` in the text of the document and its flat statistics, joined by `stats_dataframe`. The source is parsed once, by `parts_document` of the class, and the class with the parameters `params` counts the document of every part ([`document_part`](https://sergeyshk.github.io/anyTS/document/#document_part)); the classes of readability parse as their `basic_stats_class`. A part without words, such as a line of asterisks, or one the class cannot count, such as a number alone on a line for a class without numbers among its words, keeps its row without statistics; a source with no part the class can count raises the error of the class. The numbers of the words and the sentences of the parts add up to those of the whole text, while the unique words, the shares and the means are those of every part.
 
 The parts of a class are its `part_kinds`: `CohesionStats`, whose links run between sentences, counts paragraphs, and `DiversityStats`, which takes words, no parts. Other parts raise `ParameterError`; the source and a part raise the errors of the class.
 <!-- --8<-- [end:Stats-by_parts] -->
@@ -182,6 +182,7 @@ A class of statistics subclasses `Stats`:
 | `level_scale(stat)` | method | Interpretation scale of a statistic; `level_scales` by default, overridden when the scale depends on the parameters of the object |
 | `messages` | class attribute | Messages of the errors by key; `MESSAGES` by default |
 | `part_kinds` | class attribute | Parts `by_parts` counts; `("sentences", "paragraphs")` by default |
+| `parts_document(source, **params)` | class method | Document whose parts `by_parts` counts, given the parameters of the class: `parse` of an object made without `__init__` by default; a class whose `parse` needs its parameters, or that annotates a string outside `parse`, overrides it |
 <!-- --8<-- [end:Stats-hooks] -->
 
 </details>

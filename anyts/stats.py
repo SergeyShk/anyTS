@@ -8,7 +8,7 @@ from types import MappingProxyType
 from typing import TYPE_CHECKING, Any, ClassVar, TypeVar, cast
 
 from .constants import MESSAGES
-from .exceptions import ParameterError, SourceTypeError, UnknownStatError
+from .exceptions import ParameterError, SourceError, SourceTypeError, UnknownStatError
 from .utils import _check_removed, _messages, check_bool, check_messages, check_number
 
 if TYPE_CHECKING:
@@ -41,6 +41,7 @@ class Stats:
     Methods:
         parse: Document of a data source
         by_parts: Statistics of every sentence or paragraph of a data source
+        parts_document: Document whose parts by_parts counts
         stat_names: Names of the statistics of get_stats
         get_stats: Getting the computed statistics
         to_dataframe: Getting the computed statistics as a one-row frame
@@ -132,13 +133,13 @@ class Stats:
         Getting the statistics of every sentence or paragraph of a data source
 
         Description:
-            The source is parsed once, by parse of an object of the class made
-            without __init__, so a parse that reads only the class serves; the
-            class with the parameters counts the document of every part
-            (document_part). The table has a row per part, its start and end in
-            the text of the document and its flat statistics (stats_dataframe);
-            a part without words, such as a line of asterisks, has its row
-            without statistics
+            The source is parsed once (parts_document), and the class with the
+            parameters counts the document of every part (document_part). The
+            table has a row per part, its start and end in the text of the
+            document and its flat statistics (stats_dataframe); a part without
+            words, such as a line of asterisks, or one the class cannot count,
+            such as a number alone on a line for a class without numbers among
+            its words, has its row without statistics
 
         Arguments:
             source (str|Doc|Document): Data source
@@ -150,8 +151,8 @@ class Stats:
 
         Raises:
             ParameterError: If the parts are not one of part_kinds
-            SourceTypeError, SourceError: As the class raises for the source and for
-                a part
+            SourceTypeError, SourceError: As the class raises for the source, or for a
+                part when it can count none
 
         Example:
             >>> from anyts.basic_stats import BasicStats
@@ -164,27 +165,61 @@ class Stats:
             0             0   15        3
             1            16   35        4
         """
-        from pandas import DataFrame
+        return _parts_dataframe(
+            [
+                (number, *part)
+                for number, part in enumerate(cls._count_parts(source, parts, params))
+            ],
+            parts[:-1],
+        )
 
+    @classmethod
+    def parts_document(cls, source: str | Doc | Document, **params: Any) -> Document:
+        """
+        Getting the document whose parts by_parts counts
+
+        Description:
+            parse of an object of the class made without __init__ by default, so
+            a parse that reads only the class serves; a class whose parse needs
+            its parameters, or that annotates a string outside parse, overrides
+            it, so that the parts have the annotation of an object of the class
+
+        Arguments:
+            source (str|Doc|Document): Data source
+            **params: Parameters of the class
+
+        Returns:
+            Document: Document of anySeg
+        """
+        return cls.__new__(cls)._document(source)
+
+    @classmethod
+    def _count_parts(
+        cls, source: str | Doc | Document, parts: str, params: Mapping[str, Any]
+    ) -> list[tuple[int, int, Stats | None]]:
+        """Start, end and statistics of every part of a source parsed once, None for a part
+        without words or one the class cannot count, such as a number alone on a line for a
+        class without numbers; the error of the class when it can count no part"""
         from .document import _document_parts, document_words
 
-        messages = cls.messages
         if not isinstance(parts, str) or parts not in cls.part_kinds:
             raise ParameterError(
-                messages["parts_kind"].format(parts=repr(parts), kinds=cls.part_kinds)
+                cls.messages["parts_kind"].format(parts=repr(parts), kinds=cls.part_kinds)
             )
-        document = cls.__new__(cls)._document(source)
-        bounds, counted, numbers = [], [], []
-        for number, (start, end, part) in enumerate(_document_parts(document, parts)):
-            bounds.append({"start": start, "end": end})
+        document = cls.parts_document(source, **params)
+        counted: list[tuple[int, int, Stats | None]] = []
+        failure: SourceError | None = None
+        for start, end, part in _document_parts(document, parts):
+            stats = None
             if document_words(part):
-                counted.append(cast(Any, cls)(part, **params))
-                numbers.append(number)
-        name = parts[:-1]
-        stats = stats_dataframe(counted, index=numbers)
-        frame = DataFrame(bounds).join(stats)
-        frame.index.name = name
-        return frame
+                try:
+                    stats = cast(Any, cls)(part, **params)
+                except SourceError as error:
+                    failure = failure or error
+            counted.append((start, end, stats))
+        if failure is not None and all(stats is None for _, _, stats in counted):
+            raise failure
+        return counted
 
     def stat_names(self) -> tuple[str, ...]:
         """
@@ -485,3 +520,21 @@ def stats_dataframe(
                 columns.append(column)
         rows.append(row)
     return DataFrame(rows, index=index, columns=columns)
+
+
+def _parts_dataframe(
+    parts: Sequence[tuple[Hashable, int, int, Stats | None]], name: str
+) -> DataFrame:
+    """Table of parts: a row per part labelled by its key, with its start, its end and the flat
+    statistics of stats_dataframe, none for a part without them; name names the index"""
+    from pandas import DataFrame
+
+    bounds = DataFrame(
+        {"start": [start for _, start, _, _ in parts], "end": [end for _, _, end, _ in parts]},
+        index=[key for key, _, _, _ in parts],
+    )
+    counted = [(key, stats) for key, _, _, stats in parts if stats is not None]
+    table = stats_dataframe([stats for _, stats in counted], index=[key for key, _ in counted])
+    frame = bounds.join(table)
+    frame.index.name = name
+    return frame

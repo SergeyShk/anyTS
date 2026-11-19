@@ -244,7 +244,16 @@ class _PartReader:
     """The tokens, the words and the columns of a document read once, to make documents of its
     parts"""
 
-    __slots__ = ("columns", "document", "ends", "first_tokens", "first_words", "forms", "starts")
+    __slots__ = (
+        "columns",
+        "document",
+        "ends",
+        "first_tokens",
+        "first_words",
+        "forms",
+        "multiword",
+        "starts",
+    )
 
     def __init__(self, document: Document) -> None:
         self.document = document
@@ -258,6 +267,8 @@ class _PartReader:
         for token in document.multiword_tokens:
             self.forms[token.index] = [word.form for word in token.words]
             sizes[token.index] = len(token.words)
+        # The indices of the multiword tokens in order, to find those of a part
+        self.multiword = sorted(self.forms)
         self.first_words = [0]
         for size in sizes:
             self.first_words.append(self.first_words[-1] + size)
@@ -300,9 +311,12 @@ class _PartReader:
                 self.first_tokens[index] - token_first for index in range(first, last + 1)
             ],
             words={
-                index - token_first: forms
-                for index, forms in self.forms.items()
-                if token_first <= index < token_end
+                index - token_first: self.forms[index]
+                for index in self.multiword[
+                    bisect_left(self.multiword, token_first) : bisect_left(
+                        self.multiword, token_end
+                    )
+                ]
             }
             or None,
         )

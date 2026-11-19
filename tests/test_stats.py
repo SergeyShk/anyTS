@@ -11,8 +11,8 @@ from anyts.basic_stats import BasicStats
 from anyts.cohesion_stats import CohesionStats
 from anyts.constants import MESSAGES
 from anyts.diversity_stats import DiversityStats
-from anyts.document import to_document
-from anyts.exceptions import ParameterError, SourceTypeError, UnknownStatError
+from anyts.document import document_part, to_document
+from anyts.exceptions import ParameterError, SourceError, SourceTypeError, UnknownStatError
 from anyts.readability_stats import ReadabilityStats
 from anyts.stats import Stats, scale_level, stats_dataframe
 from anyts.syntax_stats import SyntaxStats
@@ -434,3 +434,48 @@ def test_stats_dataframe_type_errors(stats):
         SourceTypeError, match=r"^A list of objects of statistics is expected, not "
     ):
         stats_dataframe(stats)
+
+
+def test_by_parts_keeps_a_part_the_class_cannot_count():
+    """A number alone on a line is a sentence of words, but none for a class without numbers:
+    its row stays without statistics; a text of such parts alone raises the error of the class"""
+    parts = Vowels.by_parts("Chapter one.\n\n1\n\nThe cat sleeps.", filter_nums=True)
+    assert parts["n_words"].tolist()[0::2] == [2, 3]
+    assert parts.loc[1].drop(["start", "end"]).isna().all()
+    with pytest.raises(SourceError, match=r"^The data source has no words$"):
+        Vowels.by_parts("1\n\n2", filter_nums=True)
+
+
+def test_parts_document_takes_the_parameters():
+    """parts_document gets the parameters of the class, for a parse that needs them"""
+    calls = []
+
+    class Upper(Vowels):
+        @classmethod
+        def parts_document(cls, source, **params):
+            calls.append(params)
+            return to_document(source.upper())
+
+    parts = Upper.by_parts("The cat sleeps. A dog barks.", complex_syl_factor=2)
+    assert calls == [{"complex_syl_factor": 2}]
+    assert parts["n_words"].tolist() == [3, 3]
+    assert Upper.by_parts("The cat.")["n_letters"].tolist() == [6]
+
+
+def test_by_parts_of_multiword_tokens():
+    vocab = spacy.blank("es").vocab
+    doc = spacy.tokens.Doc(
+        vocab,
+        words=["Vino", "del", "mar", ".", "Fue", "al", "río", "."],
+        spaces=[True, True, False, True, True, True, False, False],
+        sent_starts=[True, False, False, False, True, False, False, False],
+    )
+    import anyseg.spacy  # noqa: F401 - the extension token._.anyseg_words
+
+    doc[1]._.anyseg_words = [{"form": "de", "upos": "ADP"}, {"form": "el", "upos": "DET"}]
+    doc[5]._.anyseg_words = [{"form": "a", "upos": "ADP"}, {"form": "el", "upos": "DET"}]
+    document = to_document(doc)
+    assert [
+        [word.form for word in to_document(document_part(document, start, end)).words]
+        for start, end in Vowels.by_parts(doc)[["start", "end"]].values
+    ] == [["Vino", "de", "el", "mar", "."], ["Fue", "a", "el", "río", "."]]
