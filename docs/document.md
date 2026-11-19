@@ -76,6 +76,42 @@ Returns the words of a document: its tokens with a letter or a digit (`str.isaln
     ('Well', 'the', 'cat', 'sat', '100')
     ```
 
+## Part of a document { #document_part }
+
+<!-- --8<-- [start:document_part] -->
+``` {.python .signature}
+document_part(document, start, end, *, messages=None)
+```
+
+Returns the document of a part of a document: the sentences the span of the text from `start` to `end` overlaps, whole, so that their trees stay whole - a sentence, a paragraph or a fragment of several of them. Its text runs from the first token of the first sentence to the last token of the last one, and the positions count from there. The tokens, the words with their columns, the sentences and the paragraphs are those of the document, and a head stays as it is, since the head of a word is in its own sentence. A class of statistics counts a part as any document. Every call reads the columns of the whole document, so [`by_parts`](https://sergeyshk.github.io/anyTS/stats/stats/#by_parts), which reads them once, counts every sentence or paragraph of a text.
+
+| Parameter | Type | Default | Description |
+| :-------- | :--- | :------ | :---------- |
+| `document` | `Document` | - | Document of anySeg |
+| `start` | `int` | - | Position of the first character of the span in the text |
+| `end` | `int` | - | Position after its last character |
+| `messages` | `dict[str, str]` | `None` | Messages of the errors by key, in place of those of the library |
+
+A value that is not a `Document` raises `SourceTypeError`; a `start` or an `end` that is not an integer, or a span not within the text with its start before its end, `ParameterError`; and a span that overlaps no sentence, as one of whitespace between two, `SourceError`.
+<!-- --8<-- [end:document_part] -->
+
+=== "Code"
+
+    ``` python
+    from anyts.document import document_part, to_document
+
+    document = to_document("The cat sleeps. The dog barks.\n\nA bird sings.")
+    document_part(document, 20, 21).text
+    [sentence.text for sentence in document_part(document, 5, 35).sentences]
+    ```
+
+=== "Result"
+
+    ```
+    'The dog barks.'
+    ['The cat sleeps.', 'The dog barks.', 'A bird sings.']
+    ```
+
 ## Document objects { #is_document }
 
 <!-- --8<-- [start:is_document] -->

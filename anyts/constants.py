@@ -255,6 +255,12 @@ MESSAGES: Mapping[str, str] = MappingProxyType(
         ),
         "not_grade_formula": "The metric {stat} is not a grade formula. Grade formulas: {grade_stats}",
         "no_scale": "The metric {stat} has no scale of bands",
+        "part_bounds": (
+            "The part must lie within the text of {size} characters, its start before its end, "
+            "not {start} and {end}"
+        ),
+        "parts_kind": "The parts must be one of {kinds}, not {parts}",
+        "stats_objects": "A list of objects of statistics is expected, not {type}",
         "unknown_stat": "Unknown statistic: {stat}. Available statistics: {stats}",
         "unknown_norm": "Unknown reading speed norm: {norm}. Available norms: {norms}",
         "negative_words": "The number of words cannot be negative",

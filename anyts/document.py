@@ -8,10 +8,10 @@ from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from functools import cache, partial
 from re import Pattern
-from typing import TYPE_CHECKING, Any, NamedTuple
+from typing import TYPE_CHECKING, Any, NamedTuple, cast
 
 from .constants import MESSAGES
-from .exceptions import SourceError, SourceTypeError
+from .exceptions import ParameterError, SourceError, SourceTypeError
 from .extractors import _check_spans, _sentence_spans, _word_pattern
 from .utils import (
     _IN_WORD_MARKS,
@@ -19,6 +19,7 @@ from .utils import (
     _messages,
     _separators,
     check_callable,
+    check_integer,
     has_words,
     is_doc,
     is_document,
@@ -31,6 +32,8 @@ if TYPE_CHECKING:
 
 Spans = Callable[[str], Iterable[tuple[int, int, str]]]
 
+# Columns of the words a part of a document keeps
+_PART_COLUMNS = ("lemma", "upos", "xpos", "feats", "head", "deprel", "deps", "misc")
 # The separators a word of the default tokens may end with
 _WORD_SEPARATORS = "\u00ad\u200c\u200d" + _IN_WORD_MARKS
 
@@ -175,6 +178,153 @@ def document_words(document: Document) -> tuple[str, ...]:
         )
         if has_words(word)
     )
+
+
+def document_part(
+    document: Document, start: int, end: int, *, messages: Mapping[str, str] | None = None
+) -> Document:
+    """
+    Getting the document of a part of a document
+
+    Description:
+        The part is made of the sentences the span of the text from start to
+        end overlaps, whole, so that their trees stay whole: a sentence, a
+        paragraph or a fragment of several of them. Its text runs from the first
+        token of the first sentence to the last token of the last one, and the
+        positions count from there; the tokens, the words with their columns,
+        the sentences and the paragraphs are those of the document, and a head
+        stays as it is, since the head of a word is in its own sentence
+
+    Arguments:
+        document (Document): Document of anySeg
+        start (int): Position of the first character of the span in the text
+        end (int): Position after its last character
+        messages (dict[str, str]): Messages of the errors by key, in place of those of
+            the library
+
+    Returns:
+        Document: Document of the part
+
+    Raises:
+        SourceTypeError: If the document is not a Document object
+        ParameterError: If start or end is not an integer, or the span is not within
+            the text with start before end
+        SourceError: If the span overlaps no sentence, as one of whitespace between two
+
+    Example:
+        >>> from anyts.document import document_part, to_document
+        >>> document = to_document("The cat sleeps. The dog barks.")
+        >>> document_part(document, 20, 21).text
+        'The dog barks.'
+    """
+    messages = _messages(messages)
+    if not is_document(document):
+        raise source_type_error(messages, document)
+    for value, what in ((start, "start"), (end, "end")):
+        check_integer(value, what, message=messages["integer_param"])
+    size = len(document.text)
+    if not 0 <= start < end <= size:
+        raise ParameterError(messages["part_bounds"].format(size=size, start=start, end=end))
+    reader = _PartReader(document)
+    sentences = reader.sentences_in(start, end)
+    if not sentences:
+        raise SourceError(messages["no_words"])
+    return reader.part(sentences[0], sentences[-1])
+
+
+def _document_parts(document: Document, kind: str) -> Iterator[tuple[int, int, Document]]:
+    """Positions of every sentence or paragraph of a document in its text, with its document
+    (document_part), the columns read once"""
+    reader = _PartReader(document)
+    for first, last in reader.ranges(kind):
+        yield *reader.bounds(first, last), reader.part(first, last)
+
+
+class _PartReader:
+    """The tokens, the words and the columns of a document read once, to make documents of its
+    parts"""
+
+    __slots__ = (
+        "columns",
+        "document",
+        "ends",
+        "first_tokens",
+        "first_words",
+        "forms",
+        "multiword",
+        "starts",
+    )
+
+    def __init__(self, document: Document) -> None:
+        self.document = document
+        tokens = document.tokens
+        self.starts = list(tokens.starts)
+        self.ends = list(tokens.ends)
+        self.first_tokens = [bisect_left(self.starts, s) for s in document.sentences.starts]
+        self.first_tokens.append(len(self.starts))
+        sizes = [1] * len(self.starts)
+        self.forms: dict[int, list[str]] = {}
+        for token in document.multiword_tokens:
+            self.forms[token.index] = [word.form for word in token.words]
+            sizes[token.index] = len(token.words)
+        # The indices of the multiword tokens in order, to find those of a part
+        self.multiword = sorted(self.forms)
+        self.first_words = [0]
+        for size in sizes:
+            self.first_words.append(self.first_words[-1] + size)
+        self.columns = {name: document.column(name) for name in _PART_COLUMNS}
+
+    def sentences_in(self, start: int, end: int) -> list[int]:
+        """Indices of the sentences whose tokens the span overlaps"""
+        found = []
+        for index in range(len(self.first_tokens) - 1):
+            first, last = self.first_tokens[index], self.first_tokens[index + 1] - 1
+            if first <= last and self.starts[first] < end and self.ends[last] > start:
+                found.append(index)
+        return found
+
+    def ranges(self, kind: str) -> list[tuple[int, int]]:
+        """First and last sentences of every sentence or paragraph"""
+        if kind == "sentences":
+            return [(index, index) for index in range(len(self.first_tokens) - 1)]
+        ranges = []
+        for paragraph in self.document.paragraphs:
+            indices = [sentence.index for sentence in paragraph.sentences]
+            ranges.append((indices[0], indices[-1]))
+        return ranges
+
+    def bounds(self, first: int, last: int) -> tuple[int, int]:
+        """Start of the first token of the first sentence and end of the last token of the last"""
+        return self.starts[self.first_tokens[first]], self.ends[self.first_tokens[last + 1] - 1]
+
+    def part(self, first: int, last: int) -> Document:
+        """Document of the sentences from first to last"""
+        from anyseg import Document
+
+        token_first, token_end = self.first_tokens[first], self.first_tokens[last + 1]
+        offset, end = self.bounds(first, last)
+        part = Document.from_tokens(
+            self.document.text[offset:end],
+            [position - offset for position in self.starts[token_first:token_end]],
+            [position - offset for position in self.ends[token_first:token_end]],
+            sentence_starts=[
+                self.first_tokens[index] - token_first for index in range(first, last + 1)
+            ],
+            words={
+                index - token_first: self.forms[index]
+                for index in self.multiword[
+                    bisect_left(self.multiword, token_first) : bisect_left(
+                        self.multiword, token_end
+                    )
+                ]
+            }
+            or None,
+        )
+        word_first, word_end = self.first_words[token_first], self.first_words[token_end]
+        values = {name: column[word_first:word_end] for name, column in self.columns.items()}
+        kept = {name: value for name, value in values.items() if any(v is not None for v in value)}
+        part.set_columns(**cast(dict[str, Any], kept))
+        return part
 
 
 class TreeWord:

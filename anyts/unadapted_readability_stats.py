@@ -12,7 +12,7 @@ from .constants import (
     UNADAPTED_READABILITY_STATS_DESC,
 )
 from .exceptions import ParameterError
-from .readability_stats import _read_basic_stats, _word_letters
+from .readability_stats import _basic_parse, _read_basic_stats, _word_letters
 from .stats import Stats
 from .utils import check_bool, check_integer, safe_divide
 
@@ -119,6 +119,22 @@ class UnadaptedReadabilityStats(Stats):
                 f"The basic_stats_class of {cls.__name__} must be a subclass of BasicStats "
                 f"or None, not {basic!r}"
             )
+
+    def parse(self, source: str | Doc | Document) -> Document:
+        """
+        Getting the document of a data source
+
+        Description:
+            parse of basic_stats_class, whose statistics the class reads; that
+            of Stats without it
+
+        Arguments:
+            source (str|Doc|Document): Data source
+
+        Returns:
+            Document: Document of anySeg
+        """
+        return _basic_parse(self, source)
 
     def __init__(
         self,

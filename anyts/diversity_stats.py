@@ -232,6 +232,8 @@ class DiversityStats(Stats):
 
     stats_desc: ClassVar[Mapping[str, str]] = DIVERSITY_STATS_DESC
     stats_headers: ClassVar[tuple[str, str]] = ("Metric", "Value")
+    # The class takes words, which a document of a part does not give
+    part_kinds: ClassVar[tuple[str, ...]] = ()
 
     def __init__(
         self,
