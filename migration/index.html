@@ -2225,7 +2225,7 @@
 </table>
 <p>A pipeline with the tokenizer of spaCy and a parser has no replacement for the first three: the tokenizer and the sentencizer of anySeg segment the text otherwise, so the parser builds other trees and the numbers shift. A library keeps its own copies of them until it moves to the pipeline of anySeg. The tokenizer of anySeg goes into the config of the pipeline (<code>spacy.blank(lang, config={"nlp": {"tokenizer": {"@tokenizers": "anyseg.Tokenizer.v1"}}})</code>): a pipeline with one set as <code>nlp.tokenizer</code> is saved by <code>nlp.to_disk</code> without it, and <code>spacy.load</code> fails on it (<code>FileNotFoundError</code>).</p>
 <h2 id="hooks">Class attributes and hooks<a class="headerlink" href="#hooks" title="Permanent link">&para;</a></h2>
-<p>The attributes of 0.4 that the core no longer reads raise <code>ParameterError</code> (the message <code>removed_attribute</code>) when a class that sets them is defined, since a class that kept them would give other numbers without a sign:</p>
+<p>The attributes of 0.4 that the core no longer reads raise <code>ParameterError</code> (the messages <code>removed_attribute</code> and <code>removed_attribute_either</code>, and <code>removed_component_attribute</code> for a component, since 0.6) when a class that sets them is defined, since a class that kept them would give other numbers without a sign:</p>
 <table>
 <thead>
 <tr>
