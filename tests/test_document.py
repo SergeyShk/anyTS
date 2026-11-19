@@ -482,3 +482,18 @@ def test_tree():
     assert empty.words == empty.sentences == ()
     with pytest.raises(SourceTypeError, match="cannot be of type str"):
         get_tree("Vino del pueblo")
+
+
+@pytest.mark.parametrize(
+    ("text", "tokens"),
+    [
+        ("Hola \u200emundo.", ["Hola", "mundo", "."]),
+        ("Hola mundo\u200f.", ["Hola", "mundo", "."]),
+        ("Вто\u2060рой день.", ["Вто\u2060рой", "день", "."]),
+        ("pa\u200egina\u200f\u200e web", ["pa\u200egina", "web"]),
+    ],
+)
+def test_marks_of_the_direction_of_text(text, tokens):
+    """A mark of the direction of text or a word joiner is never a token: between words it is
+    in neither, inside a word part of it, as in anySeg"""
+    assert [token.text for token in to_document(text).tokens] == tokens

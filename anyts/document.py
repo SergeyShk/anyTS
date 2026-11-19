@@ -14,6 +14,7 @@ from .constants import MESSAGES
 from .exceptions import SourceError, SourceTypeError
 from .extractors import _check_spans, _sentence_spans, _word_pattern
 from .utils import (
+    _IN_WORD_MARKS,
     BLANK_LINE,
     _messages,
     _separators,
@@ -31,7 +32,7 @@ if TYPE_CHECKING:
 Spans = Callable[[str], Iterable[tuple[int, int, str]]]
 
 # The separators a word of the default tokens may end with
-_WORD_SEPARATORS = "\u00ad\u200c\u200d"
+_WORD_SEPARATORS = "\u00ad\u200c\u200d" + _IN_WORD_MARKS
 
 
 class _Converted:
