@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from collections import Counter
-from collections.abc import Iterable, Mapping
-from typing import TYPE_CHECKING, Any, ClassVar, NamedTuple
+from collections.abc import Hashable, Iterable, Mapping
+from typing import TYPE_CHECKING, Any, ClassVar, NamedTuple, cast
 
 from .constants import MORPH_FEATURES, MORPH_STATS_DESC, MORPH_VALUES_DESC
 from .document import _feature_dict
@@ -331,6 +331,23 @@ class MorphStats(Stats):
             for value, number in sorted(counts.items(), key=lambda item: item[1], reverse=True):
                 print(f"{self._value_desc(descs, value):30}|{number!s:^10}")
             print()
+
+    def value_desc(self, stat: str, value: Hashable) -> str:
+        """
+        Getting the description of a value of a statistic, as print_stats
+
+        Description:
+            The description of values_desc, a value of several joining those of
+            its parts with a slash; unknown_value for the words without the feature
+
+        Arguments:
+            stat (str): Name of the statistic
+            value (str|None): Value of the feature
+
+        Returns:
+            str: Description of the value
+        """
+        return self._value_desc(self.values_desc.get(stat, {}), cast(str | None, value))
 
     def _value_desc(self, descs: Mapping[str, str], value: str | None) -> str:
         """Description of a value of a statistic for print_stats"""

@@ -382,6 +382,10 @@ def test_by_parts_raises_the_error_of_the_parts():
         Fussy.by_parts("The cat sleeps. A dog barks.")
 
 
+def test_value_desc_of_a_class_is_the_value():
+    assert Vowels("The cat sleeps.").value_desc("c_letters", 3) == "3"
+
+
 def test_by_parts_reads_the_statistics_once():
     reads = []
 

@@ -185,8 +185,13 @@ def test_values_are_those_of_get_stats():
     report = Morph(doc)
     found = {cells[0]: cells[1] for cells in rows(report.to_html(), "<h3>morph</h3>")}
     stats = report.stats["morph"]
-    assert found[escape(stats.stats_desc["pos"])] == escape("NOUN: 1, VERB: 1")
-    assert found[escape(stats.stats_desc["number"])] == escape("Plur: 1, None: 1")
+    # The values described as print_stats describes them
+    assert found[escape(stats.stats_desc["pos"])] == escape(
+        f"{stats.value_desc('pos', 'NOUN')}: 1, {stats.value_desc('pos', 'VERB')}: 1"
+    )
+    assert found[escape(stats.stats_desc["number"])] == escape(
+        f"{stats.value_desc('number', 'Plur')}: 1, {stats.unknown_value}: 1"
+    )
 
 
 def test_the_statistics_are_read_once_for_the_sentences():
@@ -231,7 +236,8 @@ def test_skip_errors():
         Two("The cat sleeps.")
     report = Two("The cat sleeps.", skip_errors=True)
     assert list(report.stats) == ["basic"] and str(report.errors["fussy"]) == "Too few words"
-    assert "<h3>fussy</h3>" not in report.to_html()
+    page = report.to_html()
+    assert "<h3>fussy</h3>" not in page and "<p>Not counted: fussy</p>" in page
     with pytest.raises(ParameterError):
         Two("The cat sleeps.", skip_errors="yes")
 
@@ -268,3 +274,113 @@ def test_an_output_that_cannot_be_written(tmp_path, capsys, command):
     output = tmp_path / "missing" / "out"
     assert Prototype().run([command, str(source), "-o", str(output)]) == 1
     assert capsys.readouterr().err.startswith(f"proto: {output}: ")
+
+
+def test_rows_are_those_of_print_stats():
+    """The statistics of stats_desc, as print_stats, not the distributions of BasicStats; the
+    classes under their titles"""
+
+    class Titled(VowelsReport):
+        titles: ClassVar[dict[str, str]] = {"basic": "Basic <statistics>"}
+
+    page = Titled(TEXT).to_html()
+    found = [cells[0] for cells in rows(page, "<h3>Basic &lt;statistics&gt;</h3>")]
+    assert found == [escape(desc) for desc in Vowels.stats_desc.values()]
+    assert "<h3>readability</h3>" in page
+
+
+def test_numbers():
+    """A small float keeps two significant digits, and an undefined value is the text of
+    undefined"""
+
+    class Small(Vowels):
+        stats_desc: ClassVar[dict[str, str]] = {
+            **Vowels.stats_desc,
+            "small": "Small",
+            "none": "None",
+        }
+        small = 0.0033
+        none = None
+
+    class SmallReport(Report):
+        stats_classes: ClassVar[dict[str, type]] = {"small": Small}
+
+    found = {cells[0]: cells[1] for cells in rows(SmallReport(TEXT).to_html(), "<h3>small</h3>")}
+    assert (found["Small"], found["None"]) == ("0.0033", "-")
+
+
+def test_max_sentences():
+    """A longer text has the sentences with the highest values of the first column, in order"""
+
+    class Top(VowelsReport):
+        max_sentences = 2
+        sections: ClassVar[tuple[str, ...]] = ("sentences",)
+
+    text = "A cat. The big dog barks. It sleeps now. Birds sing in the old tree."
+    page = Top(text).to_html()
+    assert [cells[:3] for cells in rows(page, "<h2>Sentences</h2>")] == [
+        ["2", "The big dog barks.", "4"],
+        ["4", "Birds sing in the old tree.", "6"],
+    ]
+    assert "The 2 sentences of 4 with the highest" in page
+
+
+def test_the_page_is_the_same_for_the_same_text():
+    class Two(VowelsReport):
+        def plots(self):
+            return super().plots() + super().plots()
+
+    page = Two(TEXT).to_html()
+    assert page == Two(TEXT).to_html()
+    assert "<dc:date>" not in page
+    ids = re.findall(r'\bid="([^"]+)"', page)
+    assert len(ids) == len(set(ids))
+    assert re.findall(r"url\(#([^)]+)\)", page)
+    assert all(found in ids for found in re.findall(r"url\(#([^)]+)\)", page))
+
+
+def test_the_styles_of_the_highlighting_are_in_the_head():
+    page = VowelsReport(TEXT).to_html()
+    head, body = page.split("</head>")
+    assert LongWords.css() in head and LongWords.css() not in body
+
+
+def test_no_interactive_backend(tmp_path):
+    """A report chooses no backend of matplotlib that could open a window"""
+    import os
+    import subprocess
+
+    script = tmp_path / "report.py"
+    script.write_text(
+        "import sys\n"
+        "from anyts.basic_stats import BasicStats\n"
+        "from anyts.report import Report\n"
+        "class Vowels(BasicStats):\n"
+        "    def count_syllables(self, word):\n"
+        "        return 1\n"
+        "class Basic(Report):\n"
+        "    stats_classes = {'basic': Vowels}\n"
+        "Basic('The cat sleeps. A dog barks.').to_html()\n"
+        "print(sorted(name for name in sys.modules if name.startswith('matplotlib.backends.backend_')))\n",
+        encoding="utf-8",
+    )
+    environment = {key: value for key, value in os.environ.items() if key != "MPLBACKEND"}
+    found = subprocess.run(
+        [sys.executable, str(script)], capture_output=True, text=True, env=environment, check=True
+    )
+    # The backends that write files, and none of a window
+    assert set(eval(found.stdout)) <= {
+        f"matplotlib.backends.backend_{name}" for name in ("agg", "mixed", "svg")
+    }
+
+
+def test_plot_of_many_sentences():
+    """A plot of the lengths of a few hundred sentences marks every sentence, of more none"""
+
+    def marker(count):
+        report = VowelsReport(" ".join(["The cat sleeps."] * count))
+        [(_, figure)] = report.plots()
+        return figure.axes[0].get_lines()[0].get_marker()
+
+    assert marker(300) == "."
+    assert marker(301) in ("", "None")
