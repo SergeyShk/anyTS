@@ -6,8 +6,7 @@ import io
 import json
 import os
 import sys
-from collections.abc import Callable, Iterator, Mapping, Sequence
-from contextlib import contextmanager
+from collections.abc import Mapping, Sequence
 from functools import partial
 from math import isfinite
 from pathlib import Path
@@ -51,7 +50,7 @@ class Command:
 
     Attributes:
         args (argparse.Namespace): Arguments of the command line, set by run before
-            the command, so that parse and compute may read them
+            the command, so that parse may read them
         names (list[str]): Names of the classes of the command, those of --stats
 
     Class attributes:
@@ -155,21 +154,19 @@ class Command:
             dest="command", required=True, title=texts["commands"], parser_class=_Parser
         )
         stats = commands.add_parser("stats", help=texts["stats_command"], texts=texts)
-        stats.positionals.add_argument(
-            "files", nargs="*", metavar=texts["files_metavar"], help=texts["files"]
-        )
+        stats.add_argument("files", nargs="*", metavar=texts["files_metavar"], help=texts["files"])
         self._add_options(stats, "encoding_option")
-        stats.options.add_argument("-p", "--parts", choices=_PARTS, help=texts["parts_option"])
-        stats.options.add_argument(
+        stats.add_argument("-p", "--parts", choices=_PARTS, help=texts["parts_option"])
+        stats.add_argument(
             "-f", "--format", choices=_FORMATS, default="table", help=texts["format_option"]
         )
         self.arguments(stats, "stats")
         report = commands.add_parser("report", help=texts["report_command"], texts=texts)
-        report.positionals.add_argument(
+        report.add_argument(
             "file", nargs="?", default=_STDIN, metavar=texts["file_metavar"], help=texts["file"]
         )
         self._add_options(report, "report_encoding_option")
-        report.options.add_argument(
+        report.add_argument(
             "-t", "--title", metavar=texts["title_metavar"], help=texts["title_option"]
         )
         self.arguments(report, "report")
@@ -253,27 +250,27 @@ class Command:
         part = (args.parts or "sentences")[:-1]
         failed = False
         results: dict[str, dict[str, Any]] = {}
-        try:
-            with _output(args.output) as output:
-                for source in sources:
-                    found = self._text_stats(source, args)
-                    failed = failed or found is None or len(found) < len(self.names)
-                    if found is None:
-                        continue
-                    if args.format == "table":
-                        output(self._tables(source, found, part, many=len(sources) > 1))
-                    else:
-                        # The statistics kept, not the objects
-                        results[source] = {
-                            name: _stats_row(value) if isinstance(value, Stats) else value
-                            for name, value in found.items()
-                        }
-                if args.format != "table":
-                    output(_formatted(results, args.format, part))
-        except BrokenPipeError:
-            raise
-        except OSError as error:
-            self._error(self.texts["file_error"].format(source=args.output, error=error))
+        output = self._output(args.output)
+        if output is None:
+            return 1
+        for source in sources:
+            found = self._text_stats(source, args)
+            failed = failed or found is None or len(found) < len(self.names)
+            if found is None:
+                continue
+            if args.format == "table":
+                text = self._tables(source, found, part, many=len(sources) > 1)
+                if not self._put(output, text):
+                    return 1
+            else:
+                # The statistics kept, not the objects
+                results[source] = {
+                    name: _stats_row(value) if isinstance(value, Stats) else value
+                    for name, value in found.items()
+                }
+        if args.format != "table" and not self._put(
+            output, _formatted(results, args.format, part)
+        ):
             return 1
         return 1 if failed else 0
 
@@ -293,7 +290,8 @@ class Command:
                 count it
         """
         document = self._document(args.file, args.encoding)
-        if document is None:
+        output = self._output(args.output)
+        if document is None or output is None:
             return 1
         try:
             report = self.report_class(
@@ -310,32 +308,24 @@ class Command:
             self._error(
                 self.texts["stats_error"].format(source=args.file, name=name, error=failure)
             )
-        try:
-            if args.output in (None, _STDIN):
-                _write_stdout(page)
-            else:
-                Path(args.output).write_text(page, encoding="utf-8")
-        except BrokenPipeError:
-            raise
-        except OSError as error:
-            self._error(self.texts["file_error"].format(source=args.output, error=error))
+        if not self._put(output, page):
             return 1
         return 1 if report.errors else 0
 
-    def _add_options(self, parser: _Parser, encoding: str) -> None:
+    def _add_options(self, parser: argparse.ArgumentParser, encoding: str) -> None:
         """Options of the classes, of the output and of the encoding, with the help of the key
         encoding"""
         texts = self.texts
-        parser.options.add_argument(
+        parser.add_argument(
             "-s",
             "--stats",
             metavar=texts["stats_metavar"],
             help=texts["stats_option"].format(names=", ".join(self.stats_classes)),
         )
-        parser.options.add_argument(
+        parser.add_argument(
             "-o", "--output", metavar=texts["output_metavar"], help=texts["output_option"]
         )
-        parser.options.add_argument(
+        parser.add_argument(
             "-e",
             "--encoding",
             default=_ENCODING,
@@ -400,7 +390,7 @@ class Command:
         """Document of a file or of the standard input, None with its error reported"""
         try:
             text = _read(source, encoding)
-        except UnicodeDecodeError as error:
+        except UnicodeError as error:
             self._error(self.texts["decode_error"].format(source=source, error=error))
             return None
         except OSError as error:
@@ -411,6 +401,25 @@ class Command:
         except AnyTSError as error:
             self._error(self.texts["file_error"].format(source=source, error=error))
             return None
+
+    def _output(self, path: str | None) -> _Output | None:
+        """The output of a command, None with its error reported"""
+        try:
+            return _Output(path)
+        except OSError as error:
+            self._error(self.texts["file_error"].format(source=path, error=error))
+            return None
+
+    def _put(self, output: _Output, text: str) -> bool:
+        """Writing to the output, False with its error reported"""
+        try:
+            output.write(text)
+        except BrokenPipeError:
+            raise
+        except OSError as error:
+            self._error(self.texts["file_error"].format(source=output.name, error=error))
+            return False
+        return True
 
     def _error(self, message: str) -> None:
         """Message of an error on the standard error"""
@@ -455,9 +464,10 @@ class _Parser(argparse.ArgumentParser):
         kwargs.update(formatter_class=partial(_Formatter, usage=texts["usage"]), add_help=False)
         super().__init__(*args, **kwargs)
         self.texts = texts
-        self.positionals = self.add_argument_group(texts["positionals"])
-        self.options = self.add_argument_group(texts["options"])
-        self.options.add_argument(
+        # The groups of the arguments of argparse, those a library adds among them
+        self._positionals.title = texts["positionals"]
+        self._optionals.title = texts["options"]
+        self.add_argument(
             "-h", "--help", action="help", default=argparse.SUPPRESS, help=texts["help_option"]
         )
 
@@ -486,27 +496,31 @@ def _read(source: str, encoding: str) -> str:
     return Path(source).read_text(encoding=encoding)
 
 
-@contextmanager
-def _output(path: str | None) -> Iterator[Callable[[str], Any]]:
-    """Writing to the file of the output or to the standard output, in UTF-8"""
-    if path is not None and path != _STDIN:
-        with Path(path).open("w", encoding="utf-8") as file:
-            yield file.write
-        return
+class _Output:
+    """The file of the output, made at once so that a wrong path is reported before the texts
+    are counted, or the standard output, written in UTF-8 with the line breaks \\n, to the
+    standard output as bytes, whatever the encoding of the console"""
 
-    yield _write_stdout
+    def __init__(self, path: str | None) -> None:
+        self.name = _STDIN if path is None else path
+        if self.name != _STDIN:
+            with Path(self.name).open("w", encoding="utf-8"):
+                pass
 
-
-def _write_stdout(text: str) -> None:
-    """Writing to the standard output in UTF-8, whatever the encoding of the console; as text
-    where it is one, as in a test"""
-    buffer = getattr(sys.stdout, "buffer", None)
-    if buffer is None:
-        sys.stdout.write(text)
-        return
-    sys.stdout.flush()
-    buffer.write(text.encode("utf-8"))
-    buffer.flush()
+    def write(self, text: str) -> None:
+        """Writing a text, at once, so that an error of the output comes with it"""
+        if self.name != _STDIN:
+            with Path(self.name).open("a", encoding="utf-8", newline="\n") as file:
+                file.write(text)
+            return
+        buffer = getattr(sys.stdout, "buffer", None)
+        if buffer is None:
+            # A standard output of text, as in a test
+            sys.stdout.write(text)
+            return
+        sys.stdout.flush()
+        buffer.write(text.encode("utf-8"))
+        buffer.flush()
 
 
 def _close_stdout() -> None:
