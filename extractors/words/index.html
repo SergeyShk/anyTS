@@ -2382,7 +2382,7 @@
 <tr>
 <td style="text-align: left;"><code>tokenize(text)</code></td>
 <td style="text-align: left;">method</td>
-<td style="text-align: left;">Tokenizer when <code>tokenizer</code> is not given; by default a word character <code>\w</code> followed by word characters, combining marks, zero-width joiners and non-joiners and soft hyphens, so that a word in NFD, in Devanagari or in Persian with <code>U+200C</code> stays whole</td>
+<td style="text-align: left;">Tokenizer when <code>tokenizer</code> is not given; by default a word character <code>\w</code> followed by word characters, combining marks, zero-width joiners and non-joiners, soft hyphens, word joiners and marks of the direction of text, so that a word in NFD, in Devanagari or in Persian with <code>U+200C</code> stays whole; a word does not end with a word joiner or a mark of the direction</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>lemmatize(word)</code></td>
