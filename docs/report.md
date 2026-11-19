@@ -104,7 +104,7 @@ A report of a library subclasses `Report`:
 | `sections` | class attribute | Sections in their order; `("statistics", "sentences", "highlight", "plots")` by default |
 | `section_<name>()` | method | Fragment of HTML of a section; a library overrides one or adds its own and names it in `sections` |
 | `parse(source)` | method | Document of a source, once for all the sections; `to_document` by default |
-| `compute(cls, document)` | method | Statistics of a class of the document, as `compute` of `Command` |
+| `compute(stats_class, document)` | class method | Statistics of a class of the document or of its sentence; `DiversityStats` of the words of the document (`document_words`). `compute` of `Command` is that of its report, so that the command counts alike |
 | `plots()` | method | Captions and figures of matplotlib of the section `plots` |
 <!-- --8<-- [end:Report-hooks] -->
 

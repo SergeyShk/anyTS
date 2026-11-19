@@ -163,7 +163,7 @@ def test_report_command_errors(tmp_path, capsys):
     empty = tmp_path / "empty.txt"
     empty.write_text("", encoding="utf-8")
     assert Prototype().run(["report", str(empty)]) == 1
-    assert capsys.readouterr().err.startswith(f"proto: {empty}, report: ")
+    assert capsys.readouterr().err == f"proto: {empty}: The data source has no words\n"
 
 
 def test_values_are_those_of_get_stats():
