@@ -10,6 +10,7 @@ import spacy
 from anyseg import Document
 from spacy.tokens import Doc
 
+import anyts.syntax_stats
 from anyts.constants import MESSAGES, SYNTAX_STATS_DESC
 from anyts.document import TreeWord, get_tree, to_document
 from anyts.exceptions import SourceError, SourceTypeError
@@ -2620,6 +2621,56 @@ def test_pickle_and_copy():
         assert came.deprel == "root" and came.head is None and he.head is came
     bare = copy.deepcopy(SyntaxStats.__new__(SyntaxStats))
     assert not hasattr(bare, "sents")
+
+
+@pytest.mark.parametrize(("dep", "form"), [("conj", "Fin"), ("xcomp", "Inf")])
+def test_clauses_of_a_long_chain(dep, form, monkeypatch):
+    """Every word of a chain of conjuncts or of infinitive complements climbs it once for all the
+    checks of a clause, so their work grows with the length of the chain and not its square"""
+    n = 400
+    doc = parse(
+        ["left"] + ["go"] * (n - 1),
+        [0, *range(n - 1)],
+        ["ROOT"] + [dep] * (n - 1),
+        morphs=["VerbForm=Fin"] + [f"VerbForm={form}"] * (n - 1),
+        pos=["VERB"] * n,
+    )
+    calls = 0
+    predicate_form = anyts.syntax_stats._predicate_form
+
+    def counted(*args):
+        nonlocal calls
+        calls += 1
+        return predicate_form(*args)
+
+    monkeypatch.setattr(anyts.syntax_stats, "_predicate_form", counted)
+    stats = SyntaxStats(doc)
+    assert stats.n_clauses == n
+    assert stats.get_stats()["clauses_per_t_unit"] > 0
+    assert calls < 20 * n
+    # The memo of the climbs belongs to one count
+    assert not hasattr(stats, "_climbs")
+
+
+def test_clause_kind_through_a_loop():
+    """A conjunct past a marked parataxis climbs into a loop of conjuncts and takes the relation of
+    the word it stops at, the same within SyntaxStats, which keeps no climb into a loop, as alone"""
+    source = document(
+        ["came", "if", "rang", "went", "left"],
+        [4, 3, 1, 1, 3],
+        ["conj", "mark", "parataxis", "conj", "conj"],
+        upos=["VERB", "SCONJ", "VERB", "VERB", "VERB"],
+    )
+
+    class Marks(SyntaxStats):
+        subordinating_marks = ("if",)
+
+    stats = Marks(source)
+    heads = [word for word in get_tree(source).words if stats.is_clause_head(word)]
+    assert [word.form for word in heads] == ["rang", "left"]
+    assert stats.n_subordinate_clauses == sum(
+        is_subordinate_clause_head(word, subordinating_marks=("if",)) for word in heads
+    )
 
 
 def test_pickle_of_a_long_text():
