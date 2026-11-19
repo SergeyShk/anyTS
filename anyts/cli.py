@@ -183,11 +183,13 @@ class Command:
             for name in names:
                 cls = self.stats_classes[name]
                 try:
-                    results[source][name] = (
-                        cls._count_parts(document, args.parts, {})
-                        if args.parts
-                        else self.compute(cls, document)
-                    )
+                    if args.parts:
+                        results[source][name] = cls._count_parts(document, args.parts, {})
+                    else:
+                        stats = self.compute(cls, document)
+                        # A statistic computed when it is read raises here, for its text
+                        stats.get_stats()
+                        results[source][name] = stats
                 except AnyTSError as error:
                     self._error(
                         self.texts["stats_error"].format(source=source, name=name, error=error)
@@ -248,7 +250,7 @@ class Command:
     def _read(self, source: str, encoding: str) -> str:
         """Text of a file or of the standard input"""
         if source == _STDIN:
-            return sys.stdin.read()
+            return sys.stdin.buffer.read().decode(encoding)
         return Path(source).read_text(encoding=encoding)
 
     def _error(self, message: str) -> None:
@@ -297,11 +299,12 @@ class Command:
 
 
 def _compute(cls: type[Stats], document: Document) -> Stats:
-    """Statistics of a class of a document; DiversityStats of its words"""
+    """Statistics of a class of a document; a DiversityStats with the constructor of the core of
+    its words"""
     from .diversity_stats import DiversityStats
     from .document import document_words
 
-    if issubclass(cls, DiversityStats):
+    if issubclass(cls, DiversityStats) and cls.__init__ is DiversityStats.__init__:
         return cls(document_words(document))
     return cls(document)  # type: ignore[call-arg]
 
@@ -330,29 +333,38 @@ def _finite(stats: Mapping[str, Any]) -> dict[str, Any]:
 
 def _table(results: Mapping[str, Mapping[str, Any]], part: str) -> DataFrame:
     """One table of the texts, or of their parts, with the columns of every class named by it:
-    a value of a dictionary statistic a text or a part lacks is 0 across all of them"""
-    from pandas import DataFrame, concat
+    a value of a dictionary statistic a text or a part lacks is 0 across all of them, and the
+    positions of the parts of a text come from any class that counted it"""
+    from pandas import DataFrame, MultiIndex, concat
 
     from .stats import _parts_dataframe, stats_dataframe
 
     names = list(dict.fromkeys(name for found in results.values() for name in found))
     columns: list[DataFrame] = []
+    bounds: dict[tuple[str, int], tuple[int, int]] = {}
     for name in names:
         found = {source: value[name] for source, value in results.items() if name in value}
         if all(isinstance(value, Stats) for value in found.values()):
             frame = stats_dataframe(list(found.values()), index=list(found))
             frame.index.name = "source"
         else:
-            frame = _parts_dataframe(
-                [
-                    ((source, number), *counted)
-                    for source, value in found.items()
-                    for number, counted in enumerate(value)
-                ],
-                ("source", part),
-            )
-            if not columns:
-                columns.append(frame[["start", "end"]])
-            frame = frame.drop(columns=["start", "end"])
+            keyed = [
+                ((source, number), *counted)
+                for source, value in found.items()
+                for number, counted in enumerate(value)
+            ]
+            for key, start, end, _ in keyed:
+                bounds.setdefault(key, (start, end))
+            frame = _parts_dataframe(keyed, ("source", part)).drop(columns=["start", "end"])
         columns.append(frame.add_prefix(f"{name}."))
+    if bounds:
+        keys = sorted(bounds, key=lambda key: (list(results).index(key[0]), key[1]))
+        columns.insert(
+            0,
+            DataFrame(
+                [bounds[key] for key in keys],
+                index=MultiIndex.from_tuples(keys, names=["source", part]),
+                columns=["start", "end"],
+            ),
+        )
     return concat(columns, axis=1) if columns else DataFrame()

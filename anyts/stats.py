@@ -214,7 +214,10 @@ class Stats:
             if document_words(part):
                 try:
                     stats = cast(Any, cls)(part, **params)
+                    # A statistic computed when it is read raises here, for its part
+                    stats.get_stats()
                 except SourceError as error:
+                    stats = None
                     failure = failure or error
             counted.append((start, end, stats))
         if failure is not None and all(stats is None for _, _, stats in counted):

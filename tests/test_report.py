@@ -1,6 +1,6 @@
 import re
 import sys
-from io import StringIO
+from io import BytesIO, TextIOWrapper
 from typing import ClassVar
 
 import pytest
@@ -151,7 +151,7 @@ def test_report_command(tmp_path, capsys, monkeypatch):
     page = output.read_text(encoding="utf-8")
     assert "<title>Text</title>" in page
     assert "<h3>basic</h3>" in page and "<h3>readability</h3>" not in page
-    monkeypatch.setattr(sys, "stdin", StringIO("The cat sleeps."))
+    monkeypatch.setattr(sys, "stdin", TextIOWrapper(BytesIO(b"The cat sleeps.")))
     assert Prototype().run(["report"]) == 0
     assert capsys.readouterr().out.startswith("<!DOCTYPE html>")
 

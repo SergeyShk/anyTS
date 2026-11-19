@@ -1,6 +1,6 @@
 import json
 import sys
-from io import StringIO
+from io import BytesIO, StringIO, TextIOWrapper
 from typing import ClassVar
 
 import pandas as pd
@@ -11,7 +11,7 @@ from anyts.cli import Command
 from anyts.constants import CLI_TEXTS
 from anyts.diversity_stats import DiversityStats
 from anyts.document import document_words, to_document
-from anyts.exceptions import ParameterError
+from anyts.exceptions import ParameterError, SourceError
 from anyts.style_stats import StyleStats
 from anyts.syntax_stats import SyntaxStats
 
@@ -72,14 +72,22 @@ def test_json_is_the_flat_statistics(capsys, files):
     assert data[files[0]]["style"] == finite(StyleStats(document).get_stats(flat=True))
 
 
+def stdin(text, encoding="utf-8"):
+    return TextIOWrapper(BytesIO(text.encode(encoding)), encoding="utf-8")
+
+
 def test_standard_input(capsys, monkeypatch):
-    monkeypatch.setattr(sys, "stdin", StringIO(SECOND))
+    monkeypatch.setattr(sys, "stdin", stdin(SECOND))
     code, out, _ = run(capsys, "-s", "basic", "-f", "json")
     assert code == 0
     assert json.loads(out)["-"]["basic"]["n_words"] == 4
-    monkeypatch.setattr(sys, "stdin", StringIO(SECOND))
+    monkeypatch.setattr(sys, "stdin", stdin(SECOND))
     code, out, _ = run(capsys, "-s", "basic", "-f", "json", "-")
     assert json.loads(out)["-"]["basic"]["n_words"] == 4
+    # The encoding of the option, not that of the locale
+    monkeypatch.setattr(sys, "stdin", stdin("Кот спит у окна.", "cp1251"))
+    code, out, _ = run(capsys, "-s", "basic", "-f", "json", "-e", "cp1251")
+    assert json.loads(out)["-"]["basic"]["n_letters"] == 12
 
 
 def test_csv_of_several_texts(capsys, files):
@@ -180,3 +188,70 @@ def test_texts_of_a_library(capsys):
     assert "diversity не считает sentences" in capsys.readouterr().err
     with pytest.raises(ParameterError, match="lack the keys"):
         type("Partial", (Command,), {"texts": {"description": "Статистика"}})
+
+
+class SourceDiversity(DiversityStats):
+    """DiversityStats of a library, which takes a source and finds its words itself"""
+
+    def __init__(self, source):
+        super().__init__(document_words(to_document(source)))
+
+
+class Lazy(Vowels):
+    """A statistic computed when it is read, which fails for a text with no long word"""
+
+    stats_desc: ClassVar[dict[str, str]] = {**Vowels.stats_desc, "longest": "Longest word"}
+
+    @property
+    def longest(self):
+        if not self.n_long_words:
+            raise SourceError("No long words")
+        return self.n_long_words
+
+
+class Library(Command):
+    prog = "library"
+    stats_classes: ClassVar[dict[str, type]] = {
+        "syntax": SyntaxStats,
+        "basic": Vowels,
+        "diversity": SourceDiversity,
+        "lazy": Lazy,
+    }
+
+
+def test_diversity_of_a_library(capsys, files):
+    """A DiversityStats with its own constructor gets the document, the core one its words"""
+    assert Library().run(["stats", "-s", "diversity", "-f", "json", files[0]]) == 0
+    data = json.loads(capsys.readouterr().out)
+    assert (
+        data[files[0]]["diversity"]["ttr"]
+        == DiversityStats(document_words(to_document(FIRST))).ttr
+    )
+
+
+def test_a_statistic_that_fails_when_read(capsys, tmp_path):
+    """It is reported for its text, and the other texts and classes are counted; a part keeps its
+    row without statistics"""
+    plain, wordy = tmp_path / "plain.txt", tmp_path / "wordy.txt"
+    plain.write_text("The cat sleeps.", encoding="utf-8")
+    wordy.write_text("Wonderful creatures. A cat.", encoding="utf-8")
+    code = Library().run(["stats", "-s", "basic,lazy", "-f", "json", str(plain), str(wordy)])
+    out, err = capsys.readouterr()
+    assert code == 1
+    data = json.loads(out)
+    assert set(data[str(plain)]) == {"basic"} and set(data[str(wordy)]) == {"basic", "lazy"}
+    assert err == f"library: {plain}, lazy: No long words\n"
+    code = Library().run(["stats", "-s", "lazy", "-p", "sentences", "-f", "json", str(wordy)])
+    records = json.loads(capsys.readouterr().out)[str(wordy)]["lazy"]
+    assert code == 0
+    assert [record["longest"] for record in records] == [2, None]
+
+
+def test_positions_of_the_parts_of_a_failed_class(capsys, files):
+    """The positions of the parts come from any class that counted the text"""
+    code = Library().run(["stats", "-s", "syntax,basic", "-p", "sentences", "-f", "csv", *files])
+    out, err = capsys.readouterr()
+    assert code == 1 and "syntax" in err
+    table = pd.read_csv(StringIO(out), index_col=["source", "sentence"])
+    assert table[["start", "end"]].dtypes.tolist() == ["int64", "int64"]
+    assert table.loc[(files[1], 0), ["start", "end"]].tolist() == [0, 19]
