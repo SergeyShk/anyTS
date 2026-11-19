@@ -16,7 +16,7 @@
         <link rel="prev" href="../components/">
       
       
-        <link rel="next" href="../datasets/">
+        <link rel="next" href="../report/">
       
       
         
@@ -355,6 +355,25 @@
     
   
   Command line
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../report/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  HTML report
 
       </a>
     </li>
@@ -1812,6 +1831,33 @@
   
   
     <li class="md-nav__item">
+      <a href="../report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    HTML report
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../datasets/" class="md-nav__link">
         
   
@@ -1850,10 +1896,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
         
           
-          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
             
   
   
@@ -1871,8 +1917,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_9">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -2201,7 +2247,8 @@
 </tr>
 </tbody>
 </table>
-<p><code>run(argv=None)</code> runs the command with the arguments, those of the command line by default, and returns the exit code: 0; 1 when a file cannot be read or a class cannot count a text, whose error goes to the standard error while the other texts and classes are counted; 2 for wrong arguments, with the help of <code>argparse</code>.</p>
+<p>Its command <code>report</code> writes the <a href="https://sergeyshk.github.io/anyTS/report/">HTML report</a> of a text, from a file or from the standard input, to <code>-o</code> or to the standard output, with the classes of <code>-s</code> and the title of <code>-t</code>, <code>--title</code>. <code>-e</code> is the encoding of the file, and the report is in UTF-8, which it declares. A class that cannot count the text is left out of the report, and its error goes to the standard error with the exit code 1.</p>
+<p><code>run(argv=None)</code> runs the command with the arguments, those of the command line by default, and returns the exit code: 0; 1 when a file cannot be read or written or a class cannot count a text, whose error goes to the standard error while the other texts and classes are counted; 2 for wrong arguments, with the help of <code>argparse</code>.</p>
 <p>Raises <code>ParameterError</code> when a subclass is defined with texts that <code>check_messages</code> rejects against <code>CLI_TEXTS</code>.</p>
 <!-- --8<-- [end:Command] -->
 
@@ -2235,6 +2282,7 @@
 vowels<span class="w"> </span>stats<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>chapter1.txt<span class="w"> </span>chapter2.txt
 vowels<span class="w"> </span>stats<span class="w"> </span>-p<span class="w"> </span>sentences<span class="w"> </span>-f<span class="w"> </span>csv<span class="w"> </span>-o<span class="w"> </span>sentences.csv<span class="w"> </span>text.txt
 cat<span class="w"> </span>text.txt<span class="w"> </span><span class="p">|</span><span class="w"> </span>vowels<span class="w"> </span>stats<span class="w"> </span>-f<span class="w"> </span>json
+vowels<span class="w"> </span>report<span class="w"> </span>text.txt<span class="w"> </span>-t<span class="w"> </span><span class="s2">"My text"</span><span class="w"> </span>-o<span class="w"> </span>report.html
 </code></pre></div>
 <h2 id="hooks">For library developers<a class="headerlink" href="#hooks" title="Permanent link">&para;</a></h2>
 <details class="library-hooks">
@@ -2274,6 +2322,11 @@ cat<span class="w"> </span>text.txt<span class="w"> </span><span class="p">|</sp
 <td style="text-align: left;"><code>compute(cls, document)</code></td>
 <td style="text-align: left;">method</td>
 <td style="text-align: left;">Statistics of a class of a document; <code>DiversityStats</code> of the words of the document (<code>document_words</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>report_class</code></td>
+<td style="text-align: left;">class attribute</td>
+<td style="text-align: left;">Report of the command <code>report</code>, made of the document of <code>parse</code> and the classes of <code>-s</code>; <code>Report</code> by default</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>parser()</code></td>
