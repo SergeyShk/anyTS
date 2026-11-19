@@ -523,18 +523,26 @@ def stats_dataframe(
 
 
 def _parts_dataframe(
-    parts: Sequence[tuple[Hashable, int, int, Stats | None]], name: str
+    parts: Sequence[tuple[Hashable, int, int, Stats | None]], name: str | Sequence[str]
 ) -> DataFrame:
     """Table of parts: a row per part labelled by its key, with its start, its end and the flat
-    statistics of stats_dataframe, none for a part without them; name names the index"""
-    from pandas import DataFrame
+    statistics of stats_dataframe, none for a part without them; name names the index, or its
+    levels for keys that are tuples, such as a text and the number of its part"""
+    from pandas import DataFrame, Index, MultiIndex
+
+    names = [name] if isinstance(name, str) else list(name)
+
+    def labels(keys: list[Hashable]) -> Index:
+        if len(names) > 1:
+            return MultiIndex.from_tuples(keys, names=names)
+        return Index(keys, name=names[0])
 
     bounds = DataFrame(
         {"start": [start for _, start, _, _ in parts], "end": [end for _, _, end, _ in parts]},
-        index=[key for key, _, _, _ in parts],
+        index=labels([key for key, _, _, _ in parts]),
     )
     counted = [(key, stats) for key, _, _, stats in parts if stats is not None]
-    table = stats_dataframe([stats for _, stats in counted], index=[key for key, _ in counted])
-    frame = bounds.join(table)
-    frame.index.name = name
-    return frame
+    table = stats_dataframe(
+        [stats for _, stats in counted], index=labels([key for key, _ in counted])
+    )
+    return bounds.join(table)

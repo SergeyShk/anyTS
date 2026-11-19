@@ -44,6 +44,7 @@ nav:
       - Stylometric plots: visualizers/stylometry.md
       - Text highlighting: visualizers/highlight.md
     - Components: components.md
+    - Command line: cli.md
     - Datasets: datasets.md
     - Utilities:
       - Words and tokens: utils/words.md
