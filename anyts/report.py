@@ -236,14 +236,9 @@ class Report:
         rows = []
         text = self.document.text
         first = next(iter(tables.values()))
-        # A whole count stays an integer, though a sentence without words makes its column float
-        whole = {name: self.stats[name].get_stats() for name in tables}
-        integers = {(name, stat): isinstance(whole[name][stat], int) for name, stat in columns}
         for number, (start, end) in enumerate(first[["start", "end"]].itertuples(index=False)):
             cells = "".join(
-                f'<td class="number">'
-                f"{escape(_cell(tables[name][stat].iloc[number], integers[name, stat], texts))}"
-                f"</td>"
+                f'<td class="number">{escape(_cell(tables[name][stat].iloc[number], texts))}</td>'
                 for name, stat in columns
             )
             rows.append(
@@ -348,11 +343,11 @@ def _number(value: Any, texts: Mapping[str, str]) -> str:
     return str(value)
 
 
-def _cell(value: Any, integer: bool, texts: Mapping[str, str]) -> str:
-    """Value of a statistic of a sentence, a whole one as an integer where that of the text is"""
-    if integer and isinstance(value, float) and isfinite(value):
-        return str(int(value))
-    return _number(value, texts)
+def _cell(value: Any, texts: Mapping[str, str]) -> str:
+    """Value of a statistic of a sentence, undefined for a sentence without statistics"""
+    from pandas import isna
+
+    return texts["undefined"] if isna(value) else _number(value, texts)
 
 
 def _svg(figure: Figure) -> str:

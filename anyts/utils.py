@@ -57,9 +57,19 @@ _PUNCTUATION_CATEGORIES = frozenset(
 NUMBER_PATTERN = re.compile(r"[+\-−]?(?:\d{1,3}(?:[ \u00a0\u202f]\d{3})+|\d+)(?:[.,:/-]\d+)*%?")
 # A line break of Unicode, the vertical tab and the form feed among them, as in anySeg
 _BREAK = r"\r\n|[\n\r\x0b\x0c\x85\u2028]"
+# Invisible characters anySeg keeps inside a word and leaves out at its edges: the marks of the
+# direction of text, the Mongolian vowel separator and the word joiner
+_IN_WORD_MARKS = (
+    "\u061c\u180e\u200e\u200f\u202a\u202b\u202c\u202d\u202e\u2060\u2066\u2067\u2068\u2069"
+)
 # What a blank line may hold besides its breaks: whitespace, control characters and the
-# invisible separators of anySeg (the soft hyphen, zero-width characters, the byte order mark)
-_BLANK = r"[^\S\n\r\x0b\x0c\x85\u2028\u2029]|[\x00-\x08\x0e-\x1f\x7f-\x84\x86-\x9f\u00ad\u200b-\u200d\u2060\ufeff]"
+# invisible separators of anySeg (the soft hyphen, zero-width characters, the byte order mark,
+# the marks of the direction of text)
+_BLANK = (
+    r"[^\S\n\r\x0b\x0c\x85\u2028\u2029]|[\x00-\x08\x0e-\x1f\x7f-\x84\x86-\x9f\u00ad\u200b-\u200d\ufeff"
+    + _IN_WORD_MARKS
+    + "]"
+)
 # Blank lines: a line break and the breaks after it with nothing but blank characters
 # between them, or a paragraph separator - a paragraph break of anySeg
 BLANK_LINE = re.compile(rf"(?>{_BREAK}|\u2029)(?:(?:{_BLANK})*(?>{_BREAK}|\u2029))+|\u2029")
@@ -67,11 +77,6 @@ BLANK_LINE = re.compile(rf"(?>{_BREAK}|\u2029)(?:(?:{_BLANK})*(?>{_BREAK}|\u2029
 LINE_BREAK = re.compile(rf"{_BREAK}|\u2029")
 # One import of a name of a lazy package at a time, a nested one in the same thread included
 _LAZY_IMPORT = threading.RLock()
-# Invisible characters anySeg keeps inside a word and leaves out at its edges: the marks of the
-# direction of text, the Mongolian vowel separator and the word joiner
-_IN_WORD_MARKS = (
-    "\u061c\u180e\u200e\u200f\u202a\u202b\u202c\u202d\u202e\u2060\u2066\u2067\u2068\u2069"
-)
 
 
 @lru_cache(maxsize=1)
@@ -1390,10 +1395,13 @@ def make_lazy(name: str, modules: Mapping[str, str]) -> None:
 
 
 def _messages(messages: Mapping[str, str] | None) -> Mapping[str, str]:
-    """Messages of the errors of a function: MESSAGES with those given over them"""
+    """Messages of the errors of a function: MESSAGES with those given over them, the given ones
+    as they are when complete, as those of a class"""
     if messages is None:
         return MESSAGES
-    return {**MESSAGES, **messages} if isinstance(messages, Mapping) else messages
+    if not isinstance(messages, Mapping) or MESSAGES.keys() <= messages.keys():
+        return messages
+    return {**MESSAGES, **messages}
 
 
 def _check_word_list(

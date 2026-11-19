@@ -136,8 +136,8 @@ def keyness(
 
     Raises:
         SourceTypeError: If a corpus is not a list of strings (check_words), a
-            list of such lists or a counter (check_counts), every word of a corpus
-            or of one of its texts holds a space, a frequency of the target corpus
+            list of such lists or a counter (check_counts), most words of a corpus
+            or of one of its texts hold a space, a frequency of the target corpus
             is not a whole number, key, keep or keys of a FrequencyReference is not
             callable, or keys does not give a string for every word of a text
         ParameterError: If the measure is unknown, top_n or n is below one,
@@ -295,9 +295,11 @@ def _check_words_or_counts(
 
 
 def _check_not_texts(words: Sequence[str], what: str, messages: Mapping[str, str]) -> None:
-    """Raising SourceTypeError for words that are texts, every one holding a space; a phrase of
-    several words among the words passes"""
-    if words and all(any(char.isspace() for char in word) for word in words):
+    """Raising SourceTypeError for words that are texts, most of them holding a space, as the
+    sentences of a text with a sentence of one word among them; a phrase of several words among
+    the words passes"""
+    spaced = sum(any(char.isspace() for char in word) for word in words)
+    if 2 * spaced > len(words):
         raise SourceTypeError(messages["words_texts"].format(param=what))
 
 
@@ -410,8 +412,8 @@ def check_keyness_params(
             number of keywords or n is not an integer, the number or n is below
             one, or positive is not a bool
         SourceTypeError: If the target corpus is not a list of strings, a list of
-            such lists or a mapping of strings to whole frequencies, or every word of
-            it or of one of its texts holds a space
+            such lists or a mapping of strings to whole frequencies, or most words of
+            it or of one of its texts hold a space
         SourceError: If a frequency of the target corpus is negative, nan or infinite
 
     Example:

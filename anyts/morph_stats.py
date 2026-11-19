@@ -267,14 +267,17 @@ class MorphStats(Stats):
             stats[stat] = (
                 {value: n for value, n in counts.items() if value} if filter_none else counts
             )
-        if flat:
-            return {
-                f"{stat}_{value}": n
-                for stat, counts in stats.items()
-                for value, n in counts.items()
-                if value is not None
-            }
-        return stats
+        return self._flat(stats) if flat else stats
+
+    @classmethod
+    def _flat(cls, stats: Mapping[str, Any]) -> dict[str, Any]:
+        """Flat statistics without the words that lack the feature"""
+        return {
+            f"{stat}_{value}": n
+            for stat, counts in stats.items()
+            for value, n in counts.items()
+            if value is not None
+        }
 
     def explain_text(
         self, *args: str, filter_none: bool = False

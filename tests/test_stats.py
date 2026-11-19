@@ -13,6 +13,7 @@ from anyts.constants import MESSAGES
 from anyts.diversity_stats import DiversityStats
 from anyts.document import document_part, to_document
 from anyts.exceptions import ParameterError, SourceError, SourceTypeError, UnknownStatError
+from anyts.morph_stats import MorphStats
 from anyts.readability_stats import ReadabilityStats
 from anyts.stats import Stats, scale_level, stats_dataframe
 from anyts.syntax_stats import SyntaxStats
@@ -315,6 +316,87 @@ def test_by_parts_of_paragraphs_with_parameters():
     )
 
 
+LINES_TEXT = "The cat sleeps. A dog barks.\nA bird sings\nin the tree.\n\nThe end."
+
+
+def test_by_parts_of_lines():
+    """A line is the sentences between line breaks, a sentence over a line break in one of them,
+    and the lines of a paragraph add up to it"""
+    lines = Vowels.by_parts(LINES_TEXT, "lines")
+    assert lines.index.name == "line"
+    assert [LINES_TEXT[start:end] for start, end in lines[["start", "end"]].values] == [
+        "The cat sleeps. A dog barks.",
+        "A bird sings\nin the tree.",
+        "The end.",
+    ]
+    assert lines["n_sents"].tolist() == [2, 1, 1]
+    paragraphs = Vowels.by_parts(LINES_TEXT, "paragraphs")
+    assert paragraphs["n_words"].tolist() == [lines["n_words"][:2].sum(), 2]
+
+
+def test_by_parts_of_cohesion_by_lines():
+    """The lines, the paragraphs of the class by default, are its first parts"""
+    doc = spacy.blank("en")("A cat sleeps. The cat eats.\nA dog barks.")
+    for token in doc:
+        token.pos_ = "NOUN" if token.lower_ in {"cat", "dog"} else "VERB"
+        token.pos_ = "PUNCT" if token.is_punct else "SPACE" if token.is_space else token.pos_
+        token.lemma_ = token.lower_
+        token.is_sent_start = token.i == 0 or doc[token.i - 1].text == "."
+    parts = CohesionStats.by_parts(doc)
+    assert parts.index.name == "line"
+    assert [doc.text[start:end] for start, end in parts[["start", "end"]].values] == [
+        "A cat sleeps. The cat eats.",
+        "A dog barks.",
+    ]
+    assert parts["noun_overlap_adjacent"].tolist()[0] == 1.0
+
+
+def test_by_parts_counts_stay_integers():
+    """A count stays an integer in the rows of the parts without statistics"""
+    parts = Vowels.by_parts(PARTS_TEXT)
+    assert str(parts["n_words"].dtype) == "Int64"
+    assert parts["n_words"].isna().tolist() == [False, False, False, True, False]
+    assert parts["letters_entropy"].dtype == float
+
+
+@pytest.mark.parametrize("source", ["", "***", "***\n\n* * *"])
+def test_by_parts_of_a_source_without_words(source):
+    """A source without words raises as the class does, its parameters checked"""
+    with pytest.raises(SourceError, match=r"^The data source has no words$"):
+        Vowels.by_parts(source)
+    with pytest.raises(ParameterError, match=r"syllables in a complex word must be greater"):
+        Vowels.by_parts(source, complex_syl_factor=0)
+
+
+def test_by_parts_raises_the_error_of_the_parts():
+    """A class that counts the whole text but none of its parts raises the error of a part"""
+
+    class Fussy(Vowels):
+        def __init__(self, source):
+            super().__init__(source)
+            if self.n_words < 5:
+                raise SourceError("Too few words")
+
+    assert Fussy("The cat sleeps. A dog barks.").n_words == 6
+    with pytest.raises(SourceError, match="^Too few words$"):
+        Fussy.by_parts("The cat sleeps. A dog barks.")
+
+
+def test_by_parts_reads_the_statistics_once():
+    reads = []
+
+    class Counted(Vowels):
+        stats_desc: ClassVar[dict[str, str]] = {**Vowels.stats_desc, "slow": "Slow"}
+
+        @property
+        def slow(self):
+            reads.append(self.n_words)
+            return self.n_words
+
+    Counted.by_parts(PARTS_TEXT)
+    assert reads == [3, 4, 3, 2]
+
+
 def test_by_parts_of_a_string_a_doc_and_a_document():
     doc = spacy.blank("en")(PARTS_TEXT)
     frames = [Vowels.by_parts(source) for source in (PARTS_TEXT, doc, to_document(PARTS_TEXT))]
@@ -382,11 +464,12 @@ def test_by_parts_of_syntax():
         (
             Vowels,
             "words",
-            r"^The parts must be one of \('sentences', 'paragraphs'\), not 'words'$",
+            r"^The parts must be one of \('sentences', 'lines', 'paragraphs'\), not 'words'$",
         ),
         (Vowels, 1, "not 1$"),
-        (CohesionStats, "sentences", r"one of \('paragraphs',\)"),
-        (DiversityStats, "paragraphs", r"one of \(\), not 'paragraphs'$"),
+        (CohesionStats, "sentences", r"one of \('lines', 'paragraphs'\)"),
+        (DiversityStats, "paragraphs", "^DiversityStats counts a whole text, not its parts$"),
+        (DiversityStats, None, "^DiversityStats counts a whole text, not its parts$"),
     ],
 )
 def test_by_parts_kinds(cls, parts, message):
@@ -426,6 +509,23 @@ def test_stats_dataframe():
     assert pd.isna(frame.loc["b", "share"])
     assert stats_dataframe([]).empty
     assert list(stats_dataframe(iter([Lengths("x")])).index) == [0]
+
+
+def test_stats_dataframe_of_the_flat_statistics():
+    """The columns are those of get_stats(flat=True): MorphStats leaves out the words without a
+    feature"""
+    words = ["The", "cats", "sleep", "."]
+    doc = spacy.tokens.Doc(
+        spacy.blank("en").vocab,
+        words=words,
+        pos=["DET", "NOUN", "VERB", "PUNCT"],
+        morphs=["", "Number=Plur", "Tense=Pres", ""],
+    )
+    stats = MorphStats(doc)
+    frame = stats_dataframe([stats])
+    assert list(frame.columns) == list(stats.to_dataframe().columns)
+    assert not any(column.endswith("_None") for column in frame.columns)
+    assert list(MorphStats.by_parts(doc).columns[2:]) == list(frame.columns)
 
 
 @pytest.mark.parametrize("stats", ["text", 5, [Lengths("x"), {"n_words": 1}]])

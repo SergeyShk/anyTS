@@ -53,7 +53,7 @@ The reference may be a list of words, a mapping of frequencies (its size is the 
 | `n` | `int` | `1` | Length of the n-grams of the words of every text; `1` - the words |
 | `messages` | `dict[str, str]` | `None` | Messages of the errors by key, in place of those of the library |
 
-The parameters and the target corpus are checked by `check_keyness_params`; an `n` above 1 with frequencies or a `FrequencyReference` raises `ParameterError`. A reference that is not a list of strings, a list of such lists, a counter or a `FrequencyReference` raises `SourceTypeError`, and so does a corpus whose every word, or every word of one of its texts, holds a space: such words are texts, not their words, while a phrase of several words among them passes. A negative, `nan` or infinite frequency of a counter and a corpus without words, or shorter than `n` words, raise `SourceError`.
+The parameters and the target corpus are checked by `check_keyness_params`; an `n` above 1 with frequencies or a `FrequencyReference` raises `ParameterError`. A reference that is not a list of strings, a list of such lists, a counter or a `FrequencyReference` raises `SourceTypeError`, and so does a corpus most of whose words, or of the words of one of its texts, hold a space: such words are texts, as the sentences of a text with a sentence of one word among them, not their words, while a phrase of several words among them passes. A negative, `nan` or infinite frequency of a counter and a corpus without words, or shorter than `n` words, raise `SourceError`.
 <!-- --8<-- [end:keyness-parameters] -->
 
 <!-- --8<-- [start:check_keyness_params] -->
@@ -61,7 +61,7 @@ The parameters and the target corpus are checked by `check_keyness_params`; an `
 check_keyness_params(measure='log_likelihood', min_freq=1, top_n=None, target=None, n=1, positive=True, *, messages=None)
 ```
 
-Checks the parameters of `keyness` before a frequency dictionary is read: it raises `ParameterError` unless the measure is one of `KEYNESS_MEASURES`, the minimum frequency is an integer, the number of keywords is `None` or an integer of at least one, the length of the n-grams `n` is an integer of at least one and `positive` is a `bool`. With `target` it also raises `SourceTypeError` unless the target corpus is a list of strings, a list of such lists or a mapping of strings to whole frequencies, or if every word of it or of one of its texts holds a space, and `SourceError` for a negative, nan or infinite frequency.
+Checks the parameters of `keyness` before a frequency dictionary is read: it raises `ParameterError` unless the measure is one of `KEYNESS_MEASURES`, the minimum frequency is an integer, the number of keywords is `None` or an integer of at least one, the length of the n-grams `n` is an integer of at least one and `positive` is a `bool`. With `target` it also raises `SourceTypeError` unless the target corpus is a list of strings, a list of such lists or a mapping of strings to whole frequencies, or if most of its words or of the words of one of its texts hold a space, and `SourceError` for a negative, nan or infinite frequency.
 <!-- --8<-- [end:check_keyness_params] -->
 
 ## Reference by frequencies
