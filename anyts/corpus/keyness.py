@@ -32,7 +32,10 @@ class FrequencyReference(NamedTuple):
         key. A key missing from counts has the frequency missing, an upper
         bound such as the least frequency of a dictionary, so its word may be a
         positive keyword but never a negative one. Negative keywords come only
-        from the keys of counts that keep passes
+        from the keys of counts that keep passes. The keys of the words of a
+        list come from keys, given the words of a text in their order, so that
+        a word may be keyed in its context, such as by its lemma; key keys a
+        mapping of frequencies and the words without keys
 
     Attributes:
         counts (dict[str, float]): Frequencies of the keys in the reference corpus
@@ -41,6 +44,8 @@ class FrequencyReference(NamedTuple):
         key (callable): Key of a word of the target corpus, such as its lemma;
             None - the word itself
         keep (callable): Whether a word of the target corpus is counted; None - every word
+        keys (callable): Keys of the words of a text of the target corpus in their
+            order, such as their lemmas in context; None - those of key
     """
 
     counts: Mapping[str, float]
@@ -48,6 +53,7 @@ class FrequencyReference(NamedTuple):
     missing: float = 0.0
     key: Callable[[str], str] | None = None
     keep: Callable[[str], bool] | None = None
+    keys: Callable[[Sequence[str]], Sequence[str]] | None = None
 
 
 class Keyword(NamedTuple):
@@ -130,9 +136,10 @@ def keyness(
 
     Raises:
         SourceTypeError: If a corpus is not a list of strings (check_words), a
-            list of such lists or a counter (check_counts), a frequency of the
-            target corpus is not a whole number, or key or keep of a
-            FrequencyReference is not callable
+            list of such lists or a counter (check_counts), every word of a corpus
+            or of one of its texts holds a space, a frequency of the target corpus
+            is not a whole number, key, keep or keys of a FrequencyReference is not
+            callable, or keys does not give a string for every word of a text
         ParameterError: If the measure is unknown, top_n or n is below one,
             min_freq or n is not an integer, positive is not a bool, n is above
             one with frequencies or a FrequencyReference, or the size or the
@@ -158,7 +165,10 @@ def keyness(
         if n > 1:
             raise ParameterError(messages["reference_ngrams"])
         _check_reference(reference, messages)
-        counts_target = _count(units, key=reference.key, keep=reference.keep)
+        if reference.keys is None or isinstance(target, Mapping):
+            counts_target = _count(units, key=reference.key, keep=reference.keep)
+        else:
+            counts_target = _count_in_context(target, reference, messages)
         size_reference = float(reference.size)
         counts_reference = reference.counts
         missing = float(reference.missing)
@@ -277,9 +287,18 @@ def _check_words_or_counts(
     _check_word_list(words, what, messages, items=False)
     if not _holds_texts(words):
         _check_word_list(words, what, messages)
+        _check_not_texts(cast(Sequence[str], words), what, messages)
         return
     for text in words:
         _check_word_list(text, what, messages, text=True)
+        _check_not_texts(cast(Sequence[str], text), what, messages)
+
+
+def _check_not_texts(words: Sequence[str], what: str, messages: Mapping[str, str]) -> None:
+    """Raising SourceTypeError for words that are texts, every one holding a space; a phrase of
+    several words among the words passes"""
+    if words and all(any(char.isspace() for char in word) for word in words):
+        raise SourceTypeError(messages["words_texts"].format(param=what))
 
 
 def _check_reference(reference: FrequencyReference, messages: Mapping[str, str]) -> None:
@@ -292,7 +311,7 @@ def _check_reference(reference: FrequencyReference, messages: Mapping[str, str])
         check_number(value, what, message=messages["number_param"])
         if value < 0:
             raise ParameterError(messages["negative_param"].format(param=what))
-    for hook, what in ((reference.key, "key"), (reference.keep, "keep")):
+    for hook, what in ((reference.key, "key"), (reference.keep, "keep"), (reference.keys, "keys")):
         if hook is not None:
             check_callable(hook, what, message=messages["callable_param"])
 
@@ -304,6 +323,41 @@ def _check_target(target: Iterable[object], messages: Mapping[str, str]) -> None
         float(count).is_integer() for count in target.values()
     ):
         raise SourceTypeError(messages["target_counts"])
+
+
+def _count_in_context(
+    target: Sequence[str] | Sequence[Sequence[str]],
+    reference: FrequencyReference,
+    messages: Mapping[str, str],
+) -> Mapping[str, float]:
+    """Frequencies of the words of the target that keep passes, summed by the keys that keys
+    gives to the words of every text"""
+    keys = cast(Callable[[Sequence[str]], Sequence[str]], reference.keys)
+    texts = target if _holds_texts(target) else [target]
+    counts: dict[str, float] = {}
+    for text in texts:
+        words = list(cast(Sequence[str], text))
+        text_keys = keys(words)
+        problem = _keys_problem(text_keys, len(words))
+        if problem:
+            raise SourceTypeError(
+                messages["reference_keys"].format(size=len(words), value=problem)
+            )
+        for word, word_key in zip(words, text_keys, strict=True):
+            if reference.keep is None or reference.keep(word):
+                counts[word_key] = counts.get(word_key, 0) + 1
+    return counts
+
+
+def _keys_problem(keys: object, size: int) -> str:
+    """What is wrong with the keys of a text of size words, empty if nothing: the type of the keys
+    or of a key, or their number"""
+    if isinstance(keys, str) or not isinstance(keys, Sequence):
+        return type(keys).__name__
+    other = [key for key in keys if not isinstance(key, str)]
+    if other:
+        return type(other[0]).__name__
+    return "" if len(keys) == size else str(len(keys))
 
 
 def _count(
@@ -356,7 +410,8 @@ def check_keyness_params(
             number of keywords or n is not an integer, the number or n is below
             one, or positive is not a bool
         SourceTypeError: If the target corpus is not a list of strings, a list of
-            such lists or a mapping of strings to whole frequencies
+            such lists or a mapping of strings to whole frequencies, or every word of
+            it or of one of its texts holds a space
         SourceError: If a frequency of the target corpus is negative, nan or infinite
 
     Example:

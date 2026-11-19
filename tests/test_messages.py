@@ -50,7 +50,7 @@ from anyts.lexical_stats import LexicalStats, LexicalWord
 from anyts.morph_stats import MorphStats
 from anyts.phon_stats import PhonStats
 from anyts.readability_stats import ReadabilityStats, calc_reading_time
-from anyts.style_stats import StyleStats
+from anyts.style_stats import StyleStats, WordFlags
 from anyts.syntax_stats import SyntaxStats
 from anyts.unadapted_readability_stats import UnadaptedReadabilityStats
 from anyts.utils import check_counts, check_messages
@@ -476,6 +476,11 @@ CASES = [
         lambda: hooked(Style, doc_flags=lambda self, d: 5)(TEXT).water,
     ),
     (
+        "hook_flags_check",
+        SourceTypeError,
+        lambda: hooked(Style, doc_flags=lambda self, d: WordFlags(water=(True,)))(TEXT).water,
+    ),
+    (
         "hook_word_pairs",
         SourceTypeError,
         lambda: hooked(Syntax, find_split_predicates=lambda self, words: ["ab"])(TAGGED_PARSE),
@@ -533,9 +538,13 @@ CASES = [
         lambda: check_highlight_params(1, 1, 0, messages=OWN),
     ),
     ("removed_attribute", ParameterError, lambda: type("Old", (Stats,), {"join_hyphens": True})),
-    ("removed_attribute", ParameterError, lambda: hooked(Layers, iter_words=lambda self, t: ())),
     (
-        "removed_attribute",
+        "removed_attribute_either",
+        ParameterError,
+        lambda: hooked(Layers, iter_words=lambda self, t: ()),
+    ),
+    (
+        "removed_component_attribute",
         ParameterError,
         lambda: type("Old", (BareComponent,), {"join_hyphens": True}),
     ),
@@ -759,6 +768,18 @@ CASES = [
         lambda: bootstrap_median_diff([1, 2], [1], texts_a=["a", 1], messages=OWN),
     ),
     ("p_values", ParameterError, lambda: holm_correction([2.0], messages=OWN)),
+    (
+        "words_texts",
+        SourceTypeError,
+        lambda: keyness(["the cat sleeps", "the dog barks"], WORDS, messages=OWN),
+    ),
+    (
+        "reference_keys",
+        SourceTypeError,
+        lambda: keyness(
+            WORDS, FrequencyReference({"cat": 1.0}, 10.0, keys=lambda words: ()), messages=OWN
+        ),
+    ),
 ]
 
 

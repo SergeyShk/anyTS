@@ -53,7 +53,7 @@ The reference may be a list of words, a mapping of frequencies (its size is the 
 | `n` | `int` | `1` | Length of the n-grams of the words of every text; `1` - the words |
 | `messages` | `dict[str, str]` | `None` | Messages of the errors by key, in place of those of the library |
 
-The parameters and the target corpus are checked by `check_keyness_params`; an `n` above 1 with frequencies or a `FrequencyReference` raises `ParameterError`. A reference that is not a list of strings, a list of such lists, a counter or a `FrequencyReference` raises `SourceTypeError`, and a negative, `nan` or infinite frequency of a counter and a corpus without words, or shorter than `n` words, raise `SourceError`.
+The parameters and the target corpus are checked by `check_keyness_params`; an `n` above 1 with frequencies or a `FrequencyReference` raises `ParameterError`. A reference that is not a list of strings, a list of such lists, a counter or a `FrequencyReference` raises `SourceTypeError`, and so does a corpus whose every word, or every word of one of its texts, holds a space: such words are texts, not their words, while a phrase of several words among them passes. A negative, `nan` or infinite frequency of a counter and a corpus without words, or shorter than `n` words, raise `SourceError`.
 <!-- --8<-- [end:keyness-parameters] -->
 
 <!-- --8<-- [start:check_keyness_params] -->
@@ -61,14 +61,14 @@ The parameters and the target corpus are checked by `check_keyness_params`; an `
 check_keyness_params(measure='log_likelihood', min_freq=1, top_n=None, target=None, n=1, positive=True, *, messages=None)
 ```
 
-Checks the parameters of `keyness` before a frequency dictionary is read: it raises `ParameterError` unless the measure is one of `KEYNESS_MEASURES`, the minimum frequency is an integer, the number of keywords is `None` or an integer of at least one, the length of the n-grams `n` is an integer of at least one and `positive` is a `bool`. With `target` it also raises `SourceTypeError` unless the target corpus is a list of strings, a list of such lists or a mapping of strings to whole frequencies, and `SourceError` for a negative, nan or infinite frequency.
+Checks the parameters of `keyness` before a frequency dictionary is read: it raises `ParameterError` unless the measure is one of `KEYNESS_MEASURES`, the minimum frequency is an integer, the number of keywords is `None` or an integer of at least one, the length of the n-grams `n` is an integer of at least one and `positive` is a `bool`. With `target` it also raises `SourceTypeError` unless the target corpus is a list of strings, a list of such lists or a mapping of strings to whole frequencies, or if every word of it or of one of its texts holds a space, and `SourceError` for a negative, nan or infinite frequency.
 <!-- --8<-- [end:check_keyness_params] -->
 
 ## Reference by frequencies
 
 <!-- --8<-- [start:FrequencyReference] -->
 ``` {.python .signature}
-FrequencyReference(counts, size, missing=0.0, key=None, keep=None)
+FrequencyReference(counts, size, missing=0.0, key=None, keep=None, keys=None)
 ```
 
 A reference corpus described by its frequencies alone, such as a frequency dictionary built from a corpus too large to pass as words:
@@ -80,8 +80,9 @@ A reference corpus described by its frequencies alone, such as a frequency dicti
 | `missing` | `float` | `0.0` | Frequency of a key missing from `counts` |
 | `key` | `Callable` | `None` | Key of a word of the target corpus in `counts`, such as its lemma; `None` - the word itself |
 | `keep` | `Callable` | `None` | Whether a word of the target corpus is counted; `None` - every word |
+| `keys` | `Callable` | `None` | Keys of the words of a text of the target corpus, given its words in their order, such as their lemmas in context; `None` - those of `key` |
 
-Only the words of the target that `keep` passes are counted, under their `key`, in the frequencies and in the size alike. A key missing from `counts` has the frequency `missing`, such as the least frequency of a dictionary: an upper bound, so its word may be a positive keyword but never a negative one. Negative keywords come only from the keys of `counts` that `keep` passes. A frequency is checked as it is read, so a large dictionary is not gone through for positive keywords: one that is not a number raises `SourceTypeError`, and a negative, `nan` or infinite one `SourceError`. A `size` or a `missing` that is not a finite number or is negative raises `ParameterError`, and a `key` or a `keep` that cannot be called `SourceTypeError`.
+Only the words of the target that `keep` passes are counted, under their key, in the frequencies and in the size alike. The keys of a list of words come from `keys` when it is given: it gets the words of every text in their order and returns a key for each, so a lemmatizer in context tells the homonyms apart where `key`, which sees a word alone, takes one analysis for all its occurrences. `key` keys a target given by its frequencies and the words without `keys`. A key missing from `counts` has the frequency `missing`, such as the least frequency of a dictionary: an upper bound, so its word may be a positive keyword but never a negative one. Negative keywords come only from the keys of `counts` that `keep` passes. A frequency is checked as it is read, so a large dictionary is not gone through for positive keywords: one that is not a number raises `SourceTypeError`, and a negative, `nan` or infinite one `SourceError`. A `size` or a `missing` that is not a finite number or is negative raises `ParameterError`, and a `key`, a `keep` or a `keys` that cannot be called `SourceTypeError`, as do keys that are not a string for every word of a text.
 <!-- --8<-- [end:FrequencyReference] -->
 
 === "Code"

@@ -19,7 +19,7 @@ A pipeline with the tokenizer of spaCy and a parser has no replacement for the f
 
 ## Class attributes and hooks { #hooks }
 
-The attributes of 0.4 that the core no longer reads raise `ParameterError` (the message `removed_attribute`) when a class that sets them is defined, since a class that kept them would give other numbers without a sign:
+The attributes of 0.4 that the core no longer reads raise `ParameterError` (the messages `removed_attribute` and `removed_attribute_either`, and `removed_component_attribute` for a component, since 0.6) when a class that sets them is defined, since a class that kept them would give other numbers without a sign:
 
 | Removed | Classes | Replacement |
 | :------ | :------ | :---------- |

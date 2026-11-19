@@ -205,7 +205,7 @@ $$
 
 ### Spam score { #spam }
 
-`spam` · [Text.ru](https://text.ru/seo)
+`spam`
 { .metric-meta }
 
 <!-- --8<-- [start:calc_spam] -->
