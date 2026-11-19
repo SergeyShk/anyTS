@@ -109,9 +109,6 @@ jobs:
         run: |
           uv sync --locked --no-default-groups --group test ${{ matrix.sync }}
           uv pip install ../anyTS
-      - name: Take the pages of the core from this branch
-        working-directory: library
-        run: uv run --no-sync python scripts/core_docs.py ../anyTS
       - name: Run tests
         working-directory: library
         run: uv run --no-sync pytest -m "not network and not core_sync"
