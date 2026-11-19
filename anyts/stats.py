@@ -1,15 +1,15 @@
 from __future__ import annotations
 
-from collections.abc import Iterable, Mapping
+from collections.abc import Hashable, Iterable, Mapping, Sequence
 from itertools import pairwise
 from math import isfinite
 from numbers import Real
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
+from typing import TYPE_CHECKING, Any, ClassVar, TypeVar, cast
 
 from .constants import MESSAGES
-from .exceptions import ParameterError, UnknownStatError
-from .utils import _check_removed, check_bool, check_messages, check_number
+from .exceptions import ParameterError, SourceTypeError, UnknownStatError
+from .utils import _check_removed, _messages, check_bool, check_messages, check_number
 
 if TYPE_CHECKING:
     from anyseg import Document
@@ -40,6 +40,7 @@ class Stats:
 
     Methods:
         parse: Document of a data source
+        by_parts: Statistics of every sentence or paragraph of a data source
         stat_names: Names of the statistics of get_stats
         get_stats: Getting the computed statistics
         to_dataframe: Getting the computed statistics as a one-row frame
@@ -54,6 +55,8 @@ class Stats:
         level_scales (dict[str, tuple[tuple[float, str], ...]]): Interpretation scales
             of describe by statistic, as lower bounds and their bands
         messages (dict[str, str]): Messages of the errors by key (MESSAGES)
+        part_kinds (tuple[str, ...]): Parts of by_parts the class counts, sentences
+            and paragraphs by default
 
     Raises:
         ParameterError: When a class is defined, if its messages are incomplete,
@@ -82,6 +85,7 @@ class Stats:
     stats_headers: ClassVar[tuple[str, str]] = ("Statistic", "Value")
     level_scales: ClassVar[Mapping[str, tuple[tuple[float, str], ...]]] = {}
     messages: ClassVar[Mapping[str, str]] = MESSAGES
+    part_kinds: ClassVar[tuple[str, ...]] = ("sentences", "paragraphs")
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
@@ -119,6 +123,68 @@ class Stats:
         from .document import _parsed
 
         return _parsed(self, source)
+
+    @classmethod
+    def by_parts(
+        cls, source: str | Doc | Document, parts: str = "sentences", **params: Any
+    ) -> DataFrame:
+        """
+        Getting the statistics of every sentence or paragraph of a data source
+
+        Description:
+            The source is parsed once, by parse of an object of the class made
+            without __init__, so a parse that reads only the class serves; the
+            class with the parameters counts the document of every part
+            (document_part). The table has a row per part, its start and end in
+            the text of the document and its flat statistics (stats_dataframe);
+            a part without words, such as a line of asterisks, has its row
+            without statistics
+
+        Arguments:
+            source (str|Doc|Document): Data source
+            parts (str): Parts, one of part_kinds of the class
+            **params: Parameters of the class
+
+        Returns:
+            pandas.DataFrame: Table of the parts, indexed by their number
+
+        Raises:
+            ParameterError: If the parts are not one of part_kinds
+            SourceTypeError, SourceError: As the class raises for the source and for
+                a part
+
+        Example:
+            >>> from anyts.basic_stats import BasicStats
+            >>> class Vowels(BasicStats):
+            ...     def count_syllables(self, word):
+            ...         return sum(char in "aeiou" for char in word.lower())
+            >>> Vowels.by_parts("The cat sleeps. A dog barks loudly.")[["start", "end", "n_words"]]
+                      start  end  n_words
+            sentence
+            0             0   15        3
+            1            16   35        4
+        """
+        from pandas import DataFrame
+
+        from .document import _document_parts, document_words
+
+        messages = cls.messages
+        if not isinstance(parts, str) or parts not in cls.part_kinds:
+            raise ParameterError(
+                messages["parts_kind"].format(parts=repr(parts), kinds=cls.part_kinds)
+            )
+        document = cls.__new__(cls)._document(source)
+        bounds, counted, numbers = [], [], []
+        for number, (start, end, part) in enumerate(_document_parts(document, parts)):
+            bounds.append({"start": start, "end": end})
+            if document_words(part):
+                counted.append(cast(Any, cls)(part, **params))
+                numbers.append(number)
+        name = parts[:-1]
+        stats = stats_dataframe(counted, index=numbers)
+        frame = DataFrame(bounds).join(stats)
+        frame.index.name = name
+        return frame
 
     def stat_names(self) -> tuple[str, ...]:
         """
@@ -339,3 +405,83 @@ def scale_level(value: float, scale: Iterable[tuple[float, Band]]) -> Band:
         if value >= threshold:
             return band
     return bands[-1][1]
+
+
+def stats_dataframe(
+    stats: Iterable[Stats],
+    index: Sequence[Hashable] | None = None,
+    *,
+    messages: Mapping[str, str] | None = None,
+) -> DataFrame:
+    """
+    Getting the flat statistics of several objects as one table
+
+    Description:
+        A row per object, its flat statistics (get_stats(flat=True)), and a column
+        for every key of any of them. A value of a dictionary statistic an object
+        lacks is 0, since its text has no such value; any other value it lacks is
+        NaN. The values of a dictionary with keys of numbers, such as the words
+        by their length, go in the order of the keys
+
+    Arguments:
+        stats (list[Stats]): Objects of statistics
+        index (list): Labels of the rows; their numbers by default
+        messages (dict[str, str]): Messages of the errors by key, in place of those of the
+            library
+
+    Returns:
+        pandas.DataFrame: Table of the statistics
+
+    Raises:
+        SourceTypeError: If an object is not of a class of statistics
+
+    Example:
+        >>> from anyts.stats import Stats, stats_dataframe
+        >>> class TextSize(Stats):
+        ...     stats_desc = {"n_words": "Words", "c_lengths": "Words by length"}
+        ...     def __init__(self, text):
+        ...         words = text.split()
+        ...         self.n_words = len(words)
+        ...         self.c_lengths = dict(sorted(Counter(map(len, words)).items()))
+        >>> from collections import Counter
+        >>> stats_dataframe([TextSize("The cat sat"), TextSize("A mouse ran away")])
+           n_words  c_lengths_1  c_lengths_3  c_lengths_4  c_lengths_5
+        0        3            0            3            0            0
+        1        4            1            1            1            1
+    """
+    from pandas import DataFrame
+
+    messages = _messages(messages)
+    given: object = stats
+    if isinstance(given, str) or not isinstance(given, Iterable):
+        raise SourceTypeError(messages["stats_objects"].format(type=type(given).__name__))
+    objects = list(given)
+    for item in objects:
+        if not isinstance(item, Stats):
+            raise SourceTypeError(messages["stats_objects"].format(type=type(item).__name__))
+    nested = [item.get_stats() for item in objects]
+    # The keys of every dictionary statistic over all the objects, in order
+    keys: dict[str, list[Any]] = {}
+    for values in nested:
+        for name, value in values.items():
+            if isinstance(value, Mapping):
+                found = keys.setdefault(name, [])
+                found.extend(key for key in value if key not in found)
+    for found in keys.values():
+        if all(isinstance(key, Real) and not isinstance(key, bool) for key in found):
+            found.sort()
+    columns: list[str] = []
+    rows = []
+    for values in nested:
+        row: dict[str, Any] = {}
+        for name, value in values.items():
+            if isinstance(value, Mapping):
+                full = {key: value.get(key, 0) for key in keys[name]}
+                row.update(_flatten({name: full}))
+            else:
+                row[name] = value
+        for column in row:
+            if column not in columns:
+                columns.append(column)
+        rows.append(row)
+    return DataFrame(rows, index=index, columns=columns)

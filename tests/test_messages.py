@@ -44,12 +44,13 @@ from anyts.corpus import (
     zeta_segments,
 )
 from anyts.diversity_stats import DiversityStats, calc_ttr, calc_windowed, check_params
-from anyts.document import to_document
+from anyts.document import document_part, to_document
 from anyts.exceptions import ParameterError, SourceError, SourceTypeError, UnknownStatError
 from anyts.lexical_stats import LexicalStats, LexicalWord
 from anyts.morph_stats import MorphStats
 from anyts.phon_stats import PhonStats
 from anyts.readability_stats import ReadabilityStats, calc_reading_time
+from anyts.stats import stats_dataframe
 from anyts.style_stats import StyleStats, WordFlags
 from anyts.syntax_stats import SyntaxStats
 from anyts.unadapted_readability_stats import UnadaptedReadabilityStats
@@ -773,6 +774,13 @@ CASES = [
         SourceTypeError,
         lambda: keyness(["the cat sleeps", "the dog barks"], WORDS, messages=OWN),
     ),
+    (
+        "part_bounds",
+        ParameterError,
+        lambda: document_part(to_document(TEXT), 5, 2, messages=OWN),
+    ),
+    ("parts_kind", ParameterError, lambda: Stats.by_parts(TEXT, "words")),
+    ("stats_objects", SourceTypeError, lambda: stats_dataframe([5], messages=OWN)),
     (
         "reference_keys",
         SourceTypeError,

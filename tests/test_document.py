@@ -12,8 +12,8 @@ from spacy.tokens import Doc
 
 from anyts import document as document_module
 from anyts.constants import MESSAGES
-from anyts.document import document_words, get_tree, to_document
-from anyts.exceptions import SourceError, SourceTypeError
+from anyts.document import document_part, document_words, get_tree, to_document
+from anyts.exceptions import ParameterError, SourceError, SourceTypeError
 from anyts.extractors import split_paragraphs
 from anyts.utils import is_document
 
@@ -497,3 +497,121 @@ def test_marks_of_the_direction_of_text(text, tokens):
     """A mark of the direction of text or a word joiner is never a token: between words it is
     in neither, inside a word part of it, as in anySeg"""
     assert [token.text for token in to_document(text).tokens] == tokens
+
+
+def parsed_text():
+    """A Doc of two paragraphs of three sentences with a parse, lemmas and features"""
+    vocab = spacy.blank("en").vocab
+    return Doc(
+        vocab,
+        words=["Cats", "sleep", ".", "Dogs", "bark", "loudly", ".", "\n\n", "Birds", "sing", "."],
+        spaces=[True, False, True, True, True, False, False, False, True, False, False],
+        heads=[1, 1, 1, 4, 4, 4, 4, 6, 9, 9, 9],
+        deps=[
+            "nsubj",
+            "ROOT",
+            "punct",
+            "nsubj",
+            "ROOT",
+            "advmod",
+            "punct",
+            "dep",
+            "nsubj",
+            "ROOT",
+            "punct",
+        ],
+        pos=[
+            "NOUN",
+            "VERB",
+            "PUNCT",
+            "NOUN",
+            "VERB",
+            "ADV",
+            "PUNCT",
+            "SPACE",
+            "NOUN",
+            "VERB",
+            "PUNCT",
+        ],
+        lemmas=["cat", "sleep", ".", "dog", "bark", "loudly", ".", "\n\n", "bird", "sing", "."],
+        morphs=["Number=Plur", "", "", "Number=Plur", "", "", "", "", "Number=Plur", "", ""],
+    )
+
+
+def test_document_part_of_a_sentence():
+    """A part keeps the tokens, the words with their columns and the heads of its sentence, at
+    positions from its start"""
+    document = to_document(parsed_text())
+    part = document_part(document, 13, 14)
+    assert part.text == "Dogs bark loudly."
+    assert list(zip(part.tokens.starts, part.tokens.ends, strict=True)) == [
+        (0, 4),
+        (5, 9),
+        (10, 16),
+        (16, 17),
+    ]
+    words = get_tree(part).words
+    assert [(w.form, w.lemma, w.upos, w.deprel) for w in words] == [
+        ("Dogs", "dog", "NOUN", "nsubj"),
+        ("bark", "bark", "VERB", "root"),
+        ("loudly", "loudly", "ADV", "advmod"),
+        (".", ".", "PUNCT", "punct"),
+    ]
+    assert [w.head.form if w.head else None for w in words] == ["bark", None, "bark", "bark"]
+    assert words[0].feats == {"Number": "Plur"}
+
+
+def test_document_part_of_several_sentences():
+    """A span takes the sentences it overlaps whole, across a blank line with its paragraphs"""
+    document = to_document(parsed_text())
+    part = document_part(document, 3, 33)
+    assert [sentence.text for sentence in part.sentences] == [
+        "Cats sleep.",
+        "Dogs bark loudly.",
+        "Birds sing.",
+    ]
+    assert [paragraph.text for paragraph in part.paragraphs] == [
+        "Cats sleep. Dogs bark loudly.",
+        "Birds sing.",
+    ]
+    assert document_part(document, 0, len(document.text)).text == document.text
+    # A document without columns gives a part without them
+    plain = document_part(to_document("One two. Three four."), 9, 10)
+    assert plain.text == "Three four."
+    assert plain.column("lemma") == [None, None, None]
+
+
+def test_document_part_keeps_multiword_tokens():
+    vocab = spacy.blank("es").vocab
+    doc = Doc(
+        vocab,
+        words=["Vino", ".", "Salió", "del", "pueblo", "."],
+        spaces=[False, True, True, True, False, False],
+        sent_starts=[True, False, True, False, False, False],
+    )
+    import anyseg.spacy  # noqa: F401 - the extension token._.anyseg_words
+
+    doc[3]._.anyseg_words = [{"form": "de", "upos": "ADP"}, {"form": "el", "upos": "DET"}]
+    part = document_part(to_document(doc), 7, 8)
+    assert part.text == "Salió del pueblo."
+    assert [word.form for word in part.words] == ["Salió", "de", "el", "pueblo", "."]
+    assert part.column("upos") == [None, "ADP", "DET", None, None]
+
+
+@pytest.mark.parametrize(
+    ("arguments", "error", "message"),
+    [
+        (("The cat.", 0, 3), SourceTypeError, "^The data source cannot be of type str$"),
+        ((None, 0.5, 3), ParameterError, "^The start must be an integer, not float$"),
+        ((None, 0, "3"), ParameterError, "^The end must be an integer, not str$"),
+        ((None, 3, 3), ParameterError, "^The part must lie within the text of 20 characters"),
+        ((None, -1, 3), ParameterError, "not -1 and 3$"),
+        ((None, 0, 21), ParameterError, "not 0 and 21$"),
+        ((None, 8, 9), SourceError, "^The data source has no words$"),
+    ],
+)
+def test_document_part_errors(arguments, error, message):
+    document = to_document("The cat. The dog.   ")
+    source, start, end = arguments
+    with pytest.raises(error, match=message):
+        document_part(document if source is None else source, start, end)

@@ -182,6 +182,22 @@ class ReadabilityStats(Stats):
             _check_grades(grades, f"preset_reading_ease_grades of {name} for {preset}")
         _check_levels(cls.grade_age_levels, cls.postgraduate_level, f"grade_age_levels of {name}")
 
+    def parse(self, source: str | Doc | Document) -> Document:
+        """
+        Getting the document of a data source
+
+        Description:
+            parse of basic_stats_class, whose statistics the class reads; that
+            of Stats without it
+
+        Arguments:
+            source (str|Doc|Document): Data source
+
+        Returns:
+            Document: Document of anySeg
+        """
+        return _basic_parse(self, source)
+
     def __init__(
         self,
         source: str | Doc | Document | BasicStats,
@@ -513,6 +529,15 @@ def _read_basic_stats(
     if not bs.n_sents:
         raise SourceError(messages["no_sentences"])
     return bs
+
+
+def _basic_parse(stats: Any, source: str | Doc | Document) -> Document:
+    """Document of a source by parse of the basic_stats_class of a class of readability, which
+    reads only the class, or by that of Stats"""
+    basic: type[BasicStats] | None = stats.basic_stats_class
+    if basic is None:
+        return Stats.parse(stats, source)
+    return basic.__new__(basic).parse(source)
 
 
 def _read_words(bs: BasicStats) -> int:
