@@ -32,8 +32,8 @@ class Command:
         The command stats reads texts from files or from the standard input,
         parses every text once (parse) and prints the statistics of the classes
         of stats_classes: a table, JSON with the flat statistics of every class
-        by text, or CSV with a row per text; with --parts, a row per sentence or
-        paragraph (by_parts). A text a class cannot count is reported on the
+        by text, or CSV with a row per text; with --parts, a row per sentence,
+        line or paragraph (by_parts). A text a class cannot count is reported on the
         standard error and the others are counted, with the exit code 1. A
         language library subclasses it and calls run from the entry point of its
         command

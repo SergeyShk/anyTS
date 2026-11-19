@@ -1,3 +1,4 @@
+import re
 from collections import Counter
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from math import inf, isnan, log, log2, nan
@@ -21,6 +22,8 @@ from ..utils import (
 )
 
 _ZERO_ADJUSTMENT = 0.5
+# A space in a word, the whitespace of str.isspace
+_SPACE = re.compile(r"\s")
 
 
 class FrequencyReference(NamedTuple):
@@ -298,7 +301,9 @@ def _check_not_texts(words: Sequence[str], what: str, messages: Mapping[str, str
     """Raising SourceTypeError for words that are texts, most of them holding a space, as the
     sentences of a text with a sentence of one word among them; a phrase of several words among
     the words passes"""
-    spaced = sum(any(char.isspace() for char in word) for word in words)
+    if not _SPACE.search("".join(words)):
+        return
+    spaced = sum(_SPACE.search(word) is not None for word in words)
     if 2 * spaced > len(words):
         raise SourceTypeError(messages["words_texts"].format(param=what))
 
