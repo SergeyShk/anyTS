@@ -425,6 +425,7 @@ def test_blank_lines():
     generator = random.Random(0)
     alphabet = (
         "ab .\n\r\x0b\x0c\x85\u2028\u2029\u00ad\u2060\u200b\u200c\u200d\ufeff\t \x01\x7f\xa0"
+        "\u200e\u200f\u2066\u061c"
     )
     for _ in range(2000):
         text = "".join(generator.choice(alphabet) for _ in range(generator.randint(0, 12)))
