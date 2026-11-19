@@ -10,6 +10,7 @@ import pytest
 
 from anyts import (
     basic_stats,
+    cli,
     cohesion_stats,
     components,
     constants,
@@ -133,6 +134,7 @@ def test_public_api_has_sections():
         *public_names(basic_stats),
         *public_names(readability_stats),
         *public_names(stats),
+        *public_names(cli),
         *public_names(style_stats),
         *public_names(lexical_stats),
         "LexicalStats",

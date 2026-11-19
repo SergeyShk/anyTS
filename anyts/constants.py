@@ -554,6 +554,25 @@ VISUALIZER_LABELS = {
     },
 }
 
+# Texts of the command line of a library by key: the help of the command and its options and
+# the messages of its errors; a language library passes its own over these
+CLI_TEXTS: Mapping[str, str] = MappingProxyType(
+    {
+        "description": "Statistics of texts",
+        "stats_command": "Print the statistics of texts",
+        "files": "Text files; the standard input without them or for -",
+        "stats_option": "Classes of statistics, by name and separated by commas: {names}; all by default",
+        "parts_option": "Statistics of every sentence or paragraph",
+        "format_option": "Output: a table, JSON or CSV",
+        "output_option": "File of the output; the standard output by default",
+        "encoding_option": "Encoding of the files and of the output",
+        "unknown_stats": "unknown statistics {name}; available: {names}",
+        "no_parts": "{name} counts no {parts}",
+        "file_error": "{source}: {error}",
+        "stats_error": "{source}, {name}: {error}",
+    }
+)
+
 # Basic statistics: the least syllables of a complex word and letters of a long one (the
 # bounds of Gunning's fog and of LIX)
 COMPLEX_SYL_FACTOR = 3
