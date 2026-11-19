@@ -59,6 +59,7 @@ class MorphStats(Stats):
         get_stats: Number of the words by value of every statistic
         explain_text: Values of the statistics word by word
         print_stats: Printing the numbers with the descriptions of the values
+        value_desc: Description of a value of a statistic
         get_markers: Markers of the language computed from the features
         print_markers: Printing the markers with their descriptions
 
@@ -68,8 +69,9 @@ class MorphStats(Stats):
         stats_desc (dict[str, str]): pos and the statistics of feature_names with their
             names, in the order of get_stats (MORPH_STATS_DESC)
         values_desc (dict[str, dict[str, str]]): Descriptions of the values by statistic
-            for print_stats (MORPH_VALUES_DESC)
+            for print_stats and value_desc (MORPH_VALUES_DESC)
         unknown_value (str): Description of the words without the feature in print_stats
+            and value_desc
         markers_desc (dict[str, str]): Markers of get_markers with their descriptions,
             none by default
         markers_headers (tuple[str, str]): Headers of the columns for print_markers

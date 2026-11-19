@@ -362,6 +362,24 @@ def test_compute_counts_the_text_its_parts_and_the_report(capsys, tmp_path):
     assert cells == ["1", "4", "2", "2"]
 
 
+def test_an_error_of_parse_is_not_one_of_the_output(files):
+    """An error of the environment in parse, as a missing model, is no error of the output"""
+
+    class Missing(Prototype):
+        def parse(self, text):
+            raise OSError("Can't find model")
+
+    with pytest.raises(OSError, match="Can't find model"):
+        Missing().run(["stats", "-o", "out.json", files[1]])
+
+
+def test_a_file_in_utf_16_without_its_mark(capsys, tmp_path):
+    source = tmp_path / "odd.txt"
+    source.write_bytes(b"abc")
+    code, _, err = run(capsys, "-s", "basic", "-e", "utf-16", str(source))
+    assert code == 1 and err.endswith("; give its encoding with -e\n")
+
+
 class Options(Prototype):
     """A command with an option of its own that parse reads, and a command of its own"""
 
@@ -404,10 +422,15 @@ def test_texts_of_argparse(capsys):
         pass
 
     Translated.texts = texts
+    Translated.arguments = lambda self, parser, command: parser.add_argument(
+        "--upper", action="store_true", help="upper case"
+    )
     assert Translated().run(["stats", "--help"]) == 0
     help_text = capsys.readouterr().out
     for text in ("использование: proto stats", "аргументы:", "параметры:", "показать справку"):
         assert text in help_text
+    # An option of the library goes among the translated options
+    assert "options:" not in help_text and "--upper" in help_text.split("параметры:")[1]
     assert "[файлы ...]" in help_text
     assert Translated().run(["--help"]) == 0
     assert "команды:" in capsys.readouterr().out
@@ -484,3 +507,19 @@ def test_closed_output_in_process(monkeypatch, files, command):
     finally:
         os.close(reader)
         os.close(writer)
+
+
+class FullOutput(ClosedOutput):
+    """A standard output that cannot be written"""
+
+    def write(self, data):
+        raise OSError("No space left on device")
+
+
+@pytest.mark.parametrize(
+    "argv", [["stats"], ["stats", "-f", "json"], ["stats", "-f", "csv"], ["report"]]
+)
+def test_an_output_that_cannot_be_written_is_named(capsys, monkeypatch, files, argv):
+    monkeypatch.setattr(sys, "stdout", FullOutput(1))
+    assert Prototype().run([*argv, "-s", "basic", files[1]]) == 1
+    assert capsys.readouterr().err == "proto: -: No space left on device\n"

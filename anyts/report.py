@@ -220,8 +220,8 @@ class Report:
         """
         Getting the section of the statistics: a table per class with the
         description, the value and the reading of every statistic of stats_desc,
-        as print_stats, the values of a dictionary described by value_desc; the
-        classes left out by skip_errors named
+        as print_stats, the values of a dictionary from the most frequent and
+        described by value_desc; the classes left out by skip_errors named
 
         Returns:
             str: Fragment of HTML
@@ -229,16 +229,17 @@ class Report:
         texts = self.texts
         tables = []
         if self.errors:
-            tables.append(
-                f"<p>{escape(texts['left_out'].format(names=', '.join(self.errors)))}</p>\n"
-            )
+            names = ", ".join(self.titles.get(name, name) for name in self.errors)
+            tables.append(f"<p>{escape(texts['left_out'].format(names=names))}</p>\n")
         for name, stats in self.stats.items():
             values = self._values[name]
             rows = []
             for stat, desc in stats.stats_desc.items():
                 value = values[stat]
                 if isinstance(value, Mapping):
-                    value = {stats.value_desc(stat, key): item for key, item in value.items()}
+                    # The values from the most frequent, as print_stats
+                    pairs = sorted(value.items(), key=lambda pair: pair[1], reverse=True)
+                    value = {stats.value_desc(stat, key): item for key, item in pairs}
                 rows.append(
                     f"<tr><td>{escape(desc)}</td>"
                     f'<td class="number">{escape(_number(value, texts))}</td>'
@@ -379,7 +380,8 @@ class Report:
         except AnyTSError:
             return []
         if len(self.document.sentences) > _MARKED_SENTENCES:
-            for line in ax.get_lines():
+            legend = ax.get_legend()
+            for line in [*ax.get_lines(), *(legend.get_lines() if legend else [])]:
                 line.set_marker("")
         return [(self.texts["sentence_lengths"], figure)]
 
