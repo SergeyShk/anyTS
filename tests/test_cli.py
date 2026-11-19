@@ -362,7 +362,7 @@ def test_compute_counts_the_text_its_parts_and_the_report(capsys, tmp_path):
     assert cells == ["1", "4", "2", "2"]
 
 
-def test_an_error_of_parse_is_not_one_of_the_output(files):
+def test_an_error_of_parse_is_not_one_of_the_output(files, tmp_path):
     """An error of the environment in parse, as a missing model, is no error of the output"""
 
     class Missing(Prototype):
@@ -370,7 +370,7 @@ def test_an_error_of_parse_is_not_one_of_the_output(files):
             raise OSError("Can't find model")
 
     with pytest.raises(OSError, match="Can't find model"):
-        Missing().run(["stats", "-o", "out.json", files[1]])
+        Missing().run(["stats", "-o", str(tmp_path / "out.json"), files[1]])
 
 
 def test_a_file_in_utf_16_without_its_mark(capsys, tmp_path):
