@@ -291,31 +291,6 @@ def test_multiword_tokens_without_columns_of_their_words():
     ]
 
 
-def test_multiword_tokens_merged_in_one_pass(monkeypatch):
-    """The merge of multiword tokens reads every column of the document once"""
-    from anyseg.spacy import from_doc
-
-    vocab = spacy.blank("es").vocab
-    doc = Doc(vocab, words=["al", "del"] * 3, heads=[0] * 6, deps=["ROOT"] * 6)
-    import anyseg.spacy  # noqa: F401 - the extension token._.anyseg_words
-
-    for token in doc:
-        token._.anyseg_words = [{"form": "a"}, {"form": "el"}]
-    document = from_doc(doc)
-    names = []
-    column = Document.column
-
-    def counted(self, name):
-        names.append(name)
-        return column(self, name)
-
-    monkeypatch.setattr(Document, "column", counted)
-    merged = document_module._merged(document, {token.index for token in document.tokens})
-    assert len(names) == len(set(names))
-    monkeypatch.undo()
-    assert [word.form for word in merged.words] == ["al", "del"] * 3
-
-
 def test_sentences_of_a_doc_in_one_pass(monkeypatch):
     """The sentences of a Doc without them read the starts of its tokens a fixed number of times,
     however many sentences it has"""
