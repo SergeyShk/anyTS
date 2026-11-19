@@ -57,6 +57,21 @@ _SUBJECT_DEPS = SUBJECT_DEPS | {"csubjpass", "nsubjpass"}
 _AGREEMENT_FEATURES = ("Person", "Number", "Gender")
 
 
+class _Climbs:
+    """Memo of the climbs up the chains of a tree, for the words of one document and the same
+    hooks: the answers of _climb_to_clause by the index of a word and whether a conjunct below
+    has a predication of its own, those of _clause_relation by the index of a word, whether
+    the clause inherits a mark and whether it is past the first word, and the words the
+    complements of _completed_word lead to"""
+
+    __slots__ = ("clause_heads", "completions", "relations")
+
+    def __init__(self) -> None:
+        self.clause_heads: dict[tuple[int, bool], bool] = {}
+        self.relations: dict[tuple[int, bool, bool], tuple[TreeWord, str]] = {}
+        self.completions: dict[int, TreeWord] = {}
+
+
 class SyntaxStats(Stats):
     """
     Base of the syntactic statistics of a text
@@ -244,6 +259,9 @@ class SyntaxStats(Stats):
         finite_verbs = [word for word in words if _is_finite_verb(word)]
         chains = [length for span in spans for length in _calc_coordination_chains(span)]
         self.n_coordination_chains = len(chains)
+        # Climbs up the chains of conjuncts and complements, which every word of a chain would
+        # make again
+        self._climbs = _Climbs()
         heads = [[word for word in sent if self.is_clause_head(word)] for sent in sents]
         self.n_clauses = sum(map(len, heads))
         subordinate = [
@@ -331,6 +349,7 @@ class SyntaxStats(Stats):
             self.n_preverbal_objects, self.n_nominal_objects, nan
         )
         self.noun_verb_ratio = safe_divide(self.n_nouns, self.n_verbs, nan)
+        del self._climbs
 
     @cached_property
     def _l2sca(self) -> dict[str, int]:
@@ -556,7 +575,9 @@ class SyntaxStats(Stats):
         Returns:
             bool: Result of the check
         """
-        return is_clause_head(word, self.is_infinitive_periphrasis, self.auxiliary_form)
+        return _is_clause_head(
+            word, self.is_infinitive_periphrasis, self.auxiliary_form, self.__dict__.get("_climbs")
+        )
 
     def is_infinitive_periphrasis(self, word: TreeWord) -> bool:
         """
@@ -608,11 +629,12 @@ class SyntaxStats(Stats):
         Returns:
             bool: Result of the check
         """
-        return _is_subordinate_clause_head(
+        return _subordinate_clause_head(
             word,
             self.is_clause_head,
+            self.is_subordinating_mark,
             self.auxiliary_form,
-            is_subordinating_mark=self.is_subordinating_mark,
+            self.__dict__.get("_climbs"),
         )
 
     def is_infinitive_clause_head(self, word: TreeWord) -> bool:
@@ -629,11 +651,12 @@ class SyntaxStats(Stats):
         Returns:
             bool: Result of the check
         """
-        return _is_infinitive_clause_head(
+        return _infinitive_clause_head(
             word,
             self.is_clause_head,
+            self.is_subordinating_mark,
             self.auxiliary_form,
-            is_subordinating_mark=self.is_subordinating_mark,
+            self.__dict__.get("_climbs"),
         )
 
     def is_subordinating_mark(self, word: TreeWord) -> bool:
@@ -1490,51 +1513,79 @@ def _is_clause_head(
     word: TreeWord,
     is_infinitive_periphrasis: Callable[[TreeWord], bool] | None,
     auxiliary_form: Callable[[TreeWord], str] | None,
+    climbs: _Climbs | None = None,
 ) -> bool:
-    """is_clause_head with checked hooks"""
+    """is_clause_head with checked hooks and the memo of the climbs of a document"""
+    steps: list[tuple[int, bool]] = []
+    answer, looped = _climb_to_clause(
+        word, is_infinitive_periphrasis, auxiliary_form, climbs, steps
+    )
+    if climbs is not None and not looped:
+        climbs.clause_heads.update(dict.fromkeys(steps, answer))
+    return answer
+
+
+def _climb_to_clause(
+    word: TreeWord,
+    is_infinitive_periphrasis: Callable[[TreeWord], bool] | None,
+    auxiliary_form: Callable[[TreeWord], str] | None,
+    climbs: _Climbs | None,
+    steps: list[tuple[int, bool]],
+) -> tuple[bool, bool]:
+    """Whether a word heads a clause, climbing the chains of conjuncts and infinitive complements
+    to the word that is none, with the steps it passes and whether it ran into a loop of a broken
+    parse"""
     own = False
     seen = set()
-    # Up the chains of conjuncts and infinitive complements to the word that is none
     while _is_word(word) and word.index not in seen:
+        step = (word.index, own)
+        if climbs is not None and step in climbs.clause_heads:
+            return climbs.clause_heads[step], False
+        steps.append(step)
         head = word.head
         if head is None:
-            return True
+            return True, False
         form = _predicate_form(word, auxiliary_form)
         if form in NONFINITE_CLAUSE_FORMS:
-            return False
+            return False, False
         dep = _base_dep(word)
         if dep != "conj":
             if dep == "xcomp":
                 if form == "Fin":
-                    return True
+                    return True, False
                 completed = (
-                    _completed_word(word, is_infinitive_periphrasis, auxiliary_form)
+                    _completed_word(
+                        word,
+                        is_infinitive_periphrasis,
+                        auxiliary_form,
+                        None if climbs is None else climbs.completions,
+                    )
                     if _is_infinitive_complement(word, is_infinitive_periphrasis, auxiliary_form)
                     else None
                 )
                 if completed is None:
-                    return False
+                    return False, False
                 seen.add(word.index)
                 word = completed
                 continue
             if dep not in CLAUSE_DEPS:
-                return False
+                return False, False
             if dep == "parataxis":
-                return _is_predicate(word)
+                return _is_predicate(word), False
             if dep == "csubj" and form == "Inf" and is_infinitive_periphrasis:
-                return not is_infinitive_periphrasis(word)
-            return not (dep == "acl" and form == "Inf")
+                return not is_infinitive_periphrasis(word), False
+            return not (dep == "acl" and form == "Inf"), False
         if form == "Inf" and is_infinitive_periphrasis and is_infinitive_periphrasis(word):
             # Past the infinitive of a periphrasis, a part of the predicate of its head, goes only a
             # chain with a predicate of a subject of its own (he must leave and she stayed)
             if not own:
-                return False
+                return False, False
         elif not _is_predicate(word):
-            return False
+            return False, False
         own = own or (form != "Inf" and not _shares_subject(word))
         seen.add(word.index)
         word = head
-    return False
+    return False, _is_word(word)
 
 
 @_takes_word
@@ -1624,14 +1675,17 @@ def _completed_word(
     word: TreeWord,
     is_infinitive_periphrasis: Callable[[TreeWord], bool] | None,
     auxiliary_form: Callable[[TreeWord], str] | None,
+    completions: dict[int, TreeWord] | None = None,
 ) -> TreeWord | None:
     """
     Word an infinitive complement completes, up its non-finite complements and the
     infinitives of a periphrasis a model attaches as conj or csubj, an infinitive conjunct
     of a periphrasis among them (is ready to come and help us live); None in a loop or for
-    a complement with no head
+    a complement with no head. completions keeps the word every complement passed on the
+    way leads to, for the words of one document and the same hooks
     """
     seen = {word.index}
+    passed = []
     completed = word.head
     while (
         completed is not None
@@ -1649,10 +1703,16 @@ def _completed_word(
             )
         )
     ):
+        if completions is not None and completed.index in completions:
+            completed = completions[completed.index]
+            break
+        passed.append(completed.index)
         seen.add(completed.index)
         completed = completed.head
     if completed is None:
         return None
+    if completions is not None and completed.index not in seen:
+        completions.update(dict.fromkeys(passed, completed))
     # A loop through the words above would bring the checks back to the infinitive
     above = completed
     while above.head is not None and above.index not in seen:
@@ -1734,9 +1794,20 @@ def is_subordinate_clause_head(
     is_clause_head, is_marked = _clause_kind_hooks(
         is_clause_head, auxiliary_form, subordinating_marks, is_subordinating_mark
     )
+    return _subordinate_clause_head(word, is_clause_head, is_marked, auxiliary_form)
+
+
+def _subordinate_clause_head(
+    word: TreeWord,
+    is_clause_head: Callable[[TreeWord], bool],
+    is_marked: Callable[[TreeWord], bool],
+    auxiliary_form: Callable[[TreeWord], str] | None,
+    climbs: _Climbs | None = None,
+) -> bool:
+    """is_subordinate_clause_head with checked hooks and the memo of the climbs of a document"""
     if _is_root(word) or not is_clause_head(word):
         return False
-    first, dep = _clause_relation(word, is_marked, auxiliary_form)
+    first, dep = _clause_relation(word, is_marked, auxiliary_form, climbs)
     if _predicate_form(word, auxiliary_form) == "Inf":
         return False
     if _predicate_form(first, auxiliary_form) == "Inf":
@@ -1745,13 +1816,10 @@ def is_subordinate_clause_head(
         owner = None if _shares_subject(word) else _infinitive_owner(first, auxiliary_form)
         if owner is None:
             return False
-        first, dep = _clause_relation(owner, is_marked, auxiliary_form)
+        first, dep = _clause_relation(owner, is_marked, auxiliary_form, climbs)
         if _predicate_form(first, auxiliary_form) == "Inf":
             return False
     return dep == "xcomp" or (not _is_root(first) and dep in SUBORDINATE_CLAUSE_DEPS)
-
-
-_is_subordinate_clause_head = unchecked(is_subordinate_clause_head)
 
 
 @_takes_word
@@ -1798,15 +1866,23 @@ def is_infinitive_clause_head(
     is_clause_head, is_marked = _clause_kind_hooks(
         is_clause_head, auxiliary_form, subordinating_marks, is_subordinating_mark
     )
+    return _infinitive_clause_head(word, is_clause_head, is_marked, auxiliary_form)
+
+
+def _infinitive_clause_head(
+    word: TreeWord,
+    is_clause_head: Callable[[TreeWord], bool],
+    is_marked: Callable[[TreeWord], bool],
+    auxiliary_form: Callable[[TreeWord], str] | None,
+    climbs: _Climbs | None = None,
+) -> bool:
+    """is_infinitive_clause_head with checked hooks and the memo of the climbs of a document"""
     if _is_root(word) or not is_clause_head(word):
         return False
-    _, dep = _clause_relation(word, is_marked, auxiliary_form)
+    _, dep = _clause_relation(word, is_marked, auxiliary_form, climbs)
     return _predicate_form(word, auxiliary_form) == "Inf" and (
         dep == "xcomp" or dep in SUBORDINATE_CLAUSE_DEPS
     )
-
-
-_is_infinitive_clause_head = unchecked(is_infinitive_clause_head)
 
 
 def _infinitive_owner(
@@ -1847,6 +1923,7 @@ def _clause_relation(
     word: TreeWord,
     is_subordinating_mark: Callable[[TreeWord], bool],
     auxiliary_form: Callable[[TreeWord], str] | None,
+    climbs: _Climbs | None = None,
 ) -> tuple[TreeWord, str]:
     """First word up the chain of conjuncts of a clause head and its relation, advcl for a
     conjunct or a parataxis with a subordinating mark, of its own or of a clause it is
@@ -1856,14 +1933,22 @@ def _clause_relation(
     if _base_dep(word) in MAIN_CLAUSE_DEPS and _has_mark(word, is_subordinating_mark):
         return word, "advcl"
     inherits = _inherits_mark(word, auxiliary_form)
+    relations = None if climbs is None else climbs.relations
     seen: set[int] = set()
+    steps: list[tuple[int, bool, bool]] = []
     while word.head is not None and word.index not in seen:
+        step = (word.index, inherits, bool(seen))
+        if relations is not None and step in relations:
+            relation = relations[step]
+            break
+        steps.append(step)
         passed = (
             bool(seen)
             and _base_dep(word) in MAIN_CLAUSE_DEPS
             and _has_mark(word, is_subordinating_mark)
         )
         if _base_dep(word) != "conj" and not passed:
+            relation = word, _base_dep(word)
             break
         seen.add(word.index)
         word = word.head
@@ -1872,13 +1957,21 @@ def _clause_relation(
             and _base_dep(word) in MAIN_CLAUSE_DEPS
             and _has_mark(word, is_subordinating_mark)
         ):
-            return word, "advcl"
+            relation = word, "advcl"
+            break
         inherits = (
             _inherits_mark(word, auxiliary_form)
             if passed
             else inherits and (_shares_subject(word) or _inherits_mark(word, auxiliary_form))
         )
-    return word, _base_dep(word)
+    else:
+        relation = word, _base_dep(word)
+        if word.head is not None:
+            # A loop of a broken parse: the answer depends on where the chain was entered
+            return relation
+    if relations is not None:
+        relations.update(dict.fromkeys(steps, relation))
+    return relation
 
 
 def _inherits_mark(word: TreeWord, auxiliary_form: Callable[[TreeWord], str] | None) -> bool:
