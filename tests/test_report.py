@@ -174,9 +174,9 @@ def test_values_are_those_of_get_stats():
 
     doc = Doc(
         spacy.blank("en").vocab,
-        words=["Cats", "sleep", "."],
-        pos=["NOUN", "VERB", "PUNCT"],
-        morphs=["Number=Plur", "Tense=Pres", ""],
+        words=["Cats", "sleep", "and", "eat", "."],
+        pos=["NOUN", "VERB", "CCONJ", "VERB", "PUNCT"],
+        morphs=["Number=Plur", "Tense=Pres", "", "Tense=Pres", ""],
     )
 
     class Morph(Report):
@@ -185,12 +185,13 @@ def test_values_are_those_of_get_stats():
     report = Morph(doc)
     found = {cells[0]: cells[1] for cells in rows(report.to_html(), "<h3>morph</h3>")}
     stats = report.stats["morph"]
-    # The values described as print_stats describes them
+    # The values from the most frequent, described as print_stats describes them
+    desc = stats.value_desc
     assert found[escape(stats.stats_desc["pos"])] == escape(
-        f"{stats.value_desc('pos', 'NOUN')}: 1, {stats.value_desc('pos', 'VERB')}: 1"
+        f"{desc('pos', 'VERB')}: 2, {desc('pos', 'NOUN')}: 1, {desc('pos', 'CCONJ')}: 1"
     )
     assert found[escape(stats.stats_desc["number"])] == escape(
-        f"{stats.value_desc('number', 'Plur')}: 1, {stats.unknown_value}: 1"
+        f"{stats.unknown_value}: 3, {desc('number', 'Plur')}: 1"
     )
 
 
@@ -238,6 +239,14 @@ def test_skip_errors():
     assert list(report.stats) == ["basic"] and str(report.errors["fussy"]) == "Too few words"
     page = report.to_html()
     assert "<h3>fussy</h3>" not in page and "<p>Not counted: fussy</p>" in page
+
+    class Titled(Two):
+        titles: ClassVar[dict[str, str]] = {"fussy": "Fussy statistics"}
+
+    assert (
+        "<p>Not counted: Fussy statistics</p>"
+        in Titled("The cat sleeps.", skip_errors=True).to_html()
+    )
     with pytest.raises(ParameterError):
         Two("The cat sleeps.", skip_errors="yes")
 
@@ -377,10 +386,12 @@ def test_no_interactive_backend(tmp_path):
 def test_plot_of_many_sentences():
     """A plot of the lengths of a few hundred sentences marks every sentence, of more none"""
 
-    def marker(count):
+    def markers(count):
         report = VowelsReport(" ".join(["The cat sleeps."] * count))
         [(_, figure)] = report.plots()
-        return figure.axes[0].get_lines()[0].get_marker()
+        ax = figure.axes[0]
+        lines = [*ax.get_lines(), *ax.get_legend().get_lines()]
+        return {line.get_marker() for line in lines} - {"None", ""}
 
-    assert marker(300) == "."
-    assert marker(301) in ("", "None")
+    assert markers(300) == {"."}
+    assert markers(301) == set()

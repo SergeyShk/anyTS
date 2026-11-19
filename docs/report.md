@@ -13,10 +13,10 @@ The HTML report of the statistics of a text. The text is parsed once (`parse`), 
 
 | Section | Content |
 | :------ | :------ |
-| `statistics` | A table per class of `stats_classes` under its title (`titles`): the description of every statistic of `stats_desc`, as `print_stats`, its value - a float with two decimals, a smaller one than 0.1 with two significant digits, a distribution as its pairs with the values described by `value_desc`, an undefined value as the text `undefined` - and its reading (`describe`); the classes left out by `skip_errors` are named above |
+| `statistics` | A table per class of `stats_classes` under its title (`titles`): the description of every statistic of `stats_desc`, as `print_stats`, its value - a float with two decimals, a smaller one than 0.1 with two significant digits, a distribution as its pairs from the most frequent, with the values described by `value_desc`, an undefined value as the text `undefined` - and its reading (`describe`); the classes left out by `skip_errors` are named above |
 | `sentences` | The text of every sentence with the statistics of `sentence_columns` ([`by_parts`](https://sergeyshk.github.io/anyTS/stats/stats/#by_parts)); none without them. A text of more than `max_sentences` sentences has those with the highest values of the first statistic, in their order |
 | `highlight` | The text highlighted by `highlight_class` with its default layers, its styles in the head of the page; none without it |
-| `plots` | The plots of `plots` in SVG with their captions: the lengths of the sentences (`sentence_lengths_plot`) by default, without a mark on every sentence for a text of a few hundred of them; none for a text without sentences |
+| `plots` | The plots of `plots` in SVG with their captions: the lengths of the sentences (`sentence_lengths_plot`) by default, without a mark on every sentence for a text of more than 300 of them; none for a text without sentences |
 
 The style is in the page and the plots draw their text as paths, so they need no font; they are made without `pyplot`, so that a command opens no window. The page is the same for the same text, and the ids of its plots differ. Every text of the source and of the statistics goes through `escape`, so that it never becomes markup.
 
