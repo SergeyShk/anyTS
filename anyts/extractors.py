@@ -12,6 +12,7 @@ from typing import Any, ClassVar
 from .constants import MESSAGES
 from .exceptions import ParameterError, SourceTypeError
 from .utils import (
+    _IN_WORD_MARKS,
     BLANK_LINE,
     _separators,
     check_bool,
@@ -47,7 +48,9 @@ def _word_pattern() -> Pattern[str]:
 
     Description:
         A word character \\w followed by word characters, combining marks, the
-        zero-width non-joiner and joiner and the soft hyphen. Built on first use,
+        zero-width non-joiner and joiner, the soft hyphen, the word joiner and
+        the marks of the direction of text, which anySeg keeps in a word and
+        leaves out at its end. Built on first use,
         not on import, since reading the combining marks takes tens of
         milliseconds
 
@@ -57,9 +60,10 @@ def _word_pattern() -> Pattern[str]:
     continuation = _char_class(
         char
         for char in map(chr, range(sys.maxunicode + 1))
-        if unicodedata.category(char)[0] == "M" or char in "\u00ad\u200c\u200d"
+        if unicodedata.category(char)[0] == "M" or char in "\u00ad\u200c\u200d" + _IN_WORD_MARKS
     )
-    return re.compile(rf"\w[\w{continuation}]*")
+    marks = _char_class(_IN_WORD_MARKS)
+    return re.compile(rf"\w[\w{continuation}]*(?<![{marks}])")
 
 
 def _char_class(chars: Iterable[str]) -> str:

@@ -67,18 +67,25 @@ BLANK_LINE = re.compile(rf"(?>{_BREAK}|\u2029)(?:(?:{_BLANK})*(?>{_BREAK}|\u2029
 LINE_BREAK = re.compile(rf"{_BREAK}|\u2029")
 # One import of a name of a lazy package at a time, a nested one in the same thread included
 _LAZY_IMPORT = threading.RLock()
+# Invisible characters anySeg keeps inside a word and leaves out at its edges: the marks of the
+# direction of text, the Mongolian vowel separator and the word joiner
+_IN_WORD_MARKS = (
+    "\u061c\u180e\u200e\u200f\u202a\u202b\u202c\u202d\u202e\u2060\u2066\u2067\u2068\u2069"
+)
 
 
 @lru_cache(maxsize=1)
 def _separators() -> str:
-    """Characters between the tokens of anySeg: whitespace, control and invisible characters"""
+    """Characters between the tokens of anySeg: whitespace, control and invisible characters,
+    the marks of the direction of text among them"""
     return (
         "".join(
             char
             for char in map(chr, range(0x3001))
             if char.isspace() or unicodedata.category(char) == "Cc"
         )
-        + "\u00ad\u200b\u200c\u200d\u2060\ufeff"
+        + "\u00ad\u200b\u200c\u200d\ufeff"
+        + _IN_WORD_MARKS
     )
 
 

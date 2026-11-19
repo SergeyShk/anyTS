@@ -640,3 +640,13 @@ def test_split_paragraphs():
     assert SentsExtractor().extract("Notes\u2029It rains") == ("Notes", "It rains")
     with pytest.raises(SourceTypeError, match=r"^A text string is expected, not int$"):
         split_paragraphs(5)
+
+
+def test_words_with_marks_of_the_direction_of_text():
+    assert WordsExtractor().extract("Visita la pa\u200egina\u200f de Ana\u200e.") == (
+        "Visita",
+        "la",
+        "pa\u200egina",
+        "de",
+        "Ana",
+    )

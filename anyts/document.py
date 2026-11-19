@@ -4,7 +4,7 @@ import re
 import threading
 import weakref
 from bisect import bisect_left, bisect_right
-from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, Sequence
+from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from functools import cache, partial
 from re import Pattern
@@ -14,6 +14,7 @@ from .constants import MESSAGES
 from .exceptions import SourceError, SourceTypeError
 from .extractors import _check_spans, _sentence_spans, _word_pattern
 from .utils import (
+    _IN_WORD_MARKS,
     BLANK_LINE,
     _messages,
     _separators,
@@ -31,7 +32,7 @@ if TYPE_CHECKING:
 Spans = Callable[[str], Iterable[tuple[int, int, str]]]
 
 # The separators a word of the default tokens may end with
-_WORD_SEPARATORS = "\u00ad\u200c\u200d"
+_WORD_SEPARATORS = "\u00ad\u200c\u200d" + _IN_WORD_MARKS
 
 
 class _Converted:
@@ -544,135 +545,23 @@ def _doc_stamp(doc: Doc) -> tuple[bytes, str, tuple[int, ...] | None]:
 
 def _doc_document(doc: Doc, sentenize: Spans | None, messages: Mapping[str, str]) -> Document:
     """Document of a Doc: a multiword token whose words have no columns of their own is one word,
-    as the pipeline annotated it, and a Doc without a parse takes the sentences of its hook,
-    or of sentenize when it has no sentence start at some token"""
+    as the pipeline annotated it, and a Doc without its sentences takes those of sentenize"""
     from anyseg.spacy import from_doc
 
     try:
-        document = from_doc(doc)
+        document = from_doc(doc, split_unannotated=False)
     except (TypeError, ValueError) as error:
         raise SourceError(messages["document_tokens"].format(error=error)) from error
-    if merged := _bare_tokens(doc, document):
-        document = _merged(document, merged)
-    if doc.has_annotation("DEP"):
+    if _has_sentences(doc) or "sents" in doc.user_hooks:
         return document
-    if "sents" in doc.user_hooks:
-        hooked = [span.start_char for span in doc.sents]
-        return _with_sentences(document, [*hooked, *document.sentences.starts])
-    if doc.has_annotation("SENT_START", require_complete=True):
-        return document
-    token_starts = document.tokens.starts
-    starts = _sent_starts(document.text, token_starts, sentenize, messages)
-    return _with_sentences(document, [token_starts[index] for index in starts])
-
-
-def _bare_tokens(doc: Doc, document: Document) -> set[int]:
-    """Multiword tokens of a document whose words in token._.anyseg_words of the Doc carry no
-    column of their own"""
-    if not document.multiword_tokens:
-        return set()
-    from anyseg.spacy import WORD_COLUMNS, given_words
-
-    columns = set(WORD_COLUMNS)
-    bare = set()
-    given = given_words(doc)
-    for token in document.multiword_tokens:
-        span = doc.char_span(token.start, token.end, alignment_mode="expand")
-        words = given.get((span.start_char, span.end_char)) if span is not None else None
-        if isinstance(words, list | tuple) and not any(
-            isinstance(word, Mapping) and columns & word.keys() for word in words
-        ):
-            bare.add(token.index)
-    return bare
-
-
-def _merged(document: Document, merged: Collection[int]) -> Document:
-    """Document whose multiword tokens of merged are a word each, with the columns and the head
-    of their first word, which the parse of the tokens gave"""
-    from anyseg import Document
-
-    tokens = document.tokens
-    column = document.column
-    old_heads = column("head")
-    keep = []
-    # The ID of every word of the document in its sentence after the merge
-    new_ids: dict[int, int] = {}
-    firsts: dict[int, int] = {}
-    count = 0
-    sentence = -1
-    for word in document.words:
-        token = word.token
-        if word.sentence.index != sentence:
-            sentence = word.sentence.index
-            firsts[sentence] = word.index
-            count = 0
-        first = token.words[0].index
-        if token.index not in merged or word.index == first:
-            count += 1
-            new_ids[word.index] = count
-            keep.append(word)
-        else:
-            new_ids[word.index] = new_ids[first]
-    rebuilt = Document.from_tokens(
-        document.text,
-        tokens.starts,
-        tokens.ends,
-        sentence_starts=_token_indices(tokens.starts, document.sentences.starts),
-        words={
-            token.index: [word.form for word in token.words]
-            for token in document.multiword_tokens
-            if token.index not in merged
-        }
-        or None,
-    )
-    values: dict[str, list[Any]] = {}
-    for name in ("lemma", "upos", "xpos", "feats", "deprel", "deps", "misc"):
-        found = column(name)
-        values[name] = [found[word.index] for word in keep]
-    heads = []
-    for word in keep:
-        head = old_heads[word.index]
-        heads.append(new_ids[firsts[word.sentence.index] + head - 1] if head else head)
-    rebuilt.set_columns(head=heads, **values)
-    return rebuilt
-
-
-def _with_sentences(document: Document, starts: Iterable[int]) -> Document:
-    """Document of a document without a parse whose sentences start at the first tokens at or
-    after the positions"""
-    from anyseg import Document
-
-    tokens = document.tokens
-    words = {
-        token.index: [word.form for word in token.words] for token in document.multiword_tokens
-    }
-    rebuilt = Document.from_tokens(
-        document.text,
-        tokens.starts,
-        tokens.ends,
-        sentence_starts=_token_indices(tokens.starts, starts),
-        words=words or None,
-    )
-    column = document.column
-    rebuilt.set_columns(
-        lemma=column("lemma"),
-        upos=column("upos"),
-        xpos=column("xpos"),
-        feats=column("feats"),
-        misc=column("misc"),
-    )
-    return rebuilt
+    starts = _sent_starts(document.text, document.tokens.starts, sentenize, messages)
+    return document.with_sentences(starts)
 
 
 def _has_sentences(doc: Doc) -> bool:
     """Whether a Doc has its sentences: is_sent_start set at every token, a hook of the sentences
     or a parse"""
     return doc.has_annotation("SENT_START", require_complete=True) or doc.has_annotation("DEP")
-
-
-def _token_indices(starts: Sequence[int], positions: Iterable[int]) -> list[int]:
-    """Indices of the first tokens at or after the positions, in order and once each"""
-    return sorted({bisect_left(starts, position) for position in positions} - {len(starts)})
 
 
 def _text_document(

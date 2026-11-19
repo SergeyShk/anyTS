@@ -103,9 +103,9 @@ def test_get_words(house):
 
 
 def test_invisible_characters_are_not_words():
-    # The zero-width space is no token of the document, the left-to-right mark is no word
+    # The zero-width space and the left-to-right mark are no tokens of the document
     words = tree(parse(["one", "​", "two", "‎"], [2, 2, 2, 2], ["dep", "dep", "ROOT", "dep"]))
-    assert forms(words) == ["one", "two", "‎"]
+    assert forms(words) == ["one", "two"]
     assert forms(get_words(words)) == ["one", "two"]
 
 

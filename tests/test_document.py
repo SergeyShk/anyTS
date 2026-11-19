@@ -291,31 +291,6 @@ def test_multiword_tokens_without_columns_of_their_words():
     ]
 
 
-def test_multiword_tokens_merged_in_one_pass(monkeypatch):
-    """The merge of multiword tokens reads every column of the document once"""
-    from anyseg.spacy import from_doc
-
-    vocab = spacy.blank("es").vocab
-    doc = Doc(vocab, words=["al", "del"] * 3, heads=[0] * 6, deps=["ROOT"] * 6)
-    import anyseg.spacy  # noqa: F401 - the extension token._.anyseg_words
-
-    for token in doc:
-        token._.anyseg_words = [{"form": "a"}, {"form": "el"}]
-    document = from_doc(doc)
-    names = []
-    column = Document.column
-
-    def counted(self, name):
-        names.append(name)
-        return column(self, name)
-
-    monkeypatch.setattr(Document, "column", counted)
-    merged = document_module._merged(document, {token.index for token in document.tokens})
-    assert len(names) == len(set(names))
-    monkeypatch.undo()
-    assert [word.form for word in merged.words] == ["al", "del"] * 3
-
-
 def test_sentences_of_a_doc_in_one_pass(monkeypatch):
     """The sentences of a Doc without them read the starts of its tokens a fixed number of times,
     however many sentences it has"""
@@ -507,3 +482,18 @@ def test_tree():
     assert empty.words == empty.sentences == ()
     with pytest.raises(SourceTypeError, match="cannot be of type str"):
         get_tree("Vino del pueblo")
+
+
+@pytest.mark.parametrize(
+    ("text", "tokens"),
+    [
+        ("Hola \u200emundo.", ["Hola", "mundo", "."]),
+        ("Hola mundo\u200f.", ["Hola", "mundo", "."]),
+        ("Вто\u2060рой день.", ["Вто\u2060рой", "день", "."]),
+        ("pa\u200egina\u200f\u200e web", ["pa\u200egina", "web"]),
+    ],
+)
+def test_marks_of_the_direction_of_text(text, tokens):
+    """A mark of the direction of text or a word joiner is never a token: between words it is
+    in neither, inside a word part of it, as in anySeg"""
+    assert [token.text for token in to_document(text).tokens] == tokens
