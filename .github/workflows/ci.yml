@@ -75,12 +75,11 @@ jobs:
         run: uv run --no-sync pytest
 
   libraries:
-    # The tests of the language libraries on this branch. A library moves onto a minor series
-    # of the core after its release, so a red job shows what its next version has to follow
-    # and does not fail the build
+    # The tests of the language libraries on the core of this branch. Tests marked core_sync
+    # compare the pages and messages of a library with its released core, so the library
+    # follows a change of the core in them when it moves onto that core; they are skipped here
     name: libraries (${{ matrix.library }})
     runs-on: ubuntu-latest
-    continue-on-error: true
     strategy:
       fail-fast: false
       matrix:
@@ -110,12 +109,9 @@ jobs:
         run: |
           uv sync --locked --no-default-groups --group test ${{ matrix.sync }}
           uv pip install ../anyTS
-      - name: Take the pages of the core from this branch
-        working-directory: library
-        run: uv run --no-sync python scripts/core_docs.py ../anyTS
       - name: Run tests
         working-directory: library
-        run: uv run --no-sync pytest -m "not network"
+        run: uv run --no-sync pytest -m "not network and not core_sync"
 
   examples:
     runs-on: ubuntu-latest
