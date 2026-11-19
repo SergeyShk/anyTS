@@ -10,6 +10,7 @@ from typing import IO, TYPE_CHECKING, Any, ClassVar
 
 from .constants import CLI_TEXTS
 from .exceptions import AnyTSError
+from .report import Report
 from .stats import Stats
 from .utils import check_messages
 
@@ -43,6 +44,8 @@ class Command:
             name in --stats
         texts (dict[str, str]): Texts of the help and of the errors by key (CLI_TEXTS),
             complete as the messages of a class of statistics (check_messages)
+        report_class (type[Report]): Report of the command report, made of the document
+            of parse and the classes of --stats
 
     Raises:
         ParameterError: When a class is defined, if its texts are incomplete or have a
@@ -68,6 +71,7 @@ class Command:
     prog: ClassVar[str] = "anyts"
     stats_classes: ClassVar[Mapping[str, type[Stats]]] = {}
     texts: ClassVar[Mapping[str, str]] = CLI_TEXTS
+    report_class: ClassVar[type[Report]] = Report
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
@@ -107,36 +111,31 @@ class Command:
         Returns:
             Stats: Statistics
         """
-        from .diversity_stats import DiversityStats
-        from .document import document_words
-
-        if issubclass(cls, DiversityStats):
-            return cls(document_words(document))
-        return cls(document)  # type: ignore[call-arg]
+        return _compute(cls, document)
 
     def parser(self) -> argparse.ArgumentParser:
         """
         Getting the parser of the arguments of the command
 
         Returns:
-            ArgumentParser: Parser with the command stats
+            ArgumentParser: Parser with the commands stats and report
         """
         texts = self.texts
         parser = argparse.ArgumentParser(prog=self.prog, description=texts["description"])
         commands = parser.add_subparsers(dest="command", required=True)
         stats = commands.add_parser("stats", help=texts["stats_command"])
-        self._add_input(stats)
-        stats.add_argument(
-            "-s",
-            "--stats",
-            help=texts["stats_option"].format(names=", ".join(self.stats_classes)),
-        )
+        stats.add_argument("files", nargs="*", help=texts["files"])
+        self._add_options(stats)
         stats.add_argument(
             "-p", "--parts", choices=("sentences", "paragraphs"), help=texts["parts_option"]
         )
         stats.add_argument(
             "-f", "--format", choices=_FORMATS, default="table", help=texts["format_option"]
         )
+        report = commands.add_parser("report", help=texts["report_command"])
+        report.add_argument("file", nargs="?", default=_STDIN, help=texts["file"])
+        self._add_options(report)
+        report.add_argument("-t", "--title", help=texts["title_option"])
         return parser
 
     def run(self, argv: Sequence[str] | None = None) -> int:
@@ -154,13 +153,15 @@ class Command:
         try:
             args = parser.parse_args(argv)
             names = self._names(parser, args.stats)
-            if args.parts:
+            if args.command == "stats" and args.parts:
                 for name in names:
                     if args.parts not in self.stats_classes[name].part_kinds:
                         parser.error(self.texts["no_parts"].format(name=name, parts=args.parts))
         except SystemExit as ended:
             # The help and the wrong arguments, which argparse ends with sys.exit
             return int(ended.code or 0)
+        if args.command == "report":
+            return self._report(args.file, names, args)
         failed = False
         results: dict[str, dict[str, Any]] = {}
         for source in args.files or [_STDIN]:
@@ -196,12 +197,39 @@ class Command:
             self._write(results, args.format, (args.parts or "sentences")[:-1], output)
         return 1 if failed else 0
 
-    def _add_input(self, parser: argparse.ArgumentParser) -> None:
-        """Arguments of the files, of the output and of the encoding"""
+    def _add_options(self, parser: argparse.ArgumentParser) -> None:
+        """Options of the classes, of the output and of the encoding"""
         texts = self.texts
-        parser.add_argument("files", nargs="*", help=texts["files"])
+        parser.add_argument(
+            "-s",
+            "--stats",
+            help=texts["stats_option"].format(names=", ".join(self.stats_classes)),
+        )
         parser.add_argument("-o", "--output", help=texts["output_option"])
         parser.add_argument("-e", "--encoding", default="utf-8", help=texts["encoding_option"])
+
+    def _report(self, source: str, names: Sequence[str], args: argparse.Namespace) -> int:
+        """The report of a text, with the classes of names, to the output"""
+        try:
+            text = self._read(source, args.encoding)
+        except (OSError, UnicodeDecodeError) as error:
+            self._error(self.texts["file_error"].format(source=source, error=error))
+            return 1
+        try:
+            report = self.report_class(
+                self.parse(text),
+                title=args.title,
+                stats_classes={name: self.stats_classes[name] for name in names},
+            )
+            page = report.to_html()
+        except AnyTSError as error:
+            self._error(
+                self.texts["stats_error"].format(source=source, name="report", error=error)
+            )
+            return 1
+        with self._output(args.output, args.encoding) as output:
+            output.write(page)
+        return 0
 
     def _names(self, parser: argparse.ArgumentParser, option: str | None) -> list[str]:
         """Names of the classes of --stats, every class without it"""
@@ -266,6 +294,16 @@ class Command:
                 else:
                     output.write(_parts(value, part).to_string() + "\n")
                 output.write("\n")
+
+
+def _compute(cls: type[Stats], document: Document) -> Stats:
+    """Statistics of a class of a document; DiversityStats of its words"""
+    from .diversity_stats import DiversityStats
+    from .document import document_words
+
+    if issubclass(cls, DiversityStats):
+        return cls(document_words(document))
+    return cls(document)  # type: ignore[call-arg]
 
 
 def _parts(counted: Sequence[tuple[int, int, Stats | None]], part: str) -> DataFrame:
