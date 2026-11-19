@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 from .constants import REPORT_TEXTS
 from .exceptions import AnyTSError
 from .stats import Stats
-from .utils import check_messages
+from .utils import check_bool, check_messages
 
 if TYPE_CHECKING:
     from anyseg import Document
@@ -51,11 +51,14 @@ class Report:
         title (str): Title of the report; that of texts by default
         stats_classes (dict[str, type[Stats]]): Classes of statistics by name; those
             of the class by default
+        skip_errors (bool): Leave out a class that cannot count the source, with its
+            error in errors, instead of raising it
 
     Attributes:
         document (Document): Document of the source
         title (str): Title of the report
         stats (dict[str, Stats]): Statistics of every class by name
+        errors (dict[str, AnyTSError]): Errors of the classes left out by skip_errors
 
     Class attributes:
         stats_classes (dict[str, type[Stats]]): Classes of statistics by name
@@ -71,8 +74,9 @@ class Report:
 
     Raises:
         ParameterError: When a class is defined, if its texts are incomplete or have a
-            field their default lacks
-        SourceTypeError, SourceError: As the classes raise for the source
+            field their default lacks; if skip_errors is not a bool
+        SourceTypeError, SourceError: As the classes raise for the source, unless
+            skip_errors
 
     Example:
         >>> from anyts.basic_stats import BasicStats
@@ -104,11 +108,26 @@ class Report:
         source: str | Doc | Document,
         title: str | None = None,
         stats_classes: Mapping[str, type[Stats]] | None = None,
+        *,
+        skip_errors: bool = False,
     ):
+        check_bool(skip_errors, "skip_errors")
         self.document = self.parse(source)
         self.title = self.texts["title"] if title is None else title
         classes = self.stats_classes if stats_classes is None else stats_classes
-        self.stats = {name: self.compute(cls, self.document) for name, cls in classes.items()}
+        self.stats: dict[str, Stats] = {}
+        self.errors: dict[str, AnyTSError] = {}
+        for name, cls in classes.items():
+            try:
+                stats = self.compute(cls, self.document)
+                # A statistic computed when it is read raises here, for its class
+                stats.get_stats()
+            except AnyTSError as error:
+                if not skip_errors:
+                    raise
+                self.errors[name] = error
+            else:
+                self.stats[name] = stats
 
     def parse(self, source: str | Doc | Document) -> Document:
         """
@@ -158,15 +177,14 @@ class Report:
             f"<h1>{escape(self.title)}</h1>\n{body}</main>\n</body>\n</html>\n"
         )
 
-    def save(self, path: str | Path, encoding: str = "utf-8") -> None:
+    def save(self, path: str | Path) -> None:
         """
-        Writing the report to a file
+        Writing the report to a file in UTF-8, the encoding the page declares
 
         Arguments:
             path (str|Path): Path of the file
-            encoding (str): Encoding of the file
         """
-        Path(path).write_text(self.to_html(), encoding=encoding)
+        Path(path).write_text(self.to_html(), encoding="utf-8")
 
     def section_statistics(self) -> str:
         """
@@ -180,8 +198,7 @@ class Report:
         tables = []
         for name, stats in self.stats.items():
             rows = []
-            for stat in stats.stat_names():
-                value = getattr(stats, stat)
+            for stat, value in stats.get_stats().items():
                 reading = stats.describe(stat) or ""
                 rows.append(
                     f"<tr><td>{escape(stats.stats_desc.get(stat, stat))}</td>"
@@ -194,7 +211,7 @@ class Report:
                 + "\n".join(rows)
                 + "\n</table>\n"
             )
-        return _section(texts["statistics"], "".join(tables))
+        return _section(texts["statistics"], "".join(tables)) if tables else ""
 
     def section_sentences(self) -> str:
         """
@@ -219,10 +236,14 @@ class Report:
         rows = []
         text = self.document.text
         first = next(iter(tables.values()))
+        # A whole count stays an integer, though a sentence without words makes its column float
+        whole = {name: self.stats[name].get_stats() for name in tables}
+        integers = {(name, stat): isinstance(whole[name][stat], int) for name, stat in columns}
         for number, (start, end) in enumerate(first[["start", "end"]].itertuples(index=False)):
             cells = "".join(
                 f'<td class="number">'
-                f"{escape(self._cell(name, stat, tables[name][stat].iloc[number]))}</td>"
+                f"{escape(_cell(tables[name][stat].iloc[number], integers[name, stat], texts))}"
+                f"</td>"
                 for name, stat in columns
             )
             rows.append(
@@ -235,14 +256,6 @@ class Report:
             + "\n".join(rows)
             + "\n</table>\n",
         )
-
-    def _cell(self, name: str, stat: str, value: Any) -> str:
-        """Value of a statistic of a sentence, a whole one as an integer where that of the text
-        is one, since a sentence without words makes its column of floats"""
-        whole = getattr(self.stats[name], stat)
-        if isinstance(whole, int) and isinstance(value, float) and isfinite(value):
-            return str(int(value))
-        return _number(value, self.texts)
 
     def section_highlight(self) -> str:
         """
@@ -333,6 +346,13 @@ def _number(value: Any, texts: Mapping[str, str]) -> str:
     if isinstance(value, float):
         return f"{value:.2f}" if isfinite(value) else texts["undefined"]
     return str(value)
+
+
+def _cell(value: Any, integer: bool, texts: Mapping[str, str]) -> str:
+    """Value of a statistic of a sentence, a whole one as an integer where that of the text is"""
+    if integer and isinstance(value, float) and isfinite(value):
+        return str(int(value))
+    return _number(value, texts)
 
 
 def _svg(figure: Figure) -> str:

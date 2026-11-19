@@ -573,6 +573,7 @@ CLI_TEXTS: Mapping[str, str] = MappingProxyType(
         "report_command": "Write the HTML report of a text",
         "file": "Text file; the standard input without it or for -",
         "title_option": "Title of the report",
+        "report_encoding_option": "Encoding of the file; the report is in UTF-8",
     }
 )
 # Headings and labels of the HTML report of a text by key; a language library passes its own

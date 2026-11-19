@@ -6,14 +6,14 @@ The report of a text in one HTML file with nothing outside it: no script, no sty
 
 <!-- --8<-- [start:Report] -->
 ``` {.python .signature}
-Report(source, title=None, stats_classes=None)
+Report(source, title=None, stats_classes=None, *, skip_errors=False)
 ```
 
 The HTML report of the statistics of a text. The text is parsed once (`parse`), and its sections follow `sections`, each a method `section_<name>` that gives a fragment of HTML:
 
 | Section | Content |
 | :------ | :------ |
-| `statistics` | A table per class of `stats_classes`: the description of every statistic of `stat_names`, its value - a float with two decimals, a distribution as its pairs - and its reading (`describe`) |
+| `statistics` | A table per class of `stats_classes`: the description of every statistic of `get_stats`, its value - a float with two decimals, a distribution as its pairs - and its reading (`describe`) |
 | `sentences` | The text of every sentence with the statistics of `sentence_columns` ([`by_parts`](https://sergeyshk.github.io/anyTS/stats/stats/#by_parts)); none without them |
 | `highlight` | The text highlighted by `highlight_class` with its default layers; none without it |
 | `plots` | The plots of `plots` in SVG with their captions: the lengths of the sentences (`sentence_lengths_plot`) by default; none for a text without sentences |
@@ -25,8 +25,9 @@ The style is in the page and the plots draw their text as paths, so they need no
 | `source` | `str` / `Doc` / `Document` | - | Data source |
 | `title` | `str` | `None` | Title of the report; the text `title` by default |
 | `stats_classes` | `dict[str, type[Stats]]` | `None` | Classes of statistics by name; those of the class by default |
+| `skip_errors` | `bool` | `False` | Leave out a class that cannot count the source, with its error in `errors`, instead of raising it |
 
-The object keeps `document`, `title` and the statistics of every class by name, `stats`. `to_html()` returns the page, and `save(path, encoding="utf-8")` writes it to a file. A source a class cannot count raises the error of the class.
+The object keeps `document`, `title`, the statistics of every class by name, `stats`, and the errors of the classes left out, `errors`. `to_html()` returns the page, and `save(path)` writes it to a file in UTF-8, the encoding the page declares. A source a class cannot count raises the error of the class, unless `skip_errors`; a `skip_errors` that is not a `bool` raises `ParameterError`.
 <!-- --8<-- [end:Report] -->
 
 === "Code"

@@ -125,7 +125,7 @@ class Command:
         commands = parser.add_subparsers(dest="command", required=True)
         stats = commands.add_parser("stats", help=texts["stats_command"])
         stats.add_argument("files", nargs="*", help=texts["files"])
-        self._add_options(stats)
+        self._add_options(stats, "encoding_option")
         stats.add_argument(
             "-p", "--parts", choices=("sentences", "paragraphs"), help=texts["parts_option"]
         )
@@ -134,7 +134,7 @@ class Command:
         )
         report = commands.add_parser("report", help=texts["report_command"])
         report.add_argument("file", nargs="?", default=_STDIN, help=texts["file"])
-        self._add_options(report)
+        self._add_options(report, "report_encoding_option")
         report.add_argument("-t", "--title", help=texts["title_option"])
         return parser
 
@@ -195,12 +195,17 @@ class Command:
                         self.texts["stats_error"].format(source=source, name=name, error=error)
                     )
                     failed = True
-        with self._output(args.output, args.encoding) as output:
-            self._write(results, args.format, (args.parts or "sentences")[:-1], output)
+        try:
+            with self._output(args.output, args.encoding) as output:
+                self._write(results, args.format, (args.parts or "sentences")[:-1], output)
+        except OSError as error:
+            self._error(self.texts["file_error"].format(source=args.output, error=error))
+            return 1
         return 1 if failed else 0
 
-    def _add_options(self, parser: argparse.ArgumentParser) -> None:
-        """Options of the classes, of the output and of the encoding"""
+    def _add_options(self, parser: argparse.ArgumentParser, encoding: str) -> None:
+        """Options of the classes, of the output and of the encoding, with the help of the key
+        encoding"""
         texts = self.texts
         parser.add_argument(
             "-s",
@@ -208,10 +213,11 @@ class Command:
             help=texts["stats_option"].format(names=", ".join(self.stats_classes)),
         )
         parser.add_argument("-o", "--output", help=texts["output_option"])
-        parser.add_argument("-e", "--encoding", default="utf-8", help=texts["encoding_option"])
+        parser.add_argument("-e", "--encoding", default="utf-8", help=texts[encoding])
 
     def _report(self, source: str, names: Sequence[str], args: argparse.Namespace) -> int:
-        """The report of a text, with the classes of names, to the output"""
+        """The report of a text, with the classes of names that can count it, to the output in
+        UTF-8, the encoding the page declares"""
         try:
             text = self._read(source, args.encoding)
         except (OSError, UnicodeDecodeError) as error:
@@ -222,16 +228,27 @@ class Command:
                 self.parse(text),
                 title=args.title,
                 stats_classes={name: self.stats_classes[name] for name in names},
+                skip_errors=True,
             )
-            page = report.to_html()
+            page = report.to_html().encode("utf-8")
         except AnyTSError as error:
             self._error(
                 self.texts["stats_error"].format(source=source, name="report", error=error)
             )
             return 1
-        with self._output(args.output, args.encoding) as output:
-            output.write(page)
-        return 0
+        for name, failure in report.errors.items():
+            self._error(self.texts["stats_error"].format(source=source, name=name, error=failure))
+        try:
+            if args.output is None:
+                sys.stdout.flush()
+                sys.stdout.buffer.write(page)
+                sys.stdout.buffer.flush()
+            else:
+                Path(args.output).write_bytes(page)
+        except OSError as error:
+            self._error(self.texts["file_error"].format(source=args.output, error=error))
+            return 1
+        return 1 if report.errors else 0
 
     def _names(self, parser: argparse.ArgumentParser, option: str | None) -> list[str]:
         """Names of the classes of --stats, every class without it"""
