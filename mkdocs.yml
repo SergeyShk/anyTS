@@ -45,6 +45,7 @@ nav:
       - Text highlighting: visualizers/highlight.md
     - Components: components.md
     - Command line: cli.md
+    - HTML report: report.md
     - Datasets: datasets.md
     - Utilities:
       - Words and tokens: utils/words.md

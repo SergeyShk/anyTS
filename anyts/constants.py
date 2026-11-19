@@ -570,6 +570,28 @@ CLI_TEXTS: Mapping[str, str] = MappingProxyType(
         "no_parts": "{name} counts no {parts}",
         "file_error": "{source}: {error}",
         "stats_error": "{source}, {name}: {error}",
+        "report_command": "Write the HTML report of a text",
+        "file": "Text file; the standard input without it or for -",
+        "title_option": "Title of the report",
+        "report_encoding_option": "Encoding of the file; the report is in UTF-8",
+    }
+)
+# Headings and labels of the HTML report of a text by key; a language library passes its own
+# over these
+REPORT_TEXTS: Mapping[str, str] = MappingProxyType(
+    {
+        "lang": "en",
+        "title": "Text statistics",
+        "statistics": "Statistics",
+        "statistic": "Statistic",
+        "value": "Value",
+        "reading": "Reading",
+        "sentences": "Sentences",
+        "sentence": "Sentence",
+        "highlight": "Highlighted text",
+        "plots": "Plots",
+        "sentence_lengths": "Lengths of the sentences in words",
+        "undefined": "-",
     }
 )
 

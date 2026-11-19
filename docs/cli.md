@@ -20,7 +20,9 @@ The command line of the statistics of a language library. Its command `stats` re
 | `-o`, `--output` | the standard output | File of the output |
 | `-e`, `--encoding` | `utf-8` | Encoding of the files and of the output |
 
-`run(argv=None)` runs the command with the arguments, those of the command line by default, and returns the exit code: 0; 1 when a file cannot be read or a class cannot count a text, whose error goes to the standard error while the other texts and classes are counted; 2 for wrong arguments, with the help of `argparse`.
+Its command `report` writes the [HTML report](https://sergeyshk.github.io/anyTS/report/) of a text, from a file or from the standard input, to `-o` or to the standard output, with the classes of `-s` and the title of `-t`, `--title`. `-e` is the encoding of the file, and the report is in UTF-8, which it declares. A class that cannot count the text is left out of the report, and its error goes to the standard error with the exit code 1.
+
+`run(argv=None)` runs the command with the arguments, those of the command line by default, and returns the exit code: 0; 1 when a file cannot be read or written or a class cannot count a text, whose error goes to the standard error while the other texts and classes are counted; 2 for wrong arguments, with the help of `argparse`.
 
 Raises `ParameterError` when a subclass is defined with texts that `check_messages` rejects against `CLI_TEXTS`.
 <!-- --8<-- [end:Command] -->
@@ -59,6 +61,7 @@ vowels stats text.txt
 vowels stats -f json chapter1.txt chapter2.txt
 vowels stats -p sentences -f csv -o sentences.csv text.txt
 cat text.txt | vowels stats -f json
+vowels report text.txt -t "My text" -o report.html
 ```
 
 ## For library developers { #hooks }
@@ -76,6 +79,7 @@ A command of a library subclasses `Command`:
 | `texts` | class attribute | Texts of the help and of the errors by key, `CLI_TEXTS` by default: complete, as the messages of a class of statistics |
 | `parse(text)` | method | Document of a text, once for all the classes; `to_document` by default, overridden with the parse of the classes of the library |
 | `compute(cls, document)` | method | Statistics of a class of a document; `DiversityStats` of the words of the document (`document_words`) |
+| `report_class` | class attribute | Report of the command `report`, made of the document of `parse` and the classes of `-s`; `Report` by default |
 | `parser()` | method | `ArgumentParser` of the command |
 <!-- --8<-- [end:Command-hooks] -->
 
