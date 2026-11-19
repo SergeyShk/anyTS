@@ -26,7 +26,7 @@
 
     ---
 
-    Give the statistics of every class through one interface: a dictionary, nested or flat, a pandas frame, a printed table and the reading of a statistic by its scale
+    Give the statistics of every class through one interface: a dictionary, nested or flat, a pandas frame, a printed table, the reading of a statistic by its scale, the statistics of every sentence, line or paragraph and one table of several texts
 
     [:octicons-arrow-right-24: Statistics interface](stats/stats.md)
 
@@ -117,6 +117,22 @@
     Plot [Zipf's law](visualizers/zipf.md), [vocabulary growth](visualizers/vocabulary.md), [sentence lengths](visualizers/sentences.md), [literature fingerprinting](visualizers/fingerprinting.md), a [word tree](visualizers/word_tree.md), [corpus](visualizers/corpus.md) and [stylometric](visualizers/stylometry.md) measures, with the labels of the plots as a parameter, and [highlight](visualizers/highlight.md) a text by the layers of a language library
 
     [:octicons-arrow-right-24: Visualization](visualizers/zipf.md)
+
+-   :material-console:{ .lg .middle } __Command line__
+
+    ---
+
+    Build the command of a language library over its classes: the statistics of texts as a table, JSON or CSV, by text or by part, and the report of a text
+
+    [:octicons-arrow-right-24: Command line](cli.md)
+
+-   :material-file-chart-outline:{ .lg .middle } __HTML report__
+
+    ---
+
+    Write the statistics of a text with their readings, its hardest sentences, the highlighted text and plots into one HTML file that needs nothing outside it
+
+    [:octicons-arrow-right-24: HTML report](report.md)
 
 -   :material-pipe:{ .lg .middle } __Components__
 

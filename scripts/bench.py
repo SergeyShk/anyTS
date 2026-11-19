@@ -10,15 +10,17 @@ change from round to round, so run takes it in the first round only (take --no-m
 garbage collector runs before every measurement and not during it, since the trees hold cycles.
 
 Usage:
-    make bench
-    uv run python scripts/bench.py run [--data DIR]
+    make bench [BASE=REF]
+    uv run python scripts/bench.py run [--data DIR] [--base REF]
     uv run python scripts/bench.py take OUT [--data DIR] [--no-memory]
     uv run python scripts/bench.py compare OLD NEW
 
-run takes the classes of a worktree of the commit this branch starts from on master (git
-merge-base) and of this tree, in the same environment and in ROUNDS rounds in turn, the
-fastest of them counting, and prints the table of both; a class one of them lacks, and the
-memory of a take without it, has a dash.
+run takes the classes of a worktree of a base, the commit this branch starts from on master
+(git merge-base) by default or a tag or commit of --base, and of this tree, in the same
+environment and in ROUNDS rounds in turn, the fastest of them counting, and prints the table
+of both; a class one of them lacks, and the memory of a take without it, has a dash. The base
+runs with the dependencies of this tree: a change of a dependency, such as anySeg, is measured
+by take in the environment of each side and compare.
 """
 
 import argparse
@@ -214,10 +216,10 @@ def _change(first: dict[str, float] | None, second: dict[str, float] | None, key
     return f"{(second[key] - first[key]) / first[key] * 100:+.1f} %"
 
 
-def run(data: Path) -> None:
+def run(data: Path, base: str | None = None) -> None:
     data_files(data)
     script = str(Path(__file__).resolve())
-    base = _git("merge-base", "HEAD", "master")
+    base = base or _git("merge-base", "HEAD", "master")
     with tempfile.TemporaryDirectory() as folder:
         tree = Path(folder) / "base"
         _git("worktree", "add", "--quiet", "--detach", str(tree), base)
@@ -288,12 +290,14 @@ def main() -> None:
             command.add_argument("out", type=Path)
             command.add_argument("--no-memory", dest="memory", action="store_false")
         command.add_argument("--data", type=Path)
+        if name == "run":
+            command.add_argument("--base")
     command = commands.add_parser("compare")
     command.add_argument("old", type=Path)
     command.add_argument("new", type=Path)
     args = parser.parse_args()
     if args.command == "run":
-        run(args.data or _default_data())
+        run(args.data or _default_data(), args.base)
     elif args.command == "take":
         take(args.out, args.data or _default_data(), args.memory)
     else:

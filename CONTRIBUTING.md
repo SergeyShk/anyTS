@@ -55,6 +55,6 @@ The pull request description answers two questions: what was done and why. If it
 - `tests/` - tests mirroring the package.
 - `docs/` - MkDocs (Material) documentation, `mkdocs.yml` - navigation.
 - `scripts/` - development scripts: `bench.py` behind `make bench`.
-- `.github/workflows/` - CI (`ci.yml`), publishing (`publish.yml`), documentation (`docs.yml`).
+- `.github/workflows/` - CI (`ci.yml`), publishing (`publish.yml`), documentation (`docs.yml`, deployed from a release).
 
 The version lives only in `pyproject.toml`; releases are made through GitHub Releases, changes are described in the release notes, there is no separate CHANGELOG file.
