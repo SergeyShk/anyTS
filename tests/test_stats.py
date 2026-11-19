@@ -378,7 +378,7 @@ def test_by_parts_raises_the_error_of_the_parts():
                 raise SourceError("Too few words")
 
     assert Fussy("The cat sleeps. A dog barks.").n_words == 6
-    with pytest.raises(SourceError, match="^Too few words$"):
+    with pytest.raises(SourceError, match=r"^Too few words$"):
         Fussy.by_parts("The cat sleeps. A dog barks.")
 
 
