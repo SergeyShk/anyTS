@@ -130,7 +130,7 @@
 
     ---
 
-    Write the statistics of a text with their readings, its hardest sentences, the highlighted text and plots into one HTML file that needs nothing outside it
+    Write the statistics of a text with their readings, the statistics of its sentences, the highlighted text and plots into one HTML file that needs nothing outside it
 
     [:octicons-arrow-right-24: HTML report](report.md)
 
