@@ -327,7 +327,9 @@ def test_check_keyness_params(kwargs):
         keyness(["cat"], ["dog"], **kwargs)
 
 
-@pytest.mark.parametrize("target", ["cat dog", 5, {"cat": 1.5}, [1, 2]])
+@pytest.mark.parametrize(
+    "target", ["cat dog", 5, {"cat": 1.5}, [1, 2], ["the cat sleeps", "the dog barks"]]
+)
 def test_check_keyness_params_target(target):
     with pytest.raises(SourceTypeError):
         check_keyness_params(target=target)
@@ -377,7 +379,7 @@ def test_check_keyness_params_valid():
         (
             {"keys": lambda words: ["cat"]},
             SourceTypeError,
-            r"^The keys of the reference must be a string for every word of a text, not 1$",
+            r"^The keys of the reference must be a string for each of the 3 words of a text, not 1$",
         ),
         ({"keys": lambda words: "cat"}, SourceTypeError, r"not str$"),
         ({"keys": lambda words: [None] * len(words)}, SourceTypeError, r"not NoneType$"),

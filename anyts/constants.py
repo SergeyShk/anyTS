@@ -284,7 +284,7 @@ MESSAGES: Mapping[str, str] = MappingProxyType(
             "{cls} defines {name}, which is no longer read: override {first} or {second}"
         ),
         "removed_component_attribute": (
-            "{cls} defines {name}, which is no longer read: override {replacement} of its stats_class"
+            "{cls} defines {name}, which is no longer read: override {replacement} of stats_class"
         ),
         "foreign_extension": (
             "The extension {name} of Doc belongs to another package: give the component another name"
@@ -437,7 +437,7 @@ MESSAGES: Mapping[str, str] = MappingProxyType(
         "no_kept_words": "The data source has no words the reference keeps",
         "short_texts": "The data source has no n-grams: its texts are shorter than {n} words",
         "reference_counts": "The frequencies of the reference must be a mapping, not {type}",
-        "reference_keys": "The keys of the reference must be a string for every word of a text, not {value}",
+        "reference_keys": "The keys of the reference must be a string for each of the {size} words of a text, not {value}",
         "target_counts": "The frequencies of the target corpus must be whole numbers",
         "corpus_type": "The {param} must be a mapping of the names of the texts to their units, not {type}",
         "corpus_texts": "There are no {param} texts",

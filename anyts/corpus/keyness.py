@@ -340,7 +340,9 @@ def _count_in_context(
         text_keys = keys(words)
         problem = _keys_problem(text_keys, len(words))
         if problem:
-            raise SourceTypeError(messages["reference_keys"].format(value=problem))
+            raise SourceTypeError(
+                messages["reference_keys"].format(size=len(words), value=problem)
+            )
         for word, word_key in zip(words, text_keys, strict=True):
             if reference.keep is None or reference.keep(word):
                 counts[word_key] = counts.get(word_key, 0) + 1
