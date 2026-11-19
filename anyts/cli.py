@@ -545,7 +545,7 @@ def _formatted(results: Mapping[str, Mapping[str, Any]], fmt: str, part: str) ->
             for source, found in results.items()
         }
         return json.dumps(data, ensure_ascii=False, allow_nan=False) + "\n"
-    # A file of the output writes the line breaks of the platform for \n
+    # The line ends of CSV, \n alike in a file and on the standard output
     return str(_table(results, part).to_csv(lineterminator="\n"))
 
 
