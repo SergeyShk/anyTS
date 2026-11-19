@@ -280,6 +280,12 @@ MESSAGES: Mapping[str, str] = MappingProxyType(
         "no_stats_class": "{cls} has no concrete class of statistics in stats_class",
         "stats_param": "{cls} has no attribute {param} of stats_params",
         "removed_attribute": "{cls} defines {name}, which is no longer read: override {replacement}",
+        "removed_attribute_either": (
+            "{cls} defines {name}, which is no longer read: override {first} or {second}"
+        ),
+        "removed_component_attribute": (
+            "{cls} defines {name}, which is no longer read: override {replacement} of its stats_class"
+        ),
         "foreign_extension": (
             "The extension {name} of Doc belongs to another package: give the component another name"
         ),
@@ -345,6 +351,10 @@ MESSAGES: Mapping[str, str] = MappingProxyType(
             "The {hook} of {cls} must return WordFlags of {size} booleans in every check, "
             "not {value}"
         ),
+        "hook_flags_check": (
+            "The {hook} of {cls} must return WordFlags of {size} booleans in every check, "
+            "not {value} in {check}"
+        ),
         "hook_word_pairs": "The {hook} of {cls} must return pairs of TreeWord objects, not {type}",
         "hook_string": "The {hook} of {cls} must return a string, not {type}",
         "hook_sounds": "The {hook} of {cls} must return a string or strings, not {type}",
@@ -402,6 +412,7 @@ MESSAGES: Mapping[str, str] = MappingProxyType(
         "words_doc": "The {param} must be a list of strings, not {type}: extract the words with WordsExtractor",
         "text_words": "A text of the {param} must be a list of strings, not {type}",
         "text_doc": "A text of the {param} must be a list of strings, not {type}: extract the words with WordsExtractor",
+        "words_texts": "Every word of the {param} holds a space: split its texts into words",
         "callable_param": "The {param} must be callable, not {type}",
         "negative_param": "The {param} cannot be negative",
         "positive_param": "The {param} must be greater than 0",
@@ -426,6 +437,7 @@ MESSAGES: Mapping[str, str] = MappingProxyType(
         "no_kept_words": "The data source has no words the reference keeps",
         "short_texts": "The data source has no n-grams: its texts are shorter than {n} words",
         "reference_counts": "The frequencies of the reference must be a mapping, not {type}",
+        "reference_keys": "The keys of the reference must be a string for every word of a text, not {value}",
         "target_counts": "The frequencies of the target corpus must be whole numbers",
         "corpus_type": "The {param} must be a mapping of the names of the texts to their units, not {type}",
         "corpus_texts": "There are no {param} texts",

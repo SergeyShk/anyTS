@@ -50,8 +50,8 @@ _ANNOTATION_NAMES = {
     "xpos": "tags",
     "feats": "morphological features",
 }
-# Hooks of the highlighting of 0.4 the core no longer reads, with what replaces them
-_REMOVED_HOOKS = MappingProxyType({"iter_words": "parse or doc_words", "iter_sents": "parse"})
+# Hooks of the highlighting of 0.4 the core no longer reads, with the hooks that replace them
+_REMOVED_HOOKS = MappingProxyType({"iter_words": ("parse", "doc_words"), "iter_sents": ("parse",)})
 
 
 class Word(NamedTuple):

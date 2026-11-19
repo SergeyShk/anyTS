@@ -686,11 +686,8 @@ def calc_spam(text: Sequence[str]) -> float:
     Computing the spam score
 
     Description:
-        The share of the repeated words in percent (Text.ru), every occurrence
-        of a word after the first: 100 · (1 - TTR)
-
-    References:
-        https://text.ru/seo
+        The share of the repeated words in percent, every occurrence of a word
+        after the first: 100 · (1 - TTR)
 
     Arguments:
         text (list[str]): List of words
@@ -967,23 +964,17 @@ def _check_flags(flags: object, size: int) -> None:
 
 def _hook_flags(owner: StyleStats, flags: object, size: int) -> WordFlags:
     """Flags of doc_flags, checked to be WordFlags of a boolean per word, with tuples"""
-    wrong = type(flags).__name__
-    if isinstance(flags, WordFlags):
-        wrong = next(
-            (
-                f"{problem} in {name}"
-                for name, values in zip(WordFlags._fields, flags, strict=True)
-                if values is not None and (problem := _flags_problem(values, size))
-            ),
-            "",
+    fields = {"hook": "doc_flags", "cls": type(owner).__name__, "size": size}
+    if not isinstance(flags, WordFlags):
+        raise SourceTypeError(
+            owner.messages["hook_flags"].format(**fields, value=type(flags).__name__)
         )
-        if not wrong:
-            return WordFlags(*(None if values is None else tuple(values) for values in flags))
-    raise SourceTypeError(
-        owner.messages["hook_flags"].format(
-            hook="doc_flags", cls=type(owner).__name__, size=size, value=wrong
-        )
-    )
+    for name, values in zip(WordFlags._fields, flags, strict=True):
+        if values is not None and (problem := _flags_problem(values, size)):
+            raise SourceTypeError(
+                owner.messages["hook_flags_check"].format(**fields, value=problem, check=name)
+            )
+    return WordFlags(*(None if values is None else tuple(values) for values in flags))
 
 
 def _flags_problem(values: object, size: int) -> str:

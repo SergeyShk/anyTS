@@ -1206,16 +1206,25 @@ def _hook_words(owner: Any, hook: str, result: object) -> tuple[str, ...]:
     return words
 
 
-def _check_removed(cls: type, removed: Mapping[str, str], messages: Mapping[str, str]) -> None:
+def _check_removed(
+    cls: type,
+    removed: Mapping[str, tuple[str, ...]],
+    messages: Mapping[str, str],
+    key: str = "removed_attribute",
+) -> None:
     """Raising ParameterError for a class with an attribute of 0.4 the core no longer reads, with
-    the hook that replaces it"""
-    for name, replacement in removed.items():
-        if hasattr(cls, name):
-            raise ParameterError(
-                messages["removed_attribute"].format(
-                    cls=cls.__name__, name=name, replacement=replacement
-                )
+    the hook that replaces it, or either of two; key is the message of one hook"""
+    for name, hooks in removed.items():
+        if not hasattr(cls, name):
+            continue
+        if len(hooks) == 2:
+            first, second = hooks
+            message = messages["removed_attribute_either"].format(
+                cls=cls.__name__, name=name, first=first, second=second
             )
+        else:
+            message = messages[key].format(cls=cls.__name__, name=name, replacement=hooks[0])
+        raise ParameterError(message)
 
 
 def source_type_error(messages: Mapping[str, str], source: object) -> SourceTypeError:

@@ -16,13 +16,14 @@ if TYPE_CHECKING:
     from pandas import DataFrame
     from spacy.tokens import Doc
 
-# Attributes of the classes of statistics of 0.4 the core no longer reads, with what replaces them
+# Attributes of the classes of statistics of 0.4 the core no longer reads, with the hooks that
+# replace them
 _REMOVED_ATTRIBUTES = MappingProxyType(
     {
-        "words_extractor_class": "parse or doc_words",
-        "sents_extractor_class": "parse",
-        "join_hyphens": "parse",
-        "doc_units": "analyze",
+        "words_extractor_class": ("parse", "doc_words"),
+        "sents_extractor_class": ("parse",),
+        "join_hyphens": ("parse",),
+        "doc_units": ("analyze",),
     }
 )
 

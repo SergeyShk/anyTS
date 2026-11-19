@@ -373,6 +373,14 @@ def test_check_keyness_params_valid():
         ({"missing": -1}, ParameterError, r"^The missing cannot be negative$"),
         ({"key": 1}, SourceTypeError, r"^The key must be callable, not int$"),
         ({"keep": "x"}, SourceTypeError, r"^The keep must be callable, not str$"),
+        ({"keys": 1}, SourceTypeError, r"^The keys must be callable, not int$"),
+        (
+            {"keys": lambda words: ["cat"]},
+            SourceTypeError,
+            r"^The keys of the reference must be a string for every word of a text, not 1$",
+        ),
+        ({"keys": lambda words: "cat"}, SourceTypeError, r"not str$"),
+        ({"keys": lambda words: [None] * len(words)}, SourceTypeError, r"not NoneType$"),
     ],
 )
 def test_frequency_reference_checks_its_fields(fields, error, message):
@@ -479,3 +487,67 @@ def test_reasons_of_an_empty_corpus():
         keyness([[], []], ["the", "cat"], n=2)
     with pytest.raises(SourceError, match=r"shorter than 2 words$"):
         keyness(["the", "cat"], [["the"], ["cat"]], n=2)
+
+
+def saw_in_context(words):
+    """The lemma of saw by the word before it: a verb after a pronoun, a noun otherwise"""
+    return [
+        "see" if word == "saw" and i and words[i - 1] in {"i", "we"} else word
+        for i, word in enumerate(words)
+    ]
+
+
+SAWS = FrequencyReference({"see": 100.0, "saw": 10.0, "a": 20_000.0}, 1_000_000, 0.5)
+
+
+def test_frequency_reference_keys_in_context():
+    """keys sees the words of a text in their order, so a homonym gets the key of its context
+    where key, given a word alone, keys all its occurrences the same"""
+    target = ["i", "saw", "a", "saw", "we", "saw", "it"]
+    in_context = {
+        k.word: k.freq_target for k in keyness(target, SAWS._replace(keys=saw_in_context))
+    }
+    assert in_context["see"] == 2
+    assert in_context["saw"] == 1
+    word_alone = {k.word: k.freq_target for k in keyness(target, SAWS._replace(key=str.upper))}
+    assert word_alone["SAW"] == 3
+
+
+def test_frequency_reference_keys_of_every_text():
+    """Every text gets its own call, so the context does not run across two texts; keep sees
+    the words, not their keys"""
+    calls = []
+
+    def keys(words):
+        calls.append(words)
+        return saw_in_context(words)
+
+    reference = SAWS._replace(keys=keys, keep=lambda word: word != "a")
+    keywords = keyness([["i", "saw"], ["saw", "a", "saw"]], reference)
+    assert calls == [["i", "saw"], ["saw", "a", "saw"]]
+    counts = {k.word: k.freq_target for k in keywords}
+    assert counts == {"see": 1, "saw": 2, "i": 1}
+
+
+def test_frequency_reference_keys_leave_frequencies_to_key():
+    """A target given by its frequencies has no context: its words are keyed by key"""
+    reference = SAWS._replace(key=str.upper, keys=saw_in_context)
+    assert {k.word for k in keyness({"saw": 2, "it": 1}, reference)} == {"SAW", "IT"}
+
+
+@pytest.mark.parametrize(
+    ("target", "reference", "side"),
+    [
+        (["the cat sleeps.", "the dog barks."], ["the", "dog"], "target"),
+        ([["the cat sleeps."], ["the", "dog"]], ["the", "dog"], "target"),
+        (["the", "cat"], ["the dog barks", "a cat sleeps"], "reference"),
+    ],
+)
+def test_keyness_refuses_texts_in_place_of_words(target, reference, side):
+    with pytest.raises(SourceTypeError, match=f"^Every word of the {side} holds a space"):
+        keyness(target, reference)
+
+
+def test_keyness_takes_a_phrase_among_the_words():
+    keywords = keyness(["as well as", "cat", "cat"], ["the", "dog"])
+    assert {keyword.word for keyword in keywords} == {"as well as", "cat"}

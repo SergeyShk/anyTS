@@ -44,8 +44,9 @@ if TYPE_CHECKING:
 
 # Extensions of Doc registered by the components; any other one belongs to another package
 _EXTENSIONS: set[str] = set()
-# Attributes of the components of 0.4 the core no longer reads, with what replaces them
-_REMOVED_ATTRIBUTES = MappingProxyType({"join_hyphens": "parse of stats_class"})
+# Attributes of the components of 0.4 the core no longer reads, with the hook of the class of
+# statistics that replaces them
+_REMOVED_ATTRIBUTES = MappingProxyType({"join_hyphens": ("parse",)})
 
 Stats = TypeVar("Stats")
 
@@ -97,7 +98,7 @@ class StatsComponent:
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
         check_messages(cls.messages)
-        _check_removed(cls, _REMOVED_ATTRIBUTES, cls.messages)
+        _check_removed(cls, _REMOVED_ATTRIBUTES, cls.messages, "removed_component_attribute")
 
     def __init__(self, nlp: Language, name: str):
         if type(self).compute is StatsComponent.compute:
