@@ -34,7 +34,7 @@ make docs-build  # mkdocs build --strict, if the documentation changed
 
 CI runs the same on Python 3.11-3.15 (Linux) and on Windows and macOS for one Python version.
 
-A change that may slow the statistics down is measured with `make bench`: the classes of this tree against those of the commit it starts from on `master`, the time of a run over the documents and the largest memory of one document. The documents are CoNLL-U files of annotated texts in the folder of the environment variable `BENCH_DATA` (`--data` of `scripts/bench.py`), by default `core_snapshot/bench-documents` next to the clone of the repository. The two trees run in turn, three rounds each, so a change of the load falls on both; on an idle machine a repeated run on the same code stays within 5 %.
+A change that may slow the statistics down is measured with `make bench`: the classes of this tree against those of the commit it starts from on `master`, or of a tag or a commit of `BASE` (`make bench BASE=0.5.7`), the time of a run over the documents and the largest memory of one document. The documents are CoNLL-U files of annotated texts in the folder of the environment variable `BENCH_DATA` (`--data` of `scripts/bench.py`), by default `core_snapshot/bench-documents` next to the clone of the repository. The two trees run in turn, three rounds each, so a change of the load falls on both; on an idle machine a repeated run on the same code stays within 5 %. Both run with the dependencies of this tree, so a change of a dependency, such as anySeg, is measured by `scripts/bench.py take` in the environment of each side and `compare`.
 
 ## What a pull request is expected to contain
 
@@ -55,6 +55,6 @@ The pull request description answers two questions: what was done and why. If it
 - `tests/` - tests mirroring the package.
 - `docs/` - MkDocs (Material) documentation, `mkdocs.yml` - navigation.
 - `scripts/` - development scripts: `bench.py` behind `make bench`.
-- `.github/workflows/` - CI (`ci.yml`), publishing (`publish.yml`), documentation (`docs.yml`).
+- `.github/workflows/` - CI (`ci.yml`), publishing (`publish.yml`), documentation (`docs.yml`, deployed from a release).
 
 The version lives only in `pyproject.toml`; releases are made through GitHub Releases, changes are described in the release notes, there is no separate CHANGELOG file.

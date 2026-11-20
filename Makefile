@@ -49,8 +49,8 @@ test-cov: deps ## Run the tests with a coverage threshold
 test-examples: deps ## Run the examples of the docs against their results
 	uv run pytest -m examples tests/test_docs_examples.py
 
-bench: deps ## Compare the speed and memory of the classes with master on frozen documents
-	uv run python $(SCRIPTS_PATH)/bench.py run
+bench: deps ## Compare the speed and memory of the classes with master, or with BASE, on frozen documents
+	uv run python $(SCRIPTS_PATH)/bench.py run $(if $(BASE),--base $(BASE))
 
 clean: clean-build clean-pyc clean-test ## Remove all artifacts
 	rm -f .coverage coverage.xml

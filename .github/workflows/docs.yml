@@ -1,13 +1,10 @@
 name: docs
 
+# The site describes the released package: it is deployed from a release, and by hand for a fix
+# of the docs of the release
 on:
-  push:
-    branches:
-      - master
-    paths:
-      - "docs/**"
-      - "mkdocs.yml"
-      - ".github/workflows/docs.yml"
+  release:
+    types: [published]
   workflow_dispatch:
 
 concurrency:
