@@ -2227,7 +2227,7 @@
 <!-- --8<-- [start:Report] -->
 <div class="signature highlight"><pre><span></span><code><span class="n">Report</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">stats_classes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">skip_errors</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 </code></pre></div>
-<p>The HTML report of the statistics of a text. The text is parsed once (<code>parse</code>), and its sections follow <code>sections</code>, each a method <code>section_&lt;name&gt;</code> that gives a fragment of HTML:</p>
+<p>The HTML report of the statistics of a text. The text is parsed once (<code>parse</code>), every class counts it and its sentences by <code>compute</code>, and its sections follow <code>sections</code>, each a method <code>section_&lt;name&gt;</code> that gives a fragment of HTML:</p>
 <table>
 <thead>
 <tr>
@@ -2238,23 +2238,23 @@
 <tbody>
 <tr>
 <td style="text-align: left;"><code>statistics</code></td>
-<td style="text-align: left;">A table per class of <code>stats_classes</code>: the description of every statistic of <code>get_stats</code>, its value - a float with two decimals, a distribution as its pairs - and its reading (<code>describe</code>)</td>
+<td style="text-align: left;">A table per class of <code>stats_classes</code> under its title (<code>titles</code>): the description of every statistic of <code>stats_desc</code>, as <code>print_stats</code>, its value - a float with two decimals, a smaller one than 0.1 with two significant digits, a distribution as its pairs from the most frequent, with the values described by <code>value_desc</code>, an undefined value as the text <code>undefined</code> - and its reading (<code>describe</code>); the classes left out by <code>skip_errors</code> are named above</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>sentences</code></td>
-<td style="text-align: left;">The text of every sentence with the statistics of <code>sentence_columns</code> (<a href="https://sergeyshk.github.io/anyTS/stats/stats/#by_parts"><code>by_parts</code></a>); none without them</td>
+<td style="text-align: left;">The text of every sentence with the statistics of <code>sentence_columns</code> (<a href="https://sergeyshk.github.io/anyTS/stats/stats/#by_parts"><code>by_parts</code></a>); none without them. A text of more than <code>max_sentences</code> sentences has those with the highest values of the first statistic, in their order</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>highlight</code></td>
-<td style="text-align: left;">The text highlighted by <code>highlight_class</code> with its default layers; none without it</td>
+<td style="text-align: left;">The text highlighted by <code>highlight_class</code> with its default layers, its styles in the head of the page; none without it</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>plots</code></td>
-<td style="text-align: left;">The plots of <code>plots</code> in SVG with their captions: the lengths of the sentences (<code>sentence_lengths_plot</code>) by default; none for a text without sentences</td>
+<td style="text-align: left;">The plots of <code>plots</code> in SVG with their captions: the lengths of the sentences (<code>sentence_lengths_plot</code>) by default, without a mark on every sentence for a text of more than 300 of them; none for a text without sentences</td>
 </tr>
 </tbody>
 </table>
-<p>The style is in the page and the plots draw their text as paths, so they need no font. Every text of the source and of the statistics goes through <code>escape</code>, so that it never becomes markup.</p>
+<p>The style is in the page and the plots draw their text as paths, so they need no font; they are made without <code>pyplot</code>, so that a command opens no window. The page is the same for the same text, and the ids of its plots differ. Every text of the source and of the statistics goes through <code>escape</code>, so that it never becomes markup.</p>
 <table>
 <thead>
 <tr>
@@ -2381,9 +2381,19 @@
 <td style="text-align: left;">Classes of statistics by name; none by default</td>
 </tr>
 <tr>
+<td style="text-align: left;"><code>titles</code></td>
+<td style="text-align: left;">class attribute</td>
+<td style="text-align: left;">Headings of the classes by name; the names by default</td>
+</tr>
+<tr>
 <td style="text-align: left;"><code>sentence_columns</code></td>
 <td style="text-align: left;">class attribute</td>
-<td style="text-align: left;">Statistics of every sentence, as pairs of the name of a class and of a statistic; none by default</td>
+<td style="text-align: left;">Statistics of every sentence, as pairs of the name of a class and of a statistic, a key of its flat statistics among them; none by default</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>max_sentences</code></td>
+<td style="text-align: left;">class attribute</td>
+<td style="text-align: left;">Sentences of the table at most, those with the highest values of its first statistic for a longer text; 100 by default</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>highlight_class</code></td>
@@ -2423,7 +2433,7 @@
 <tr>
 <td style="text-align: left;"><code>plots()</code></td>
 <td style="text-align: left;">method</td>
-<td style="text-align: left;">Captions and figures of matplotlib of the section <code>plots</code></td>
+<td style="text-align: left;">Captions and figures of matplotlib of the section <code>plots</code>, made on a <code>Figure</code>, not with <code>pyplot</code>, so that a command chooses no interactive backend</td>
 </tr>
 </tbody>
 </table>
