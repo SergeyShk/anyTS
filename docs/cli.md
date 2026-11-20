@@ -15,7 +15,7 @@ The command line of the statistics of a language library. Its command `stats` re
 | :----- | :------ | :---------- |
 | `files` | the standard input | Text files |
 | `-s`, `--stats` | every class | Classes of statistics, by name and separated by commas |
-| `-p`, `--parts` | - | `sentences` or `paragraphs`: a row per part ([`by_parts`](https://sergeyshk.github.io/anyTS/stats/stats/#by_parts)); a class that counts no such parts is an error |
+| `-p`, `--parts` | - | `sentences`, `lines` or `paragraphs`: a row per part ([`by_parts`](https://sergeyshk.github.io/anyTS/stats/stats/#by_parts)); a class that counts no such parts is an error |
 | `-f`, `--format` | `table` | `table` - the table of `print_stats` of every class, or of the parts; `json` - the flat statistics of every class by text, `get_stats(flat=True)`, or the records of the parts, with `nan` and infinities as `null`; `csv` - a row per text, or per part of a text, with a column `<class>.<statistic>` for every statistic and 0 for a count of a distribution a text lacks ([`stats_dataframe`](https://sergeyshk.github.io/anyTS/stats/stats/#stats_dataframe)) |
 | `-o`, `--output` | the standard output | File of the output |
 | `-e`, `--encoding` | `utf-8` | Encoding of the files and of the output |

@@ -189,9 +189,8 @@ def test_values_are_those_of_get_stats():
     assert found[escape(stats.stats_desc["number"])] == escape("Plur: 1, None: 1")
 
 
-def test_the_text_is_read_once_for_the_sentences():
-    """The statistic of the whole text that tells a count from a float is read once per column,
-    not once per sentence"""
+def test_the_statistics_are_read_once_for_the_sentences():
+    """The statistics of every sentence are read once, and none of the whole text"""
     reads = []
 
     class Counted(Vowels):
@@ -212,7 +211,7 @@ def test_the_text_is_read_once_for_the_sentences():
     reads.clear()
     page = report.to_html()
     assert [cells[2] for cells in rows(page, "<h2>Sentences</h2>")] == ["3"] * 40
-    assert reads.count(120) == 1
+    assert reads == [3] * 40
 
 
 class Fussy(Vowels):

@@ -83,7 +83,7 @@ Returns the words of a document: its tokens with a letter or a digit (`str.isaln
 document_part(document, start, end, *, messages=None)
 ```
 
-Returns the document of a part of a document: the sentences the span of the text from `start` to `end` overlaps, whole, so that their trees stay whole - a sentence, a paragraph or a fragment of several of them. Its text runs from the first token of the first sentence to the last token of the last one, and the positions count from there. The tokens, the words with their columns, the sentences and the paragraphs are those of the document, and a head stays as it is, since the head of a word is in its own sentence. A class of statistics counts a part as any document. Every call reads the columns of the whole document, so [`by_parts`](https://sergeyshk.github.io/anyTS/stats/stats/#by_parts), which reads them once, counts every sentence or paragraph of a text.
+Returns the document of a part of a document: the sentences the span of the text from `start` to `end` overlaps, whole, so that their trees stay whole - a sentence, a paragraph or a fragment of several of them. Its text runs from the first token of the first sentence to the last token of the last one, and the positions count from there. The tokens, the words with their columns, the sentences and the paragraphs are those of the document, and a head stays as it is, since the head of a word is in its own sentence. A class of statistics counts a part as any document. Every call reads the columns of the whole document, so [`by_parts`](https://sergeyshk.github.io/anyTS/stats/stats/#by_parts), which reads them once, counts every sentence, line or paragraph of a text.
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |

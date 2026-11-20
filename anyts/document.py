@@ -16,6 +16,7 @@ from .extractors import _check_spans, _sentence_spans, _word_pattern
 from .utils import (
     _IN_WORD_MARKS,
     BLANK_LINE,
+    LINE_BREAK,
     _messages,
     _separators,
     check_callable,
@@ -233,7 +234,7 @@ def document_part(
 
 
 def _document_parts(document: Document, kind: str) -> Iterator[tuple[int, int, Document]]:
-    """Positions of every sentence or paragraph of a document in its text, with its document
+    """Positions of every sentence, line or paragraph of a document in its text, with its document
     (document_part), the columns read once"""
     reader = _PartReader(document)
     for first, last in reader.ranges(kind):
@@ -284,9 +285,25 @@ class _PartReader:
         return found
 
     def ranges(self, kind: str) -> list[tuple[int, int]]:
-        """First and last sentences of every sentence or paragraph"""
+        """First and last sentences of every sentence, line or paragraph"""
+        count = len(self.first_tokens) - 1
         if kind == "sentences":
-            return [(index, index) for index in range(len(self.first_tokens) - 1)]
+            return [(index, index) for index in range(count)]
+        if kind == "lines" and count:
+            # A line ends before a sentence with a line break between it and the one before
+            text = self.document.text
+            firsts = [
+                index
+                for index in range(1, count)
+                if LINE_BREAK.search(
+                    text,
+                    self.ends[self.first_tokens[index] - 1],
+                    self.starts[self.first_tokens[index]],
+                )
+            ]
+            return list(
+                zip([0, *firsts], [*(first - 1 for first in firsts), count - 1], strict=True)
+            )
         ranges = []
         for paragraph in self.document.paragraphs:
             indices = [sentence.index for sentence in paragraph.sentences]

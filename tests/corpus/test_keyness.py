@@ -543,10 +543,12 @@ def test_frequency_reference_keys_leave_frequencies_to_key():
         (["the cat sleeps.", "the dog barks."], ["the", "dog"], "target"),
         ([["the cat sleeps."], ["the", "dog"]], ["the", "dog"], "target"),
         (["the", "cat"], ["the dog barks", "a cat sleeps"], "reference"),
+        # The sentences of a text, one of them a single word
+        (["Thanks!", "The cat was late.", "The dog barks."], ["the", "dog"], "target"),
     ],
 )
 def test_keyness_refuses_texts_in_place_of_words(target, reference, side):
-    with pytest.raises(SourceTypeError, match=f"^Every word of the {side} holds a space"):
+    with pytest.raises(SourceTypeError, match=f"^Most words of the {side} hold a space"):
         keyness(target, reference)
 
 

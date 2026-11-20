@@ -11,7 +11,7 @@ from typing import IO, TYPE_CHECKING, Any, ClassVar
 from .constants import CLI_TEXTS
 from .exceptions import AnyTSError
 from .report import Report
-from .stats import Stats
+from .stats import Stats, StatsRow
 from .utils import check_messages
 
 if TYPE_CHECKING:
@@ -32,8 +32,8 @@ class Command:
         The command stats reads texts from files or from the standard input,
         parses every text once (parse) and prints the statistics of the classes
         of stats_classes: a table, JSON with the flat statistics of every class
-        by text, or CSV with a row per text; with --parts, a row per sentence or
-        paragraph (by_parts). A text a class cannot count is reported on the
+        by text, or CSV with a row per text; with --parts, a row per sentence,
+        line or paragraph (by_parts). A text a class cannot count is reported on the
         standard error and the others are counted, with the exit code 1. A
         language library subclasses it and calls run from the entry point of its
         command
@@ -127,7 +127,10 @@ class Command:
         stats.add_argument("files", nargs="*", help=texts["files"])
         self._add_options(stats, "encoding_option")
         stats.add_argument(
-            "-p", "--parts", choices=("sentences", "paragraphs"), help=texts["parts_option"]
+            "-p",
+            "--parts",
+            choices=("sentences", "lines", "paragraphs"),
+            help=texts["parts_option"],
         )
         stats.add_argument(
             "-f", "--format", choices=_FORMATS, default="table", help=texts["format_option"]
@@ -326,7 +329,7 @@ def _compute(cls: type[Stats], document: Document) -> Stats:
     return cls(document)  # type: ignore[call-arg]
 
 
-def _parts(counted: Sequence[tuple[int, int, Stats | None]], part: str) -> DataFrame:
+def _parts(counted: Sequence[tuple[int, int, StatsRow | None]], part: str) -> DataFrame:
     """Table of the parts of one text"""
     from .stats import _parts_dataframe
 
@@ -337,7 +340,10 @@ def _json_value(value: Any, part: str) -> Any:
     """Flat statistics, or records of the parts, for JSON: nan and infinities as null"""
     if isinstance(value, Stats):
         return _finite(value.get_stats(flat=True))
-    return [_finite(record) for record in _parts(value, part).reset_index().to_dict("records")]
+    table = _parts(value, part).reset_index()
+    # The parts without statistics have None for NaN and for the NA of the counts
+    table = table.astype(object).where(table.notna(), None)
+    return [_finite(record) for record in table.to_dict("records")]
 
 
 def _finite(stats: Mapping[str, Any]) -> dict[str, Any]:

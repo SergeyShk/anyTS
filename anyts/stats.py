@@ -28,6 +28,8 @@ _REMOVED_ATTRIBUTES = MappingProxyType(
 )
 
 Band = TypeVar("Band")
+# The statistics of an object read once (get_stats), with its class, which flattens them
+StatsRow = tuple[type["Stats"], dict[str, Any]]
 
 
 class Stats:
@@ -40,7 +42,7 @@ class Stats:
 
     Methods:
         parse: Document of a data source
-        by_parts: Statistics of every sentence or paragraph of a data source
+        by_parts: Statistics of every sentence, line or paragraph of a data source
         parts_document: Document whose parts by_parts counts
         stat_names: Names of the statistics of get_stats
         get_stats: Getting the computed statistics
@@ -56,8 +58,8 @@ class Stats:
         level_scales (dict[str, tuple[tuple[float, str], ...]]): Interpretation scales
             of describe by statistic, as lower bounds and their bands
         messages (dict[str, str]): Messages of the errors by key (MESSAGES)
-        part_kinds (tuple[str, ...]): Parts of by_parts the class counts, sentences
-            and paragraphs by default
+        part_kinds (tuple[str, ...]): Parts of by_parts the class counts, the first by
+            default: sentences, lines and paragraphs
 
     Raises:
         ParameterError: When a class is defined, if its messages are incomplete,
@@ -86,7 +88,7 @@ class Stats:
     stats_headers: ClassVar[tuple[str, str]] = ("Statistic", "Value")
     level_scales: ClassVar[Mapping[str, tuple[tuple[float, str], ...]]] = {}
     messages: ClassVar[Mapping[str, str]] = MESSAGES
-    part_kinds: ClassVar[tuple[str, ...]] = ("sentences", "paragraphs")
+    part_kinds: ClassVar[tuple[str, ...]] = ("sentences", "lines", "paragraphs")
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
@@ -127,32 +129,40 @@ class Stats:
 
     @classmethod
     def by_parts(
-        cls, source: str | Doc | Document, parts: str = "sentences", **params: Any
+        cls, source: str | Doc | Document, parts: str | None = None, **params: Any
     ) -> DataFrame:
         """
-        Getting the statistics of every sentence or paragraph of a data source
+        Getting the statistics of every sentence, line or paragraph of a data source
 
         Description:
             The source is parsed once (parts_document), and the class with the
-            parameters counts the document of every part (document_part). The
-            table has a row per part, its start and end in the text of the
-            document and its flat statistics (stats_dataframe); a part without
+            parameters counts the document of every part (document_part). A line
+            is the sentences between line breaks, and a paragraph those between
+            blank lines, so that a text with a paragraph on every line has as
+            many lines as paragraphs and one paragraph; a sentence that runs over
+            a line break, as in a verse, stays in one line. The table has a row
+            per part, its start and end in the text of the document and its flat
+            statistics (stats_dataframe), the counts as integers; a part without
             words, such as a line of asterisks, or one the class cannot count,
             such as a number alone on a line for a class without numbers among
-            its words, has its row without statistics
+            its words, has its row without statistics. A statistic that compares
+            the sentences of a text, as the similarity of adjacent sentences, is
+            undefined in a part of one sentence
 
         Arguments:
             source (str|Doc|Document): Data source
-            parts (str): Parts, one of part_kinds of the class
+            parts (str): Parts, one of part_kinds of the class; the first of them by
+                default
             **params: Parameters of the class
 
         Returns:
             pandas.DataFrame: Table of the parts, indexed by their number
 
         Raises:
-            ParameterError: If the parts are not one of part_kinds
-            SourceTypeError, SourceError: As the class raises for the source, or for a
-                part when it can count none
+            ParameterError: If the class counts no parts, or the parts are not one of
+                part_kinds
+            SourceTypeError, SourceError: As the class raises for the source, when it
+                can count none of its parts
 
         Example:
             >>> from anyts.basic_stats import BasicStats
@@ -165,12 +175,13 @@ class Stats:
             0             0   15        3
             1            16   35        4
         """
+        kind = cls._parts_kind(parts)
         return _parts_dataframe(
             [
                 (number, *part)
-                for number, part in enumerate(cls._count_parts(source, parts, params))
+                for number, part in enumerate(cls._count_parts(source, kind, params))
             ],
-            parts[:-1],
+            kind[:-1],
         )
 
     @classmethod
@@ -194,34 +205,44 @@ class Stats:
         return cls.__new__(cls)._document(source)
 
     @classmethod
-    def _count_parts(
-        cls, source: str | Doc | Document, parts: str, params: Mapping[str, Any]
-    ) -> list[tuple[int, int, Stats | None]]:
-        """Start, end and statistics of every part of a source parsed once, None for a part
-        without words or one the class cannot count, such as a number alone on a line for a
-        class without numbers; the error of the class when it can count no part"""
-        from .document import _document_parts, document_words
-
+    def _parts_kind(cls, parts: object) -> str:
+        """Parts of by_parts, the first of part_kinds for None, checked to be one of them"""
+        if not cls.part_kinds:
+            raise ParameterError(cls.messages["no_part_kinds"].format(cls=cls.__name__))
+        if parts is None:
+            return cls.part_kinds[0]
         if not isinstance(parts, str) or parts not in cls.part_kinds:
             raise ParameterError(
                 cls.messages["parts_kind"].format(parts=repr(parts), kinds=cls.part_kinds)
             )
+        return parts
+
+    @classmethod
+    def _count_parts(
+        cls, source: str | Doc | Document, parts: str, params: Mapping[str, Any]
+    ) -> list[tuple[int, int, StatsRow | None]]:
+        """Start, end and statistics of every part of a source parsed once, None for a part
+        without words or one the class cannot count, such as a number alone on a line for a
+        class without numbers; when it can count no part, the error of the class for the whole
+        document, so that a source without words raises as the class does"""
+        from .document import _document_parts, document_words
+
+        kind = cls._parts_kind(parts)
         document = cls.parts_document(source, **params)
-        counted: list[tuple[int, int, Stats | None]] = []
+        counted: list[tuple[int, int, StatsRow | None]] = []
         failure: SourceError | None = None
-        for start, end, part in _document_parts(document, parts):
-            stats = None
+        for start, end, part in _document_parts(document, kind):
+            row = None
             if document_words(part):
                 try:
-                    stats = cast(Any, cls)(part, **params)
-                    # A statistic computed when it is read raises here, for its part
-                    stats.get_stats()
+                    row = _stats_row(cast(Any, cls)(part, **params))
                 except SourceError as error:
-                    stats = None
                     failure = failure or error
-            counted.append((start, end, stats))
-        if failure is not None and all(stats is None for _, _, stats in counted):
-            raise failure
+            counted.append((start, end, row))
+        if all(row is None for _, _, row in counted):
+            # The class checks its parameters and raises its error for the whole document
+            _stats_row(cast(Any, cls)(document, **params))
+            raise failure or SourceError(cls.messages["no_words"])
         return counted
 
     def stat_names(self) -> tuple[str, ...]:
@@ -249,7 +270,12 @@ class Stats:
         """
         check_bool(flat, "flat", message=self.messages["bool_param"])
         stats = {stat: getattr(self, stat) for stat in self.stat_names()}
-        return _flatten(stats) if flat else _copy(stats)
+        return self._flat(stats) if flat else _copy(stats)
+
+    @classmethod
+    def _flat(cls, stats: Mapping[str, Any]) -> dict[str, Any]:
+        """Flat statistics of get_stats(flat=True) from the nested ones"""
+        return _flatten(stats)
 
     def to_dataframe(self) -> DataFrame:
         """
@@ -487,8 +513,6 @@ def stats_dataframe(
         0        3            0            3            0            0
         1        4            1            1            1            1
     """
-    from pandas import DataFrame
-
     messages = _messages(messages)
     given: object = stats
     if isinstance(given, str) or not isinstance(given, Iterable):
@@ -497,41 +521,58 @@ def stats_dataframe(
     for item in objects:
         if not isinstance(item, Stats):
             raise SourceTypeError(messages["stats_objects"].format(type=type(item).__name__))
-    nested = [item.get_stats() for item in objects]
-    # The keys of every dictionary statistic over all the objects, in order
+    return _stats_table([_stats_row(item) for item in objects], index)
+
+
+def _stats_row(stats: Stats) -> StatsRow:
+    """Statistics of an object for a table, read once"""
+    return type(stats), stats.get_stats()
+
+
+def _stats_table(rows: Sequence[StatsRow], index: Sequence[Hashable] | None) -> DataFrame:
+    """Table of the flat statistics of stats_dataframe: a value of a dictionary statistic a row
+    lacks is 0, the values of a dictionary with keys of numbers in their order"""
+    from pandas import DataFrame
+
+    # The keys of every dictionary statistic over all the rows, in order, those of its flat
+    # statistics alone, as a class may leave some out of them; the flat statistics of a row are
+    # made as it is read, not kept for all of them
     keys: dict[str, list[Any]] = {}
-    for values in nested:
-        for name, value in values.items():
+    for cls, nested in rows:
+        flat = cls._flat(nested)
+        for name, value in nested.items():
             if isinstance(value, Mapping):
                 found = keys.setdefault(name, [])
-                found.extend(key for key in value if key not in found)
+                found.extend(key for key in value if key not in found and f"{name}_{key}" in flat)
     for found in keys.values():
         if all(isinstance(key, Real) and not isinstance(key, bool) for key in found):
             found.sort()
     columns: list[str] = []
-    rows = []
-    for values in nested:
+    table = []
+    for cls, nested in rows:
+        flat = cls._flat(nested)
         row: dict[str, Any] = {}
-        for name, value in values.items():
+        for name, value in nested.items():
             if isinstance(value, Mapping):
-                full = {key: value.get(key, 0) for key in keys[name]}
-                row.update(_flatten({name: full}))
+                row.update({f"{name}_{key}": flat.get(f"{name}_{key}", 0) for key in keys[name]})
             else:
                 row[name] = value
         for column in row:
             if column not in columns:
                 columns.append(column)
-        rows.append(row)
-    return DataFrame(rows, index=index, columns=columns)
+        table.append(row)
+    return DataFrame(table, index=index, columns=columns)
 
 
 def _parts_dataframe(
-    parts: Sequence[tuple[Hashable, int, int, Stats | None]], name: str | Sequence[str]
+    parts: Sequence[tuple[Hashable, int, int, StatsRow | None]], name: str | Sequence[str]
 ) -> DataFrame:
     """Table of parts: a row per part labelled by its key, with its start, its end and the flat
-    statistics of stats_dataframe, none for a part without them; name names the index, or its
-    levels for keys that are tuples, such as a text and the number of its part"""
+    statistics of stats_dataframe, none for a part without them, the counts as integers; name
+    names the index, or its levels for keys that are tuples, such as a text and the number of
+    its part"""
     from pandas import DataFrame, Index, MultiIndex
+    from pandas.api.types import is_bool_dtype, is_integer_dtype
 
     names = [name] if isinstance(name, str) else list(name)
 
@@ -544,8 +585,14 @@ def _parts_dataframe(
         {"start": [start for _, start, _, _ in parts], "end": [end for _, _, end, _ in parts]},
         index=labels([key for key, _, _, _ in parts]),
     )
-    counted = [(key, stats) for key, _, _, stats in parts if stats is not None]
-    table = stats_dataframe(
-        [stats for _, stats in counted], index=labels([key for key, _ in counted])
+    counted = [(key, row) for key, _, _, row in parts if row is not None]
+    table = _stats_table([row for _, row in counted], labels([key for key, _ in counted]))
+    # A count stays an integer in the rows of the parts without statistics
+    table = table.astype(
+        {
+            column: "Int64"
+            for column, dtype in table.dtypes.items()
+            if is_integer_dtype(dtype) and not is_bool_dtype(dtype)
+        }
     )
     return bounds.join(table)

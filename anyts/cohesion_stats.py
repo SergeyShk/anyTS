@@ -673,8 +673,9 @@ class CohesionStats(Stats):
     requires_lemmas: ClassVar[bool] = True
     temporal_features: ClassVar[tuple[str, ...]] = ("tense", "aspect")
     stats_desc: ClassVar[Mapping[str, str]] = COHESION_STATS_DESC
-    # Cohesion is between sentences, so a part is a paragraph
-    part_kinds: ClassVar[tuple[str, ...]] = ("paragraphs",)
+    # Cohesion is between sentences, so a part is a line, a paragraph of the class by default,
+    # or the sentences between blank lines
+    part_kinds: ClassVar[tuple[str, ...]] = ("lines", "paragraphs")
     _connector_matcher: ClassVar[ConnectorMatcher | None] = None
     # The densities of the default classes and kinds, set by name with those of the matcher
     connectors_causal: float

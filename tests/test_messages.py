@@ -780,6 +780,7 @@ CASES = [
         lambda: document_part(to_document(TEXT), 5, 2, messages=OWN),
     ),
     ("parts_kind", ParameterError, lambda: Stats.by_parts(TEXT, "words")),
+    ("no_part_kinds", ParameterError, lambda: Diversity.by_parts(TEXT)),
     ("stats_objects", SourceTypeError, lambda: stats_dataframe([5], messages=OWN)),
     (
         "reference_keys",
