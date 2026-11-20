@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from collections.abc import Hashable, Iterable, Mapping, Sequence
+from collections.abc import Callable, Hashable, Iterable, Mapping, Sequence
+from functools import partial
 from itertools import pairwise
 from math import isfinite
 from numbers import Real
@@ -219,29 +220,36 @@ class Stats:
 
     @classmethod
     def _count_parts(
-        cls, source: str | Doc | Document, parts: str, params: Mapping[str, Any]
+        cls,
+        source: str | Doc | Document,
+        parts: str,
+        params: Mapping[str, Any],
+        make: Callable[[Document], Stats] | None = None,
     ) -> list[tuple[int, int, StatsRow | None]]:
         """Start, end and statistics of every part of a source parsed once, None for a part
         without words or one the class cannot count, such as a number alone on a line for a
         class without numbers; when it can count no part, the error of the class for the whole
-        document, so that a source without words raises as the class does"""
+        document, so that a source without words raises as the class does. make makes the
+        statistics of a document, the class with the parameters by default"""
         from .document import _document_parts, document_words
 
         kind = cls._parts_kind(parts)
         document = cls.parts_document(source, **params)
+        if make is None:
+            make = partial(cast(Any, cls), **params)
         counted: list[tuple[int, int, StatsRow | None]] = []
         failure: SourceError | None = None
         for start, end, part in _document_parts(document, kind):
             row = None
             if document_words(part):
                 try:
-                    row = _stats_row(cast(Any, cls)(part, **params))
+                    row = _stats_row(make(part))
                 except SourceError as error:
                     failure = failure or error
             counted.append((start, end, row))
         if all(row is None for _, _, row in counted):
             # The class checks its parameters and raises its error for the whole document
-            _stats_row(cast(Any, cls)(document, **params))
+            _stats_row(make(document))
             raise failure or SourceError(cls.messages["no_words"])
         return counted
 

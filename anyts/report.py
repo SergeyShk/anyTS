@@ -3,18 +3,20 @@ from __future__ import annotations
 import html
 import io
 from collections.abc import Mapping, Sequence
+from functools import partial
 from math import isfinite
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from .constants import REPORT_TEXTS
 from .exceptions import AnyTSError
-from .stats import Stats
+from .stats import Stats, _parts_dataframe
 from .utils import check_bool, check_messages
 
 if TYPE_CHECKING:
     from anyseg import Document
     from matplotlib.figure import Figure
+    from pandas import DataFrame
     from spacy.tokens import Doc
 
     from .visualizers.highlight import HighlightedText
@@ -147,20 +149,32 @@ class Report:
 
         return to_document(source)
 
-    def compute(self, cls: type[Stats], document: Document) -> Stats:
+    @classmethod
+    def compute(cls, stats_class: type[Stats], document: Document) -> Stats:
         """
-        Getting the statistics of a class of the document, as Command.compute
+        Getting the statistics of a class of the document or of its sentence
+
+        Description:
+            The class of the document; DiversityStats, which takes words, of the
+            words of the document (document_words). A library overrides it for a
+            class that takes something else or other parameters; Command.compute
+            is this one of its report, so that the command counts alike
 
         Arguments:
-            cls (type[Stats]): Class of statistics
-            document (Document): Document of the text
+            stats_class (type[Stats]): Class of statistics
+            document (Document): Document of the text or of its sentence
 
         Returns:
             Stats: Statistics
         """
-        from .cli import _compute
+        from .diversity_stats import DiversityStats
+        from .document import document_words
 
-        return _compute(cls, document)
+        if issubclass(stats_class, DiversityStats) and (
+            stats_class.__init__ is DiversityStats.__init__
+        ):
+            return stats_class(document_words(document))
+        return stats_class(document)  # type: ignore[call-arg]
 
     def to_html(self) -> str:
         """
@@ -226,7 +240,7 @@ class Report:
         if not columns:
             return ""
         tables = {
-            name: type(self.stats[name]).by_parts(self.document, "sentences")
+            name: self._sentences_table(type(self.stats[name]))
             for name in dict.fromkeys(name for name, _ in columns)
         }
         heads = "".join(
@@ -250,6 +264,15 @@ class Report:
             f"<table>\n<tr><th>#</th><th>{escape(texts['sentence'])}</th>{heads}</tr>\n"
             + "\n".join(rows)
             + "\n</table>\n",
+        )
+
+    def _sentences_table(self, stats_class: type[Stats]) -> DataFrame:
+        """Table of the statistics of every sentence of the document, counted by compute"""
+        counted = stats_class._count_parts(
+            self.document, "sentences", {}, make=partial(self.compute, stats_class)
+        )
+        return _parts_dataframe(
+            [(number, *part) for number, part in enumerate(counted)], "sentence"
         )
 
     def section_highlight(self) -> str:

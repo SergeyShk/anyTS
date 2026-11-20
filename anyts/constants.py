@@ -555,25 +555,44 @@ VISUALIZER_LABELS = {
     },
 }
 
-# Texts of the command line of a library by key: the help of the command and its options and
-# the messages of its errors; a language library passes its own over these
+# Texts of the command line of a library by key: the help of the command and its options, its
+# headings and usage, and the messages of its errors; a language library passes its own over
+# these
 CLI_TEXTS: Mapping[str, str] = MappingProxyType(
     {
         "description": "Statistics of texts",
+        "usage": "usage: ",
+        "commands": "commands",
+        "positionals": "positional arguments",
+        "options": "options",
+        "help_option": "show this help message and exit",
         "stats_command": "Print the statistics of texts",
         "files": "Text files; the standard input without them or for -",
-        "stats_option": "Classes of statistics, by name and separated by commas: {names}; all by default",
+        "files_metavar": "files",
+        "stats_option": (
+            "Classes of statistics, by name and separated by commas: {names}; all by default, "
+            "those that count the parts with --parts"
+        ),
+        "stats_metavar": "STATS",
         "parts_option": "Statistics of every sentence, line or paragraph",
         "format_option": "Output: a table, JSON or CSV",
-        "output_option": "File of the output; the standard output by default",
-        "encoding_option": "Encoding of the files and of the output",
+        "output_option": "File of the output; the standard output by default or for -",
+        "output_metavar": "OUTPUT",
+        "encoding_option": "Encoding of the files; the output is in UTF-8",
+        "encoding_metavar": "ENCODING",
+        "error": "{prog}: error: {message}",
         "unknown_stats": "unknown statistics {name}; available: {names}",
+        "unknown_encoding": "unknown encoding {encoding}",
         "no_parts": "{name} counts no {parts}",
+        "parts_classes": "no class counts {parts}",
         "file_error": "{source}: {error}",
+        "decode_error": "{source}: {error}; give its encoding with -e",
         "stats_error": "{source}, {name}: {error}",
         "report_command": "Write the HTML report of a text",
         "file": "Text file; the standard input without it or for -",
+        "file_metavar": "file",
         "title_option": "Title of the report",
+        "title_metavar": "TITLE",
         "report_encoding_option": "Encoding of the file; the report is in UTF-8",
     }
 )

@@ -14,15 +14,17 @@ The command line of the statistics of a language library. Its command `stats` re
 | Option | Default | Description |
 | :----- | :------ | :---------- |
 | `files` | the standard input | Text files |
-| `-s`, `--stats` | every class | Classes of statistics, by name and separated by commas |
-| `-p`, `--parts` | - | `sentences`, `lines` or `paragraphs`: a row per part ([`by_parts`](https://sergeyshk.github.io/anyTS/stats/stats/#by_parts)); a class that counts no such parts is an error |
+| `-s`, `--stats` | every class | Classes of statistics, by name and separated by commas; with `-p`, every class that counts such parts by default |
+| `-p`, `--parts` | - | `sentences`, `lines` or `paragraphs`: a row per part ([`by_parts`](https://sergeyshk.github.io/anyTS/stats/stats/#by_parts)); a class of `-s` that counts no such parts is an error |
 | `-f`, `--format` | `table` | `table` - the table of `print_stats` of every class, or of the parts; `json` - the flat statistics of every class by text, `get_stats(flat=True)`, or the records of the parts, with `nan` and infinities as `null`; `csv` - a row per text, or per part of a text, with a column `<class>.<statistic>` for every statistic and 0 for a count of a distribution a text lacks ([`stats_dataframe`](https://sergeyshk.github.io/anyTS/stats/stats/#stats_dataframe)) |
-| `-o`, `--output` | the standard output | File of the output |
-| `-e`, `--encoding` | `utf-8` | Encoding of the files and of the output |
+| `-o`, `--output` | the standard output | File of the output; the standard output for `-` |
+| `-e`, `--encoding` | `utf-8-sig` | Encoding of the files: UTF-8, a byte order mark left out, by default; the output is in UTF-8 |
 
-Its command `report` writes the [HTML report](https://sergeyshk.github.io/anyTS/report/) of a text, from a file or from the standard input, to `-o` or to the standard output, with the classes of `-s` and the title of `-t`, `--title`. `-e` is the encoding of the file, and the report is in UTF-8, which it declares. A class that cannot count the text is left out of the report, and its error goes to the standard error with the exit code 1.
+The standard input is read as a file, its line breaks and its byte order mark alike, and a table is printed as every text is counted.
 
-`run(argv=None)` runs the command with the arguments, those of the command line by default, and returns the exit code: 0; 1 when a file cannot be read or written or a class cannot count a text, whose error goes to the standard error while the other texts and classes are counted; 2 for wrong arguments, with the help of `argparse`.
+Its command `report` writes the [HTML report](https://sergeyshk.github.io/anyTS/report/) of a text, from a file or from the standard input, to `-o` or to the standard output, with the classes of `-s` and the title of `-t`, `--title`. `-e` is the encoding of the file, and the report is in UTF-8, which it declares; the statistics of the report, and of its table of sentences, are counted as by `stats`. A class that cannot count the text is left out of the report, and its error goes to the standard error with the exit code 1.
+
+`run(argv=None)` runs the command with the arguments, those of the command line by default, and returns the exit code: 0; 1 when a file cannot be read or written or a class cannot count a text, whose error goes to the standard error while the other texts and classes are counted, and when the reader of the output stops, as `head`, without a message; 2 for wrong arguments, an unknown encoding among them, with the help of `argparse`; 130 when interrupted.
 
 Raises `ParameterError` when a subclass is defined with texts that `check_messages` rejects against `CLI_TEXTS`.
 <!-- --8<-- [end:Command] -->
@@ -76,10 +78,14 @@ A command of a library subclasses `Command`:
 | :--- | :--- | :---------- |
 | `prog` | class attribute | Name of the command; `anyts` by default |
 | `stats_classes` | class attribute | Classes of statistics by their name in `--stats`; none by default |
-| `texts` | class attribute | Texts of the help and of the errors by key, `CLI_TEXTS` by default: complete, as the messages of a class of statistics |
-| `parse(text)` | method | Document of a text, once for all the classes; `to_document` by default, overridden with the parse of the classes of the library |
-| `compute(cls, document)` | method | Statistics of a class of a document; `DiversityStats` of the words of the document (`document_words`) |
+| `texts` | class attribute | Texts of the help, of its headings and usage, and of the errors by key, `CLI_TEXTS` by default: complete, as the messages of a class of statistics. The other errors of `argparse`, as an invalid choice, come from its translation by `gettext` |
+| `parse(text)` | method | Document of a text, once for all the classes; `to_document` by default, overridden with the parse of the classes of the library. It may read `args` and `names`, as to parse with a model only for the classes that need it, and raises `SourceError` for a text it cannot parse, so that the other texts are counted |
+| `compute(stats_class, document)` | method | Statistics of a class of a document or of its part; `compute` of `report_class` by default, so that a library overrides that of its report and the commands count alike |
 | `report_class` | class attribute | Report of the command `report`, made of the document of `parse` and the classes of `-s`; `Report` by default |
+| `arguments(parser, command)` | method | Adds the options of the library to the parser of the command `stats` or `report`; none by default |
+| `subcommands(commands)` | method | Adds the commands of the library with `commands.add_parser(name, help=..., texts=self.texts)`; none by default |
+| `command_<name>(args)` | method | Runs the command `name` and returns its exit code: `command_stats`, `command_report` and those of the library |
+| `args`, `names` | attributes | Arguments of the command line and names of the classes of `-s`, set by `run` before the command |
 | `parser()` | method | `ArgumentParser` of the command |
 <!-- --8<-- [end:Command-hooks] -->
 
