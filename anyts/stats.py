@@ -49,6 +49,7 @@ class Stats:
         get_stats: Getting the computed statistics
         to_dataframe: Getting the computed statistics as a one-row frame
         print_stats: Printing the computed statistics with descriptions
+        value_desc: Description of a value of a dictionary statistic
         level_scale: Interpretation scale of a statistic, level_scales by default
         describe: Reading of a statistic by its scale
 
@@ -306,6 +307,23 @@ class Stats:
         _print_table(
             [(desc, stats[stat]) for stat, desc in self.stats_desc.items()], self.stats_headers
         )
+
+    def value_desc(self, stat: str, value: Hashable) -> str:
+        """
+        Getting the description of a value of a dictionary statistic
+
+        Description:
+            The value itself by default, as the length of the words by length; a
+            class whose values have descriptions overrides it, as MorphStats
+
+        Arguments:
+            stat (str): Name of the statistic
+            value (Hashable): Value, a key of the counts of the statistic
+
+        Returns:
+            str: Description of the value
+        """
+        return str(value)
 
     def level_scale(self, stat: str) -> tuple[tuple[float, str], ...] | None:
         """

@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from collections import Counter
-from collections.abc import Iterable, Mapping
-from typing import TYPE_CHECKING, Any, ClassVar, NamedTuple
+from collections.abc import Hashable, Iterable, Mapping
+from typing import TYPE_CHECKING, Any, ClassVar, NamedTuple, cast
 
 from .constants import MORPH_FEATURES, MORPH_STATS_DESC, MORPH_VALUES_DESC
 from .document import _feature_dict
@@ -59,6 +59,7 @@ class MorphStats(Stats):
         get_stats: Number of the words by value of every statistic
         explain_text: Values of the statistics word by word
         print_stats: Printing the numbers with the descriptions of the values
+        value_desc: Description of a value of a statistic
         get_markers: Markers of the language computed from the features
         print_markers: Printing the markers with their descriptions
 
@@ -68,8 +69,9 @@ class MorphStats(Stats):
         stats_desc (dict[str, str]): pos and the statistics of feature_names with their
             names, in the order of get_stats (MORPH_STATS_DESC)
         values_desc (dict[str, dict[str, str]]): Descriptions of the values by statistic
-            for print_stats (MORPH_VALUES_DESC)
+            for print_stats and value_desc (MORPH_VALUES_DESC)
         unknown_value (str): Description of the words without the feature in print_stats
+            and value_desc
         markers_desc (dict[str, str]): Markers of get_markers with their descriptions,
             none by default
         markers_headers (tuple[str, str]): Headers of the columns for print_markers
@@ -331,6 +333,23 @@ class MorphStats(Stats):
             for value, number in sorted(counts.items(), key=lambda item: item[1], reverse=True):
                 print(f"{self._value_desc(descs, value):30}|{number!s:^10}")
             print()
+
+    def value_desc(self, stat: str, value: Hashable) -> str:
+        """
+        Getting the description of a value of a statistic, as print_stats
+
+        Description:
+            The description of values_desc, a value of several joining those of
+            its parts with a slash; unknown_value for the words without the feature
+
+        Arguments:
+            stat (str): Name of the statistic
+            value (str|None): Value of the feature
+
+        Returns:
+            str: Description of the value
+        """
+        return self._value_desc(self.values_desc.get(stat, {}), cast(str | None, value))
 
     def _value_desc(self, descs: Mapping[str, str], value: str | None) -> str:
         """Description of a value of a statistic for print_stats"""

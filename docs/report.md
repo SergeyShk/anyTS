@@ -9,16 +9,16 @@ The report of a text in one HTML file with nothing outside it: no script, no sty
 Report(source, title=None, stats_classes=None, *, skip_errors=False)
 ```
 
-The HTML report of the statistics of a text. The text is parsed once (`parse`), and its sections follow `sections`, each a method `section_<name>` that gives a fragment of HTML:
+The HTML report of the statistics of a text. The text is parsed once (`parse`), every class counts it and its sentences by `compute`, and its sections follow `sections`, each a method `section_<name>` that gives a fragment of HTML:
 
 | Section | Content |
 | :------ | :------ |
-| `statistics` | A table per class of `stats_classes`: the description of every statistic of `get_stats`, its value - a float with two decimals, a distribution as its pairs - and its reading (`describe`) |
-| `sentences` | The text of every sentence with the statistics of `sentence_columns` ([`by_parts`](https://sergeyshk.github.io/anyTS/stats/stats/#by_parts)); none without them |
-| `highlight` | The text highlighted by `highlight_class` with its default layers; none without it |
-| `plots` | The plots of `plots` in SVG with their captions: the lengths of the sentences (`sentence_lengths_plot`) by default; none for a text without sentences |
+| `statistics` | A table per class of `stats_classes` under its title (`titles`): the description of every statistic of `stats_desc`, as `print_stats`, its value - a float with two decimals, a smaller one than 0.1 with two significant digits, a distribution as its pairs from the most frequent, with the values described by `value_desc`, an undefined value as the text `undefined` - and its reading (`describe`); the classes left out by `skip_errors` are named above |
+| `sentences` | The text of every sentence with the statistics of `sentence_columns` ([`by_parts`](https://sergeyshk.github.io/anyTS/stats/stats/#by_parts)); none without them. A text of more than `max_sentences` sentences has those with the highest values of the first statistic, in their order |
+| `highlight` | The text highlighted by `highlight_class` with its default layers, its styles in the head of the page; none without it |
+| `plots` | The plots of `plots` in SVG with their captions: the lengths of the sentences (`sentence_lengths_plot`) by default, without a mark on every sentence for a text of more than 300 of them; none for a text without sentences |
 
-The style is in the page and the plots draw their text as paths, so they need no font. Every text of the source and of the statistics goes through `escape`, so that it never becomes markup.
+The style is in the page and the plots draw their text as paths, so they need no font; they are made without `pyplot`, so that a command opens no window. The page is the same for the same text, and the ids of its plots differ. Every text of the source and of the statistics goes through `escape`, so that it never becomes markup.
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
@@ -97,7 +97,9 @@ A report of a library subclasses `Report`:
 | Hook | Kind | Description |
 | :--- | :--- | :---------- |
 | `stats_classes` | class attribute | Classes of statistics by name; none by default |
-| `sentence_columns` | class attribute | Statistics of every sentence, as pairs of the name of a class and of a statistic; none by default |
+| `titles` | class attribute | Headings of the classes by name; the names by default |
+| `sentence_columns` | class attribute | Statistics of every sentence, as pairs of the name of a class and of a statistic, a key of its flat statistics among them; none by default |
+| `max_sentences` | class attribute | Sentences of the table at most, those with the highest values of its first statistic for a longer text; 100 by default |
 | `highlight_class` | class attribute | Highlighting of the text (`HighlightedText`), with its default layers; none by default |
 | `visualizer_labels` | class attribute | Labels of the plots by visualizer, over `VISUALIZER_LABELS`; none by default |
 | `texts` | class attribute | Headings and labels by key, `REPORT_TEXTS` by default, the language of the page `lang` among them: complete, as the messages of a class of statistics |
@@ -105,7 +107,7 @@ A report of a library subclasses `Report`:
 | `section_<name>()` | method | Fragment of HTML of a section; a library overrides one or adds its own and names it in `sections` |
 | `parse(source)` | method | Document of a source, once for all the sections; `to_document` by default |
 | `compute(stats_class, document)` | class method | Statistics of a class of the document or of its sentence; `DiversityStats` of the words of the document (`document_words`). `compute` of `Command` is that of its report, so that the command counts alike |
-| `plots()` | method | Captions and figures of matplotlib of the section `plots` |
+| `plots()` | method | Captions and figures of matplotlib of the section `plots`, made on a `Figure`, not with `pyplot`, so that a command chooses no interactive backend |
 <!-- --8<-- [end:Report-hooks] -->
 
 </details>

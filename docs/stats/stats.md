@@ -178,6 +178,7 @@ A class of statistics subclasses `Stats`:
 | `stats_desc` | class attribute | Statistics of the class with their descriptions; each is an attribute or a property of the object |
 | `stat_names()` | method | Names of the statistics of `get_stats`; the keys of `stats_desc` by default |
 | `stats_headers` | class attribute | Headers of the columns for `print_stats`; `("Statistic", "Value")` by default |
+| `value_desc(stat, value)` | method | Description of a value of a dictionary statistic, a key of its counts, in the [report](https://sergeyshk.github.io/anyTS/report/); the value itself by default, its description of `values_desc` in `MorphStats` |
 | `level_scales` | class attribute | Interpretation scales of `describe` by statistic, as lower bounds and their bands in descending order; none by default |
 | `level_scale(stat)` | method | Interpretation scale of a statistic; `level_scales` by default, overridden when the scale depends on the parameters of the object |
 | `messages` | class attribute | Messages of the errors by key; `MESSAGES` by default |

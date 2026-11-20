@@ -144,8 +144,8 @@ A language library subclasses `MorphStats`. By default the words and their featu
 | `parse(source)` | method | Document of the source, from `Stats`; a library sets it to annotate a string in its language |
 | `feature_names` | class attribute | Feature of Universal Dependencies by statistic, `MORPH_FEATURES` by default; a statistic is an identifier other than `pos`, `tags`, `words` and the names of the class, since it becomes an attribute of the object |
 | `stats_desc` | class attribute | `pos` and the statistics of `feature_names` with their names, in the order of `get_stats`; `MORPH_STATS_DESC` by default |
-| `values_desc` | class attribute | Descriptions of the values by statistic for `print_stats`, `MORPH_VALUES_DESC` by default; a value without one is printed as it is |
-| `unknown_value` | class attribute | Description of the words without the feature in `print_stats`, `"Unknown"` by default |
+| `values_desc` | class attribute | Descriptions of the values by statistic for `print_stats` and `value_desc`, `MORPH_VALUES_DESC` by default; a value without one is printed as it is |
+| `unknown_value` | class attribute | Description of the words without the feature in `print_stats` and `value_desc`, `"Unknown"` by default |
 | `get_markers()` | method | Markers of the language computed from the statistics; none by default |
 | `markers_desc`, `markers_headers` | class attributes | Markers of `get_markers` with their descriptions, headers of the columns for `print_markers` |
 | `messages` | class attribute | Messages of the errors by key; `MESSAGES` by default |

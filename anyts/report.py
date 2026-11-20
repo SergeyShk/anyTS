@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import html
 import io
+import re
 from collections.abc import Mapping, Sequence
 from functools import partial
 from math import isfinite
@@ -21,6 +22,8 @@ if TYPE_CHECKING:
 
     from .visualizers.highlight import HighlightedText
 
+# Sentences a plot of their lengths marks one by one; a longer text has its curve alone
+_MARKED_SENTENCES = 300
 # Style of the report, inline so that the file needs nothing else
 _STYLE = """
 body { font-family: system-ui, sans-serif; margin: 2rem auto; max-width: 60rem; color: #222; }
@@ -40,13 +43,15 @@ class Report:
 
     Description:
         One HTML file with no outside resources: the statistics of every class
-        with their descriptions and readings (describe), the chosen statistics
-        of every sentence (by_parts), the highlighted text and plots in SVG. The
-        text is parsed once (parse). Every section is a method section_<name>
-        that gives a fragment of HTML, in the order of sections; a language
-        library sets the classes, the columns of the sentences, the highlighting
-        and the texts, and overrides or adds sections. Every text of the source
-        or of the statistics goes through escape
+        with their descriptions and readings (describe), as print_stats, the
+        chosen statistics of every sentence (by_parts), at most max_sentences of
+        them, the highlighted text and plots in SVG. The text is parsed once
+        (parse), and every class counts it and its sentences by compute. Every
+        section is a method section_<name> that gives a fragment of HTML, in the
+        order of sections; a language library sets the classes, their titles,
+        the columns of the sentences, the highlighting and the texts, and
+        overrides or adds sections. Every text of the source or of the statistics
+        goes through escape, and the page is the same for the same text
 
     Arguments:
         source (str|Doc|Document): Data source
@@ -64,8 +69,12 @@ class Report:
 
     Class attributes:
         stats_classes (dict[str, type[Stats]]): Classes of statistics by name
+        titles (dict[str, str]): Headings of the classes by name; the names by default
         sentence_columns (tuple[tuple[str, str], ...]): Statistics of every sentence in
-            the table of the sentences, as names of a class and of a statistic
+            the table of the sentences, as names of a class and of a statistic, a key
+            of its flat statistics among them
+        max_sentences (int): Sentences of the table, those with the highest values of
+            its first statistic for a longer text; 100 by default
         highlight_class (type[HighlightedText]): Highlighting of the text, with its
             default layers; none by default
         visualizer_labels (dict[str, dict[str, str]]): Labels of the plots by visualizer,
@@ -95,7 +104,9 @@ class Report:
     """
 
     stats_classes: ClassVar[Mapping[str, type[Stats]]] = {}
+    titles: ClassVar[Mapping[str, str]] = {}
     sentence_columns: ClassVar[Sequence[tuple[str, str]]] = ()
+    max_sentences: ClassVar[int] = 100
     highlight_class: ClassVar[type[HighlightedText] | None] = None
     visualizer_labels: ClassVar[Mapping[str, Mapping[str, str]]] = {}
     texts: ClassVar[Mapping[str, str]] = REPORT_TEXTS
@@ -119,11 +130,13 @@ class Report:
         classes = self.stats_classes if stats_classes is None else stats_classes
         self.stats: dict[str, Stats] = {}
         self.errors: dict[str, AnyTSError] = {}
+        # The statistics read once, so that a statistic computed when it is read raises here,
+        # for its class
+        self._values: dict[str, dict[str, Any]] = {}
         for name, cls in classes.items():
             try:
                 stats = self.compute(cls, self.document)
-                # A statistic computed when it is read raises here, for its class
-                stats.get_stats()
+                self._values[name] = stats.get_stats()
             except AnyTSError as error:
                 if not skip_errors:
                     raise
@@ -184,10 +197,13 @@ class Report:
             str: HTML page
         """
         body = "".join(getattr(self, f"section_{name}")() for name in self.sections)
+        style = _STYLE
+        if self.highlight_class is not None and "highlight" in self.sections:
+            style += self.highlight_class.css()
         return (
             f'<!DOCTYPE html>\n<html lang="{escape(self.texts["lang"])}">\n<head>\n'
             f'<meta charset="utf-8">\n<title>{escape(self.title)}</title>\n'
-            f"<style>{_STYLE}</style>\n</head>\n<body>\n<main>\n"
+            f"<style>{style}</style>\n</head>\n<body>\n<main>\n"
             f"<h1>{escape(self.title)}</h1>\n{body}</main>\n</body>\n</html>\n"
         )
 
@@ -203,34 +219,47 @@ class Report:
     def section_statistics(self) -> str:
         """
         Getting the section of the statistics: a table per class with the
-        description, the value and the reading of every statistic
+        description, the value and the reading of every statistic of stats_desc,
+        as print_stats, the values of a dictionary from the most frequent and
+        described by value_desc; the classes left out by skip_errors named
 
         Returns:
             str: Fragment of HTML
         """
         texts = self.texts
         tables = []
+        if self.errors:
+            names = ", ".join(self.titles.get(name, name) for name in self.errors)
+            tables.append(f"<p>{escape(texts['left_out'].format(names=names))}</p>\n")
         for name, stats in self.stats.items():
+            values = self._values[name]
             rows = []
-            for stat, value in stats.get_stats().items():
-                reading = stats.describe(stat) or ""
+            for stat, desc in stats.stats_desc.items():
+                value = values[stat]
+                if isinstance(value, Mapping):
+                    # The values from the most frequent, as print_stats
+                    pairs = sorted(value.items(), key=lambda pair: pair[1], reverse=True)
+                    value = {stats.value_desc(stat, key): item for key, item in pairs}
                 rows.append(
-                    f"<tr><td>{escape(stats.stats_desc.get(stat, stat))}</td>"
+                    f"<tr><td>{escape(desc)}</td>"
                     f'<td class="number">{escape(_number(value, texts))}</td>'
-                    f"<td>{escape(reading)}</td></tr>"
+                    f"<td>{escape(stats.describe(stat) or '')}</td></tr>"
                 )
             tables.append(
-                f"<h3>{escape(name)}</h3>\n<table>\n<tr><th>{escape(texts['statistic'])}</th>"
+                f"<h3>{escape(self.titles.get(name, name))}</h3>\n<table>\n"
+                f"<tr><th>{escape(texts['statistic'])}</th>"
                 f"<th>{escape(texts['value'])}</th><th>{escape(texts['reading'])}</th></tr>\n"
                 + "\n".join(rows)
                 + "\n</table>\n"
             )
-        return _section(texts["statistics"], "".join(tables)) if tables else ""
+        return _section(texts["statistics"], "".join(tables)) if self.stats else ""
 
     def section_sentences(self) -> str:
         """
         Getting the section of the sentences: the text of every sentence with the
-        statistics of sentence_columns; none without them
+        statistics of sentence_columns, none without them; a text of more than
+        max_sentences sentences has those with the highest values of the first
+        statistic, in their order
 
         Returns:
             str: Fragment of HTML
@@ -247,10 +276,28 @@ class Report:
             f"<th>{escape(type(self.stats[name]).stats_desc.get(stat, stat))}</th>"
             for name, stat in columns
         )
-        rows = []
-        text = self.document.text
         first = next(iter(tables.values()))
-        for number, (start, end) in enumerate(first[["start", "end"]].itertuples(index=False)):
+        numbers = list(range(len(first)))
+        note = ""
+        if len(numbers) > self.max_sentences:
+            name, stat = columns[0]
+            ranked = tables[name][stat].reset_index(drop=True)
+            top = ranked.sort_values(ascending=False, kind="stable", na_position="last")
+            numbers = sorted(top.index[: self.max_sentences])
+            note = "<p>{}</p>\n".format(
+                escape(
+                    texts["top_sentences"].format(
+                        shown=len(numbers),
+                        total=len(first),
+                        stat=type(self.stats[name]).stats_desc.get(stat, stat),
+                    )
+                )
+            )
+        text = self.document.text
+        bounds = first[["start", "end"]].to_numpy().tolist()
+        rows = []
+        for number in numbers:
+            start, end = bounds[number]
             cells = "".join(
                 f'<td class="number">{escape(_cell(tables[name][stat].iloc[number], texts))}</td>'
                 for name, stat in columns
@@ -261,7 +308,8 @@ class Report:
             )
         return _section(
             texts["sentences"],
-            f"<table>\n<tr><th>#</th><th>{escape(texts['sentence'])}</th>{heads}</tr>\n"
+            note
+            + f"<table>\n<tr><th>#</th><th>{escape(texts['sentence'])}</th>{heads}</tr>\n"
             + "\n".join(rows)
             + "\n</table>\n",
         )
@@ -278,14 +326,16 @@ class Report:
     def section_highlight(self) -> str:
         """
         Getting the section of the highlighted text, with the default layers of
-        highlight_class; none without it
+        highlight_class, its styles in the head of the page; none without it
 
         Returns:
             str: Fragment of HTML
         """
         if self.highlight_class is None:
             return ""
-        return _section(self.texts["highlight"], self.highlight_class(self.document).to_html())
+        return _section(
+            self.texts["highlight"], self.highlight_class(self.document).to_html(css=False)
+        )
 
     def section_plots(self) -> str:
         """
@@ -295,8 +345,9 @@ class Report:
             str: Fragment of HTML
         """
         figures = "".join(
-            f"<figure>\n{_svg(figure)}\n<figcaption>{escape(caption)}</figcaption>\n</figure>\n"
-            for caption, figure in self.plots()
+            f"<figure>\n{_svg(figure, f'plot{number}-')}\n"
+            f"<figcaption>{escape(caption)}</figcaption>\n</figure>\n"
+            for number, (caption, figure) in enumerate(self.plots(), start=1)
         )
         return _section(self.texts["plots"], figures) if figures else ""
 
@@ -306,17 +357,20 @@ class Report:
 
         Description:
             The lengths of the sentences (sentence_lengths_plot) by default, with
-            the labels of visualizer_labels; a text without sentences has none. A
-            library overrides it to add its own
+            the labels of visualizer_labels, a mark on every sentence of a text
+            of a few hundred of them; a text without sentences has none. A
+            library overrides it to add its own, made on a Figure of matplotlib,
+            not of pyplot, so that a command chooses no interactive backend
 
         Returns:
             list[tuple[str, Figure]]: Captions and figures of matplotlib
         """
-        import matplotlib.pyplot as plt
+        from matplotlib.figure import Figure
 
         from .visualizers.sentences import sentence_lengths_plot
 
-        figure, ax = plt.subplots(figsize=(9, 4))
+        figure = Figure(figsize=(9, 4))
+        ax = figure.subplots()
         try:
             sentence_lengths_plot(
                 self.document,
@@ -324,8 +378,11 @@ class Report:
                 labels=self.visualizer_labels.get("sentence_lengths_plot"),
             )
         except AnyTSError:
-            plt.close(figure)
             return []
+        if len(self.document.sentences) > _MARKED_SENTENCES:
+            legend = ax.get_legend()
+            for line in [*ax.get_lines(), *(legend.get_lines() if legend else [])]:
+                line.set_marker("")
         return [(self.texts["sentence_lengths"], figure)]
 
 
@@ -357,12 +414,14 @@ def _section(heading: str, content: str) -> str:
 
 
 def _number(value: Any, texts: Mapping[str, str]) -> str:
-    """Value of a statistic as text: a float with two decimals, an undefined one as the text of
-    undefined, a dictionary as its pairs"""
+    """Value of a statistic as text: a float with two decimals, a small one with two significant
+    digits, an undefined one as the text of undefined, a dictionary as its pairs"""
     if isinstance(value, Mapping):
         return ", ".join(f"{key}: {_number(item, texts)}" for key, item in value.items())
+    if value is None or (isinstance(value, float) and not isfinite(value)):
+        return texts["undefined"]
     if isinstance(value, float):
-        return f"{value:.2f}" if isfinite(value) else texts["undefined"]
+        return f"{value:.2g}" if 0 < abs(value) < 0.1 else f"{value:.2f}"
     return str(value)
 
 
@@ -373,13 +432,19 @@ def _cell(value: Any, texts: Mapping[str, str]) -> str:
     return texts["undefined"] if isna(value) else _number(value, texts)
 
 
-def _svg(figure: Figure) -> str:
-    """SVG of a figure of matplotlib, with the text as paths, so that it needs no font"""
-    import matplotlib.pyplot as plt
+def _svg(figure: Figure, prefix: str) -> str:
+    """SVG of a figure of matplotlib, with the text as paths, so that it needs no font, the same
+    for the same figure, its ids starting with the prefix, so that those of several figures of a
+    page differ"""
+    import matplotlib
 
     buffer = io.StringIO()
-    with plt.rc_context({"svg.fonttype": "path"}):
-        figure.savefig(buffer, format="svg", bbox_inches="tight")
-    plt.close(figure)
+    with matplotlib.rc_context({"svg.fonttype": "path", "svg.hashsalt": "anyts"}):
+        figure.savefig(
+            buffer,
+            format="svg",
+            bbox_inches="tight",
+            metadata={"Date": None, "Creator": None, "Format": None, "Type": None},
+        )
     svg = buffer.getvalue()
-    return svg[svg.index("<svg") :]
+    return re.sub(r'(\bid="|href="#|url\(#)', rf"\1{prefix}", svg[svg.index("<svg") :])
