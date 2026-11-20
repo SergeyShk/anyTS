@@ -2223,12 +2223,12 @@
 <tr>
 <td style="text-align: left;"><code>-s</code>, <code>--stats</code></td>
 <td style="text-align: left;">every class</td>
-<td style="text-align: left;">Classes of statistics, by name and separated by commas</td>
+<td style="text-align: left;">Classes of statistics, by name and separated by commas; with <code>-p</code>, every class that counts such parts by default</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>-p</code>, <code>--parts</code></td>
 <td style="text-align: left;">-</td>
-<td style="text-align: left;"><code>sentences</code>, <code>lines</code> or <code>paragraphs</code>: a row per part (<a href="https://sergeyshk.github.io/anyTS/stats/stats/#by_parts"><code>by_parts</code></a>); a class that counts no such parts is an error</td>
+<td style="text-align: left;"><code>sentences</code>, <code>lines</code> or <code>paragraphs</code>: a row per part (<a href="https://sergeyshk.github.io/anyTS/stats/stats/#by_parts"><code>by_parts</code></a>); a class of <code>-s</code> that counts no such parts is an error</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>-f</code>, <code>--format</code></td>
@@ -2238,17 +2238,18 @@
 <tr>
 <td style="text-align: left;"><code>-o</code>, <code>--output</code></td>
 <td style="text-align: left;">the standard output</td>
-<td style="text-align: left;">File of the output</td>
+<td style="text-align: left;">File of the output; the standard output for <code>-</code></td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>-e</code>, <code>--encoding</code></td>
-<td style="text-align: left;"><code>utf-8</code></td>
-<td style="text-align: left;">Encoding of the files and of the output</td>
+<td style="text-align: left;"><code>utf-8-sig</code></td>
+<td style="text-align: left;">Encoding of the files: UTF-8, a byte order mark left out, by default; the output is in UTF-8</td>
 </tr>
 </tbody>
 </table>
-<p>Its command <code>report</code> writes the <a href="https://sergeyshk.github.io/anyTS/report/">HTML report</a> of a text, from a file or from the standard input, to <code>-o</code> or to the standard output, with the classes of <code>-s</code> and the title of <code>-t</code>, <code>--title</code>. <code>-e</code> is the encoding of the file, and the report is in UTF-8, which it declares. A class that cannot count the text is left out of the report, and its error goes to the standard error with the exit code 1.</p>
-<p><code>run(argv=None)</code> runs the command with the arguments, those of the command line by default, and returns the exit code: 0; 1 when a file cannot be read or written or a class cannot count a text, whose error goes to the standard error while the other texts and classes are counted; 2 for wrong arguments, with the help of <code>argparse</code>.</p>
+<p>The standard input is read as a file, its line breaks and its byte order mark alike, and a table is printed as every text is counted.</p>
+<p>Its command <code>report</code> writes the <a href="https://sergeyshk.github.io/anyTS/report/">HTML report</a> of a text, from a file or from the standard input, to <code>-o</code> or to the standard output, with the classes of <code>-s</code> and the title of <code>-t</code>, <code>--title</code>. <code>-e</code> is the encoding of the file, and the report is in UTF-8, which it declares; the statistics of the report, and of its table of sentences, are counted as by <code>stats</code>. A class that cannot count the text is left out of the report, and its error goes to the standard error with the exit code 1.</p>
+<p><code>run(argv=None)</code> runs the command with the arguments, those of the command line by default, and returns the exit code: 0; 1 when a file cannot be read or written or a class cannot count a text, whose error goes to the standard error while the other texts and classes are counted, and when the reader of the output stops, as <code>head</code>, without a message; 2 for wrong arguments, an unknown encoding among them, with the help of <code>argparse</code>; 130 when interrupted.</p>
 <p>Raises <code>ParameterError</code> when a subclass is defined with texts that <code>check_messages</code> rejects against <code>CLI_TEXTS</code>.</p>
 <!-- --8<-- [end:Command] -->
 
@@ -2311,22 +2312,42 @@ vowels<span class="w"> </span>report<span class="w"> </span>text.txt<span class=
 <tr>
 <td style="text-align: left;"><code>texts</code></td>
 <td style="text-align: left;">class attribute</td>
-<td style="text-align: left;">Texts of the help and of the errors by key, <code>CLI_TEXTS</code> by default: complete, as the messages of a class of statistics</td>
+<td style="text-align: left;">Texts of the help, of its headings and usage, and of the errors by key, <code>CLI_TEXTS</code> by default: complete, as the messages of a class of statistics. The other errors of <code>argparse</code>, as an invalid choice, come from its translation by <code>gettext</code></td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>parse(text)</code></td>
 <td style="text-align: left;">method</td>
-<td style="text-align: left;">Document of a text, once for all the classes; <code>to_document</code> by default, overridden with the parse of the classes of the library</td>
+<td style="text-align: left;">Document of a text, once for all the classes; <code>to_document</code> by default, overridden with the parse of the classes of the library. It may read <code>args</code> and <code>names</code>, as to parse with a model only for the classes that need it, and raises <code>SourceError</code> for a text it cannot parse, so that the other texts are counted</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>compute(cls, document)</code></td>
+<td style="text-align: left;"><code>compute(stats_class, document)</code></td>
 <td style="text-align: left;">method</td>
-<td style="text-align: left;">Statistics of a class of a document; <code>DiversityStats</code> of the words of the document (<code>document_words</code>)</td>
+<td style="text-align: left;">Statistics of a class of a document or of its part; <code>compute</code> of <code>report_class</code> by default, so that a library overrides that of its report and the commands count alike</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>report_class</code></td>
 <td style="text-align: left;">class attribute</td>
 <td style="text-align: left;">Report of the command <code>report</code>, made of the document of <code>parse</code> and the classes of <code>-s</code>; <code>Report</code> by default</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>arguments(parser, command)</code></td>
+<td style="text-align: left;">method</td>
+<td style="text-align: left;">Adds the options of the library to the parser of the command <code>stats</code> or <code>report</code>; none by default</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>subcommands(commands)</code></td>
+<td style="text-align: left;">method</td>
+<td style="text-align: left;">Adds the commands of the library with <code>commands.add_parser(name, help=..., texts=self.texts)</code>; none by default</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>command_&lt;name&gt;(args)</code></td>
+<td style="text-align: left;">method</td>
+<td style="text-align: left;">Runs the command <code>name</code> and returns its exit code: <code>command_stats</code>, <code>command_report</code> and those of the library</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>args</code>, <code>names</code></td>
+<td style="text-align: left;">attributes</td>
+<td style="text-align: left;">Arguments of the command line and names of the classes of <code>-s</code>, set by <code>run</code> before the command</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>parser()</code></td>
