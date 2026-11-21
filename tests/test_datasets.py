@@ -293,7 +293,9 @@ def test_download_file_partial_cleanup(tmp_path, monkeypatch):
 def test_download_file_mkdir_error(tmp_path):
     blocker = tmp_path / "file"
     blocker.write_text("not a directory", encoding="utf-8")
-    with pytest.raises(DownloadError, match=r"^Cannot create the directory .+: \[Errno"):
+    with pytest.raises(
+        DownloadError, match=r"^Cannot create the directory .+: \[(Errno|WinError) "
+    ):
         download_file("https://example.com/data.zip", blocker / "data")
 
 
