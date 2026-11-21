@@ -11,7 +11,7 @@ from anyts.cli import Command
 from anyts.constants import CLI_TEXTS
 from anyts.diversity_stats import DiversityStats
 from anyts.document import document_words, to_document
-from anyts.exceptions import ParameterError, SourceError
+from anyts.exceptions import DownloadError, ParameterError, SourceError
 from anyts.report import Report
 from anyts.style_stats import StyleStats
 from anyts.syntax_stats import SyntaxStats
@@ -360,6 +360,85 @@ def test_compute_counts_the_text_its_parts_and_the_report(capsys, tmp_path):
     page = capsys.readouterr().out
     cells = [cell.split("<")[0] for cell in page.split('<td class="number">')[1:]]
     assert cells == ["1", "4", "2", "2"]
+
+
+class Archive:
+    """A dataset of a library, its downloads recorded"""
+
+    downloads: ClassVar[list[tuple[str, bool]]] = []
+
+    def download(self, force=False):
+        Archive.downloads.append((type(self).__name__, force))
+
+
+class Broken(Archive):
+    def download(self, force=False):
+        raise DownloadError("No network")
+
+
+class Defaults(Prototype):
+    """A command whose classes without --stats are some of them, with its datasets"""
+
+    default_stats = ("basic", "diversity")
+    datasets: ClassVar[dict[str, type]] = {"archive": Archive, "broken": Broken}
+
+
+def test_default_stats(capsys, files):
+    """Without --stats the command counts the classes of default_stats, with --parts those of
+    them that count the parts, and the report has them"""
+    command = Defaults()
+    assert command.run(["stats", "-f", "json", files[1]]) == 0
+    assert list(json.loads(capsys.readouterr().out)[files[1]]) == ["basic", "diversity"]
+    assert command.run(["stats", "-p", "sentences", "-f", "json", files[1]]) == 0
+    assert list(json.loads(capsys.readouterr().out)[files[1]]) == ["basic"]
+    assert command.run(["stats", "-s", "style", "-f", "json", files[1]]) == 0
+    assert list(json.loads(capsys.readouterr().out)[files[1]]) == ["style"]
+    assert command.run(["report", files[1]]) == 0
+    assert command.names == ["basic", "diversity"]
+    capsys.readouterr()
+    assert command.run(["stats", "--help"]) == 0
+    help_text = " ".join(capsys.readouterr().out.split())
+    assert "basic, diversity, style, syntax; basic, diversity by default" in help_text
+
+
+def test_default_stats_name_classes():
+    with pytest.raises(ParameterError, match=r"must be names of stats_classes, not lexical$"):
+        type("Wrong", (Prototype,), {"default_stats": ("basic", "lexical")})
+
+
+def test_download(capsys):
+    """download downloads every dataset, or those named, and goes on past one that fails"""
+    Archive.downloads.clear()
+    command = Defaults()
+    assert command.run(["download"]) == 1
+    out, err = capsys.readouterr()
+    assert out == "archive: ready\n"
+    assert err == "proto: broken: No network\n"
+    assert command.run(["download", "archive", "archive", "--force"]) == 0
+    assert capsys.readouterr().out == "archive: ready\n"
+    assert Archive.downloads == [("Archive", False), ("Archive", True)]
+    assert command.run(["download", "words"]) == 2
+    assert "unknown dataset words; available: archive, broken" in capsys.readouterr().err
+    assert Prototype().run(["download"]) == 2
+    assert "invalid choice: 'download'" in capsys.readouterr().err
+
+
+class Described(Defaults):
+    """A command of a library whose arguments are also names"""
+
+    def subcommands(self, commands):
+        describe = commands.add_parser("describe", help="Describe classes", texts=self.texts)
+        describe.add_argument("names", nargs="*")
+
+    def command_describe(self, args):
+        print(", ".join(args.names))
+        return 0
+
+
+def test_names_of_another_command(capsys):
+    """Only the names of download are those of datasets"""
+    assert Described().run(["describe", "basic"]) == 0
+    assert capsys.readouterr().out == "basic\n"
 
 
 def test_an_error_of_parse_is_not_one_of_the_output(files, tmp_path):
