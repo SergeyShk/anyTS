@@ -44,14 +44,12 @@ class Command:
         of stats_classes: a table, JSON with the flat statistics of every class
         by text, or CSV with a row per text; with --parts, a row per sentence,
         line or paragraph (by_parts). The command report writes the HTML report
-        of a text (report_class), and the command download, of a library with
-        datasets, downloads the datasets its classes need. Without --stats the
-        classes are those of default_stats. A text a class cannot count is
-        reported on the standard error and the others are counted, with the exit
-        code 1. Every
-        command is a method command_<name>; a language library subclasses the
-        class, adds options (arguments) and commands (subcommands), and calls
-        run from the entry point of its command
+        of a text (report_class), and download the datasets of datasets. A text
+        a class cannot count is reported on the standard error and the others
+        are counted, with the exit code 1. Every command is a method
+        command_<name>; a language library subclasses the class, adds options
+        (arguments) and commands (subcommands), and calls run from the entry
+        point of its command
 
     Attributes:
         args (argparse.Namespace): Arguments of the command line, set by run before
@@ -111,7 +109,7 @@ class Command:
             if unknown:
                 raise ParameterError(
                     f"default_stats of {cls.__name__} must be names of stats_classes, "
-                    f"not {cls.default_stats!r}"
+                    f"not {', '.join(unknown)}"
                 )
 
     def parse(self, text: str) -> Document:
@@ -161,9 +159,8 @@ class Command:
         Description:
             The commands stats and report with the options of arguments, download
             with datasets, and the commands of subcommands; the headings, the
-            usage, the help option and
-            the errors of the command come from texts, the other errors of
-            argparse from its translation (gettext)
+            usage, the help option and the errors of the command come from texts,
+            the other errors of argparse from its translation (gettext)
 
         Returns:
             ArgumentParser: Parser of the commands
@@ -233,9 +230,8 @@ class Command:
         Running the command
 
         Description:
-            The arguments go to args and the classes of --stats to names, those of
-            default_stats without it, and the method command_<name> of the command
-            runs
+            The arguments go to args and the classes of --stats to names, and the
+            method command_<name> of the command runs
 
         Arguments:
             argv (list[str]): Arguments; those of the command line by default
@@ -427,7 +423,9 @@ class Command:
 
     def _check_datasets(self, parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
         """The names of the command download, each one of datasets"""
-        for name in getattr(args, "names", None) or ():
+        if args.command != "download":
+            return
+        for name in args.names:
             if name not in self.datasets:
                 parser.error(
                     self.texts["unknown_dataset"].format(name=name, names=", ".join(self.datasets))

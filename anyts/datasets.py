@@ -388,7 +388,7 @@ def download_file(
     try:
         dirpath.mkdir(parents=True, exist_ok=True)
     except OSError as e:
-        raise DownloadError(f"Cannot create the directory {dirpath}") from e
+        raise DownloadError(f"Cannot create the directory {dirpath}: {e}") from e
     if not filename:
         filename = Path(urllib.parse.unquote(urllib.parse.urlparse(url).path)).name
     if not filename:
@@ -417,7 +417,7 @@ def download_file(
     except DownloadError:
         raise
     except Exception as e:
-        raise DownloadError(f"Cannot download the file {url}") from e
+        raise DownloadError(f"Cannot download the file {url}: {e}") from e
     finally:
         partial.unlink(missing_ok=True)
     logger.info("The file is downloaded: %s", filepath)

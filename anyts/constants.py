@@ -602,7 +602,7 @@ CLI_TEXTS: Mapping[str, str] = MappingProxyType(
         "datasets_option": "Datasets: {names}; all by default",
         "datasets_metavar": "datasets",
         "force_option": "Download a dataset even if it is already there",
-        "downloaded": "{name}: downloaded",
+        "downloaded": "{name}: ready",
         "unknown_dataset": "unknown dataset {name}; available: {names}",
     }
 )

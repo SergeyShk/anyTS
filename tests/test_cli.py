@@ -401,10 +401,9 @@ def test_default_stats(capsys, files):
     assert "basic, diversity, style, syntax; basic, diversity by default" in help_text
 
 
-@pytest.mark.parametrize("defaults", [("lexical",), "basic"])
-def test_default_stats_name_classes(defaults):
-    with pytest.raises(ParameterError, match="must be names of stats_classes"):
-        type("Wrong", (Prototype,), {"default_stats": defaults})
+def test_default_stats_name_classes():
+    with pytest.raises(ParameterError, match=r"must be names of stats_classes, not lexical$"):
+        type("Wrong", (Prototype,), {"default_stats": ("basic", "lexical")})
 
 
 def test_download(capsys):
@@ -413,15 +412,33 @@ def test_download(capsys):
     command = Defaults()
     assert command.run(["download"]) == 1
     out, err = capsys.readouterr()
-    assert out == "archive: downloaded\n"
+    assert out == "archive: ready\n"
     assert err == "proto: broken: No network\n"
     assert command.run(["download", "archive", "archive", "--force"]) == 0
-    assert capsys.readouterr().out == "archive: downloaded\n"
+    assert capsys.readouterr().out == "archive: ready\n"
     assert Archive.downloads == [("Archive", False), ("Archive", True)]
     assert command.run(["download", "words"]) == 2
     assert "unknown dataset words; available: archive, broken" in capsys.readouterr().err
     assert Prototype().run(["download"]) == 2
     assert "invalid choice: 'download'" in capsys.readouterr().err
+
+
+class Described(Defaults):
+    """A command of a library whose arguments are also names"""
+
+    def subcommands(self, commands):
+        describe = commands.add_parser("describe", help="Describe classes", texts=self.texts)
+        describe.add_argument("names", nargs="*")
+
+    def command_describe(self, args):
+        print(", ".join(args.names))
+        return 0
+
+
+def test_names_of_another_command(capsys):
+    """Only the names of download are those of datasets"""
+    assert Described().run(["describe", "basic"]) == 0
+    assert capsys.readouterr().out == "basic\n"
 
 
 def test_an_error_of_parse_is_not_one_of_the_output(files, tmp_path):

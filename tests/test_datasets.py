@@ -285,7 +285,7 @@ def test_download_file_partial_cleanup(tmp_path, monkeypatch):
     monkeypatch.setattr(
         datasets.urllib.request, "urlopen", lambda *args, **kwargs: BrokenResponse()
     )
-    with pytest.raises(DownloadError, match=r"^Cannot download the file"):
+    with pytest.raises(DownloadError, match=r"^Cannot download the file .+: connection reset$"):
         download_file("https://example.com/data.zip", tmp_path, force=True)
     assert list(tmp_path.iterdir()) == []
 
@@ -293,7 +293,7 @@ def test_download_file_partial_cleanup(tmp_path, monkeypatch):
 def test_download_file_mkdir_error(tmp_path):
     blocker = tmp_path / "file"
     blocker.write_text("not a directory", encoding="utf-8")
-    with pytest.raises(DownloadError, match=r"^Cannot create the directory"):
+    with pytest.raises(DownloadError, match=r"^Cannot create the directory .+: \[Errno"):
         download_file("https://example.com/data.zip", blocker / "data")
 
 

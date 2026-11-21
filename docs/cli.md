@@ -80,8 +80,8 @@ A command of a library subclasses `Command`:
 | :--- | :--- | :---------- |
 | `prog` | class attribute | Name of the command; `anyts` by default |
 | `stats_classes` | class attribute | Classes of statistics by their name in `--stats`; none by default |
-| `default_stats` | class attribute | Names of the classes counted without `--stats`, as those that suit any text; `None` - every class, by default |
-| `datasets` | class attribute | Datasets of the command `download` by name, as their classes, made without arguments; none by default, and then no such command |
+| `default_stats` | class attribute | Names of the classes counted without `--stats`; `None` - every class, by default |
+| `datasets` | class attribute | Datasets of the command `download` by name, as their classes, made without arguments; none by default |
 | `texts` | class attribute | Texts of the help, of its headings and usage, and of the errors by key, `CLI_TEXTS` by default: complete, as the messages of a class of statistics. The other errors of `argparse`, as an invalid choice, come from its translation by `gettext` |
 | `parse(text)` | method | Document of a text, once for all the classes; `to_document` by default, overridden with the parse of the classes of the library. It may read `args` and `names`, as to parse with a model only for the classes that need it, and raises `SourceError` for a text it cannot parse, so that the other texts are counted |
 | `compute(stats_class, document)` | method | Statistics of a class of a document or of its part; `compute` of `report_class` by default, so that a library overrides that of its report and the commands count alike |
