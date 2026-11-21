@@ -573,6 +573,10 @@ CLI_TEXTS: Mapping[str, str] = MappingProxyType(
             "Classes of statistics, by name and separated by commas: {names}; all by default, "
             "those that count the parts with --parts"
         ),
+        "stats_option_default": (
+            "Classes of statistics, by name and separated by commas: {names}; {defaults} by "
+            "default, those of them that count the parts with --parts"
+        ),
         "stats_metavar": "STATS",
         "parts_option": "Statistics of every sentence, line or paragraph",
         "format_option": "Output: a table, JSON or CSV",
@@ -594,6 +598,12 @@ CLI_TEXTS: Mapping[str, str] = MappingProxyType(
         "title_option": "Title of the report",
         "title_metavar": "TITLE",
         "report_encoding_option": "Encoding of the file; the report is in UTF-8",
+        "download_command": "Download the datasets the statistics need",
+        "datasets_option": "Datasets: {names}; all by default",
+        "datasets_metavar": "datasets",
+        "force_option": "Download a dataset even if it is already there",
+        "downloaded": "{name}: downloaded",
+        "unknown_dataset": "unknown dataset {name}; available: {names}",
     }
 )
 # Headings and labels of the HTML report of a text by key; a language library passes its own

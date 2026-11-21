@@ -6,14 +6,14 @@ import io
 import json
 import os
 import sys
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from functools import partial
 from math import isfinite
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from .constants import CLI_TEXTS
-from .exceptions import AnyTSError
+from .exceptions import AnyTSError, ParameterError
 from .report import Report
 from .stats import Stats, StatsRow, _stats_row
 from .utils import check_messages
@@ -21,6 +21,8 @@ from .utils import check_messages
 if TYPE_CHECKING:
     from anyseg import Document
     from pandas import DataFrame
+
+    from .datasets import Dataset
 
 # Outputs of the command
 _FORMATS = ("table", "json", "csv")
@@ -42,8 +44,11 @@ class Command:
         of stats_classes: a table, JSON with the flat statistics of every class
         by text, or CSV with a row per text; with --parts, a row per sentence,
         line or paragraph (by_parts). The command report writes the HTML report
-        of a text (report_class). A text a class cannot count is reported on the
-        standard error and the others are counted, with the exit code 1. Every
+        of a text (report_class), and the command download, of a library with
+        datasets, downloads the datasets its classes need. Without --stats the
+        classes are those of default_stats. A text a class cannot count is
+        reported on the standard error and the others are counted, with the exit
+        code 1. Every
         command is a method command_<name>; a language library subclasses the
         class, adds options (arguments) and commands (subcommands), and calls
         run from the entry point of its command
@@ -57,6 +62,10 @@ class Command:
         prog (str): Name of the command
         stats_classes (dict[str, type[Stats]]): Classes of statistics by their
             name in --stats
+        default_stats (tuple[str, ...]|None): Names of the classes counted without
+            --stats; None - every class
+        datasets (dict[str, Callable[[], Dataset]]): Datasets of the command download
+            by name, as their classes; none by default, and no such command
         texts (dict[str, str]): Texts of the help and of the errors by key (CLI_TEXTS),
             complete as the messages of a class of statistics (check_messages)
         report_class (type[Report]): Report of the command report, made of the document
@@ -64,7 +73,8 @@ class Command:
 
     Raises:
         ParameterError: When a class is defined, if its texts are incomplete or have a
-            field their default lacks
+            field their default lacks, or default_stats names a class that is not in
+            stats_classes
 
     Example:
         >>> from anyts.basic_stats import BasicStats
@@ -85,6 +95,8 @@ class Command:
 
     prog: ClassVar[str] = "anyts"
     stats_classes: ClassVar[Mapping[str, type[Stats]]] = {}
+    default_stats: ClassVar[Sequence[str] | None] = None
+    datasets: ClassVar[Mapping[str, Callable[[], Dataset]]] = {}
     texts: ClassVar[Mapping[str, str]] = CLI_TEXTS
     report_class: ClassVar[type[Report]] = Report
 
@@ -94,6 +106,13 @@ class Command:
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
         check_messages(cls.texts, CLI_TEXTS)
+        if cls.default_stats is not None:
+            unknown = [name for name in cls.default_stats if name not in cls.stats_classes]
+            if unknown:
+                raise ParameterError(
+                    f"default_stats of {cls.__name__} must be names of stats_classes, "
+                    f"not {cls.default_stats!r}"
+                )
 
     def parse(self, text: str) -> Document:
         """
@@ -140,8 +159,9 @@ class Command:
         Getting the parser of the arguments of the command
 
         Description:
-            The commands stats and report with the options of arguments, and the
-            commands of subcommands; the headings, the usage, the help option and
+            The commands stats and report with the options of arguments, download
+            with datasets, and the commands of subcommands; the headings, the
+            usage, the help option and
             the errors of the command come from texts, the other errors of
             argparse from its translation (gettext)
 
@@ -170,6 +190,15 @@ class Command:
             "-t", "--title", metavar=texts["title_metavar"], help=texts["title_option"]
         )
         self.arguments(report, "report")
+        if self.datasets:
+            download = commands.add_parser("download", help=texts["download_command"], texts=texts)
+            download.add_argument(
+                "names",
+                nargs="*",
+                metavar=texts["datasets_metavar"],
+                help=texts["datasets_option"].format(names=", ".join(self.datasets)),
+            )
+            download.add_argument("--force", action="store_true", help=texts["force_option"])
         self.subcommands(commands)
         return parser
 
@@ -204,8 +233,9 @@ class Command:
         Running the command
 
         Description:
-            The arguments go to args and the classes of --stats to names, and the
-            method command_<name> of the command runs
+            The arguments go to args and the classes of --stats to names, those of
+            default_stats without it, and the method command_<name> of the command
+            runs
 
         Arguments:
             argv (list[str]): Arguments; those of the command line by default
@@ -219,6 +249,7 @@ class Command:
         try:
             self.args = parser.parse_args(argv)
             self.names = self._names(parser, self.args)
+            self._check_datasets(parser, self.args)
         except SystemExit as ended:
             # The help and the wrong arguments, which argparse ends with sys.exit
             return int(ended.code or 0)
@@ -312,15 +343,48 @@ class Command:
             return 1
         return 1 if report.errors else 0
 
+    def command_download(self, args: argparse.Namespace) -> int:
+        """
+        Running the command download
+
+        Description:
+            Every dataset of the names, every one of datasets without them, is
+            downloaded, again with --force, and named on the standard output; one
+            that cannot be downloaded is reported on the standard error and the
+            others are downloaded
+
+        Arguments:
+            args (argparse.Namespace): Arguments of the command
+
+        Returns:
+            int: Exit code: 0, 1 if a dataset could not be downloaded
+        """
+        output = _Output(None)
+        failed = False
+        for name in dict.fromkeys(args.names or self.datasets):
+            try:
+                self.datasets[name]().download(force=args.force)
+            except (AnyTSError, OSError) as error:
+                self._error(self.texts["file_error"].format(source=name, error=error))
+                failed = True
+            else:
+                self._put(output, self.texts["downloaded"].format(name=name) + "\n")
+        return 1 if failed else 0
+
     def _add_options(self, parser: argparse.ArgumentParser, encoding: str) -> None:
         """Options of the classes, of the output and of the encoding, with the help of the key
         encoding"""
         texts = self.texts
+        names = ", ".join(self.stats_classes)
         parser.add_argument(
             "-s",
             "--stats",
             metavar=texts["stats_metavar"],
-            help=texts["stats_option"].format(names=", ".join(self.stats_classes)),
+            help=texts["stats_option"].format(names=names)
+            if self.default_stats is None
+            else texts["stats_option_default"].format(
+                names=names, defaults=", ".join(self.default_stats)
+            ),
         )
         parser.add_argument(
             "-o", "--output", metavar=texts["output_metavar"], help=texts["output_option"]
@@ -335,10 +399,10 @@ class Command:
         )
 
     def _names(self, parser: argparse.ArgumentParser, args: argparse.Namespace) -> list[str]:
-        """Names of the classes of --stats, every class without it; with --parts, those that
-        count such parts, a class named in --stats that does not being an error"""
+        """Names of the classes of --stats, those of default_stats without it; with --parts,
+        those that count such parts, a class named in --stats that does not being an error"""
         option = getattr(args, "stats", None)
-        names = list(self.stats_classes)
+        names = list(self.stats_classes if self.default_stats is None else self.default_stats)
         if option is not None:
             names = [name.strip() for name in option.split(",") if name.strip()]
             for name in names:
@@ -360,6 +424,14 @@ class Command:
         if not names:
             parser.error(self.texts["parts_classes"].format(parts=parts))
         return names
+
+    def _check_datasets(self, parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
+        """The names of the command download, each one of datasets"""
+        for name in getattr(args, "names", None) or ():
+            if name not in self.datasets:
+                parser.error(
+                    self.texts["unknown_dataset"].format(name=name, names=", ".join(self.datasets))
+                )
 
     def _text_stats(self, source: str, args: argparse.Namespace) -> dict[str, Any] | None:
         """Statistics of the classes of a text, or the rows of its parts, without a class that
