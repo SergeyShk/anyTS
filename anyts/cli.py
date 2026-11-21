@@ -544,9 +544,8 @@ class _Parser(argparse.ArgumentParser):
 
     def _print_message(self, message: str, file: Any = None) -> None:
         # The help, the usage and the errors of argparse go out as the output does
-        if message:
-            with contextlib.suppress(AttributeError, OSError):
-                _write(file or sys.stderr, message)
+        with contextlib.suppress(AttributeError, OSError):
+            _write(file or sys.stderr, message)
 
     def error(self, message: str) -> Any:
         self.print_usage(sys.stderr)
