@@ -2222,8 +2222,8 @@
 </tr>
 <tr>
 <td style="text-align: left;"><code>-s</code>, <code>--stats</code></td>
-<td style="text-align: left;">every class</td>
-<td style="text-align: left;">Classes of statistics, by name and separated by commas; with <code>-p</code>, every class that counts such parts by default</td>
+<td style="text-align: left;">the classes of <code>default_stats</code></td>
+<td style="text-align: left;">Classes of statistics, by name and separated by commas; with <code>-p</code>, those of <code>default_stats</code> that count such parts by default</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>-p</code>, <code>--parts</code></td>
@@ -2248,9 +2248,10 @@
 </tbody>
 </table>
 <p>The standard input is read as a file, its line breaks and its byte order mark alike, and a table is printed as every text is counted.</p>
+<p>Its command <code>download</code>, of a library with <code>datasets</code>, downloads the datasets its classes need, those named or every one, again with <code>--force</code>, and names each on the standard output; a dataset that cannot be downloaded goes to the standard error with the exit code 1, while the others are downloaded.</p>
 <p>Its command <code>report</code> writes the <a href="https://sergeyshk.github.io/anyTS/report/">HTML report</a> of a text, from a file or from the standard input, to <code>-o</code> or to the standard output, with the classes of <code>-s</code> and the title of <code>-t</code>, <code>--title</code>. <code>-e</code> is the encoding of the file, and the report is in UTF-8, which it declares; the statistics of the report, and of its table of sentences, are counted as by <code>stats</code>. A class that cannot count the text is left out of the report, and its error goes to the standard error with the exit code 1.</p>
 <p><code>run(argv=None)</code> runs the command with the arguments, those of the command line by default, and returns the exit code: 0; 1 when a file cannot be read or written or a class cannot count a text, whose error goes to the standard error while the other texts and classes are counted, and when the reader of the output stops, as <code>head</code>, without a message; 2 for wrong arguments, an unknown encoding among them, with the help of <code>argparse</code>; 130 when interrupted.</p>
-<p>Raises <code>ParameterError</code> when a subclass is defined with texts that <code>check_messages</code> rejects against <code>CLI_TEXTS</code>.</p>
+<p>Raises <code>ParameterError</code> when a subclass is defined with texts that <code>check_messages</code> rejects against <code>CLI_TEXTS</code>, or with <code>default_stats</code> that names a class not in <code>stats_classes</code>.</p>
 <!-- --8<-- [end:Command] -->
 
 <p>A library defines its command, with the parse of its classes and the help in its language, and makes <code>run</code> the entry point of a script of its package. Here the classes are those of the core, and the parse is <code>to_document</code>:</p>
@@ -2308,6 +2309,16 @@ vowels<span class="w"> </span>report<span class="w"> </span>text.txt<span class=
 <td style="text-align: left;"><code>stats_classes</code></td>
 <td style="text-align: left;">class attribute</td>
 <td style="text-align: left;">Classes of statistics by their name in <code>--stats</code>; none by default</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>default_stats</code></td>
+<td style="text-align: left;">class attribute</td>
+<td style="text-align: left;">Names of the classes counted without <code>--stats</code>; <code>None</code> - every class, by default</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>datasets</code></td>
+<td style="text-align: left;">class attribute</td>
+<td style="text-align: left;">Datasets of the command <code>download</code> by name, as their classes, made without arguments; none by default</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>texts</code></td>
