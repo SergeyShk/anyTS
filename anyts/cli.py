@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import codecs
+import contextlib
 import io
 import json
 import os
@@ -493,7 +494,7 @@ class Command:
 
     def _error(self, message: str) -> None:
         """Message of an error on the standard error"""
-        print(f"{self.prog}: {message}", file=sys.stderr)
+        _write(sys.stderr, f"{self.prog}: {message}\n")
 
     def _tables(self, source: str, found: Mapping[str, Any], part: str, *, many: bool) -> str:
         """Tables of the statistics of a text by class, with a heading where there are several
@@ -541,6 +542,12 @@ class _Parser(argparse.ArgumentParser):
             "-h", "--help", action="help", default=argparse.SUPPRESS, help=texts["help_option"]
         )
 
+    def _print_message(self, message: str, file: Any = None) -> None:
+        # The help, the usage and the errors of argparse go out as the output does
+        if message:
+            with contextlib.suppress(AttributeError, OSError):
+                _write(file or sys.stderr, message)
+
     def error(self, message: str) -> Any:
         self.print_usage(sys.stderr)
         self.exit(2, self.texts["error"].format(prog=self.prog, message=message) + "\n")
@@ -568,8 +575,7 @@ def _read(source: str, encoding: str) -> str:
 
 class _Output:
     """The file of the output, made at once so that a wrong path is reported before the texts
-    are counted, or the standard output, written in UTF-8 with the line breaks \\n, to the
-    standard output as bytes, whatever the encoding of the console"""
+    are counted, or the standard output, written in UTF-8 with the line breaks \\n"""
 
     def __init__(self, path: str | None) -> None:
         self.name = _STDIN if path is None else path
@@ -583,14 +589,19 @@ class _Output:
             with Path(self.name).open("a", encoding="utf-8", newline="\n") as file:
                 file.write(text)
             return
-        buffer = getattr(sys.stdout, "buffer", None)
-        if buffer is None:
-            # A standard output of text, as in a test
-            sys.stdout.write(text)
-            return
-        sys.stdout.flush()
-        buffer.write(text.encode("utf-8"))
-        buffer.flush()
+        _write(sys.stdout, text)
+
+
+def _write(stream: Any, text: str) -> None:
+    """Writing a text to a standard stream in UTF-8, as bytes, whatever the encoding of the
+    console; a stream of text without bytes, as in a test, gets the text"""
+    buffer = getattr(stream, "buffer", None)
+    if buffer is None:
+        stream.write(text)
+        return
+    stream.flush()
+    buffer.write(text.encode("utf-8"))
+    buffer.flush()
 
 
 def _close_stdout() -> None:
