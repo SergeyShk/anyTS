@@ -37,6 +37,7 @@ nav:
     - Visualization:
       - Zipf's law: visualizers/zipf.md
       - Vocabulary growth: visualizers/vocabulary.md
+      - Rhythm of the lines: visualizers/verse.md
       - Sentence lengths: visualizers/sentences.md
       - Literature fingerprinting: visualizers/fingerprinting.md
       - Word tree: visualizers/word_tree.md

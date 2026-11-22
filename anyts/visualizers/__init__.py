@@ -16,6 +16,7 @@ if TYPE_CHECKING:
         rolling_delta_plot,
         zeta_scatter_plot,
     )
+    from .verse import rhythm_plot
     from .vocabulary import frequency_spectrum_plot, heaps_plot
     from .word_tree import wordtree
     from .zipf import zipf, zipf_theory
@@ -36,6 +37,7 @@ _MODULES = {
     "mds_plot": "stylometry",
     "mendenhall_plot": "stylometry",
     "pca_plot": "stylometry",
+    "rhythm_plot": "verse",
     "rolling_delta_plot": "stylometry",
     "sentence_lengths": "sentences",
     "sentence_lengths_plot": "sentences",
@@ -59,6 +61,7 @@ __all__ = [
     "mds_plot",
     "mendenhall_plot",
     "pca_plot",
+    "rhythm_plot",
     "rolling_delta_plot",
     "sentence_lengths",
     "sentence_lengths_plot",
