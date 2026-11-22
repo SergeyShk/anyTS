@@ -413,3 +413,6 @@ def test_junctions_of_composed_letters():
     text = "северной авроры"
     assert Cyrillic(text).p_junction_hiatus == 0.0
     assert Cyrillic(unicodedata.normalize("NFD", text)).p_junction_hiatus == 0.0
+    # A vowel with a grave, composed or not, is the vowel
+    assert Cyrillic("все\u0300 ушло").p_junction_hiatus == 1.0
+    assert Cyrillic("вс\u0450 ушло").p_junction_hiatus == 1.0

@@ -360,7 +360,13 @@ def _edges(
     """Consonants before the first vowel and after the last one, the first and the last sound of
     the classes; None for a word without them and for one of consonants alone but a single one,
     an abbreviation read by its letters"""
-    classed = [sound for sound in sounds if sound in vowels or sound in consonants]
+    classed = []
+    for sound in sounds:
+        if len(sound) == 1 and sound not in vowels and sound not in consonants:
+            # A letter with a mark of its own, as е with a grave, is its base letter
+            sound = unicodedata.normalize("NFD", sound)[0]
+        if sound in vowels or sound in consonants:
+            classed.append(sound)
     lead = next((i for i, sound in enumerate(classed) if sound in vowels), len(classed))
     if lead == len(classed) != 1:
         return None
