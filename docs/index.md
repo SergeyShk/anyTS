@@ -114,7 +114,7 @@
 
     ---
 
-    Plot [Zipf's law](visualizers/zipf.md), [vocabulary growth](visualizers/vocabulary.md), [sentence lengths](visualizers/sentences.md), [literature fingerprinting](visualizers/fingerprinting.md), a [word tree](visualizers/word_tree.md), [corpus](visualizers/corpus.md) and [stylometric](visualizers/stylometry.md) measures, with the labels of the plots as a parameter, and [highlight](visualizers/highlight.md) a text by the layers of a language library
+    Plot [Zipf's law](visualizers/zipf.md), [vocabulary growth](visualizers/vocabulary.md), [sentence lengths](visualizers/sentences.md), the [rhythm of the lines](visualizers/verse.md) of a verse, [literature fingerprinting](visualizers/fingerprinting.md), a [word tree](visualizers/word_tree.md), [corpus](visualizers/corpus.md) and [stylometric](visualizers/stylometry.md) measures, with the labels of the plots as a parameter, and [highlight](visualizers/highlight.md) a text by the layers of a language library
 
     [:octicons-arrow-right-24: Visualization](visualizers/zipf.md)
 

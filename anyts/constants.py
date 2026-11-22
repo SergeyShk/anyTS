@@ -512,6 +512,13 @@ VISUALIZER_LABELS = {
         "fit": "Zipf-Mandelbrot: q={q:.2f}, s={s:.2f}",
     },
     "zipf_theory": {"theoretical": "Theoretical law"},
+    "rhythm_plot": {
+        "title": "Rhythm of the lines",
+        "xlabel": "Syllable",
+        "ylabel": "Line",
+        "stressed": "Stressed syllable",
+        "unstressed": "Unstressed syllable",
+    },
     "heaps_plot": {
         "title": "Heaps' law",
         "xlabel": "Length of the text, words",
