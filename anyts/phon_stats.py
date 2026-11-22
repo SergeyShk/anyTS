@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import unicodedata
 from abc import ABCMeta, abstractmethod
 from collections import Counter
 from collections.abc import Collection, Mapping, Sequence
@@ -235,7 +236,8 @@ class PhonStats(Stats, metaclass=ABCMeta):
         for sentence in document.sentences:
             before = None
             for token in sentence.tokens:
-                word = token.text.lower()
+                # A letter written with a combining mark is the letter of its class
+                word = unicodedata.normalize("NFC", token.text).lower()
                 if word not in sounds:
                     sounds[word] = _edges(self.transcribe(word), self.vowels, consonants)
                 edges = sounds[word]

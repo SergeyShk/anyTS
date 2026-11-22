@@ -1,4 +1,5 @@
 import re
+import unicodedata
 from itertools import permutations
 from math import comb, fsum, isnan, log2
 from typing import ClassVar
@@ -398,3 +399,17 @@ def test_junctions_break():
     assert English("its strength").p_junction_clusters == 1.0
     assert isnan(English("the bbc news").p_junction_clusters)
     assert English("a x idea").p_junction_hiatus == 0.0
+
+
+def test_junctions_of_composed_letters():
+    """A letter written with a combining mark (NFD) is the letter of its class, as composed"""
+
+    class Cyrillic(English):
+        vowels = frozenset("аеиоуыэюяё")
+        sonorants = frozenset("лмнрй")
+        voiced = frozenset("бвгджз")
+        voiceless = frozenset("кпстфхцчшщ")
+
+    text = "северной авроры"
+    assert Cyrillic(text).p_junction_hiatus == 0.0
+    assert Cyrillic(unicodedata.normalize("NFD", text)).p_junction_hiatus == 0.0
