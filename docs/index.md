@@ -58,7 +58,7 @@
 
     ---
 
-    Measure a text by a frequency dictionary in the manner of TAALES: coverage, mean frequency, range and dispersion, surprisal and perplexity, frequency bands and lexical density
+    Measure a text by a frequency dictionary in the manner of TAALES: coverage, mean frequency, range and dispersion, surprisal and perplexity, frequency bands, lexical density and the shares of proper nouns and abbreviations
 
     [:octicons-arrow-right-24: Lexical sophistication](stats/lexical_stats.md)
 
