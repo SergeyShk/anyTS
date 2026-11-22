@@ -291,6 +291,12 @@ WORDS = TEXT.split()
 
 
 # One case for every raise site of the classes, a key raised at several sites several times
+@pytest.fixture(autouse=True)
+def temporary(tmp_path, monkeypatch):
+    """The directories of scratch inside the directory of the test, which pytest removes"""
+    monkeypatch.setattr(tempfile, "tempdir", str(tmp_path))
+
+
 def scratch() -> Path:
     """A new empty directory"""
     return Path(tempfile.mkdtemp())
