@@ -128,6 +128,10 @@ def test_errors():
         Stats(TEXT, sents_extractor=WordsExtractor())
     with pytest.raises(SourceTypeError, match=r"must be a WordsExtractor$"):
         Stats(TEXT, words_extractor=SentsExtractor())
+    with pytest.raises(SourceTypeError, match=r"^The data source cannot be of type int$"):
+        Stats(5, sents_extractor=SentsExtractor(), words_extractor=WordsExtractor())
+    extractors = {"sents_extractor": SentsExtractor(), "words_extractor": WordsExtractor()}
+    assert Stats(to_document(TEXT), **extractors).n_words == Stats(TEXT, **extractors).n_words
     for kwargs in (
         {"complex_syl_factor": 0},
         {"long_word_letter_factor": -1},

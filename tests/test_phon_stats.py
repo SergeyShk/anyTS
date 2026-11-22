@@ -366,3 +366,25 @@ def test_calc_repetition_index_window(window_len, message):
 def test_sound_classes_checked_at_class_definition():
     with pytest.raises(SourceTypeError, match=r"^A list of vowels is expected, not a string$"):
         type("Sounded", (English,), {"vowels": "aeiou"})
+
+
+def test_junctions():
+    """Junctions of the words of a sentence with only spaces between them: a vowel on both sides
+    is a hiatus, four consonants in a row a heavy cluster"""
+    stats = English("I owe a idea to the strength splits")
+    assert (stats.p_junction_hiatus, stats.p_junction_clusters) == (3 / 7, 1 / 7)
+    # A sign between the words or the end of a sentence makes no junction
+    assert (English("I owe, a idea. Splits").p_junction_hiatus) == 1.0
+    assert isnan(English("Stream").p_junction_hiatus)
+    # The junctions are those of the text with an extractor of the words too
+    extracted = English("I owe a idea to the strength splits", words_extractor=WordsExtractor())
+    assert extracted.p_junction_clusters == 1 / 7
+
+
+def test_junctions_with_glides():
+    """A vowel of glides after a vowel makes no hiatus across a junction"""
+
+    class Glided(English):
+        glides = frozenset("u")
+
+    assert Glided("a use a idea").p_junction_hiatus == 2 / 3
