@@ -49,7 +49,7 @@ Raises:
     Share of clusters of 3 consonants or more             |   0.08
     Hiatuses per word                                     |   0.22
     Share of junctions of words with a hiatus             |   0.00
-    Share of junctions of words with 4 consonants or more |   0.12
+    Share of junctions of words with 4 consonants or more |   0.00
     Entropy of the CV patterns of words (bits)            |   2.95
     Hardness                                              |   0.75
     Alliteration index                                    |   0.61
@@ -193,7 +193,7 @@ The number of the hiatuses of a word by its vowels in a row: a run of two vowels
 { .metric-meta }
 
 <!-- --8<-- [start:PhonStats-junctions] -->
-A junction is two words of a sentence with only spaces between them: a sign, such as a comma, or the end of a sentence makes none. A junction has a hiatus when the last sound of the classes of the first word and the first of the second are vowels, the second not one of `glides`, and a heavy cluster when the consonants at the end of the first word and at the start of the second make `JUNCTION_CLUSTER_LEN` (4) or more. The shares are those of all the junctions of the text, by the sounds of `transcribe`; with a word extractor, the junctions are still those of the document of the source.
+A junction is two words of a sentence with only spaces between them: a sign, such as a comma, a line break or the end of a sentence makes none, and so does a word of consonants alone but a single one, such as an abbreviation read by its letters. A junction has a hiatus when the last sound of the classes of the first word and the first of the second are vowels, the second not one of `glides`, and a heavy cluster when the consonants at the end of the first word and at the start of the second, both words having some, make `JUNCTION_CLUSTER_LEN` (4) or more. The shares are those of all the junctions of the text, by the sounds of `transcribe`; with a word extractor, the junctions are still those of the document of the source.
 <!-- --8<-- [end:PhonStats-junctions] -->
 
 </div>

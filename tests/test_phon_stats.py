@@ -388,3 +388,13 @@ def test_junctions_with_glides():
         glides = frozenset("u")
 
     assert Glided("a use a idea").p_junction_hiatus == 2 / 3
+
+
+def test_junctions_break():
+    """A line break ends a junction as a sign does; a heavy cluster needs consonants of both
+    words; a word of consonants alone but a single one, an abbreviation, makes no junction"""
+    assert English("I owe\na idea to").p_junction_hiatus == 2 / 3
+    assert English("a schwa").p_junction_clusters == 0.0
+    assert English("its strength").p_junction_clusters == 1.0
+    assert isnan(English("the bbc news").p_junction_clusters)
+    assert English("a x idea").p_junction_hiatus == 0.0

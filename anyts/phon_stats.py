@@ -81,7 +81,7 @@ class PhonStats(Stats, metaclass=ABCMeta):
         p_hiatus (float): Hiatuses per word
         p_junction_hiatus (float): Share of the junctions of words with a vowel on both sides
         p_junction_clusters (float): Share of the junctions of words with
-            JUNCTION_CLUSTER_LEN consonants or more in a row
+            JUNCTION_CLUSTER_LEN consonants or more in a row from both words
         cv_entropy (float): Shannon entropy of the CV patterns of the words, in bits
         hardness (float): Voiceless consonants to the vowels and the sonorants
         alliteration (float): Alliteration index
@@ -226,9 +226,10 @@ class PhonStats(Stats, metaclass=ABCMeta):
         )
 
     def _junctions(self, document: Document, consonants: frozenset[str]) -> tuple[int, int, int]:
-        """Junctions of two words of a sentence with only spaces between them - a sign is a token
-        of its own - those with a hiatus and those with JUNCTION_CLUSTER_LEN consonants or more
-        in a row"""
+        """Junctions of two words of a sentence with only spaces between them, no line break - a
+        sign is a token of its own - those with a hiatus and those with JUNCTION_CLUSTER_LEN
+        consonants or more in a row from both words"""
+        text = document.text
         sounds: dict[str, tuple[int, int, str, str] | None] = {}
         n_junctions = n_hiatus = n_clusters = 0
         for sentence in document.sentences:
@@ -238,15 +239,19 @@ class PhonStats(Stats, metaclass=ABCMeta):
                 if word not in sounds:
                     sounds[word] = _edges(self.transcribe(word), self.vowels, consonants)
                 edges = sounds[word]
-                if edges is not None and before is not None:
-                    _, trail, _, last = before
+                if (
+                    edges is not None
+                    and before is not None
+                    and "\n" not in text[before[0] : token.start]
+                ):
+                    _, (_, trail, _, last) = before
                     lead, _, first, _ = edges
                     n_junctions += 1
                     n_hiatus += (
                         last in self.vowels and first in self.vowels and first not in self.glides
                     )
-                    n_clusters += trail + lead >= JUNCTION_CLUSTER_LEN
-                before = edges
+                    n_clusters += min(trail, lead) > 0 and trail + lead >= JUNCTION_CLUSTER_LEN
+                before = None if edges is None else (token.end, edges)
         return n_junctions, n_hiatus, n_clusters
 
     def _checked(self, hook: str, result: object) -> Any:
@@ -351,11 +356,12 @@ def _edges(
     sounds: Sequence[str], vowels: Collection[str], consonants: Collection[str]
 ) -> tuple[int, int, str, str] | None:
     """Consonants before the first vowel and after the last one, the first and the last sound of
-    the classes; None for a word without them"""
+    the classes; None for a word without them and for one of consonants alone but a single one,
+    an abbreviation read by its letters"""
     classed = [sound for sound in sounds if sound in vowels or sound in consonants]
-    if not classed:
-        return None
     lead = next((i for i, sound in enumerate(classed) if sound in vowels), len(classed))
+    if lead == len(classed) != 1:
+        return None
     trail = next((i for i, sound in enumerate(reversed(classed)) if sound in vowels), len(classed))
     return lead, trail, classed[0], classed[-1]
 
