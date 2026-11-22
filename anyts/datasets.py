@@ -10,12 +10,12 @@ import urllib.request
 import uuid
 import zipfile
 from abc import ABCMeta, abstractmethod
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterator, Mapping
 from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import Any, ClassVar
 
 from .exceptions import DataFileError, DownloadError, ParameterError, SourceTypeError
-from .utils import check_callable, check_integer
+from .utils import _messages, check_callable, check_integer
 
 logger = logging.getLogger(__name__)
 
@@ -101,6 +101,8 @@ def fetch_archive(
     missing: bool,
     force: bool = False,
     user_agent: str = USER_AGENT,
+    *,
+    messages: Mapping[str, str] | None = None,
 ) -> None:
     """
     Downloading the archive of a dataset, verifying it and extracting the files
@@ -120,6 +122,8 @@ def fetch_archive(
         missing (bool): Whether the extracted files are missing
         force (bool): Download the archive even if it is already there
         user_agent (str): User-Agent header of the request
+        messages (dict[str, str]): Messages of the errors by key, in place of those of
+            the library
 
     Raises:
         ParameterError: If the name of the archive has no extension
@@ -127,17 +131,19 @@ def fetch_archive(
         DataFileError: If the verified archive cannot be extracted or its files
             cannot replace the directory of the dataset
     """
-    filepath = to_path(filepath)
+    messages = _messages(messages)
+    filepath = to_path(filepath, messages=messages)
     checksum = checksum.lower()
     stem = _stem(filepath.name)
     if stem == filepath.name:
-        raise ParameterError(f"The name of the archive {filepath.name} has no extension")
+        raise ParameterError(messages["archive_extension"].format(name=filepath.name))
     downloaded = download_file(
         url=url,
         dirpath=filepath.parent,
         filename=filepath.name,
         force=force,
         user_agent=user_agent,
+        messages=messages,
     )
     if not downloaded and not missing:
         return
@@ -149,21 +155,19 @@ def fetch_archive(
             filename=filepath.name,
             force=True,
             user_agent=user_agent,
+            messages=messages,
         )
         if sha256(filepath) != checksum:
             filepath.unlink(missing_ok=True)
-            raise DownloadError(
-                f"The file {filepath} failed the checksum verification and was removed, "
-                "download it again"
-            )
+            raise DownloadError(messages["checksum"].format(path=filepath))
     target = filepath.parent / stem
     partial = _partial(target)
     try:
         partial.mkdir()
-        extracted = Path(extract_archive(filepath, partial))
+        extracted = Path(extract_archive(filepath, partial, messages=messages))
         _replace(extracted, target)
     except OSError as e:
-        raise DataFileError(f"Cannot replace the directory {target}") from e
+        raise DataFileError(messages["replace_directory"].format(path=target, error=e)) from e
     finally:
         shutil.rmtree(partial, ignore_errors=True)
 
@@ -223,20 +227,23 @@ def _stem(name: str) -> str:
     return name
 
 
-def check_limit(limit: int | None) -> None:
+def check_limit(limit: int | None, *, messages: Mapping[str, str] | None = None) -> None:
     """
     Checking the number of records
 
     Arguments:
         limit (int): Number of records; None - no limit
+        messages (dict[str, str]): Messages of the errors by key, in place of those of
+            the library
 
     Raises:
         ParameterError: If the number of records is not an integer or is negative
     """
+    messages = _messages(messages)
     if limit is not None:
-        check_integer(limit, "number of records")
+        check_integer(limit, "limit", message=messages["integer_param"])
     if limit is not None and limit < 0:
-        raise ParameterError(f"The number of records must not be negative - {limit}")
+        raise ParameterError(messages["negative_param"].format(param="limit"))
 
 
 def fold_diacritics(value: str) -> str:
@@ -265,7 +272,11 @@ def fold_diacritics(value: str) -> str:
 
 
 def substring_filter(
-    field: str, value: str, fold: Callable[[str], str] = fold_diacritics
+    field: str,
+    value: str,
+    fold: Callable[[str], str] = fold_diacritics,
+    *,
+    messages: Mapping[str, str] | None = None,
 ) -> Filter:
     """
     Filter of the records by a substring of a field
@@ -279,6 +290,8 @@ def substring_filter(
         field (str): Name of the field of a record
         value (str): Substring to look for
         fold (callable): Folding of a string before the comparison
+        messages (dict[str, str]): Messages of the errors by key, in place of those of
+            the library
 
     Returns:
         Filter: Predicate on a record
@@ -292,20 +305,27 @@ def substring_filter(
         >>> substring_filter("author", "galdos")({"author": "Benito Pérez Galdós"})
         True
     """
+    messages = _messages(messages)
     if not isinstance(value, str):
-        raise ParameterError(f"The {field} must be a string, not {type(value).__name__}")
-    check_callable(fold, "folding")
+        raise ParameterError(
+            messages["filter_value"].format(field=field, type=type(value).__name__)
+        )
+    check_callable(fold, "fold", message=messages["callable_param"])
     needle = fold(value)
     return lambda record: isinstance(text := record[field], str) and needle in fold(text)
 
 
-def length_filters(min_len: int | None, max_len: int | None) -> Filters:
+def length_filters(
+    min_len: int | None, max_len: int | None, *, messages: Mapping[str, str] | None = None
+) -> Filters:
     """
     Filters of the records by the length of the text
 
     Arguments:
         min_len (int): Minimum length of the text in characters; None - no bound
         max_len (int): Maximum length of the text in characters; None - no bound
+        messages (dict[str, str]): Messages of the errors by key, in place of those of
+            the library
 
     Returns:
         Filters: List of predicates on a record
@@ -314,23 +334,23 @@ def length_filters(min_len: int | None, max_len: int | None) -> Filters:
         ParameterError: If the minimum or the maximum length is not an integer or
             is below one, or the minimum length is greater than the maximum one
     """
+    messages = _messages(messages)
     filters: Filters = []
+    for value, param in ((min_len, "min_len"), (max_len, "max_len")):
+        if value is not None:
+            check_integer(value, param, message=messages["integer_param"])
+            if value < 1:
+                raise ParameterError(messages["positive_param"].format(param=param))
     if min_len is not None:
-        check_integer(min_len, "minimum length of the text")
-        if min_len < 1:
-            raise ParameterError("The minimum length of the text must be greater than 0")
         filters.append(lambda record: len(record["text"]) >= min_len)
     if max_len is not None:
-        check_integer(max_len, "maximum length of the text")
-        if max_len < 1:
-            raise ParameterError("The maximum length of the text must be greater than 0")
         filters.append(lambda record: len(record["text"]) <= max_len)
     if min_len is not None and max_len is not None and min_len > max_len:
-        raise ParameterError("The minimum length of the text is greater than the maximum one")
+        raise ParameterError(messages["text_len_order"])
     return filters
 
 
-def to_path(path: str | Path) -> Path:
+def to_path(path: str | Path, *, messages: Mapping[str, str] | None = None) -> Path:
     """
     Converting the string form of a path into a Path
 
@@ -340,6 +360,8 @@ def to_path(path: str | Path) -> Path:
 
     Arguments:
         path (str|Path): Path as a string or a Path
+        messages (dict[str, str]): Messages of the errors by key, in place of those of
+            the library
 
     Returns:
         Path: Path object
@@ -350,7 +372,7 @@ def to_path(path: str | Path) -> Path:
     if isinstance(path, str | Path):
         text = str(path)
         return Path(path).expanduser() if text == "~" or text.startswith(_HOME) else Path(path)
-    raise SourceTypeError("The path must be a string or a Path")
+    raise SourceTypeError(_messages(messages)["path_type"].format(type=type(path).__name__))
 
 
 def download_file(
@@ -359,6 +381,8 @@ def download_file(
     filename: str | None = None,
     force: bool = False,
     user_agent: str = USER_AGENT,
+    *,
+    messages: Mapping[str, str] | None = None,
 ) -> str:
     """
     Downloading a file from the network
@@ -375,6 +399,8 @@ def download_file(
         filename (str): Name of the downloaded file; the last part of the address by default
         force (bool): Download the file even if it is already there
         user_agent (str): User-Agent header of the request
+        messages (dict[str, str]): Messages of the errors by key, in place of those of
+            the library
 
     Returns:
         str: Path to the downloaded file; an empty string if it was already there
@@ -384,17 +410,18 @@ def download_file(
             file and no name is given, the name is not a plain name of a file, or
             the file cannot be downloaded
     """
-    dirpath = to_path(dirpath)
+    messages = _messages(messages)
+    dirpath = to_path(dirpath, messages=messages)
     try:
         dirpath.mkdir(parents=True, exist_ok=True)
     except OSError as e:
-        raise DownloadError(f"Cannot create the directory {dirpath}: {e}") from e
+        raise DownloadError(messages["create_directory"].format(path=dirpath, error=e)) from e
     if not filename:
         filename = Path(urllib.parse.unquote(urllib.parse.urlparse(url).path)).name
     if not filename:
-        raise DownloadError(f"The address {url} names no file: give the name of the file")
+        raise DownloadError(messages["no_file_name"].format(url=url))
     if "\x00" in filename or _is_outside(filename) or PureWindowsPath(filename).name != filename:
-        raise DownloadError(f"The name of the file {filename} is not a plain name")
+        raise DownloadError(messages["file_name"].format(name=filename))
     filepath = dirpath.resolve() / filename
     if filepath.is_file() and not force:
         logger.info("The file %s is already downloaded", filepath)
@@ -411,13 +438,15 @@ def download_file(
             length = response.headers.get("Content-Length", "")
             if length.isdigit() and out_file.tell() != int(length):
                 raise DownloadError(
-                    f"Cannot download the file {url}: received {out_file.tell()} of {length} bytes"
+                    messages["download_length"].format(
+                        url=url, received=out_file.tell(), length=length
+                    )
                 )
         partial.replace(filepath)
     except DownloadError:
         raise
     except Exception as e:
-        raise DownloadError(f"Cannot download the file {url}: {e}") from e
+        raise DownloadError(messages["download_file"].format(url=url, error=e)) from e
     finally:
         partial.unlink(missing_ok=True)
     logger.info("The file is downloaded: %s", filepath)
@@ -437,7 +466,12 @@ def _is_outside(member: str) -> bool:
     return bool(path.anchor) or ".." in path.parts
 
 
-def extract_archive(archive_file: str | Path, extract_dir: str | Path | None = None) -> str:
+def extract_archive(
+    archive_file: str | Path,
+    extract_dir: str | Path | None = None,
+    *,
+    messages: Mapping[str, str] | None = None,
+) -> str:
     """
     Extracting the files of a ZIP or TAR archive
 
@@ -453,6 +487,8 @@ def extract_archive(archive_file: str | Path, extract_dir: str | Path | None = N
     Arguments:
         archive_file (str|Path): Path to the archive
         extract_dir (str|Path): Directory for the extracted files; the directory of the archive by default
+        messages (dict[str, str]): Messages of the errors by key, in place of those of
+            the library
 
     Returns:
         str: Path to the directory with the extracted files
@@ -464,27 +500,28 @@ def extract_archive(archive_file: str | Path, extract_dir: str | Path | None = N
             other way round, or the directory cannot be created or its files
             replaced
     """
-    archive_path = to_path(archive_file).resolve()
+    messages = _messages(messages)
+    archive_path = to_path(archive_file, messages=messages).resolve()
     if not archive_path.is_file():
-        raise DataFileError(f"The archive {archive_path} is not found")
-    extract_path = to_path(extract_dir) if extract_dir else archive_path.parent
+        raise DataFileError(messages["no_archive"].format(path=archive_path))
+    extract_path = to_path(extract_dir, messages=messages) if extract_dir else archive_path.parent
     try:
         extract_path.mkdir(parents=True, exist_ok=True)
     except OSError as e:
-        raise DataFileError(f"Cannot create the directory {extract_path}") from e
+        raise DataFileError(messages["create_directory"].format(path=extract_path, error=e)) from e
     # A TAR that ends with a ZIP member passes is_zipfile too
     is_tar = tarfile.is_tarfile(archive_path)
     if not is_tar and not zipfile.is_zipfile(archive_path):
-        raise DataFileError(f"The file {archive_path} is not a ZIP or TAR archive")
+        raise DataFileError(messages["not_archive"].format(path=archive_path))
     stem = _stem(archive_path.name)
     partial = _partial(extract_path / stem)
     try:
         partial.mkdir()
-        members = _extract(archive_path, is_tar, partial)
+        members = _extract(archive_path, is_tar, partial, messages)
         roots = {parts[0] for member in members if (parts := PurePosixPath(member).parts)}
         if len(roots) == 1 and (partial / (root := roots.pop())).is_dir():
             destination = extract_path / stem
-            _check_not_the_archive(destination, archive_path)
+            _check_not_the_archive(destination, archive_path, messages)
             _replace(partial / root, destination)
             return str(destination)
         entries = [
@@ -492,7 +529,7 @@ def extract_archive(archive_file: str | Path, extract_dir: str | Path | None = N
             for entry in sorted(partial.rglob("*"))
         ]
         for entry, destination in entries:
-            _check_merge(entry, destination, archive_path)
+            _check_merge(entry, destination, archive_path, messages)
         for entry, destination in entries:
             if entry.is_dir():
                 destination.mkdir(parents=True, exist_ok=True)
@@ -501,32 +538,33 @@ def extract_archive(archive_file: str | Path, extract_dir: str | Path | None = N
                 _replace(entry, destination)
         return str(extract_path)
     except OSError as e:
-        raise DataFileError(f"Cannot extract the archive {archive_path}") from e
+        raise DataFileError(messages["extract_archive"].format(path=archive_path, error=e)) from e
     finally:
         shutil.rmtree(partial, ignore_errors=True)
 
 
-def _check_merge(entry: Path, destination: Path, archive_path: Path) -> None:
+def _check_merge(
+    entry: Path, destination: Path, archive_path: Path, messages: Mapping[str, str]
+) -> None:
     """Refusing a file or a directory of the archive that would replace one of the other kind"""
     if entry.is_file():
-        _check_not_the_archive(destination, archive_path)
+        _check_not_the_archive(destination, archive_path, messages)
     if destination.exists() and entry.is_dir() != destination.is_dir():
-        kind = "directory" if entry.is_dir() else "file"
-        raise DataFileError(
-            f"The archive {archive_path} would put a {kind} in the place of {destination}"
-        )
+        key = "archive_directory" if entry.is_dir() else "archive_file"
+        raise DataFileError(messages[key].format(path=archive_path, destination=destination))
 
 
-def _check_not_the_archive(destination: Path, archive_path: Path) -> None:
+def _check_not_the_archive(
+    destination: Path, archive_path: Path, messages: Mapping[str, str]
+) -> None:
     """Refusing a file of the archive that would take the place of the archive itself"""
     if destination.resolve() == archive_path:
-        raise DataFileError(
-            f"The files of the archive {archive_path} would replace it: give the archive "
-            "an extension or extract it into another directory"
-        )
+        raise DataFileError(messages["archive_itself"].format(path=archive_path))
 
 
-def _extract(archive_path: Path, is_tar: bool, extract_path: Path) -> list[str]:
+def _extract(
+    archive_path: Path, is_tar: bool, extract_path: Path, messages: Mapping[str, str]
+) -> list[str]:
     """
     Extracting the members of an archive; the names of the members
 
@@ -535,7 +573,7 @@ def _extract(archive_path: Path, is_tar: bool, extract_path: Path) -> list[str]:
         once; a refused member stops the extraction, and the caller removes
         what was written
     """
-    refused = f"The archive {archive_path} has paths outside the directory or links"
+    refused = messages["archive_paths"].format(path=archive_path)
 
     def check(member: tarfile.TarInfo, path: str) -> tarfile.TarInfo:
         if _is_outside(member.name) or not (member.isfile() or member.isdir()):
@@ -560,9 +598,9 @@ def _extract(archive_path: Path, is_tar: bool, extract_path: Path) -> list[str]:
                     raise DataFileError(refused)
                 zip_file.extractall(extract_path)
     except (OSError, zipfile.BadZipFile, tarfile.TarError) as e:
-        raise DataFileError(f"Cannot extract the archive {archive_path}") from e
+        raise DataFileError(messages["extract_archive"].format(path=archive_path, error=e)) from e
     if not members:
-        raise DataFileError(f"The archive {archive_path} has no files")
+        raise DataFileError(messages["empty_archive"].format(path=archive_path))
     return members
 
 

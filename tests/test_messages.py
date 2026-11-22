@@ -1,7 +1,11 @@
+import io
 import pickle
 import re
+import tempfile
+import zipfile
 from pathlib import Path
 from typing import ClassVar
+from unittest import mock
 
 import pandas as pd
 import pytest
@@ -9,7 +13,7 @@ import spacy
 from spacy.tokens import Doc
 
 import anyts
-from anyts import CharNgramsExtractor, SentsExtractor, WordsExtractor
+from anyts import CharNgramsExtractor, SentsExtractor, WordsExtractor, datasets
 from anyts.basic_stats import BasicStats
 from anyts.cohesion_stats import CohesionStats, ConnectorMatcher
 from anyts.components import (
@@ -43,9 +47,25 @@ from anyts.corpus import (
     z_scores,
     zeta_segments,
 )
+from anyts.datasets import (
+    download_file,
+    extract_archive,
+    fetch_archive,
+    length_filters,
+    sha256,
+    substring_filter,
+    to_path,
+)
 from anyts.diversity_stats import DiversityStats, calc_ttr, calc_windowed, check_params
 from anyts.document import document_part, to_document
-from anyts.exceptions import ParameterError, SourceError, SourceTypeError, UnknownStatError
+from anyts.exceptions import (
+    DataFileError,
+    DownloadError,
+    ParameterError,
+    SourceError,
+    SourceTypeError,
+    UnknownStatError,
+)
 from anyts.lexical_stats import LexicalStats, LexicalWord
 from anyts.morph_stats import MorphStats
 from anyts.phon_stats import PhonStats
@@ -268,7 +288,75 @@ def hooked(cls, **hooks):
 
 
 WORDS = TEXT.split()
+
+
 # One case for every raise site of the classes, a key raised at several sites several times
+def scratch() -> Path:
+    """A new empty directory"""
+    return Path(tempfile.mkdtemp())
+
+
+def zip_archive(members: dict[str, str], name: str = "data.zip") -> Path:
+    """A ZIP archive with the files given, in a new directory"""
+    path = scratch() / name
+    with zipfile.ZipFile(path, "w") as archive:
+        for member, text in members.items():
+            archive.writestr(member, text)
+    return path
+
+
+def fetched(archive: Path, checksum: str) -> None:
+    """The archive fetched by its file address into a new directory"""
+    fetch_archive(archive.as_uri(), scratch() / archive.name, checksum, True, messages=OWN)
+
+
+def cannot_replace() -> None:
+    """The extracted directory of a fetched archive cannot take its place"""
+    archive = zip_archive({"data/a.txt": "a"})
+    with mock.patch.object(datasets, "_replace", side_effect=[None, OSError("busy")]):
+        fetched(archive, sha256(archive))
+
+
+def cut_download() -> None:
+    """An answer shorter than its Content-Length"""
+
+    class Answer(io.BytesIO):
+        headers: ClassVar[dict[str, str]] = {"Content-Length": "10"}
+
+    with mock.patch.object(datasets.urllib.request, "urlopen", return_value=Answer(b"abc")):
+        download_file("https://example.com/a.zip", scratch(), messages=OWN)
+
+
+def put_over(member: str, existing: str, directory: bool) -> None:
+    """An archive of several roots whose member would replace a file or a directory"""
+    archive = zip_archive({member: "x", "other.txt": "y"})
+    target = scratch()
+    if directory:
+        (target / existing).mkdir()
+    else:
+        (target / existing).write_text("x")
+    extract_archive(archive, target, messages=OWN)
+
+
+def blocked_directory() -> Path:
+    """A path under a file, which cannot be a directory"""
+    blocker = scratch() / "file"
+    blocker.write_text("x")
+    return blocker / "sub"
+
+
+def not_an_archive() -> Path:
+    path = scratch() / "a.zip"
+    path.write_text("x")
+    return path
+
+
+def cannot_extract() -> None:
+    archive = zip_archive({"data/a.txt": "a"})
+    with mock.patch.object(datasets, "_replace", side_effect=OSError("busy")):
+        extract_archive(archive, messages=OWN)
+
+
 CASES = [
     ("source_type", SourceTypeError, lambda: Stats(5)),
     ("document_tokens", SourceError, lambda: Stats(MERGED)),
@@ -788,6 +876,53 @@ CASES = [
         lambda: keyness(
             WORDS, FrequencyReference({"cat": 1.0}, 10.0, keys=lambda words: ()), messages=OWN
         ),
+    ),
+    (
+        "archive_extension",
+        ParameterError,
+        lambda: fetch_archive("https://example.com/a", scratch() / "a", "0", True, messages=OWN),
+    ),
+    ("checksum", DownloadError, lambda: fetched(zip_archive({"data/a.txt": "a"}), "0" * 64)),
+    ("replace_directory", DataFileError, cannot_replace),
+    ("filter_value", ParameterError, lambda: substring_filter("author", 5, messages=OWN)),
+    ("text_len_order", ParameterError, lambda: length_filters(5, 2, messages=OWN)),
+    ("path_type", SourceTypeError, lambda: to_path(5, messages=OWN)),
+    (
+        "create_directory",
+        DownloadError,
+        lambda: download_file("https://example.com/a.zip", blocked_directory(), messages=OWN),
+    ),
+    (
+        "no_file_name",
+        DownloadError,
+        lambda: download_file("https://example.com/", scratch(), messages=OWN),
+    ),
+    (
+        "file_name",
+        DownloadError,
+        lambda: download_file("https://example.com/a", scratch(), "../a", messages=OWN),
+    ),
+    (
+        "download_file",
+        DownloadError,
+        lambda: download_file((scratch() / "a.zip").as_uri(), scratch(), messages=OWN),
+    ),
+    ("download_length", DownloadError, cut_download),
+    ("no_archive", DataFileError, lambda: extract_archive(scratch() / "a.zip", messages=OWN)),
+    ("not_archive", DataFileError, lambda: extract_archive(not_an_archive(), messages=OWN)),
+    ("extract_archive", DataFileError, cannot_extract),
+    ("empty_archive", DataFileError, lambda: extract_archive(zip_archive({}), messages=OWN)),
+    (
+        "archive_paths",
+        DataFileError,
+        lambda: extract_archive(zip_archive({"../a.txt": "a"}), messages=OWN),
+    ),
+    ("archive_directory", DataFileError, lambda: put_over("a/b.txt", "a", directory=False)),
+    ("archive_file", DataFileError, lambda: put_over("a.txt", "a.txt", directory=True)),
+    (
+        "archive_itself",
+        DataFileError,
+        lambda: extract_archive(zip_archive({"data/a.txt": "a"}, name="data"), messages=OWN),
     ),
 ]
 

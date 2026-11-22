@@ -21,7 +21,7 @@ An abstract dataset: a name, a dictionary of reference information `meta` and th
 
 <!-- --8<-- [start:fetch_archive] -->
 ``` {.python .signature}
-fetch_archive(url, filepath, checksum, missing, force=False, user_agent='anyTS')
+fetch_archive(url, filepath, checksum, missing, force=False, user_agent='anyTS', *, messages=None)
 ```
 
 Downloads the archive of a dataset; when it is just downloaded or `missing` says the extracted files are not all in place, verifies it and extracts the files. The SHA-256 checksum may be in upper or lower case; an archive that fails it is removed and downloaded again once. The files are extracted aside, next to the archive, and replace the directory of the dataset (or a link in its place) only once complete, the earlier directory removed only once they are in place: an interrupted extraction or a failed replacement leaves the earlier files intact, and concurrent calls do not share partial files. The name of the archive needs an extension, since the directory is named after the archive without it.
@@ -34,6 +34,7 @@ Downloads the archive of a dataset; when it is just downloaded or `missing` says
 | `missing` | `bool` | - | Whether the extracted files are missing |
 | `force` | `bool` | `False` | Download the archive even if it is already there |
 | `user_agent` | `str` | `USER_AGENT` | User-Agent header of the request, the name of the library |
+| `messages` | `dict[str, str]` | `None` | Messages of the errors by key, in place of those of the library |
 
 A name of the archive without an extension raises `ParameterError` before the download, an archive that cannot be downloaded or fails the checksum twice `DownloadError`, an archive that cannot be extracted or files that cannot replace the directory of the dataset `DataFileError`, and a path of the archive that is neither a string nor a `Path` `SourceTypeError`.
 <!-- --8<-- [end:fetch_archive] -->
@@ -42,7 +43,7 @@ A name of the archive without an extension raises `ParameterError` before the do
 
 <!-- --8<-- [start:download_file] -->
 ``` {.python .signature}
-download_file(url, dirpath, filename=None, force=False, user_agent='anyTS')
+download_file(url, dirpath, filename=None, force=False, user_agent='anyTS', *, messages=None)
 ```
 
 Downloads a file into a directory and returns its path, or an empty string if the file is already there and `force` is off. The name of the file is the decoded last part of the path of the address; an address without one needs `filename`. The file is written under a temporary name and renamed once complete: a broken, interrupted or cut download (shorter than the announced length) leaves no partial file, and concurrent downloads do not share partial files. The server is waited for at most `DOWNLOAD_TIMEOUT` (60) seconds.
@@ -54,6 +55,7 @@ Downloads a file into a directory and returns its path, or an empty string if th
 | `filename` | `str` | `None` | Name of the downloaded file; the last part of the address by default |
 | `force` | `bool` | `False` | Download the file even if it is already there |
 | `user_agent` | `str` | `USER_AGENT` | User-Agent header of the request, the name of the library |
+| `messages` | `dict[str, str]` | `None` | Messages of the errors by key, in place of those of the library |
 
 A directory that cannot be created, an address without a name of a file and no `filename`, a name that is not a plain name of a file, such as one with a drive or a separator, and a broken, interrupted or cut download raise `DownloadError`, and a directory that is neither a string nor a `Path` `SourceTypeError`.
 <!-- --8<-- [end:download_file] -->
@@ -64,7 +66,7 @@ A language library passes its own name as `user_agent`.
 
 <!-- --8<-- [start:extract_archive] -->
 ``` {.python .signature}
-extract_archive(archive_file, extract_dir=None)
+extract_archive(archive_file, extract_dir=None, *, messages=None)
 ```
 
 Extracts a ZIP or TAR archive and returns the directory with the files. Paths leading outside the directory (absolute, with a drive or a network share, or with `..`) and links are refused before anything is written, on any version of Python. The archive is extracted aside and put in place once complete: a single root directory takes the name of the archive without its extensions (`corpus_v1.tar.xz` - `corpus_v1`), replacing an earlier extraction; otherwise the files go into the directory, replacing those of the same names and keeping the others. A file in the place of a directory or the other way round, or in the place of the archive itself, is refused before anything is replaced.
@@ -73,6 +75,7 @@ Extracts a ZIP or TAR archive and returns the directory with the files. Paths le
 | :-------- | :--- | :------ | :---------- |
 | `archive_file` | `str` / `Path` | - | Path to the archive |
 | `extract_dir` | `str` / `Path` | `None` | Directory for the extracted files; the directory of the archive by default |
+| `messages` | `dict[str, str]` | `None` | Messages of the errors by key, in place of those of the library |
 
 A refused path, link or file, a missing file, a file that is not an archive, a corrupted or empty archive, a directory that cannot be created and files that cannot be replaced raise `DataFileError`, and a path that is neither a string nor a `Path` `SourceTypeError`.
 <!-- --8<-- [end:extract_archive] -->
@@ -97,7 +100,7 @@ A path that is neither a string nor a `Path` raises `SourceTypeError`.
 
 <!-- --8<-- [start:to_path] -->
 ``` {.python .signature}
-to_path(path)
+to_path(path, *, messages=None)
 ```
 
 Converts a string or a `Path` into a `Path`, expanding a leading `~`, alone or before a separator, into the home directory.
@@ -105,6 +108,7 @@ Converts a string or a `Path` into a `Path`, expanding a leading `~`, alone or b
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
 | `path` | `str` / `Path` | - | Path as a string or a Path |
+| `messages` | `dict[str, str]` | `None` | Messages of the errors by key, in place of those of the library |
 
 Any other value raises `SourceTypeError`.
 <!-- --8<-- [end:to_path] -->
@@ -113,7 +117,7 @@ Any other value raises `SourceTypeError`.
 
 <!-- --8<-- [start:check_limit] -->
 ``` {.python .signature}
-check_limit(limit)
+check_limit(limit, *, messages=None)
 ```
 
 Checks the number of records to take: `None` or a non-negative integer.
@@ -121,13 +125,14 @@ Checks the number of records to take: `None` or a non-negative integer.
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
 | `limit` | `int` | - | Number of records; `None` - no limit |
+| `messages` | `dict[str, str]` | `None` | Messages of the errors by key, in place of those of the library |
 
 Any other value raises `ParameterError`.
 <!-- --8<-- [end:check_limit] -->
 
 <!-- --8<-- [start:length_filters] -->
 ``` {.python .signature}
-length_filters(min_len, max_len)
+length_filters(min_len, max_len, *, messages=None)
 ```
 
 Returns the predicates that keep the records whose field `text` is at least `min_len` and at most `max_len` characters long.
@@ -136,12 +141,13 @@ Returns the predicates that keep the records whose field `text` is at least `min
 | :-------- | :--- | :------ | :---------- |
 | `min_len` | `int` | - | Minimum length of the text in characters; `None` - no bound |
 | `max_len` | `int` | - | Maximum length of the text in characters; `None` - no bound |
+| `messages` | `dict[str, str]` | `None` | Messages of the errors by key, in place of those of the library |
 
 A bound that is not an integer or is below one, or a minimum greater than the maximum, raises `ParameterError`.
 <!-- --8<-- [end:length_filters] -->
 
 ``` {.python .signature}
-substring_filter(field, value, fold=fold_diacritics)
+substring_filter(field, value, fold=fold_diacritics, *, messages=None)
 ```
 
 <!-- --8<-- [start:substring_filter] -->
@@ -153,6 +159,7 @@ Returns the predicate that keeps the records whose field holds the substring `va
 | `field` | `str` | - | Name of the field of a record |
 | `value` | `str` | - | Substring to look for |
 | `fold` | `Callable` | `fold_diacritics` | Folding of a string before the comparison |
+| `messages` | `dict[str, str]` | `None` | Messages of the errors by key, in place of those of the library |
 
 <!-- --8<-- [start:fold_diacritics] -->
 ``` {.python .signature}

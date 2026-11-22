@@ -85,7 +85,7 @@ def test_methods(dataset, name):
 def test_check_limit():
     check_limit(None)
     check_limit(0)
-    with pytest.raises(ParameterError, match=r"^The number of records must not be negative"):
+    with pytest.raises(ParameterError, match=r"^The limit cannot be negative$"):
         check_limit(-1)
     with pytest.raises(ParameterError, match=r"must be an integer, not float$"):
         check_limit(1.5)
@@ -163,7 +163,7 @@ def test_to_path():
 
 @pytest.mark.parametrize("path", [666, ["a", "b"], {"a": "b"}])
 def test_to_path_type_error(path):
-    with pytest.raises(SourceTypeError, match=r"^The path must be a string or a Path$"):
+    with pytest.raises(SourceTypeError, match=r"^The path must be a string or a Path, not \w+$"):
         to_path(path)
 
 
@@ -714,7 +714,7 @@ def remote(tmp_path, monkeypatch):
     archive = _tar(source, MEMBERS)
     calls = []
 
-    def fake_download(url, dirpath, filename=None, force=False, user_agent=None):
+    def fake_download(url, dirpath, filename=None, force=False, user_agent=None, messages=None):
         calls.append((force, user_agent))
         path = Path(dirpath) / filename
         if path.is_file() and not force:
@@ -854,7 +854,7 @@ def test_fetch_archive_interrupted_extraction(remote, monkeypatch):
     (root / "a.txt").write_text("earlier", encoding="utf-8")
     (root / "b" / "c.txt").unlink()
 
-    def broken_extract(archive_file, extract_dir=None):
+    def broken_extract(archive_file, extract_dir=None, messages=None):
         # The first members are written, then the extraction stops
         folder = Path(extract_dir) / "corpus_v1" / "b"
         folder.mkdir(parents=True)
@@ -878,5 +878,5 @@ def test_fetch_archive_interrupted_extraction(remote, monkeypatch):
 
 
 def test_substring_filter_checks_the_folding():
-    with pytest.raises(SourceTypeError, match=r"^The folding must be callable, not str$"):
+    with pytest.raises(SourceTypeError, match=r"^The fold must be callable, not str$"):
         substring_filter("author", "galdos", "lower")
