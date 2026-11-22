@@ -294,6 +294,41 @@ def test_output_is_utf_8(capsys, tmp_path):
     assert code == 0 and "Honoré's R" in out
 
 
+def test_help_and_errors_in_utf_8(monkeypatch, tmp_path):
+    """The help and the errors go out in UTF-8, as the output, whatever the encoding of the
+    console"""
+
+    class Russian(Prototype):
+        texts: ClassVar[dict[str, str]] = {
+            **CLI_TEXTS,
+            "description": "Статистики текстов",
+            "unknown_stats": "неизвестные статистики {name}",
+            "file_error": "{source}: не прочитан",
+        }
+
+    out, err = BytesIO(), BytesIO()
+    monkeypatch.setattr(sys, "stdout", TextIOWrapper(out, encoding="cp1252"))
+    monkeypatch.setattr(sys, "stderr", TextIOWrapper(err, encoding="cp1252"))
+    assert Russian().run(["--help"]) == 0
+    assert Russian().run(["stats", "-s", "lexical"]) == 2
+    assert Russian().run(["stats", str(tmp_path / "нет.txt")]) == 1
+    assert "Статистики текстов" in out.getvalue().decode("utf-8")
+    errors = err.getvalue().decode("utf-8")
+    assert "неизвестные статистики lexical" in errors
+    assert "нет.txt: не прочитан" in errors
+
+
+def test_no_standard_error(monkeypatch, files, tmp_path):
+    """Without a standard error, as under pythonw, the errors go nowhere and the other texts are
+    counted"""
+    monkeypatch.setattr(sys, "stderr", None)
+    output = tmp_path / "out.json"
+    argv = ["stats", "-s", "basic", "-f", "json", "-o", str(output), "nope.txt", files[1]]
+    assert Prototype().run(argv) == 1
+    assert list(json.loads(output.read_text(encoding="utf-8"))) == [files[1]]
+    assert Prototype().run(["stats", "-s", "lexical"]) == 2
+
+
 def test_csv_line_ends(capsys, files, tmp_path):
     output = tmp_path / "out.csv"
     assert run(capsys, "-s", "basic", "-f", "csv", "-o", str(output), *files)[0] == 0
