@@ -1310,6 +1310,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#junctions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Junctions of words
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#cv_entropy" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1714,6 +1725,34 @@
     
   
     Vocabulary growth
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../visualizers/verse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rhythm of the lines
   
 
     
@@ -2368,6 +2407,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#junctions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Junctions of words
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#cv_entropy" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2494,21 +2544,23 @@
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code>                 Statistic                 |  Value
-------------------------------------------------------
-Share of vowels                            |   0.38
-Share of sonorant consonants               |   0.17
-Share of voiced obstruents                 |   0.03
-Share of voiceless obstruents              |   0.41
-Ratio of consonants to vowels              |   1.64
-Share of clusters of 3 consonants or more  |   0.08
-Hiatuses per word                          |   0.22
-Entropy of the CV patterns of words (bits) |   2.95
-Hardness                                   |   0.75
-Alliteration index                         |   0.61
-Assonance index                            |   0.82
-Share of open syllables                    |   0.50
-Mean length of a syllable (sounds)         |   2.90
+<div class="highlight"><pre><span></span><code>                      Statistic                       |  Value
+-----------------------------------------------------------------
+Share of vowels                                       |   0.38
+Share of sonorant consonants                          |   0.17
+Share of voiced obstruents                            |   0.03
+Share of voiceless obstruents                         |   0.41
+Ratio of consonants to vowels                         |   1.64
+Share of clusters of 3 consonants or more             |   0.08
+Hiatuses per word                                     |   0.22
+Share of junctions of words with a hiatus             |   0.00
+Share of junctions of words with 4 consonants or more |   0.00
+Entropy of the CV patterns of words (bits)            |   2.95
+Hardness                                              |   0.75
+Alliteration index                                    |   0.61
+Assonance index                                       |   0.82
+Share of open syllables                               |   0.50
+Mean length of a syllable (sounds)                    |   2.90
 </code></pre></div>
 </div>
 </div>
@@ -2648,6 +2700,18 @@ Mean length of a syllable (sounds)         |   2.90
 <td style="text-align: left;">More vowels in a row</td>
 </tr>
 <tr>
+<td style="text-align: left;"><a href="#junctions"><code>p_junction_hiatus</code></a></td>
+<td style="text-align: left;">Share of the junctions of words with a vowel on both sides</td>
+<td style="text-align: left;">0-1, <code>nan</code> without junctions</td>
+<td style="text-align: left;">More vowels meeting between the words</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a href="#junctions"><code>p_junction_clusters</code></a></td>
+<td style="text-align: left;">Share of the junctions of words with <code>JUNCTION_CLUSTER_LEN</code> (4) consonants or more in a row</td>
+<td style="text-align: left;">0-1, <code>nan</code> without junctions</td>
+<td style="text-align: left;">More consonants meeting between the words</td>
+</tr>
+<tr>
 <td style="text-align: left;"><a href="#cv_entropy"><code>cv_entropy</code></a></td>
 <td style="text-align: left;">Shannon entropy of the CV patterns of the words, in bits</td>
 <td style="text-align: left;">0 and above, <code>nan</code> without sounds</td>
@@ -2784,6 +2848,13 @@ Mean length of a syllable (sounds)         |   2.90
 </tbody>
 </table>
 <!-- --8<-- [end:count_hiatus] -->
+</div>
+<div class="metric-card">
+<h3 id="junctions">Junctions of words<a class="headerlink" href="#junctions" title="Permanent link">&para;</a></h3>
+<p class="metric-meta"><code>p_junction_hiatus</code> · <code>p_junction_clusters</code></p>
+<!-- --8<-- [start:PhonStats-junctions] -->
+<p>A junction is two words of a sentence with only spaces between them: a sign, such as a comma, a line break or the end of a sentence makes none, and so does a word of consonants alone but a single one, such as an abbreviation read by its letters. A junction has a hiatus when the last sound of the classes of the first word and the first of the second are vowels, the second not one of <code>glides</code>, and a heavy cluster when the consonants at the end of the first word and at the start of the second, both words having some, make <code>JUNCTION_CLUSTER_LEN</code> (4) or more. The shares are those of all the junctions of the text, by the sounds of <code>transcribe</code>; with a word extractor, the junctions are still those of the document of the source.</p>
+<!-- --8<-- [end:PhonStats-junctions] -->
 </div>
 <div class="metric-card">
 <h3 id="cv_entropy">Entropy of the CV patterns<a class="headerlink" href="#cv_entropy" title="Permanent link">&para;</a></h3>

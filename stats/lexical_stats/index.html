@@ -1679,6 +1679,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../visualizers/verse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rhythm of the lines
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../visualizers/sentences/" class="md-nav__link">
         
   
@@ -2352,7 +2380,7 @@
 <div class="signature highlight"><pre><span></span><code><span class="n">LexicalStats</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">freq_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 <!-- --8<-- [start:LexicalStats] -->
-<p>Lexical sophistication in the manner of TAALES (Kyle, Crossley and Berger, 2018) - how rare the words of a text are: statistics by a frequency dictionary and its unigram model, the shares of the frequency bands of a list of the most frequent lemmas and the lexical density. The statistics by the dictionary are computed when first read, so the bands and the lexical density need no dictionary data. The data source is a text, a <code>Doc</code> object of <a href="https://github.com/explosion/spaCy">spaCy</a> or a <code>Document</code> of <a href="https://github.com/SergeyShk/anySeg">anySeg</a>, read through its <a href="https://sergeyshk.github.io/anyTS/document/">document</a>: by default its words of Universal Dependencies without numbers, with their lemmas and parts of speech.</p>
+<p>Lexical sophistication in the manner of TAALES (Kyle, Crossley and Berger, 2018) - how rare the words of a text are: statistics by a frequency dictionary and its unigram model, the shares of the frequency bands of a list of the most frequent lemmas, the lexical density and the shares of the proper nouns and of the abbreviations. The statistics by the dictionary are computed when first read, so the bands and the shares need no dictionary data. The data source is a text, a <code>Doc</code> object of <a href="https://github.com/explosion/spaCy">spaCy</a> or a <code>Document</code> of <a href="https://github.com/SergeyShk/anySeg">anySeg</a>, read through its <a href="https://sergeyshk.github.io/anyTS/document/">document</a>: by default its words of Universal Dependencies without numbers, with their lemmas, parts of speech and features.</p>
 <p>Raises:</p>
 <ul>
 <li><code>SourceTypeError</code> - a source that is neither a string, a <code>Doc</code> nor a <code>Document</code>, a <code>parse</code> that returns no <code>Document</code>, a dictionary of another class than that of the library or, without <code>freq_dict_class</code>, one without <code>lookup</code> and <code>ipm</code> or none at all; an <code>analyze</code> that does not give <code>LexicalWord</code> objects;</li>
@@ -2418,6 +2446,8 @@ Share of words in the top 5000                   |   0.60
 Share of words in the top 10000                  |   0.60
 Share of words beyond the top 10000              |   0.40
 Lexical density                                  |   0.60
+Share of proper nouns                            |   0.00
+Share of abbreviations                           |   0.00
 </code></pre></div>
 </div>
 </div>
@@ -2577,6 +2607,18 @@ Lexical density                                  |   0.60
 <td style="text-align: left;">0-1</td>
 <td style="text-align: left;">More content words</td>
 </tr>
+<tr>
+<td style="text-align: left;"><code>p_proper_nouns</code></td>
+<td style="text-align: left;">Share of the proper nouns</td>
+<td style="text-align: left;">0-1</td>
+<td style="text-align: left;">More names of persons, places and organizations</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>p_abbreviations</code></td>
+<td style="text-align: left;">Share of the abbreviations</td>
+<td style="text-align: left;">0-1</td>
+<td style="text-align: left;">More abbreviations, as in official and scientific texts</td>
+</tr>
 </tbody>
 </table>
 <!-- --8<-- [end:LexicalStats-metrics] -->
@@ -2665,7 +2707,7 @@ Lexical density                                  |   0.60
 <tr>
 <td style="text-align: left;"><code>analyze(source)</code></td>
 <td style="text-align: left;">method</td>
-<td style="text-align: left;">The words of a source as <code>LexicalWord</code>: the word, its lemma and whether it is a content word. By default the words of Universal Dependencies of the document of <code>parse</code> with a letter or a digit, numbers (<code>is_number</code> of <code>anyts.utils</code>) left out, the lemma of the column <code>lemma</code> or the word itself, and the content words by the parts of speech of <code>CONTENT_UD_POS</code> (<code>ADJ</code>, <code>ADV</code>, <code>NOUN</code>, <code>PROPN</code>, <code>VERB</code>); a library with its own lemmas or content words overrides it</td>
+<td style="text-align: left;">The words of a source as <code>LexicalWord</code>: the word, its lemma and whether it is a content word, a proper noun and an abbreviation (<code>proper</code> and <code>abbreviation</code>, <code>False</code> by default). By default the words of Universal Dependencies of the document of <code>parse</code> with a letter or a digit, numbers (<code>is_number</code> of <code>anyts.utils</code>) left out, the lemma of the column <code>lemma</code> or the word itself, the content words by the parts of speech of <code>CONTENT_UD_POS</code> (<code>ADJ</code>, <code>ADV</code>, <code>NOUN</code>, <code>PROPN</code>, <code>VERB</code>), the proper nouns by <code>PROPN</code> and the abbreviations by <code>Abbr=Yes</code> of the column <code>feats</code>; a library with its own lemmas or content words overrides it</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>parse(source)</code></td>
