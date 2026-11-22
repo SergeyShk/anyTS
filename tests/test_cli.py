@@ -318,6 +318,17 @@ def test_help_and_errors_in_utf_8(monkeypatch, tmp_path):
     assert "нет.txt: не прочитан" in errors
 
 
+def test_no_standard_error(monkeypatch, files, tmp_path):
+    """Without a standard error, as under pythonw, the errors go nowhere and the other texts are
+    counted"""
+    monkeypatch.setattr(sys, "stderr", None)
+    output = tmp_path / "out.json"
+    argv = ["stats", "-s", "basic", "-f", "json", "-o", str(output), "nope.txt", files[1]]
+    assert Prototype().run(argv) == 1
+    assert list(json.loads(output.read_text(encoding="utf-8"))) == [files[1]]
+    assert Prototype().run(["stats", "-s", "lexical"]) == 2
+
+
 def test_csv_line_ends(capsys, files, tmp_path):
     output = tmp_path / "out.csv"
     assert run(capsys, "-s", "basic", "-f", "csv", "-o", str(output), *files)[0] == 0

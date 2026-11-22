@@ -544,7 +544,7 @@ class _Parser(argparse.ArgumentParser):
 
     def _print_message(self, message: str, file: Any = None) -> None:
         # The help, the usage and the errors of argparse go out as the output does
-        with contextlib.suppress(AttributeError, OSError):
+        with contextlib.suppress(OSError):
             _write(file or sys.stderr, message)
 
     def error(self, message: str) -> Any:
@@ -593,7 +593,10 @@ class _Output:
 
 def _write(stream: Any, text: str) -> None:
     """Writing a text to a standard stream in UTF-8, as bytes, whatever the encoding of the
-    console; a stream of text without bytes, as in a test, gets the text"""
+    console; a stream of text without bytes, as in a test, gets the text, and none, as under
+    pythonw, nothing"""
+    if stream is None:
+        return
     buffer = getattr(stream, "buffer", None)
     if buffer is None:
         stream.write(text)
