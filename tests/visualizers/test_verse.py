@@ -3,15 +3,14 @@ import numpy as np
 import pytest
 from matplotlib.axes import Axes
 
-from anyts.exceptions import SourceError, SourceTypeError
+from anyts.exceptions import ParameterError, SourceError, SourceTypeError
 from anyts.visualizers import rhythm_plot
 
-STRESSES = [(1, 3, 5, 7), (1, 3, 7), (0, 2)]
-LENGTHS = [8, 9, 4]
+PATTERNS = ["cCcCcCcC", "cCcCcccCc", "CcCc"]
 
 
 def test_rhythm_plot():
-    ax = rhythm_plot(STRESSES, LENGTHS)
+    ax = rhythm_plot(PATTERNS, "C")
     assert isinstance(ax, Axes)
     grid = np.ma.filled(ax.get_images()[0].get_array().astype(float), np.nan)
     assert grid.shape == (3, 9)
@@ -23,23 +22,29 @@ def test_rhythm_plot():
         "Unstressed syllable",
     ]
     assert ax.get_title() == "Rhythm of the lines"
+    assert ax.figure.get_layout_engine() is not None
     _, given = plt.subplots()
-    assert rhythm_plot(STRESSES, LENGTHS, ax=given, labels={"title": "Ритм"}) is given
+    assert rhythm_plot(["-+-+"], "+", ax=given, labels={"title": "Ритм"}) is given
     assert given.get_title() == "Ритм"
 
 
+def test_rhythm_plot_of_a_long_poem():
+    """Every cell keeps its color, and the ticks of the lines do not crowd"""
+    ax = rhythm_plot(["cC" * 4] * 300, "C")
+    assert ax.get_images()[0].get_interpolation() == "nearest"
+    assert len(ax.get_yticks()) < 20
+
+
 @pytest.mark.parametrize(
-    ("stresses", "lengths", "error"),
+    ("patterns", "stressed", "error"),
     [
-        ([], [], SourceError),
-        ([(1,)], [2, 3], SourceError),
-        ([(2,)], [2], SourceError),
-        ([(0,)], [-1], SourceError),
-        ([(0.5,)], [2], SourceTypeError),
-        ([(True,)], [2], SourceTypeError),
-        ("01", [2], SourceTypeError),
+        ([], "C", SourceError),
+        ([1], "C", SourceTypeError),
+        ("cC", "C", SourceTypeError),
+        (["cC"], "CC", ParameterError),
+        (["cC"], 1, ParameterError),
     ],
 )
-def test_rhythm_plot_errors(stresses, lengths, error):
+def test_rhythm_plot_errors(patterns, stressed, error):
     with pytest.raises(error):
-        rhythm_plot(stresses, lengths)
+        rhythm_plot(patterns, stressed)

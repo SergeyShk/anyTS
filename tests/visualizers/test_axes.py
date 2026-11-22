@@ -74,7 +74,7 @@ PLOTS = {
     "frequency_spectrum_plot": lambda ax: frequency_spectrum_plot(WORDS, ax=ax),
     "zipf": lambda ax: zipf(Counter(WORDS), ax=ax),
     "zipf_theory": lambda ax: zipf_theory(10, 5, ax=ax),
-    "rhythm_plot": lambda ax: rhythm_plot([(1, 3)], [4], ax=ax),
+    "rhythm_plot": lambda ax: rhythm_plot(["cCcC"], "C", ax=ax),
 }
 
 
