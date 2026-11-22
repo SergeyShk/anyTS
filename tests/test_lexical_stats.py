@@ -82,6 +82,7 @@ def test_words_and_lemmas(stats):
     assert stats.keys == stats.lemmas
     assert stats.n_words == 10 and stats.n_content_words == 6
     assert stats.lexical_density == 0.6
+    assert stats.p_proper_nouns == stats.p_abbreviations == 0.0
     assert stats.ranks == (1, 1500, 900, 5, 1, 8000, None, 1, 1500, 900)
 
 
@@ -193,6 +194,16 @@ def test_default_analyze():
     assert stats.lemmas == ("venir", "de", "el", "pueblo")
     with pytest.raises(SourceError, match=r"^The data source has no words$"):
         LexicalStats("2020 !", Dictionary())
+
+
+def test_proper_nouns_and_abbreviations():
+    """Proper nouns by PROPN, abbreviations by Abbr=Yes of the features"""
+    document = Document.from_tokens("Anna met Dr Smith", [0, 5, 9, 12], [4, 8, 11, 17])
+    document.set_columns(
+        upos=["PROPN", "VERB", "NOUN", "PROPN"], feats=[None, "Tense=Past", "Abbr=Yes", None]
+    )
+    stats = LexicalStats(document, Dictionary())
+    assert (stats.p_proper_nouns, stats.p_abbreviations) == (0.5, 0.25)
 
 
 def test_surprisal_function():
