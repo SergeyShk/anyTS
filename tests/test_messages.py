@@ -913,9 +913,11 @@ CASES = [
         DownloadError,
         lambda: download_file((scratch() / "a.zip").as_uri(), scratch(), messages=OWN),
     ),
+    ("download_file", DownloadError, lambda: fetched(scratch() / "a.zip", "0" * 64)),
     ("download_length", DownloadError, cut_download),
     ("no_archive", DataFileError, lambda: extract_archive(scratch() / "a.zip", messages=OWN)),
     ("not_archive", DataFileError, lambda: extract_archive(not_an_archive(), messages=OWN)),
+    ("not_archive", DataFileError, lambda: fetched(path := not_an_archive(), sha256(path))),
     ("extract_archive", DataFileError, cannot_extract),
     ("empty_archive", DataFileError, lambda: extract_archive(zip_archive({}), messages=OWN)),
     (

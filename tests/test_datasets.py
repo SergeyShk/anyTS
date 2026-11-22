@@ -714,7 +714,7 @@ def remote(tmp_path, monkeypatch):
     archive = _tar(source, MEMBERS)
     calls = []
 
-    def fake_download(url, dirpath, filename=None, force=False, user_agent=None, messages=None):
+    def fake_download(url, dirpath, filename=None, force=False, user_agent=None):
         calls.append((force, user_agent))
         path = Path(dirpath) / filename
         if path.is_file() and not force:
@@ -854,7 +854,7 @@ def test_fetch_archive_interrupted_extraction(remote, monkeypatch):
     (root / "a.txt").write_text("earlier", encoding="utf-8")
     (root / "b" / "c.txt").unlink()
 
-    def broken_extract(archive_file, extract_dir=None, messages=None):
+    def broken_extract(archive_file, extract_dir=None):
         # The first members are written, then the extraction stops
         folder = Path(extract_dir) / "corpus_v1" / "b"
         folder.mkdir(parents=True)
