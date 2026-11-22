@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import unicodedata
 from abc import ABCMeta, abstractmethod
 from collections import Counter
 from collections.abc import Collection, Mapping, Sequence
@@ -9,8 +10,8 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 import numpy as np
 
-from .constants import MESSAGES, PHON_STATS_DESC, PHON_WINDOW_LEN
-from .document import _source_text, document_words
+from .constants import JUNCTION_CLUSTER_LEN, MESSAGES, PHON_STATS_DESC, PHON_WINDOW_LEN
+from .document import document_words
 from .exceptions import ParameterError, SourceError, SourceTypeError
 from .extractors import WordsExtractor
 from .stats import Stats
@@ -79,6 +80,9 @@ class PhonStats(Stats, metaclass=ABCMeta):
         consonant_vowel_ratio (float): Ratio of the consonants to the vowels
         p_heavy_clusters (float): Share of the clusters of three consonants or more
         p_hiatus (float): Hiatuses per word
+        p_junction_hiatus (float): Share of the junctions of words with a vowel on both sides
+        p_junction_clusters (float): Share of the junctions of words with
+            JUNCTION_CLUSTER_LEN consonants or more in a row from both words
         cv_entropy (float): Shannon entropy of the CV patterns of the words, in bits
         hardness (float): Voiceless consonants to the vowels and the sonorants
         alliteration (float): Alliteration index
@@ -143,12 +147,11 @@ class PhonStats(Stats, metaclass=ABCMeta):
         if words_extractor is not None and not isinstance(words_extractor, WordsExtractor):
             raise SourceTypeError(messages["words_extractor_type"])
         check_params(window_len, messages=messages)
+        document = self._document(source)
         if words_extractor is not None:
-            words = tuple(
-                word.lower() for word in words_extractor.extract(_source_text(source, messages))
-            )
+            words = tuple(word.lower() for word in words_extractor.extract(document.text))
         else:
-            words = _hook_words(self, "doc_words", self.doc_words(self._document(source)))
+            words = _hook_words(self, "doc_words", self.doc_words(document))
         if not words:
             raise SourceError(messages["no_words"])
         self.words = words
@@ -203,6 +206,9 @@ class PhonStats(Stats, metaclass=ABCMeta):
         )
         n_hiatus = sum(self.word_hiatus(word) * count for word, count in counts.items())
         self.p_hiatus = n_hiatus / len(words) if n_sounds else nan
+        n_junctions, n_junction_hiatus, n_junction_clusters = self._junctions(document, consonants)
+        self.p_junction_hiatus = safe_divide(n_junction_hiatus, n_junctions, nan)
+        self.p_junction_clusters = safe_divide(n_junction_clusters, n_junctions, nan)
         self.cv_entropy = shannon_entropy(patterns)
         self.hardness = safe_divide(self.n_voiceless, self.n_vowels + self.n_sonorants, nan)
         self.alliteration = calc_repetition_index(self.sounds, window_len, consonants)
@@ -219,6 +225,36 @@ class PhonStats(Stats, metaclass=ABCMeta):
             n_syllables,
             nan,
         )
+
+    def _junctions(self, document: Document, consonants: frozenset[str]) -> tuple[int, int, int]:
+        """Junctions of two words of a sentence with only spaces between them, no line break - a
+        sign is a token of its own - those with a hiatus and those with JUNCTION_CLUSTER_LEN
+        consonants or more in a row from both words"""
+        text = document.text
+        sounds: dict[str, tuple[int, int, str, str] | None] = {}
+        n_junctions = n_hiatus = n_clusters = 0
+        for sentence in document.sentences:
+            before = None
+            for token in sentence.tokens:
+                # A letter written with a combining mark is the letter of its class
+                word = unicodedata.normalize("NFC", token.text).lower()
+                if word not in sounds:
+                    sounds[word] = _edges(self.transcribe(word), self.vowels, consonants)
+                edges = sounds[word]
+                if (
+                    edges is not None
+                    and before is not None
+                    and "\n" not in text[before[0] : token.start]
+                ):
+                    _, (_, trail, _, last) = before
+                    lead, _, first, _ = edges
+                    n_junctions += 1
+                    n_hiatus += (
+                        last in self.vowels and first in self.vowels and first not in self.glides
+                    )
+                    n_clusters += min(trail, lead) > 0 and trail + lead >= JUNCTION_CLUSTER_LEN
+                before = None if edges is None else (token.end, edges)
+        return n_junctions, n_hiatus, n_clusters
 
     def _checked(self, hook: str, result: object) -> Any:
         """The syllables or the sounds a hook gives for a word, checked to be strings"""
@@ -316,6 +352,26 @@ class PhonStats(Stats, metaclass=ABCMeta):
             int: Number of hiatuses
         """
         return count_hiatus(self.transcribe(word), self.vowels, self.glides)
+
+
+def _edges(
+    sounds: Sequence[str], vowels: Collection[str], consonants: Collection[str]
+) -> tuple[int, int, str, str] | None:
+    """Consonants before the first vowel and after the last one, the first and the last sound of
+    the classes; None for a word without them and for one of consonants alone but a single one,
+    an abbreviation read by its letters"""
+    classed = []
+    for sound in sounds:
+        if len(sound) == 1 and sound not in vowels and sound not in consonants:
+            # A letter with a mark of its own, as е with a grave, is its base letter
+            sound = unicodedata.normalize("NFD", sound)[0]
+        if sound in vowels or sound in consonants:
+            classed.append(sound)
+    lead = next((i for i, sound in enumerate(classed) if sound in vowels), len(classed))
+    if lead == len(classed) != 1:
+        return None
+    trail = next((i for i, sound in enumerate(reversed(classed)) if sound in vowels), len(classed))
+    return lead, trail, classed[0], classed[-1]
 
 
 def cv_pattern(sounds: Sequence[str], vowels: Collection[str], consonants: Collection[str]) -> str:

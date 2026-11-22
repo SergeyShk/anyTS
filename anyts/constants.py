@@ -721,6 +721,8 @@ PHON_STATS_DESC = {
     "consonant_vowel_ratio": "Ratio of consonants to vowels",
     "p_heavy_clusters": "Share of clusters of 3 consonants or more",
     "p_hiatus": "Hiatuses per word",
+    "p_junction_hiatus": "Share of junctions of words with a hiatus",
+    "p_junction_clusters": "Share of junctions of words with 4 consonants or more",
     "cv_entropy": "Entropy of the CV patterns of words (bits)",
     "hardness": "Hardness",
     "alliteration": "Alliteration index",
@@ -730,6 +732,8 @@ PHON_STATS_DESC = {
 }
 # Window in words of the alliteration and the assonance
 PHON_WINDOW_LEN = 3
+# Consonants in a row across a junction of two words that make it heavy
+JUNCTION_CLUSTER_LEN = 4
 # Highlighting of the alliteration: the probability below which a repetition of a consonant
 # counts, and the word length below which words are transparent
 ALLITERATION_THRESHOLD = 0.001

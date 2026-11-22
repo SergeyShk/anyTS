@@ -1,4 +1,5 @@
 import re
+import unicodedata
 from itertools import permutations
 from math import comb, fsum, isnan, log2
 from typing import ClassVar
@@ -366,3 +367,52 @@ def test_calc_repetition_index_window(window_len, message):
 def test_sound_classes_checked_at_class_definition():
     with pytest.raises(SourceTypeError, match=r"^A list of vowels is expected, not a string$"):
         type("Sounded", (English,), {"vowels": "aeiou"})
+
+
+def test_junctions():
+    """Junctions of the words of a sentence with only spaces between them: a vowel on both sides
+    is a hiatus, four consonants in a row a heavy cluster"""
+    stats = English("I owe a idea to the strength splits")
+    assert (stats.p_junction_hiatus, stats.p_junction_clusters) == (3 / 7, 1 / 7)
+    # A sign between the words or the end of a sentence makes no junction
+    assert (English("I owe, a idea. Splits").p_junction_hiatus) == 1.0
+    assert isnan(English("Stream").p_junction_hiatus)
+    # The junctions are those of the text with an extractor of the words too
+    extracted = English("I owe a idea to the strength splits", words_extractor=WordsExtractor())
+    assert extracted.p_junction_clusters == 1 / 7
+
+
+def test_junctions_with_glides():
+    """A vowel of glides after a vowel makes no hiatus across a junction"""
+
+    class Glided(English):
+        glides = frozenset("u")
+
+    assert Glided("a use a idea").p_junction_hiatus == 2 / 3
+
+
+def test_junctions_break():
+    """A line break ends a junction as a sign does; a heavy cluster needs consonants of both
+    words; a word of consonants alone but a single one, an abbreviation, makes no junction"""
+    assert English("I owe\na idea to").p_junction_hiatus == 2 / 3
+    assert English("a schwa").p_junction_clusters == 0.0
+    assert English("its strength").p_junction_clusters == 1.0
+    assert isnan(English("the bbc news").p_junction_clusters)
+    assert English("a x idea").p_junction_hiatus == 0.0
+
+
+def test_junctions_of_composed_letters():
+    """A letter written with a combining mark (NFD) is the letter of its class, as composed"""
+
+    class Cyrillic(English):
+        vowels = frozenset("аеиоуыэюяё")
+        sonorants = frozenset("лмнрй")
+        voiced = frozenset("бвгджз")
+        voiceless = frozenset("кпстфхцчшщ")
+
+    text = "северной авроры"
+    assert Cyrillic(text).p_junction_hiatus == 0.0
+    assert Cyrillic(unicodedata.normalize("NFD", text)).p_junction_hiatus == 0.0
+    # A vowel with a grave, composed or not, is the vowel
+    assert Cyrillic("все\u0300 ушло").p_junction_hiatus == 1.0
+    assert Cyrillic("вс\u0450 ушло").p_junction_hiatus == 1.0

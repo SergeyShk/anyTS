@@ -39,21 +39,23 @@ Raises:
 === "Result"
 
     ```
-                     Statistic                 |  Value
-    ------------------------------------------------------
-    Share of vowels                            |   0.38
-    Share of sonorant consonants               |   0.17
-    Share of voiced obstruents                 |   0.03
-    Share of voiceless obstruents              |   0.41
-    Ratio of consonants to vowels              |   1.64
-    Share of clusters of 3 consonants or more  |   0.08
-    Hiatuses per word                          |   0.22
-    Entropy of the CV patterns of words (bits) |   2.95
-    Hardness                                   |   0.75
-    Alliteration index                         |   0.61
-    Assonance index                            |   0.82
-    Share of open syllables                    |   0.50
-    Mean length of a syllable (sounds)         |   2.90
+                          Statistic                       |  Value
+    -----------------------------------------------------------------
+    Share of vowels                                       |   0.38
+    Share of sonorant consonants                          |   0.17
+    Share of voiced obstruents                            |   0.03
+    Share of voiceless obstruents                         |   0.41
+    Ratio of consonants to vowels                         |   1.64
+    Share of clusters of 3 consonants or more             |   0.08
+    Hiatuses per word                                     |   0.22
+    Share of junctions of words with a hiatus             |   0.00
+    Share of junctions of words with 4 consonants or more |   0.00
+    Entropy of the CV patterns of words (bits)            |   2.95
+    Hardness                                              |   0.75
+    Alliteration index                                    |   0.61
+    Assonance index                                       |   0.82
+    Share of open syllables                               |   0.50
+    Mean length of a syllable (sounds)                    |   2.90
     ```
 
 ## Parameters
@@ -93,6 +95,8 @@ Every metric is an attribute of the object, computed when it is created, and `ge
 | [`consonant_vowel_ratio`](#consonant_vowel_ratio) | Ratio of the consonants to the vowels | 0 and above, `nan` without vowels | Denser consonants |
 | [`p_heavy_clusters`](#consonant_clusters) | Share of the clusters of three consonants or more | 0-1, `nan` without clusters | Heavier clusters |
 | [`p_hiatus`](#hiatus) | Hiatuses of `word_hiatus` per word | 0 and above, `nan` without sounds | More vowels in a row |
+| [`p_junction_hiatus`](#junctions) | Share of the junctions of words with a vowel on both sides | 0-1, `nan` without junctions | More vowels meeting between the words |
+| [`p_junction_clusters`](#junctions) | Share of the junctions of words with `JUNCTION_CLUSTER_LEN` (4) consonants or more in a row | 0-1, `nan` without junctions | More consonants meeting between the words |
 | [`cv_entropy`](#cv_entropy) | Shannon entropy of the CV patterns of the words, in bits | 0 and above, `nan` without sounds | More varied shapes of the words |
 | [`hardness`](#hardness) | Voiceless obstruents to the vowels and the sonorants | 0 and above, `nan` without vowels and sonorants | A harder sound |
 | [`alliteration`](#repetition_index) | Repetition index of the consonants in windows of `window_len` words | 0 and above, `nan` for a text shorter than the window or with no consonant shared by two words | Consonants repeated closer together |
@@ -178,6 +182,19 @@ The number of the hiatuses of a word by its vowels in a row: a run of two vowels
 | `vowels` | `Collection[str]` | - | Vowels |
 | `glides` | `Collection[str]` | `()` | Vowels that make no hiatus after a vowel, such as a letter that writes a glide and a vowel |
 <!-- --8<-- [end:count_hiatus] -->
+
+</div>
+
+<div class="metric-card" markdown>
+
+### Junctions of words { #junctions }
+
+`p_junction_hiatus` · `p_junction_clusters`
+{ .metric-meta }
+
+<!-- --8<-- [start:PhonStats-junctions] -->
+A junction is two words of a sentence with only spaces between them: a sign, such as a comma, a line break or the end of a sentence makes none, and so does a word of consonants alone but a single one, such as an abbreviation read by its letters. A junction has a hiatus when the last sound of the classes of the first word and the first of the second are vowels, the second not one of `glides`, and a heavy cluster when the consonants at the end of the first word and at the start of the second, both words having some, make `JUNCTION_CLUSTER_LEN` (4) or more. The shares are those of all the junctions of the text, by the sounds of `transcribe`; with a word extractor, the junctions are still those of the document of the source.
+<!-- --8<-- [end:PhonStats-junctions] -->
 
 </div>
 
