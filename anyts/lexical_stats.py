@@ -170,7 +170,8 @@ class LexicalStats(Stats):
         self.n_content_words = sum(self._content)
         self.ranks = tuple(self.rank(lemma) for lemma in self.lemmas)
         self.lexical_density = self.n_content_words / self.n_words
-        self.p_proper_nouns = sum(word.proper for word in words) / self.n_words
+        self._proper = tuple(word.proper for word in words)
+        self.p_proper_nouns = sum(self._proper) / self.n_words
         self.p_abbreviations = sum(word.abbreviation for word in words) / self.n_words
         size = self.top_size()
         bands = self.band_coverage([band for band in FREQUENCY_BANDS if band <= size])

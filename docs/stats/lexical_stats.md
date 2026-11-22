@@ -126,8 +126,8 @@ Every metric is an attribute or a property of the object, and `get_stats` gives 
 | [`p_top1000`](#bands), [`p_top2000`](#bands), [`p_top5000`](#bands), [`p_top10000`](#bands) | Share of the words with a lemma in the top 1000, 2000, 5000 and 10000 of the list | 0-1, `nan` for a band beyond `top_size` | More frequent words |
 | [`p_beyond_top10000`](#bands) | Share of the words with a lemma beyond the top 10000 | 0-1, `nan` for a list shorter than 10000 | Rarer words |
 | `lexical_density` | Share of the content words | 0-1 | More content words |
-| `p_proper_nouns` | Share of the proper nouns (`PROPN`) | 0-1 | More names of persons, places and organizations |
-| `p_abbreviations` | Share of the abbreviations (`Abbr=Yes`) | 0-1 | More abbreviations, as in official and scientific texts |
+| `p_proper_nouns` | Share of the proper nouns | 0-1 | More names of persons, places and organizations |
+| `p_abbreviations` | Share of the abbreviations | 0-1 | More abbreviations, as in official and scientific texts |
 <!-- --8<-- [end:LexicalStats-metrics] -->
 
 <div class="metric-card" markdown>
