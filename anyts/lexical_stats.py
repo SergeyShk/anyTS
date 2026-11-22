@@ -48,11 +48,15 @@ class LexicalWord(NamedTuple):
         word (str): Word as the text writes it
         lemma (str): Lemma of the word, by which its rank is found
         content (bool): Whether the word is a content word
+        proper (bool): Whether the word is a proper noun
+        abbreviation (bool): Whether the word is an abbreviation
     """
 
     word: str
     lemma: str
     content: bool
+    proper: bool = False
+    abbreviation: bool = False
 
 
 class LexicalStats(Stats):
@@ -62,8 +66,9 @@ class LexicalStats(Stats):
     Description:
         Lexical sophistication in the manner of TAALES - how rare the words of a
         text are: statistics by a frequency dictionary and its unigram model,
-        the shares of the frequency bands of a list of the most frequent lemmas
-        and the lexical density. A language library subclasses the class and
+        the shares of the frequency bands of a list of the most frequent lemmas,
+        the lexical density and the shares of the proper nouns and of the
+        abbreviations. A language library subclasses the class and
         sets the dictionary, the keys of the words and the ranks of the lemmas;
         the words, their lemmas and the content words are those of the document
         of parse by default (analyze). The statistics by the dictionary are computed
@@ -101,6 +106,8 @@ class LexicalStats(Stats):
         p_top10000 (float): Share of words with a lemma of the top 10000
         p_beyond_top10000 (float): Share of words with a lemma beyond the top 10000
         lexical_density (float): Share of content words
+        p_proper_nouns (float): Share of proper nouns
+        p_abbreviations (float): Share of abbreviations
 
     Methods:
         analyze: Words of a source with their lemmas and their kind
@@ -163,6 +170,8 @@ class LexicalStats(Stats):
         self.n_content_words = sum(self._content)
         self.ranks = tuple(self.rank(lemma) for lemma in self.lemmas)
         self.lexical_density = self.n_content_words / self.n_words
+        self.p_proper_nouns = sum(word.proper for word in words) / self.n_words
+        self.p_abbreviations = sum(word.abbreviation for word in words) / self.n_words
         size = self.top_size()
         bands = self.band_coverage([band for band in FREQUENCY_BANDS if band <= size])
         self.p_top1000 = bands.get(1000, nan)
@@ -178,15 +187,17 @@ class LexicalStats(Stats):
         Description:
             The words of Universal Dependencies of the document of parse that
             hold a letter or a digit and are no numbers (is_number), with the
-            lemma of the column lemma or the word itself, and content words by
-            the parts of speech of CONTENT_UD_POS (the column upos); a library
-            with its own lemmas or content words overrides it
+            lemma of the column lemma or the word itself, content words by the
+            parts of speech of CONTENT_UD_POS and proper nouns by PROPN (the
+            column upos), and abbreviations by Abbr=Yes (the column feats); a
+            library with its own lemmas or content words overrides it
 
         Arguments:
             source (str|Doc|Document): Data source
 
         Returns:
-            iterable[LexicalWord]: Word, lemma and whether it is a content word
+            iterable[LexicalWord]: Word, lemma and whether it is a content word, a proper
+                noun and an abbreviation
 
         Raises:
             SourceTypeError: If the source is neither a string, a Doc nor a Document
@@ -197,13 +208,22 @@ class LexicalStats(Stats):
         column = document.column
         rows = [
             row
-            for row in zip(column("form"), column("lemma"), column("upos"), strict=True)
+            for row in zip(
+                column("form"), column("lemma"), column("upos"), column("feats"), strict=True
+            )
             if has_words(row[0]) and not is_number(row[0])
         ]
-        if rows and not any(pos for _, _, pos in rows):
+        if rows and not any(pos for _, _, pos, _ in rows):
             raise SourceError(self.messages["no_pos"])
         return [
-            LexicalWord(form, lemma or form, pos in CONTENT_UD_POS) for form, lemma, pos in rows
+            LexicalWord(
+                form,
+                lemma or form,
+                pos in CONTENT_UD_POS,
+                pos == "PROPN",
+                "Abbr=Yes" in (feats or "").split("|"),
+            )
+            for form, lemma, pos, feats in rows
         ]
 
     def dictionary_keys(self) -> tuple[str, ...]:

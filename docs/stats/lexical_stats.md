@@ -5,7 +5,7 @@ LexicalStats(source, freq_dict=None)
 ```
 
 <!-- --8<-- [start:LexicalStats] -->
-Lexical sophistication in the manner of TAALES (Kyle, Crossley and Berger, 2018) - how rare the words of a text are: statistics by a frequency dictionary and its unigram model, the shares of the frequency bands of a list of the most frequent lemmas and the lexical density. The statistics by the dictionary are computed when first read, so the bands and the lexical density need no dictionary data. The data source is a text, a `Doc` object of [spaCy](https://github.com/explosion/spaCy) or a `Document` of [anySeg](https://github.com/SergeyShk/anySeg), read through its [document](https://sergeyshk.github.io/anyTS/document/): by default its words of Universal Dependencies without numbers, with their lemmas and parts of speech.
+Lexical sophistication in the manner of TAALES (Kyle, Crossley and Berger, 2018) - how rare the words of a text are: statistics by a frequency dictionary and its unigram model, the shares of the frequency bands of a list of the most frequent lemmas, the lexical density and the shares of the proper nouns and of the abbreviations. The statistics by the dictionary are computed when first read, so the bands and the shares need no dictionary data. The data source is a text, a `Doc` object of [spaCy](https://github.com/explosion/spaCy) or a `Document` of [anySeg](https://github.com/SergeyShk/anySeg), read through its [document](https://sergeyshk.github.io/anyTS/document/): by default its words of Universal Dependencies without numbers, with their lemmas, parts of speech and features.
 
 Raises:
 
@@ -73,6 +73,8 @@ Raises:
     Share of words in the top 10000                  |   0.60
     Share of words beyond the top 10000              |   0.40
     Lexical density                                  |   0.60
+    Share of proper nouns                            |   0.00
+    Share of abbreviations                           |   0.00
     ```
 
 ## Parameters
@@ -124,6 +126,8 @@ Every metric is an attribute or a property of the object, and `get_stats` gives 
 | [`p_top1000`](#bands), [`p_top2000`](#bands), [`p_top5000`](#bands), [`p_top10000`](#bands) | Share of the words with a lemma in the top 1000, 2000, 5000 and 10000 of the list | 0-1, `nan` for a band beyond `top_size` | More frequent words |
 | [`p_beyond_top10000`](#bands) | Share of the words with a lemma beyond the top 10000 | 0-1, `nan` for a list shorter than 10000 | Rarer words |
 | `lexical_density` | Share of the content words | 0-1 | More content words |
+| `p_proper_nouns` | Share of the proper nouns (`PROPN`) | 0-1 | More names of persons, places and organizations |
+| `p_abbreviations` | Share of the abbreviations (`Abbr=Yes`) | 0-1 | More abbreviations, as in official and scientific texts |
 <!-- --8<-- [end:LexicalStats-metrics] -->
 
 <div class="metric-card" markdown>
@@ -203,7 +207,7 @@ A language library subclasses `LexicalStats`:
 
 | Hook | Kind | Description |
 | :--- | :--- | :---------- |
-| `analyze(source)` | method | The words of a source as `LexicalWord`: the word, its lemma and whether it is a content word. By default the words of Universal Dependencies of the document of `parse` with a letter or a digit, numbers (`is_number` of `anyts.utils`) left out, the lemma of the column `lemma` or the word itself, and the content words by the parts of speech of `CONTENT_UD_POS` (`ADJ`, `ADV`, `NOUN`, `PROPN`, `VERB`); a library with its own lemmas or content words overrides it |
+| `analyze(source)` | method | The words of a source as `LexicalWord`: the word, its lemma and whether it is a content word, a proper noun and an abbreviation (`proper` and `abbreviation`, `False` by default). By default the words of Universal Dependencies of the document of `parse` with a letter or a digit, numbers (`is_number` of `anyts.utils`) left out, the lemma of the column `lemma` or the word itself, the content words by the parts of speech of `CONTENT_UD_POS` (`ADJ`, `ADV`, `NOUN`, `PROPN`, `VERB`), the proper nouns by `PROPN` and the abbreviations by `Abbr=Yes` of the column `feats`; a library with its own lemmas or content words overrides it |
 | `parse(source)` | method | Document of the source, from `Stats`; a library sets it to annotate a string in its language |
 | `freq_dict_class` | class attribute | Class of the frequency dictionary, made without arguments when none is given; a dictionary of another class is refused, and without the class a dictionary must be given |
 | `dictionary_keys()` | method | Keys of the words in the dictionary; the lemmas by default, or for instance a proper noun by its form |
