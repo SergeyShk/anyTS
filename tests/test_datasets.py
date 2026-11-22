@@ -85,7 +85,7 @@ def test_methods(dataset, name):
 def test_check_limit():
     check_limit(None)
     check_limit(0)
-    with pytest.raises(ParameterError, match=r"^The number of records must not be negative"):
+    with pytest.raises(ParameterError, match=r"^The limit cannot be negative$"):
         check_limit(-1)
     with pytest.raises(ParameterError, match=r"must be an integer, not float$"):
         check_limit(1.5)
@@ -163,7 +163,7 @@ def test_to_path():
 
 @pytest.mark.parametrize("path", [666, ["a", "b"], {"a": "b"}])
 def test_to_path_type_error(path):
-    with pytest.raises(SourceTypeError, match=r"^The path must be a string or a Path$"):
+    with pytest.raises(SourceTypeError, match=r"^The path must be a string or a Path, not \w+$"):
         to_path(path)
 
 
@@ -878,5 +878,5 @@ def test_fetch_archive_interrupted_extraction(remote, monkeypatch):
 
 
 def test_substring_filter_checks_the_folding():
-    with pytest.raises(SourceTypeError, match=r"^The folding must be callable, not str$"):
+    with pytest.raises(SourceTypeError, match=r"^The fold must be callable, not str$"):
         substring_filter("author", "galdos", "lower")

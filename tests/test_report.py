@@ -12,6 +12,7 @@ from anyts.exceptions import ParameterError, SourceError
 from anyts.morph_stats import MorphStats
 from anyts.readability_stats import ReadabilityStats
 from anyts.report import Report, escape
+from anyts.visualizers import sentence_lengths
 from anyts.visualizers.highlight import Highlight, HighlightedText
 
 
@@ -70,14 +71,16 @@ def test_statistics_are_those_of_the_classes():
 
 
 def test_sentences_are_those_of_by_parts():
+    """The sentences with words, numbered as on the plot of their lengths: *** is left out"""
     page = VowelsReport(TEXT).to_html()
     parts = Vowels.by_parts(TEXT)
     grades = Readability.by_parts(TEXT)["flesch_kincaid_grade"]
     found = rows(page, "<h2>Sentences</h2>")
-    assert [cells[0] for cells in found] == ["1", "2", "3"]
+    assert [cells[0] for cells in found] == ["1", "2"]
     assert found[0][1] == escape(TEXT[parts.loc[0, "start"] : parts.loc[0, "end"]])
-    assert [cells[2] for cells in found] == [str(int(parts.loc[0, "n_words"])), "-", "5"]
-    assert found[2][3] == f"{grades.loc[2]:.2f}"
+    assert [cells[2] for cells in found] == [str(int(parts.loc[0, "n_words"])), "5"]
+    assert found[1][3] == f"{grades.loc[2]:.2f}"
+    assert len(sentence_lengths(TEXT)) == len(found)
 
 
 def test_text_is_escaped_and_needs_nothing_else():

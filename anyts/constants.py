@@ -473,6 +473,30 @@ MESSAGES: Mapping[str, str] = MappingProxyType(
         "texts_values": "The texts must match the values one to one: {texts} texts, {values} values",
         "texts_labels": "The texts must be labels of one type",
         "p_values": "The p-values must lie within [0, 1]",
+        "archive_extension": "The name of the archive {name} has no extension",
+        "checksum": (
+            "The file {path} failed the checksum verification and was removed, download it again"
+        ),
+        "replace_directory": "Cannot replace the directory {path}: {error}",
+        "filter_value": "The {field} must be a string, not {type}",
+        "text_len_order": "The minimum length of the text is greater than the maximum one",
+        "path_type": "The path must be a string or a Path, not {type}",
+        "create_directory": "Cannot create the directory {path}: {error}",
+        "no_file_name": "The address {url} names no file: give the name of the file",
+        "file_name": "The name of the file {name} is not a plain name",
+        "download_file": "Cannot download the file {url}: {error}",
+        "download_length": "Cannot download the file {url}: received {received} of {length} bytes",
+        "no_archive": "The archive {path} is not found",
+        "not_archive": "The file {path} is not a ZIP or TAR archive",
+        "extract_archive": "Cannot extract the archive {path}: {error}",
+        "empty_archive": "The archive {path} has no files",
+        "archive_paths": "The archive {path} has paths outside the directory or links",
+        "archive_directory": "The archive {path} would put a directory in the place of {destination}",
+        "archive_file": "The archive {path} would put a file in the place of {destination}",
+        "archive_itself": (
+            "The files of the archive {path} would replace it: give the archive an extension or "
+            "extract it into another directory"
+        ),
     }
 )
 
@@ -598,6 +622,12 @@ CLI_TEXTS: Mapping[str, str] = MappingProxyType(
         "title_option": "Title of the report",
         "title_metavar": "TITLE",
         "report_encoding_option": "Encoding of the file; the report is in UTF-8",
+        "report_stats_option": (
+            "Classes of statistics, by name and separated by commas: {names}; all by default"
+        ),
+        "report_stats_option_default": (
+            "Classes of statistics, by name and separated by commas: {names}; {defaults} by default"
+        ),
         "download_command": "Download the datasets the statistics need",
         "datasets_option": "Datasets: {names}; all by default",
         "datasets_metavar": "datasets",

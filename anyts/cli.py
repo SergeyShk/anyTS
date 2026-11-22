@@ -173,7 +173,7 @@ class Command:
         )
         stats = commands.add_parser("stats", help=texts["stats_command"], texts=texts)
         stats.add_argument("files", nargs="*", metavar=texts["files_metavar"], help=texts["files"])
-        self._add_options(stats, "encoding_option")
+        self._add_options(stats, "")
         stats.add_argument("-p", "--parts", choices=_PARTS, help=texts["parts_option"])
         stats.add_argument(
             "-f", "--format", choices=_FORMATS, default="table", help=texts["format_option"]
@@ -183,7 +183,7 @@ class Command:
         report.add_argument(
             "file", nargs="?", default=_STDIN, metavar=texts["file_metavar"], help=texts["file"]
         )
-        self._add_options(report, "report_encoding_option")
+        self._add_options(report, "report_")
         report.add_argument(
             "-t", "--title", metavar=texts["title_metavar"], help=texts["title_option"]
         )
@@ -368,18 +368,18 @@ class Command:
                 self._put(output, self.texts["downloaded"].format(name=name) + "\n")
         return 1 if failed else 0
 
-    def _add_options(self, parser: argparse.ArgumentParser, encoding: str) -> None:
-        """Options of the classes, of the output and of the encoding, with the help of the key
-        encoding"""
+    def _add_options(self, parser: argparse.ArgumentParser, prefix: str) -> None:
+        """Options of the classes, of the output and of the encoding, with the help of the keys
+        of the command: stats_option for stats, report_stats_option for report"""
         texts = self.texts
         names = ", ".join(self.stats_classes)
         parser.add_argument(
             "-s",
             "--stats",
             metavar=texts["stats_metavar"],
-            help=texts["stats_option"].format(names=names)
+            help=texts[f"{prefix}stats_option"].format(names=names)
             if self.default_stats is None
-            else texts["stats_option_default"].format(
+            else texts[f"{prefix}stats_option_default"].format(
                 names=names, defaults=", ".join(self.default_stats)
             ),
         )
@@ -392,7 +392,7 @@ class Command:
             default=_ENCODING,
             type=partial(_encoding, message=texts["unknown_encoding"]),
             metavar=texts["encoding_metavar"],
-            help=texts[encoding],
+            help=texts[f"{prefix}encoding_option"],
         )
 
     def _names(self, parser: argparse.ArgumentParser, args: argparse.Namespace) -> list[str]:

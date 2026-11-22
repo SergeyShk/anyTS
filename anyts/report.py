@@ -256,10 +256,11 @@ class Report:
 
     def section_sentences(self) -> str:
         """
-        Getting the section of the sentences: the text of every sentence with the
-        statistics of sentence_columns, none without them; a text of more than
-        max_sentences sentences has those with the highest values of the first
-        statistic, in their order
+        Getting the section of the sentences: the text of every sentence with
+        words, numbered as on the plot of their lengths, with the statistics of
+        sentence_columns, none without them; a text of more than max_sentences
+        such sentences has those with the highest values of the first statistic,
+        in their order
 
         Returns:
             str: Fragment of HTML
@@ -276,23 +277,27 @@ class Report:
             f"<th>{escape(type(self.stats[name]).stats_desc.get(stat, stat))}</th>"
             for name, stat in columns
         )
+        from .visualizers.sentences import _document_lengths
+
         first = next(iter(tables.values()))
-        numbers = list(range(len(first)))
+        lengths = _document_lengths(self.document)
+        numbers = [number for number, length in enumerate(lengths) if length]
+        places = {number: place for place, number in enumerate(numbers, start=1)}
         note = ""
         if len(numbers) > self.max_sentences:
             name, stat = columns[0]
-            ranked = tables[name][stat].reset_index(drop=True)
+            ranked = tables[name][stat].reset_index(drop=True).iloc[numbers]
             top = ranked.sort_values(ascending=False, kind="stable", na_position="last")
-            numbers = sorted(top.index[: self.max_sentences])
             note = "<p>{}</p>\n".format(
                 escape(
                     texts["top_sentences"].format(
-                        shown=len(numbers),
-                        total=len(first),
+                        shown=self.max_sentences,
+                        total=len(numbers),
                         stat=type(self.stats[name]).stats_desc.get(stat, stat),
                     )
                 )
             )
+            numbers = sorted(top.index[: self.max_sentences])
         text = self.document.text
         bounds = first[["start", "end"]].to_numpy().tolist()
         rows = []
@@ -303,7 +308,7 @@ class Report:
                 for name, stat in columns
             )
             rows.append(
-                f'<tr><td class="number">{number + 1}</td>'
+                f'<tr><td class="number">{places[number]}</td>'
                 f"<td>{escape(text[start:end])}</td>{cells}</tr>"
             )
         return _section(
