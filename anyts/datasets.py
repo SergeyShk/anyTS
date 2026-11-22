@@ -131,6 +131,8 @@ def fetch_archive(
         DataFileError: If the verified archive cannot be extracted or its files
             cannot replace the directory of the dataset
     """
+    # Only the messages given go on, to the helpers the tests of a library replace too
+    given = {} if messages is None else {"messages": messages}
     messages = _messages(messages)
     filepath = to_path(filepath, messages=messages)
     checksum = checksum.lower()
@@ -143,7 +145,7 @@ def fetch_archive(
         filename=filepath.name,
         force=force,
         user_agent=user_agent,
-        messages=messages,
+        **given,
     )
     if not downloaded and not missing:
         return
@@ -155,7 +157,7 @@ def fetch_archive(
             filename=filepath.name,
             force=True,
             user_agent=user_agent,
-            messages=messages,
+            **given,
         )
         if sha256(filepath) != checksum:
             filepath.unlink(missing_ok=True)
@@ -164,7 +166,7 @@ def fetch_archive(
     partial = _partial(target)
     try:
         partial.mkdir()
-        extracted = Path(extract_archive(filepath, partial, messages=messages))
+        extracted = Path(extract_archive(filepath, partial, **given))
         _replace(extracted, target)
     except OSError as e:
         raise DataFileError(messages["replace_directory"].format(path=target, error=e)) from e
