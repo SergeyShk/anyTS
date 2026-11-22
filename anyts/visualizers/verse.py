@@ -56,7 +56,7 @@ def rhythm_plot(
     check_sequence(patterns, "patterns of the lines")
     if not all(isinstance(pattern, str) for pattern in patterns):
         raise SourceTypeError("The patterns of the lines must be strings")
-    if not patterns:
+    if len(patterns) == 0:
         raise SourceError("The rhythm needs at least one line")
     if not isinstance(stressed, str) or len(stressed) != 1:
         raise ParameterError(f"The stressed syllable must be one character, not {stressed!r}")
@@ -76,8 +76,8 @@ def rhythm_plot(
         interpolation="nearest",
         extent=(0.5, columns + 0.5, rows + 0.5, 0.5),
     )
-    ax.xaxis.set_major_locator(MaxNLocator(integer=True))
-    ax.yaxis.set_major_locator(MaxNLocator(integer=True))
+    ax.xaxis.set_major_locator(MaxNLocator(integer=True, min_n_ticks=1))
+    ax.yaxis.set_major_locator(MaxNLocator(integer=True, min_n_ticks=1))
     ax.set_xlabel(captions["xlabel"])
     ax.set_ylabel(captions["ylabel"])
     ax.set_title(captions["title"])

@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import pytest
 from matplotlib.axes import Axes
 
@@ -33,6 +34,16 @@ def test_rhythm_plot_of_a_long_poem():
     ax = rhythm_plot(["cC" * 4] * 300, "C")
     assert ax.get_images()[0].get_interpolation() == "nearest"
     assert len(ax.get_yticks()) < 20
+
+
+def test_rhythm_plot_of_one_line():
+    """One line has whole numbers of its lines, and a numpy array or a Series of patterns does"""
+    ax = rhythm_plot(np.array(["cCcCcCcCc"]), "C")
+    assert [tick for tick in ax.get_yticks() if 0.5 <= tick <= 1.5] == [1.0]
+    assert rhythm_plot(pd.Series(["cCcC", "CcCc"]), "C").get_images()[0].get_array().shape == (
+        2,
+        4,
+    )
 
 
 @pytest.mark.parametrize(
