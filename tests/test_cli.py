@@ -434,6 +434,10 @@ def test_default_stats(capsys, files):
     assert command.run(["stats", "--help"]) == 0
     help_text = " ".join(capsys.readouterr().out.split())
     assert "basic, diversity, style, syntax; basic, diversity by default" in help_text
+    assert command.run(["report", "--help"]) == 0
+    help_text = " ".join(capsys.readouterr().out.split())
+    assert "basic, diversity, style, syntax; basic, diversity by default" in help_text
+    assert "--parts" not in help_text
 
 
 def test_default_stats_name_classes():
