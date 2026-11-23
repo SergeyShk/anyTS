@@ -7,11 +7,12 @@ import pytest
 
 from anyts.basic_stats import BasicStats
 from anyts.cli import Command
-from anyts.constants import REPORT_TEXTS
+from anyts.constants import MESSAGES, REPORT_TEXTS
 from anyts.exceptions import ParameterError, SourceError
 from anyts.morph_stats import MorphStats
 from anyts.readability_stats import ReadabilityStats
 from anyts.report import Report, escape
+from anyts.style_stats import StyleStats
 from anyts.visualizers import sentence_lengths
 from anyts.visualizers.highlight import Highlight, HighlightedText
 
@@ -398,3 +399,80 @@ def test_plot_of_many_sentences():
 
     assert markers(300) == {"."}
     assert markers(301) == set()
+
+
+def test_messages_of_a_report():
+    """The errors of the arguments of a report come from its messages"""
+
+    class Translated(Report):
+        messages: ClassVar[dict[str, str]] = {
+            **MESSAGES,
+            "bool_param": "Wrong {param}: {type}",
+            "report_stats_classes": "Classes: {type}",
+        }
+
+    with pytest.raises(ParameterError, match=r"^Wrong skip_errors: str$"):
+        Translated(TEXT, skip_errors="yes")
+    for classes, name in (
+        (("basic",), "tuple"),
+        ({"basic": object()}, "object"),
+        ({"x": int}, "int"),
+        ({"basic": None}, "NoneType"),
+    ):
+        with pytest.raises(ParameterError, match=rf"^Classes: {name}$"):
+            Translated(TEXT, stats_classes=classes)
+
+
+def test_the_other_classes_count_only_the_sentences_shown():
+    """For a longer text, the classes after the first count the sentences of the table only"""
+    counted = []
+
+    class Counting(Report):
+        stats_classes: ClassVar[dict[str, type]] = {"basic": Vowels, "style": StyleStats}
+        sentence_columns: ClassVar[tuple[tuple[str, str], ...]] = (
+            ("basic", "n_words"),
+            ("style", "water"),
+        )
+        max_sentences = 2
+
+        @classmethod
+        def compute(cls, stats_class, document):
+            if stats_class is StyleStats:
+                counted.append(document.text)
+            return super().compute(stats_class, document)
+
+    report = Counting("One. Two words. Three words here. Four words are here now.")
+    counted.clear()
+    table = rows(report.section_sentences(), "<table>")
+    assert counted == ["Three words here.", "Four words are here now."]
+    assert [row[0] for row in table] == ["3", "4"]
+    assert all(cell != "-" for row in table for cell in row)
+
+
+def test_the_statistics_of_a_report_keep_their_tree():
+    """The tree the classes of a report share stays whole for the statistics it keeps"""
+    import spacy
+    from spacy.tokens import Doc
+
+    from anyts import document as document_module
+    from anyts.document import to_document
+    from anyts.syntax_stats import SyntaxStats
+
+    doc = Doc(
+        spacy.blank("en").vocab,
+        words=["Cats", "sleep", "."],
+        heads=[1, 1, 1],
+        deps=["nsubj", "ROOT", "punct"],
+        pos=["NOUN", "VERB", "PUNCT"],
+        lemmas=["cat", "sleep", "."],
+    )
+    document = to_document(doc)
+    # A document no conversion keeps, as that of a text
+    document_module._slot().clear()
+
+    class Trees(Report):
+        stats_classes: ClassVar[dict[str, type]] = {"syntax": SyntaxStats}
+
+    report = Trees(document)
+    cats, sleep = report.stats["syntax"].sents[0]
+    assert cats.head is sleep

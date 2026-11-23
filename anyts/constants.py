@@ -497,6 +497,10 @@ MESSAGES: Mapping[str, str] = MappingProxyType(
             "The files of the archive {path} would replace it: give the archive an extension or "
             "extract it into another directory"
         ),
+        "report_stats_classes": (
+            "The classes of statistics must be a dictionary of classes of statistics by name, "
+            "not {type}"
+        ),
     }
 )
 
@@ -597,6 +601,7 @@ CLI_TEXTS: Mapping[str, str] = MappingProxyType(
         "positionals": "positional arguments",
         "options": "options",
         "help_option": "show this help message and exit",
+        "version_option": "show the versions of the library and of the core and exit",
         "stats_command": "Print the statistics of texts",
         "files": "Text files; the standard input without them or for -",
         "files_metavar": "files",
@@ -622,6 +627,9 @@ CLI_TEXTS: Mapping[str, str] = MappingProxyType(
         "parts_classes": "no class counts {parts}",
         "file_error": "{source}: {error}",
         "decode_error": "{source}: {error}; give its encoding with -e",
+        "no_file": "{source}: no such file or directory",
+        "is_directory": "{source}: is a directory",
+        "no_access": "{source}: permission denied",
         "stats_error": "{source}, {name}: {error}",
         "report_command": "Write the HTML report of a text",
         "file": "Text file; the standard input without it or for -",

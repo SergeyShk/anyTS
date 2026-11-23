@@ -70,6 +70,7 @@ from anyts.lexical_stats import LexicalStats, LexicalWord
 from anyts.morph_stats import MorphStats
 from anyts.phon_stats import PhonStats
 from anyts.readability_stats import ReadabilityStats, calc_reading_time
+from anyts.report import Report
 from anyts.stats import stats_dataframe
 from anyts.style_stats import StyleStats, WordFlags
 from anyts.syntax_stats import SyntaxStats
@@ -86,6 +87,10 @@ UNITS = {"a": ["x"], "b": ["y"]}
 TEN = ["a"] * 10
 LONG = {"A": TEN, "B": TEN}
 FEATURES = pd.DataFrame({"a": [1.0, 2.0]})
+
+
+class OwnReport(Report):
+    messages = OWN
 
 
 class Stats(BasicStats):
@@ -932,6 +937,9 @@ CASES = [
         DataFileError,
         lambda: extract_archive(zip_archive({"data/a.txt": "a"}, name="data"), messages=OWN),
     ),
+    ("bool_param", ParameterError, lambda: OwnReport(TEXT, skip_errors="yes")),
+    ("report_stats_classes", ParameterError, lambda: OwnReport(TEXT, stats_classes=("basic",))),
+    ("report_stats_classes", ParameterError, lambda: OwnReport(TEXT, stats_classes={"x": int})),
 ]
 
 
@@ -1013,6 +1021,7 @@ def test_check_messages(messages, match):
         CharNgramsExtractor,
         ConnectorMatcher,
         HighlightedText,
+        Report,
     ],
 )
 def test_messages_checked_when_a_class_is_defined(base):

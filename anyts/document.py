@@ -66,6 +66,16 @@ class _Slot(list[_Converted]):
     __slots__ = ("__weakref__",)
 
 
+class _Shared:
+    """The document the classes of a command or a report count and its tree, once one is asked"""
+
+    __slots__ = ("document", "tree")
+
+    def __init__(self, document: Document):
+        self.document = document
+        self.tree: Tree | None = None
+
+
 # The slot of the last conversion of every thread
 _local = threading.local()
 
@@ -484,9 +494,9 @@ def get_tree(document: Document) -> Tree:
         lemma, upos, xpos, feats, head and deprel, linked by their heads within
         their sentences: a word without a head (0 or None) heads its sentence.
         The tree of the document of the Doc a thread converted last
-        (to_document) is built once and kept with it, so the classes of one
-        Doc share it, and it is not to be changed; a tree holds cycles of
-        references, which the garbage collector of Python frees
+        (to_document), and of the document the command and the report count, is
+        built once and shared by the classes, and it is not to be changed; a tree
+        holds cycles of references, which the garbage collector of Python frees
 
     Arguments:
         document (Document): Document of anySeg
@@ -514,12 +524,18 @@ def get_tree(document: Document) -> Tree:
     """
     if not is_document(document):
         raise SourceTypeError(MESSAGES["source_type"].format(type=type(document).__name__))
+    shared: _Shared | None = getattr(_local, "shared", None)
+    if shared is not None and shared.document is document and shared.tree is not None:
+        return shared.tree
     converted = next((item for item in _slot() if item.document is document), None)
     if converted is not None and converted.tree is not None:
-        return converted.tree
-    tree = _built_tree(document)
-    if converted is not None:
-        converted.tree = tree
+        tree = converted.tree
+    else:
+        tree = _built_tree(document)
+        if converted is not None:
+            converted.tree = tree
+    if shared is not None and shared.document is document:
+        shared.tree = tree
     return tree
 
 
@@ -630,15 +646,46 @@ def _tree_once(document: Document) -> Iterator[Tree]:
     """Tree of a document (get_tree) for one use: a tree no slot keeps is broken after it, so that
     it goes at once rather than with the garbage collector"""
     tree = get_tree(document)
-    kept = any(converted.tree is tree for converted in _slot())
     try:
         yield tree
     finally:
-        if not kept:
-            for word in tree.words:
-                word.head = None
-                word.children = ()
-                del word.tree
+        if not _kept(tree):
+            _break(tree)
+
+
+@contextmanager
+def _sharing_tree(document: Document, *, release: bool) -> Iterator[None]:
+    """The tree of a document built once for the classes that count it inside; with release,
+    broken after them as _tree_once breaks it, for classes whose objects are dropped"""
+    previous: _Shared | None = getattr(_local, "shared", None)
+    shared = _local.shared = _Shared(document)
+    try:
+        yield
+    finally:
+        _local.shared = previous
+        if (
+            release
+            and shared.tree is not None
+            and not any(converted.tree is shared.tree for converted in _slot())
+        ):
+            _break(shared.tree)
+
+
+def _kept(tree: Tree) -> bool:
+    """Whether a slot or the shared document keeps a tree"""
+    shared: _Shared | None = getattr(_local, "shared", None)
+    return (shared is not None and shared.tree is tree) or any(
+        converted.tree is tree for converted in _slot()
+    )
+
+
+def _break(tree: Tree) -> None:
+    """Breaking the cycles of the references of a tree, so that it goes at once rather than with
+    the garbage collector"""
+    for word in tree.words:
+        word.head = None
+        word.children = ()
+        del word.tree
 
 
 def _parsed(owner: Any, source: str | Doc | Document) -> Document:

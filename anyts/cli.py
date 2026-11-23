@@ -33,6 +33,12 @@ _PARTS = ("sentences", "lines", "paragraphs")
 _STDIN = "-"
 # Encoding of the files by default: UTF-8, a byte order mark left out
 _ENCODING = "utf-8-sig"
+# Errors of files with texts of their own
+_FILE_ERRORS = (
+    (FileNotFoundError, "no_file"),
+    (IsADirectoryError, "is_directory"),
+    (PermissionError, "no_access"),
+)
 
 
 class Command:
@@ -69,6 +75,8 @@ class Command:
             complete as the messages of a class of statistics (check_messages)
         report_class (type[Report]): Report of the command report, made of the document
             of parse and the classes of --stats
+        version (str|None): Version of the library, which --version shows with that of
+            the core; None - no such option
 
     Raises:
         ParameterError: When a class is defined, if its texts are incomplete or have a
@@ -98,6 +106,7 @@ class Command:
     datasets: ClassVar[Mapping[str, Callable[[], Dataset]]] = {}
     texts: ClassVar[Mapping[str, str]] = CLI_TEXTS
     report_class: ClassVar[type[Report]] = Report
+    version: ClassVar[str | None] = None
 
     args: argparse.Namespace
     names: list[str]
@@ -159,18 +168,30 @@ class Command:
 
         Description:
             The commands stats and report with the options of arguments, download
-            with datasets, and the commands of subcommands; the headings, the
-            usage, the help option and the errors of the command come from texts,
-            the other errors of argparse from its translation (gettext)
+            with datasets, the commands of subcommands and --version with version;
+            the headings, the usage, the help option and the errors of the command
+            come from texts, the other errors of argparse from its translation
+            (gettext)
 
         Returns:
             ArgumentParser: Parser of the commands
         """
         texts = self.texts
         parser = _Parser(prog=self.prog, description=texts["description"], texts=texts)
+        if self.version is not None:
+            from . import __version__
+
+            parser.add_argument(
+                "-V",
+                "--version",
+                action="version",
+                version=f"{self.prog} {self.version} (anyTS {__version__})",
+                help=texts["version_option"],
+            )
         commands = parser.add_subparsers(
-            dest="command", required=True, title=texts["commands"], parser_class=_Parser
+            dest="command", title=texts["commands"], parser_class=_Parser
         )
+        parser.commands = commands.choices
         stats = commands.add_parser("stats", help=texts["stats_command"], texts=texts)
         stats.add_argument("files", nargs="*", metavar=texts["files_metavar"], help=texts["files"])
         self._add_options(stats, "")
@@ -232,7 +253,8 @@ class Command:
 
         Description:
             The arguments go to args and the classes of --stats to names, and the
-            method command_<name> of the command runs
+            method command_<name> of the command runs; without a command the help
+            is printed
 
         Arguments:
             argv (list[str]): Arguments; those of the command line by default
@@ -245,8 +267,13 @@ class Command:
         parser = self.parser()
         try:
             self.args = parser.parse_args(argv)
-            self.names = self._names(parser, self.args)
-            self._check_datasets(parser, self.args)
+            if self.args.command is None:
+                parser.print_help()
+                return 2
+            # The errors of the arguments with the usage of their command
+            command = getattr(parser, "commands", {}).get(self.args.command, parser)
+            self.names = self._names(command, self.args)
+            self._check_datasets(command, self.args)
         except SystemExit as ended:
             # The help and the wrong arguments, which argparse ends with sys.exit
             return int(ended.code or 0)
@@ -291,13 +318,12 @@ class Command:
                 if not self._put(output, text):
                     return 1
             else:
-                # The statistics kept, not the objects
-                results[source] = {
-                    name: _stats_row(value) if isinstance(value, Stats) else value
-                    for name, value in found.items()
-                }
-        if args.format != "table" and not self._put(
-            output, _formatted(results, args.format, part)
+                results[source] = found
+        # Without a text read, nothing replaces the output
+        if (
+            args.format != "table"
+            and results
+            and not self._put(output, _formatted(results, args.format, part))
         ):
             return 1
         return 1 if failed else 0
@@ -433,28 +459,35 @@ class Command:
                 )
 
     def _text_stats(self, source: str, args: argparse.Namespace) -> dict[str, Any] | None:
-        """Statistics of the classes of a text, or the rows of its parts, without a class that
-        could not count it; None if the text could not be read or parsed"""
+        """Statistics of the classes of a text - the printed table for the format table, the row
+        otherwise - or the rows of its parts, without a class that could not count it; None if
+        the text could not be read or parsed"""
+        from .document import _sharing_tree
+
         document = self._document(source, args.encoding)
         if document is None:
             return None
         found: dict[str, Any] = {}
-        for name in self.names:
-            cls = self.stats_classes[name]
-            try:
-                if args.parts:
-                    found[name] = cls._count_parts(
-                        document, args.parts, {}, make=partial(self.compute, cls)
+        # The statistics are dropped after their rows, so the tree goes with them
+        with _sharing_tree(document, release=True):
+            for name in self.names:
+                cls = self.stats_classes[name]
+                try:
+                    if args.parts:
+                        found[name] = cls._count_parts(
+                            document, args.parts, {}, make=partial(self.compute, cls)
+                        )
+                    else:
+                        # The statistics read once, so that a statistic computed when it is
+                        # read raises here, for its text
+                        stats = self.compute(cls, document)
+                        found[name] = (
+                            _printed(stats) if args.format == "table" else _stats_row(stats)
+                        )
+                except AnyTSError as error:
+                    self._error(
+                        self.texts["stats_error"].format(source=source, name=name, error=error)
                     )
-                else:
-                    stats = self.compute(cls, document)
-                    # A statistic computed when it is read raises here, for its text
-                    stats.get_stats()
-                    found[name] = stats
-            except AnyTSError as error:
-                self._error(
-                    self.texts["stats_error"].format(source=source, name=name, error=error)
-                )
         return found
 
     def _document(self, source: str, encoding: str) -> Document | None:
@@ -465,7 +498,7 @@ class Command:
             self._error(self.texts["decode_error"].format(source=source, error=error))
             return None
         except OSError as error:
-            self._error(self.texts["file_error"].format(source=source, error=error))
+            self._error(self._file_error(source, error))
             return None
         try:
             return self.parse(text)
@@ -478,7 +511,7 @@ class Command:
         try:
             return _Output(path)
         except OSError as error:
-            self._error(self.texts["file_error"].format(source=path, error=error))
+            self._error(self._file_error(path, error))
             return None
 
     def _put(self, output: _Output, text: str) -> bool:
@@ -488,9 +521,20 @@ class Command:
         except BrokenPipeError:
             raise
         except OSError as error:
-            self._error(self.texts["file_error"].format(source=output.name, error=error))
+            self._error(self._file_error(output.name, error))
             return False
         return True
+
+    def _file_error(self, source: str | None, error: OSError) -> str:
+        """Message of an error of a file: a text of its own for a missing file, a directory and
+        a denied access, the error of the system otherwise"""
+        for kind, key in _FILE_ERRORS:
+            if isinstance(error, kind):
+                # Windows denies reading a directory
+                if key == "no_access" and source is not None and Path(source).is_dir():
+                    key = "is_directory"
+                return self.texts[key].format(source=source)
+        return self.texts["file_error"].format(source=source, error=error)
 
     def _error(self, message: str) -> None:
         """Message of an error on the standard error"""
@@ -499,17 +543,13 @@ class Command:
     def _tables(self, source: str, found: Mapping[str, Any], part: str, *, many: bool) -> str:
         """Tables of the statistics of a text by class, with a heading where there are several
         texts or classes"""
-        from contextlib import redirect_stdout
-
         tables = io.StringIO()
         for name, value in found.items():
             if many or len(found) > 1:
                 tables.write(f"{source}: {name}\n" if many else f"{name}\n")
-            if isinstance(value, Stats):
-                with redirect_stdout(tables):
-                    value.print_stats()
-            else:
-                tables.write(_parts(value, part).to_string() + "\n")
+            tables.write(
+                value if isinstance(value, str) else _parts(value, part).to_string() + "\n"
+            )
             tables.write("\n")
         return tables.getvalue()
 
@@ -530,6 +570,8 @@ class _Formatter(argparse.HelpFormatter):
 class _Parser(argparse.ArgumentParser):
     """Parser of a command with the texts of the command: the usage, the headings of its
     positional arguments and options, the help option and the error"""
+
+    commands: Mapping[str, argparse.ArgumentParser]
 
     def __init__(self, *args: Any, texts: Mapping[str, str], **kwargs: Any) -> None:
         kwargs.update(formatter_class=partial(_Formatter, usage=texts["usage"]), add_help=False)
@@ -573,20 +615,26 @@ def _read(source: str, encoding: str) -> str:
 
 
 class _Output:
-    """The file of the output, made at once so that a wrong path is reported before the texts
-    are counted, or the standard output, written in UTF-8 with the line breaks \\n"""
+    """The file of the output, opened at once so that a wrong path is reported before the texts
+    are counted and replaced only by a result, or the standard output, written in UTF-8 with
+    the line breaks \\n"""
 
     def __init__(self, path: str | None) -> None:
         self.name = _STDIN if path is None else path
+        self._written = False
         if self.name != _STDIN:
-            with Path(self.name).open("w", encoding="utf-8"):
+            # Opened to append, which keeps what the file has
+            with Path(self.name).open("a", encoding="utf-8"):
                 pass
 
     def write(self, text: str) -> None:
-        """Writing a text, at once, so that an error of the output comes with it"""
+        """Writing a text, at once, so that an error of the output comes with it; the first
+        replaces what the file had"""
         if self.name != _STDIN:
-            with Path(self.name).open("a", encoding="utf-8", newline="\n") as file:
+            mode = "a" if self._written else "w"
+            with Path(self.name).open(mode, encoding="utf-8", newline="\n") as file:
                 file.write(text)
+            self._written = True
             return
         _write(sys.stdout, text)
 
@@ -611,6 +659,16 @@ def _close_stdout() -> None:
     closed pipe as it exits"""
     devnull = os.open(os.devnull, os.O_WRONLY)
     os.dup2(devnull, sys.stdout.fileno())
+
+
+def _printed(stats: Stats) -> str:
+    """Table of the statistics of an object, as print_stats prints it"""
+    from contextlib import redirect_stdout
+
+    table = io.StringIO()
+    with redirect_stdout(table):
+        stats.print_stats()
+    return table.getvalue()
 
 
 def _parts(counted: Sequence[tuple[int, int, StatsRow | None]], part: str) -> DataFrame:
