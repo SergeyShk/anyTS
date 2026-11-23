@@ -627,7 +627,7 @@ CLI_TEXTS: Mapping[str, str] = MappingProxyType(
         "parts_classes": "no class counts {parts}",
         "file_error": "{source}: {error}",
         "decode_error": "{source}: {error}; give its encoding with -e",
-        "no_file": "{source}: no such file",
+        "no_file": "{source}: no such file or directory",
         "is_directory": "{source}: is a directory",
         "no_access": "{source}: permission denied",
         "stats_error": "{source}, {name}: {error}",

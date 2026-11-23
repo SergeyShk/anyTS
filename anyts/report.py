@@ -140,7 +140,8 @@ class Report:
         # The statistics read once, so that a statistic computed when it is read raises here,
         # for its class
         self._values: dict[str, dict[str, Any]] = {}
-        with _sharing_tree(self.document):
+        # The statistics of the report keep the tree, which is not broken after them
+        with _sharing_tree(self.document, release=False):
             for name, cls in classes.items():
                 try:
                     stats = self.compute(cls, self.document)
@@ -432,24 +433,14 @@ def escape(value: object) -> str:
 
 def _check_classes(classes: Any, messages: Mapping[str, str]) -> None:
     """Classes of statistics of a report: a dictionary of subclasses of Stats by name"""
-    wrong = (
-        classes
-        if not isinstance(classes, Mapping)
-        else next(
-            (
-                cls
-                for cls in classes.values()
-                if not (isinstance(cls, type) and issubclass(cls, Stats))
-            ),
-            None,
-        )
-    )
-    if wrong is not None or not isinstance(classes, Mapping):
-        raise ParameterError(
-            messages["report_stats_classes"].format(
-                type=wrong.__name__ if isinstance(wrong, type) else type(wrong).__name__
-            )
-        )
+    values = list(classes.values()) if isinstance(classes, Mapping) else [classes]
+    wrong = [
+        value for value in values if not (isinstance(value, type) and issubclass(value, Stats))
+    ]
+    if not isinstance(classes, Mapping) or wrong:
+        value = wrong[0] if wrong else classes
+        name = value.__name__ if isinstance(value, type) else type(value).__name__
+        raise ParameterError(messages["report_stats_classes"].format(type=name))
 
 
 def _section(heading: str, content: str) -> str:

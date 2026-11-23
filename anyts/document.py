@@ -654,17 +654,19 @@ def _tree_once(document: Document) -> Iterator[Tree]:
 
 
 @contextmanager
-def _sharing_tree(document: Document) -> Iterator[None]:
-    """The tree of a document built once for the classes that count it inside, and broken after
-    them as _tree_once breaks it"""
+def _sharing_tree(document: Document, *, release: bool) -> Iterator[None]:
+    """The tree of a document built once for the classes that count it inside; with release,
+    broken after them as _tree_once breaks it, for classes whose objects are dropped"""
     previous: _Shared | None = getattr(_local, "shared", None)
     shared = _local.shared = _Shared(document)
     try:
         yield
     finally:
         _local.shared = previous
-        if shared.tree is not None and not any(
-            converted.tree is shared.tree for converted in _slot()
+        if (
+            release
+            and shared.tree is not None
+            and not any(converted.tree is shared.tree for converted in _slot())
         ):
             _break(shared.tree)
 

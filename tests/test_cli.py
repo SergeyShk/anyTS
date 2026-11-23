@@ -690,17 +690,17 @@ def test_the_output_that_is_the_input(capsys, files):
 def test_errors_of_files(capsys, tmp_path):
     """A missing file, a directory and a denied access have texts of their own"""
     missing = tmp_path / "missing.txt"
-    assert run(capsys, "-s", "basic", str(missing))[2] == f"proto: {missing}: no such file\n"
-    err = run(capsys, "-s", "basic", str(tmp_path))[2]
-    # Windows denies reading a directory
-    assert err in {
-        f"proto: {tmp_path}: is a directory\n",
-        f"proto: {tmp_path}: permission denied\n",
-    }
+    assert run(capsys, "-s", "basic", str(missing))[2] == (
+        f"proto: {missing}: no such file or directory\n"
+    )
+    assert run(capsys, "-s", "basic", str(tmp_path))[2] == f"proto: {tmp_path}: is a directory\n"
     command = Prototype()
     assert (
         command._file_error("a.txt", PermissionError(13, "Denied")) == "a.txt: permission denied"
     )
+    # Windows denies reading a directory
+    denied = command._file_error(str(tmp_path), PermissionError(13, "Denied"))
+    assert denied == f"{tmp_path}: is a directory"
     assert command._file_error("a.txt", OSError(28, "Full")) == "a.txt: [Errno 28] Full"
 
 

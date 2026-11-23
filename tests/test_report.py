@@ -417,6 +417,7 @@ def test_messages_of_a_report():
         (("basic",), "tuple"),
         ({"basic": object()}, "object"),
         ({"x": int}, "int"),
+        ({"basic": None}, "NoneType"),
     ):
         with pytest.raises(ParameterError, match=rf"^Classes: {name}$"):
             Translated(TEXT, stats_classes=classes)
@@ -446,3 +447,32 @@ def test_the_other_classes_count_only_the_sentences_shown():
     assert counted == ["Three words here.", "Four words are here now."]
     assert [row[0] for row in table] == ["3", "4"]
     assert all(cell != "-" for row in table for cell in row)
+
+
+def test_the_statistics_of_a_report_keep_their_tree():
+    """The tree the classes of a report share stays whole for the statistics it keeps"""
+    import spacy
+    from spacy.tokens import Doc
+
+    from anyts import document as document_module
+    from anyts.document import to_document
+    from anyts.syntax_stats import SyntaxStats
+
+    doc = Doc(
+        spacy.blank("en").vocab,
+        words=["Cats", "sleep", "."],
+        heads=[1, 1, 1],
+        deps=["nsubj", "ROOT", "punct"],
+        pos=["NOUN", "VERB", "PUNCT"],
+        lemmas=["cat", "sleep", "."],
+    )
+    document = to_document(doc)
+    # A document no conversion keeps, as that of a text
+    document_module._slot().clear()
+
+    class Trees(Report):
+        stats_classes: ClassVar[dict[str, type]] = {"syntax": SyntaxStats}
+
+    report = Trees(document)
+    cats, sleep = report.stats["syntax"].sents[0]
+    assert cats.head is sleep

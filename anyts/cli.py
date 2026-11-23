@@ -468,7 +468,8 @@ class Command:
         if document is None:
             return None
         found: dict[str, Any] = {}
-        with _sharing_tree(document):
+        # The statistics are dropped after their rows, so the tree goes with them
+        with _sharing_tree(document, release=True):
             for name in self.names:
                 cls = self.stats_classes[name]
                 try:
@@ -529,6 +530,9 @@ class Command:
         a denied access, the error of the system otherwise"""
         for kind, key in _FILE_ERRORS:
             if isinstance(error, kind):
+                # Windows denies reading a directory
+                if key == "no_access" and source is not None and Path(source).is_dir():
+                    key = "is_directory"
                 return self.texts[key].format(source=source)
         return self.texts["file_error"].format(source=source, error=error)
 
