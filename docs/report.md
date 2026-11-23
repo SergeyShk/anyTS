@@ -18,7 +18,7 @@ The HTML report of the statistics of a text. The text is parsed once (`parse`), 
 | `highlight` | The text highlighted by `highlight_class` with its default layers, its styles in the head of the page; none without it |
 | `plots` | The plots of `plots` in SVG with their captions: the lengths of the sentences (`sentence_lengths_plot`) by default, without a mark on every sentence for a text of more than 300 of them; none for a text without sentences |
 
-The style is in the page and the plots draw their text as paths, so they need no font; they are made without `pyplot`, so that a command opens no window. The page is the same for the same text, and the ids of its plots differ. Every text of the source and of the statistics goes through `escape`, so that it never becomes markup.
+The page is the same for the same text, and no text of the source or of the statistics becomes markup.
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
@@ -27,7 +27,7 @@ The style is in the page and the plots draw their text as paths, so they need no
 | `stats_classes` | `dict[str, type[Stats]]` | `None` | Classes of statistics by name; those of the class by default |
 | `skip_errors` | `bool` | `False` | Leave out a class that cannot count the source, with its error in `errors`, instead of raising it |
 
-The object keeps `document`, `title`, the statistics of every class by name, `stats`, and the errors of the classes left out, `errors`. `to_html()` returns the page, and `save(path)` writes it to a file in UTF-8, the encoding the page declares. A source a class cannot count raises the error of the class, unless `skip_errors`; a `skip_errors` that is not a `bool` raises `ParameterError`.
+The object keeps `document`, `title`, the statistics of every class by name, `stats`, and the errors of the classes left out, `errors`. `to_html()` returns the page, and `save(path)` writes it to a file in UTF-8, the encoding the page declares. A source a class cannot count raises the error of the class, unless `skip_errors`; a `skip_errors` that is not a `bool` and `stats_classes` that are not a dictionary of classes of statistics raise `ParameterError`.
 <!-- --8<-- [end:Report] -->
 
 === "Code"
@@ -103,6 +103,7 @@ A report of a library subclasses `Report`:
 | `highlight_class` | class attribute | Highlighting of the text (`HighlightedText`), with its default layers; none by default |
 | `visualizer_labels` | class attribute | Labels of the plots by visualizer, over `VISUALIZER_LABELS`; none by default |
 | `texts` | class attribute | Headings and labels by key, `REPORT_TEXTS` by default, the language of the page `lang` among them: complete, as the messages of a class of statistics |
+| `messages` | class attribute | Messages of the errors of the report by key, `MESSAGES` by default: complete |
 | `sections` | class attribute | Sections in their order; `("statistics", "sentences", "highlight", "plots")` by default |
 | `section_<name>()` | method | Fragment of HTML of a section; a library overrides one or adds its own and names it in `sections` |
 | `parse(source)` | method | Document of a source, once for all the sections; `to_document` by default |

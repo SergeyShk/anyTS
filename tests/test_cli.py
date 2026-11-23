@@ -1,13 +1,16 @@
 import json
 import sys
 from io import BytesIO, StringIO, TextIOWrapper
+from pathlib import Path
 from typing import ClassVar
 
 import pandas as pd
 import pytest
 
+import anyts
 from anyts.basic_stats import BasicStats
 from anyts.cli import Command
+from anyts.cohesion_stats import CohesionStats
 from anyts.constants import CLI_TEXTS
 from anyts.diversity_stats import DiversityStats
 from anyts.document import document_words, to_document
@@ -167,12 +170,34 @@ def test_a_text_that_cannot_be_parsed(capsys, files):
         ),
         (["stats", "-s", "diversity", "-p", "sentences"], "diversity counts no sentences"),
         (["stats", "-f", "xml"], "invalid choice: 'xml'"),
-        ([], "the following arguments are required: command"),
     ],
 )
 def test_wrong_arguments(capsys, argv, message):
+    """An error of the arguments comes with the usage of their command"""
     assert Prototype().run(argv) == 2
-    assert message in capsys.readouterr().err
+    err = capsys.readouterr().err
+    assert message in err
+    assert err.startswith("usage: proto stats ")
+
+
+def test_without_a_command(capsys):
+    assert Prototype().run([]) == 2
+    out, err = capsys.readouterr()
+    assert out.startswith("usage: proto ")
+    assert "Print the statistics of texts" in out
+    assert err == ""
+
+
+def test_version(capsys):
+    """--version shows the versions of the library and of the core, a command without a
+    version has no such option"""
+
+    class Versioned(Prototype):
+        version = "1.2.3"
+
+    assert Versioned().run(["--version"]) == 0
+    assert capsys.readouterr().out == f"proto 1.2.3 (anyTS {anyts.__version__})\n"
+    assert Prototype().run(["--version"]) == 2
 
 
 def test_help(capsys):
@@ -270,7 +295,7 @@ def test_parts_without_stats(capsys, files):
         stats_classes: ClassVar[dict[str, type]] = {"diversity": DiversityStats}
 
     assert Diverse().run(["stats", "-p", "lines", files[1]]) == 2
-    assert "diverse: error: no class counts lines" in capsys.readouterr().err
+    assert "diverse stats: error: no class counts lines" in capsys.readouterr().err
 
 
 def test_lines(capsys, files):
@@ -303,7 +328,7 @@ def test_help_and_errors_in_utf_8(monkeypatch, tmp_path):
             **CLI_TEXTS,
             "description": "Статистики текстов",
             "unknown_stats": "неизвестные статистики {name}",
-            "file_error": "{source}: не прочитан",
+            "no_file": "{source}: нет файла",
         }
 
     out, err = BytesIO(), BytesIO()
@@ -315,7 +340,7 @@ def test_help_and_errors_in_utf_8(monkeypatch, tmp_path):
     assert "Статистики текстов" in out.getvalue().decode("utf-8")
     errors = err.getvalue().decode("utf-8")
     assert "неизвестные статистики lexical" in errors
-    assert "нет.txt: не прочитан" in errors
+    assert "нет.txt: нет файла" in errors
 
 
 def test_no_standard_error(monkeypatch, files, tmp_path):
@@ -641,3 +666,95 @@ def test_an_output_that_cannot_be_written_is_named(capsys, monkeypatch, files, a
     monkeypatch.setattr(sys, "stdout", FullOutput(1))
     assert Prototype().run([*argv, "-s", "basic", files[1]]) == 1
     assert capsys.readouterr().err == "proto: -: No space left on device\n"
+
+
+@pytest.mark.parametrize("fmt", ["table", "json", "csv"])
+def test_the_output_is_replaced_only_by_a_result(capsys, tmp_path, fmt):
+    """A text that cannot be read leaves the output as it was"""
+    output = tmp_path / "out.txt"
+    output.write_text("before", encoding="utf-8")
+    missing = str(tmp_path / "missing.txt")
+    assert run(capsys, "-s", "basic", "-f", fmt, "-o", str(output), missing)[0] == 1
+    assert output.read_text(encoding="utf-8") == "before"
+    assert Prototype().run(["report", "-o", str(output), missing]) == 1
+    assert output.read_text(encoding="utf-8") == "before"
+
+
+def test_the_output_that_is_the_input(capsys, files):
+    """The output named as the text gets the statistics of the text, read before"""
+    assert run(capsys, "-s", "basic", "-f", "json", "-o", files[1], files[1])[0] == 0
+    found = json.loads(Path(files[1]).read_text(encoding="utf-8"))
+    assert found[files[1]]["basic"]["n_words"] == 4
+
+
+def test_errors_of_files(capsys, tmp_path):
+    """A missing file, a directory and a denied access have texts of their own"""
+    missing = tmp_path / "missing.txt"
+    assert run(capsys, "-s", "basic", str(missing))[2] == f"proto: {missing}: no such file\n"
+    err = run(capsys, "-s", "basic", str(tmp_path))[2]
+    # Windows denies reading a directory
+    assert err in {
+        f"proto: {tmp_path}: is a directory\n",
+        f"proto: {tmp_path}: permission denied\n",
+    }
+    command = Prototype()
+    assert (
+        command._file_error("a.txt", PermissionError(13, "Denied")) == "a.txt: permission denied"
+    )
+    assert command._file_error("a.txt", OSError(28, "Full")) == "a.txt: [Errno 28] Full"
+
+
+@pytest.mark.parametrize("fmt", ["table", "json", "csv"])
+def test_the_statistics_are_read_once(capsys, files, monkeypatch, fmt):
+    calls = []
+    read = DiversityStats.get_stats
+
+    def counted(self, **kwargs):
+        calls.append(kwargs)
+        return read(self, **kwargs)
+
+    monkeypatch.setattr(DiversityStats, "get_stats", counted)
+    assert run(capsys, "-s", "diversity", "-f", fmt, files[1])[0] == 0
+    assert len(calls) == 1
+
+
+def test_the_tree_of_a_text_is_built_once(capsys, files, monkeypatch):
+    """The classes of a text share its tree, which is broken after them"""
+    import spacy
+    from spacy.tokens import Doc
+
+    from anyts import document as document_module
+
+    built = []
+    build = document_module._built_tree
+
+    def counted(document):
+        built.append(build(document))
+        return built[-1]
+
+    monkeypatch.setattr(document_module, "_built_tree", counted)
+    doc = Doc(
+        spacy.blank("en").vocab,
+        words=["Cats", "sleep", "."],
+        heads=[1, 1, 1],
+        deps=["nsubj", "ROOT", "punct"],
+        pos=["NOUN", "VERB", "PUNCT"],
+        lemmas=["cat", "sleep", "."],
+    )
+
+    class Trees(Prototype):
+        stats_classes: ClassVar[dict[str, type]] = {
+            "syntax": SyntaxStats,
+            "cohesion": CohesionStats,
+        }
+
+        def parse(self, text):
+            document = to_document(doc)
+            # A document no conversion keeps, as that of a text
+            document_module._slot().clear()
+            return document
+
+    assert Trees().run(["stats", "-f", "json", files[0]]) == 0
+    capsys.readouterr()
+    assert len(built) == 1
+    assert all(word.head is None for word in built[0].words)

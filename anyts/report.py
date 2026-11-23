@@ -9,8 +9,8 @@ from math import isfinite
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from .constants import REPORT_TEXTS
-from .exceptions import AnyTSError
+from .constants import MESSAGES, REPORT_TEXTS
+from .exceptions import AnyTSError, ParameterError
 from .stats import Stats, _parts_dataframe
 from .utils import check_bool, check_messages
 
@@ -81,11 +81,13 @@ class Report:
             over VISUALIZER_LABELS
         texts (dict[str, str]): Headings and labels by key (REPORT_TEXTS), complete as
             the messages of a class of statistics
+        messages (dict[str, str]): Messages of its errors by key (MESSAGES)
         sections (tuple[str, ...]): Sections in their order
 
     Raises:
-        ParameterError: When a class is defined, if its texts are incomplete or have a
-            field their default lacks; if skip_errors is not a bool
+        ParameterError: When a class is defined, if its texts or messages are
+            incomplete or have a field their default lacks; if skip_errors is not a
+            bool or stats_classes is not a dictionary of classes of statistics
         SourceTypeError, SourceError: As the classes raise for the source, unless
             skip_errors
 
@@ -110,11 +112,13 @@ class Report:
     highlight_class: ClassVar[type[HighlightedText] | None] = None
     visualizer_labels: ClassVar[Mapping[str, Mapping[str, str]]] = {}
     texts: ClassVar[Mapping[str, str]] = REPORT_TEXTS
+    messages: ClassVar[Mapping[str, str]] = MESSAGES
     sections: ClassVar[Sequence[str]] = ("statistics", "sentences", "highlight", "plots")
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
         check_messages(cls.texts, REPORT_TEXTS)
+        check_messages(cls.messages, MESSAGES)
 
     def __init__(
         self,
@@ -124,25 +128,29 @@ class Report:
         *,
         skip_errors: bool = False,
     ):
-        check_bool(skip_errors, "skip_errors")
+        from .document import _sharing_tree
+
+        check_bool(skip_errors, "skip_errors", message=self.messages["bool_param"])
+        classes = self.stats_classes if stats_classes is None else stats_classes
+        _check_classes(classes, self.messages)
         self.document = self.parse(source)
         self.title = self.texts["title"] if title is None else title
-        classes = self.stats_classes if stats_classes is None else stats_classes
         self.stats: dict[str, Stats] = {}
         self.errors: dict[str, AnyTSError] = {}
         # The statistics read once, so that a statistic computed when it is read raises here,
         # for its class
         self._values: dict[str, dict[str, Any]] = {}
-        for name, cls in classes.items():
-            try:
-                stats = self.compute(cls, self.document)
-                self._values[name] = stats.get_stats()
-            except AnyTSError as error:
-                if not skip_errors:
-                    raise
-                self.errors[name] = error
-            else:
-                self.stats[name] = stats
+        with _sharing_tree(self.document):
+            for name, cls in classes.items():
+                try:
+                    stats = self.compute(cls, self.document)
+                    self._values[name] = stats.get_stats()
+                except AnyTSError as error:
+                    if not skip_errors:
+                        raise
+                    self.errors[name] = error
+                else:
+                    self.stats[name] = stats
 
     def parse(self, source: str | Doc | Document) -> Document:
         """
@@ -269,10 +277,7 @@ class Report:
         columns = [(name, stat) for name, stat in self.sentence_columns if name in self.stats]
         if not columns:
             return ""
-        tables = {
-            name: self._sentences_table(type(self.stats[name]))
-            for name in dict.fromkeys(name for name, _ in columns)
-        }
+        tables = {columns[0][0]: self._sentences_table(type(self.stats[columns[0][0]]))}
         heads = "".join(
             f"<th>{escape(type(self.stats[name]).stats_desc.get(stat, stat))}</th>"
             for name, stat in columns
@@ -298,6 +303,11 @@ class Report:
                 )
             )
             numbers = sorted(top.index[: self.max_sentences])
+        # The other classes count only the sentences shown
+        shown = set(numbers)
+        for name, _ in columns:
+            if name not in tables:
+                tables[name] = self._sentences_table(type(self.stats[name]), shown)
         text = self.document.text
         bounds = first[["start", "end"]].to_numpy().tolist()
         rows = []
@@ -319,10 +329,17 @@ class Report:
             + "\n</table>\n",
         )
 
-    def _sentences_table(self, stats_class: type[Stats]) -> DataFrame:
-        """Table of the statistics of every sentence of the document, counted by compute"""
+    def _sentences_table(
+        self, stats_class: type[Stats], numbers: set[int] | None = None
+    ) -> DataFrame:
+        """Table of the statistics of every sentence of the document, or of those of numbers,
+        counted by compute"""
         counted = stats_class._count_parts(
-            self.document, "sentences", {}, make=partial(self.compute, stats_class)
+            self.document,
+            "sentences",
+            {},
+            make=partial(self.compute, stats_class),
+            numbers=numbers,
         )
         return _parts_dataframe(
             [(number, *part) for number, part in enumerate(counted)], "sentence"
@@ -411,6 +428,28 @@ def escape(value: object) -> str:
         '&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;'
     """
     return html.escape(str(value), quote=True)
+
+
+def _check_classes(classes: Any, messages: Mapping[str, str]) -> None:
+    """Classes of statistics of a report: a dictionary of subclasses of Stats by name"""
+    wrong = (
+        classes
+        if not isinstance(classes, Mapping)
+        else next(
+            (
+                cls
+                for cls in classes.values()
+                if not (isinstance(cls, type) and issubclass(cls, Stats))
+            ),
+            None,
+        )
+    )
+    if wrong is not None or not isinstance(classes, Mapping):
+        raise ParameterError(
+            messages["report_stats_classes"].format(
+                type=wrong.__name__ if isinstance(wrong, type) else type(wrong).__name__
+            )
+        )
 
 
 def _section(heading: str, content: str) -> str:
