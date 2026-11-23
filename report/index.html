@@ -2282,7 +2282,7 @@
 </tr>
 </tbody>
 </table>
-<p>The style is in the page and the plots draw their text as paths, so they need no font; they are made without <code>pyplot</code>, so that a command opens no window. The page is the same for the same text, and the ids of its plots differ. Every text of the source and of the statistics goes through <code>escape</code>, so that it never becomes markup.</p>
+<p>The page is the same for the same text, and no text of the source or of the statistics becomes markup.</p>
 <table>
 <thead>
 <tr>
@@ -2319,7 +2319,7 @@
 </tr>
 </tbody>
 </table>
-<p>The object keeps <code>document</code>, <code>title</code>, the statistics of every class by name, <code>stats</code>, and the errors of the classes left out, <code>errors</code>. <code>to_html()</code> returns the page, and <code>save(path)</code> writes it to a file in UTF-8, the encoding the page declares. A source a class cannot count raises the error of the class, unless <code>skip_errors</code>; a <code>skip_errors</code> that is not a <code>bool</code> raises <code>ParameterError</code>.</p>
+<p>The object keeps <code>document</code>, <code>title</code>, the statistics of every class by name, <code>stats</code>, and the errors of the classes left out, <code>errors</code>. <code>to_html()</code> returns the page, and <code>save(path)</code> writes it to a file in UTF-8, the encoding the page declares. A source a class cannot count raises the error of the class, unless <code>skip_errors</code>; a <code>skip_errors</code> that is not a <code>bool</code> and <code>stats_classes</code> that are not a dictionary of classes of statistics raise <code>ParameterError</code>.</p>
 <!-- --8<-- [end:Report] -->
 
 <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Code</label><label for="__tabbed_1_2">Result</label></div>
@@ -2437,6 +2437,11 @@
 <td style="text-align: left;"><code>texts</code></td>
 <td style="text-align: left;">class attribute</td>
 <td style="text-align: left;">Headings and labels by key, <code>REPORT_TEXTS</code> by default, the language of the page <code>lang</code> among them: complete, as the messages of a class of statistics</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>messages</code></td>
+<td style="text-align: left;">class attribute</td>
+<td style="text-align: left;">Messages of the errors of the report by key, <code>MESSAGES</code> by default: complete</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>sections</code></td>
