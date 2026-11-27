@@ -387,6 +387,37 @@ def test_no_interactive_backend(tmp_path):
     }
 
 
+def test_the_command_report_does_not_load_pyplot(tmp_path):
+    """The command report draws on a Figure, without the state of pyplot"""
+    import subprocess
+
+    source = tmp_path / "text.txt"
+    source.write_text("The cat sleeps. A dog barks loudly!", encoding="utf-8")
+    code = (
+        "import sys\n"
+        "from anyts.basic_stats import BasicStats\n"
+        "from anyts.cli import Command\n"
+        "from anyts.report import Report\n"
+        "class Vowels(BasicStats):\n"
+        "    def count_syllables(self, word):\n"
+        "        return 1\n"
+        "class Basic(Report):\n"
+        "    stats_classes = {'basic': Vowels}\n"
+        "    sentence_columns = (('basic', 'n_words'),)\n"
+        "class Proto(Command):\n"
+        "    prog = 'proto'\n"
+        "    stats_classes = {'basic': Vowels}\n"
+        "    report_class = Basic\n"
+        f"code = Proto().run(['report', {str(source)!r}, '-o', {str(tmp_path / 'text.html')!r}])\n"
+        "print(code, 'matplotlib.pyplot' in sys.modules)\n"
+    )
+    found = subprocess.run(
+        [sys.executable, "-I", "-c", code], capture_output=True, text=True, check=True
+    )
+    assert found.stdout == "0 False\n"
+    assert "<svg" in (tmp_path / "text.html").read_text(encoding="utf-8")
+
+
 def test_plot_of_many_sentences():
     """A plot of the lengths of a few hundred sentences marks every sentence, of more none"""
 
