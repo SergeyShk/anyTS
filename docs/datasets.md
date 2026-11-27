@@ -96,6 +96,25 @@ Computes the SHA-256 checksum of a file as a hexadecimal string in lower case; a
 A path that is neither a string nor a `Path` raises `SourceTypeError`.
 <!-- --8<-- [end:sha256] -->
 
+## Other versions of a dataset { #other_versions }
+
+<!-- --8<-- [start:other_versions] -->
+``` {.python .signature}
+other_versions(data_dir, name, version, filename)
+```
+
+Returns the names of the directories `<name>_v<N>` of the data directory that hold the file of the dataset, `N` a number other than `version`, in the order of the versions: a library names them in its message when the dataset of its version is not found. A directory without the file or with a suffix that is not a number is left out, and a missing data directory gives an empty list.
+
+| Parameter | Type | Default | Description |
+| :-------- | :--- | :------ | :---------- |
+| `data_dir` | `str` / `Path` | - | Directory of the data |
+| `name` | `str` | - | Name of the dataset |
+| `version` | `int` | - | Version of the dataset that the library reads |
+| `filename` | `str` | - | Name of the file of the dataset in its directory |
+
+A directory that is neither a string nor a `Path` raises `SourceTypeError`.
+<!-- --8<-- [end:other_versions] -->
+
 ## Conversion into a path { #to_path }
 
 <!-- --8<-- [start:to_path] -->
