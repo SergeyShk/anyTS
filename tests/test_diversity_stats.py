@@ -4,7 +4,7 @@ import warnings
 from collections import Counter, deque
 from dataclasses import dataclass
 from functools import partial
-from math import e, exp, inf, isnan, log, log2, log10, nan, nextafter, sqrt
+from math import e, inf, isnan, log, log2, log10, nan, nextafter, sqrt
 from typing import ClassVar
 
 import numpy as np
@@ -420,28 +420,30 @@ def test_orlov_z():
     share = max(counts.values()) / n_words
     expected = z / log(share * z) * n_words / (n_words - z) * log(n_words / z)
     assert expected == pytest.approx(len(counts), rel=1e-9) and z > n_words
+    # A Z ten times larger adds a lexeme or more, so the vocabulary determines Z
+    assert _orlov_vocabulary(log(z) + log(10), n_words, share) >= len(counts) + 1
     # Below the minimum of the right side there is no solution, nor for words all distinct
     assert isnan(
         calc_orlov_z(["the", "cat", "and", "the", "dog", "and", "the", "bird", "saw", "a", "fish"])
     )
     assert isnan(calc_orlov_z(list("abcdef"))) and isnan(calc_orlov_z(["a"]))
-    # A short text of nearly all new words, 50 words and 47 lexemes: the right side reaches V
-    # only beyond e^(1/p) / p, where the most frequent lexeme would occur more often than
-    # there are lexemes
-    poem = ["a", "a", "a", "b", "b", *(f"w{i}" for i in range(45))]
-    assert _orlov_vocabulary(log(50 / 3) + 50 / 3, 50, 3 / 50) < 47
-    assert isnan(calc_orlov_z(poem))
+
+    # 50 words, the most frequent lexeme three times: of 45 to 47 lexemes a Z ten times larger
+    # adds less than one lexeme, so the vocabulary does not determine Z; of 44 it does
+    def text(n_lexemes):
+        pairs = 48 - n_lexemes
+        repeated = [f"r{i}" for i in range(pairs) for _ in range(2)]
+        return ["a", "a", "a", *repeated, *(f"w{i}" for i in range(47 - 2 * pairs))]
+
+    for n_lexemes in (45, 46, 47):
+        assert isnan(calc_orlov_z(text(n_lexemes)))
+    z = calc_orlov_z(text(44))
+    assert z / log(0.06 * z) * 50 / (50 - z) * log(50 / z) == pytest.approx(44, rel=1e-9)
+    assert _orlov_vocabulary(log(z) + log(10), 50, 0.06) >= 45
+    # A root near the float limit or beyond it adds no lexeme, with no OverflowError
     assert isnan(calc_orlov_z(["the", "the", *(f"w{i}" for i in range(2000))]))
-    # One lexeme fewer, 46, solves below the bound
-    z = calc_orlov_z(["c", "c", *poem[:-2]])
-    assert 1e7 < z < exp(50 / 3) * 50 / 3
-    expected = z / log(0.06 * z) * 50 / (50 - z) * log(50 / z)
-    assert expected == pytest.approx(46, rel=1e-9)
-    # A root near the float limit, below it or beyond it, gives a number or inf, no OverflowError
-    for n_words in (2000, 2016, 2020, 2024, 2100):
-        z = calc_orlov_z(["a", "a", "b", "b", *(f"w{i}" for i in range(n_words))])
-        assert z > 1e300 or z == inf
-    assert calc_orlov_z(["a", "a", "b", "b", *(f"w{i}" for i in range(2100))]) == inf
+    for n_words in (1000, 1020, 1050, 1200, 1310):
+        assert isnan(calc_orlov_z(["the", "the", *(f"w{i}" for i in range(n_words - 2))]))
     # At Z = N the right side takes its limit, Z / ln(pZ)
     assert _orlov_vocabulary(log(100), 100, 0.1) == pytest.approx(100 / log(10))
     assert _orlov_vocabulary(log(100) + 1e-9, 100, 0.1) == pytest.approx(100 / log(10))
