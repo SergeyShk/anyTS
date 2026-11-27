@@ -1357,9 +1357,12 @@ def calc_orlov_z(text: Sequence[str]) -> float:
         (Orlov 1983): the solution Z of
         V = Z / ln(pZ) · N / (N − Z) · ln(N / Z)
         for N words, V lexemes and the share p of the most frequent one. The
-        right side has a minimum over Z, and Z is the solution above it. On a
-        text shorter than about ten thousand words Z is unstable and grows with
-        the length, and its values span orders of magnitude
+        right side has a minimum over Z, and Z is the solution above it, up to
+        e^(1/p) / p, where the pZ occurrences of the most frequent lexeme reach
+        the Z / ln(pZ) lexemes: the law of Zipf lets no lexeme occur more often
+        than there are lexemes. On a text shorter than about ten thousand words
+        Z is unstable and grows with the length, and its values span orders of
+        magnitude
 
     References:
         https://doi.org/10.1023/A:1001749303137 (Tweedie and Baayen 1998)
@@ -1369,7 +1372,8 @@ def calc_orlov_z(text: Sequence[str]) -> float:
 
     Returns:
         float: Value of the measure in words; nan when V lies at or below the minimum
-            of the right side, inf when V comes so close to N that Z overflows
+            of the right side or Z would lie beyond e^(1/p) / p, inf when Z overflows
+            a float
 
     Raises:
         SourceTypeError: If the words are not a list of strings (check_words)
@@ -1387,19 +1391,16 @@ def calc_orlov_z(text: Sequence[str]) -> float:
     from scipy.optimize import brentq, minimize_scalar
 
     share = max(counts.values()) / n_words
-    # Over u = ln Z the right side is defined above u = -ln p and tends to N at infinity
+    # Over u = ln Z the right side is defined above u = -ln p, and up to u = 1/p - ln p the
+    # most frequent lexeme occurs no more often than there are lexemes
     low = -log(share)
+    high = low + 1 / share
     expected = partial(_orlov_vocabulary, n_words=n_words, share=share)
-    bound = log(n_words) + 50.0
-    lowest = minimize_scalar(expected, bounds=(low + 1e-9, bound), method="bounded")
-    if n_lexemes <= lowest.fun:
+    lowest = minimize_scalar(expected, bounds=(low + 1e-9, high), method="bounded")
+    if not lowest.fun < n_lexemes <= expected(high):
         return nan
-    high = bound
-    while expected(high) <= n_lexemes:
-        if high >= _MAX_LOG_Z:
-            return inf
-        high = min(2 * high, _MAX_LOG_Z)
-    return exp(brentq(lambda u: expected(u) - n_lexemes, lowest.x, high, xtol=1e-12))
+    root = brentq(lambda u: expected(u) - n_lexemes, lowest.x, high, xtol=1e-12)
+    return exp(root) if root <= _MAX_LOG_Z else inf
 
 
 def _orlov_vocabulary(u: float, n_words: int, share: float) -> float:

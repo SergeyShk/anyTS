@@ -814,7 +814,7 @@ $$
 calc_orlov_z(text)
 ```
 
-The text length at which the law of Zipf fits the vocabulary best (Orlov 1983): the solution $Z$ for $N$ words, $V$ lexemes and the share $p$ of the most frequent lexeme. The right side has a minimum over $Z$, and $Z$ is the solution above it; it is `nan` when $V$ lies at or below that minimum or when every word is a lexeme of its own, and `inf` when $V$ comes so close to $N$ that $Z$ overflows a float. With Yule's K, Z separated the authors best among the measures Tweedie and Baayen compared. On a text shorter than about ten thousand words Z is unstable and grows with the length, and its values span orders of magnitude: texts of one length are compared, or by its logarithm.
+The text length at which the law of Zipf fits the vocabulary best (Orlov 1983): the solution $Z$ for $N$ words, $V$ lexemes and the share $p$ of the most frequent lexeme. The right side has a minimum over $Z$, and $Z$ is the solution above it, up to $e^{1/p} / p$, where the $pZ$ occurrences of the most frequent lexeme reach the $Z / \ln(pZ)$ lexemes: the law of Zipf lets no lexeme occur more often than there are lexemes. It is `nan` when $V$ lies at or below that minimum, when the solution lies beyond that bound, as on a short text of nearly all new words, or when every word is a lexeme of its own, and `inf` when $Z$ overflows a float. With Yule's K, Z separated the authors best among the measures Tweedie and Baayen compared. On a text shorter than about ten thousand words Z is unstable and grows with the length, and its values span orders of magnitude: texts of one length are compared, or by its logarithm.
 
 $$
 V = \frac{Z}{\ln(pZ)} \cdot \frac{N}{N - Z} \cdot \ln \frac{N}{Z}

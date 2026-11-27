@@ -4,7 +4,7 @@ import warnings
 from collections import Counter, deque
 from dataclasses import dataclass
 from functools import partial
-from math import e, inf, isnan, log, log2, log10, nan, nextafter, sqrt
+from math import e, exp, inf, isnan, log, log2, log10, nan, nextafter, sqrt
 from typing import ClassVar
 
 import numpy as np
@@ -425,12 +425,23 @@ def test_orlov_z():
         calc_orlov_z(["the", "cat", "and", "the", "dog", "and", "the", "bird", "saw", "a", "fish"])
     )
     assert isnan(calc_orlov_z(list("abcdef"))) and isnan(calc_orlov_z(["a"]))
-    # A text of mostly new words has a Z beyond floats
-    assert calc_orlov_z(["the", "the", *(f"w{i}" for i in range(2000))]) == inf
+    # A short text of nearly all new words, 50 words and 47 lexemes: the right side reaches V
+    # only beyond e^(1/p) / p, where the most frequent lexeme would occur more often than
+    # there are lexemes
+    poem = ["a", "a", "a", "b", "b", *(f"w{i}" for i in range(45))]
+    assert _orlov_vocabulary(log(50 / 3) + 50 / 3, 50, 3 / 50) < 47
+    assert isnan(calc_orlov_z(poem))
+    assert isnan(calc_orlov_z(["the", "the", *(f"w{i}" for i in range(2000))]))
+    # One lexeme fewer, 46, solves below the bound
+    z = calc_orlov_z(["c", "c", *poem[:-2]])
+    assert 1e7 < z < exp(50 / 3) * 50 / 3
+    expected = z / log(0.06 * z) * 50 / (50 - z) * log(50 / z)
+    assert expected == pytest.approx(46, rel=1e-9)
     # A root near the float limit, below it or beyond it, gives a number or inf, no OverflowError
-    for n_words in (1000, 1020, 1050, 1200, 1310):
-        z = calc_orlov_z(["the", "the", *(f"w{i}" for i in range(n_words - 2))])
+    for n_words in (2000, 2016, 2020, 2024, 2100):
+        z = calc_orlov_z(["a", "a", "b", "b", *(f"w{i}" for i in range(n_words))])
         assert z > 1e300 or z == inf
+    assert calc_orlov_z(["a", "a", "b", "b", *(f"w{i}" for i in range(2100))]) == inf
     # At Z = N the right side takes its limit, Z / ln(pZ)
     assert _orlov_vocabulary(log(100), 100, 0.1) == pytest.approx(100 / log(10))
     assert _orlov_vocabulary(log(100) + 1e-9, 100, 0.1) == pytest.approx(100 / log(10))
