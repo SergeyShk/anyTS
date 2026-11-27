@@ -107,6 +107,9 @@ class ReadabilityStats(Stats):
         preset_level_scales (dict[str, dict[str, tuple[tuple[float, str], ...]]]):
             Interpretation scales by preset and metric, in place of level_scales for
             the preset
+        preset_stats_desc (dict[str, dict[str, str]]): Descriptions of the metrics by
+            preset, in place of those of stats_desc on an object of the preset; a metric
+            stats_desc lacks is left out
         grade_scales (dict[str, tuple[tuple[float, float], ...]]): Scales of a metric in
             years of schooling, as lower bounds and grades, for describe when
             level_scale gives no scale of bands
@@ -128,10 +131,10 @@ class ReadabilityStats(Stats):
         SourceError: If the source has no words or no sentences
         ParameterError: If the coefficient preset is not a string or is unknown,
             filter_nums is not a bool or differs from that of the ready basic statistics; when
-            a class is defined, if its scales of a preset name an unknown preset, a
-            scale or a scale of grades is not one of scale_level with finite grades, its
-            school stages are not ascending quadruples of two years and two strings, or
-            the stage above them is not a pair of strings
+            a class is defined, if its scales or descriptions of a preset name an unknown
+            preset, a scale or a scale of grades is not one of scale_level with finite
+            grades, its school stages are not ascending quadruples of two years and two
+            strings, or the stage above them is not a pair of strings
     """
 
     basic_stats_class: ClassVar[type[BasicStats] | None] = None
@@ -149,6 +152,7 @@ class ReadabilityStats(Stats):
         "rix": RIX_LEVELS,
     }
     preset_level_scales: ClassVar[Mapping[str, Mapping[str, tuple[tuple[float, str], ...]]]] = {}
+    preset_stats_desc: ClassVar[Mapping[str, Mapping[str, str]]] = {}
     grade_scales: ClassVar[Mapping[str, tuple[tuple[float, float], ...]]] = {"rix": RIX_GRADES}
     reading_ease_grades: ClassVar[tuple[tuple[float, float], ...]] = (
         *READING_EASE_GRADES,
@@ -161,8 +165,13 @@ class ReadabilityStats(Stats):
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
-        # Not the scales a class of the readability passes down: a subclass may narrow the presets
-        for attribute in ("preset_level_scales", "preset_reading_ease_grades"):
+        # Not the scales and descriptions a class of the readability passes down: a subclass may
+        # narrow the presets
+        for attribute in (
+            "preset_level_scales",
+            "preset_reading_ease_grades",
+            "preset_stats_desc",
+        ):
             owner = next(base for base in cls.__mro__ if attribute in vars(base))
             if owner is not cls and issubclass(owner, ReadabilityStats):
                 continue
@@ -220,6 +229,11 @@ class ReadabilityStats(Stats):
             )
         self._preset = preset
         self.coefficients = dict(self.presets[preset])
+        descs = self.preset_stats_desc.get(preset)
+        if descs:
+            self.stats_desc = {  # type: ignore[misc]
+                stat: descs.get(stat, desc) for stat, desc in self.stats_desc.items()
+            }
         self.bs = _read_basic_stats(
             self, source, self.basic_stats_class, sents_extractor, words_extractor, filter_nums
         )

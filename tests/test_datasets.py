@@ -15,6 +15,7 @@ from anyts.datasets import (
     fetch_archive,
     fold_diacritics,
     length_filters,
+    other_versions,
     sha256,
     substring_filter,
     to_path,
@@ -641,6 +642,29 @@ def test_sha256(tmp_path):
     assert sha256(path) == hashlib.sha256(b"anyTS").hexdigest()
     assert sha256(str(path)) == sha256(path)
     assert sha256(tmp_path / "missing.txt") == ""
+
+
+def test_other_versions(tmp_path):
+    for dirname in ("corpus_v1", "corpus_v2", "corpus_v10", "corpus_v3", "corpus_vx", "corpus_v"):
+        (tmp_path / dirname).mkdir()
+        (tmp_path / dirname / "corpus.tsv").write_text("a")
+    (tmp_path / "corpus_v4").mkdir()
+    # In the order of the versions, without the current one, a directory without the file and
+    # a suffix that is not a number
+    assert other_versions(tmp_path, "corpus", 3, "corpus.tsv") == [
+        "corpus_v1",
+        "corpus_v2",
+        "corpus_v10",
+    ]
+    assert other_versions(str(tmp_path), "corpus", 10, "corpus.tsv") == [
+        "corpus_v1",
+        "corpus_v2",
+        "corpus_v3",
+    ]
+    assert other_versions(tmp_path, "corpus", 3, "other.tsv") == []
+    assert other_versions(tmp_path / "missing", "corpus", 3, "corpus.tsv") == []
+    with pytest.raises(SourceTypeError):
+        other_versions(666, "corpus", 3, "corpus.tsv")
 
 
 def test_replace_errors(tmp_path, monkeypatch):

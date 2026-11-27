@@ -621,3 +621,33 @@ def sha256(path: str | Path) -> str:
         return ""
     with path.open("rb") as file:
         return hashlib.file_digest(file, "sha256").hexdigest()
+
+
+def other_versions(data_dir: str | Path, name: str, version: int, filename: str) -> list[str]:
+    """
+    Finding the directories of the other versions of a dataset
+
+    Description:
+        The directories <name>_v<N> of the data directory that hold the file
+        of the dataset, N a number other than the version; a library names them
+        when the dataset of its version is not found
+
+    Arguments:
+        data_dir (str|Path): Directory of the data
+        name (str): Name of the dataset
+        version (int): Version of the dataset that the library reads
+        filename (str): Name of the file of the dataset in its directory
+
+    Returns:
+        list[str]: Names of the directories in the order of the versions; an empty
+            list for a missing data directory
+
+    Raises:
+        SourceTypeError: If the directory is neither a string nor a Path
+    """
+    found = []
+    for path in to_path(data_dir).glob(f"{name}_v*/{filename}"):
+        suffix = path.parent.name.removeprefix(f"{name}_v")
+        if suffix.isdecimal() and int(suffix) != version:
+            found.append((int(suffix), path.parent.name))
+    return [dirname for _, dirname in sorted(found)]

@@ -5,7 +5,6 @@ from collections.abc import Iterable, Iterator, Mapping
 from numbers import Integral
 from typing import TYPE_CHECKING, cast
 
-import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.axes import Axes
 
@@ -68,6 +67,8 @@ def sentence_lengths_plot(
         raise SourceError("The data source has no sentences")
     check_axes(ax)
     if ax is None:
+        import matplotlib.pyplot as plt
+
         _, ax = plt.subplots(figsize=(9, 4))
     numbers = np.arange(1, len(lengths) + 1)
     ax.plot(numbers, lengths, marker=".", linewidth=1, color="tab:blue", label=captions["length"])

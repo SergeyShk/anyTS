@@ -1357,9 +1357,11 @@ def calc_orlov_z(text: Sequence[str]) -> float:
         (Orlov 1983): the solution Z of
         V = Z / ln(pZ) · N / (N − Z) · ln(N / Z)
         for N words, V lexemes and the share p of the most frequent one. The
-        right side has a minimum over Z, and Z is the solution above it. On a
-        text shorter than about ten thousand words Z is unstable and grows with
-        the length, and its values span orders of magnitude
+        right side has a minimum over Z, and Z is the solution above it; it is
+        nan when a Z ten times larger would add less than one lexeme, since the
+        vocabulary does not determine it. On a text shorter than about ten
+        thousand words Z is unstable and grows with the length, and its values
+        span orders of magnitude
 
     References:
         https://doi.org/10.1023/A:1001749303137 (Tweedie and Baayen 1998)
@@ -1369,7 +1371,7 @@ def calc_orlov_z(text: Sequence[str]) -> float:
 
     Returns:
         float: Value of the measure in words; nan when V lies at or below the minimum
-            of the right side, inf when V comes so close to N that Z overflows
+            of the right side or the vocabulary does not determine Z
 
     Raises:
         SourceTypeError: If the words are not a list of strings (check_words)
@@ -1397,9 +1399,10 @@ def calc_orlov_z(text: Sequence[str]) -> float:
     high = bound
     while expected(high) <= n_lexemes:
         if high >= _MAX_LOG_Z:
-            return inf
+            return nan
         high = min(2 * high, _MAX_LOG_Z)
-    return exp(brentq(lambda u: expected(u) - n_lexemes, lowest.x, high, xtol=1e-12))
+    root = brentq(lambda u: expected(u) - n_lexemes, lowest.x, high, xtol=1e-12)
+    return exp(root) if expected(root + log(10)) >= n_lexemes + 1 else nan
 
 
 def _orlov_vocabulary(u: float, n_words: int, share: float) -> float:

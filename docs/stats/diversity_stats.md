@@ -130,7 +130,7 @@ Every metric is a property of the object, computed on each access by the functio
 | [`brunet_w`](#brunet_w) | Words against the lexemes | 1 to the number of words | A poorer vocabulary |
 | [`dugast_k`](#dugast_k) | Lexemes against the words in logarithms | 0 and above, `nan` for a text no longer than the base | A richer vocabulary |
 | [`baayen_p`](#baayen_p) | Share of the hapaxes among the words | 0-1 | A faster growing vocabulary |
-| [`orlov_z`](#orlov_z) | Text length in words at which the law of Zipf fits the vocabulary best | Above 0, `nan` without a solution, `inf` beyond floats | A richer vocabulary |
+| [`orlov_z`](#orlov_z) | Text length in words at which the law of Zipf fits the vocabulary best | Above 0, `nan` without a solution or when the vocabulary does not determine it | A richer vocabulary |
 | [`hapax_ratio`](#hapax_ratio) | Share of the hapaxes among the lexemes | 0-1 | More lexemes used once |
 | [`alpha2`](#alpha2) | Shape of the lower frequency spectrum | 1 and below, `nan` without hapaxes | More hapaxes against dis legomena |
 | [`entropy`](#entropy) | Information per word in bits | 0 and above | A richer vocabulary |
@@ -814,7 +814,7 @@ $$
 calc_orlov_z(text)
 ```
 
-The text length at which the law of Zipf fits the vocabulary best (Orlov 1983): the solution $Z$ for $N$ words, $V$ lexemes and the share $p$ of the most frequent lexeme. The right side has a minimum over $Z$, and $Z$ is the solution above it; it is `nan` when $V$ lies at or below that minimum or when every word is a lexeme of its own, and `inf` when $V$ comes so close to $N$ that $Z$ overflows a float. With Yule's K, Z separated the authors best among the measures Tweedie and Baayen compared. On a text shorter than about ten thousand words Z is unstable and grows with the length, and its values span orders of magnitude: texts of one length are compared, or by its logarithm.
+The text length at which the law of Zipf fits the vocabulary best (Orlov 1983): the solution $Z$ for $N$ words, $V$ lexemes and the share $p$ of the most frequent lexeme. The right side has a minimum over $Z$, and $Z$ is the solution above it; it is `nan` when $V$ lies at or below that minimum, when every word is a lexeme of its own, or when a $Z$ ten times larger would add less than one lexeme: the vocabulary does not determine $Z$, as on a short text of nearly all new words. With Yule's K, Z separated the authors best among the measures Tweedie and Baayen compared. On a text shorter than about ten thousand words Z is unstable and grows with the length, and its values span orders of magnitude: texts of one length are compared, or by its logarithm.
 
 $$
 V = \frac{Z}{\ln(pZ)} \cdot \frac{N}{N - Z} \cdot \ln \frac{N}{Z}

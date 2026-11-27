@@ -420,17 +420,30 @@ def test_orlov_z():
     share = max(counts.values()) / n_words
     expected = z / log(share * z) * n_words / (n_words - z) * log(n_words / z)
     assert expected == pytest.approx(len(counts), rel=1e-9) and z > n_words
+    # A Z ten times larger adds a lexeme or more, so the vocabulary determines Z
+    assert _orlov_vocabulary(log(z) + log(10), n_words, share) >= len(counts) + 1
     # Below the minimum of the right side there is no solution, nor for words all distinct
     assert isnan(
         calc_orlov_z(["the", "cat", "and", "the", "dog", "and", "the", "bird", "saw", "a", "fish"])
     )
     assert isnan(calc_orlov_z(list("abcdef"))) and isnan(calc_orlov_z(["a"]))
-    # A text of mostly new words has a Z beyond floats
-    assert calc_orlov_z(["the", "the", *(f"w{i}" for i in range(2000))]) == inf
-    # A root near the float limit, below it or beyond it, gives a number or inf, no OverflowError
+
+    # 50 words, the most frequent lexeme three times: of 45 to 47 lexemes a Z ten times larger
+    # adds less than one lexeme, so the vocabulary does not determine Z; of 44 it does
+    def text(n_lexemes):
+        pairs = 48 - n_lexemes
+        repeated = [f"r{i}" for i in range(pairs) for _ in range(2)]
+        return ["a", "a", "a", *repeated, *(f"w{i}" for i in range(47 - 2 * pairs))]
+
+    for n_lexemes in (45, 46, 47):
+        assert isnan(calc_orlov_z(text(n_lexemes)))
+    z = calc_orlov_z(text(44))
+    assert z / log(0.06 * z) * 50 / (50 - z) * log(50 / z) == pytest.approx(44, rel=1e-9)
+    assert _orlov_vocabulary(log(z) + log(10), 50, 0.06) >= 45
+    # A root near the float limit or beyond it adds no lexeme, with no OverflowError
+    assert isnan(calc_orlov_z(["the", "the", *(f"w{i}" for i in range(2000))]))
     for n_words in (1000, 1020, 1050, 1200, 1310):
-        z = calc_orlov_z(["the", "the", *(f"w{i}" for i in range(n_words - 2))])
-        assert z > 1e300 or z == inf
+        assert isnan(calc_orlov_z(["the", "the", *(f"w{i}" for i in range(n_words - 2))]))
     # At Z = N the right side takes its limit, Z / ln(pZ)
     assert _orlov_vocabulary(log(100), 100, 0.1) == pytest.approx(100 / log(10))
     assert _orlov_vocabulary(log(100) + 1e-9, 100, 0.1) == pytest.approx(100 / log(10))

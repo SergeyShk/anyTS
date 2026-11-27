@@ -338,6 +338,27 @@ def test_max_sentences():
     assert "The 2 sentences of 4 with the highest" in page
 
 
+def test_the_sentences_describe_a_statistic_as_its_object():
+    """The header and the note of the sentences take the description of the preset"""
+
+    class Preset(Readability):
+        preset_stats_desc: ClassVar[dict[str, dict[str, str]]] = {
+            "original": {"flesch_kincaid_grade": "Grade of the preset"}
+        }
+
+    class Top(VowelsReport):
+        stats_classes: ClassVar[dict[str, type]] = {"readability": Preset}
+        sentence_columns: ClassVar[tuple[tuple[str, str], ...]] = (
+            ("readability", "flesch_kincaid_grade"),
+        )
+        max_sentences = 1
+        sections: ClassVar[tuple[str, ...]] = ("sentences",)
+
+    page = Top(TEXT).to_html()
+    assert "<th>Grade of the preset</th>" in page
+    assert "The 1 sentences of 2 with the highest Grade of the preset" in page
+
+
 def test_the_page_is_the_same_for_the_same_text():
     class Two(VowelsReport):
         def plots(self):
@@ -385,6 +406,37 @@ def test_no_interactive_backend(tmp_path):
     assert set(eval(found.stdout)) <= {
         f"matplotlib.backends.backend_{name}" for name in ("agg", "mixed", "svg")
     }
+
+
+def test_the_command_report_does_not_load_pyplot(tmp_path):
+    """The command report draws on a Figure, without the state of pyplot"""
+    import subprocess
+
+    source = tmp_path / "text.txt"
+    source.write_text("The cat sleeps. A dog barks loudly!", encoding="utf-8")
+    code = (
+        "import sys\n"
+        "from anyts.basic_stats import BasicStats\n"
+        "from anyts.cli import Command\n"
+        "from anyts.report import Report\n"
+        "class Vowels(BasicStats):\n"
+        "    def count_syllables(self, word):\n"
+        "        return 1\n"
+        "class Basic(Report):\n"
+        "    stats_classes = {'basic': Vowels}\n"
+        "    sentence_columns = (('basic', 'n_words'),)\n"
+        "class Proto(Command):\n"
+        "    prog = 'proto'\n"
+        "    stats_classes = {'basic': Vowels}\n"
+        "    report_class = Basic\n"
+        f"code = Proto().run(['report', {str(source)!r}, '-o', {str(tmp_path / 'text.html')!r}])\n"
+        "print(code, 'matplotlib.pyplot' in sys.modules)\n"
+    )
+    found = subprocess.run(
+        [sys.executable, "-I", "-c", code], capture_output=True, text=True, check=True
+    )
+    assert found.stdout == "0 False\n"
+    assert "<svg" in (tmp_path / "text.html").read_text(encoding="utf-8")
 
 
 def test_plot_of_many_sentences():

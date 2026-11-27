@@ -280,7 +280,7 @@ class Report:
             return ""
         tables = {columns[0][0]: self._sentences_table(type(self.stats[columns[0][0]]))}
         heads = "".join(
-            f"<th>{escape(type(self.stats[name]).stats_desc.get(stat, stat))}</th>"
+            f"<th>{escape(self.stats[name].stats_desc.get(stat, stat))}</th>"
             for name, stat in columns
         )
         from .visualizers.sentences import _document_lengths
@@ -299,7 +299,7 @@ class Report:
                     texts["top_sentences"].format(
                         shown=self.max_sentences,
                         total=len(numbers),
-                        stat=type(self.stats[name]).stats_desc.get(stat, stat),
+                        stat=self.stats[name].stats_desc.get(stat, stat),
                     )
                 )
             )
