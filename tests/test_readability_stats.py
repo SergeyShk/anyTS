@@ -170,6 +170,7 @@ class TwoPresets(Readability):
         "strict": {"flesch_reading_easy": ((99, "easy"), (0, "hard"))}
     }
     preset_reading_ease_grades: ClassVar = {"strict": ((99, 5), (0, 15))}
+    preset_stats_desc: ClassVar = {"strict": {"flesch_reading_easy": "Strict reading ease"}}
 
     def __init__(self, source, preset="plain"):
         super().__init__(source, preset=preset)
@@ -187,7 +188,26 @@ def test_scales_by_preset():
     assert strict.consensus_grade != plain.consensus_grade
 
 
-@pytest.mark.parametrize("attribute", ["preset_level_scales", "preset_reading_ease_grades"])
+def test_descriptions_by_preset(capsys):
+    plain, strict = TwoPresets(TEXT), TwoPresets(TEXT, preset="strict")
+    assert plain.stats_desc is TwoPresets.stats_desc is READABILITY_STATS_DESC
+    # In place of the description of stats_desc, in its order, for the object alone
+    assert strict.stats_desc == {
+        **READABILITY_STATS_DESC,
+        "flesch_reading_easy": "Strict reading ease",
+    }
+    assert list(strict.stats_desc) == list(READABILITY_STATS_DESC)
+    assert READABILITY_STATS_DESC["flesch_reading_easy"] != "Strict reading ease"
+    strict.print_stats()
+    assert "Strict reading ease" in capsys.readouterr().out
+    # A subclass that narrows stats_desc gets no metric back
+    narrow = type("Narrow", (TwoPresets,), {"stats_desc": {"lix": "LIX"}})
+    assert narrow(TEXT, preset="strict").stats_desc == {"lix": "LIX"}
+
+
+@pytest.mark.parametrize(
+    "attribute", ["preset_level_scales", "preset_reading_ease_grades", "preset_stats_desc"]
+)
 def test_scales_of_an_unknown_preset(attribute):
     message = rf"^The {attribute} of Typo name unknown presets: \['strct'\]"
     with pytest.raises(ParameterError, match=message):

@@ -338,6 +338,27 @@ def test_max_sentences():
     assert "The 2 sentences of 4 with the highest" in page
 
 
+def test_the_sentences_describe_a_statistic_as_its_object():
+    """The header and the note of the sentences take the description of the preset"""
+
+    class Preset(Readability):
+        preset_stats_desc: ClassVar[dict[str, dict[str, str]]] = {
+            "original": {"flesch_kincaid_grade": "Grade of the preset"}
+        }
+
+    class Top(VowelsReport):
+        stats_classes: ClassVar[dict[str, type]] = {"readability": Preset}
+        sentence_columns: ClassVar[tuple[tuple[str, str], ...]] = (
+            ("readability", "flesch_kincaid_grade"),
+        )
+        max_sentences = 1
+        sections: ClassVar[tuple[str, ...]] = ("sentences",)
+
+    page = Top(TEXT).to_html()
+    assert "<th>Grade of the preset</th>" in page
+    assert "The 1 sentences of 2 with the highest Grade of the preset" in page
+
+
 def test_the_page_is_the_same_for_the_same_text():
     class Two(VowelsReport):
         def plots(self):

@@ -597,6 +597,7 @@ A language library subclasses `ReadabilityStats`:
 | `presets` | class attribute | Coefficients of the formulas by preset; a formula missing from a preset takes the defaults of its function |
 | `grade_stats` | class attribute | Grade formulas of the consensus grade; `anyts.constants.READABILITY_GRADE_STATS` by default |
 | `stats_desc`, `stats_headers` | class attributes | Metrics of `get_stats` with their descriptions (`READABILITY_STATS_DESC` by default), headers of the columns for `print_stats` |
+| `preset_stats_desc` | class attribute | Descriptions of the metrics by preset, in place of those of `stats_desc` on an object of the preset, for `print_stats` and the report; a metric `stats_desc` lacks is left out |
 | `smog_complex_syl_factor` | class attribute | Minimum number of syllables in a polysyllabic word of SMOG and Gunning fog; `SMOG_COMPLEX_SYL_FACTOR` by default |
 | `lix_long_word_letter_factor` | class attribute | Minimum number of letters in a long word of LIX and RIX; `LIX_LONG_WORD_LETTER_FACTOR` by default |
 | `grade_age_levels`, `postgraduate_level` | class attributes | School stages and ages of `describe_grade` |
@@ -610,7 +611,7 @@ A language library subclasses `ReadabilityStats`:
 | `reading_ease_to_grade(flesch_reading_easy)` | method | Years of schooling for the reading ease in the consensus grade; the band of the scale of the preset in `preset_reading_ease_grades`, else of `reading_ease_grades` by default |
 | `messages` | class attribute | Messages of the errors by key; `MESSAGES` by default |
 
-A formula of the library is a property of the subclass named in `stats_desc`, and in `grade_stats` when it gives years of schooling; its coefficients may live in the presets under its name. The preset is a parameter: a library sets its own default in its `__init__` and passes it on. When the class is defined, `ParameterError` is raised by a preset unknown to `presets` among the keys of `preset_level_scales` or `preset_reading_ease_grades` the class sets itself (a subclass may narrow the presets and keep the scales it inherits), by a scale of them, of `grade_scales` or of `reading_ease_grades` that is not one of `scale_level` with finite grades, by `grade_age_levels` that are not quadruples of the first and the last year, the stage and the age in ascending order of the years, and by a `postgraduate_level` that is not a pair of strings.
+A formula of the library is a property of the subclass named in `stats_desc`, and in `grade_stats` when it gives years of schooling; its coefficients may live in the presets under its name. The preset is a parameter: a library sets its own default in its `__init__` and passes it on. When the class is defined, `ParameterError` is raised by a preset unknown to `presets` among the keys of `preset_level_scales`, `preset_reading_ease_grades` or `preset_stats_desc` the class sets itself (a subclass may narrow the presets and keep the scales and descriptions it inherits), by a scale of them, of `grade_scales` or of `reading_ease_grades` that is not one of `scale_level` with finite grades, by `grade_age_levels` that are not quadruples of the first and the last year, the stage and the age in ascending order of the years, and by a `postgraduate_level` that is not a pair of strings.
 <!-- --8<-- [end:ReadabilityStats-hooks] -->
 
 </details>
