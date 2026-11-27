@@ -3737,6 +3737,11 @@ a \cdot \left(\frac{\textrm{Number of words}}{\textrm{Number of sentences}} + \f
 <td style="text-align: left;">Metrics of <code>get_stats</code> with their descriptions (<code>READABILITY_STATS_DESC</code> by default), headers of the columns for <code>print_stats</code></td>
 </tr>
 <tr>
+<td style="text-align: left;"><code>preset_stats_desc</code></td>
+<td style="text-align: left;">class attribute</td>
+<td style="text-align: left;">Descriptions of the metrics by preset, in place of those of <code>stats_desc</code> on an object of the preset, for <code>print_stats</code> and the report; a metric <code>stats_desc</code> lacks is left out</td>
+</tr>
+<tr>
 <td style="text-align: left;"><code>smog_complex_syl_factor</code></td>
 <td style="text-align: left;">class attribute</td>
 <td style="text-align: left;">Minimum number of syllables in a polysyllabic word of SMOG and Gunning fog; <code>SMOG_COMPLEX_SYL_FACTOR</code> by default</td>
@@ -3798,7 +3803,7 @@ a \cdot \left(\frac{\textrm{Number of words}}{\textrm{Number of sentences}} + \f
 </tr>
 </tbody>
 </table>
-<p>A formula of the library is a property of the subclass named in <code>stats_desc</code>, and in <code>grade_stats</code> when it gives years of schooling; its coefficients may live in the presets under its name. The preset is a parameter: a library sets its own default in its <code>__init__</code> and passes it on. When the class is defined, <code>ParameterError</code> is raised by a preset unknown to <code>presets</code> among the keys of <code>preset_level_scales</code> or <code>preset_reading_ease_grades</code> the class sets itself (a subclass may narrow the presets and keep the scales it inherits), by a scale of them, of <code>grade_scales</code> or of <code>reading_ease_grades</code> that is not one of <code>scale_level</code> with finite grades, by <code>grade_age_levels</code> that are not quadruples of the first and the last year, the stage and the age in ascending order of the years, and by a <code>postgraduate_level</code> that is not a pair of strings.</p>
+<p>A formula of the library is a property of the subclass named in <code>stats_desc</code>, and in <code>grade_stats</code> when it gives years of schooling; its coefficients may live in the presets under its name. The preset is a parameter: a library sets its own default in its <code>__init__</code> and passes it on. When the class is defined, <code>ParameterError</code> is raised by a preset unknown to <code>presets</code> among the keys of <code>preset_level_scales</code>, <code>preset_reading_ease_grades</code> or <code>preset_stats_desc</code> the class sets itself (a subclass may narrow the presets and keep the scales and descriptions it inherits), by a scale of them, of <code>grade_scales</code> or of <code>reading_ease_grades</code> that is not one of <code>scale_level</code> with finite grades, by <code>grade_age_levels</code> that are not quadruples of the first and the last year, the stage and the age in ascending order of the years, and by a <code>postgraduate_level</code> that is not a pair of strings.</p>
 <!-- --8<-- [end:ReadabilityStats-hooks] -->
 </details>
 

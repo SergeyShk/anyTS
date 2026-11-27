@@ -3456,7 +3456,7 @@ Burstiness of the frequent lexemes                                     |   nan
 <tr>
 <td style="text-align: left;"><a href="#orlov_z"><code>orlov_z</code></a></td>
 <td style="text-align: left;">Text length in words at which the law of Zipf fits the vocabulary best</td>
-<td style="text-align: left;">Above 0, <code>nan</code> without a solution, <code>inf</code> beyond floats</td>
+<td style="text-align: left;">Above 0, <code>nan</code> without a solution or when the vocabulary does not determine it</td>
 <td style="text-align: left;">A richer vocabulary</td>
 </tr>
 <tr>
@@ -4378,7 +4378,7 @@ P = \frac{V_1}{N}
 <!-- --8<-- [start:calc_orlov_z] -->
 <div class="signature highlight"><pre><span></span><code><span class="n">calc_orlov_z</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
 </code></pre></div>
-<p>The text length at which the law of Zipf fits the vocabulary best (Orlov 1983): the solution <span class="arithmatex">\(Z\)</span> for <span class="arithmatex">\(N\)</span> words, <span class="arithmatex">\(V\)</span> lexemes and the share <span class="arithmatex">\(p\)</span> of the most frequent lexeme. The right side has a minimum over <span class="arithmatex">\(Z\)</span>, and <span class="arithmatex">\(Z\)</span> is the solution above it; it is <code>nan</code> when <span class="arithmatex">\(V\)</span> lies at or below that minimum or when every word is a lexeme of its own, and <code>inf</code> when <span class="arithmatex">\(V\)</span> comes so close to <span class="arithmatex">\(N\)</span> that <span class="arithmatex">\(Z\)</span> overflows a float. With Yule's K, Z separated the authors best among the measures Tweedie and Baayen compared. On a text shorter than about ten thousand words Z is unstable and grows with the length, and its values span orders of magnitude: texts of one length are compared, or by its logarithm.</p>
+<p>The text length at which the law of Zipf fits the vocabulary best (Orlov 1983): the solution <span class="arithmatex">\(Z\)</span> for <span class="arithmatex">\(N\)</span> words, <span class="arithmatex">\(V\)</span> lexemes and the share <span class="arithmatex">\(p\)</span> of the most frequent lexeme. The right side has a minimum over <span class="arithmatex">\(Z\)</span>, and <span class="arithmatex">\(Z\)</span> is the solution above it; it is <code>nan</code> when <span class="arithmatex">\(V\)</span> lies at or below that minimum, when every word is a lexeme of its own, or when a <span class="arithmatex">\(Z\)</span> ten times larger would add less than one lexeme: the vocabulary does not determine <span class="arithmatex">\(Z\)</span>, as on a short text of nearly all new words. With Yule's K, Z separated the authors best among the measures Tweedie and Baayen compared. On a text shorter than about ten thousand words Z is unstable and grows with the length, and its values span orders of magnitude: texts of one length are compared, or by its logarithm.</p>
 <div class="arithmatex">\[
 V = \frac{Z}{\ln(pZ)} \cdot \frac{N}{N - Z} \cdot \ln \frac{N}{Z}
 \]</div>

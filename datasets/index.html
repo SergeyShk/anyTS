@@ -1932,6 +1932,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#other_versions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Other versions of a dataset
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#to_path" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2307,6 +2318,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#other_versions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Other versions of a dataset
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#to_path" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2574,6 +2596,50 @@
 </table>
 <p>A path that is neither a string nor a <code>Path</code> raises <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:sha256] -->
+
+<h2 id="other_versions">Other versions of a dataset<a class="headerlink" href="#other_versions" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:other_versions] -->
+<div class="signature highlight"><pre><span></span><code><span class="n">other_versions</span><span class="p">(</span><span class="n">data_dir</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">version</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+</code></pre></div>
+<p>Returns the names of the directories <code>&lt;name&gt;_v&lt;N&gt;</code> of the data directory that hold the file of the dataset, <code>N</code> a number other than <code>version</code>, in the order of the versions: a library names them in its message when the dataset of its version is not found. A directory without the file or with a suffix that is not a number is left out, and a missing data directory gives an empty list.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Parameter</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Default</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>data_dir</code></td>
+<td style="text-align: left;"><code>str</code> / <code>Path</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Directory of the data</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>name</code></td>
+<td style="text-align: left;"><code>str</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Name of the dataset</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>version</code></td>
+<td style="text-align: left;"><code>int</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Version of the dataset that the library reads</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>filename</code></td>
+<td style="text-align: left;"><code>str</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Name of the file of the dataset in its directory</td>
+</tr>
+</tbody>
+</table>
+<p>A directory that is neither a string nor a <code>Path</code> raises <code>SourceTypeError</code>.</p>
+<!-- --8<-- [end:other_versions] -->
 
 <h2 id="to_path">Conversion into a path<a class="headerlink" href="#to_path" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:to_path] -->
