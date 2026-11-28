@@ -197,37 +197,30 @@ def document_part(
 
 def _document_parts(document: Document, kind: str) -> Iterator[tuple[int, int, Document]]:
     """Positions of every sentence, line or paragraph of a document in its text, with its document
-    (document_part), the columns read once"""
+    (document_part), the bounds of the sentences read once"""
     reader = _PartReader(document)
     for first, last in reader.ranges(kind):
         yield *reader.bounds(first, last), reader.part(first, last)
 
 
 class _PartReader:
-    """The tokens and the sentences of a document read once, to make documents of its parts"""
+    """The bounds of the sentences of a document read once, to make documents of its parts"""
 
-    __slots__ = ("document", "ends", "first_tokens", "starts")
+    __slots__ = ("document", "ends", "starts")
 
     def __init__(self, document: Document) -> None:
         self.document = document
-        tokens = document.tokens
-        self.starts = list(tokens.starts)
-        self.ends = list(tokens.ends)
-        self.first_tokens = [bisect_left(self.starts, s) for s in document.sentences.starts]
-        self.first_tokens.append(len(self.starts))
+        sentences = document.sentences
+        self.starts = list(sentences.starts)
+        self.ends = list(sentences.ends)
 
     def sentences_in(self, start: int, end: int) -> list[int]:
-        """Indices of the sentences whose tokens the span overlaps"""
-        found = []
-        for index in range(len(self.first_tokens) - 1):
-            first, last = self.first_tokens[index], self.first_tokens[index + 1] - 1
-            if first <= last and self.starts[first] < end and self.ends[last] > start:
-                found.append(index)
-        return found
+        """Indices of the sentences the span overlaps"""
+        return list(range(bisect_right(self.ends, start), bisect_left(self.starts, end)))
 
     def ranges(self, kind: str) -> list[tuple[int, int]]:
         """First and last sentences of every sentence, line or paragraph"""
-        count = len(self.first_tokens) - 1
+        count = len(self.starts)
         if kind == "sentences":
             return [(index, index) for index in range(count)]
         if kind == "lines" and count:
@@ -236,11 +229,7 @@ class _PartReader:
             firsts = [
                 index
                 for index in range(1, count)
-                if LINE_BREAK.search(
-                    text,
-                    self.ends[self.first_tokens[index] - 1],
-                    self.starts[self.first_tokens[index]],
-                )
+                if LINE_BREAK.search(text, self.ends[index - 1], self.starts[index])
             ]
             return list(
                 zip([0, *firsts], [*(first - 1 for first in firsts), count - 1], strict=True)
@@ -252,8 +241,8 @@ class _PartReader:
         return ranges
 
     def bounds(self, first: int, last: int) -> tuple[int, int]:
-        """Start of the first token of the first sentence and end of the last token of the last"""
-        return self.starts[self.first_tokens[first]], self.ends[self.first_tokens[last + 1] - 1]
+        """Start of the first sentence and end of the last one, those of their tokens"""
+        return self.starts[first], self.ends[last]
 
     def part(self, first: int, last: int) -> Document:
         """Document of the sentences from first to last"""
