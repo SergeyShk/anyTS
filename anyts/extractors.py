@@ -1,4 +1,3 @@
-import contextlib
 import re
 import sys
 import unicodedata
@@ -420,10 +419,13 @@ def _check_spans(
     checked = []
     previous = 0
     size = len(text)
-    for span in spans:
-        if not isinstance(span, tuple | list):
-            with contextlib.suppress(AttributeError):
-                span = (span.start, span.end, span.text)
+    for item in spans:
+        span = item
+        if not isinstance(item, tuple | list):
+            try:
+                span = (item.start, item.end, item.text)
+            except AttributeError:
+                span = item
         if not (isinstance(span, tuple | list) and len(span) == 3):
             raise SourceTypeError(
                 error(span)
