@@ -694,6 +694,15 @@ def test_a_failed_command_leaves_no_new_output(capsys, tmp_path, fmt):
     undecodable.write_bytes("Café".encode("latin-1"))
     assert Prototype().run(["report", "-o", str(output), str(undecodable)]) == 1
     assert not output.exists()
+    # A text that no class can count, as one without words, writes no result either
+    empty = tmp_path / "empty.txt"
+    empty.write_text("*** --- ***", encoding="utf-8")
+    assert run(capsys, "-s", "basic", "-f", fmt, "-o", str(output), str(empty))[0] == 1
+    assert not output.exists()
+    kept = tmp_path / "kept.txt"
+    kept.write_text("before", encoding="utf-8")
+    assert run(capsys, "-s", "basic", "-f", fmt, "-o", str(kept), str(empty))[0] == 1
+    assert kept.read_text(encoding="utf-8") == "before"
 
 
 def test_the_output_that_is_the_input(capsys, files):

@@ -312,7 +312,8 @@ class Command:
             for source in sources:
                 found = self._text_stats(source, args)
                 failed = failed or found is None or len(found) < len(self.names)
-                if found is None:
+                # A text no class could count has no result to write
+                if not found:
                     continue
                 if args.format == "table":
                     text = self._tables(source, found, part, many=len(sources) > 1)
