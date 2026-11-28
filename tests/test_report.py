@@ -592,8 +592,11 @@ def test_the_tree_of_a_report_is_built_once(monkeypatch):
         ["nsubj", "ROOT", "punct"],
         pos=["NOUN", "VERB", "PUNCT"],
     )
-    Trees(source).to_html()
+    report = Trees(source)
+    report.to_html()
     assert len(built) == 1
+    # After the page the report keeps no tree of its own
+    assert report._shared.tree is None
     TreeLayers(source)
     assert len(built) == 2
 

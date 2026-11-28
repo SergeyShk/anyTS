@@ -209,10 +209,14 @@ class Report:
         Returns:
             str: HTML page
         """
-        from .document import _sharing_document
+        from .document import _Shared, _sharing_document
 
-        with _sharing_document(self.document, release=False, shared=self._shared):
-            body = "".join(getattr(self, f"section_{name}")() for name in self.sections)
+        try:
+            with _sharing_document(self.document, release=False, shared=self._shared):
+                body = "".join(getattr(self, f"section_{name}")() for name in self.sections)
+        finally:
+            # The page is made: the tree goes unless the statistics keep it
+            self._shared = _Shared(self.document)
         style = _STYLE
         if self.highlight_class is not None and "highlight" in self.sections:
             style += self.highlight_class.css()

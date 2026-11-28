@@ -388,9 +388,13 @@ def get_tree(document: Document) -> Tree:
         The words of Universal Dependencies of the document with the columns
         lemma, upos, xpos, feats, head and deprel, linked by their heads within
         their sentences: a word without a head (0 or None) heads its sentence.
-        The tree of the document the command and the report count is built once
-        and shared by their classes, and it is not to be changed; a tree holds
-        cycles of references, which the garbage collector of Python frees
+        The tree of the document a command or a report counts, of a text
+        HighlightedText highlights and of a part by_parts counts is built once
+        and shared by the classes and the layers that read it, and it is not to
+        be changed; the tree of a text highlighted alone and of a part is broken
+        after them, its words without head, children and tree, so a hook keeps
+        no word of it. A tree holds cycles of references, which the garbage
+        collector of Python frees
 
     Arguments:
         document (Document): Document of anySeg
