@@ -1116,10 +1116,9 @@ def _check_removed(
     cls: type,
     removed: Mapping[str, tuple[str, ...]],
     messages: Mapping[str, str],
-    key: str = "removed_attribute",
 ) -> None:
     """Raising ParameterError for a class with an attribute of 0.4 the core no longer reads, with
-    the hook that replaces it, or either of two; key is the message of one hook"""
+    the hook that replaces it, or either of two"""
     for name, hooks in removed.items():
         if not hasattr(cls, name):
             continue
@@ -1129,7 +1128,9 @@ def _check_removed(
                 cls=cls.__name__, name=name, first=first, second=second
             )
         else:
-            message = messages[key].format(cls=cls.__name__, name=name, replacement=hooks[0])
+            message = messages["removed_attribute"].format(
+                cls=cls.__name__, name=name, replacement=hooks[0]
+            )
         raise ParameterError(message)
 
 
