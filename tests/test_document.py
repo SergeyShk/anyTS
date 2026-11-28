@@ -92,6 +92,17 @@ def test_sentenize():
     assert sentences(reversed_thirds) == ["Onetwo", "three"]
 
 
+def test_hooks_of_spans():
+    """The spans of anySeg are hooks as they are, as triples with start, end and text are"""
+    from anyseg import Segmenter
+
+    segmenter = Segmenter("ru")
+    text = "Ёж идёт домой. Т. е. всё.\n\nКот спит."
+    document = to_document(text, tokenize=segmenter.tokenize, sentenize=segmenter.sentenize)
+    assert sentences(document) == ["Ёж идёт домой.", "Т. е. всё.", "Кот спит."]
+    assert tokens(document) == [span.text for span in segmenter.tokenize(text)]
+
+
 def test_hooks_are_checked():
     with pytest.raises(SourceTypeError, match=r"^The tokenize must be callable, not int$"):
         to_document(TEXT, tokenize=5)
@@ -177,7 +188,7 @@ def test_document_words():
         "5",
     )
     assert document_words(to_document("?! ...")) == ()
-    with pytest.raises(SourceTypeError, match="cannot be of type str"):
+    with pytest.raises(SourceTypeError, match=r"^A Document of anySeg is expected, not str: make"):
         document_words(TEXT)
 
 
@@ -240,7 +251,7 @@ def test_tree():
     assert clone.head.form == "pueblo" and clone.tree.sentences[1][1].children[0].form == "Se"
     empty = pickle.loads(pickle.dumps(get_tree(to_document(""))))
     assert empty.words == empty.sentences == ()
-    with pytest.raises(SourceTypeError, match="cannot be of type str"):
+    with pytest.raises(SourceTypeError, match=r"^A Document of anySeg is expected, not str: make"):
         get_tree("Vino del pueblo")
 
 
@@ -357,13 +368,13 @@ def test_document_part_keeps_multiword_tokens():
 @pytest.mark.parametrize(
     ("arguments", "error", "message"),
     [
-        (("The cat.", 0, 3), SourceTypeError, "^The data source cannot be of type str$"),
+        (("The cat.", 0, 3), SourceTypeError, "^A Document of anySeg is expected, not str: make"),
         ((None, 0.5, 3), ParameterError, "^The start must be an integer, not float$"),
         ((None, 0, "3"), ParameterError, "^The end must be an integer, not str$"),
         ((None, 3, 3), ParameterError, "^The part must lie within the text of 20 characters"),
         ((None, -1, 3), ParameterError, "not -1 and 3$"),
         ((None, 0, 21), ParameterError, "not 0 and 21$"),
-        ((None, 8, 9), SourceError, "^The data source has no words$"),
+        ((None, 8, 9), SourceError, "^The part from 8 to 9 overlaps no sentence$"),
     ],
 )
 def test_document_part_errors(arguments, error, message):

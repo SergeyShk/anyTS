@@ -562,31 +562,33 @@ def _stats_table(rows: Sequence[StatsRow], index: Sequence[Hashable] | None) -> 
     # The keys of every dictionary statistic over all the rows, in order, those of its flat
     # statistics alone, as a class may leave some out of them; the flat statistics of a row are
     # made as it is read, not kept for all of them
-    keys: dict[str, list[Any]] = {}
+    keys: dict[str, dict[Any, None]] = {}
     for cls, nested in rows:
         flat = cls._flat(nested)
         for name, value in nested.items():
             if isinstance(value, Mapping):
-                found = keys.setdefault(name, [])
-                found.extend(key for key in value if key not in found and f"{name}_{key}" in flat)
-    for found in keys.values():
-        if all(isinstance(key, Real) and not isinstance(key, bool) for key in found):
-            found.sort()
-    columns: list[str] = []
+                found = keys.setdefault(name, {})
+                found.update((key, None) for key in value if f"{name}_{key}" in flat)
+    # The columns of every dictionary statistic, made once for all the rows
+    names: dict[str, list[str]] = {}
+    for name, found in keys.items():
+        ordered = list(found)
+        if all(isinstance(key, Real) and not isinstance(key, bool) for key in ordered):
+            ordered.sort()
+        names[name] = [f"{name}_{key}" for key in ordered]
+    columns: dict[str, None] = {}
     table = []
     for cls, nested in rows:
         flat = cls._flat(nested)
         row: dict[str, Any] = {}
         for name, value in nested.items():
             if isinstance(value, Mapping):
-                row.update({f"{name}_{key}": flat.get(f"{name}_{key}", 0) for key in keys[name]})
+                row.update((column, flat.get(column, 0)) for column in names[name])
             else:
                 row[name] = value
-        for column in row:
-            if column not in columns:
-                columns.append(column)
+        columns.update(dict.fromkeys(row))
         table.append(row)
-    return DataFrame(table, index=index, columns=columns)
+    return DataFrame(table, index=index, columns=list(columns))
 
 
 def _parts_dataframe(

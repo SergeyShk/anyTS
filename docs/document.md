@@ -11,7 +11,7 @@ to_document(source, tokenize=None, sentenize=None, *, messages=MESSAGES)
 
 Returns the document of a data source in the model of anySeg. A `Document` is returned as it is. A string is split into tokens by `tokenize` and into sentences by `sentenize`, which may give them in any order since only their starts count, and the default tokens fill the gaps between those of `tokenize`, so a tokenizer may give the words alone. A blank line (`BLANK_LINE`) ends a paragraph of the document and so a sentence: every part between blank lines goes to `sentenize` apart, and a sentence starts at its first token. Whitespace and invisible separators (the soft hyphen, zero-width characters, the byte order mark, the marks of the direction of text) at the edges of a token are left out, and a token of nothing else is dropped; a word joiner or a mark of the direction inside a word, as anySeg keeps it, is part of the word.
 
-The default tokens are the words of `WordsExtractor` and every run of one other character, such as `...` or `--`; the default sentences are those of `SentsExtractor`.
+The default tokens are the words of `WordsExtractor` and every run of one other character, such as `...` or `--`; the default sentences are those of `SentsExtractor`. A hook gives triples or objects with `start`, `end` and `text`, such as the spans of `Segmenter.tokenize` and `Segmenter.sentenize` of anySeg.
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
@@ -20,7 +20,7 @@ The default tokens are the words of `WordsExtractor` and every run of one other 
 | `sentenize` | `Callable` | `None` | Splitter giving the start, the end and the text of every sentence of a string |
 | `messages` | `dict[str, str]` | `MESSAGES` | Messages of the errors by key |
 
-A source that is neither a string nor a `Document` raises `SourceTypeError`, and so does a `tokenize` or `sentenize` that cannot be called, does not give triples of integer bounds within the text and a string (ascending for `tokenize`; the message `hook_bounds`), or gives a token over a blank line (`document_tokens`).
+A source that is neither a string nor a `Document` raises `SourceTypeError`, and so does a `tokenize` or `sentenize` that cannot be called, does not give triples or spans of integer bounds within the text and a string (ascending for `tokenize`; the message `hook_bounds`), or gives a token over a blank line (`document_tokens`).
 <!-- --8<-- [end:to_document] -->
 
 === "Code"

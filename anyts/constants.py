@@ -254,10 +254,12 @@ MESSAGES: Mapping[str, str] = MappingProxyType(
         ),
         "not_grade_formula": "The metric {stat} is not a grade formula. Grade formulas: {grade_stats}",
         "no_scale": "The metric {stat} has no scale of bands",
+        "document_type": "A Document of anySeg is expected, not {type}: make it with to_document",
         "part_bounds": (
             "The part must lie within the text of {size} characters, its start before its end, "
             "not {start} and {end}"
         ),
+        "part_no_sentences": "The part from {start} to {end} overlaps no sentence",
         "parts_kind": "The parts must be one of {kinds}, not {parts}",
         "no_part_kinds": "{cls} counts a whole text, not its parts",
         "stats_objects": "A list of objects of statistics is expected, not {type}",

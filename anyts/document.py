@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 import threading
 from bisect import bisect_left, bisect_right
-from collections.abc import Callable, Hashable, Iterable, Iterator, Mapping, Sequence
+from collections.abc import Callable, Hashable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from functools import cache
 from re import Pattern
@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Any, NamedTuple, TypeVar
 
 from .constants import MESSAGES
 from .exceptions import ParameterError, SourceError, SourceTypeError
-from .extractors import _check_spans, _sentence_spans, _word_pattern
+from .extractors import _check_spans, _sentence_spans, _Spans, _word_pattern
 from .utils import (
     _IN_WORD_MARKS,
     BLANK_LINE,
@@ -28,7 +28,7 @@ from .utils import (
 if TYPE_CHECKING:
     from anyseg import Document
 
-Spans = Callable[[str], Iterable[tuple[int, int, str]]]
+Spans = _Spans
 _Value = TypeVar("_Value")
 
 # The separators a word of the default tokens may end with
@@ -76,9 +76,10 @@ def to_document(
     Arguments:
         source (str|Document): Data source
         tokenize (Callable[[str], Iterable[tuple[int, int, str]]]): Tokens of a
-            string with their positions
+            string with their positions, as triples or objects with start, end and
+            text, such as the Span of anySeg
         sentenize (Callable[[str], Iterable[tuple[int, int, str]]]): Sentences of a
-            string with their positions, in any order
+            string with their positions, as tokenize gives them, in any order
         messages (dict[str, str]): Messages of the errors by key (MESSAGES)
 
     Returns:
@@ -86,8 +87,8 @@ def to_document(
 
     Raises:
         SourceTypeError: If the source is neither a string nor a Document object,
-            tokenize or sentenize is not callable, either does not give triples of
-            integer bounds inside the text and a string, those of tokenize
+            tokenize or sentenize is not callable, either does not give triples or
+            spans of integer bounds inside the text and a string, those of tokenize
             ascending, or a token of tokenize runs over a blank line
 
     Example:
@@ -134,7 +135,7 @@ def document_words(document: Document) -> tuple[str, ...]:
         ('Well', 'the', 'cat', 'sat', '100')
     """
     if not is_document(document):
-        raise SourceTypeError(MESSAGES["source_type"].format(type=type(document).__name__))
+        raise SourceTypeError(MESSAGES["document_type"].format(type=type(document).__name__))
     text = document.text
     tokens = document.tokens
     return tuple(
@@ -185,7 +186,7 @@ def document_part(
     """
     messages = _messages(messages)
     if not is_document(document):
-        raise source_type_error(messages, document)
+        raise SourceTypeError(messages["document_type"].format(type=type(document).__name__))
     for value, what in ((start, "start"), (end, "end")):
         check_integer(value, what, message=messages["integer_param"])
     size = len(document.text)
@@ -194,7 +195,7 @@ def document_part(
     reader = _PartReader(document)
     sentences = reader.sentences_in(start, end)
     if not sentences:
-        raise SourceError(messages["no_words"])
+        raise SourceError(messages["part_no_sentences"].format(start=start, end=end))
     return reader.part(sentences[0], sentences[-1])
 
 
@@ -409,7 +410,7 @@ def get_tree(document: Document) -> Tree:
         (True, None, (TreeWord(0, 'Cats', NOUN, nsubj),))
     """
     if not is_document(document):
-        raise SourceTypeError(MESSAGES["source_type"].format(type=type(document).__name__))
+        raise SourceTypeError(MESSAGES["document_type"].format(type=type(document).__name__))
     shared: _Shared | None = getattr(_local, "shared", None)
     if shared is None or shared.document is not document:
         return _built_tree(document)

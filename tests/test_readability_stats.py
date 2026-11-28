@@ -229,6 +229,28 @@ def test_default_preset_of_a_subclass():
         type("Unset", (Readability,), {"presets": {"plain": {}}})(TEXT)
 
 
+@pytest.mark.parametrize(
+    ("attributes", "message"),
+    [
+        ({"default_preset": "orignal"}, r"^The default_preset of Typo is not one of its presets"),
+        ({"basic_stats_class": int}, r"^The basic_stats_class of Typo must be a subclass"),
+        ({"smog_complex_syl_factor": 0}, r"^The smog_complex_syl_factor of Typo must be greater"),
+        ({"lix_long_word_letter_factor": "7"}, r"^The lix_long_word_letter_factor of Typo must"),
+    ],
+)
+def test_class_attributes_are_checked(attributes, message):
+    with pytest.raises(ParameterError, match=message):
+        type("Typo", (Readability,), attributes)
+
+
+def test_default_preset_of_a_mixin_is_checked():
+    class Mixin:
+        default_preset = "plian"
+
+    with pytest.raises(ParameterError, match=r"^The default_preset of Mixed is not one"):
+        type("Mixed", (Mixin, TwoPresets), {})
+
+
 def test_coefficients_copy():
     rs = Readability(TEXT)
     rs.coefficients["flesch_reading_easy"] = (1.0, 62.3, 206.835)

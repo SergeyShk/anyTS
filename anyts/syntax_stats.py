@@ -1174,9 +1174,6 @@ def get_subtree(word: TreeWord) -> list[TreeWord]:
     return sorted(_subtree(word), key=lambda found: found.index)
 
 
-_get_subtree = unchecked(get_subtree)
-
-
 def _subtree(word: TreeWord) -> Iterator[TreeWord]:
     """The word and its direct and indirect dependents, each once"""
     words = [word]
@@ -2111,9 +2108,6 @@ def is_agentless(word: TreeWord) -> bool:
         SourceTypeError: If the word is not a TreeWord
     """
     return _is_passive(word) and not _has_agent(word)
-
-
-_is_agentless = unchecked(is_agentless)
 
 
 @_takes_word
