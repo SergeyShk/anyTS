@@ -3,8 +3,7 @@
 ## Requirements
 
 *   `python` 3.11 or newer
-*   `spaCy` 3.8.17 or newer within 3
-*   `anyseg` 0.4 - the document model
+*   `anyseg` 0.5 - the document model
 *   `numpy`, `scipy`, `pandas`
 *   `matplotlib`, `graphviz` - for the visualizers
 

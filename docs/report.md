@@ -22,7 +22,7 @@ The page is the same for the same text, and no text of the source or of the stat
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
-| `source` | `str` / `Doc` / `Document` | - | Data source |
+| `source` | `str` / `Document` | - | Data source |
 | `title` | `str` | `None` | Title of the report; the text `title` by default |
 | `stats_classes` | `dict[str, type[Stats]]` | `None` | Classes of statistics by name; those of the class by default |
 | `skip_errors` | `bool` | `False` | Leave out a class that cannot count the source, with its error in `errors`, instead of raising it |

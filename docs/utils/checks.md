@@ -18,7 +18,7 @@ Checks that an argument is a sequence and not a text or an iterator: a string wo
 | `ordered` | `bool` | `True` | Whether the order and the repeats of the items matter |
 | `message` | `str` | `None` | Message of the error with the fields `{type}`, the type of the value, and `{param}`, the `what`, in place of the English one, such as one of `MESSAGES` a library translates |
 
-A string (of characters or bytes), a `Doc`, a `Span`, an iterator, an object that cannot be iterated or has no length, a table - a two-dimensional array or a `DataFrame` - and, unless `ordered=False`, a set or a mapping raise `SourceTypeError`.
+A string (of characters or bytes), an iterator, an object that cannot be iterated or has no length, a table - a two-dimensional array or a `DataFrame` - and, unless `ordered=False`, a set or a mapping raise `SourceTypeError`.
 <!-- --8<-- [end:check_sequence] -->
 
 === "Code"
@@ -55,18 +55,16 @@ Checks that an argument is a list of words: it passes `check_sequence` and every
 | `ordered` | `bool` | `True` | Whether the order and the repeats of the words matter |
 | `message` | `str` | `None` | Message of the error with the fields `{type}`, the type of the value or of the item that is not a string, and `{param}`, the `what`, in place of the English one |
 
-A value that fails `check_sequence` or holds an item that is not a string, such as a spaCy token, raises `SourceTypeError`.
+A value that fails `check_sequence` or holds an item that is not a string raises `SourceTypeError`.
 <!-- --8<-- [end:check_words] -->
 
 === "Code"
 
     ``` python
-    import spacy
-
     from anyts.utils import check_words
 
     check_words(["the", "cat"])
-    check_words(list(spacy.blank("xx")("the cat")))
+    check_words(["the", 3])
     ```
 
 === "Result"
@@ -74,7 +72,7 @@ A value that fails `check_sequence` or holds an item that is not a string, such 
     ```
     Traceback (most recent call last):
       ...
-    anyts.exceptions.SourceTypeError: The words must be strings, not Token
+    anyts.exceptions.SourceTypeError: The words must be strings, not int
     ```
 
 ## Words { #check_word }
@@ -235,17 +233,15 @@ Checks that a value is a word of the tree of a document (`TreeWord`), as the fun
 | `value` | `object` | - | Value to check |
 | `message` | `str` | `None` | Message of the error with the field `{type}`, the type of the value, in place of the English one |
 
-A value that is not a `TreeWord`, such as a spaCy `Token`, raises `SourceTypeError`.
+A value that is not a `TreeWord` raises `SourceTypeError`.
 <!-- --8<-- [end:check_tree_word] -->
 
 === "Code"
 
     ``` python
-    import spacy
-
     from anyts.utils import check_tree_word
 
-    check_tree_word(spacy.blank("en")("cat")[0])
+    check_tree_word("cat")
     ```
 
 === "Result"
@@ -253,7 +249,7 @@ A value that is not a `TreeWord`, such as a spaCy `Token`, raises `SourceTypeErr
     ```
     Traceback (most recent call last):
       ...
-    anyts.exceptions.SourceTypeError: A TreeWord is expected, not Token
+    anyts.exceptions.SourceTypeError: A TreeWord is expected, not str
     ```
 
 ## Functions without the check { #unchecked }

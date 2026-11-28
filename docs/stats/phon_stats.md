@@ -5,11 +5,11 @@ PhonStats(source, words_extractor=None, window_len=3)
 ```
 
 <!-- --8<-- [start:PhonStats] -->
-The phonetic statistics of a text: its sounds by class, their clusters, sequences and repetitions, and its syllables. A sound is a letter of a word by default, or a sound of its transcription when a library gives one. The data source is a text, a `Doc` object of [spaCy](https://github.com/explosion/spaCy) or a `Document` of [anySeg](https://github.com/SergeyShk/anySeg); the words are those of its [document](https://sergeyshk.github.io/anyTS/document/) in lower case (`doc_words`), or those of an extractor passed explicitly, used on the text.
+The phonetic statistics of a text: its sounds by class, their clusters, sequences and repetitions, and its syllables. A sound is a letter of a word by default, or a sound of its transcription when a library gives one. The data source is a text or a `Document` of [anySeg](https://github.com/SergeyShk/anySeg); the words are those of its [document](https://sergeyshk.github.io/anyTS/document/) in lower case (`doc_words`), or those of an extractor passed explicitly, used on the text.
 
 Raises:
 
-- `SourceTypeError` - a source that is neither a string, a `Doc` nor a `Document`, a `parse` that returns no `Document`, a `doc_words`, `syllabify` or `transcribe` that returns no strings, an extractor of another type;
+- `SourceTypeError` - a source that is neither a string nor a `Document`, a `parse` that returns no `Document`, a `doc_words`, `syllabify` or `transcribe` that returns no strings, an extractor of another type;
 - `SourceError` - a source without words;
 - `ParameterError` - a window that is not an integer of at least 2.
 <!-- --8<-- [end:PhonStats] -->
@@ -63,7 +63,7 @@ Raises:
 <!-- --8<-- [start:PhonStats-parameters] -->
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
-| `source` | `str` / `Doc` / `Document` | - | Data source |
+| `source` | `str` / `Document` | - | Data source |
 | `words_extractor` | `WordsExtractor` | `None` | Word extraction tool, used on the text in place of the words of the document |
 | `window_len` | `int` | `3` | Window in words of the alliteration and the assonance (`PHON_WINDOW_LEN`) |
 <!-- --8<-- [end:PhonStats-parameters] -->
