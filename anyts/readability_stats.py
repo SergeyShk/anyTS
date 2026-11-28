@@ -53,7 +53,7 @@ class ReadabilityStats(Stats):
             ready basic statistics
         words_extractor (WordsExtractor): Word extraction tool, not used for ready
             basic statistics
-        preset (str): Coefficient preset
+        preset (str): Coefficient preset; default_preset by default
         filter_nums (bool): Leave out the numbers among the words; None - the class
             attribute filter_nums, for ready basic statistics - as in them
 
@@ -91,6 +91,7 @@ class ReadabilityStats(Stats):
             without it the source must be a BasicStats object
         presets (dict[str, dict[str, tuple[float, ...]]]): Coefficients of the formulas
             by preset
+        default_preset (str): Preset of an object without one, original
         grade_stats (tuple[str, ...]): Grade formulas of the consensus grade
         stats_desc (dict[str, str]): Metrics of get_stats and their descriptions for
             print_stats
@@ -138,6 +139,7 @@ class ReadabilityStats(Stats):
 
     basic_stats_class: ClassVar[type[BasicStats] | None] = None
     presets: ClassVar[Mapping[str, Mapping[str, tuple[float, ...]]]] = READABILITY_PRESETS
+    default_preset: ClassVar[str] = "original"
     grade_stats: ClassVar[tuple[str, ...]] = READABILITY_GRADE_STATS
     stats_desc: ClassVar[Mapping[str, str]] = READABILITY_STATS_DESC
     filter_nums: ClassVar[bool] = False
@@ -211,10 +213,12 @@ class ReadabilityStats(Stats):
         source: str | Document | BasicStats,
         sents_extractor: SentsExtractor | None = None,
         words_extractor: WordsExtractor | None = None,
-        preset: str = "original",
+        preset: str | None = None,
         filter_nums: bool | None = None,
     ):
         messages = self.messages
+        if preset is None:
+            preset = self.default_preset
         check_bool(
             self.filter_nums if filter_nums is None else filter_nums,
             "filter_nums",

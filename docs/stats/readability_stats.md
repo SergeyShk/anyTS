@@ -1,7 +1,7 @@
 # Readability metrics
 
 ``` {.python .signature}
-ReadabilityStats(source, sents_extractor=None, words_extractor=None, preset='original', filter_nums=None)
+ReadabilityStats(source, sents_extractor=None, words_extractor=None, preset=None, filter_nums=None)
 ```
 
 <!-- --8<-- [start:ReadabilityStats] -->
@@ -65,7 +65,7 @@ A subclass with the basic statistics of a language - here the syllables are the 
 | `source` | `str` / `Document` / `BasicStats` | - | Data source (a string or a Document object, or ready basic statistics) |
 | `sents_extractor` | `SentsExtractor` | `None` | Sentence extraction tool, not used for ready basic statistics |
 | `words_extractor` | `WordsExtractor` | `None` | Word extraction tool, not used for ready basic statistics |
-| `preset` | `str` | `'original'` | Coefficient preset |
+| `preset` | `str` | `None` | Coefficient preset; `None` - the class attribute `default_preset` |
 | `filter_nums` | `bool` | `None` | Leave out the numbers among the words; `None` - the class attribute `filter_nums`, for ready basic statistics - as in them; a value that differs from theirs raises `ParameterError` |
 
 In the core `basic_stats_class` is `None`, so the class takes only a ready `BasicStats` object of a library. The object keeps the basic statistics of the text in `bs`, the name of the preset in `preset`, read-only, and the coefficients of the preset by formula in `coefficients`, a copy that can be changed for one object. An object of another preset can reuse the basic statistics: `ReadabilityStats(rs.bs, preset=...)`.
@@ -595,6 +595,7 @@ A language library subclasses `ReadabilityStats`:
 | `basic_stats_class` | class attribute | Its subclass of `BasicStats` for a string or a `Document`; without it the source must be a `BasicStats` object |
 | `filter_nums` | class attribute | Whether the numbers are left out of the words by default; `False` in the core |
 | `presets` | class attribute | Coefficients of the formulas by preset; a formula missing from a preset takes the defaults of its function |
+| `default_preset` | class attribute | Preset of an object without one, `original` in the core |
 | `grade_stats` | class attribute | Grade formulas of the consensus grade; `anyts.constants.READABILITY_GRADE_STATS` by default |
 | `stats_desc`, `stats_headers` | class attributes | Metrics of `get_stats` with their descriptions (`READABILITY_STATS_DESC` by default), headers of the columns for `print_stats` |
 | `preset_stats_desc` | class attribute | Descriptions of the metrics by preset, in place of those of `stats_desc` on an object of the preset, for `print_stats` and the report; a metric `stats_desc` lacks is left out |
