@@ -17,7 +17,7 @@ The command line of the statistics of a language library. Its command `stats` re
 | `-s`, `--stats` | the classes of `default_stats` | Classes of statistics, by name and separated by commas; with `-p`, those of `default_stats` that count such parts by default |
 | `-p`, `--parts` | - | `sentences`, `lines` or `paragraphs`: a row per part ([`by_parts`](https://sergeyshk.github.io/anyTS/stats/stats/#by_parts)); a class of `-s` that counts no such parts is an error |
 | `-f`, `--format` | `table` | `table` - the table of `print_stats` of every class, or of the parts; `json` - the flat statistics of every class by text, `get_stats(flat=True)`, or the records of the parts, with `nan` and infinities as `null`; `csv` - a row per text, or per part of a text, with a column `<class>.<statistic>` for every statistic and 0 for a count of a distribution a text lacks ([`stats_dataframe`](https://sergeyshk.github.io/anyTS/stats/stats/#stats_dataframe)) |
-| `-o`, `--output` | the standard output | File of the output, written only by a result: without one an existing file keeps its text and a new one is not left; the standard output for `-` |
+| `-o`, `--output` | the standard output | File of the output, written only by a result: without one an existing file keeps its text and a new one is not left; the standard output for `-`. A table, written as every text is counted, refuses one of its texts after the first |
 | `-e`, `--encoding` | `utf-8-sig` | Encoding of the files: UTF-8, a byte order mark left out, by default; the output is in UTF-8 |
 
 The standard input is read as a file, its line breaks and its byte order mark alike, and a table is printed as every text is counted.

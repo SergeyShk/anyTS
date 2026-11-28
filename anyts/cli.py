@@ -274,6 +274,7 @@ class Command:
             command = getattr(parser, "commands", {}).get(self.args.command, parser)
             self.names = self._names(command, self.args)
             self._check_datasets(command, self.args)
+            self._check_output(command, self.args)
         except SystemExit as ended:
             # The help and the wrong arguments, which argparse ends with sys.exit
             return int(ended.code or 0)
@@ -347,11 +348,11 @@ class Command:
             int: Exit code: 0, 1 if the text could not be read or a class could not
                 count it
         """
-        document = self._document(args.file, args.encoding)
         output = self._output(args.output)
         if output is None:
             return 1
         try:
+            document = self._document(args.file, args.encoding)
             if document is None:
                 return 1
             try:
@@ -369,7 +370,8 @@ class Command:
                 self._error(
                     self.texts["stats_error"].format(source=args.file, name=name, error=failure)
                 )
-            if not self._put(output, page):
+            # A text no class could count has no report to write
+            if not report.stats or not self._put(output, page):
                 return 1
             return 1 if report.errors else 0
         finally:
@@ -467,6 +469,15 @@ class Command:
                     self.texts["unknown_dataset"].format(name=name, names=", ".join(self.datasets))
                 )
 
+    def _check_output(self, parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
+        """The output of a table of stats, written as every text is counted, is none of the texts
+        after the first, which it would replace before they are read"""
+        if args.command != "stats" or args.format != "table" or args.output in (None, _STDIN):
+            return
+        for source in args.files[1:]:
+            if source != _STDIN and _same_file(args.output, source):
+                parser.error(self.texts["output_input"].format(output=args.output, source=source))
+
     def _text_stats(self, source: str, args: argparse.Namespace) -> dict[str, Any] | None:
         """Statistics of the classes of a text - the printed table for the format table, the row
         otherwise - or the rows of its parts, without a class that could not count it; None if
@@ -476,27 +487,40 @@ class Command:
         document = self._document(source, args.encoding)
         if document is None:
             return None
+        from .stats import _count_classes_parts
+
         found: dict[str, Any] = {}
+        counted: Mapping[str, Any]
         # The statistics are dropped after their rows, so the tree goes with them
         with _sharing_document(document, release=True):
-            for name in self.names:
-                cls = self.stats_classes[name]
-                try:
-                    if args.parts:
-                        found[name] = cls._count_parts(
-                            document, args.parts, {}, make=partial(self.compute, cls)
-                        )
-                    else:
+            if args.parts:
+                # Every part is cut once for the classes, which share what they count on it
+                counted = _count_classes_parts(
+                    {name: self.stats_classes[name] for name in self.names},
+                    document,
+                    args.parts,
+                    lambda cls: partial(self.compute, cls),
+                )
+            else:
+                whole: dict[str, Any] = {}
+                for name in self.names:
+                    try:
                         # The statistics read once, so that a statistic computed when it is
                         # read raises here, for its text
-                        stats = self.compute(cls, document)
-                        found[name] = (
+                        stats = self.compute(self.stats_classes[name], document)
+                        whole[name] = (
                             _printed(stats) if args.format == "table" else _stats_row(stats)
                         )
-                except AnyTSError as error:
-                    self._error(
-                        self.texts["stats_error"].format(source=source, name=name, error=error)
-                    )
+                    except AnyTSError as error:
+                        whole[name] = error
+                counted = whole
+        for name, result in counted.items():
+            if isinstance(result, AnyTSError):
+                self._error(
+                    self.texts["stats_error"].format(source=source, name=name, error=result)
+                )
+            else:
+                found[name] = result
         return found
 
     def _document(self, source: str, encoding: str) -> Document | None:
@@ -621,6 +645,14 @@ def _read(source: str, encoding: str) -> str:
         finally:
             wrapper.detach()
     return Path(source).read_text(encoding=encoding)
+
+
+def _same_file(first: str, second: str) -> bool:
+    """Whether two paths name one file, False if either is missing"""
+    try:
+        return Path(first).samefile(second)
+    except OSError:
+        return False
 
 
 class _Output:

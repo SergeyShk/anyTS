@@ -534,12 +534,14 @@ def _tree_once(document: Document) -> Iterator[Tree]:
 
 
 @contextmanager
-def _sharing_document(document: Document, *, release: bool) -> Iterator[None]:
+def _sharing_document(
+    document: Document, *, release: bool, shared: _Shared | None = None
+) -> Iterator[None]:
     """The tree of a document and its shared values (_shared_value) built once for the classes
-    that count it inside; with release, the tree broken after them as _tree_once breaks it, for
-    classes whose objects are dropped"""
+    that count it inside, or those of shared, kept for several uses; with release, the tree
+    broken after them as _tree_once breaks it, for classes whose objects are dropped"""
     previous: _Shared | None = getattr(_local, "shared", None)
-    shared = _local.shared = _Shared(document)
+    shared = _local.shared = _Shared(document) if shared is None else shared
     try:
         yield
     finally:
@@ -557,6 +559,12 @@ def _shared_value(document: Document, key: Hashable, make: Callable[[], _Value])
     if key not in shared.values:
         shared.values[key] = make()
     return shared.values[key]  # type: ignore[no-any-return]
+
+
+def _is_shared(document: Document) -> bool:
+    """Whether a document is the shared document of the thread"""
+    shared: _Shared | None = getattr(_local, "shared", None)
+    return shared is not None and shared.document is document
 
 
 def _kept(tree: Tree) -> bool:

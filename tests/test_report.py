@@ -8,6 +8,7 @@ import pytest
 from anyts.basic_stats import BasicStats
 from anyts.cli import Command
 from anyts.constants import MESSAGES, REPORT_TEXTS
+from anyts.document import to_document
 from anyts.exceptions import ParameterError, SourceError
 from anyts.morph_stats import MorphStats
 from anyts.readability_stats import ReadabilityStats
@@ -498,6 +499,105 @@ def test_the_other_classes_count_only_the_sentences_shown():
     assert all(cell != "-" for row in table for cell in row)
 
 
+def test_a_report_of_no_class_names_them():
+    """A report whose classes all failed names them in the section of the statistics"""
+    page = Report("*** --- ***", stats_classes={"basic": Vowels}, skip_errors=True).to_html()
+    assert REPORT_TEXTS["left_out"].format(names="basic") in page
+
+
+def test_a_class_that_counts_no_sentence_fails_the_table():
+    """A class of the columns that counts the text but none of its sentences raises its error"""
+
+    class Pairs(Vowels):
+        def __init__(self, source, *args, **kwargs):
+            super().__init__(source, *args, **kwargs)
+            if self.n_sents < 2:
+                raise SourceError("Two sentences at least")
+
+    class Table(Report):
+        stats_classes: ClassVar[dict[str, type]] = {"pairs": Pairs}
+        sentence_columns: ClassVar[tuple[tuple[str, str], ...]] = (("pairs", "n_words"),)
+
+    with pytest.raises(SourceError, match=r"^Two sentences at least$"):
+        Table("The cat sleeps. A dog barks.").to_html()
+
+
+def test_parse_reads_the_classes_of_the_report():
+    """parse knows the classes of the object, to annotate only what they need"""
+    seen = []
+
+    class Seeing(Report):
+        def parse(self, source):
+            seen.append(tuple(self.classes))
+            return super().parse(source)
+
+    Seeing("The cat sleeps.", stats_classes={"basic": Vowels})
+    assert seen == [("basic",)]
+
+
+def test_the_parts_share_the_basic_statistics_of_their_classes():
+    """The classes of readability of a part of a command or a table of sentences count its basic
+    statistics once"""
+    from anyts.stats import _count_parts_of
+    from anyts.unadapted_readability_stats import UnadaptedReadabilityStats
+
+    unadapted = type("Unadapted", (UnadaptedReadabilityStats,), {"basic_stats_class": Vowels})
+    made = {"r": [], "u": []}
+
+    def make(name, cls):
+        def counted(part):
+            stats = cls(part)
+            made[name].append(stats.bs)
+            return stats
+
+        return counted
+
+    counted = _count_parts_of(
+        to_document("The cat sleeps. A dog barks."),
+        "sentences",
+        [(Readability, make("r", Readability)), (unadapted, make("u", unadapted))],
+    )
+    assert all(isinstance(rows, list) and len(rows) == 2 for rows in counted)
+    assert [a is b for a, b in zip(made["r"], made["u"], strict=True)] == [True, True]
+
+
+def test_the_tree_of_a_report_is_built_once(monkeypatch):
+    """The statistics and the layers of the highlighting of a report share the tree of its
+    document, and the layers of a text alone share theirs"""
+    from anyts import document as document_module
+    from anyts.document import get_tree
+    from anyts.syntax_stats import SyntaxStats
+
+    built = []
+    build = document_module._built_tree
+    monkeypatch.setattr(
+        document_module, "_built_tree", lambda document: built.append(1) or build(document)
+    )
+
+    class TreeLayers(HighlightedText):
+        layers_desc: ClassVar[dict[str, str]] = {"one": "One", "two": "Two", "three": "Three"}
+        default_layers: ClassVar[tuple[str, ...]] = ("one", "two", "three")
+
+        def find(self, layer, words, sents, document):
+            get_tree(document)
+            return []
+
+    class Trees(Report):
+        stats_classes: ClassVar[dict[str, type]] = {"syntax": SyntaxStats}
+        highlight_class = TreeLayers
+
+    source = parsed(
+        ["Cats", "sleep", "."],
+        [1, 1, 1],
+        ["nsubj", "ROOT", "punct"],
+        pos=["NOUN", "VERB", "PUNCT"],
+    )
+    Trees(source).to_html()
+    assert len(built) == 1
+    TreeLayers(source)
+    assert len(built) == 2
+
+
 def test_the_classes_of_readability_share_their_basic_statistics():
     """The classes of readability of a report count the basic statistics of its text once, those
     with the same class and filter_nums"""
@@ -511,6 +611,8 @@ def test_the_classes_of_readability_share_their_basic_statistics():
     assert stats["n"].bs is not stats["r"].bs and stats["n"].bs.filter_nums
     # Outside a report every object counts its own
     assert Readability(text).bs is not unadapted(text).bs
+    document = to_document(text)
+    assert Readability(document).bs is not unadapted(document).bs
 
 
 def test_the_statistics_of_a_report_keep_their_tree():
