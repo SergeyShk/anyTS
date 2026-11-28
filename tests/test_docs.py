@@ -332,16 +332,13 @@ def test_parameter_tables_match_the_code():
                     target = getattr(target, method, None)
                 where = f"{page.relative_to(DOCS)}: {section or base}"
                 assert callable(target), f"{where} names no callable"
-                key = (page, base, section is not None)
-                documented.setdefault(key, (target, []))[1].extend(rows)
+                documented.setdefault((page, base), (target, []))[1].extend(rows)
     assert documented
-    for (page, base, in_section), (target, rows) in documented.items():
-        # The sections of a component leave the pipeline and the name to the libraries
+    for (page, base), (target, rows) in documented.items():
         params = [
             param
             for param in inspect.signature(target).parameters.values()
             if param.name != "self"
-            and not (in_section and base.endswith("Component") and param.name in ("nlp", "name"))
         ]
         where = f"{page.relative_to(DOCS)}: {base}"
         assert [name for name, _ in rows] == [param.name for param in params], where

@@ -1,23 +1,15 @@
 """Documents of anySeg with hand-made annotations for the tests"""
 
-import unicodedata
 from collections.abc import Sequence
 
 from anyseg import Document
 
 from anyts.constants import MESSAGES
 from anyts.document import _sent_starts
+from anyts.utils import _separators
 
 # Whitespace, control characters and the invisible marks, which anySeg keeps out of tokens
-SEPARATORS = frozenset(
-    "".join(
-        character
-        for character in map(chr, range(0x3001))
-        if character.isspace() or unicodedata.category(character) == "Cc"
-    )
-    + "­​‌‍⁠﻿‎‏‪‫‬‭‮"
-    + "⁦⁧⁨⁩؜᠎"
-)
+SEPARATORS = _separators()
 
 
 def parsed(
@@ -57,11 +49,11 @@ def parsed(
     for index, word in enumerate(words):
         start, end = offset, offset + len(word)
         offset = end + bool(spaces[index])
-        rest = word.lstrip("".join(SEPARATORS))
+        rest = word.lstrip(SEPARATORS)
         if not rest:
             continue
         start = end - len(rest)
-        end = start + len(rest.rstrip("".join(SEPARATORS)))
+        end = start + len(rest.rstrip(SEPARATORS))
         positions[index] = len(kept)
         starts.append(start)
         ends.append(end)
