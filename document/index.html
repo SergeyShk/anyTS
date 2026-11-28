@@ -16,7 +16,7 @@
         <link rel="prev" href="../installation/">
       
       
-        <link rel="next" href="../migration/">
+        <link rel="next" href="../exceptions/">
       
       
         
@@ -320,25 +320,6 @@
         </a>
       </li>
     
-  
-
-      
-        
-  
-  
-  
-  
-    <li class="md-tabs__item">
-      <a href="../components/" class="md-tabs__link">
-        
-  
-  
-    
-  
-  Components
-
-      </a>
-    </li>
   
 
       
@@ -700,34 +681,6 @@
   
 </nav>
       
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../migration/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Migrating from 0.4
-  
-
-    
-  </span>
-  
-  
-
-      </a>
     </li>
   
 
@@ -1843,33 +1796,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../components/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Components
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../cli/" class="md-nav__link">
         
   
@@ -1962,10 +1888,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
         
           
-          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
             
   
   
@@ -1983,8 +1909,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_10">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -2057,14 +1983,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../utils/spacy/" class="md-nav__link">
+      <a href="../utils/tree/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    spaCy objects
+    Words of the tree
   
 
     
@@ -2299,14 +2225,13 @@
 
 
 <h1 id="document-model">Document model<a class="headerlink" href="#document-model" title="Permanent link">&para;</a></h1>
-<p>The classes of statistics read a text through a document of <a href="https://github.com/SergeyShk/anySeg">anySeg</a>: its tokens with their positions, the words of Universal Dependencies with their columns (lemma, part of speech, features, head and relation), its sentences and paragraphs. A string, a <code>Doc</code> object of <a href="https://github.com/explosion/spaCy">spaCy</a> and a ready <code>Document</code> give one document, so a text split the same way gives the same numbers in every form. A language library segments and annotates a string in its language by the <code>parse</code> hook of the classes; the core splits a string into words of <code>\w</code>, punctuation marks and the sentences of <code>SentsExtractor</code>.</p>
+<p>The classes of statistics read a text through a document of <a href="https://github.com/SergeyShk/anySeg">anySeg</a>: its tokens with their positions, the words of Universal Dependencies with their columns (lemma, part of speech, features, head and relation), its sentences and paragraphs. The classes take a string or a ready <code>Document</code>, and a text split the same way gives the same numbers in either form. A language library segments and annotates a string in its language by the <code>parse</code> hook of the classes; the core splits a string into words of <code>\w</code>, punctuation marks and the sentences of <code>SentsExtractor</code>.</p>
 <h2 id="to_document">Document of a source<a class="headerlink" href="#to_document" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:to_document] -->
 <div class="signature highlight"><pre><span></span><code><span class="n">to_document</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">tokenize</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sentenize</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">messages</span><span class="o">=</span><span class="n">MESSAGES</span><span class="p">)</span>
 </code></pre></div>
-<p>Returns the document of a data source in the model of anySeg. A <code>Document</code> is returned as it is. A <code>Doc</code> keeps its tokens, their columns and its sentences, those of a hook (<code>doc.user_hooks["sents"]</code>) of a <code>Doc</code> without a parse included. A multiword token of the tokenizer of anySeg (<code>token._.anyseg_words</code>) whose words carry no columns of their own is one word with the columns and the head the pipeline gave the token, as the tagger and the parser of a spaCy model see it; words with their own columns stay words of Universal Dependencies. A <code>Doc</code> with no or only partial sentence starts (a token whose <code>is_sent_start</code> is unset), as before the parser, <code>senter</code> or <code>sentencizer</code>, and without a parse gets the sentences of <code>sentenize</code> on its text. A string is split into tokens by <code>tokenize</code> and into sentences by <code>sentenize</code>, which may give them in any order since only their starts count, and the default tokens fill the gaps between those of <code>tokenize</code>, so a tokenizer may give the words alone. A blank line (<code>BLANK_LINE</code>) ends a paragraph of the document and so a sentence, of a <code>Doc</code> too: every part between blank lines goes to <code>sentenize</code> apart, and a sentence starts at its first token. Of the words of a parse that hung over a blank line, the first heads its new sentence and the others hang on it with <code>dep</code>. Whitespace and invisible separators (the soft hyphen, zero-width characters, the byte order mark, the marks of the direction of text) at the edges of a token are left out, and a token of nothing else is dropped; a word joiner or a mark of the direction inside a word, as anySeg keeps it, is part of the word.</p>
-<p>The default tokens are the words of <code>WordsExtractor</code> and every run of one other character, such as <code>...</code> or <code>--</code>; the default sentences are those of <code>SentsExtractor</code>.</p>
-<p>The document of the <code>Doc</code> a thread converted last is kept while the <code>Doc</code> lives with the same tokens and annotations, and the same <code>sentenize</code> for a <code>Doc</code> without its sentences, so the classes of statistics and the components of one <code>Doc</code> convert it once. The same <code>Document</code> comes back then: it is not to be changed, and a document of its own is built for that.</p>
+<p>Returns the document of a data source in the model of anySeg. A <code>Document</code> is returned as it is. A string is split into tokens by <code>tokenize</code> and into sentences by <code>sentenize</code>, which may give them in any order since only their starts count, and the default tokens fill the gaps between those of <code>tokenize</code>, so a tokenizer may give the words alone. A blank line (<code>BLANK_LINE</code>) ends a paragraph of the document and so a sentence: every part between blank lines goes to <code>sentenize</code> apart, and a sentence starts at its first token. Whitespace and invisible separators (the soft hyphen, zero-width characters, the byte order mark, the marks of the direction of text) at the edges of a token are left out, and a token of nothing else is dropped; a word joiner or a mark of the direction inside a word, as anySeg keeps it, is part of the word.</p>
+<p>The default tokens are the words of <code>WordsExtractor</code> and every run of one other character, such as <code>...</code> or <code>--</code>; the default sentences are those of <code>SentsExtractor</code>. A hook gives triples or objects with <code>start</code>, <code>end</code> and <code>text</code>, such as the spans of <code>Segmenter.tokenize</code> and <code>Segmenter.sentenize</code> of anySeg.</p>
 <table>
 <thead>
 <tr>
@@ -2319,7 +2244,7 @@
 <tbody>
 <tr>
 <td style="text-align: left;"><code>source</code></td>
-<td style="text-align: left;"><code>str</code> / <code>Doc</code> / <code>Document</code></td>
+<td style="text-align: left;"><code>str</code> / <code>Document</code></td>
 <td style="text-align: left;">-</td>
 <td style="text-align: left;">Data source</td>
 </tr>
@@ -2343,28 +2268,22 @@
 </tr>
 </tbody>
 </table>
-<p>A source that is neither a string, a <code>Doc</code> nor a <code>Document</code> raises <code>SourceTypeError</code> (a <code>Span</code> with the message <code>source_span</code>), and so does a <code>tokenize</code> or <code>sentenize</code> that cannot be called, does not give triples of integer bounds within the text and a string (ascending for <code>tokenize</code>; the message <code>hook_bounds</code>), or gives a token over a blank line (<code>document_tokens</code>). A <code>Doc</code> with a token over a blank line, as a retokenizer may merge, or with words in <code>token._.anyseg_words</code> that a document cannot hold raises <code>SourceError</code> with the message <code>document_tokens</code>.</p>
+<p>A source that is neither a string nor a <code>Document</code> raises <code>SourceTypeError</code>, and so does a <code>tokenize</code> or <code>sentenize</code> that cannot be called, does not give triples or spans of integer bounds within the text and a string (ascending for <code>tokenize</code>; the message <code>hook_bounds</code>), or gives a token over a blank line (<code>document_tokens</code>).</p>
 <!-- --8<-- [end:to_document] -->
 
 <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Code</label><label for="__tabbed_1_2">Result</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">spacy</span>
-
-<span class="kn">from</span><span class="w"> </span><span class="nn">anyts.document</span><span class="w"> </span><span class="kn">import</span> <span class="n">to_document</span>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts.document</span><span class="w"> </span><span class="kn">import</span> <span class="n">to_document</span>
 
 <span class="n">document</span> <span class="o">=</span> <span class="n">to_document</span><span class="p">(</span><span class="s2">"The cat sat. It slept!</span><span class="se">\n\n</span><span class="s2">The end"</span><span class="p">)</span>
 <span class="p">[</span><span class="n">token</span><span class="o">.</span><span class="n">text</span> <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">document</span><span class="o">.</span><span class="n">tokens</span><span class="p">][:</span><span class="mi">4</span><span class="p">]</span>
 <span class="p">[</span><span class="n">sentence</span><span class="o">.</span><span class="n">text</span> <span class="k">for</span> <span class="n">sentence</span> <span class="ow">in</span> <span class="n">document</span><span class="o">.</span><span class="n">sentences</span><span class="p">]</span>
-
-<span class="n">doc</span> <span class="o">=</span> <span class="n">spacy</span><span class="o">.</span><span class="n">blank</span><span class="p">(</span><span class="s2">"en"</span><span class="p">)(</span><span class="s2">"One. Two!"</span><span class="p">)</span>
-<span class="p">[</span><span class="n">sentence</span><span class="o">.</span><span class="n">text</span> <span class="k">for</span> <span class="n">sentence</span> <span class="ow">in</span> <span class="n">to_document</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span><span class="o">.</span><span class="n">sentences</span><span class="p">]</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code>['The', 'cat', 'sat', '.']
 ['The cat sat.', 'It slept!', 'The end']
-['One.', 'Two!']
 </code></pre></div>
 </div>
 </div>
@@ -2412,7 +2331,7 @@
 <!-- --8<-- [start:document_part] -->
 <div class="signature highlight"><pre><span></span><code><span class="n">document_part</span><span class="p">(</span><span class="n">document</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">messages</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
-<p>Returns the document of a part of a document: the sentences the span of the text from <code>start</code> to <code>end</code> overlaps, whole, so that their trees stay whole - a sentence, a paragraph or a fragment of several of them. Its text runs from the first token of the first sentence to the last token of the last one, and the positions count from there. The tokens, the words with their columns, the sentences and the paragraphs are those of the document, and a head stays as it is, since the head of a word is in its own sentence. A class of statistics counts a part as any document. Every call reads the columns of the whole document, so <a href="https://sergeyshk.github.io/anyTS/stats/stats/#by_parts"><code>by_parts</code></a>, which reads them once, counts every sentence, line or paragraph of a text.</p>
+<p>Returns the document of a part of a document: the sentences the span of the text from <code>start</code> to <code>end</code> overlaps, whole, so that their trees stay whole - a sentence, a paragraph or a fragment of several of them. Its text runs from the first token of the first sentence to the last token of the last one, and the positions count from there. The tokens, the words with their columns, the sentences and the paragraphs are those of the document, and a head stays as it is, since the head of a word is in its own sentence. A class of statistics counts a part as any document, and <a href="https://sergeyshk.github.io/anyTS/stats/stats/#by_parts"><code>by_parts</code></a> counts every sentence, line or paragraph of a text.</p>
 <table>
 <thead>
 <tr>
@@ -2473,7 +2392,7 @@
 <!-- --8<-- [start:is_document] -->
 <div class="signature highlight"><pre><span></span><code><span class="n">is_document</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
 </code></pre></div>
-<p>Checks whether a value is a <code>Document</code> object of anySeg without importing anySeg, as <code>is_doc</code> does for spaCy: such an object exists only once anySeg is loaded, so before that every value gives <code>False</code>.</p>
+<p>Checks whether a value is a <code>Document</code> object of anySeg without importing anySeg: such an object exists only once anySeg is loaded, so before that every value gives <code>False</code>.</p>
 <table>
 <thead>
 <tr>
@@ -2514,7 +2433,7 @@
 <!-- --8<-- [start:get_tree] -->
 <div class="signature highlight"><pre><span></span><code><span class="n">get_tree</span><span class="p">(</span><span class="n">document</span><span class="p">)</span>
 </code></pre></div>
-<p>Returns the dependency tree of a document: its words of Universal Dependencies with the columns <code>lemma</code>, <code>upos</code>, <code>xpos</code>, <code>feats</code>, <code>head</code> and <code>deprel</code>, linked by their heads within their sentences. A word without a head heads its sentence. The syntactic statistics and their language hooks read the words of this tree. The tree of the document of the <code>Doc</code> a thread converted last (<code>to_document</code>) is built once and kept with it, so the classes of one <code>Doc</code> share it, and it is not to be changed.</p>
+<p>Returns the dependency tree of a document: its words of Universal Dependencies with the columns <code>lemma</code>, <code>upos</code>, <code>xpos</code>, <code>feats</code>, <code>head</code> and <code>deprel</code>, linked by their heads within their sentences. A word without a head heads its sentence. The syntactic statistics and their language hooks read the words of this tree. The tree of the document a command or a report counts, of a text <code>HighlightedText</code> highlights and of a part <code>by_parts</code> counts is built once and shared by the classes and the layers that read it, and it is not to be changed. The tree of a text highlighted alone and of a part is broken after them - its words lose <code>head</code>, <code>children</code> and <code>tree</code> - so a hook keeps no word of it; a report keeps the tree of its text until its page is made.</p>
 <p>The words of a tree refer to each other and to the tree, so an unused tree waits for the garbage collector of Python rather than going at once: a loop over many large texts may hold several of them, and <code>gc.collect()</code> between the texts frees them. A value that is not a <code>Document</code> raises <code>SourceTypeError</code>.</p>
 <table>
 <thead>
@@ -2534,7 +2453,7 @@
 </tr>
 </tbody>
 </table>
-<p>The result is a <code>Tree</code> named tuple: <code>text</code>, <code>words</code> - the words of the document, punctuation marks included - and <code>sentences</code> - the words of every sentence. Its method <code>word_at(position, end=None)</code> gives the word whose token covers a position of the text, or with <code>end</code> the first one whose token overlaps the span; the first word of a multiword token, or <code>None</code> where no word stands, as at whitespace. The word of a spaCy token is <code>tree.word_at(token.idx, token.idx + len(token))</code>: the positions of the words differ from <code>Token.i</code> where a <code>Doc</code> has tokens of whitespace, and the token of the document leaves out a separator at the edge of the token, such as a byte order mark.</p>
+<p>The result is a <code>Tree</code> named tuple: <code>text</code>, <code>words</code> - the words of the document, punctuation marks included - and <code>sentences</code> - the words of every sentence. Its method <code>word_at(position, end=None)</code> gives the word whose token covers a position of the text, or with <code>end</code> the first one whose token overlaps the span; the first word of a multiword token, or <code>None</code> where no word stands, as at whitespace.</p>
 <!-- --8<-- [end:get_tree] -->
 
 <!-- --8<-- [start:TreeWord] -->
@@ -2583,7 +2502,7 @@
 <tr>
 <td style="text-align: left;"><code>deprel</code></td>
 <td style="text-align: left;"><code>str</code> / <code>None</code></td>
-<td style="text-align: left;">Relation to the head; the root of a spaCy parse is <code>root</code></td>
+<td style="text-align: left;">Relation to the head</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>head</code></td>
@@ -2612,26 +2531,23 @@
 </tr>
 </tbody>
 </table>
-<p>In place of the attributes of a spaCy <code>Token</code> (the <a href="https://sergeyshk.github.io/anyTS/migration/#tree-words">migration page</a> has more): <code>text</code> - <code>form</code>, <code>lemma_</code> - <code>lemma</code>, <code>pos_</code> - <code>upos</code>, <code>tag_</code> - <code>xpos</code>, <code>dep_</code> - <code>deprel</code>, <code>morph.get(name)</code> - <code>feats.get(name)</code> (a string), <code>i</code> - <code>index</code> (other where a <code>Doc</code> has tokens of whitespace: <code>tree.word_at(token.idx, token.idx + len(token))</code> gives the word of a token), <code>idx</code> - <code>start</code>, <code>head</code> of a root - <code>None</code> instead of the token itself, <code>subtree</code> - <code>get_subtree(word)</code> of <code>anyts.syntax_stats</code>.</p>
 <!-- --8<-- [end:TreeWord] -->
 
 <div class="tabbed-set tabbed-alternate" data-tabs="5:2"><input checked="checked" id="__tabbed_5_1" name="__tabbed_5" type="radio" /><input id="__tabbed_5_2" name="__tabbed_5" type="radio" /><div class="tabbed-labels"><label for="__tabbed_5_1">Code</label><label for="__tabbed_5_2">Result</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">spacy</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">spacy.tokens</span><span class="w"> </span><span class="kn">import</span> <span class="n">Doc</span>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyseg</span><span class="w"> </span><span class="kn">import</span> <span class="n">Document</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">anyts.document</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_tree</span><span class="p">,</span> <span class="n">to_document</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">anyts.document</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_tree</span>
 
-<span class="n">doc</span> <span class="o">=</span> <span class="n">Doc</span><span class="p">(</span>
-    <span class="n">spacy</span><span class="o">.</span><span class="n">blank</span><span class="p">(</span><span class="s2">"en"</span><span class="p">)</span><span class="o">.</span><span class="n">vocab</span><span class="p">,</span>
-    <span class="n">words</span><span class="o">=</span><span class="p">[</span><span class="s2">"Cats"</span><span class="p">,</span> <span class="s2">"sleep"</span><span class="p">,</span> <span class="s2">"."</span><span class="p">],</span>
-    <span class="n">heads</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
-    <span class="n">deps</span><span class="o">=</span><span class="p">[</span><span class="s2">"nsubj"</span><span class="p">,</span> <span class="s2">"ROOT"</span><span class="p">,</span> <span class="s2">"punct"</span><span class="p">],</span>
-    <span class="n">pos</span><span class="o">=</span><span class="p">[</span><span class="s2">"NOUN"</span><span class="p">,</span> <span class="s2">"VERB"</span><span class="p">,</span> <span class="s2">"PUNCT"</span><span class="p">],</span>
-    <span class="n">morphs</span><span class="o">=</span><span class="p">[</span><span class="s2">"Number=Plur"</span><span class="p">,</span> <span class="s2">"Mood=Ind|VerbForm=Fin"</span><span class="p">,</span> <span class="s2">""</span><span class="p">],</span>
+<span class="n">document</span> <span class="o">=</span> <span class="n">Document</span><span class="o">.</span><span class="n">from_tokens</span><span class="p">(</span><span class="s2">"Cats sleep."</span><span class="p">,</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">],</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">])</span>
+<span class="n">document</span><span class="o">.</span><span class="n">set_columns</span><span class="p">(</span>
+    <span class="n">upos</span><span class="o">=</span><span class="p">[</span><span class="s2">"NOUN"</span><span class="p">,</span> <span class="s2">"VERB"</span><span class="p">,</span> <span class="s2">"PUNCT"</span><span class="p">],</span>
+    <span class="n">feats</span><span class="o">=</span><span class="p">[</span><span class="s2">"Number=Plur"</span><span class="p">,</span> <span class="s2">"Mood=Ind|VerbForm=Fin"</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span>
+    <span class="n">head</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span>
+    <span class="n">deprel</span><span class="o">=</span><span class="p">[</span><span class="s2">"nsubj"</span><span class="p">,</span> <span class="s2">"root"</span><span class="p">,</span> <span class="s2">"punct"</span><span class="p">],</span>
 <span class="p">)</span>
-<span class="n">cats</span><span class="p">,</span> <span class="n">sleep</span><span class="p">,</span> <span class="n">mark</span> <span class="o">=</span> <span class="n">get_tree</span><span class="p">(</span><span class="n">to_document</span><span class="p">(</span><span class="n">doc</span><span class="p">))</span><span class="o">.</span><span class="n">words</span>
+<span class="n">cats</span><span class="p">,</span> <span class="n">sleep</span><span class="p">,</span> <span class="n">mark</span> <span class="o">=</span> <span class="n">get_tree</span><span class="p">(</span><span class="n">document</span><span class="p">)</span><span class="o">.</span><span class="n">words</span>
 <span class="n">cats</span><span class="o">.</span><span class="n">head</span><span class="o">.</span><span class="n">form</span><span class="p">,</span> <span class="n">sleep</span><span class="o">.</span><span class="n">head</span><span class="p">,</span> <span class="n">sleep</span><span class="o">.</span><span class="n">deprel</span><span class="p">,</span> <span class="n">sleep</span><span class="o">.</span><span class="n">feats</span><span class="p">[</span><span class="s2">"VerbForm"</span><span class="p">]</span>
 <span class="n">sleep</span><span class="o">.</span><span class="n">children</span>
 </code></pre></div>

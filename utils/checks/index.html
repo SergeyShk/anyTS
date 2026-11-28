@@ -327,25 +327,6 @@
   
   
     <li class="md-tabs__item">
-      <a href="../../components/" class="md-tabs__link">
-        
-  
-  
-    
-  
-  Components
-
-      </a>
-    </li>
-  
-
-      
-        
-  
-  
-  
-  
-    <li class="md-tabs__item">
       <a href="../../cli/" class="md-tabs__link">
         
   
@@ -585,34 +566,6 @@
     
   
     Document model
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../migration/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Migrating from 0.4
   
 
     
@@ -1736,33 +1689,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../components/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Components
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../cli/" class="md-nav__link">
         
   
@@ -1860,10 +1786,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" checked>
         
           
-          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="">
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="">
             
   
   
@@ -1881,8 +1807,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_10">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_9">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1955,14 +1881,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../spacy/" class="md-nav__link">
+      <a href="../tree/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    spaCy objects
+    Words of the tree
   
 
     
@@ -2451,7 +2377,7 @@
 </tr>
 </tbody>
 </table>
-<p>A string (of characters or bytes), a <code>Doc</code>, a <code>Span</code>, an iterator, an object that cannot be iterated or has no length, a table - a two-dimensional array or a <code>DataFrame</code> - and, unless <code>ordered=False</code>, a set or a mapping raise <code>SourceTypeError</code>.</p>
+<p>A string (of characters or bytes), an iterator, an object that cannot be iterated or has no length, a table - a two-dimensional array or a <code>DataFrame</code> - and, unless <code>ordered=False</code>, a set or a mapping raise <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:check_sequence] -->
 
 <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Code</label><label for="__tabbed_1_2">Result</label></div>
@@ -2513,24 +2439,22 @@ anyts.exceptions.SourceTypeError: A list of words is expected, not a string
 </tr>
 </tbody>
 </table>
-<p>A value that fails <code>check_sequence</code> or holds an item that is not a string, such as a spaCy token, raises <code>SourceTypeError</code>.</p>
+<p>A value that fails <code>check_sequence</code> or holds an item that is not a string raises <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:check_words] -->
 
 <div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Code</label><label for="__tabbed_2_2">Result</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">spacy</span>
-
-<span class="kn">from</span><span class="w"> </span><span class="nn">anyts.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">check_words</span>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">check_words</span>
 
 <span class="n">check_words</span><span class="p">([</span><span class="s2">"the"</span><span class="p">,</span> <span class="s2">"cat"</span><span class="p">])</span>
-<span class="n">check_words</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">spacy</span><span class="o">.</span><span class="n">blank</span><span class="p">(</span><span class="s2">"xx"</span><span class="p">)(</span><span class="s2">"the cat"</span><span class="p">)))</span>
+<span class="n">check_words</span><span class="p">([</span><span class="s2">"the"</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code>Traceback (most recent call last):
   ...
-anyts.exceptions.SourceTypeError: The words must be strings, not Token
+anyts.exceptions.SourceTypeError: The words must be strings, not int
 </code></pre></div>
 </div>
 </div>
@@ -2778,23 +2702,21 @@ anyts.exceptions.ParameterError: The normalization must be a bool, not str
 </tr>
 </tbody>
 </table>
-<p>A value that is not a <code>TreeWord</code>, such as a spaCy <code>Token</code>, raises <code>SourceTypeError</code>.</p>
+<p>A value that is not a <code>TreeWord</code> raises <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:check_tree_word] -->
 
 <div class="tabbed-set tabbed-alternate" data-tabs="7:2"><input checked="checked" id="__tabbed_7_1" name="__tabbed_7" type="radio" /><input id="__tabbed_7_2" name="__tabbed_7" type="radio" /><div class="tabbed-labels"><label for="__tabbed_7_1">Code</label><label for="__tabbed_7_2">Result</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">spacy</span>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">check_tree_word</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">anyts.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">check_tree_word</span>
-
-<span class="n">check_tree_word</span><span class="p">(</span><span class="n">spacy</span><span class="o">.</span><span class="n">blank</span><span class="p">(</span><span class="s2">"en"</span><span class="p">)(</span><span class="s2">"cat"</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">check_tree_word</span><span class="p">(</span><span class="s2">"cat"</span><span class="p">)</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code>Traceback (most recent call last):
   ...
-anyts.exceptions.SourceTypeError: A TreeWord is expected, not Token
+anyts.exceptions.SourceTypeError: A TreeWord is expected, not str
 </code></pre></div>
 </div>
 </div>

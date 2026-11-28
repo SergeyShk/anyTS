@@ -13,7 +13,7 @@
         <link rel="canonical" href="https://sergeyshk.github.io/anyTS/exceptions/">
       
       
-        <link rel="prev" href="../migration/">
+        <link rel="prev" href="../document/">
       
       
         <link rel="next" href="../authors/">
@@ -329,25 +329,6 @@
   
   
     <li class="md-tabs__item">
-      <a href="../components/" class="md-tabs__link">
-        
-  
-  
-    
-  
-  Components
-
-      </a>
-    </li>
-  
-
-      
-        
-  
-  
-  
-  
-    <li class="md-tabs__item">
       <a href="../cli/" class="md-tabs__link">
         
   
@@ -590,34 +571,6 @@
     
   
     Document model
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../migration/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Migrating from 0.4
   
 
     
@@ -1799,33 +1752,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../components/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Components
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../cli/" class="md-nav__link">
         
   
@@ -1918,10 +1844,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
         
           
-          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
             
   
   
@@ -1939,8 +1865,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_10">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -2013,14 +1939,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../utils/spacy/" class="md-nav__link">
+      <a href="../utils/tree/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    spaCy objects
+    Words of the tree
   
 
     
@@ -2250,7 +2176,7 @@
 <tr>
 <td style="text-align: left;"><code>DatasetNotFoundError</code></td>
 <td style="text-align: left;"><code>OSError</code></td>
-<td style="text-align: left;">The spaCy model is not installed or a dataset is not downloaded; the message gives the command that fixes it</td>
+<td style="text-align: left;">A dataset is not downloaded; the message gives the command that fixes it</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>DataFileError</code></td>
@@ -2292,7 +2218,7 @@ SourceTypeError
 </div>
 <h2 id="messages">Messages<a class="headerlink" href="#messages" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:messages] -->
-<p>The errors of the classes of statistics (<code>Stats</code> and its subclasses), of <code>StatsComponent</code>, of the extractors <code>SentsExtractor</code>, <code>WordsExtractor</code> and <code>CharNgramsExtractor</code>, of <code>ConnectorMatcher</code> and of <code>HighlightedText</code> take their messages from the class attribute <code>messages</code>, a mapping of a key to a message, <code>anyts.constants.MESSAGES</code> in English by default, a read-only mapping shared by every class; the messages with fields in braces are format strings. A language library sets the messages of its language on its subclasses, <code>messages = MappingProxyType({**MESSAGES, **own})</code>, and they cover every error such a class raises itself; <code>source_type_error</code> of <code>anyts.utils</code> gives the error of a source of a wrong type by them. The functions <code>to_document</code>, <code>check_params</code>, <code>calc_windowed</code>, <code>calc_reading_time</code>, <code>find_nausea_words</code>, <code>calc_academic_nausea</code>, <code>calc_zipf_naturalness</code>, the corpus functions and the helpers of <code>anyts.datasets</code> take the messages as the keyword <code>messages</code>; for a corpus function or a helper of the datasets <code>None</code> stands for those of the library.</p>
+<p>The errors of the classes of statistics (<code>Stats</code> and its subclasses), of the extractors <code>SentsExtractor</code>, <code>WordsExtractor</code> and <code>CharNgramsExtractor</code>, of <code>ConnectorMatcher</code> and of <code>HighlightedText</code> take their messages from the class attribute <code>messages</code>, a mapping of a key to a message, <code>anyts.constants.MESSAGES</code> in English by default, a read-only mapping shared by every class; the messages with fields in braces are format strings. A language library sets the messages of its language on its subclasses, <code>messages = MappingProxyType({**MESSAGES, **own})</code>, and they cover every error such a class raises itself; <code>source_type_error</code> of <code>anyts.utils</code> gives the error of a source of a wrong type by them. The functions <code>to_document</code>, <code>check_params</code>, <code>calc_windowed</code>, <code>calc_reading_time</code>, <code>find_nausea_words</code>, <code>calc_academic_nausea</code>, <code>calc_zipf_naturalness</code>, the corpus functions and the helpers of <code>anyts.datasets</code> take the messages as the keyword <code>messages</code>; for a corpus function or a helper of the datasets <code>None</code> stands for those of the library.</p>
 <p>The shared checks of <code>anyts.utils</code> (<code>check_integer</code>, <code>check_number</code>, <code>check_bool</code>, <code>check_words</code>, <code>check_sequence</code>, <code>check_callable</code>) take the message of a class through their keyword <code>message</code>, and <code>check_counts</code> the messages through <code>messages</code>, so a parameter of a wrong type of these classes and functions comes in the language of the class under the name of the parameter (<code>bool_param</code>, <code>integer_param</code>, <code>number_param</code>, <code>words_param</code>, <code>callable_param</code>), and so do the arguments of <code>ConnectorMatcher.find</code>; a wrong value a hook of <code>to_document</code> gives raises <code>hook_bounds</code>. A hook of a class that returns what the core cannot use raises a <code>hook_*</code> message of the class. The checks of the lists and the scales of a subclass when it is defined, of the hooks of the functions of style and syntax and of the functions of the core without <code>messages</code> keep their messages in English, and so does the text of anySeg inside <code>document_tokens</code>.</p>
 <!-- --8<-- [end:messages] -->
 

@@ -327,25 +327,6 @@
   
   
     <li class="md-tabs__item">
-      <a href="components/" class="md-tabs__link">
-        
-  
-  
-    
-  
-  Components
-
-      </a>
-    </li>
-  
-
-      
-        
-  
-  
-  
-  
-    <li class="md-tabs__item">
       <a href="cli/" class="md-tabs__link">
         
   
@@ -668,34 +649,6 @@
     
   
     Document model
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="migration/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Migrating from 0.4
   
 
     
@@ -1819,33 +1772,6 @@
   
   
     <li class="md-nav__item">
-      <a href="components/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Components
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="cli/" class="md-nav__link">
         
   
@@ -1938,10 +1864,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
         
           
-          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
             
   
   
@@ -1959,8 +1885,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_10">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -2033,14 +1959,14 @@
   
   
     <li class="md-nav__item">
-      <a href="utils/spacy/" class="md-nav__link">
+      <a href="utils/tree/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    spaCy objects
+    Words of the tree
   
 
     
@@ -2253,14 +2179,14 @@
 
 
 <h1 id="any-texts-statistics-anyts">Any Texts Statistics (anyTS)<a class="headerlink" href="#any-texts-statistics-anyts" title="Permanent link">&para;</a></h1>
-<p><strong>anyTS</strong> is the language-independent core of the text statistics libraries <a href="https://github.com/SergeyShk/ruTS">ruTS</a> (Russian) and <a href="https://github.com/SergeyShk/esTS">esTS</a> (Spanish). It holds the code that does not depend on a language, so that it is written, tested and documented once; a language library adds its tokenizer, lemmatizer, <a href="https://github.com/explosion/spaCy">spaCy</a> model and rules and re-exports the core under its own names.</p>
+<p><strong>anyTS</strong> is the language-independent core of the text statistics libraries <a href="https://github.com/SergeyShk/ruTS">ruTS</a> (Russian) and <a href="https://github.com/SergeyShk/esTS">esTS</a> (Spanish). It holds the code that does not depend on a language, so that it is written, tested and documented once; a language library adds its segmenter, morphology, parser and rules and re-exports the core under its own names.</p>
 <h2 id="features">Features<a class="headerlink" href="#features" title="Permanent link">&para;</a></h2>
 <div class="grid cards">
 <ul>
 <li>
 <p><span class="twemoji lg middle"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M6 2a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm0 2h7v5h5v11H6zm2 8v2h8v-2zm0 4v2h5v-2z"/></svg></span> <strong>Document model</strong></p>
 <hr />
-<p>Read a string, a spaCy <code>Doc</code> or a <code>Document</code> of <a href="https://github.com/SergeyShk/anySeg">anySeg</a> as one document of tokens, words, sentences and paragraphs; a language library segments and annotates a string in its language; code written for 0.4 moves as <a href="migration/">the migration page</a> says</p>
+<p>Read a string or a <code>Document</code> of <a href="https://github.com/SergeyShk/anySeg">anySeg</a> as one document of tokens, words, sentences and paragraphs; a language library segments and annotates a string in its language</p>
 <p><a href="document/"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.75.75 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0"/></svg></span> Document model</a></p>
 </li>
 <li>
@@ -2352,12 +2278,6 @@
 <hr />
 <p>Write the statistics of a text with their readings, the statistics of its sentences, the highlighted text and plots into one HTML file that needs nothing outside it</p>
 <p><a href="report/"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.75.75 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0"/></svg></span> HTML report</a></p>
-</li>
-<li>
-<p><span class="twemoji lg middle"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M22 14h-2v2h-6v-3h2v-2h-2V6a2 2 0 0 0-2-2H4V2H2v8h2V8h6v3H8v2h2v5a2 2 0 0 0 2 2h8v2h2"/></svg></span> <strong>Components</strong></p>
-<hr />
-<p>Build components of spaCy pipelines that put the statistics into an extension of <code>Doc</code></p>
-<p><a href="components/"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.75.75 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0"/></svg></span> Components</a></p>
 </li>
 <li>
 <p><span class="twemoji lg middle"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 3C7.58 3 4 4.79 4 7s3.58 4 8 4 8-1.79 8-4-3.58-4-8-4M4 9v3c0 2.21 3.58 4 8 4s8-1.79 8-4V9c0 2.21-3.58 4-8 4s-8-1.79-8-4m0 5v3c0 2.21 3.58 4 8 4s8-1.79 8-4v-3c0 2.21-3.58 4-8 4s-8-1.79-8-4"/></svg></span> <strong>Datasets</strong></p>

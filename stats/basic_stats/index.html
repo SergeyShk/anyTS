@@ -329,25 +329,6 @@
   
   
     <li class="md-tabs__item">
-      <a href="../../components/" class="md-tabs__link">
-        
-  
-  
-    
-  
-  Components
-
-      </a>
-    </li>
-  
-
-      
-        
-  
-  
-  
-  
-    <li class="md-tabs__item">
       <a href="../../cli/" class="md-tabs__link">
         
   
@@ -585,34 +566,6 @@
     
   
     Document model
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../migration/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Migrating from 0.4
   
 
     
@@ -1854,33 +1807,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../components/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Components
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../cli/" class="md-nav__link">
         
   
@@ -1973,10 +1899,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
         
           
-          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
             
   
   
@@ -1994,8 +1920,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_10">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -2068,14 +1994,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../../utils/spacy/" class="md-nav__link">
+      <a href="../../utils/tree/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    spaCy objects
+    Words of the tree
   
 
     
@@ -2324,11 +2250,11 @@
 <div class="signature highlight"><pre><span></span><code><span class="n">BasicStats</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">sents_extractor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">words_extractor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">complex_syl_factor</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">long_word_letter_factor</span><span class="o">=</span><span class="mi">7</span><span class="p">,</span> <span class="n">filter_nums</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 </code></pre></div>
 <!-- --8<-- [start:BasicStats] -->
-<p>The basic statistics of a text: the counts of its sentences, words, characters, syllables and punctuation marks and the distributions of its words. The data source is a text, a <code>Doc</code> object of <a href="https://github.com/explosion/spaCy">spaCy</a> or a <code>Document</code> of <a href="https://github.com/SergeyShk/anySeg">anySeg</a>. Letters are counted by <code>str.isalpha</code>, so digits, hyphens and marks inside a word are not letters.</p>
-<p>The words and the sentences come from the <a href="https://sergeyshk.github.io/anyTS/document/">document</a> of the source (<code>parse</code>): its tokens without punctuation marks and symbols such as <code>€</code> or <code>%</code> (<code>doc_words</code>) and its sentences; an extractor given is used on the text instead. A <code>Doc</code> keeps its sentence starts, and one with no or only partial sentence starts (a token whose <code>is_sent_start</code> is unset) gets those of <code>parse</code>. A blank line ends a sentence of every source, since it ends a paragraph of the document. A sentence without words, such as punctuation alone, is not counted.</p>
+<p>The basic statistics of a text: the counts of its sentences, words, characters, syllables and punctuation marks and the distributions of its words. The data source is a text or a <code>Document</code> of <a href="https://github.com/SergeyShk/anySeg">anySeg</a>. Letters are counted by <code>str.isalpha</code>, so digits, hyphens and marks inside a word are not letters.</p>
+<p>The words and the sentences come from the <a href="https://sergeyshk.github.io/anyTS/document/">document</a> of the source (<code>parse</code>): its tokens without punctuation marks and symbols such as <code>€</code> or <code>%</code> (<code>doc_words</code>) and its sentences; an extractor given is used on the text instead. A blank line ends a sentence of every source, since it ends a paragraph of the document. A sentence without words, such as punctuation alone, is not counted.</p>
 <p>Raises:</p>
 <ul>
-<li><code>SourceTypeError</code> - a source that is neither a string, a <code>Doc</code> nor a <code>Document</code>, a <code>parse</code> that returns no <code>Document</code>, a <code>doc_words</code> that returns no sequence of strings, an extractor of another type;</li>
+<li><code>SourceTypeError</code> - a source that is neither a string nor a <code>Document</code>, a <code>parse</code> that returns no <code>Document</code>, a <code>doc_words</code> that returns no sequence of strings, an extractor of another type;</li>
 <li><code>SourceError</code> - a source without words;</li>
 <li><code>ParameterError</code> - a threshold that is not an integer of at least one, a <code>normalize</code> that is not a <code>bool</code>.</li>
 </ul>
@@ -2388,7 +2314,7 @@ Entropy of the word lengths in syllables (bits) |   0.50
 <tbody>
 <tr>
 <td style="text-align: left;"><code>source</code></td>
-<td style="text-align: left;"><code>str</code> / <code>Doc</code> / <code>Document</code></td>
+<td style="text-align: left;"><code>str</code> / <code>Document</code></td>
 <td style="text-align: left;">-</td>
 <td style="text-align: left;">Data source</td>
 </tr>

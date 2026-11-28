@@ -329,25 +329,6 @@
   
   
     <li class="md-tabs__item">
-      <a href="../../components/" class="md-tabs__link">
-        
-  
-  
-    
-  
-  Components
-
-      </a>
-    </li>
-  
-
-      
-        
-  
-  
-  
-  
-    <li class="md-tabs__item">
       <a href="../../cli/" class="md-tabs__link">
         
   
@@ -585,34 +566,6 @@
     
   
     Document model
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../migration/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Migrating from 0.4
   
 
     
@@ -2256,33 +2209,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../components/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Components
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../cli/" class="md-nav__link">
         
   
@@ -2375,10 +2301,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
         
           
-          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
             
   
   
@@ -2396,8 +2322,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_10">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -2470,14 +2396,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../../utils/spacy/" class="md-nav__link">
+      <a href="../../utils/tree/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    spaCy objects
+    Words of the tree
   
 
     
@@ -3133,7 +3059,7 @@
 
 <p>Raises:</p>
 <ul>
-<li><code>SourceTypeError</code> - words that are not a sequence or an iterator of strings, and a string, a <code>Doc</code>, a set or a table;</li>
+<li><code>SourceTypeError</code> - words that are not a sequence or an iterator of strings, and a string, a set or a table;</li>
 <li><code>SourceError</code> - no words;</li>
 <li><code>ParameterError</code> - a parameter that <code>check_params</code> rejects.</li>
 </ul>
@@ -4785,7 +4711,7 @@ A_n = \frac{\sqrt{n + 1} \cdot r - \sqrt{n - 1}}{(\sqrt{n + 1} - 2) \cdot r + \s
 <!-- --8<-- [end:calc_windowed] -->
 </div>
 <!-- --8<-- [start:diversity-checks] -->
-<p>Every function checks its words with <code>check_words</code>: a <code>text</code> that is a string, a <code>Doc</code>, an iterator, a set or a table, or whose words are not strings, raises <code>SourceTypeError</code>; <code>fit_zipf_mandelbrot</code> takes a counter too.</p>
+<p>Every function checks its words with <code>check_words</code>: a <code>text</code> that is a string, an iterator, a set or a table, or whose words are not strings, raises <code>SourceTypeError</code>; <code>fit_zipf_mandelbrot</code> takes a counter too.</p>
 <!-- --8<-- [end:diversity-checks] -->
 
 <h2 id="methods">Methods<a class="headerlink" href="#methods" title="Permanent link">&para;</a></h2>
@@ -4820,7 +4746,7 @@ A_n = \frac{\sqrt{n + 1} \cdot r - \sqrt{n - 1}}{(\sqrt{n + 1} - 2) \cdot r + \s
 <details class="library-hooks">
 <summary>Language hooks of a subclass</summary>
 <!-- --8<-- [start:DiversityStats-hooks] -->
-<p>A language library subclasses <code>DiversityStats</code>. The class takes the words as given: the library extracts them from its sources (a string, a <a href="https://github.com/explosion/spaCy">spaCy</a> <code>Doc</code>) and lower-cases them, since every metric counts lexemes.</p>
+<p>A language library subclasses <code>DiversityStats</code>. The class takes the words as given: the library extracts them from its sources (a string, a <code>Document</code>) and lower-cases them, since every metric counts lexemes.</p>
 <table>
 <thead>
 <tr>

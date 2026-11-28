@@ -327,25 +327,6 @@
   
   
     <li class="md-tabs__item">
-      <a href="../../components/" class="md-tabs__link">
-        
-  
-  
-    
-  
-  Components
-
-      </a>
-    </li>
-  
-
-      
-        
-  
-  
-  
-  
-    <li class="md-tabs__item">
       <a href="../../cli/" class="md-tabs__link">
         
   
@@ -585,34 +566,6 @@
     
   
     Document model
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../migration/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Migrating from 0.4
   
 
     
@@ -1736,33 +1689,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../components/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Components
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../cli/" class="md-nav__link">
         
   
@@ -1860,10 +1786,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" checked>
         
           
-          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="">
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="">
             
   
   
@@ -1881,8 +1807,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_10">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_9">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -2068,14 +1994,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../spacy/" class="md-nav__link">
+      <a href="../tree/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    spaCy objects
+    Words of the tree
   
 
     
@@ -2449,9 +2375,9 @@
 </div>
 <h2 id="has_words">Texts with words<a class="headerlink" href="#has_words" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:has_words] -->
-<div class="signature highlight"><pre><span></span><code><span class="n">has_words</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+<div class="signature highlight"><pre><span></span><code><span class="n">has_words</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
 </code></pre></div>
-<p>Checks whether a text, a <code>Doc</code> or a <code>Span</code> holds a word - a letter or a digit (<code>str.isalnum</code>): an empty text or one of whitespace, punctuation marks, symbols and characters of no class alone, such as a bullet of private use from a PDF, holds none. The words of a <a href="https://sergeyshk.github.io/anyTS/document/">document</a> follow the same rule.</p>
+<p>Checks whether a text holds a word - a letter or a digit (<code>str.isalnum</code>): an empty text or one of whitespace, punctuation marks, symbols and characters of no class alone, such as a bullet of private use from a PDF, holds none. The words of a <a href="https://sergeyshk.github.io/anyTS/document/">document</a> follow the same rule.</p>
 <table>
 <thead>
 <tr>
@@ -2463,10 +2389,10 @@
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><code>source</code></td>
-<td style="text-align: left;"><code>str</code> / <code>Doc</code> / <code>Span</code></td>
+<td style="text-align: left;"><code>text</code></td>
+<td style="text-align: left;"><code>str</code></td>
 <td style="text-align: left;">-</td>
-<td style="text-align: left;">Text, Doc or Span object</td>
+<td style="text-align: left;">Text</td>
 </tr>
 </tbody>
 </table>

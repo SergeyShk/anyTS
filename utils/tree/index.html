@@ -10,31 +10,31 @@
       
       
       
-        <link rel="canonical" href="https://sergeyshk.github.io/anyTS/migration/">
+        <link rel="canonical" href="https://sergeyshk.github.io/anyTS/utils/tree/">
       
       
-        <link rel="prev" href="../document/">
+        <link rel="prev" href="../collections/">
       
       
-        <link rel="next" href="../exceptions/">
+        <link rel="next" href="../arithmetic/">
       
       
         
       
       
-      <link rel="icon" href="../assets/images/favicon.png">
+      <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
     
     
       
-        <title>Migrating from 0.4 - anyTS</title>
+        <title>Words of the tree - anyTS</title>
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.57a0d79d.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.57a0d79d.min.css">
       
         
-        <link rel="stylesheet" href="../assets/stylesheets/palette.fb2fffe2.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.fb2fffe2.min.css">
       
       
 
@@ -53,9 +53,9 @@
       
     
     
-      <link rel="stylesheet" href="../css/extra.css">
+      <link rel="stylesheet" href="../../css/extra.css">
     
-    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#migrating-from-04" class="md-skip">
+        <a href="#words-of-the-tree" class="md-skip">
           Skip to content
         </a>
       
@@ -94,7 +94,7 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="anyTS" class="md-header__button md-logo" aria-label="anyTS" data-md-component="logo">
+    <a href="../.." title="anyTS" class="md-header__button md-logo" aria-label="anyTS" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Migrating from 0.4
+              Words of the tree
             
           </span>
         </div>
@@ -225,13 +225,11 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href=".." class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../.." class="md-tabs__link">
           
   
   
@@ -251,7 +249,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../extractors/sentences/" class="md-tabs__link">
+        <a href="../../extractors/sentences/" class="md-tabs__link">
           
   
   
@@ -271,7 +269,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../stats/stats/" class="md-tabs__link">
+        <a href="../../stats/stats/" class="md-tabs__link">
           
   
   
@@ -291,7 +289,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../corpus/keyness/" class="md-tabs__link">
+        <a href="../../corpus/keyness/" class="md-tabs__link">
           
   
   
@@ -311,7 +309,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../visualizers/zipf/" class="md-tabs__link">
+        <a href="../../visualizers/zipf/" class="md-tabs__link">
           
   
   
@@ -329,26 +327,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../components/" class="md-tabs__link">
-        
-  
-  
-    
-  
-  Components
-
-      </a>
-    </li>
-  
-
-      
-        
-  
-  
-  
-  
-    <li class="md-tabs__item">
-      <a href="../cli/" class="md-tabs__link">
+      <a href="../../cli/" class="md-tabs__link">
         
   
   
@@ -367,7 +346,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../report/" class="md-tabs__link">
+      <a href="../../report/" class="md-tabs__link">
         
   
   
@@ -386,7 +365,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../datasets/" class="md-tabs__link">
+      <a href="../../datasets/" class="md-tabs__link">
         
   
   
@@ -403,11 +382,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../utils/words/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../words/" class="md-tabs__link">
           
   
   
@@ -441,7 +422,7 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="anyTS" class="md-nav__button md-logo" aria-label="anyTS" data-md-component="logo">
+    <a href="../.." title="anyTS" class="md-nav__button md-logo" aria-label="anyTS" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -468,29 +449,24 @@
       
   
   
-    
   
   
-  
     
     
     
     
       
-        
-        
-      
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
         
           
-          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="">
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
             
   
   
@@ -508,7 +484,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_1">
             <span class="md-nav__icon md-icon"></span>
             
@@ -526,7 +502,7 @@
   
   
     <li class="md-nav__item">
-      <a href=".." class="md-nav__link">
+      <a href="../.." class="md-nav__link">
         
   
   
@@ -554,7 +530,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../installation/" class="md-nav__link">
+      <a href="../../installation/" class="md-nav__link">
         
   
   
@@ -582,7 +558,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../document/" class="md-nav__link">
+      <a href="../../document/" class="md-nav__link">
         
   
   
@@ -607,140 +583,10 @@
                 
   
   
-    
-  
-  
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Migrating from 0.4
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Migrating from 0.4
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#removed" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Removed names
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#hooks" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Class attributes and hooks
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#tree-words" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Words of the tree
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#segmentation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Sources and segmentation
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#messages" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Messages
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
   
   
     <li class="md-nav__item">
-      <a href="../exceptions/" class="md-nav__link">
+      <a href="../../exceptions/" class="md-nav__link">
         
   
   
@@ -768,7 +614,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../authors/" class="md-nav__link">
+      <a href="../../authors/" class="md-nav__link">
         
   
   
@@ -853,7 +699,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../extractors/sentences/" class="md-nav__link">
+      <a href="../../extractors/sentences/" class="md-nav__link">
         
   
   
@@ -881,7 +727,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../extractors/words/" class="md-nav__link">
+      <a href="../../extractors/words/" class="md-nav__link">
         
   
   
@@ -909,7 +755,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../extractors/char_ngrams/" class="md-nav__link">
+      <a href="../../extractors/char_ngrams/" class="md-nav__link">
         
   
   
@@ -994,7 +840,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../stats/stats/" class="md-nav__link">
+      <a href="../../stats/stats/" class="md-nav__link">
         
   
   
@@ -1022,7 +868,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../stats/diversity_stats/" class="md-nav__link">
+      <a href="../../stats/diversity_stats/" class="md-nav__link">
         
   
   
@@ -1050,7 +896,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../stats/basic_stats/" class="md-nav__link">
+      <a href="../../stats/basic_stats/" class="md-nav__link">
         
   
   
@@ -1078,7 +924,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../stats/readability_stats/" class="md-nav__link">
+      <a href="../../stats/readability_stats/" class="md-nav__link">
         
   
   
@@ -1106,7 +952,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../stats/unadapted_readability_stats/" class="md-nav__link">
+      <a href="../../stats/unadapted_readability_stats/" class="md-nav__link">
         
   
   
@@ -1134,7 +980,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../stats/cohesion_stats/" class="md-nav__link">
+      <a href="../../stats/cohesion_stats/" class="md-nav__link">
         
   
   
@@ -1162,7 +1008,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../stats/syntax_stats/" class="md-nav__link">
+      <a href="../../stats/syntax_stats/" class="md-nav__link">
         
   
   
@@ -1190,7 +1036,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../stats/lexical_stats/" class="md-nav__link">
+      <a href="../../stats/lexical_stats/" class="md-nav__link">
         
   
   
@@ -1218,7 +1064,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../stats/style_stats/" class="md-nav__link">
+      <a href="../../stats/style_stats/" class="md-nav__link">
         
   
   
@@ -1246,7 +1092,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../stats/morph_stats/" class="md-nav__link">
+      <a href="../../stats/morph_stats/" class="md-nav__link">
         
   
   
@@ -1274,7 +1120,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../stats/phon_stats/" class="md-nav__link">
+      <a href="../../stats/phon_stats/" class="md-nav__link">
         
   
   
@@ -1359,7 +1205,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../corpus/keyness/" class="md-nav__link">
+      <a href="../../corpus/keyness/" class="md-nav__link">
         
   
   
@@ -1387,7 +1233,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../corpus/collocations/" class="md-nav__link">
+      <a href="../../corpus/collocations/" class="md-nav__link">
         
   
   
@@ -1415,7 +1261,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../corpus/dispersion/" class="md-nav__link">
+      <a href="../../corpus/dispersion/" class="md-nav__link">
         
   
   
@@ -1443,7 +1289,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../corpus/stylometry/" class="md-nav__link">
+      <a href="../../corpus/stylometry/" class="md-nav__link">
         
   
   
@@ -1471,7 +1317,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../corpus/compare/" class="md-nav__link">
+      <a href="../../corpus/compare/" class="md-nav__link">
         
   
   
@@ -1499,7 +1345,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../corpus/kwic/" class="md-nav__link">
+      <a href="../../corpus/kwic/" class="md-nav__link">
         
   
   
@@ -1584,7 +1430,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../visualizers/zipf/" class="md-nav__link">
+      <a href="../../visualizers/zipf/" class="md-nav__link">
         
   
   
@@ -1612,7 +1458,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../visualizers/vocabulary/" class="md-nav__link">
+      <a href="../../visualizers/vocabulary/" class="md-nav__link">
         
   
   
@@ -1640,7 +1486,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../visualizers/verse/" class="md-nav__link">
+      <a href="../../visualizers/verse/" class="md-nav__link">
         
   
   
@@ -1668,7 +1514,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../visualizers/sentences/" class="md-nav__link">
+      <a href="../../visualizers/sentences/" class="md-nav__link">
         
   
   
@@ -1696,7 +1542,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../visualizers/fingerprinting/" class="md-nav__link">
+      <a href="../../visualizers/fingerprinting/" class="md-nav__link">
         
   
   
@@ -1724,7 +1570,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../visualizers/word_tree/" class="md-nav__link">
+      <a href="../../visualizers/word_tree/" class="md-nav__link">
         
   
   
@@ -1752,7 +1598,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../visualizers/corpus/" class="md-nav__link">
+      <a href="../../visualizers/corpus/" class="md-nav__link">
         
   
   
@@ -1780,7 +1626,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../visualizers/stylometry/" class="md-nav__link">
+      <a href="../../visualizers/stylometry/" class="md-nav__link">
         
   
   
@@ -1808,7 +1654,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../visualizers/highlight/" class="md-nav__link">
+      <a href="../../visualizers/highlight/" class="md-nav__link">
         
   
   
@@ -1843,34 +1689,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../components/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Components
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../cli/" class="md-nav__link">
+      <a href="../../cli/" class="md-nav__link">
         
   
   
@@ -1897,7 +1716,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../report/" class="md-nav__link">
+      <a href="../../report/" class="md-nav__link">
         
   
   
@@ -1924,7 +1743,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../datasets/" class="md-nav__link">
+      <a href="../../datasets/" class="md-nav__link">
         
   
   
@@ -1948,24 +1767,29 @@
       
   
   
+    
   
   
+  
     
     
     
     
-      
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" checked>
         
           
-          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="">
             
   
   
@@ -1983,8 +1807,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_10">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_9">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -2001,7 +1825,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../utils/words/" class="md-nav__link">
+      <a href="../words/" class="md-nav__link">
         
   
   
@@ -2029,7 +1853,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../utils/collections/" class="md-nav__link">
+      <a href="../collections/" class="md-nav__link">
         
   
   
@@ -2054,17 +1878,44 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../utils/spacy/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Words of the tree
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
   <span class="md-ellipsis">
     
   
-    spaCy objects
+    Words of the tree
   
 
     
@@ -2073,6 +1924,48 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#has_feature" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Morphological features
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verb-forms" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verb forms
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -2085,7 +1978,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../utils/arithmetic/" class="md-nav__link">
+      <a href="../arithmetic/" class="md-nav__link">
         
   
   
@@ -2113,7 +2006,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../utils/checks/" class="md-nav__link">
+      <a href="../checks/" class="md-nav__link">
         
   
   
@@ -2141,7 +2034,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../utils/messages/" class="md-nav__link">
+      <a href="../messages/" class="md-nav__link">
         
   
   
@@ -2169,7 +2062,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../utils/packages/" class="md-nav__link">
+      <a href="../packages/" class="md-nav__link">
         
   
   
@@ -2224,10 +2117,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#removed" class="md-nav__link">
+  <a href="#has_feature" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Removed names
+        Morphological features
       
     </span>
   </a>
@@ -2235,43 +2128,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#hooks" class="md-nav__link">
+  <a href="#verb-forms" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Class attributes and hooks
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#tree-words" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Words of the tree
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#segmentation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Sources and segmentation
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#messages" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Messages
+        Verb forms
       
     </span>
   </a>
@@ -2298,186 +2158,138 @@
   
 
 
-<h1 id="migrating-from-04">Migrating from 0.4<a class="headerlink" href="#migrating-from-04" title="Permanent link">&para;</a></h1>
-<p>Since 0.5 every source is read through a <a href="https://sergeyshk.github.io/anyTS/document/">document</a> of <a href="https://github.com/SergeyShk/anySeg">anySeg</a>: a string, a <code>Doc</code> object of <a href="https://github.com/explosion/spaCy">spaCy</a> and a <code>Document</code> give one document, and its tokens decide what a word is. The core no longer bridges a string and a <code>Doc</code>, and the hooks of a language library take the document and the words of its tree instead of spaCy objects. This page lists what code written for 0.4 changes.</p>
-<h2 id="removed">Removed names<a class="headerlink" href="#removed" title="Permanent link">&para;</a></h2>
+<h1 id="words-of-the-tree">Words of the tree<a class="headerlink" href="#words-of-the-tree" title="Permanent link">&para;</a></h1>
+<p>The morphology of the words of the <a href="https://sergeyshk.github.io/anyTS/document/#get_tree">tree of a document</a>. The functions take a <code>TreeWord</code>: another value raises <code>SourceTypeError</code>.</p>
+<h2 id="has_feature">Morphological features<a class="headerlink" href="#has_feature" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:has_feature] -->
+<div class="signature highlight"><pre><span></span><code><span class="n">has_feature</span><span class="p">(</span><span class="n">word</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+</code></pre></div>
+<p>Checks whether a word of the tree of a document carries a morphological feature with a given value: <code>has_feature(word, "VerbForm", "Fin")</code>; a feature with several values (<code>PronType=Int,Rel</code>) carries each of them.</p>
 <table>
 <thead>
 <tr>
-<th style="text-align: left;">Removed</th>
-<th style="text-align: left;">Replacement</th>
+<th style="text-align: left;">Parameter</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Default</th>
+<th style="text-align: left;">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><code>anyts.utils.add_tokenizer_rules</code></td>
-<td style="text-align: left;">the tokenizer of anySeg in a pipeline: <code>anyseg.Tokenizer.v1</code> in the config</td>
+<td style="text-align: left;"><code>word</code></td>
+<td style="text-align: left;"><code>TreeWord</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Word of the tree</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>anyts.components.start_sents_after_blank_lines</code></td>
-<td style="text-align: left;">the component <code>anyseg_sentencizer</code> of anySeg; the document of a <code>Doc</code> starts a sentence after every blank line anyway</td>
+<td style="text-align: left;"><code>field</code></td>
+<td style="text-align: left;"><code>str</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Name of the feature</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>anyts.utils.set_sent_starts</code></td>
-<td style="text-align: left;"><code>to_document(text, sentenize=...)</code>, or the sentences of <code>anyseg_sentencizer</code> in a pipeline</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>anyts.utils.joins_previous</code>, <code>iter_doc_tokens</code>, <code>iter_doc_units</code>, <code>iter_doc_words</code>, <code>split_doc_units</code></td>
-<td style="text-align: left;">the words of the document: <code>document_words(to_document(doc))</code>, <code>get_tree(...).words</code></td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>anyts.utils.find_unit_marks</code>, <code>find_unit_paragraph_starts</code></td>
-<td style="text-align: left;"><code>find_marks</code> and <code>find_paragraph_starts</code> on the text</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>anyts.utils.has_sents</code></td>
-<td style="text-align: left;"><code>doc.has_annotation("SENT_START", require_complete=True)</code></td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>anyts.utils.has_pos</code>, <code>is_word</code></td>
-<td style="text-align: left;">the columns of the document (<code>document.column("upos")</code>), <code>has_words(token.text)</code></td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>from anyts.extractors import BLANK_LINE</code></td>
-<td style="text-align: left;"><code>from anyts.utils import BLANK_LINE</code></td>
+<td style="text-align: left;"><code>value</code></td>
+<td style="text-align: left;"><code>str</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Value of the feature</td>
 </tr>
 </tbody>
 </table>
-<p>A pipeline with the tokenizer of spaCy and a parser has no replacement for the first three: the tokenizer and the sentencizer of anySeg segment the text otherwise, so the parser builds other trees and the numbers shift. A library keeps its own copies of them until it moves to the pipeline of anySeg. The tokenizer of anySeg goes into the config of the pipeline (<code>spacy.blank(lang, config={"nlp": {"tokenizer": {"@tokenizers": "anyseg.Tokenizer.v1"}}})</code>): a pipeline with one set as <code>nlp.tokenizer</code> is saved by <code>nlp.to_disk</code> without it, and <code>spacy.load</code> fails on it (<code>FileNotFoundError</code>).</p>
-<h2 id="hooks">Class attributes and hooks<a class="headerlink" href="#hooks" title="Permanent link">&para;</a></h2>
-<p>The attributes of 0.4 that the core no longer reads raise <code>ParameterError</code> (the messages <code>removed_attribute</code> and <code>removed_attribute_either</code>, and <code>removed_component_attribute</code> for a component, since 0.6) when a class that sets them is defined, since a class that kept them would give other numbers without a sign:</p>
+<!-- --8<-- [end:has_feature] -->
+
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Code</label><label for="__tabbed_1_2">Result</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyseg</span><span class="w"> </span><span class="kn">import</span> <span class="n">Document</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">anyts.document</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_tree</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">anyts.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">has_feature</span>
+
+<span class="n">document</span> <span class="o">=</span> <span class="n">Document</span><span class="o">.</span><span class="n">from_tokens</span><span class="p">(</span><span class="s2">"Who has left"</span><span class="p">,</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">8</span><span class="p">],</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">12</span><span class="p">])</span>
+<span class="n">document</span><span class="o">.</span><span class="n">set_columns</span><span class="p">(</span><span class="n">feats</span><span class="o">=</span><span class="p">[</span><span class="s2">"PronType=Int,Rel"</span><span class="p">,</span> <span class="s2">"Mood=Ind|VerbForm=Fin"</span><span class="p">,</span> <span class="s2">"VerbForm=Part"</span><span class="p">])</span>
+<span class="n">who</span><span class="p">,</span> <span class="n">has</span><span class="p">,</span> <span class="n">left</span> <span class="o">=</span> <span class="n">get_tree</span><span class="p">(</span><span class="n">document</span><span class="p">)</span><span class="o">.</span><span class="n">words</span>
+<span class="n">has_feature</span><span class="p">(</span><span class="n">has</span><span class="p">,</span> <span class="s2">"VerbForm"</span><span class="p">,</span> <span class="s2">"Fin"</span><span class="p">),</span> <span class="n">has_feature</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="s2">"VerbForm"</span><span class="p">,</span> <span class="s2">"Fin"</span><span class="p">)</span>
+<span class="n">has_feature</span><span class="p">(</span><span class="n">who</span><span class="p">,</span> <span class="s2">"PronType"</span><span class="p">,</span> <span class="s2">"Rel"</span><span class="p">)</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>(True, False)
+True
+</code></pre></div>
+</div>
+</div>
+</div>
+<h2 id="verb-forms">Verb forms<a class="headerlink" href="#verb-forms" title="Permanent link">&para;</a></h2>
+<!-- --8<-- [start:is_finite_verb] -->
+<div class="signature highlight"><pre><span></span><code><span class="n">is_finite_verb</span><span class="p">(</span><span class="n">word</span><span class="p">)</span>
+</code></pre></div>
+<p>Checks whether a word of the tree of a document is a finite verb: the part of speech <code>VERB</code> with <code>VerbForm=Fin</code>, so a finite auxiliary (<code>AUX</code>) is not one.</p>
 <table>
 <thead>
 <tr>
-<th style="text-align: left;">Removed</th>
-<th style="text-align: left;">Classes</th>
-<th style="text-align: left;">Replacement</th>
+<th style="text-align: left;">Parameter</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Default</th>
+<th style="text-align: left;">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><code>words_extractor_class</code></td>
-<td style="text-align: left;"><code>BasicStats</code>, <code>StyleStats</code>, <code>PhonStats</code></td>
-<td style="text-align: left;"><code>parse</code> to segment a string in the language, <code>doc_words</code> to normalize the forms of its words</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>sents_extractor_class</code></td>
-<td style="text-align: left;"><code>BasicStats</code>, <code>CohesionStats</code></td>
-<td style="text-align: left;"><code>parse</code></td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>join_hyphens</code></td>
-<td style="text-align: left;"><code>BasicStats</code>, <code>StyleStats</code>, <code>PhonStats</code>, <code>SyntaxStats</code>, <code>CohesionStats</code>, <code>LexicalStatsComponent</code></td>
-<td style="text-align: left;">the tokens of the document: <code>parse</code> of the class, or the tokenizer of the pipeline</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>doc_units</code></td>
-<td style="text-align: left;"><code>CohesionStats</code></td>
-<td style="text-align: left;"><code>analyze</code>, <code>word_info</code></td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>iter_words</code>, <code>iter_sents</code></td>
-<td style="text-align: left;"><code>HighlightedText</code></td>
-<td style="text-align: left;"><code>parse</code>, <code>doc_words</code></td>
+<td style="text-align: left;"><code>word</code></td>
+<td style="text-align: left;"><code>TreeWord</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Word of the tree</td>
 </tr>
 </tbody>
 </table>
-<p>The parameter <code>join_hyphens</code> is gone from <code>kwic</code>, <code>sentence_lengths</code>, <code>sentence_lengths_plot</code> and the functions of <code>anyts.syntax_stats</code> as well. The hooks that remain take other arguments:</p>
-<ul>
-<li><code>doc_words(document)</code> of <code>StyleStats</code>, <code>PhonStats</code> and <code>HighlightedText</code> takes a <code>Document</code> instead of a <code>Doc</code>; <code>get_doc_words</code> and <code>iter_doc_sents</code> too.</li>
-<li><code>word_info(word)</code> of <code>CohesionStats</code> takes a <code>TreeWord</code> instead of a list of tokens. The hooks of <code>SyntaxStats</code> and the functions of <code>anyts.syntax_stats</code> take a <code>TreeWord</code> instead of a <code>Token</code>, and <code>dependency_triples(words)</code> a sequence of them; so do <code>has_feature</code>, <code>is_finite_verb</code> and <code>is_infinitive</code> of <code>anyts.utils</code>, and <code>tokens_span</code> and <code>find_split_predicate_highlights</code> of <code>anyts.visualizers.highlight</code>. <code>SyntaxStats.parse</code> returns a <code>Document</code>, such as <code>to_document</code> of a parsed <code>Doc</code>, and <code>SyntaxStats.sents</code> holds <code>TreeWord</code> objects.</li>
-<li>The <code>analyze</code> of <code>MorphStats</code>, <code>LexicalStats</code> and <code>CohesionStats</code> gets the source as given, a <code>Document</code> too, and its default reads the document of <code>parse</code>, so a library that annotated a string in its <code>analyze</code> moves that into <code>parse</code>, and an <code>analyze</code> of its own reads the document by <code>self.parse(source)</code>. <code>CohesionStats</code> checks the parts of speech and the lemmas by <code>requires_pos</code> and <code>requires_lemmas</code>, which a library whose <code>word_info</code> annotates the words itself turns off.</li>
-<li><code>find(document)</code> of <code>HighlightedText</code> gets the document instead of a <code>Doc</code> or <code>None</code>, and <code>layer_annotations</code> names the columns of the document: <code>DEP</code> - <code>deprel</code>, <code>POS</code> - <code>upos</code>, <code>LEMMA</code> - <code>lemma</code>, <code>MORPH</code> - <code>feats</code>, <code>TAG</code> - <code>xpos</code>; the named entities are gone. <code>annotation_names</code> takes the same columns as keys (<code>head</code> and <code>deprel</code> for the parse), and the keys of 0.4 are not read.</li>
-<li><code>lemmatize</code> of <code>kwic</code> gets the words of Universal Dependencies of a token (<code>Word</code> of anySeg with <code>form</code>, <code>lemma</code>, <code>upos</code> and <code>feats</code>, the string of CoNLL-U such as <code>Case=Nom|Number=Sing</code>) instead of spaCy tokens, and the third item of a <code>tokenize</code> triple is not read.</li>
-<li><code>get_stats(flat=True)</code> takes <code>flat</code> as a keyword only.</li>
-</ul>
-<h2 id="tree-words">Words of the tree<a class="headerlink" href="#tree-words" title="Permanent link">&para;</a></h2>
-<p>The words of the tree of a document (<code>get_tree</code>) are <code>TreeWord</code> objects in place of spaCy tokens:</p>
+<!-- --8<-- [end:is_finite_verb] -->
+
+<!-- --8<-- [start:is_infinitive] -->
+<div class="signature highlight"><pre><span></span><code><span class="n">is_infinitive</span><span class="p">(</span><span class="n">word</span><span class="p">)</span>
+</code></pre></div>
+<p>Checks whether a word of the tree of a document is an infinitive, <code>VerbForm=Inf</code> whatever its part of speech.</p>
 <table>
 <thead>
 <tr>
-<th style="text-align: left;"><code>Token</code></th>
-<th style="text-align: left;"><code>TreeWord</code></th>
+<th style="text-align: left;">Parameter</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Default</th>
+<th style="text-align: left;">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><code>text</code>, <code>lower_</code></td>
-<td style="text-align: left;"><code>form</code>, <code>form.lower()</code></td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>lemma_</code>, <code>pos_</code>, <code>tag_</code></td>
-<td style="text-align: left;"><code>lemma</code>, <code>upos</code>, <code>xpos</code>: <code>None</code> without a value, not an empty string</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>dep_</code></td>
-<td style="text-align: left;"><code>deprel</code>; the root of a spaCy parse is <code>root</code>, not <code>ROOT</code></td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>morph.get(name)</code></td>
-<td style="text-align: left;"><code>feats.get(name)</code>: the values joined by commas (<code>Int,Rel</code>), <code>None</code> without the feature; <code>has_feature(word, name, value)</code> checks one value, and <code>feats</code> is not to be changed</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>morph.to_dict()</code>, <code>str(morph)</code></td>
-<td style="text-align: left;"><code>feats</code>, the column <code>feats</code> of the document (<code>Case=Nom|PronType=Int,Rel</code>)</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>has_morph()</code></td>
-<td style="text-align: left;">none for a word: one annotated with no features and one never annotated both have empty <code>feats</code>; <code>bool(feats)</code> says whether a word has features, <code>doc.has_annotation("MORPH")</code> whether the <code>Doc</code> was annotated</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>doc</code>, <code>i</code>, <code>doc[i]</code></td>
-<td style="text-align: left;"><code>tree</code>, <code>index</code>, <code>tree.words[i]</code>: the positions of the words differ from <code>Token.i</code> where a <code>Doc</code> has tokens of whitespace or of invisible separators alone, or multiword tokens whose words carry columns, and <code>tree.word_at(token.idx, token.idx + len(token))</code> gives the word of a token</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>nbor(n)</code></td>
-<td style="text-align: left;"><code>tree.words[word.index + n]</code></td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>idx</code></td>
-<td style="text-align: left;"><code>start</code>, after <code>idx</code> where the token starts with a separator the document leaves out, such as a byte order mark; <code>end</code> is the end of the token, shared by the words of a multiword token</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>head</code></td>
-<td style="text-align: left;"><code>head</code>, <code>None</code> at the head of a sentence instead of the token itself</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>children</code>, <code>subtree</code></td>
-<td style="text-align: left;"><code>children</code> (punctuation marks included), <code>get_subtree(word)</code> of <code>anyts.syntax_stats</code></td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>left_edge</code>, <code>right_edge</code></td>
-<td style="text-align: left;"><code>get_subtree(word)[0]</code>, <code>get_subtree(word)[-1]</code></td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>sent</code>, <code>sent.start</code>, <code>sent.end</code>, <code>is_sent_start</code></td>
-<td style="text-align: left;"><code>tree.sentences[word.sentence]</code>, its first and last word; <code>sentence</code> is its position</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>is_punct</code></td>
-<td style="text-align: left;"><code>is_punctuation(word.form)</code> of <code>anyts.utils</code>, symbols included</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>is_space</code>, <code>whitespace_</code></td>
-<td style="text-align: left;">none: whitespace is no word of the tree, and the text between two words is <code>tree.text[first.end:second.start]</code></td>
+<td style="text-align: left;"><code>word</code></td>
+<td style="text-align: left;"><code>TreeWord</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Word of the tree</td>
 </tr>
 </tbody>
 </table>
-<h2 id="segmentation">Sources and segmentation<a class="headerlink" href="#segmentation" title="Permanent link">&para;</a></h2>
-<ul>
-<li>A blank line ends a sentence of every source, a <code>Doc</code> with its own sentences included, so a sentence of a parser over a blank line is split: of the words that hung over the line, the first heads the new sentence and the others hang on it with <code>dep</code>. A blank line is that of anySeg: the vertical tab and the form feed break a line, and a line of separators alone is blank.</li>
-<li>The tokens of the document decide what a word is: the tokenizer of spaCy splits <code>well-known</code> into three tokens in English or Russian and the words stay split, and so do the default tokens of a string; the tokenizer of anySeg keeps it whole. A multiword token of anySeg (<code>token._.anyseg_words</code>) gives its words of Universal Dependencies to <code>MorphStats</code>, <code>LexicalStats</code> and the tree; without columns of their own they are one word with the columns of the token.</li>
-<li><code>SyntaxStats</code>, <code>CohesionStats</code> and <code>MorphStats</code> take a string, which a library annotates in <code>parse</code>: with the default <code>parse</code> a string raises <code>SourceError</code> (<code>no_parse</code>, <code>no_pos</code>) instead of <code>SourceTypeError</code>. <code>LexicalStats</code> can be used without a subclass, given a dictionary.</li>
-<li><code>to_document</code> returns the same <code>Document</code> for an unchanged <code>Doc</code> in a thread, and <code>get_tree</code> the same tree: neither is to be changed, and code that needs other columns builds a document of its own.</li>
-</ul>
-<h2 id="messages">Messages<a class="headerlink" href="#messages" title="Permanent link">&para;</a></h2>
-<p>A library that merges its messages over the defaults (<code>{**MESSAGES, **own}</code>) gets the new keys in English until it translates them, and drops the removed ones, which <code>check_messages</code> refuses:</p>
-<ul>
-<li>removed: <code>hook_doc</code>, <code>hook_spans</code>;</li>
-<li>new: <code>bool_param</code>, <code>integer_param</code>, <code>number_param</code>, <code>words_param</code>, <code>connector_words</code>, <code>connector_sent_index</code>, <code>connector_pos_list</code>, <code>connector_breaks_type</code>, <code>connector_blocked_type</code>, <code>document_tokens</code>, <code>hook_document</code>, <code>hook_bounds</code>, <code>hook_words</code>, <code>hook_word_pairs</code>, <code>hook_string</code>, <code>layer_columns</code>, <code>matcher_class</code>, <code>mark_length</code>, <code>negative_words</code>, <code>empty_extension</code>, <code>removed_attribute</code>;</li>
-<li>changed: <code>layer_annotations</code> speaks of a document.</li>
-</ul>
-<p>The errors of the parameters of a wrong type name the parameter as in the signature under a generic key: <code>The top_n must be an integer, not str</code> instead of <code>The number of the most frequent words must be an integer, not str</code>.</p>
+<!-- --8<-- [end:is_infinitive] -->
+
+<div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Code</label><label for="__tabbed_2_2">Result</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyseg</span><span class="w"> </span><span class="kn">import</span> <span class="n">Document</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">anyts.document</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_tree</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">anyts.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_finite_verb</span><span class="p">,</span> <span class="n">is_infinitive</span>
+
+<span class="n">document</span> <span class="o">=</span> <span class="n">Document</span><span class="o">.</span><span class="n">from_tokens</span><span class="p">(</span><span class="s2">"She has to go"</span><span class="p">,</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">11</span><span class="p">],</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">13</span><span class="p">])</span>
+<span class="n">document</span><span class="o">.</span><span class="n">set_columns</span><span class="p">(</span>
+    <span class="n">upos</span><span class="o">=</span><span class="p">[</span><span class="s2">"PRON"</span><span class="p">,</span> <span class="s2">"VERB"</span><span class="p">,</span> <span class="s2">"PART"</span><span class="p">,</span> <span class="s2">"VERB"</span><span class="p">],</span> <span class="n">feats</span><span class="o">=</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="s2">"VerbForm=Fin"</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">"VerbForm=Inf"</span><span class="p">]</span>
+<span class="p">)</span>
+<span class="n">words</span> <span class="o">=</span> <span class="n">get_tree</span><span class="p">(</span><span class="n">document</span><span class="p">)</span><span class="o">.</span><span class="n">words</span>
+<span class="p">[(</span><span class="n">word</span><span class="o">.</span><span class="n">form</span><span class="p">,</span> <span class="n">is_finite_verb</span><span class="p">(</span><span class="n">word</span><span class="p">),</span> <span class="n">is_infinitive</span><span class="p">(</span><span class="n">word</span><span class="p">))</span> <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">words</span><span class="p">]</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>[('She', False, False), ('has', True, False), ('to', False, False), ('go', False, True)]
+</code></pre></div>
+</div>
+</div>
+</div>
 
 
 
@@ -2560,12 +2372,12 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.top", "content.code.copy", "search.highlight", "search.suggest"], "search": "../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.top", "content.code.copy", "search.highlight", "search.suggest"], "search": "../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      <script src="../../assets/javascripts/bundle.a5f9d56c.min.js"></script>
       
-        <script src="../js/config.js"></script>
+        <script src="../../js/config.js"></script>
       
         <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
       

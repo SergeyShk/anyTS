@@ -329,25 +329,6 @@
   
   
     <li class="md-tabs__item">
-      <a href="../../components/" class="md-tabs__link">
-        
-  
-  
-    
-  
-  Components
-
-      </a>
-    </li>
-  
-
-      
-        
-  
-  
-  
-  
-    <li class="md-tabs__item">
       <a href="../../cli/" class="md-tabs__link">
         
   
@@ -585,34 +566,6 @@
     
   
     Document model
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../migration/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Migrating from 0.4
   
 
     
@@ -1854,33 +1807,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../components/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Components
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../cli/" class="md-nav__link">
         
   
@@ -1973,10 +1899,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
         
           
-          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
             
   
   
@@ -1994,8 +1920,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_10">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -2068,14 +1994,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../../utils/spacy/" class="md-nav__link">
+      <a href="../../utils/tree/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    spaCy objects
+    Words of the tree
   
 
     
@@ -2383,13 +2309,6 @@
 </div>
 <!-- --8<-- [end:SentsExtractor-parameters] -->
 
-<!-- --8<-- [start:SentsExtractor-pipeline] -->
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>A spaCy pipeline can be passed as the tokenizer: <code>tokenizer=lambda text: (sent.text for sent in nlp(text).sents)</code>.</p>
-</div>
-<!-- --8<-- [end:SentsExtractor-pipeline] -->
-
 <h2 id="methods">Methods<a class="headerlink" href="#methods" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:SentsExtractor-extract] -->
 <p><code>extract(text)</code> extracts sentences from a text.</p>
@@ -2459,7 +2378,7 @@
 </tr>
 </tbody>
 </table>
-<p>A text that is not a string raises <code>SourceTypeError</code>, and so does an <code>iter_sents</code> that cannot be called or does not give the sentences of a part in order, as triples of integer bounds within it and a string.</p>
+<p>A text that is not a string raises <code>SourceTypeError</code>, and so does an <code>iter_sents</code> that cannot be called or does not give the sentences of a part in order, as triples or spans of integer bounds within it and a string.</p>
 <!-- --8<-- [end:iter_part_sents] -->
 
 <div class="tabbed-set tabbed-alternate" data-tabs="3:2"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Code</label><label for="__tabbed_3_2">Result</label></div>

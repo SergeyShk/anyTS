@@ -329,25 +329,6 @@
   
   
     <li class="md-tabs__item">
-      <a href="../../components/" class="md-tabs__link">
-        
-  
-  
-    
-  
-  Components
-
-      </a>
-    </li>
-  
-
-      
-        
-  
-  
-  
-  
-    <li class="md-tabs__item">
       <a href="../../cli/" class="md-tabs__link">
         
   
@@ -585,34 +566,6 @@
     
   
     Document model
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../migration/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Migrating from 0.4
   
 
     
@@ -1948,33 +1901,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../components/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Components
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../cli/" class="md-nav__link">
         
   
@@ -2067,10 +1993,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
         
           
-          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
             
   
   
@@ -2088,8 +2014,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_10">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -2162,14 +2088,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../../utils/spacy/" class="md-nav__link">
+      <a href="../../utils/tree/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    spaCy objects
+    Words of the tree
   
 
     
@@ -2512,10 +2438,10 @@
 <div class="signature highlight"><pre><span></span><code><span class="n">CohesionStats</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">sents_extractor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">connectors</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">blank_lines</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 </code></pre></div>
 <!-- --8<-- [start:CohesionStats] -->
-<p>The cohesion statistics of a text in the manner of Coh-Metrix: the overlap of the sentences, the givenness, the temporal cohesion and the connectors of a dictionary. The sentences are compared by lemmas. The data source is a text, a <code>Doc</code> object of <a href="https://github.com/explosion/spaCy">spaCy</a> or a <code>Document</code> of <a href="https://github.com/SergeyShk/anySeg">anySeg</a> with parts of speech and lemmas; a language library annotates a string in its <code>parse</code>. The words are those of Universal Dependencies of its <a href="https://sergeyshk.github.io/anyTS/document/#get_tree">document</a> (<code>get_tree</code>) with a letter or a digit, split into sentences by the document, or by the sentence extractor over its text when one is given. The words of a connector of several words (<em>por lo tanto</em>, <em>es decir</em>) count as the connector alone: they are no nouns, pronouns or content words, its anaphors included (<em>eso</em> of <em>por eso</em>), and give no tense, mood or aspect.</p>
+<p>The cohesion statistics of a text in the manner of Coh-Metrix: the overlap of the sentences, the givenness, the temporal cohesion and the connectors of a dictionary. The sentences are compared by lemmas. The data source is a text or a <code>Document</code> of <a href="https://github.com/SergeyShk/anySeg">anySeg</a> with parts of speech and lemmas; a language library annotates a string in its <code>parse</code>. The words are those of Universal Dependencies of its <a href="https://sergeyshk.github.io/anyTS/document/#get_tree">document</a> (<code>get_tree</code>) with a letter or a digit, split into sentences by the document, or by the sentence extractor over its text when one is given. The words of a connector of several words (<em>por lo tanto</em>, <em>es decir</em>) count as the connector alone: they are no nouns, pronouns or content words, its anaphors included (<em>eso</em> of <em>por eso</em>), and give no tense, mood or aspect.</p>
 <p>Raises:</p>
 <ul>
-<li><code>SourceTypeError</code> - an extractor of another type, a source that is neither a string, a <code>Doc</code> nor a <code>Document</code>, a <code>parse</code> that returns no <code>Document</code>, connectors that are not a dictionary of phrases and pairs of strings;</li>
+<li><code>SourceTypeError</code> - an extractor of another type, a source that is neither a string nor a <code>Document</code>, a <code>parse</code> that returns no <code>Document</code>, connectors that are not a dictionary of phrases and pairs of strings;</li>
 <li><code>SourceError</code> - a source without words, or without parts of speech or lemmas while <code>requires_pos</code> or <code>requires_lemmas</code> is set;</li>
 <li><code>ParameterError</code> - an unknown class or kind of a connector, a <code>blank_lines</code> that is not a <code>bool</code>.</li>
 </ul>
@@ -2524,10 +2450,8 @@
 <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Code</label><label for="__tabbed_1_2">Result</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">spacy</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">spacy.tokens</span><span class="w"> </span><span class="kn">import</span> <span class="n">Doc</span>
-
-<span class="kn">from</span><span class="w"> </span><span class="nn">anyts.cohesion_stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">CohesionStats</span>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts.cohesion_stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">CohesionStats</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">anyts.document</span><span class="w"> </span><span class="kn">import</span> <span class="n">to_document</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">English</span><span class="p">(</span><span class="n">CohesionStats</span><span class="p">):</span>
@@ -2536,17 +2460,14 @@
         <span class="k">return</span> <span class="p">{</span><span class="s2">"however"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"adversative"</span><span class="p">,</span> <span class="s2">"secondary"</span><span class="p">)}</span>
 
 
-<span class="c1"># The cat slept. However, the cat woke.</span>
-<span class="n">doc</span> <span class="o">=</span> <span class="n">Doc</span><span class="p">(</span>
-    <span class="n">spacy</span><span class="o">.</span><span class="n">blank</span><span class="p">(</span><span class="s2">"en"</span><span class="p">)</span><span class="o">.</span><span class="n">vocab</span><span class="p">,</span>
-    <span class="n">words</span><span class="o">=</span><span class="p">[</span><span class="s2">"The"</span><span class="p">,</span> <span class="s2">"cat"</span><span class="p">,</span> <span class="s2">"slept"</span><span class="p">,</span> <span class="s2">"."</span><span class="p">,</span> <span class="s2">"However"</span><span class="p">,</span> <span class="s2">","</span><span class="p">,</span> <span class="s2">"the"</span><span class="p">,</span> <span class="s2">"cat"</span><span class="p">,</span> <span class="s2">"woke"</span><span class="p">,</span> <span class="s2">"."</span><span class="p">],</span>
-    <span class="n">spaces</span><span class="o">=</span><span class="p">[</span><span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">],</span>
-    <span class="n">pos</span><span class="o">=</span><span class="p">[</span><span class="s2">"DET"</span><span class="p">,</span> <span class="s2">"NOUN"</span><span class="p">,</span> <span class="s2">"VERB"</span><span class="p">,</span> <span class="s2">"PUNCT"</span><span class="p">,</span> <span class="s2">"ADV"</span><span class="p">,</span> <span class="s2">"PUNCT"</span><span class="p">,</span> <span class="s2">"DET"</span><span class="p">,</span> <span class="s2">"NOUN"</span><span class="p">,</span> <span class="s2">"VERB"</span><span class="p">,</span> <span class="s2">"PUNCT"</span><span class="p">],</span>
-    <span class="n">lemmas</span><span class="o">=</span><span class="p">[</span><span class="s2">"the"</span><span class="p">,</span> <span class="s2">"cat"</span><span class="p">,</span> <span class="s2">"sleep"</span><span class="p">,</span> <span class="s2">"."</span><span class="p">,</span> <span class="s2">"however"</span><span class="p">,</span> <span class="s2">","</span><span class="p">,</span> <span class="s2">"the"</span><span class="p">,</span> <span class="s2">"cat"</span><span class="p">,</span> <span class="s2">"wake"</span><span class="p">,</span> <span class="s2">"."</span><span class="p">],</span>
-    <span class="n">morphs</span><span class="o">=</span><span class="p">[</span><span class="s2">""</span><span class="p">,</span> <span class="s2">""</span><span class="p">,</span> <span class="s2">"Aspect=Perf|Tense=Past"</span><span class="p">,</span> <span class="s2">""</span><span class="p">,</span> <span class="s2">""</span><span class="p">,</span> <span class="s2">""</span><span class="p">,</span> <span class="s2">""</span><span class="p">,</span> <span class="s2">""</span><span class="p">,</span> <span class="s2">"Aspect=Perf|Tense=Past"</span><span class="p">,</span> <span class="s2">""</span><span class="p">],</span>
-    <span class="n">sent_starts</span><span class="o">=</span><span class="p">[</span><span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">],</span>
+<span class="n">document</span> <span class="o">=</span> <span class="n">to_document</span><span class="p">(</span><span class="s2">"The cat slept. However, the cat woke."</span><span class="p">)</span>
+<span class="n">past</span> <span class="o">=</span> <span class="s2">"Aspect=Perf|Tense=Past"</span>
+<span class="n">document</span><span class="o">.</span><span class="n">set_columns</span><span class="p">(</span>
+    <span class="n">upos</span><span class="o">=</span><span class="p">[</span><span class="s2">"DET"</span><span class="p">,</span> <span class="s2">"NOUN"</span><span class="p">,</span> <span class="s2">"VERB"</span><span class="p">,</span> <span class="s2">"PUNCT"</span><span class="p">,</span> <span class="s2">"ADV"</span><span class="p">,</span> <span class="s2">"PUNCT"</span><span class="p">,</span> <span class="s2">"DET"</span><span class="p">,</span> <span class="s2">"NOUN"</span><span class="p">,</span> <span class="s2">"VERB"</span><span class="p">,</span> <span class="s2">"PUNCT"</span><span class="p">],</span>
+    <span class="n">lemma</span><span class="o">=</span><span class="p">[</span><span class="s2">"the"</span><span class="p">,</span> <span class="s2">"cat"</span><span class="p">,</span> <span class="s2">"sleep"</span><span class="p">,</span> <span class="s2">"."</span><span class="p">,</span> <span class="s2">"however"</span><span class="p">,</span> <span class="s2">","</span><span class="p">,</span> <span class="s2">"the"</span><span class="p">,</span> <span class="s2">"cat"</span><span class="p">,</span> <span class="s2">"wake"</span><span class="p">,</span> <span class="s2">"."</span><span class="p">],</span>
+    <span class="n">feats</span><span class="o">=</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">past</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">past</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span>
 <span class="p">)</span>
-<span class="n">stats</span> <span class="o">=</span> <span class="n">English</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span>
+<span class="n">stats</span> <span class="o">=</span> <span class="n">English</span><span class="p">(</span><span class="n">document</span><span class="p">)</span>
 <span class="n">stats</span><span class="o">.</span><span class="n">print_stats</span><span class="p">()</span>
 </code></pre></div>
 </div>
@@ -2604,7 +2525,7 @@ Secondary connectors per 1000 words                                |  142.86
 <tbody>
 <tr>
 <td style="text-align: left;"><code>source</code></td>
-<td style="text-align: left;"><code>str</code> / <code>Doc</code> / <code>Document</code></td>
+<td style="text-align: left;"><code>str</code> / <code>Document</code></td>
 <td style="text-align: left;">-</td>
 <td style="text-align: left;">Data source with the parts of speech and the lemmas, a text that <code>parse</code> annotates, or what <code>analyze</code> reads</td>
 </tr>
@@ -3013,7 +2934,7 @@ Secondary connectors per 1000 words                                |  142.86
 </tr>
 </tbody>
 </table>
-<p>Segments that are a string, a <code>Doc</code>, an iterator or a segment that is not a list of strings raise <code>SourceTypeError</code>, a span that is not an integer above 0 <code>ParameterError</code>.</p>
+<p>Segments that are a string, an iterator or a segment that is not a list of strings raise <code>SourceTypeError</code>, a span that is not an integer above 0 <code>ParameterError</code>.</p>
 <!-- --8<-- [end:calc_forward_overlap] -->
 <div class="tabbed-set tabbed-alternate" data-tabs="3:2"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Code</label><label for="__tabbed_3_2">Result</label></div>
 <div class="tabbed-content">
@@ -3131,7 +3052,7 @@ Secondary connectors per 1000 words                                |  142.86
 <!-- --8<-- [end:CohesionStats-connectors] -->
 </div>
 <!-- --8<-- [start:cohesion-checks] -->
-<p>A list of sentences that is a string, a <code>Doc</code>, an iterator, a set or a table raises <code>SourceTypeError</code>, and so does a sentence that is not a list of strings (<code>check_words</code>), such as a list of spaCy tokens. The overlaps (<code>calc_overlap</code>, <code>calc_proportional_overlap</code>, <code>calc_overlaps</code>) take a sentence as a set too; <code>count_given</code> and <code>calc_repetition</code> count the words in order and refuse a set.</p>
+<p>A list of sentences that is a string, an iterator, a set or a table raises <code>SourceTypeError</code>, and so does a sentence that is not a list of strings (<code>check_words</code>). The overlaps (<code>calc_overlap</code>, <code>calc_proportional_overlap</code>, <code>calc_overlaps</code>) take a sentence as a set too; <code>count_given</code> and <code>calc_repetition</code> count the words in order and refuse a set.</p>
 <!-- --8<-- [end:cohesion-checks] -->
 
 <div class="tabbed-set tabbed-alternate" data-tabs="4:2"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><input id="__tabbed_4_2" name="__tabbed_4" type="radio" /><div class="tabbed-labels"><label for="__tabbed_4_1">Code</label><label for="__tabbed_4_2">Result</label></div>
@@ -3256,7 +3177,7 @@ Secondary connectors per 1000 words                                |  142.86
 </tr>
 </tbody>
 </table>
-<p>Words that are not a list of strings and parts of speech that are not a list of strings and <code>None</code> (the tags <code>token.pos_</code> of spaCy, not the numbers <code>token.pos</code>) and positions that are not a collection raise <code>SourceTypeError</code>, a number of the sentence or a position that is not an integer, a position of a mark that is not that of a word after the first, a blocked position that is not that of a word and parts of speech not as many as the words <code>ParameterError</code>.</p>
+<p>Words that are not a list of strings and parts of speech that are not a list of strings and <code>None</code> and positions that are not a collection raise <code>SourceTypeError</code>, a number of the sentence or a position that is not an integer, a position of a mark that is not that of a word after the first, a blocked position that is not that of a word and parts of speech not as many as the words <code>ParameterError</code>.</p>
 <!-- --8<-- [end:ConnectorMatcher-find] -->
 
 <div class="tabbed-set tabbed-alternate" data-tabs="6:2"><input checked="checked" id="__tabbed_6_1" name="__tabbed_6" type="radio" /><input id="__tabbed_6_2" name="__tabbed_6" type="radio" /><div class="tabbed-labels"><label for="__tabbed_6_1">Code</label><label for="__tabbed_6_2">Result</label></div>

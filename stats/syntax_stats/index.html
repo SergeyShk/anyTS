@@ -329,25 +329,6 @@
   
   
     <li class="md-tabs__item">
-      <a href="../../components/" class="md-tabs__link">
-        
-  
-  
-    
-  
-  Components
-
-      </a>
-    </li>
-  
-
-      
-        
-  
-  
-  
-  
-    <li class="md-tabs__item">
       <a href="../../cli/" class="md-tabs__link">
         
   
@@ -585,34 +566,6 @@
     
   
     Document model
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../migration/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Migrating from 0.4
   
 
     
@@ -2124,33 +2077,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../components/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Components
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../cli/" class="md-nav__link">
         
   
@@ -2243,10 +2169,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
         
           
-          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
             
   
   
@@ -2264,8 +2190,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_10">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -2338,14 +2264,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../../utils/spacy/" class="md-nav__link">
+      <a href="../../utils/tree/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    spaCy objects
+    Words of the tree
   
 
     
@@ -2864,10 +2790,10 @@
 <div class="signature highlight"><pre><span></span><code><span class="n">SyntaxStats</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
 </code></pre></div>
 <!-- --8<-- [start:SyntaxStats] -->
-<p>The syntactic statistics of a text by its dependency tree (<a href="https://dialogue-conf.org/media/4302/ivanovvv.pdf">Ivanov, Solnyshkina and Solovyev 2018</a>): the measures of the tree and of the syntactic constructions. The data source is a text, a <code>Doc</code> object of <a href="https://github.com/explosion/spaCy">spaCy</a> or a <code>Document</code> of <a href="https://github.com/SergeyShk/anySeg">anySeg</a> with a dependency parse and parts of speech; a language library parses a string in its <code>parse</code>. The tree is that of its <a href="https://sergeyshk.github.io/anyTS/document/#get_tree">document</a> (<code>get_tree</code>), and its nodes are the words of Universal Dependencies of the document with a letter or a digit: punctuation marks and symbols are none, and the tokens of the document decide what a word is. The distances are counted in positions of words. The units of L2SCA, the prepositional chains and the similarity of sentences are computed on first use, so a subclass whose <code>stats_desc</code> does not name them does not pay for them.</p>
+<p>The syntactic statistics of a text by its dependency tree (<a href="https://dialogue-conf.org/media/4302/ivanovvv.pdf">Ivanov, Solnyshkina and Solovyev 2018</a>): the measures of the tree and of the syntactic constructions. The data source is a text or a <code>Document</code> of <a href="https://github.com/SergeyShk/anySeg">anySeg</a> with a dependency parse and parts of speech; a language library parses a string in its <code>parse</code>. The tree is that of its <a href="https://sergeyshk.github.io/anyTS/document/#get_tree">document</a> (<code>get_tree</code>), and its nodes are the words of Universal Dependencies of the document with a letter or a digit: punctuation marks and symbols are none, and the tokens of the document decide what a word is. The distances are counted in positions of words. The units of L2SCA, the prepositional chains and the similarity of sentences are computed on first use, so a subclass whose <code>stats_desc</code> does not name them does not pay for them.</p>
 <p>Raises:</p>
 <ul>
-<li><code>SourceTypeError</code> - a source that is neither a string, a <code>Doc</code> nor a <code>Document</code>, a <code>parse</code> that returns no <code>Document</code>, a <code>find_split_predicates</code> that returns no pairs of <code>TreeWord</code> objects;</li>
+<li><code>SourceTypeError</code> - a source that is neither a string nor a <code>Document</code>, a <code>parse</code> that returns no <code>Document</code>, a <code>find_split_predicates</code> that returns no pairs of <code>TreeWord</code> objects;</li>
 <li><code>SourceError</code> - a source without a dependency parse, without parts of speech, without lemmas when the class requires them, or without words.</li>
 </ul>
 <!-- --8<-- [end:SyntaxStats] -->
@@ -2875,21 +2801,18 @@
 <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Code</label><label for="__tabbed_1_2">Result</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">spacy</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">spacy.tokens</span><span class="w"> </span><span class="kn">import</span> <span class="n">Doc</span>
-
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts.document</span><span class="w"> </span><span class="kn">import</span> <span class="n">to_document</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">anyts.syntax_stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">SyntaxStats</span>
 
-<span class="c1"># She said that the house was not built by him.</span>
-<span class="n">doc</span> <span class="o">=</span> <span class="n">Doc</span><span class="p">(</span>
-    <span class="n">spacy</span><span class="o">.</span><span class="n">blank</span><span class="p">(</span><span class="s2">"en"</span><span class="p">)</span><span class="o">.</span><span class="n">vocab</span><span class="p">,</span>
-    <span class="n">words</span><span class="o">=</span><span class="s2">"She said that the house was not built by him ."</span><span class="o">.</span><span class="n">split</span><span class="p">(),</span>
-    <span class="n">heads</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
-    <span class="n">deps</span><span class="o">=</span><span class="s2">"nsubj ROOT mark det nsubj:pass aux:pass advmod ccomp case obl:agent punct"</span><span class="o">.</span><span class="n">split</span><span class="p">(),</span>
-    <span class="n">pos</span><span class="o">=</span><span class="s2">"PRON VERB SCONJ DET NOUN AUX PART VERB ADP PRON PUNCT"</span><span class="o">.</span><span class="n">split</span><span class="p">(),</span>
-    <span class="n">morphs</span><span class="o">=</span><span class="s2">"_ VerbForm=Fin _ _ _ VerbForm=Fin Polarity=Neg VerbForm=Part|Voice=Pass _ _ _"</span><span class="o">.</span><span class="n">split</span><span class="p">(),</span>
+<span class="n">document</span> <span class="o">=</span> <span class="n">to_document</span><span class="p">(</span><span class="s2">"She said that the house was not built by him."</span><span class="p">)</span>
+<span class="n">fin</span><span class="p">,</span> <span class="n">part</span> <span class="o">=</span> <span class="s2">"VerbForm=Fin"</span><span class="p">,</span> <span class="s2">"VerbForm=Part|Voice=Pass"</span>
+<span class="n">document</span><span class="o">.</span><span class="n">set_columns</span><span class="p">(</span>
+    <span class="n">upos</span><span class="o">=</span><span class="s2">"PRON VERB SCONJ DET NOUN AUX PART VERB ADP PRON PUNCT"</span><span class="o">.</span><span class="n">split</span><span class="p">(),</span>
+    <span class="n">feats</span><span class="o">=</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">fin</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">fin</span><span class="p">,</span> <span class="s2">"Polarity=Neg"</span><span class="p">,</span> <span class="n">part</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span>
+    <span class="n">head</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span>
+    <span class="n">deprel</span><span class="o">=</span><span class="s2">"nsubj root mark det nsubj:pass aux:pass advmod ccomp case obl:agent punct"</span><span class="o">.</span><span class="n">split</span><span class="p">(),</span>
 <span class="p">)</span>
-<span class="n">stats</span> <span class="o">=</span> <span class="n">SyntaxStats</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span>
+<span class="n">stats</span> <span class="o">=</span> <span class="n">SyntaxStats</span><span class="p">(</span><span class="n">document</span><span class="p">)</span>
 <span class="n">stats</span><span class="o">.</span><span class="n">print_stats</span><span class="p">()</span>
 </code></pre></div>
 </div>
@@ -2953,7 +2876,7 @@ Ratio of nouns to verbs                                    |   0.50
 <tbody>
 <tr>
 <td style="text-align: left;"><code>source</code></td>
-<td style="text-align: left;"><code>str</code> / <code>Doc</code> / <code>Document</code></td>
+<td style="text-align: left;"><code>str</code> / <code>Document</code></td>
 <td style="text-align: left;">-</td>
 <td style="text-align: left;">Data source with a dependency parse and parts of speech, or a text that <code>parse</code> annotates</td>
 </tr>
@@ -3913,7 +3836,7 @@ Ratio of nouns to verbs                                    |   0.50
 </div>
 <h2 id="methods">Methods<a class="headerlink" href="#methods" title="Permanent link">&para;</a></h2>
 <p>The methods <code>get_stats</code>, <code>to_dataframe</code>, <code>print_stats</code> and <code>describe</code> are those of the <a href="../stats/">statistics interface</a>.</p>
-<p>The functions of the tree take the words of the tree of a document (<code>TreeWord</code> of <a href="../../document/#get_tree"><code>get_tree</code></a>): a word, or a sequence of them such as a sentence of the tree, whose words are those of <code>get_words</code>. A value that is no <code>TreeWord</code>, such as a spaCy <code>Token</code>, or a sequence with one raises <code>SourceTypeError</code>. They read the relations that Universal Dependencies and the ClearNLP labels of the English models share: the head of a word, <code>cc</code>, <code>conj</code>, <code>parataxis</code>, <code>punct</code> and <code>aux</code>, the subjects <code>nsubj</code> and <code>csubj</code>, the modifiers of a noun <code>amod</code>, <code>det</code>, <code>nmod</code>, <code>nummod</code> and <code>acl</code>, the clause relations <code>ccomp</code>, <code>advcl</code> and <code>xcomp</code>, and the root; the copula <code>cop</code> of <code>predicate_form</code> and <code>is_predicate</code> exists in Universal Dependencies alone. The passive and its agent (<code>is_passive</code>, <code>has_agent</code>) and the order of the subjects and the objects read the relations of both schemes (<code>PASSIVE_DEPS</code>, <code>AGENT_DEPS</code>, <code>NOMINAL_SUBJECT_DEPS</code>, <code>OBJECT_DEPS</code>); the prepositional complements of <code>is_prep_complement</code> read Universal Dependencies alone. Everything else is up to a language library.</p>
+<p>The functions of the tree take the words of the tree of a document (<code>TreeWord</code> of <a href="../../document/#get_tree"><code>get_tree</code></a>): a word, or a sequence of them such as a sentence of the tree, whose words are those of <code>get_words</code>. A value that is no <code>TreeWord</code>, or a sequence with one, raises <code>SourceTypeError</code>. They read the relations that Universal Dependencies and ClearNLP share: the head of a word, <code>cc</code>, <code>conj</code>, <code>parataxis</code>, <code>punct</code> and <code>aux</code>, the subjects <code>nsubj</code> and <code>csubj</code>, the modifiers of a noun <code>amod</code>, <code>det</code>, <code>nmod</code>, <code>nummod</code> and <code>acl</code>, the clause relations <code>ccomp</code>, <code>advcl</code> and <code>xcomp</code>, and the root; the copula <code>cop</code> of <code>predicate_form</code> and <code>is_predicate</code> exists in Universal Dependencies alone. The passive and its agent (<code>is_passive</code>, <code>has_agent</code>) and the order of the subjects and the objects read the relations of both schemes (<code>PASSIVE_DEPS</code>, <code>AGENT_DEPS</code>, <code>NOMINAL_SUBJECT_DEPS</code>, <code>OBJECT_DEPS</code>); the prepositional complements of <code>is_prep_complement</code> read Universal Dependencies alone. Everything else is up to a language library.</p>
 <h2 id="get_words">Words of a sequence<a class="headerlink" href="#get_words" title="Permanent link">&para;</a></h2>
 <!-- --8<-- [start:get_words] -->
 <div class="signature highlight"><pre><span></span><code><span class="n">get_words</span><span class="p">(</span><span class="n">words</span><span class="p">)</span>
@@ -4029,7 +3952,7 @@ Ratio of nouns to verbs                                    |   0.50
 <!-- --8<-- [start:get_subtree] -->
 <div class="signature highlight"><pre><span></span><code><span class="n">get_subtree</span><span class="p">(</span><span class="n">word</span><span class="p">)</span>
 </code></pre></div>
-<p>The words of the subtree of a word in the order of the text: the word itself and all of its direct and indirect dependents, punctuation marks included, as the <code>subtree</code> of a spaCy token; the argument is that of <code>get_children</code>.</p>
+<p>The words of the subtree of a word in the order of the text: the word itself and all of its direct and indirect dependents, punctuation marks included; the argument is that of <code>get_children</code>.</p>
 <!-- --8<-- [end:get_subtree] -->
 
 <h2 id="verb-forms">Verb form of a predicate<a class="headerlink" href="#verb-forms" title="Permanent link">&para;</a></h2>
@@ -4067,31 +3990,23 @@ Ratio of nouns to verbs                                    |   0.50
 <div class="tabbed-set tabbed-alternate" data-tabs="3:2"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Code</label><label for="__tabbed_3_2">Result</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">spacy</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">spacy.tokens</span><span class="w"> </span><span class="kn">import</span> <span class="n">Doc</span>
-
-<span class="kn">from</span><span class="w"> </span><span class="nn">anyts.document</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_tree</span><span class="p">,</span> <span class="n">to_document</span>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts.document</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_tree</span><span class="p">,</span> <span class="n">to_document</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">anyts.syntax_stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">predicate_form</span>
 
-<span class="n">vocab</span> <span class="o">=</span> <span class="n">spacy</span><span class="o">.</span><span class="n">blank</span><span class="p">(</span><span class="s2">"en"</span><span class="p">)</span><span class="o">.</span><span class="n">vocab</span>
-<span class="n">doc</span> <span class="o">=</span> <span class="n">Doc</span><span class="p">(</span>
-    <span class="n">vocab</span><span class="p">,</span>
-    <span class="n">words</span><span class="o">=</span><span class="p">[</span><span class="s2">"She"</span><span class="p">,</span> <span class="s2">"had"</span><span class="p">,</span> <span class="s2">"been"</span><span class="p">,</span> <span class="s2">"chosen"</span><span class="p">],</span>
-    <span class="n">heads</span><span class="o">=</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span>
-    <span class="n">deps</span><span class="o">=</span><span class="p">[</span><span class="s2">"nsubj:pass"</span><span class="p">,</span> <span class="s2">"aux"</span><span class="p">,</span> <span class="s2">"aux:pass"</span><span class="p">,</span> <span class="s2">"ROOT"</span><span class="p">],</span>
-    <span class="n">morphs</span><span class="o">=</span><span class="p">[</span><span class="s2">"Case=Nom"</span><span class="p">,</span> <span class="s2">"VerbForm=Fin"</span><span class="p">,</span> <span class="s2">"VerbForm=Part"</span><span class="p">,</span> <span class="s2">"VerbForm=Part"</span><span class="p">],</span>
+<span class="n">document</span> <span class="o">=</span> <span class="n">to_document</span><span class="p">(</span><span class="s2">"She had been chosen"</span><span class="p">)</span>
+<span class="n">document</span><span class="o">.</span><span class="n">set_columns</span><span class="p">(</span>
+    <span class="n">feats</span><span class="o">=</span><span class="p">[</span><span class="s2">"Case=Nom"</span><span class="p">,</span> <span class="s2">"VerbForm=Fin"</span><span class="p">,</span> <span class="s2">"VerbForm=Part"</span><span class="p">,</span> <span class="s2">"VerbForm=Part"</span><span class="p">],</span>
+    <span class="n">head</span><span class="o">=</span><span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+    <span class="n">deprel</span><span class="o">=</span><span class="p">[</span><span class="s2">"nsubj:pass"</span><span class="p">,</span> <span class="s2">"aux"</span><span class="p">,</span> <span class="s2">"aux:pass"</span><span class="p">,</span> <span class="s2">"root"</span><span class="p">],</span>
 <span class="p">)</span>
-<span class="n">chosen</span> <span class="o">=</span> <span class="n">get_tree</span><span class="p">(</span><span class="n">to_document</span><span class="p">(</span><span class="n">doc</span><span class="p">))</span><span class="o">.</span><span class="n">words</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+<span class="n">chosen</span> <span class="o">=</span> <span class="n">get_tree</span><span class="p">(</span><span class="n">document</span><span class="p">)</span><span class="o">.</span><span class="n">words</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
 <span class="n">predicate_form</span><span class="p">(</span><span class="n">chosen</span><span class="p">)</span>
 <span class="c1"># An auxiliary the model left without a form, read by the hook</span>
-<span class="n">doc</span> <span class="o">=</span> <span class="n">Doc</span><span class="p">(</span>
-    <span class="n">vocab</span><span class="p">,</span>
-    <span class="n">words</span><span class="o">=</span><span class="p">[</span><span class="s2">"to"</span><span class="p">,</span> <span class="s2">"have"</span><span class="p">,</span> <span class="s2">"gone"</span><span class="p">],</span>
-    <span class="n">heads</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span>
-    <span class="n">deps</span><span class="o">=</span><span class="p">[</span><span class="s2">"mark"</span><span class="p">,</span> <span class="s2">"aux"</span><span class="p">,</span> <span class="s2">"ROOT"</span><span class="p">],</span>
-    <span class="n">morphs</span><span class="o">=</span><span class="p">[</span><span class="s2">""</span><span class="p">,</span> <span class="s2">""</span><span class="p">,</span> <span class="s2">"VerbForm=Part"</span><span class="p">],</span>
+<span class="n">document</span> <span class="o">=</span> <span class="n">to_document</span><span class="p">(</span><span class="s2">"to have gone"</span><span class="p">)</span>
+<span class="n">document</span><span class="o">.</span><span class="n">set_columns</span><span class="p">(</span>
+    <span class="n">feats</span><span class="o">=</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">"VerbForm=Part"</span><span class="p">],</span> <span class="n">head</span><span class="o">=</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">deprel</span><span class="o">=</span><span class="p">[</span><span class="s2">"mark"</span><span class="p">,</span> <span class="s2">"aux"</span><span class="p">,</span> <span class="s2">"root"</span><span class="p">]</span>
 <span class="p">)</span>
-<span class="n">gone</span> <span class="o">=</span> <span class="n">get_tree</span><span class="p">(</span><span class="n">to_document</span><span class="p">(</span><span class="n">doc</span><span class="p">))</span><span class="o">.</span><span class="n">words</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+<span class="n">gone</span> <span class="o">=</span> <span class="n">get_tree</span><span class="p">(</span><span class="n">document</span><span class="p">)</span><span class="o">.</span><span class="n">words</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
 <span class="n">predicate_form</span><span class="p">(</span><span class="n">gone</span><span class="p">),</span> <span class="n">predicate_form</span><span class="p">(</span><span class="n">gone</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">aux</span><span class="p">:</span> <span class="s2">"Inf"</span> <span class="k">if</span> <span class="n">aux</span><span class="o">.</span><span class="n">form</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">"have"</span> <span class="k">else</span> <span class="s2">""</span><span class="p">)</span>
 </code></pre></div>
 </div>
@@ -4162,19 +4077,15 @@ Ratio of nouns to verbs                                    |   0.50
 <div class="tabbed-set tabbed-alternate" data-tabs="4:2"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><input id="__tabbed_4_2" name="__tabbed_4" type="radio" /><div class="tabbed-labels"><label for="__tabbed_4_1">Code</label><label for="__tabbed_4_2">Result</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">spacy</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">spacy.tokens</span><span class="w"> </span><span class="kn">import</span> <span class="n">Doc</span>
-
-<span class="kn">from</span><span class="w"> </span><span class="nn">anyts.document</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_tree</span><span class="p">,</span> <span class="n">to_document</span>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts.document</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_tree</span><span class="p">,</span> <span class="n">to_document</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">anyts.syntax_stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">calc_modifier_chains</span>
 
-<span class="n">doc</span> <span class="o">=</span> <span class="n">Doc</span><span class="p">(</span>
-    <span class="n">spacy</span><span class="o">.</span><span class="n">blank</span><span class="p">(</span><span class="s2">"en"</span><span class="p">)</span><span class="o">.</span><span class="n">vocab</span><span class="p">,</span>
-    <span class="n">words</span><span class="o">=</span><span class="p">[</span><span class="s2">"the"</span><span class="p">,</span> <span class="s2">"use"</span><span class="p">,</span> <span class="s2">"of"</span><span class="p">,</span> <span class="s2">"the"</span><span class="p">,</span> <span class="s2">"water"</span><span class="p">,</span> <span class="s2">"of"</span><span class="p">,</span> <span class="s2">"the"</span><span class="p">,</span> <span class="s2">"river"</span><span class="p">],</span>
-    <span class="n">heads</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span>
-    <span class="n">deps</span><span class="o">=</span><span class="p">[</span><span class="s2">"det"</span><span class="p">,</span> <span class="s2">"ROOT"</span><span class="p">,</span> <span class="s2">"case"</span><span class="p">,</span> <span class="s2">"det"</span><span class="p">,</span> <span class="s2">"nmod"</span><span class="p">,</span> <span class="s2">"case"</span><span class="p">,</span> <span class="s2">"det"</span><span class="p">,</span> <span class="s2">"nmod"</span><span class="p">],</span>
+<span class="n">document</span> <span class="o">=</span> <span class="n">to_document</span><span class="p">(</span><span class="s2">"the use of the water of the river"</span><span class="p">)</span>
+<span class="n">document</span><span class="o">.</span><span class="n">set_columns</span><span class="p">(</span>
+    <span class="n">head</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span>
+    <span class="n">deprel</span><span class="o">=</span><span class="p">[</span><span class="s2">"det"</span><span class="p">,</span> <span class="s2">"root"</span><span class="p">,</span> <span class="s2">"case"</span><span class="p">,</span> <span class="s2">"det"</span><span class="p">,</span> <span class="s2">"nmod"</span><span class="p">,</span> <span class="s2">"case"</span><span class="p">,</span> <span class="s2">"det"</span><span class="p">,</span> <span class="s2">"nmod"</span><span class="p">],</span>
 <span class="p">)</span>
-<span class="n">sentence</span> <span class="o">=</span> <span class="n">get_tree</span><span class="p">(</span><span class="n">to_document</span><span class="p">(</span><span class="n">doc</span><span class="p">))</span><span class="o">.</span><span class="n">sentences</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">sentence</span> <span class="o">=</span> <span class="n">get_tree</span><span class="p">(</span><span class="n">document</span><span class="p">)</span><span class="o">.</span><span class="n">sentences</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 <span class="n">calc_modifier_chains</span><span class="p">(</span><span class="n">sentence</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">word</span><span class="p">:</span> <span class="n">word</span><span class="o">.</span><span class="n">deprel</span> <span class="o">==</span> <span class="s2">"nmod"</span><span class="p">)</span>
 </code></pre></div>
 </div>

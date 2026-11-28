@@ -329,25 +329,6 @@
   
   
     <li class="md-tabs__item">
-      <a href="../../components/" class="md-tabs__link">
-        
-  
-  
-    
-  
-  Components
-
-      </a>
-    </li>
-  
-
-      
-        
-  
-  
-  
-  
-    <li class="md-tabs__item">
       <a href="../../cli/" class="md-tabs__link">
         
   
@@ -585,34 +566,6 @@
     
   
     Document model
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../migration/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Migrating from 0.4
   
 
     
@@ -1882,33 +1835,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../components/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Components
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../cli/" class="md-nav__link">
         
   
@@ -2001,10 +1927,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
         
           
-          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
             
   
   
@@ -2022,8 +1948,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_10">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -2096,14 +2022,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../../utils/spacy/" class="md-nav__link">
+      <a href="../../utils/tree/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    spaCy objects
+    Words of the tree
   
 
     
@@ -2380,10 +2306,10 @@
 <div class="signature highlight"><pre><span></span><code><span class="n">LexicalStats</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">freq_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 <!-- --8<-- [start:LexicalStats] -->
-<p>Lexical sophistication in the manner of TAALES (Kyle, Crossley and Berger, 2018) - how rare the words of a text are: statistics by a frequency dictionary and its unigram model, the shares of the frequency bands of a list of the most frequent lemmas, the lexical density and the shares of the proper nouns and of the abbreviations. The statistics by the dictionary are computed when first read, so the bands and the shares need no dictionary data. The data source is a text, a <code>Doc</code> object of <a href="https://github.com/explosion/spaCy">spaCy</a> or a <code>Document</code> of <a href="https://github.com/SergeyShk/anySeg">anySeg</a>, read through its <a href="https://sergeyshk.github.io/anyTS/document/">document</a>: by default its words of Universal Dependencies without numbers, with their lemmas, parts of speech and features.</p>
+<p>Lexical sophistication in the manner of TAALES (Kyle, Crossley and Berger, 2018) - how rare the words of a text are: statistics by a frequency dictionary and its unigram model, the shares of the frequency bands of a list of the most frequent lemmas, the lexical density and the shares of the proper nouns and of the abbreviations. The statistics by the dictionary are computed when first read, so the bands and the shares need no dictionary data. The data source is a text or a <code>Document</code> of <a href="https://github.com/SergeyShk/anySeg">anySeg</a>, read through its <a href="https://sergeyshk.github.io/anyTS/document/">document</a>: by default its words of Universal Dependencies without numbers, with their lemmas, parts of speech and features.</p>
 <p>Raises:</p>
 <ul>
-<li><code>SourceTypeError</code> - a source that is neither a string, a <code>Doc</code> nor a <code>Document</code>, a <code>parse</code> that returns no <code>Document</code>, a dictionary of another class than that of the library or, without <code>freq_dict_class</code>, one without <code>lookup</code> and <code>ipm</code> or none at all; an <code>analyze</code> that does not give <code>LexicalWord</code> objects;</li>
+<li><code>SourceTypeError</code> - a source that is neither a string nor a <code>Document</code>, a <code>parse</code> that returns no <code>Document</code>, a dictionary of another class than that of the library or, without <code>freq_dict_class</code>, one without <code>lookup</code> and <code>ipm</code> or none at all; an <code>analyze</code> that does not give <code>LexicalWord</code> objects;</li>
 <li><code>SourceError</code> - words without parts of speech, a source without words.</li>
 </ul>
 <!-- --8<-- [end:LexicalStats] -->
@@ -2466,7 +2392,7 @@ Share of abbreviations                           |   0.00
 <tbody>
 <tr>
 <td style="text-align: left;"><code>source</code></td>
-<td style="text-align: left;"><code>str</code> / <code>Doc</code> / <code>Document</code></td>
+<td style="text-align: left;"><code>str</code> / <code>Document</code></td>
 <td style="text-align: left;">-</td>
 <td style="text-align: left;">Data source</td>
 </tr>
@@ -2746,7 +2672,7 @@ Share of abbreviations                           |   0.00
 </tr>
 </tbody>
 </table>
-<p>A library takes its own parameters, such as a pipeline or a word extractor, in its <code>__init__</code> and passes the source and the dictionary on. An <code>analyze</code> that does not give <code>LexicalWord</code> objects raises <code>SourceTypeError</code>.</p>
+<p>A library takes its own parameters, such as its model of a string or a word extractor, in its <code>__init__</code> and passes the source and the dictionary on. An <code>analyze</code> that does not give <code>LexicalWord</code> objects raises <code>SourceTypeError</code>.</p>
 <!-- --8<-- [end:LexicalStats-hooks] -->
 </details>
 

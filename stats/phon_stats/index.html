@@ -329,25 +329,6 @@
   
   
     <li class="md-tabs__item">
-      <a href="../../components/" class="md-tabs__link">
-        
-  
-  
-    
-  
-  Components
-
-      </a>
-    </li>
-  
-
-      
-        
-  
-  
-  
-  
-    <li class="md-tabs__item">
       <a href="../../cli/" class="md-tabs__link">
         
   
@@ -585,34 +566,6 @@
     
   
     Document model
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../migration/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Migrating from 0.4
   
 
     
@@ -1948,33 +1901,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../components/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Components
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../cli/" class="md-nav__link">
         
   
@@ -2067,10 +1993,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
         
           
-          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
             
   
   
@@ -2088,8 +2014,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_10">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -2162,14 +2088,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../../utils/spacy/" class="md-nav__link">
+      <a href="../../utils/tree/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    spaCy objects
+    Words of the tree
   
 
     
@@ -2512,10 +2438,10 @@
 <div class="signature highlight"><pre><span></span><code><span class="n">PhonStats</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">words_extractor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">window_len</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
 </code></pre></div>
 <!-- --8<-- [start:PhonStats] -->
-<p>The phonetic statistics of a text: its sounds by class, their clusters, sequences and repetitions, and its syllables. A sound is a letter of a word by default, or a sound of its transcription when a library gives one. The data source is a text, a <code>Doc</code> object of <a href="https://github.com/explosion/spaCy">spaCy</a> or a <code>Document</code> of <a href="https://github.com/SergeyShk/anySeg">anySeg</a>; the words are those of its <a href="https://sergeyshk.github.io/anyTS/document/">document</a> in lower case (<code>doc_words</code>), or those of an extractor passed explicitly, used on the text.</p>
+<p>The phonetic statistics of a text: its sounds by class, their clusters, sequences and repetitions, and its syllables. A sound is a letter of a word by default, or a sound of its transcription when a library gives one. The data source is a text or a <code>Document</code> of <a href="https://github.com/SergeyShk/anySeg">anySeg</a>; the words are those of its <a href="https://sergeyshk.github.io/anyTS/document/">document</a> in lower case (<code>doc_words</code>), or those of an extractor passed explicitly, used on the text.</p>
 <p>Raises:</p>
 <ul>
-<li><code>SourceTypeError</code> - a source that is neither a string, a <code>Doc</code> nor a <code>Document</code>, a <code>parse</code> that returns no <code>Document</code>, a <code>doc_words</code>, <code>syllabify</code> or <code>transcribe</code> that returns no strings, an extractor of another type;</li>
+<li><code>SourceTypeError</code> - a source that is neither a string nor a <code>Document</code>, a <code>parse</code> that returns no <code>Document</code>, a <code>doc_words</code>, <code>syllabify</code> or <code>transcribe</code> that returns no strings, an extractor of another type;</li>
 <li><code>SourceError</code> - a source without words;</li>
 <li><code>ParameterError</code> - a window that is not an integer of at least 2.</li>
 </ul>
@@ -2579,7 +2505,7 @@ Mean length of a syllable (sounds)                    |   2.90
 <tbody>
 <tr>
 <td style="text-align: left;"><code>source</code></td>
-<td style="text-align: left;"><code>str</code> / <code>Doc</code> / <code>Document</code></td>
+<td style="text-align: left;"><code>str</code> / <code>Document</code></td>
 <td style="text-align: left;">-</td>
 <td style="text-align: left;">Data source</td>
 </tr>

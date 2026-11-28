@@ -329,25 +329,6 @@
   
   
     <li class="md-tabs__item">
-      <a href="../../components/" class="md-tabs__link">
-        
-  
-  
-    
-  
-  Components
-
-      </a>
-    </li>
-  
-
-      
-        
-  
-  
-  
-  
-    <li class="md-tabs__item">
       <a href="../../cli/" class="md-tabs__link">
         
   
@@ -585,34 +566,6 @@
     
   
     Document model
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../migration/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Migrating from 0.4
   
 
     
@@ -1810,33 +1763,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../components/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Components
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../cli/" class="md-nav__link">
         
   
@@ -1929,10 +1855,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
         
           
-          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
             
   
   
@@ -1950,8 +1876,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_10">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -2024,14 +1950,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../../utils/spacy/" class="md-nav__link">
+      <a href="../../utils/tree/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    spaCy objects
+    Words of the tree
   
 
     
@@ -2258,9 +2184,9 @@
 <tbody>
 <tr>
 <td style="text-align: left;"><code>source</code></td>
-<td style="text-align: left;"><code>str</code> / <code>Doc</code> / <code>Document</code> / <code>Iterable[int]</code></td>
+<td style="text-align: left;"><code>str</code> / <code>Document</code> / <code>Iterable[int]</code></td>
 <td style="text-align: left;">-</td>
-<td style="text-align: left;">Text, Doc or Document object or lengths of the sentences (a list, a numpy array, a Series)</td>
+<td style="text-align: left;">Text or Document object or lengths of the sentences (a list, a numpy array, a Series)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>window</code></td>
@@ -2290,25 +2216,25 @@
 <td style="text-align: left;"><code>sents_extractor</code></td>
 <td style="text-align: left;"><code>SentsExtractor</code></td>
 <td style="text-align: left;"><code>None</code></td>
-<td style="text-align: left;">Extractor of the sentences of a string or of a <code>Doc</code> without sentences, used in place of those of the document</td>
+<td style="text-align: left;">Extractor of the sentences of a string, used in place of those of the document</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>words_extractor</code></td>
 <td style="text-align: left;"><code>WordsExtractor</code></td>
 <td style="text-align: left;"><code>None</code></td>
-<td style="text-align: left;">Extractor of the words of a sentence of a string or of a <code>Doc</code> without sentences, used in place of those of the document</td>
+<td style="text-align: left;">Extractor of the words of a sentence of a string, used in place of those of the document</td>
 </tr>
 </tbody>
 </table>
 <p>The source and the extractors raise the errors of <code>sentence_lengths</code>, and no sentences raise <code>SourceError</code>; a <code>window</code> that is not an integer of at least one, labels that <code>merge_labels</code> refuses and an <code>ax</code> that is not a matplotlib <code>Axes</code> raise <code>ParameterError</code>.</p>
 <!-- --8<-- [end:sentence_lengths_plot-parameters] -->
 
-<p>Without an extractor the sentences and the words are those of the <a href="https://sergeyshk.github.io/anyTS/document/">document</a> of the source (<code>to_document</code>); with one, a string or a <code>Doc</code> without sentences of its own (no start at some token, no hook and no parse) is split by the extractors, <code>SentsExtractor()</code> and <code>WordsExtractor()</code> for the one not given, while a <code>Doc</code> with sentences and a <code>Document</code> keep theirs.</p>
+<p>Without an extractor the sentences and the words are those of the <a href="https://sergeyshk.github.io/anyTS/document/">document</a> of the source (<code>to_document</code>); with one, a string is split by the extractors, <code>SentsExtractor()</code> and <code>WordsExtractor()</code> for the one not given, while a <code>Document</code> keeps its sentences.</p>
 <h2 id="sentence_lengths">Lengths of the sentences<a class="headerlink" href="#sentence_lengths" title="Permanent link">&para;</a></h2>
 <div class="signature highlight"><pre><span></span><code><span class="n">sentence_lengths</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">sents_extractor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">words_extractor</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 <!-- --8<-- [start:sentence_lengths] -->
-<p>The lengths of the sentences in words, in order: the sentences of the document of a text, a <code>Doc</code> or a <code>Document</code> (<code>to_document</code>) and their words with a letter or a digit, or, with an extractor given, the sentences and the words of the extractors on the text of a string or of a <code>Doc</code> without sentences of its own (no start at some token, no hook and no parse); a <code>Doc</code> with sentences and a <code>Document</code> keep theirs. Sentences without words are skipped. Ready lengths (non-negative integers in a sequence or an iterator) are used as they are. The arguments are those of <code>sentence_lengths_plot</code>.</p>
+<p>The lengths of the sentences in words, in order: the sentences of the document of a text or a <code>Document</code> (<code>to_document</code>) and their words with a letter or a digit, or, with an extractor given, the sentences and the words of the extractors on a string; a <code>Document</code> keeps its sentences. Sentences without words are skipped. Ready lengths (non-negative integers in a sequence or an iterator) are used as they are. The arguments are those of <code>sentence_lengths_plot</code>.</p>
 <p>A table, a set, a mapping, bytes, a length that is not an integer and an extractor of another type raise <code>SourceTypeError</code>, a negative length <code>SourceError</code>.</p>
 <!-- --8<-- [end:sentence_lengths] -->
 

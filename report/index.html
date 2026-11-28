@@ -327,25 +327,6 @@
   
   
     <li class="md-tabs__item">
-      <a href="../components/" class="md-tabs__link">
-        
-  
-  
-    
-  
-  Components
-
-      </a>
-    </li>
-  
-
-      
-        
-  
-  
-  
-  
-    <li class="md-tabs__item">
       <a href="../cli/" class="md-tabs__link">
         
   
@@ -585,34 +566,6 @@
     
   
     Document model
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../migration/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Migrating from 0.4
   
 
     
@@ -1736,33 +1689,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../components/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Components
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../cli/" class="md-nav__link">
         
   
@@ -1935,10 +1861,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
         
           
-          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
             
   
   
@@ -1956,8 +1882,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_10">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -2030,14 +1956,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../utils/spacy/" class="md-nav__link">
+      <a href="../utils/tree/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    spaCy objects
+    Words of the tree
   
 
     
@@ -2295,7 +2221,7 @@
 <tbody>
 <tr>
 <td style="text-align: left;"><code>source</code></td>
-<td style="text-align: left;"><code>str</code> / <code>Doc</code> / <code>Document</code></td>
+<td style="text-align: left;"><code>str</code> / <code>Document</code></td>
 <td style="text-align: left;">-</td>
 <td style="text-align: left;">Data source</td>
 </tr>
@@ -2319,7 +2245,7 @@
 </tr>
 </tbody>
 </table>
-<p>The object keeps <code>document</code>, <code>title</code>, the statistics of every class by name, <code>stats</code>, and the errors of the classes left out, <code>errors</code>. <code>to_html()</code> returns the page, and <code>save(path)</code> writes it to a file in UTF-8, the encoding the page declares. A source a class cannot count raises the error of the class, unless <code>skip_errors</code>; a <code>skip_errors</code> that is not a <code>bool</code> and <code>stats_classes</code> that are not a dictionary of classes of statistics raise <code>ParameterError</code>.</p>
+<p>The object keeps its classes by name, <code>classes</code>, <code>document</code>, <code>title</code>, the statistics of every class by name, <code>stats</code>, and the errors of the classes left out, <code>errors</code>. <code>to_html()</code> returns the page, and <code>save(path)</code> writes it to a file in UTF-8, the encoding the page declares. A source a class cannot count raises the error of the class, unless <code>skip_errors</code>; a <code>skip_errors</code> that is not a <code>bool</code> and <code>stats_classes</code> that are not a dictionary of classes of statistics raise <code>ParameterError</code>.</p>
 <!-- --8<-- [end:Report] -->
 
 <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Code</label><label for="__tabbed_1_2">Result</label></div>
@@ -2456,7 +2382,7 @@
 <tr>
 <td style="text-align: left;"><code>parse(source)</code></td>
 <td style="text-align: left;">method</td>
-<td style="text-align: left;">Document of a source, once for all the sections; <code>to_document</code> by default</td>
+<td style="text-align: left;">Document of a source, once for all the sections; <code>to_document</code> by default. It may read <code>classes</code>, set before it, to annotate only what the classes of the report need</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>compute(stats_class, document)</code></td>

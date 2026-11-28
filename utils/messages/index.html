@@ -327,25 +327,6 @@
   
   
     <li class="md-tabs__item">
-      <a href="../../components/" class="md-tabs__link">
-        
-  
-  
-    
-  
-  Components
-
-      </a>
-    </li>
-  
-
-      
-        
-  
-  
-  
-  
-    <li class="md-tabs__item">
       <a href="../../cli/" class="md-tabs__link">
         
   
@@ -585,34 +566,6 @@
     
   
     Document model
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../migration/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Migrating from 0.4
   
 
     
@@ -1736,33 +1689,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../components/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Components
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../cli/" class="md-nav__link">
         
   
@@ -1860,10 +1786,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" checked>
         
           
-          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="">
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="">
             
   
   
@@ -1881,8 +1807,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_10">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_9">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1955,14 +1881,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../spacy/" class="md-nav__link">
+      <a href="../tree/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    spaCy objects
+    Words of the tree
   
 
     
@@ -2367,7 +2293,7 @@ anyts.exceptions.ParameterError: The message 'text_type' has unknown fields ['ki
 <!-- --8<-- [start:source_type_error] -->
 <div class="signature highlight"><pre><span></span><code><span class="n">source_type_error</span><span class="p">(</span><span class="n">messages</span><span class="p">,</span> <span class="n">source</span><span class="p">)</span>
 </code></pre></div>
-<p>Gives the error of a data source of a wrong type, for a class to raise: the message <code>source_span</code> for a <code>Span</code> of spaCy, which <code>span.as_doc()</code> turns into a <code>Doc</code>, and <code>source_type</code> with the name of the type for any other source.</p>
+<p>Gives the error of a data source of a wrong type, for a class to raise: the message <code>source_type</code> with the name of the type of the source.</p>
 <table>
 <thead>
 <tr>
@@ -2397,18 +2323,14 @@ anyts.exceptions.ParameterError: The message 'text_type' has unknown fields ['ki
 <div class="tabbed-set tabbed-alternate" data-tabs="3:2"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Code</label><label for="__tabbed_3_2">Result</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">spacy</span>
-
-<span class="kn">from</span><span class="w"> </span><span class="nn">anyts.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">MESSAGES</span>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyts.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">MESSAGES</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">anyts.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">source_type_error</span>
 
 <span class="n">source_type_error</span><span class="p">(</span><span class="n">MESSAGES</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
-<span class="n">source_type_error</span><span class="p">(</span><span class="n">MESSAGES</span><span class="p">,</span> <span class="n">spacy</span><span class="o">.</span><span class="n">blank</span><span class="p">(</span><span class="s2">"en"</span><span class="p">)(</span><span class="s2">"The cat sleeps"</span><span class="p">)[:</span><span class="mi">2</span><span class="p">])</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code>SourceTypeError('The data source cannot be of type int')
-SourceTypeError('The data source cannot be a Span: pass span.as_doc()')
 </code></pre></div>
 </div>
 </div>
