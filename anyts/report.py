@@ -127,7 +127,7 @@ class Report:
         *,
         skip_errors: bool = False,
     ):
-        from .document import _sharing_tree
+        from .document import _sharing_document
 
         check_bool(skip_errors, "skip_errors", message=self.messages["bool_param"])
         classes = self.stats_classes if stats_classes is None else stats_classes
@@ -140,7 +140,7 @@ class Report:
         # for its class
         self._values: dict[str, dict[str, Any]] = {}
         # The statistics of the report keep the tree, which is not broken after them
-        with _sharing_tree(self.document, release=False):
+        with _sharing_document(self.document, release=False):
             for name, cls in classes.items():
                 try:
                     stats = self.compute(cls, self.document)

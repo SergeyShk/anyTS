@@ -498,6 +498,21 @@ def test_the_other_classes_count_only_the_sentences_shown():
     assert all(cell != "-" for row in table for cell in row)
 
 
+def test_the_classes_of_readability_share_their_basic_statistics():
+    """The classes of readability of a report count the basic statistics of its text once, those
+    with the same class and filter_nums"""
+    from anyts.unadapted_readability_stats import UnadaptedReadabilityStats
+
+    unadapted = type("Unadapted", (UnadaptedReadabilityStats,), {"basic_stats_class": Vowels})
+    numbers = type("Numbers", (Readability,), {"filter_nums": True})
+    text = "The cat sleeps on the mat. The dog barks at 5 cats."
+    stats = Report(text, stats_classes={"r": Readability, "u": unadapted, "n": numbers}).stats
+    assert stats["r"].bs is stats["u"].bs
+    assert stats["n"].bs is not stats["r"].bs and stats["n"].bs.filter_nums
+    # Outside a report every object counts its own
+    assert Readability(text).bs is not unadapted(text).bs
+
+
 def test_the_statistics_of_a_report_keep_their_tree():
     """The tree the classes of a report share stays whole for the statistics it keeps"""
     from anyts.syntax_stats import SyntaxStats

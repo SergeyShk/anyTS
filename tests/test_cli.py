@@ -681,6 +681,30 @@ def test_the_output_is_replaced_only_by_a_result(capsys, tmp_path, fmt):
     assert output.read_text(encoding="utf-8") == "before"
 
 
+@pytest.mark.parametrize("fmt", ["table", "json", "csv"])
+def test_a_failed_command_leaves_no_new_output(capsys, tmp_path, fmt):
+    """A new output file goes again when no result went to it"""
+    output = tmp_path / "new.txt"
+    missing = str(tmp_path / "missing.txt")
+    assert run(capsys, "-s", "basic", "-f", fmt, "-o", str(output), missing)[0] == 1
+    assert not output.exists()
+    assert Prototype().run(["report", "-o", str(output), missing]) == 1
+    assert not output.exists()
+    undecodable = tmp_path / "latin.txt"
+    undecodable.write_bytes("Café".encode("latin-1"))
+    assert Prototype().run(["report", "-o", str(output), str(undecodable)]) == 1
+    assert not output.exists()
+    # A text that no class can count, as one without words, writes no result either
+    empty = tmp_path / "empty.txt"
+    empty.write_text("*** --- ***", encoding="utf-8")
+    assert run(capsys, "-s", "basic", "-f", fmt, "-o", str(output), str(empty))[0] == 1
+    assert not output.exists()
+    kept = tmp_path / "kept.txt"
+    kept.write_text("before", encoding="utf-8")
+    assert run(capsys, "-s", "basic", "-f", fmt, "-o", str(kept), str(empty))[0] == 1
+    assert kept.read_text(encoding="utf-8") == "before"
+
+
 def test_the_output_that_is_the_input(capsys, files):
     """The output named as the text gets the statistics of the text, read before"""
     assert run(capsys, "-s", "basic", "-f", "json", "-o", files[1], files[1])[0] == 0

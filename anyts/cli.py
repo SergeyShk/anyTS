@@ -308,25 +308,29 @@ class Command:
         output = self._output(args.output)
         if output is None:
             return 1
-        for source in sources:
-            found = self._text_stats(source, args)
-            failed = failed or found is None or len(found) < len(self.names)
-            if found is None:
-                continue
-            if args.format == "table":
-                text = self._tables(source, found, part, many=len(sources) > 1)
-                if not self._put(output, text):
-                    return 1
-            else:
-                results[source] = found
-        # Without a text read, nothing replaces the output
-        if (
-            args.format != "table"
-            and results
-            and not self._put(output, _formatted(results, args.format, part))
-        ):
-            return 1
-        return 1 if failed else 0
+        try:
+            for source in sources:
+                found = self._text_stats(source, args)
+                failed = failed or found is None or len(found) < len(self.names)
+                # A text no class could count has no result to write
+                if not found:
+                    continue
+                if args.format == "table":
+                    text = self._tables(source, found, part, many=len(sources) > 1)
+                    if not self._put(output, text):
+                        return 1
+                else:
+                    results[source] = found
+            # Without a text read, nothing replaces the output
+            if (
+                args.format != "table"
+                and results
+                and not self._put(output, _formatted(results, args.format, part))
+            ):
+                return 1
+            return 1 if failed else 0
+        finally:
+            output.close()
 
     def command_report(self, args: argparse.Namespace) -> int:
         """
@@ -345,26 +349,31 @@ class Command:
         """
         document = self._document(args.file, args.encoding)
         output = self._output(args.output)
-        if document is None or output is None:
+        if output is None:
             return 1
         try:
-            report = self.report_class(
-                document,
-                title=args.title,
-                stats_classes={name: self.stats_classes[name] for name in self.names},
-                skip_errors=True,
-            )
-            page = report.to_html()
-        except AnyTSError as error:
-            self._error(self.texts["file_error"].format(source=args.file, error=error))
-            return 1
-        for name, failure in report.errors.items():
-            self._error(
-                self.texts["stats_error"].format(source=args.file, name=name, error=failure)
-            )
-        if not self._put(output, page):
-            return 1
-        return 1 if report.errors else 0
+            if document is None:
+                return 1
+            try:
+                report = self.report_class(
+                    document,
+                    title=args.title,
+                    stats_classes={name: self.stats_classes[name] for name in self.names},
+                    skip_errors=True,
+                )
+                page = report.to_html()
+            except AnyTSError as error:
+                self._error(self.texts["file_error"].format(source=args.file, error=error))
+                return 1
+            for name, failure in report.errors.items():
+                self._error(
+                    self.texts["stats_error"].format(source=args.file, name=name, error=failure)
+                )
+            if not self._put(output, page):
+                return 1
+            return 1 if report.errors else 0
+        finally:
+            output.close()
 
     def command_download(self, args: argparse.Namespace) -> int:
         """
@@ -462,14 +471,14 @@ class Command:
         """Statistics of the classes of a text - the printed table for the format table, the row
         otherwise - or the rows of its parts, without a class that could not count it; None if
         the text could not be read or parsed"""
-        from .document import _sharing_tree
+        from .document import _sharing_document
 
         document = self._document(source, args.encoding)
         if document is None:
             return None
         found: dict[str, Any] = {}
         # The statistics are dropped after their rows, so the tree goes with them
-        with _sharing_tree(document, release=True):
+        with _sharing_document(document, release=True):
             for name in self.names:
                 cls = self.stats_classes[name]
                 try:
@@ -622,10 +631,18 @@ class _Output:
     def __init__(self, path: str | None) -> None:
         self.name = _STDIN if path is None else path
         self._written = False
+        self._created = False
         if self.name != _STDIN:
+            file = Path(self.name)
+            self._created = not file.exists()
             # Opened to append, which keeps what the file has
-            with Path(self.name).open("a", encoding="utf-8"):
+            with file.open("a", encoding="utf-8"):
                 pass
+
+    def close(self) -> None:
+        """Removing the file the check of the path created, if no result went to it"""
+        if self._created and not self._written:
+            Path(self.name).unlink(missing_ok=True)
 
     def write(self, text: str) -> None:
         """Writing a text, at once, so that an error of the output comes with it; the first

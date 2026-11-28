@@ -161,14 +161,12 @@ def test_preset_is_read_only(rs):
 
 class TwoPresets(Readability):
     presets: ClassVar = {"plain": {}, "strict": {}}
+    default_preset = "plain"
     preset_level_scales: ClassVar = {
         "strict": {"flesch_reading_easy": ((99, "easy"), (0, "hard"))}
     }
     preset_reading_ease_grades: ClassVar = {"strict": ((99, 5), (0, 15))}
     preset_stats_desc: ClassVar = {"strict": {"flesch_reading_easy": "Strict reading ease"}}
-
-    def __init__(self, source, preset="plain"):
-        super().__init__(source, preset=preset)
 
 
 def test_scales_by_preset():
@@ -221,6 +219,14 @@ def test_subclass_narrows_the_presets():
     # the scales of strict stay inherited and unused
     plain = type("Plain", (TwoPresets,), {"presets": {"plain": {}}})
     assert plain(TEXT).describe_level() == TwoPresets(TEXT).describe_level()
+
+
+def test_default_preset_of_a_subclass():
+    assert TwoPresets(TEXT).preset == "plain"
+    assert TwoPresets(TEXT, preset=None).preset == "plain"
+    assert TwoPresets(TEXT, preset="strict").preset == "strict"
+    with pytest.raises(ParameterError, match=r"^Unknown coefficient preset: original\."):
+        type("Unset", (Readability,), {"presets": {"plain": {}}})(TEXT)
 
 
 def test_coefficients_copy():

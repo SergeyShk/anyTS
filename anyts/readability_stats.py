@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable, Mapping
+from functools import partial
 from math import floor, isfinite, nan, sqrt
 from numbers import Real
 from statistics import median
@@ -28,7 +29,7 @@ from .exceptions import ParameterError, SourceError, SourceTypeError
 from .extractors import SentsExtractor, WordsExtractor
 from .stats import Stats, _check_scale, _check_scales
 from .stats import scale_level as scale_level
-from .utils import _messages, check_bool, check_integer, check_number, safe_divide
+from .utils import _messages, check_bool, check_integer, check_number, is_document, safe_divide
 
 if TYPE_CHECKING:
     from anyseg import Document
@@ -53,7 +54,7 @@ class ReadabilityStats(Stats):
             ready basic statistics
         words_extractor (WordsExtractor): Word extraction tool, not used for ready
             basic statistics
-        preset (str): Coefficient preset
+        preset (str): Coefficient preset; default_preset by default
         filter_nums (bool): Leave out the numbers among the words; None - the class
             attribute filter_nums, for ready basic statistics - as in them
 
@@ -91,6 +92,7 @@ class ReadabilityStats(Stats):
             without it the source must be a BasicStats object
         presets (dict[str, dict[str, tuple[float, ...]]]): Coefficients of the formulas
             by preset
+        default_preset (str): Preset of an object without one, original
         grade_stats (tuple[str, ...]): Grade formulas of the consensus grade
         stats_desc (dict[str, str]): Metrics of get_stats and their descriptions for
             print_stats
@@ -138,6 +140,7 @@ class ReadabilityStats(Stats):
 
     basic_stats_class: ClassVar[type[BasicStats] | None] = None
     presets: ClassVar[Mapping[str, Mapping[str, tuple[float, ...]]]] = READABILITY_PRESETS
+    default_preset: ClassVar[str] = "original"
     grade_stats: ClassVar[tuple[str, ...]] = READABILITY_GRADE_STATS
     stats_desc: ClassVar[Mapping[str, str]] = READABILITY_STATS_DESC
     filter_nums: ClassVar[bool] = False
@@ -211,10 +214,12 @@ class ReadabilityStats(Stats):
         source: str | Document | BasicStats,
         sents_extractor: SentsExtractor | None = None,
         words_extractor: WordsExtractor | None = None,
-        preset: str = "original",
+        preset: str | None = None,
         filter_nums: bool | None = None,
     ):
         messages = self.messages
+        if preset is None:
+            preset = self.default_preset
         check_bool(
             self.filter_nums if filter_nums is None else filter_nums,
             "filter_nums",
@@ -492,8 +497,9 @@ def _read_basic_stats(
 
     Description:
         A BasicStats object of basic_stats_class (any BasicStats without it) as
-        it is, or basic_stats_class over another source with the extractors;
-        the errors take the messages of the class
+        it is, or basic_stats_class over another source with the extractors,
+        made once for the document a command or a report counts; the errors take
+        the messages of the class
 
     Arguments:
         stats (Stats): Object of the class whose messages and name the errors take
@@ -538,7 +544,14 @@ def _read_basic_stats(
             filter_nums = getattr(stats, "filter_nums", False)
         # Only when set, so a basic_stats_class without the parameter keeps working
         extra = {"filter_nums": True} if filter_nums else {}
-        bs = basic_stats_class(source, sents_extractor, words_extractor, **extra)
+        make = partial(basic_stats_class, source, sents_extractor, words_extractor, **extra)
+        if sents_extractor is None and words_extractor is None and is_document(source):
+            from .document import _shared_value
+
+            # The classes of readability of a command or a report share their basic statistics
+            bs = _shared_value(source, (basic_stats_class, bool(filter_nums)), make)
+        else:
+            bs = make()
     if not bs.n_sents:
         raise SourceError(messages["no_sentences"])
     return bs

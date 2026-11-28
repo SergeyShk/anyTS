@@ -3,11 +3,11 @@ from __future__ import annotations
 import re
 import threading
 from bisect import bisect_left, bisect_right
-from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
+from collections.abc import Callable, Hashable, Iterable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from functools import cache
 from re import Pattern
-from typing import TYPE_CHECKING, Any, NamedTuple
+from typing import TYPE_CHECKING, Any, NamedTuple, TypeVar
 
 from .constants import MESSAGES
 from .exceptions import ParameterError, SourceError, SourceTypeError
@@ -29,19 +29,22 @@ if TYPE_CHECKING:
     from anyseg import Document
 
 Spans = Callable[[str], Iterable[tuple[int, int, str]]]
+_Value = TypeVar("_Value")
 
 # The separators a word of the default tokens may end with
 _WORD_SEPARATORS = "\u00ad\u200c\u200d" + _IN_WORD_MARKS
 
 
 class _Shared:
-    """The document the classes of a command or a report count and its tree, once one is asked"""
+    """The document the classes of a command or a report count, its tree, once one is asked, and
+    the values they share by key, such as the basic statistics of the classes of readability"""
 
-    __slots__ = ("document", "tree")
+    __slots__ = ("document", "tree", "values")
 
     def __init__(self, document: Document):
         self.document = document
         self.tree: Tree | None = None
+        self.values: dict[Hashable, Any] = {}
 
 
 # The shared document of every thread
@@ -530,9 +533,10 @@ def _tree_once(document: Document) -> Iterator[Tree]:
 
 
 @contextmanager
-def _sharing_tree(document: Document, *, release: bool) -> Iterator[None]:
-    """The tree of a document built once for the classes that count it inside; with release,
-    broken after them as _tree_once breaks it, for classes whose objects are dropped"""
+def _sharing_document(document: Document, *, release: bool) -> Iterator[None]:
+    """The tree of a document and its shared values (_shared_value) built once for the classes
+    that count it inside; with release, the tree broken after them as _tree_once breaks it, for
+    classes whose objects are dropped"""
     previous: _Shared | None = getattr(_local, "shared", None)
     shared = _local.shared = _Shared(document)
     try:
@@ -541,6 +545,17 @@ def _sharing_tree(document: Document, *, release: bool) -> Iterator[None]:
         _local.shared = previous
         if release and shared.tree is not None:
             _break(shared.tree)
+
+
+def _shared_value(document: Document, key: Hashable, make: Callable[[], _Value]) -> _Value:
+    """A value of the shared document by its key, made once inside _sharing_document; that of
+    another document made anew"""
+    shared: _Shared | None = getattr(_local, "shared", None)
+    if shared is None or shared.document is not document:
+        return make()
+    if key not in shared.values:
+        shared.values[key] = make()
+    return shared.values[key]  # type: ignore[no-any-return]
 
 
 def _kept(tree: Tree) -> bool:
