@@ -395,8 +395,9 @@ def _check_spans(
 ) -> list[tuple[int, int, str]]:
     """
     Checking the spans a hook gives for a string: triples of the start, the end and
-    the text of every item inside the string, in order unless not ordered; error
-    gives the message of a wrong value in place of the English ones
+    the text of every item inside the string, or objects with them as start, end and
+    text, such as the Span of anySeg, in order unless not ordered; error gives the
+    message of a wrong value in place of the English ones
     """
     if not isinstance(spans, Iterable):
         raise SourceTypeError(
@@ -406,6 +407,10 @@ def _check_spans(
     previous = 0
     size = len(text)
     for span in spans:
+        if not isinstance(span, tuple | list) and all(
+            hasattr(span, name) for name in ("start", "end", "text")
+        ):
+            span = (span.start, span.end, span.text)
         if not (isinstance(span, tuple | list) and len(span) == 3):
             raise SourceTypeError(
                 error(span)

@@ -76,7 +76,8 @@ def to_document(
     Arguments:
         source (str|Document): Data source
         tokenize (Callable[[str], Iterable[tuple[int, int, str]]]): Tokens of a
-            string with their positions
+            string with their positions, as triples or objects with start, end and
+            text, such as the Span of anySeg
         sentenize (Callable[[str], Iterable[tuple[int, int, str]]]): Sentences of a
             string with their positions, in any order
         messages (dict[str, str]): Messages of the errors by key (MESSAGES)
@@ -134,7 +135,7 @@ def document_words(document: Document) -> tuple[str, ...]:
         ('Well', 'the', 'cat', 'sat', '100')
     """
     if not is_document(document):
-        raise SourceTypeError(MESSAGES["source_type"].format(type=type(document).__name__))
+        raise SourceTypeError(MESSAGES["document_type"].format(type=type(document).__name__))
     text = document.text
     tokens = document.tokens
     return tuple(
@@ -185,7 +186,7 @@ def document_part(
     """
     messages = _messages(messages)
     if not is_document(document):
-        raise source_type_error(messages, document)
+        raise SourceTypeError(messages["document_type"].format(type=type(document).__name__))
     for value, what in ((start, "start"), (end, "end")):
         check_integer(value, what, message=messages["integer_param"])
     size = len(document.text)
@@ -194,7 +195,7 @@ def document_part(
     reader = _PartReader(document)
     sentences = reader.sentences_in(start, end)
     if not sentences:
-        raise SourceError(messages["no_words"])
+        raise SourceError(messages["part_no_sentences"].format(start=start, end=end))
     return reader.part(sentences[0], sentences[-1])
 
 
@@ -409,7 +410,7 @@ def get_tree(document: Document) -> Tree:
         (True, None, (TreeWord(0, 'Cats', NOUN, nsubj),))
     """
     if not is_document(document):
-        raise SourceTypeError(MESSAGES["source_type"].format(type=type(document).__name__))
+        raise SourceTypeError(MESSAGES["document_type"].format(type=type(document).__name__))
     shared: _Shared | None = getattr(_local, "shared", None)
     if shared is None or shared.document is not document:
         return _built_tree(document)

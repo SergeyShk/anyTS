@@ -716,6 +716,16 @@ CASES = [
         ParameterError,
         lambda: document_part(to_document(TEXT), 5, 2, messages=OWN),
     ),
+    (
+        "document_type",
+        SourceTypeError,
+        lambda: document_part(TEXT, 0, 2, messages=OWN),
+    ),
+    (
+        "part_no_sentences",
+        SourceError,
+        lambda: document_part(to_document("  " + TEXT), 0, 1, messages=OWN),
+    ),
     ("parts_kind", ParameterError, lambda: Stats.by_parts(TEXT, "words")),
     ("no_part_kinds", ParameterError, lambda: Diversity.by_parts(TEXT)),
     ("stats_objects", SourceTypeError, lambda: stats_dataframe([5], messages=OWN)),
