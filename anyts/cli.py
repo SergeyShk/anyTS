@@ -470,14 +470,14 @@ class Command:
         """Statistics of the classes of a text - the printed table for the format table, the row
         otherwise - or the rows of its parts, without a class that could not count it; None if
         the text could not be read or parsed"""
-        from .document import _sharing_tree
+        from .document import _sharing_document
 
         document = self._document(source, args.encoding)
         if document is None:
             return None
         found: dict[str, Any] = {}
         # The statistics are dropped after their rows, so the tree goes with them
-        with _sharing_tree(document, release=True):
+        with _sharing_document(document, release=True):
             for name in self.names:
                 cls = self.stats_classes[name]
                 try:
