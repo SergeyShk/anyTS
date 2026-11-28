@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 import threading
 from bisect import bisect_left, bisect_right
-from collections.abc import Callable, Hashable, Iterable, Iterator, Mapping, Sequence
+from collections.abc import Callable, Hashable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from functools import cache
 from re import Pattern
@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Any, NamedTuple, TypeVar
 
 from .constants import MESSAGES
 from .exceptions import ParameterError, SourceError, SourceTypeError
-from .extractors import _check_spans, _sentence_spans, _word_pattern
+from .extractors import _check_spans, _sentence_spans, _Spans, _word_pattern
 from .utils import (
     _IN_WORD_MARKS,
     BLANK_LINE,
@@ -28,7 +28,7 @@ from .utils import (
 if TYPE_CHECKING:
     from anyseg import Document
 
-Spans = Callable[[str], Iterable[tuple[int, int, str]]]
+Spans = _Spans
 _Value = TypeVar("_Value")
 
 # The separators a word of the default tokens may end with
@@ -79,7 +79,7 @@ def to_document(
             string with their positions, as triples or objects with start, end and
             text, such as the Span of anySeg
         sentenize (Callable[[str], Iterable[tuple[int, int, str]]]): Sentences of a
-            string with their positions, in any order
+            string with their positions, as tokenize gives them, in any order
         messages (dict[str, str]): Messages of the errors by key (MESSAGES)
 
     Returns:
@@ -87,8 +87,8 @@ def to_document(
 
     Raises:
         SourceTypeError: If the source is neither a string nor a Document object,
-            tokenize or sentenize is not callable, either does not give triples of
-            integer bounds inside the text and a string, those of tokenize
+            tokenize or sentenize is not callable, either does not give triples or
+            spans of integer bounds inside the text and a string, those of tokenize
             ascending, or a token of tokenize runs over a blank line
 
     Example:

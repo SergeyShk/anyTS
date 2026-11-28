@@ -1,3 +1,4 @@
+import contextlib
 import re
 import sys
 import unicodedata
@@ -7,7 +8,7 @@ from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, S
 from functools import cache
 from numbers import Integral
 from re import Pattern
-from typing import Any, ClassVar
+from typing import Any, ClassVar, Protocol
 
 from .constants import MESSAGES
 from .exceptions import ParameterError, SourceTypeError
@@ -27,6 +28,23 @@ from .utils import (
 from .utils import NUMBER_PATTERN as NUMBER_PATTERN
 
 Tokenizer = Pattern[str] | Callable[[str], Iterable[str]]
+
+
+class _SpanItem(Protocol):
+    """An item a hook gives with its bounds and its text, such as the Span of anySeg"""
+
+    @property
+    def start(self) -> int: ...
+
+    @property
+    def end(self) -> int: ...
+
+    @property
+    def text(self) -> str: ...
+
+
+# A hook of the items of a string: triples of the start, the end and the text, or such items
+_Spans = Callable[[str], Iterable["tuple[int, int, str] | _SpanItem"]]
 # Invisible separators left out of the character n-grams: the soft hyphen, the zero-width
 # space, the word joiner and the byte order mark; a zero-width space between words is a space
 _INVISIBLE = dict.fromkeys(map(ord, "\u00ad\u200b\u2060\ufeff"))
@@ -336,9 +354,7 @@ def _check_length_bounds(
         raise ParameterError(reversed_bounds)
 
 
-def iter_part_sents(
-    iter_sents: Callable[[str], Iterable[tuple[int, int, str]]], text: str
-) -> Iterator[tuple[int, int, str]]:
+def iter_part_sents(iter_sents: _Spans, text: str) -> Iterator[tuple[int, int, str]]:
     """
     Extracting the sentences of every part of a text between blank lines
 
@@ -375,9 +391,7 @@ def iter_part_sents(
     return _iter_part_sents(iter_sents, text)
 
 
-def _iter_part_sents(
-    iter_sents: Callable[[str], Iterable[tuple[int, int, str]]], text: str
-) -> Iterator[tuple[int, int, str]]:
+def _iter_part_sents(iter_sents: _Spans, text: str) -> Iterator[tuple[int, int, str]]:
     """iter_part_sents of checked arguments"""
     bounds = [0, *(bound for match in BLANK_LINE.finditer(text) for bound in match.span())]
     for start, end in zip(bounds[::2], [*bounds[1::2], len(text)], strict=True):
@@ -407,10 +421,9 @@ def _check_spans(
     previous = 0
     size = len(text)
     for span in spans:
-        if not isinstance(span, tuple | list) and all(
-            hasattr(span, name) for name in ("start", "end", "text")
-        ):
-            span = (span.start, span.end, span.text)
+        if not isinstance(span, tuple | list):
+            with contextlib.suppress(AttributeError):
+                span = (span.start, span.end, span.text)
         if not (isinstance(span, tuple | list) and len(span) == 3):
             raise SourceTypeError(
                 error(span)

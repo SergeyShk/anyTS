@@ -81,7 +81,7 @@ Runs the splitter `iter_sents` on every part of a text between blank lines (`BLA
 | `iter_sents` | `Callable` | - | Splitter giving the start, the end and the text of every sentence of a string |
 | `text` | `str` | - | Text string |
 
-A text that is not a string raises `SourceTypeError`, and so does an `iter_sents` that cannot be called or does not give the sentences of a part in order, as triples of integer bounds within it and a string.
+A text that is not a string raises `SourceTypeError`, and so does an `iter_sents` that cannot be called or does not give the sentences of a part in order, as triples or spans of integer bounds within it and a string.
 <!-- --8<-- [end:iter_part_sents] -->
 
 === "Code"
