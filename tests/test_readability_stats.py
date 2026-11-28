@@ -7,7 +7,6 @@ from typing import ClassVar
 
 import numpy as np
 import pytest
-import spacy
 
 from anyts.basic_stats import BasicStats
 from anyts.constants import (
@@ -104,10 +103,6 @@ def test_init_basic_stats_of_another_class():
     assert Readability(Words(TEXT)).bs.n_syllables == 11
     # Without basic_stats_class any basic statistics are taken
     assert ReadabilityStats(OneSyllable(TEXT)).bs.n_syllables == 9
-
-
-def test_init_doc(rs):
-    assert Readability(spacy.blank("xx")(TEXT)).get_stats() == rs.get_stats()
 
 
 def test_init_extractors():

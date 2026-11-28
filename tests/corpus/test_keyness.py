@@ -4,7 +4,6 @@ from math import copysign, inf, isnan, log, nan
 
 import numpy as np
 import pytest
-import spacy
 
 from anyts import WordsExtractor
 from anyts.constants import G2_CRITICAL_VALUES, KEYNESS_MEASURES
@@ -20,6 +19,7 @@ from anyts.corpus.keyness import (
     calc_odds_ratio,
     calc_p_value,
 )
+from anyts.document import to_document
 from anyts.exceptions import ParameterError, SourceError, SourceTypeError
 
 target = ["kitty", "is", "in", "window", "with", "looked", "in", "peacocks", "kitty", "dozed"]
@@ -303,14 +303,6 @@ def test_keyness_of_a_string_or_a_set():
         keyness(target, FrequencyReference(["the", "dog"], 100))
 
 
-@pytest.mark.parametrize("span", [False, True])
-def test_refuses_a_doc(span):
-    doc = spacy.blank("xx")("The cat sleeps and the cat eats.")
-    source = doc[0:3] if span else doc
-    with pytest.raises(SourceTypeError, match="WordsExtractor"):
-        keyness(source, reference)
-
-
 def test_signed_measures_give_a_positive_zero():
     assert copysign(1, calc_chi2(1, 2, 100, 100)) == 1
     assert copysign(1, calc_bic(0, 2, 8, 8)) == 1
@@ -436,8 +428,8 @@ def test_keyness_of_ngrams():
         with pytest.raises(ParameterError, match=r"^The n-grams need the words of the corpora"):
             keyness(*corpora, n=2)
     # A list of tokens or numbers is no list of texts
-    doc = spacy.blank("en")("the black cat")
-    for corpus, name in ((list(doc), "Token"), ([1, 2], "int")):
+    document = to_document("the black cat")
+    for corpus, name in ((list(document.tokens), "Token"), ([1, 2], "int")):
         with pytest.raises(
             SourceTypeError, match=f"^The target must be a list of strings, not {name}$"
         ):

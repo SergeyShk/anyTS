@@ -3,9 +3,7 @@ from typing import ClassVar
 
 import pandas as pd
 import pytest
-import spacy
 from anyseg import Document
-from spacy.tokens import Doc
 
 from anyts.cohesion_stats import ConnectorMatcher
 from anyts.document import get_tree, to_document
@@ -30,6 +28,7 @@ from anyts.visualizers.highlight import (
     split_segments,
     tokens_span,
 )
+from tests.documents import parsed
 
 STOPWORDS = {"the", "a", "and"}
 
@@ -76,8 +75,8 @@ class Marks(HighlightedText):
 text = "The old cat sleeps on the mat and the dog eats. A bird sings."
 
 
-def parsed(sentences=True, tags=True):
-    """The text as a Doc with a parse, the tags and the lemmas made by hand"""
+def annotated(tags=True):
+    """The text as a document with a parse, the tags and the lemmas made by hand"""
     words = ["The", "old", "cat", "sleeps", "on", "the", "mat", "and", "the", "dog", "eats", "."]
     words += ["A", "bird", "sings", "."]
     spaces = [True] * 10 + [False, True] + [True, True, False, False]
@@ -86,13 +85,8 @@ def parsed(sentences=True, tags=True):
     deps += ["punct", "det", "nsubj", "ROOT", "punct"]
     pos = ["DET", "ADJ", "NOUN", "VERB", "ADP", "DET", "NOUN", "CCONJ", "DET", "NOUN", "VERB"]
     pos += ["PUNCT", "DET", "NOUN", "VERB", "PUNCT"]
-    kwargs = {"heads": heads, "deps": deps}
-    if tags:
-        kwargs |= {"pos": pos, "lemmas": [word.lower() for word in words]}
-    if not sentences:
-        # Without the parse there are no sentence boundaries either
-        kwargs = {key: value for key, value in kwargs.items() if key not in ("heads", "deps")}
-    return Doc(spacy.blank("xx").vocab, words=words, spaces=spaces, **kwargs)
+    kwargs = {"pos": pos, "lemmas": [word.lower() for word in words]} if tags else {}
+    return parsed(words, heads, deps, spaces=spaces, **kwargs)
 
 
 def spans(ht, layer):
@@ -110,44 +104,20 @@ def test_string():
     assert Marks(text).layers == ("long_sents",)
 
 
-def test_doc():
-    doc = parsed()
-    ht = Marks(doc, layers="all")
+def test_document():
+    document = annotated()
+    ht = Marks(document, layers="all")
     assert ht.layers == ("long_sents", "stopwords", "subjects", "nouns")
     assert spans(ht, "subjects") == ["cat", "dog", "bird"]
     assert [h.note for h in ht.highlights if h.layer == "nouns"] == ["cat", "mat", "dog", "bird"]
-    assert Marks(doc).layers == ("long_sents", "subjects")
-    # The same sentences from the boundaries of a Doc and from the text
+    assert Marks(document).layers == ("long_sents", "subjects")
+    # The same sentences from the parse and from the text
     assert spans(ht, "long_sents") == spans(Marks(text), "long_sents")
 
 
-def test_doc_without_the_annotations():
-    ht = Marks(parsed(tags=False), layers="all")
+def test_document_without_the_tags():
+    ht = Marks(annotated(tags=False), layers="all")
     assert ht.layers == ("long_sents", "stopwords", "subjects")
-    # Without the boundaries the sentences come from the text
-    blank = spacy.blank("xx")(text)
-    assert not blank.has_annotation("SENT_START")
-    assert spans(Marks(blank), "long_sents") == spans(Marks(text), "long_sents")
-    assert Marks(blank, layers="all").layers == ("long_sents", "stopwords")
-
-
-def test_doc_with_the_parts_of_speech_of_the_whitespace_alone():
-    # The attribute ruler of a pipeline without its tagger marks the whitespace SPACE
-    doc = spacy.blank("xx")("The old cat sleeps.\n\nA bird sings.")
-    doc[5].pos_ = "SPACE"
-    for token in doc:
-        token.lemma_ = token.lower_
-    assert doc.has_annotation("POS") and "nouns" not in Marks(doc, layers="all").layers
-    assert all(word.pos is None for word in get_doc_words(to_document(doc)))
-
-
-def test_doc_with_partial_boundaries():
-    """The starts after the blank lines alone leave the sentences to the text"""
-    paragraphs = f"{text}\n\n{text}"
-    partial = spacy.blank("xx")(paragraphs)
-    partial[[token.idx for token in partial].index(len(text) + 2)].is_sent_start = True
-    assert spans(Marks(partial), "long_sents") == spans(Marks(paragraphs), "long_sents")
-    assert len(spans(Marks(partial), "long_sents")) == 2
 
 
 @pytest.mark.parametrize(
@@ -214,17 +184,14 @@ def test_sentences_count_the_words_of_the_hook():
             return [word for word in super().doc_words(document) if word.text != "known"]
 
     sample = "A well-known old cat sleeps. It eats."
-    nlp = spacy.blank("xx")
-    nlp.add_pipe("sentencizer")
-    for source in (nlp(sample), spacy.blank("xx")(sample)):
-        assert Units(source, layers="long_sents").counts == {"long_sents": 1}
-        assert Units(source, layers="long_sents").highlights[0].note == "5 words"
-    assert Marks(nlp(sample), layers="long_sents").highlights[0].note == "6 words"
+    assert Units(sample, layers="long_sents").counts == {"long_sents": 1}
+    assert Units(sample, layers="long_sents").highlights[0].note == "5 words"
+    assert Marks(sample, layers="long_sents").highlights[0].note == "6 words"
 
 
 def test_find_of_another_layer():
     class Typo(Marks):
-        def find(self, layer, words, sents, doc):
+        def find(self, layer, words, sents, document):
             return [Highlight(0, 3, "stopword")]
 
     with pytest.raises(
@@ -236,7 +203,7 @@ def test_find_of_another_layer():
 @pytest.mark.parametrize(("start", "end"), [(3, 3), (5, 2), (-4, 2), (8, 10_000)])
 def test_find_outside_the_text(start, end):
     class Astray(Marks):
-        def find(self, layer, words, sents, doc):
+        def find(self, layer, words, sents, document):
             return [Highlight(start, end, layer)]
 
     with pytest.raises(ParameterError, match=rf"lies outside the text: {start}-{end}$"):
@@ -271,7 +238,7 @@ def test_layer_requirements_listed():
 
 
 def test_highlights_sorted():
-    ht = Marks(parsed(), layers="all")
+    ht = Marks(annotated(), layers="all")
     positions = [(h.start, -h.end) for h in ht.highlights]
     assert positions == sorted(positions)
 
@@ -281,7 +248,7 @@ def test_parse_hook():
 
     class Parsed(Marks):
         def parse(self, source):
-            return to_document(parsed()) if source == text else super().parse(source)
+            return annotated() if source == text else super().parse(source)
 
     assert Parsed(text, layers="all").layers == ("long_sents", "stopwords", "subjects", "nouns")
     assert spans(Parsed(text, layers="subjects"), "subjects") == ["cat", "dog", "bird"]
@@ -291,19 +258,18 @@ def test_parse_hook():
 
 
 def test_get_doc_words():
-    assert get_doc_words(to_document(parsed()))[:2] == [
+    assert get_doc_words(annotated())[:2] == [
         Word(0, 3, "The", "DET", "the"),
         Word(4, 7, "old", "ADJ", "old"),
     ]
-    assert get_doc_words(to_document(parsed(tags=False)))[0] == Word(0, 3, "The")
+    assert get_doc_words(annotated(tags=False))[0] == Word(0, 3, "The")
     # The part of speech and the lemma are taken each when the document has it
-    doc = Doc(spacy.blank("xx").vocab, words=["The", "cat"], pos=["DET", "NOUN"])
-    assert get_doc_words(to_document(doc)) == [
+    assert get_doc_words(parsed(["The", "cat"], pos=["DET", "NOUN"])) == [
         Word(0, 3, "The", "DET"),
         Word(4, 7, "cat", "NOUN"),
     ]
-    doc = Doc(spacy.blank("xx").vocab, words=["The", "cats"], lemmas=["the", "cat"])
-    assert get_doc_words(to_document(doc))[1] == Word(4, 8, "cats", None, "cat")
+    document = parsed(["The", "cats"], lemmas=["the", "cat"])
+    assert get_doc_words(document)[1] == Word(4, 8, "cats", None, "cat")
     # A multiword token is one word with the part of speech and the lemma of its first word
     document = Document.from_tokens(
         "Vino del pueblo", [0, 5, 9], [4, 8, 15], words={1: ["de", "el"]}
@@ -316,27 +282,15 @@ def test_get_doc_words():
 
 def test_byte_order_mark():
     sample = "\ufeffThe cat and the dog sleep on a mat."
-    assert get_doc_words(to_document(spacy.blank("xx")(sample)))[0] == Word(1, 4, "The")
-    counts = Marks(sample, layers="stopwords").counts
-    assert Marks(spacy.blank("xx")(sample), layers="stopwords").counts == counts
-    assert counts == {"stopwords": 4}
+    assert get_doc_words(to_document(sample))[0] == Word(1, 4, "The")
+    assert Marks(sample, layers="stopwords").counts == {"stopwords": 4}
 
 
 def test_iter_doc_sents():
-    nlp = spacy.blank("xx")
-    nlp.add_pipe("sentencizer")
-    assert list(iter_doc_sents(to_document(nlp("\n\nHello, world.  How are you?")))) == [
+    assert list(iter_doc_sents(to_document("\n\nHello, world.  How are you?"))) == [
         (2, 15, "Hello, world."),
         (17, 29, "How are you?"),
     ]
-    # A sentence of whitespace alone is skipped
-    doc = Doc(
-        spacy.blank("xx").vocab,
-        words=["Hi", ".", "\n\n", "Bye", "."],
-        spaces=[False, False, False, False, False],
-        sent_starts=[True, False, True, True, False],
-    )
-    assert list(iter_doc_sents(to_document(doc))) == [(0, 3, "Hi."), (5, 9, "Bye.")]
 
 
 def test_get_text_sents():
@@ -365,9 +319,9 @@ def test_sentences_of_a_series():
 
 def test_tokens_span():
     # The punctuation at the edge is left out
-    doc = parsed()
-    start, end = tokens_span(get_tree(to_document(doc)).words[8:12])
-    assert doc.text[start:end] == "the dog eats"
+    document = annotated()
+    start, end = tokens_span(get_tree(document).words[8:12])
+    assert document.text[start:end] == "the dog eats"
     with pytest.raises(SourceError, match=r"^The data source has no words$"):
         tokens_span([])
 
@@ -398,7 +352,7 @@ def test_to_html():
 
 def test_to_html_nested_classes():
     # A segment of several layers lists them in the order of drawing, the notes joined
-    markup = Marks(parsed(), layers=["nouns", "subjects"]).to_html(legend=False)
+    markup = Marks(annotated(), layers=["nouns", "subjects"]).to_html(legend=False)
     assert (
         '<span class="xx-hl xx-hl-subjects xx-hl-nouns" title="subject; cat">cat</span>' in markup
     )
@@ -453,8 +407,6 @@ def test_blank_line_ends_a_sentence_of_parse():
         "Notes without a dot here",
         "The old cat sleeps on the mat.",
     ]
-    doc = spacy.blank("xx")(sample)
-    assert [h.start for h in Lines(doc, layers=["long_sents"]).highlights] == [0, 26]
 
 
 def test_check_params():
@@ -581,12 +533,8 @@ def test_find_connector_highlights_blocked():
 
 
 def test_find_split_predicate_highlights():
-    doc = Doc(
-        spacy.blank("xx").vocab,
-        words=["They", "made", "a", "decision"],
-        lemmas=["they", "make", "a", "decision"],
-    )
-    words = get_tree(to_document(doc)).words
+    document = parsed(["They", "made", "a", "decision"], lemmas=["they", "make", "a", "decision"])
+    words = get_tree(document).words
     found = find_split_predicate_highlights([(words[1], words[3])])
     assert found == [Highlight(5, 20, "split_predicates", "split predicate: make decision")]
     assert (
@@ -594,14 +542,14 @@ def test_find_split_predicate_highlights():
         == "made"
     )
     # Without lemmas the note reads the forms
-    bare = get_tree(to_document(Doc(spacy.blank("xx").vocab, words=["Made", "Decision"]))).words
+    bare = get_tree(parsed(["Made", "Decision"])).words
     assert (
         find_split_predicate_highlights([tuple(bare)])[0].note == "split predicate: made decision"
     )
     assert find_split_predicate_highlights([]) == []
-    # The pairs come from the caller: spaCy tokens are refused
+    # The pairs come from the caller: the tokens of a document are refused
     with pytest.raises(SourceTypeError, match=r"^A TreeWord is expected, not Token$"):
-        find_split_predicate_highlights([(doc[1], doc[3])])
+        find_split_predicate_highlights([(document.tokens[1], document.tokens[3])])
 
 
 FREQUENCIES = {"s": 0.06, "t": 0.09, "z": 0.001}
@@ -740,14 +688,6 @@ def test_phrase_highlights_of_a_part_normalized_to_nothing():
         words, ["in fact ,", ","], "x", normalize=lambda w: w.strip(",").lower()
     )
     assert found == [Highlight(0, 7, "x", "\u00abin fact ,\u00bb")]
-
-
-def test_token_over_a_blank_line():
-    doc = spacy.blank("en")("Mr. John\n\nSmith came home.")
-    with doc.retokenize() as retokenizer:
-        retokenizer.merge(doc[1:4])
-    with pytest.raises(SourceError, match="cannot make a document: token 1"):
-        Marks(doc)
 
 
 def test_parse_checked():

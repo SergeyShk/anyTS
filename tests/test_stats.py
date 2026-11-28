@@ -4,7 +4,7 @@ from typing import ClassVar
 
 import pandas as pd
 import pytest
-import spacy
+from anyseg import Document
 
 from anyts import readability_stats
 from anyts.basic_stats import BasicStats
@@ -18,6 +18,7 @@ from anyts.readability_stats import ReadabilityStats
 from anyts.stats import Stats, scale_level, stats_dataframe
 from anyts.syntax_stats import SyntaxStats
 from anyts.unadapted_readability_stats import UnadaptedReadabilityStats
+from tests.documents import parsed
 
 
 class Sizes(Stats):
@@ -336,15 +337,20 @@ def test_by_parts_of_lines():
 
 def test_by_parts_of_cohesion_by_lines():
     """The lines, the paragraphs of the class by default, are its first parts"""
-    doc = spacy.blank("en")("A cat sleeps. The cat eats.\nA dog barks.")
-    for token in doc:
-        token.pos_ = "NOUN" if token.lower_ in {"cat", "dog"} else "VERB"
-        token.pos_ = "PUNCT" if token.is_punct else "SPACE" if token.is_space else token.pos_
-        token.lemma_ = token.lower_
-        token.is_sent_start = token.i == 0 or doc[token.i - 1].text == "."
-    parts = CohesionStats.by_parts(doc)
+    words = ["A", "cat", "sleeps", ".", "The", "cat", "eats", ".", "\n", "A", "dog", "barks", "."]
+    document = parsed(
+        words,
+        spaces=[index not in {2, 6, 7, 8, 11, 12} for index in range(len(words))],
+        pos=[
+            {"cat": "NOUN", "dog": "NOUN", ".": "PUNCT", "\n": "SPACE"}.get(w, "VERB")
+            for w in words
+        ],
+        lemmas=[word.lower() for word in words],
+        sent_starts=[not index or words[index - 1] == "." for index in range(len(words))],
+    )
+    parts = CohesionStats.by_parts(document)
     assert parts.index.name == "line"
-    assert [doc.text[start:end] for start, end in parts[["start", "end"]].values] == [
+    assert [document.text[start:end] for start, end in parts[["start", "end"]].values] == [
         "A cat sleeps. The cat eats.",
         "A dog barks.",
     ]
@@ -401,10 +407,9 @@ def test_by_parts_reads_the_statistics_once():
     assert reads == [3, 4, 3, 2]
 
 
-def test_by_parts_of_a_string_a_doc_and_a_document():
-    doc = spacy.blank("en")(PARTS_TEXT)
-    frames = [Vowels.by_parts(source) for source in (PARTS_TEXT, doc, to_document(PARTS_TEXT))]
-    assert frames[0].equals(frames[1]) and frames[0].equals(frames[2])
+def test_by_parts_of_a_string_and_a_document():
+    frames = [Vowels.by_parts(source) for source in (PARTS_TEXT, to_document(PARTS_TEXT))]
+    assert frames[0].equals(frames[1])
 
 
 def test_by_parts_parses_the_source_once():
@@ -447,18 +452,17 @@ def test_by_parts_of_unadapted_readability():
 
 
 def test_by_parts_of_syntax():
-    doc = spacy.tokens.Doc(
-        spacy.blank("en").vocab,
-        words=["Cats", "sleep", ".", "Dogs", "bark", "."],
-        heads=[1, 1, 1, 4, 4, 4],
-        deps=["nsubj", "ROOT", "punct", "nsubj", "ROOT", "punct"],
-        pos=["NOUN", "VERB", "PUNCT", "NOUN", "VERB", "PUNCT"],
-    )
-    parts = SyntaxStats.by_parts(doc)
+    def sentence(words, heads):
+        return parsed(
+            words, heads, ["nsubj", "ROOT", "punct"] * 2, pos=["NOUN", "VERB", "PUNCT"] * 2
+        )
+
+    document = sentence(["Cats", "sleep", ".", "Dogs", "bark", "."], [1, 1, 1, 4, 4, 4])
+    parts = SyntaxStats.by_parts(document)
     assert parts["tree_depth"].tolist() == [1, 1]
     assert parts["mean_dependency_distance"].tolist() == [
-        SyntaxStats(doc[:3].as_doc()).mean_dependency_distance,
-        SyntaxStats(doc[3:].as_doc()).mean_dependency_distance,
+        SyntaxStats(sentence(["Cats", "sleep", "."], [1, 1, 1])).mean_dependency_distance,
+        SyntaxStats(sentence(["Dogs", "bark", "."], [1, 1, 1])).mean_dependency_distance,
     ]
 
 
@@ -519,17 +523,14 @@ def test_stats_dataframe_of_the_flat_statistics():
     """The columns are those of get_stats(flat=True): MorphStats leaves out the words without a
     feature"""
     words = ["The", "cats", "sleep", "."]
-    doc = spacy.tokens.Doc(
-        spacy.blank("en").vocab,
-        words=words,
-        pos=["DET", "NOUN", "VERB", "PUNCT"],
-        morphs=["", "Number=Plur", "Tense=Pres", ""],
+    document = parsed(
+        words, pos=["DET", "NOUN", "VERB", "PUNCT"], morphs=["", "Number=Plur", "Tense=Pres", ""]
     )
-    stats = MorphStats(doc)
+    stats = MorphStats(document)
     frame = stats_dataframe([stats])
     assert list(frame.columns) == list(stats.to_dataframe().columns)
     assert not any(column.endswith("_None") for column in frame.columns)
-    assert list(MorphStats.by_parts(doc).columns[2:]) == list(frame.columns)
+    assert list(MorphStats.by_parts(document).columns[2:]) == list(frame.columns)
 
 
 @pytest.mark.parametrize("stats", ["text", 5, [Lengths("x"), {"n_words": 1}]])
@@ -567,19 +568,15 @@ def test_parts_document_takes_the_parameters():
 
 
 def test_by_parts_of_multiword_tokens():
-    vocab = spacy.blank("es").vocab
-    doc = spacy.tokens.Doc(
-        vocab,
-        words=["Vino", "del", "mar", ".", "Fue", "al", "río", "."],
-        spaces=[True, True, False, True, True, True, False, False],
-        sent_starts=[True, False, False, False, True, False, False, False],
+    document = Document.from_tokens(
+        "Vino del mar. Fue al río.",
+        [0, 5, 9, 12, 14, 18, 21, 24],
+        [4, 8, 12, 13, 17, 20, 24, 25],
+        sentence_starts=[0, 4],
+        words={1: ["de", "el"], 5: ["a", "el"]},
     )
-    import anyseg.spacy  # noqa: F401 - the extension token._.anyseg_words
-
-    doc[1]._.anyseg_words = [{"form": "de", "upos": "ADP"}, {"form": "el", "upos": "DET"}]
-    doc[5]._.anyseg_words = [{"form": "a", "upos": "ADP"}, {"form": "el", "upos": "DET"}]
-    document = to_document(doc)
+    document.set_columns(upos=[None, "ADP", "DET", None, None, None, "ADP", "DET", None, None])
     assert [
         [word.form for word in to_document(document_part(document, start, end)).words]
-        for start, end in Vowels.by_parts(doc)[["start", "end"]].values
+        for start, end in Vowels.by_parts(document)[["start", "end"]].values
     ] == [["Vino", "de", "el", "mar", "."], ["Fue", "a", "el", "río", "."]]

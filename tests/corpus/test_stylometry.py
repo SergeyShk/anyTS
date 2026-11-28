@@ -4,7 +4,6 @@ from math import isclose, log2, sqrt
 import numpy as np
 import pandas as pd
 import pytest
-import spacy
 from scipy.spatial.distance import jensenshannon
 
 from anyts import CharNgramsExtractor, WordsExtractor
@@ -22,6 +21,7 @@ from anyts.corpus import (
     zeta,
     zeta_segments,
 )
+from anyts.document import to_document
 from anyts.exceptions import ParameterError, SourceError, SourceTypeError
 
 # Three short texts, every word replaced by a token of the same length that keeps
@@ -223,7 +223,7 @@ def test_delta_errors():
     with pytest.raises(SourceTypeError):
         frequency_table({"A": texts["A"]})
     with pytest.raises(SourceTypeError):
-        frequency_table({"A": spacy.blank("xx")(texts["A"])})
+        frequency_table({"A": to_document(texts["A"])})
 
 
 def naive_rolling_delta(reference, text, window, step, n_mfw, variant, culling=0.0):
@@ -392,11 +392,11 @@ def test_zeta_errors():
         zeta(corpus["A"], corpus["B"], top_n=2.0)
     with pytest.raises(SourceTypeError):
         zeta(texts["A"], corpus["B"])
-    # A text among lists of words, a Doc among the texts
+    # A text among lists of words, a Document among the texts
     with pytest.raises(SourceTypeError):
         zeta(["acab", ["babaa"]], corpus["B"])
     with pytest.raises(SourceTypeError):
-        zeta([spacy.blank("xx")(texts["A"])], corpus["B"])
+        zeta([to_document(texts["A"])], corpus["B"])
     with pytest.raises(SourceTypeError):
         zeta(set(corpus["A"]), corpus["B"])
     with pytest.raises(SourceTypeError):

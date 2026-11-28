@@ -15,6 +15,7 @@ from anyts.report import Report, escape
 from anyts.style_stats import StyleStats
 from anyts.visualizers import sentence_lengths
 from anyts.visualizers.highlight import Highlight, HighlightedText
+from tests.documents import parsed
 
 
 class Vowels(BasicStats):
@@ -173,12 +174,8 @@ def test_report_command_errors(tmp_path, capsys):
 def test_values_are_those_of_get_stats():
     """A statistic of the table is that of get_stats: the counts of MorphStats, not the values of
     every word its attributes keep"""
-    import spacy
-    from spacy.tokens import Doc
-
-    doc = Doc(
-        spacy.blank("en").vocab,
-        words=["Cats", "sleep", "and", "eat", "."],
+    document = parsed(
+        ["Cats", "sleep", "and", "eat", "."],
         pos=["NOUN", "VERB", "CCONJ", "VERB", "PUNCT"],
         morphs=["Number=Plur", "Tense=Pres", "", "Tense=Pres", ""],
     )
@@ -186,7 +183,7 @@ def test_values_are_those_of_get_stats():
     class Morph(Report):
         stats_classes: ClassVar[dict[str, type]] = {"morph": MorphStats}
 
-    report = Morph(doc)
+    report = Morph(document)
     found = {cells[0]: cells[1] for cells in rows(report.to_html(), "<h3>morph</h3>")}
     stats = report.stats["morph"]
     # The values from the most frequent, described as print_stats describes them
@@ -503,24 +500,15 @@ def test_the_other_classes_count_only_the_sentences_shown():
 
 def test_the_statistics_of_a_report_keep_their_tree():
     """The tree the classes of a report share stays whole for the statistics it keeps"""
-    import spacy
-    from spacy.tokens import Doc
-
-    from anyts import document as document_module
-    from anyts.document import to_document
     from anyts.syntax_stats import SyntaxStats
 
-    doc = Doc(
-        spacy.blank("en").vocab,
-        words=["Cats", "sleep", "."],
-        heads=[1, 1, 1],
-        deps=["nsubj", "ROOT", "punct"],
+    document = parsed(
+        ["Cats", "sleep", "."],
+        [1, 1, 1],
+        ["nsubj", "ROOT", "punct"],
         pos=["NOUN", "VERB", "PUNCT"],
         lemmas=["cat", "sleep", "."],
     )
-    document = to_document(doc)
-    # A document no conversion keeps, as that of a text
-    document_module._slot().clear()
 
     class Trees(Report):
         stats_classes: ClassVar[dict[str, type]] = {"syntax": SyntaxStats}

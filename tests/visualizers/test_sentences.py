@@ -4,15 +4,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pytest
-import spacy
 from anyseg import Document
 from matplotlib.axes import Axes
-from spacy.tokens import Doc
 
 from anyts import SentsExtractor, WordsExtractor
-from anyts.document import to_document
 from anyts.exceptions import ParameterError, SourceError, SourceTypeError
 from anyts.visualizers import sentence_lengths, sentence_lengths_plot
+from tests.documents import parsed
 
 text = (
     "The cat was on the window. It watched the birds, but the birds left. "
@@ -22,10 +20,6 @@ text = (
 
 def test_sentence_lengths():
     assert sentence_lengths(text) == [6, 8, 1, 7]
-    assert sentence_lengths(spacy.blank("xx")(text)) == [6, 8, 1, 7]
-    nlp = spacy.blank("xx")
-    nlp.add_pipe("sentencizer")
-    assert sentence_lengths(nlp(text)) == [6, 8, 1, 7]
     assert sentence_lengths([3, 5, 2]) == [3, 5, 2]
     assert sentence_lengths(np.array([3, 5, 2])) == [3, 5, 2]
     assert sentence_lengths(pd.Series([3, 5, 2])) == [3, 5, 2]
@@ -41,24 +35,13 @@ def test_sentence_lengths():
         sentence_lengths(42)
 
 
-def test_sentence_lengths_of_a_doc_with_extractors():
-    """The extractors split a Doc without sentences of its own; a Doc with them and a Document
-    keep theirs"""
-    vocab = spacy.blank("en").vocab
-    words = ["Mr", "Smith", "came", "Then", "left"]
-    starts = [True, False, False, True, False]
+def test_sentence_lengths_of_a_document_with_extractors():
+    """A Document keeps its sentences with the extractors given"""
+    document = parsed(
+        ["Mr", "Smith", "came", "Then", "left"], sent_starts=[True, False, False, True, False]
+    )
     extractors = (SentsExtractor(), WordsExtractor())
-    doc = Doc(vocab, words=words, sent_starts=starts)
-    assert sentence_lengths(doc, *extractors) == sentence_lengths(doc) == [3, 2]
-    assert sentence_lengths(to_document(doc), *extractors) == [3, 2]
-    assert sentence_lengths(Doc(vocab, words=words), *extractors) == [5]
-
-
-def test_sentence_lengths_of_a_doc_with_partial_boundaries():
-    text = "The cat sleeps. The dog eats\n\nThe bird sings. It flies."
-    doc = spacy.blank("xx")(text)
-    doc[[token.idx for token in doc].index(text.index("The bird"))].is_sent_start = True
-    assert sentence_lengths(doc) == sentence_lengths(text) == [3, 3, 3, 2]
+    assert sentence_lengths(document, *extractors) == sentence_lengths(document) == [3, 2]
 
 
 @pytest.mark.parametrize(
@@ -80,7 +63,7 @@ def test_sentence_lengths_negative():
 
 
 def test_sentence_lengths_hooks():
-    # The extractors of a string and the hyphens of a Doc are the hooks of a language
+    # The extractors of a string and the tokens of a document are the hooks of a language
     parts = SentsExtractor(tokenizer=re.compile(r"(?<=,)\s+"))
     assert sentence_lengths("The cat, the dog", sents_extractor=parts) == [2, 2]
     assert sentence_lengths(text, words_extractor=WordsExtractor(stopwords={"the"})) == [
@@ -89,20 +72,10 @@ def test_sentence_lengths_hooks():
         1,
         6,
     ]
-    nlp = spacy.blank("xx")
-    nlp.add_pipe("sentencizer")
-    doc = nlp("A well-known cat. It sleeps.")
-    assert sentence_lengths(doc) == [4, 2]
-    # A Doc without sentence boundaries gets the sentences of its text
-    bare = spacy.blank("xx")("A well-known cat. It sleeps.")
-    assert sentence_lengths(bare) == [4, 2]
+    assert sentence_lengths("A well-known cat. It sleeps.") == [4, 2]
     # The tokens of a document decide the words: a hyphenated token is one word
     document = Document.from_tokens("A well-known cat.", [0, 2, 13, 16], [1, 12, 16, 17])
     assert sentence_lengths(document) == [3]
-    # An extractor splits the text of a Doc too
-    assert sentence_lengths(
-        doc, sents_extractor=SentsExtractor(tokenizer=re.compile(r"(?<=\.) "))
-    ) == [4, 2]
     with pytest.raises(SourceTypeError, match="SentsExtractor"):
         sentence_lengths(text, sents_extractor=WordsExtractor())
     with pytest.raises(SourceTypeError, match="WordsExtractor"):

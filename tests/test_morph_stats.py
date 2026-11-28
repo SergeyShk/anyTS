@@ -3,15 +3,13 @@ from math import nan
 from typing import ClassVar
 
 import pytest
-import spacy
 from anyseg import Document
-from spacy.tokens import Doc
 
 from anyts.constants import MESSAGES, MORPH_FEATURES, MORPH_STATS_DESC, MORPH_VALUES_DESC
 from anyts.exceptions import ParameterError, SourceError, SourceTypeError, UnknownStatError
 from anyts.morph_stats import MorphStats, MorphWord
+from tests.documents import parsed
 
-VOCAB = spacy.blank("en").vocab
 WORDS = ["The", "cats", "slept", "and", "they", "dream", "."]
 POS = ["DET", "NOUN", "VERB", "CCONJ", "PRON", "VERB", "PUNCT"]
 MORPHS = [
@@ -25,13 +23,13 @@ MORPHS = [
 ]
 
 
-def make_doc(pos=True):
-    return Doc(VOCAB, words=WORDS, pos=POS if pos else None, morphs=MORPHS)
+def make_document(pos=True):
+    return parsed(WORDS, pos=POS if pos else None, morphs=MORPHS)
 
 
 @pytest.fixture(scope="module")
 def stats():
-    return MorphStats(make_doc())
+    return MorphStats(make_document())
 
 
 def test_words_and_features(stats):
@@ -53,13 +51,12 @@ def test_words_and_features(stats):
 
 
 def test_words_of_one_analysis_share_the_features():
-    doc = Doc(
-        VOCAB,
-        words=["cats", "and", "dogs"],
+    document = parsed(
+        ["cats", "and", "dogs"],
         pos=["NOUN", "CCONJ", "NOUN"],
         morphs=["Number=Plur", "", "Number=Plur"],
     )
-    cats, conjunction, dogs = MorphStats(doc).analyze(doc)
+    cats, conjunction, dogs = MorphStats(document).analyze(document)
     assert cats.features is dogs.features
     assert cats.features == {"Number": "Plur"}
     assert conjunction.features == {}
@@ -123,17 +120,16 @@ def test_unknown_statistic(stats, call):
 
     # A property is no statistic to count
     with pytest.raises(UnknownStatError, match=r"^Unknown statistic: lemmas\."):
-        getattr(Lemmas(make_doc()), call)("lemmas")
+        getattr(Lemmas(make_document()), call)("lemmas")
 
 
 def test_print_stats(capsys):
-    doc = Doc(
-        VOCAB,
-        words=["who", "what", "that", "it"],
+    document = parsed(
+        ["who", "what", "that", "it"],
         pos=["PRON", "PRON", "PRON", "PRON"],
         morphs=["PronType=Int,Rel", "PronType=Int,Rel", "PronType=Odd", ""],
     )
-    MorphStats(doc).print_stats("pron_type")
+    MorphStats(document).print_stats("pron_type")
     assert capsys.readouterr().out.splitlines() == [
         "--------------Pronoun type--------------",
         f"{'Interrogative / Relative':30}|{'2':^10}",
@@ -141,7 +137,7 @@ def test_print_stats(capsys):
         f"{'Unknown':30}|{'1':^10}",
         "",
     ]
-    MorphStats(doc).print_stats("pron_type", "pos", filter_none=True)
+    MorphStats(document).print_stats("pron_type", "pos", filter_none=True)
     lines = capsys.readouterr().out.splitlines()
     assert "Unknown" not in "".join(lines)
     assert lines[4:] == [
@@ -164,14 +160,14 @@ def test_markers(capsys, stats):
             tenses = [tense for tense in self.tense if tense]
             return {"p_past": tenses.count("Past") / len(tenses), "p_none": nan}
 
-    Verbs(make_doc()).print_markers()
+    Verbs(make_document()).print_markers()
     # A marker of markers_desc that get_markers does not give
     with pytest.raises(
         SourceTypeError,
         match=r"^The get_markers of Verbs gives no values of the markers \['p_none'\]$",
     ):
         type("Verbs", (Verbs,), {"get_markers": lambda self: {"p_past": 0.5}})(
-            make_doc()
+            make_document()
         ).print_markers()
     assert capsys.readouterr().out.splitlines() == [
         f"{'Form':^28}|{'Share':^10}",
@@ -231,14 +227,13 @@ def test_a_feature_without_value_is_none():
     [
         (5, SourceTypeError, MESSAGES["source_type"].format(type="int")),
         ("The cats", SourceError, MESSAGES["no_pos"]),
-        (make_doc()[:2], SourceTypeError, MESSAGES["source_span"]),
-        (make_doc(pos=False), SourceError, MESSAGES["no_pos"]),
+        (make_document(pos=False), SourceError, MESSAGES["no_pos"]),
         (
-            Doc(VOCAB, words=["cats", "\n\n", "sleep"], pos=["", "SPACE", ""]),
+            parsed(["cats", "\n\n", "sleep"], pos=["", "SPACE", ""]),
             SourceError,
             MESSAGES["no_pos"],
         ),
-        (Doc(VOCAB, words=[".", "!"], pos=["PUNCT", "PUNCT"]), SourceError, MESSAGES["no_words"]),
+        (parsed([".", "!"], pos=["PUNCT", "PUNCT"]), SourceError, MESSAGES["no_words"]),
     ],
 )
 def test_source_errors(source, error, message):
@@ -253,8 +248,8 @@ def test_source_errors(source, error, message):
         None,
         MorphWord("cats", None, {}),
         [("cats", None, {})],
-        # The features of spaCy are no mapping, its numbers of the parts of speech no strings
-        [MorphWord("cats", "NOUN", Doc(VOCAB, words=["cats"], morphs=["Number=Plur"])[0].morph)],
+        # The features of CoNLL-U are no mapping, a number of a part of speech no string
+        [MorphWord("cats", "NOUN", "Number=Plur")],
         [MorphWord("cats", 92, {})],
         [MorphWord(5, "NOUN", {})],
         [MorphWord("cats", "NOUN", {"Number": ["Plur"]})],
@@ -314,7 +309,7 @@ def test_stats_desc_in_another_order():
     reordered = type(
         "Reordered", (MorphStats,), {"feature_names": names, "stats_desc": stats_desc}
     )
-    assert list(reordered(make_doc()).get_stats()) == ["case", "pos", "number"]
+    assert list(reordered(make_document()).get_stats()) == ["case", "pos", "number"]
     assert MORPH_VALUES_DESC["pos"]["NOUN"] == "Noun"
 
 

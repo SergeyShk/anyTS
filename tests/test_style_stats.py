@@ -4,7 +4,6 @@ from typing import ClassVar
 import numpy as np
 import pandas as pd
 import pytest
-import spacy
 from anyseg import Document
 
 from anyts.constants import MESSAGES, STYLE_STATS_DESC
@@ -213,14 +212,14 @@ def test_defaults_of_the_base():
     assert not style.is_parenthetical("however")
 
 
-def test_source_of_a_doc_and_an_extractor():
-    doc = spacy.blank("en")("The cat, the well-known cat")
-    assert StyleStats(doc).words == ("the", "cat", "the", "well", "known", "cat")
+def test_source_of_a_document_and_an_extractor():
+    text = "The cat, the well-known cat"
+    assert StyleStats(text).words == ("the", "cat", "the", "well", "known", "cat")
 
-    joined = Document.from_tokens(doc.text, [0, 4, 7, 9, 13, 24], [3, 7, 8, 12, 23, 27])
+    joined = Document.from_tokens(text, [0, 4, 7, 9, 13, 24], [3, 7, 8, 12, 23, 27])
     assert StyleStats(joined).words == ("the", "cat", "the", "well-known", "cat")
     extractor = WordsExtractor(stopwords=["the"])
-    style = StyleStats(doc, words_extractor=extractor)
+    style = StyleStats(text, words_extractor=extractor)
     assert style.words == ("cat", "well", "known", "cat")
     assert style.forms == ("the", "cat", "the", "well", "known", "cat")
     assert StyleStats("The cat, the cat", words_extractor=extractor).words == ("cat", "cat")

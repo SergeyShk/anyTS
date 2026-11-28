@@ -18,6 +18,7 @@ from anyts.exceptions import DownloadError, ParameterError, SourceError
 from anyts.report import Report
 from anyts.style_stats import StyleStats
 from anyts.syntax_stats import SyntaxStats
+from tests.documents import parsed
 
 
 class Vowels(BasicStats):
@@ -720,9 +721,6 @@ def test_the_statistics_are_read_once(capsys, files, monkeypatch, fmt):
 
 def test_the_tree_of_a_text_is_built_once(capsys, files, monkeypatch):
     """The classes of a text share its tree, which is broken after them"""
-    import spacy
-    from spacy.tokens import Doc
-
     from anyts import document as document_module
 
     built = []
@@ -733,14 +731,6 @@ def test_the_tree_of_a_text_is_built_once(capsys, files, monkeypatch):
         return built[-1]
 
     monkeypatch.setattr(document_module, "_built_tree", counted)
-    doc = Doc(
-        spacy.blank("en").vocab,
-        words=["Cats", "sleep", "."],
-        heads=[1, 1, 1],
-        deps=["nsubj", "ROOT", "punct"],
-        pos=["NOUN", "VERB", "PUNCT"],
-        lemmas=["cat", "sleep", "."],
-    )
 
     class Trees(Prototype):
         stats_classes: ClassVar[dict[str, type]] = {
@@ -749,10 +739,13 @@ def test_the_tree_of_a_text_is_built_once(capsys, files, monkeypatch):
         }
 
         def parse(self, text):
-            document = to_document(doc)
-            # A document no conversion keeps, as that of a text
-            document_module._slot().clear()
-            return document
+            return parsed(
+                ["Cats", "sleep", "."],
+                [1, 1, 1],
+                ["nsubj", "ROOT", "punct"],
+                pos=["NOUN", "VERB", "PUNCT"],
+                lemmas=["cat", "sleep", "."],
+            )
 
     assert Trees().run(["stats", "-f", "json", files[0]]) == 0
     capsys.readouterr()

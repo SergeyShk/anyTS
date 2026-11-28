@@ -8,9 +8,9 @@ import weakref
 import numpy as np
 import pandas as pd
 import pytest
-import spacy
 
 from anyts import CharNgramsExtractor, SentsExtractor, WordsExtractor
+from anyts.document import to_document
 from anyts.exceptions import ParameterError, SourceTypeError
 from anyts.extractors import (
     NUMBER_PATTERN,
@@ -294,7 +294,9 @@ class TestWordsExtractor:
 
     @pytest.mark.parametrize("filter_punct", [True, False])
     def test_tokenizer_returns_strings(self, filter_punct):
-        we = WordsExtractor(tokenizer=spacy.blank("en").tokenizer, filter_punct=filter_punct)
+        we = WordsExtractor(
+            tokenizer=lambda text: to_document(text).tokens, filter_punct=filter_punct
+        )
         with pytest.raises(
             SourceTypeError, match=r"^The tokenizer must return strings, not Token$"
         ):

@@ -7,7 +7,6 @@ from typing import ClassVar
 import numpy as np
 import pandas as pd
 import pytest
-import spacy
 from anyseg import Document
 
 from anyts.constants import MESSAGES, PHON_STATS_DESC
@@ -166,14 +165,14 @@ def test_syllable_sounds_follow_transcribe():
     assert Transcribed("thin").mean_syllable_len == 2
 
 
-def test_source_of_a_doc_and_an_extractor():
-    doc = spacy.blank("en")("The well-known poet")
-    assert English(doc).words == ("the", "well", "known", "poet")
+def test_source_of_a_document_and_an_extractor():
+    text = "The well-known poet"
+    assert English(text).words == ("the", "well", "known", "poet")
 
-    joined = Document.from_tokens(doc.text, [0, 4, 15], [3, 14, 19])
+    joined = Document.from_tokens(text, [0, 4, 15], [3, 14, 19])
     assert English(joined).words == ("the", "well-known", "poet")
     extractor = WordsExtractor(stopwords=["the"])
-    assert English(doc, words_extractor=extractor).words == ("well", "known", "poet")
+    assert English(joined, words_extractor=extractor).words == ("well", "known", "poet")
     assert English("The poet", words_extractor=extractor).words == ("poet",)
 
 
@@ -344,11 +343,6 @@ def test_calc_repetition_index_nan(words, window_len, features):
 def test_calc_repetition_index_source_errors(words, features, message):
     with pytest.raises(SourceTypeError, match=message):
         calc_repetition_index(words, 2, features)
-
-
-def test_calc_repetition_index_tokens():
-    with pytest.raises(SourceTypeError, match=r"not a Doc"):
-        calc_repetition_index(spacy.blank("xx")("casa cosa"), 2)
 
 
 @pytest.mark.parametrize(

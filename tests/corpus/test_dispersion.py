@@ -3,7 +3,6 @@ from math import copysign, isnan, log2, sqrt
 
 import numpy as np
 import pytest
-import spacy
 
 from anyts.constants import DISPERSION_STATS_DESC
 from anyts.corpus import Dispersion, dispersion
@@ -184,14 +183,6 @@ def test_dispersion_parameters(kwargs):
 @pytest.mark.parametrize("source", ["the cat sleeps", set(words), Counter(words)])
 def test_dispersion_of_a_string_or_a_set(source):
     with pytest.raises(SourceTypeError):
-        dispersion(source, parts=2)
-
-
-@pytest.mark.parametrize("span", [False, True])
-def test_refuses_a_doc(span):
-    doc = spacy.blank("xx")("The cat sleeps and the cat eats.")
-    source = doc[0:3] if span else doc
-    with pytest.raises(SourceTypeError, match="WordsExtractor"):
         dispersion(source, parts=2)
 
 

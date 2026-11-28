@@ -1,14 +1,9 @@
-import gc
 import pickle
 import random
 import re
-import threading
-import weakref
 
 import pytest
-import spacy
 from anyseg import Document
-from spacy.tokens import Doc
 
 from anyts import document as document_module
 from anyts.constants import MESSAGES
@@ -16,6 +11,7 @@ from anyts.document import document_part, document_words, get_tree, to_document
 from anyts.exceptions import ParameterError, SourceError, SourceTypeError
 from anyts.extractors import split_paragraphs
 from anyts.utils import is_document
+from tests.documents import parsed
 
 TEXT = "The cat sat. It slept!\n\nThe end"
 
@@ -113,7 +109,7 @@ def test_hooks_are_checked():
     with pytest.raises(SourceTypeError, match=r"^Own tokenize: \(0, 3\)$"):
         to_document(TEXT, tokenize=lambda text: [(0, 3)], messages=own)
     with pytest.raises(SourceTypeError, match=r"^Own sentenize: 5$"):
-        to_document(spacy.blank("en")("One two"), sentenize=lambda text: 5, messages=own)
+        to_document("One two", sentenize=lambda text: 5, messages=own)
 
 
 def test_document():
@@ -122,104 +118,12 @@ def test_document():
     assert is_document(document) and not is_document(TEXT)
 
 
-def test_doc_with_sentences():
-    nlp = spacy.blank("en")
-    nlp.add_pipe("sentencizer")
-    document = to_document(nlp("One. Two! Three"))
-    assert sentences(document) == ["One.", "Two!", "Three"]
-    # The sentences of the Doc win over sentenize
-    assert sentences(to_document(nlp("One. Two"), sentenize=semicolons)) == ["One.", "Two"]
-
-
-def test_doc_without_sentences():
-    """No or only partial sentence starts and no parse: the sentences of sentenize"""
-    doc = spacy.blank("en")("One. Two!\n\nThree; four")
-    assert sentences(to_document(doc)) == ["One.", "Two!", "Three; four"]
-    assert sentences(to_document(doc, sentenize=semicolons)) == ["One. Two!", "Three;", "four"]
-    partial = spacy.blank("en")("One. Two!\n\nThree")
-    partial[-1].is_sent_start = True
-    assert partial.has_annotation("SENT_START")
-    assert sentences(to_document(partial)) == ["One.", "Two!", "Three"]
-
-
-def test_doc_converted_once():
-    """The last Doc converted keeps its document while its tokens and annotations stay"""
-    nlp = spacy.blank("en")
-    doc = nlp("One. Two!")
-    document = to_document(doc)
-    assert to_document(doc) is document
-    # Another sentenize, a new annotation and a Doc between them convert it again
-    assert to_document(doc, sentenize=semicolons) is not document
-    assert to_document(doc, sentenize=semicolons) is to_document(doc, sentenize=semicolons)
-    document = to_document(doc)
-    doc[0].lemma_ = "one"
-    changed = to_document(doc)
-    assert changed is not document and changed.column("lemma")[0] == "one"
-    to_document(nlp("Three"))
-    assert to_document(doc) is not changed
-    # A hook of the sentences is an annotation too
-    document = to_document(doc)
-    doc.user_hooks["sents"] = lambda whole: [whole[:]]
-    assert to_document(doc) is not document
-    assert [sentence.text for sentence in to_document(doc).sentences] == ["One. Two!"]
-    # A Doc with its sentences takes no sentenize
-    parsed = Doc(nlp.vocab, words=["Cats", "sleep"], heads=[1, 1], deps=["nsubj", "ROOT"])
-    assert to_document(parsed, sentenize=semicolons) is to_document(parsed)
-    # The words of a multiword token of anySeg are part of the annotations
-    doc = nlp("Vino del pueblo")
-    plain = to_document(doc)
-    doc[1]._.anyseg_words = [{"form": "de", "upos": "ADP"}, {"form": "el", "upos": "DET"}]
-    assert [word.form for word in to_document(doc).words] == ["Vino", "de", "el", "pueblo"]
-    assert len(plain.words) == 3
-    doc.user_data[("._.", "anyseg_words", None, None)] = "a value of the whole Doc"
-    assert len(to_document(doc).words) == 4
-    # Docs of one text are other Docs, and a Doc that is gone takes its document with it
-    first, second = nlp("Four"), nlp("Four")
-    assert to_document(first) is not to_document(second)
-    del first, second
-    gc.collect()
-    assert document_module._slot() == []
-
-
-def test_tree_of_the_last_doc_converted():
-    """The tree of the document of the last Doc converted is built once; a Document passed as it
-    is, which may change, gets a tree of its own every time; threads keep their own slots"""
-    vocab = spacy.blank("en").vocab
-    doc = Doc(vocab, words=["Cats", "sleep"], heads=[1, 1], deps=["nsubj", "ROOT"])
-    tree = get_tree(to_document(doc))
-    assert get_tree(to_document(doc)) is tree
-    document = Document.from_tokens("A b", [0, 2], [1, 3])
-    assert get_tree(document) is not get_tree(document)
-    other = Doc(vocab, words=["Dogs", "bark"], heads=[1, 1], deps=["nsubj", "ROOT"])
-    slots = []
-
-    def convert():
-        get_tree(to_document(other))
-        slots.append(weakref.ref(document_module._slot()))
-
-    # The slot of a thread goes with it, without the garbage collector
-    gc.disable()
-    try:
-        thread = threading.Thread(target=convert)
-        thread.start()
-        thread.join()
-        assert slots[0]() is None
-    finally:
-        gc.enable()
-    assert get_tree(to_document(doc)) is tree
-    # A thread may end while the callbacks of a Doc run, and its slot with it
-    document_module._forget(weakref.ref(document_module._Slot()), weakref.ref(doc))
-
-
 def test_tree_for_one_use():
-    """A tree no slot keeps is broken after its use, the tree of the slot stays whole"""
-    vocab = spacy.blank("en").vocab
-    doc = Doc(vocab, words=["Cats", "sleep"], heads=[1, 1], deps=["nsubj", "ROOT"])
-    with document_module._tree_once(to_document(doc)) as tree:
-        pass
-    assert tree is get_tree(to_document(doc))
-    assert tree.words[0].head is tree.words[1]
-    with document_module._tree_once(pickle.loads(pickle.dumps(to_document(doc)))) as tree:
+    """A tree of a document is built anew every time, and the one of _tree_once is broken after
+    its use"""
+    document = parsed(["Cats", "sleep"], [1, 1], ["nsubj", "ROOT"])
+    assert get_tree(document) is not get_tree(document)
+    with document_module._tree_once(document) as tree:
         cats, sleep = tree.words
         assert cats.head is sleep
     assert cats.head is None
@@ -227,141 +131,11 @@ def test_tree_for_one_use():
     assert not hasattr(cats, "tree")
 
 
-def test_sentences_of_a_hook():
-    """A Doc without a parse whose sentences come from a hook keeps them, each paragraph too"""
-    doc = spacy.blank("en")("One two three. Four five six. Seven eight\n\nNine")
-
-    def by_period(whole):
-        start = 0
-        for token in whole:
-            if token.text == "." or token.text.startswith("\n"):
-                yield whole[start : token.i + 1]
-                start = token.i + 1
-        yield whole[start:]
-
-    doc.user_hooks["sents"] = by_period
-    assert sentences(to_document(doc)) == [
-        "One two three.",
-        "Four five six.",
-        "Seven eight",
-        "Nine",
-    ]
-    # Another hook is another document
-    doc.user_hooks["sents"] = lambda whole: [whole[:]]
-    assert sentences(to_document(doc)) == ["One two three. Four five six. Seven eight", "Nine"]
-
-
-def test_multiword_tokens_without_columns_of_their_words():
-    """A multiword token whose words have no columns of their own is one word, with the columns
-    and the head the pipeline gave the token; words with their columns stay words"""
-    vocab = spacy.blank("es").vocab
-    doc = Doc(
-        vocab,
-        words=["Vino", "del", "pueblo", "."],
-        heads=[0, 2, 0, 0],
-        deps=["ROOT", "case", "obl", "punct"],
-        pos=["VERB", "ADP", "NOUN", "PUNCT"],
-        lemmas=["venir", "del", "pueblo", "."],
-    )
-    import anyseg.spacy  # noqa: F401 - the extension token._.anyseg_words
-
-    doc[1]._.anyseg_words = [{"form": "de"}, {"form": "el"}]
-    words = get_tree(to_document(doc)).words
-    assert [(word.form, word.lemma, word.upos, word.deprel) for word in words] == [
-        ("Vino", "venir", "VERB", "root"),
-        ("del", "del", "ADP", "case"),
-        ("pueblo", "pueblo", "NOUN", "obl"),
-        (".", ".", "PUNCT", "punct"),
-    ]
-    assert [word.head.form if word.head else None for word in words] == [
-        None,
-        "pueblo",
-        "Vino",
-        "Vino",
-    ]
-    doc[1]._.anyseg_words = ({"form": "de"}, {"form": "el"})
-    assert [word.form for word in to_document(doc).words] == ["Vino", "del", "pueblo", "."]
-    doc[1]._.anyseg_words = [{"form": "de", "upos": "ADP"}, {"form": "el", "upos": "DET"}]
-    assert [word.upos for word in to_document(doc).words] == [
-        "VERB",
-        "ADP",
-        "DET",
-        "NOUN",
-        "PUNCT",
-    ]
-
-
-def test_sentences_of_a_doc_in_one_pass(monkeypatch):
-    """The sentences of a Doc without them read the starts of its tokens a fixed number of times,
-    however many sentences it has"""
-    tokens = Document.tokens
-    reads = []
-
-    class Tokens:
-        def __init__(self, found):
-            self.found = found
-
-        def __getattr__(self, name):
-            reads.append(name)
-            return getattr(self.found, name)
-
-        def __iter__(self):
-            return iter(self.found)
-
-        def __len__(self):
-            return len(self.found)
-
-        def __getitem__(self, index):
-            return self.found[index]
-
-    monkeypatch.setattr(Document, "tokens", property(lambda self: Tokens(tokens.__get__(self))))
-    document = to_document(spacy.blank("en")("One. Two. " * 50))
-    assert len(document.sentences) == 100
-    assert reads.count("starts") <= 5
-
-
-def test_doc_columns():
-    vocab = spacy.blank("en").vocab
-    doc = Doc(
-        vocab,
-        words=["Cats", "slept", "."],
-        spaces=[True, False, False],
-        lemmas=["cat", "sleep", "."],
-        pos=["NOUN", "VERB", "PUNCT"],
-        morphs=["Number=Plur", "Tense=Past", ""],
-    )
-    document = to_document(doc)
-    assert document.column("lemma") == ["cat", "sleep", "."]
-    assert document.column("upos") == ["NOUN", "VERB", "PUNCT"]
-    assert document.column("feats") == ["Number=Plur", "Tense=Past", None]
-    # A parse keeps its sentences and its tree
-    parsed = Doc(
-        vocab, words=["Cats", "slept", "."], heads=[1, 1, 1], deps=["nsubj", "ROOT", "punct"]
-    )
-    document = to_document(parsed)
-    assert document.column("head") == [2, 0, 2]
-    assert document.column("deprel") == ["nsubj", "root", "punct"]
-
-
-def test_doc_multiword_tokens():
-    nlp = spacy.blank("es", config={"nlp": {"tokenizer": {"@tokenizers": "anyseg.Tokenizer.v1"}}})
-    doc = nlp("Vino del pueblo. Se fue")
-    document = to_document(doc)
-    assert tokens(document) == ["Vino", "del", "pueblo", ".", "Se", "fue"]
-    # Without columns of their own the words of del are the token, as the pipeline sees it
-    assert [word.form for word in document.words][:3] == ["Vino", "del", "pueblo"]
-    assert sentences(document) == ["Vino del pueblo.", "Se fue"]
-    assert document_words(document) == ("Vino", "del", "pueblo", "Se", "fue")
-
-
 def test_word_at_a_position():
-    """The word of a token of spaCy by its position, past the tokens of whitespace, and the first
-    word of a multiword token"""
-    doc = spacy.blank("en")("Cats  sleep\n\nDogs bark")
-    tree = get_tree(to_document(doc))
-    # The positions of the words are not those of the tokens
-    assert tree.words[doc[2].i].form == "Dogs"
-    assert [tree.word_at(token.idx) for token in doc] == [
+    """The word at a position or of a span, none at whitespace, and the first word of a multiword
+    token"""
+    tree = get_tree(to_document("Cats  sleep\n\nDogs bark"))
+    assert [tree.word_at(position) for position in (0, 4, 6, 11, 13, 18)] == [
         tree.words[0],
         None,
         tree.words[1],
@@ -374,22 +148,18 @@ def test_word_at_a_position():
     assert tree.word_at(4, 6) is None
     assert tree.word_at(6, 6) is tree.words[1]
     assert tree.word_at(-1) is None
-    assert tree.word_at(len(doc.text)) is None
-    # The token of the document leaves out the separators at the edges of a token of spaCy
-    doc = spacy.blank("en")("\ufeffThe cat sat on the \u200bmat.")
-    tree = get_tree(to_document(doc))
-    found = [tree.word_at(token.idx, token.idx + len(token)) for token in doc]
-    assert [word.form for word in found] == ["The", "cat", "sat", "on", "the", "mat", "."]
-    assert tree.word_at(doc[0].idx) is None
+    assert tree.word_at(len(tree.text)) is None
+    # The token of the document leaves out the separators at the edges of a piece of the text
+    tree = get_tree(to_document("\ufeffThe cat sat on the \u200bmat."))
+    assert [word.form for word in tree.words] == ["The", "cat", "sat", "on", "the", "mat", "."]
+    assert tree.word_at(0) is None
+    assert tree.word_at(19, 23) is tree.words[5]
     tree = get_tree(Document.from_tokens("al cine", [0, 3], [2, 7], words={0: ["a", "el"]}))
     assert [word.form for word in tree.words] == ["a", "el", "cine"]
     assert tree.word_at(1) is tree.words[0]
 
 
 def test_other_sources():
-    doc = spacy.blank("en")(TEXT)
-    with pytest.raises(SourceTypeError, match=re.escape(MESSAGES["source_span"])):
-        to_document(doc[:2])
     with pytest.raises(SourceTypeError, match="cannot be of type int"):
         to_document(5)
     own = {**MESSAGES, "source_type": "Own {type}"}
@@ -418,10 +188,6 @@ def test_blank_lines():
         "The page ends in the middle of a",
         "sentence that goes on.",
     ]
-    nlp = spacy.blank("en")
-    nlp.add_pipe("sentencizer")
-    document = to_document(nlp("Title of the text\n\nThe body goes on. It ends."))
-    assert sentences(document) == ["Title of the text", "The body goes on.", "It ends."]
     generator = random.Random(0)
     alphabet = (
         "ab .\n\r\x0b\x0c\x85\u2028\u2029\u00ad\u2060\u200b\u200c\u200d\ufeff\t \x01\x7f\xa0"
@@ -441,19 +207,12 @@ def test_words_of_no_class():
 
 
 def test_tokens_over_a_blank_line():
-    doc = spacy.blank("en")("Mr. John\n\nSmith came home.")
-    with doc.retokenize() as retokenizer:
-        retokenizer.merge(doc[1:4])
-    with pytest.raises(
-        SourceError, match="cannot make a document: token 1: runs over a paragraph"
-    ):
-        to_document(doc)
-    own = {**MESSAGES, "document_tokens": "Own {error}"}
-    with pytest.raises(SourceError, match=r"^Own token 1"):
-        to_document(doc, messages=own)
     text = "One two. Three four.\n\nFive six."
     with pytest.raises(SourceTypeError, match="cannot make a document: token 4: runs over"):
         to_document(text, tokenize=lambda t: [(14, 24, t[14:24])])
+    own = {**MESSAGES, "document_tokens": "Own {error}"}
+    with pytest.raises(SourceTypeError, match=r"^Own token 4"):
+        to_document(text, tokenize=lambda t: [(14, 24, t[14:24])], messages=own)
 
 
 def test_tree():
@@ -501,10 +260,8 @@ def test_marks_of_the_direction_of_text(text, tokens):
 
 
 def parsed_text():
-    """A Doc of two paragraphs of three sentences with a parse, lemmas and features"""
-    vocab = spacy.blank("en").vocab
-    return Doc(
-        vocab,
+    """A document of two paragraphs of three sentences with a parse, lemmas and features"""
+    return parsed(
         words=["Cats", "sleep", ".", "Dogs", "bark", "loudly", ".", "\n\n", "Birds", "sing", "."],
         spaces=[True, False, True, True, True, False, False, False, True, False, False],
         heads=[1, 1, 1, 4, 4, 4, 4, 6, 9, 9, 9],
@@ -583,17 +340,15 @@ def test_document_part_of_several_sentences():
 
 
 def test_document_part_keeps_multiword_tokens():
-    vocab = spacy.blank("es").vocab
-    doc = Doc(
-        vocab,
-        words=["Vino", ".", "Salió", "del", "pueblo", "."],
-        spaces=[False, True, True, True, False, False],
-        sent_starts=[True, False, True, False, False, False],
+    document = Document.from_tokens(
+        "Vino. Salió del pueblo.",
+        [0, 4, 6, 12, 16, 22],
+        [4, 5, 11, 15, 22, 23],
+        sentence_starts=[0, 2],
+        words={3: ["de", "el"]},
     )
-    import anyseg.spacy  # noqa: F401 - the extension token._.anyseg_words
-
-    doc[3]._.anyseg_words = [{"form": "de", "upos": "ADP"}, {"form": "el", "upos": "DET"}]
-    part = document_part(to_document(doc), 7, 8)
+    document.set_columns(upos=[None, None, None, "ADP", "DET", None, None])
+    part = document_part(document, 7, 8)
     assert part.text == "Salió del pueblo."
     assert [word.form for word in part.words] == ["Salió", "de", "el", "pueblo", "."]
     assert part.column("upos") == [None, "ADP", "DET", None, None]

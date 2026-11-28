@@ -6,9 +6,7 @@ from statistics import fmean, pstdev
 from typing import ClassVar
 
 import pytest
-import spacy
 from anyseg import Document
-from spacy.tokens import Doc
 
 import anyts.syntax_stats
 from anyts.constants import MESSAGES, SYNTAX_STATS_DESC
@@ -46,26 +44,17 @@ from anyts.syntax_stats import (
 )
 from anyts.utils import has_feature, is_finite_verb, is_infinitive
 from anyts.visualizers.highlight import tokens_span
-
-VOCAB = spacy.blank("xx").vocab
+from tests.documents import parsed
 
 
 def parse(words, heads, deps, morphs=None, spaces=None, pos=None):
-    """A Doc with a hand-made dependency tree: heads are the indices of the head tokens"""
-    return Doc(
-        VOCAB,
-        words=words,
-        spaces=spaces or [True] * len(words),
-        heads=heads,
-        deps=deps,
-        morphs=morphs,
-        pos=pos,
-    )
+    """A document with a hand-made dependency tree: heads are the indices of the head tokens"""
+    return parsed(words, heads, deps, spaces=spaces, morphs=morphs, pos=pos)
 
 
 def tree(doc):
-    """Words of the tree of a Doc: without whitespace tokens doc[i] is the word i"""
-    return get_tree(to_document(doc)).words
+    """Words of the tree of a document: without whitespace tokens the word i is the token i"""
+    return get_tree(doc).words
 
 
 def document(words, heads, deps, upos=None, feats=None):
@@ -116,7 +105,6 @@ def test_is_root(house):
 
 
 def test_base_dep():
-    # The label ROOT of spaCy is root in the document
     words = tree(parse(["It", "was", "built"], [2, 2, 2], ["nsubj:pass", "aux:pass", "ROOT"]))
     assert [base_dep(word) for word in words] == ["nsubj", "aux", "root"]
     # A word without a relation
@@ -323,7 +311,7 @@ def test_subtree_of_a_loop():
 
 
 def test_tree_depth_of_a_loop():
-    # a, b and c hang on each other in a Doc of ten tokens
+    # a, b and c hang on each other in a document of ten tokens
     words = tree(parse(list("abcdefghij"), [1, 2, 0] + [3] * 7, ["dep"] * 10))
     assert calc_tree_depth(words[:3]) == 2
 
@@ -461,12 +449,6 @@ def test_syntax_stats_metrics():
         "noun_verb_ratio": 1 / 3,
     }
     assert list(stats.get_stats()) == list(SYNTAX_STATS_DESC)
-
-
-def test_sources_of_one_tree():
-    doc = two_sents()
-    expected = repr(SyntaxStats(doc).get_stats())
-    assert repr(SyntaxStats(to_document(doc)).get_stats()) == expected
 
 
 def test_syntax_stats_without_constructions(house):
@@ -632,9 +614,8 @@ class Hooked(SyntaxStats):
     def parse(self, source):
         if isinstance(source, str):
             words = source.split()
-            source = Doc(
-                VOCAB,
-                words=words,
+            source = parsed(
+                words,
                 heads=[1, 1, 3, 1, 5, 3],
                 deps=["det", "ROOT", "det", "nmod", "det", "nmod"],
                 lemmas=[word.lower() for word in words],
@@ -654,23 +635,13 @@ def test_hooks():
     assert list(stats.get_stats())[-1] == "chains_per_sent"
 
 
-def test_parse_must_return_a_document():
-    class DocParser(SyntaxStats):
-        def parse(self, source):
-            return parse(["Yes"], [0], ["ROOT"], pos=["INTJ"])
-
-    message = MESSAGES["hook_document"].format(hook="parse", cls="DocParser", type="Doc")
-    with pytest.raises(SourceTypeError, match=f"^{re.escape(message)}$"):
-        DocParser("Yes")
-
-
 @pytest.mark.parametrize(
     ("source", "error", "message"),
     [
         # A string of the default parse has no dependency parse
         ("The house", SourceError, MESSAGES["no_parse"]),
         (5, SourceTypeError, MESSAGES["source_type"].format(type="int")),
-        (Doc(VOCAB, words=["The", "house"]), SourceError, MESSAGES["no_parse"]),
+        (parsed(["The", "house"]), SourceError, MESSAGES["no_parse"]),
         (parse(["The", "house"], [1, 1], ["det", "ROOT"]), SourceError, MESSAGES["no_pos"]),
         (
             parse([",", "."], [1, 1], ["punct", "ROOT"], pos=["PUNCT", "PUNCT"]),
@@ -692,24 +663,6 @@ def test_lemmas_required():
     assert SyntaxStats(doc).n_words == 1
     with pytest.raises(SourceError, match=f"^{re.escape(MESSAGES['no_lemmas'])}$"):
         Lemmas(doc)
-
-
-def test_blank_lines():
-    # He came \n\n She slept: the blank line ends a sentence, slept loses its head across it
-    doc = parse(
-        ["He", "came", "\n\n", "She", "slept"],
-        [1, 1, 1, 4, 1],
-        ["nsubj", "ROOT", "dep", "nsubj", "conj"],
-        spaces=[True, False, False, True, False],
-        pos=["PRON", "VERB", "SPACE", "PRON", "VERB"],
-    )
-    stats = SyntaxStats(doc)
-    assert [forms(sent) for sent in stats.sents] == [["He", "came"], ["She", "slept"]]
-    assert stats.c_deps == {"nsubj": 2, "root": 2}
-    # A token over a blank line makes no document
-    message = MESSAGES["document_tokens"].format(error="")
-    with pytest.raises(SourceError, match=f"^{re.escape(message)}"):
-        SyntaxStats(parse(["He", "came\n\nback"], [1, 1], ["nsubj", "ROOT"], pos=["PRON", "VERB"]))
 
 
 def test_is_predicate():
@@ -794,7 +747,7 @@ ORDER = [
 def order_doc():
     words, heads, deps, pos = (list(column) for column in zip(*ORDER, strict=True))
     starts = [i in (0, 17) for i in range(len(words))]
-    return Doc(VOCAB, words=words, heads=heads, deps=deps, pos=pos, sent_starts=starts)
+    return parsed(words, heads, deps, pos=pos, sent_starts=starts)
 
 
 def test_prepositional_chains_and_the_order_of_the_members():
@@ -923,7 +876,7 @@ L2SCA = [
 
 def l2sca_doc():
     words, heads, deps, pos = (list(column) for column in zip(*L2SCA, strict=True))
-    return Doc(VOCAB, words=words, heads=heads, deps=deps, pos=pos)
+    return parsed(words, heads, deps, pos=pos)
 
 
 def test_t_units_and_phrases():
@@ -1850,9 +1803,8 @@ def test_words_before_a_root_out_of_the_words():
 
 
 def test_word_without_a_relation():
-    # A label set without heads: a heads the sentence, b has no relation and no head
-    doc = Doc(VOCAB, words=["a", "b"], pos=["NOUN", "NOUN"])
-    doc[0].dep_ = "nsubj"
+    # Only a has a relation: a heads the sentence, b has no relation and no head
+    doc = parse(["a", "b"], [0, 1], ["nsubj", ""], pos=["NOUN", "NOUN"])
     stats = SyntaxStats(doc)
     assert stats.c_deps == {"": 1, "root": 1}
     assert [word.head for word in stats.sents[0]] == [None, None]
@@ -1860,7 +1812,7 @@ def test_word_without_a_relation():
 
 
 def test_dependency_triples():
-    first = get_tree(to_document(two_sents())).sentences[0]
+    first = get_tree(two_sents()).sentences[0]
     assert dependency_triples(first) == [
         ("NOUN", "det", "DET"),
         ("VERB", "nsubj", "NOUN"),
@@ -1954,19 +1906,13 @@ def test_triples_through_punctuation():
 
 def test_parts_of_speech_required():
     # The units of L2SCA, the chains and the similarity read the parts of speech
-    doc = two_sents()
-    bare = Doc(
-        VOCAB,
-        words=[token.text for token in doc],
-        heads=[token.head.i for token in doc],
-        deps=[token.dep_ for token in doc],
-    )
+    words, heads, deps, _, _ = (list(column) for column in zip(*TWO_SENTS, strict=True))
+    bare = parse(words, heads, deps)
     with pytest.raises(SourceError, match=f"^{re.escape(MESSAGES['no_pos'])}$"):
         SyntaxStats(bare)
     # A whitespace token is no token of the document, nor its SPACE a part of speech
-    spaced = Doc(
-        VOCAB,
-        words=["The", "house", "\n\n", "stands"],
+    spaced = parsed(
+        ["The", "house", "\n\n", "stands"],
         spaces=[True, False, False, False],
         heads=[1, 3, 3, 3],
         deps=["det", "nsubj", "dep", "ROOT"],
@@ -1992,7 +1938,7 @@ def test_items_must_be_hashable():
 
 
 @pytest.mark.parametrize(
-    "words", [None, "the cat", [1, 2], 5, list(parse(["Yes"], [0], ["ROOT"]))]
+    "words", [None, "the cat", [1, 2], 5, parse(["Yes"], [0], ["ROOT"]).words]
 )
 def test_dependency_triples_need_tree_words(words):
     with pytest.raises(SourceTypeError):
@@ -2609,8 +2555,6 @@ def test_pickle_and_copy():
     )
     stats = SyntaxStats(doc)
     data = pickle.dumps(stats)
-    # The words of the tree hold no object of spaCy
-    assert b"spacy" not in data
     for clone in (pickle.loads(data), copy.deepcopy(stats), copy.copy(stats)):
         assert repr(clone.get_stats()) == repr(stats.get_stats())
         assert [forms(sent) for sent in clone.sents] == [
@@ -2735,9 +2679,9 @@ def test_checks_of_a_word(check):
         check(None)
     with pytest.raises(SourceTypeError, match=r"^A TreeWord is expected, not str$"):
         check("came")
-    # A spaCy token is none, a leaf without dependents too
-    leaf = parse(["came"], [0], ["ROOT"])[0]
-    with pytest.raises(SourceTypeError, match=r"^A TreeWord is expected, not Token$"):
+    # A word of the document is none, a leaf without dependents too
+    leaf = parse(["came"], [0], ["ROOT"]).words[0]
+    with pytest.raises(SourceTypeError, match=r"^A TreeWord is expected, not Word$"):
         check(leaf)
 
 
@@ -2746,20 +2690,21 @@ def test_checks_of_a_word(check):
     [get_words, calc_dependency_distances, calc_tree_depth, calc_coordination_chains, tokens_span],
 )
 def test_checks_of_words(check):
-    """A sequence with an item that is no word of the tree, such as a parsed Doc, is refused"""
+    """A sequence with an item that is no word of the tree, such as a word of anySeg, is refused"""
     doc = parse(["He", "came"], [1, 1], ["nsubj", "ROOT"])
-    with pytest.raises(SourceTypeError, match=r"^A TreeWord is expected, not Token$"):
-        check(doc)
+    with pytest.raises(SourceTypeError, match=r"^A TreeWord is expected, not Word$"):
+        check(doc.words)
     with pytest.raises(SourceTypeError, match=r"^A TreeWord is expected, not str$"):
         check("he came")
     # An iterator of words is read once
-    assert check(iter(tree(doc))) == check(tree(doc))
+    words = tree(doc)
+    assert check(iter(words)) == check(words)
 
 
 def test_checks_of_modifier_chains():
     doc = parse(["He", "came"], [1, 1], ["nsubj", "ROOT"])
-    with pytest.raises(SourceTypeError, match=r"^A TreeWord is expected, not Token$"):
-        calc_modifier_chains(doc, lambda word: False)
+    with pytest.raises(SourceTypeError, match=r"^A TreeWord is expected, not Word$"):
+        calc_modifier_chains(doc.words, lambda word: False)
 
 
 def test_error_of_a_hook_on_a_word():
@@ -2774,13 +2719,3 @@ def test_error_of_a_hook_on_a_word():
     )[2]
     with pytest.raises(AttributeError):
         is_clause_head(leave, is_infinitive_periphrasis=lambda word: word.missing)
-
-
-def test_pickle_of_the_object_of_a_component():
-    from anyts.components import SyntaxStatsComponent
-
-    nlp = spacy.blank("xx")
-    component = SyntaxStatsComponent(nlp, "syntax_pickle")
-    doc = component(parse(["He", "came"], [1, 1], ["nsubj", "ROOT"], pos=["PRON", "VERB"]))
-    clone = pickle.loads(pickle.dumps(doc._.syntax_pickle))
-    assert clone.n_words == 2

@@ -7,7 +7,6 @@ from typing import ClassVar
 import numpy as np
 import pandas as pd
 import pytest
-import spacy
 from anyseg import Document
 
 from anyts import SentsExtractor, WordsExtractor
@@ -106,24 +105,14 @@ def test_blank_line_ends_a_sentence():
     assert Stats("Notes without a dot\n\nThe cat sleeps").n_sents == 2
 
 
-def test_sentences_without_words_are_not_counted_in_a_doc():
-    nlp = spacy.blank("xx")
-    nlp.add_pipe("sentencizer")
-    assert Stats(nlp("Hello. ?! Bye.")).n_sents == 2
-
-
 def test_errors():
     with pytest.raises(SourceError, match=r"^The data source has no words$"):
         Stats("+ _")
     with pytest.raises(SourceError):
-        Stats(spacy.blank("xx")("... !"))
+        Stats(to_document("... !"))
     for source, name in ((666, "int"), (["a", "b"], "list"), ({"a": "b"}, "dict")):
         with pytest.raises(SourceTypeError, match=rf"^The data source cannot be of type {name}$"):
             Stats(source)
-    with pytest.raises(
-        SourceTypeError, match=r"^The data source cannot be a Span: pass span\.as_doc\(\)$"
-    ):
-        Stats(spacy.blank("en")("The cat sleeps")[:2])
     with pytest.raises(SourceTypeError, match=r"must be a SentsExtractor$"):
         Stats(TEXT, sents_extractor=WordsExtractor())
     with pytest.raises(SourceTypeError, match=r"must be a WordsExtractor$"):
@@ -202,9 +191,6 @@ class Hooked(Stats):
 def test_parse_and_doc_words():
     assert (Hooked("one two; three").n_sents, Hooked("one two; three").n_words) == (2, 2)
     assert (Stats("one two; three").n_sents, Stats("one two; three").n_words) == (1, 3)
-    # A Doc without sentence starts gets those of parse, its words come from doc_words
-    blank = spacy.blank("xx")("one two; three")
-    assert (Hooked(blank).n_sents, Hooked(blank).n_words) == (2, 2)
     # The tokens of the document decide the words: a hyphenated token is one word
     document = Document.from_tokens("A well-known cat.", [0, 2, 13, 16], [1, 12, 16, 17])
     assert Stats(document).n_words == 3
@@ -236,36 +222,17 @@ def test_parse_must_return_a_document():
     assert stats.n_words == Stats(TEXT).n_words
 
 
-def test_doc_without_sentence_boundaries(bs):
-    doc = spacy.blank("xx")(TEXT)
-    assert not doc.has_annotation("SENT_START")
-    assert Stats(doc, normalize=True).get_stats() == bs.get_stats()
-
-
-def test_doc_with_sentence_boundaries(bs):
-    nlp = spacy.blank("xx")
-    nlp.add_pipe("sentencizer")
-    assert Stats(nlp(TEXT), normalize=True).get_stats() == bs.get_stats()
-
-
-def test_doc_with_partial_sentence_boundaries():
-    """The starts after the blank lines alone leave the sentences to the extractor"""
-    text = "The cat sleeps. The dog eats\n\nThe bird sings. It flies."
-    doc = spacy.blank("xx")(text)
-    doc[[token.idx for token in doc].index(text.index("The bird"))].is_sent_start = True
-    assert Stats(doc).n_sents == Stats(text).n_sents == 4
-
-
-def test_doc_with_extractors():
-    """An extractor passed explicitly is used for a Doc too, on its text"""
-    nlp = spacy.blank("xx")
-    nlp.add_pipe("sentencizer")
-    doc = nlp("The thesauri are a class. The THESAURI are a class.")
+def test_document_with_extractors():
+    """An extractor passed explicitly is used for a Document too, on its text"""
+    text = "The thesauri are a class. The THESAURI are a class."
+    document = to_document(text)
     words_extractor = WordsExtractor(stopwords=["the", "a"], lowercase=True)
-    assert Stats(doc, words_extractor=words_extractor).n_words == 6
-    assert Stats(doc.text, words_extractor=words_extractor).n_words == 6
-    assert Stats(doc, sents_extractor=SentsExtractor(tokenizer=re.compile(r"\. "))).n_sents == 2
-    assert Stats(doc, sents_extractor=SentsExtractor(min_len=1000)).n_sents == 0
+    assert Stats(document, words_extractor=words_extractor).n_words == 6
+    assert Stats(text, words_extractor=words_extractor).n_words == 6
+    assert (
+        Stats(document, sents_extractor=SentsExtractor(tokenizer=re.compile(r"\. "))).n_sents == 2
+    )
+    assert Stats(document, sents_extractor=SentsExtractor(min_len=1000)).n_sents == 0
 
 
 def test_count_punctuations_hook():

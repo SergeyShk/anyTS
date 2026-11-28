@@ -3,12 +3,12 @@ import unicodedata
 
 import anyseg
 import pytest
-import spacy
 from anyseg import Document
-from spacy.tokens import Doc
 
 from anyts.corpus import Concordance, format_kwic, kwic, print_kwic
+from anyts.document import to_document
 from anyts.exceptions import ParameterError, SourceTypeError
+from tests.documents import parsed
 
 text = (
     "The cat was at the window. The cat was called Tom, and the cats wanted the window. "
@@ -82,23 +82,21 @@ def test_kwic_collapses_whitespace():
     ]
 
 
-def test_kwic_of_a_blank_doc():
-    assert kwic(spacy.blank("xx")(text), "cat", window=2) == kwic(text, "cat", window=2)
-
-
-def test_kwic_of_a_doc_with_lemmas():
+def test_kwic_of_a_document_with_lemmas():
     words = ["My", "friend", "saw", "a", "saw", "."]
     lemmas = ["my", "friend", "see", "a", "saw", "."]
-    doc = Doc(spacy.blank("xx").vocab, words=words, lemmas=lemmas)
-    assert [(line.start, line.keyword) for line in kwic(doc, "see", by_lemma=True)] == [
+    document = parsed(words, lemmas=lemmas)
+    assert [(line.start, line.keyword) for line in kwic(document, "see", by_lemma=True)] == [
         (10, "saw")
     ]
     # A word is found by its own form too
-    assert [line.start for line in kwic(doc, "saw", by_lemma=True)] == [10, 16]
-    assert kwic(doc.text, "see", by_lemma=True) == []
+    assert [line.start for line in kwic(document, "saw", by_lemma=True)] == [10, 16]
+    assert kwic(document.text, "see", by_lemma=True) == []
     # The lemmatizer gets the words of Universal Dependencies of a token, none for the keyword
     seen = []
-    kwic(doc, "saw", by_lemma=True, lemmatize=lambda word, words: seen.append(words) or [word])
+    kwic(
+        document, "saw", by_lemma=True, lemmatize=lambda word, words: seen.append(words) or [word]
+    )
     # the words of the text first, then the keyword
     assert [[word.lemma for word in words] for words in seen] == [
         ["my"],
@@ -184,9 +182,9 @@ def test_kwic_fold():
 def test_kwic_hyphenated_words():
     """A hyphenated word is one word where the tokens of the document keep it whole"""
     text = "A well-known cat and a well known dog."
-    doc = spacy.blank("xx")(text)
-    assert [line.keyword for line in kwic(doc, "well known")] == ["well-known", "well known"]
-    assert kwic(doc, "well-known", tokenize=words_of(r"\w+(?:-\w+)*")) == []
+    document = to_document(text)
+    assert [line.keyword for line in kwic(document, "well known")] == ["well-known", "well known"]
+    assert kwic(document, "well-known", tokenize=words_of(r"\w+(?:-\w+)*")) == []
     assert kwic(text, "well-known", tokenize=words_of(r"\w+(?:-\w+)*")) == [
         Concordance(2, 12, "A", "well-known", "cat and a well known")
     ]
@@ -195,8 +193,6 @@ def test_kwic_hyphenated_words():
 def test_kwic_of_a_wrong_source():
     with pytest.raises(SourceTypeError, match=r"^The data source cannot be of type list$"):
         kwic(["cat"], "cat")
-    with pytest.raises(SourceTypeError, match=r"^The data source cannot be a Span"):
-        kwic(spacy.blank("en")(text)[:2], "cat")
     with pytest.raises(SourceTypeError, match=r"^The keyword must be a string, not list$"):
         kwic(text, ["cat"])
 
@@ -260,13 +256,13 @@ def test_print_kwic(capsys):
     with pytest.raises(
         SourceTypeError, match=r"^An iterable of concordances is expected, not Token$"
     ):
-        print_kwic(spacy.blank("xx")(text), "cat")
+        print_kwic(to_document(text).tokens, "cat")
 
 
 def test_kwic_byte_order_mark():
     sample = "\ufeffCat and cat."
-    assert len(kwic(sample, "cat")) == len(kwic(spacy.blank("xx")(sample), "cat")) == 2
-    assert kwic(spacy.blank("xx")(sample), "cat")[0].start == 1
+    assert len(kwic(sample, "cat")) == 2
+    assert kwic(sample, "cat")[0].start == 1
 
 
 def test_kwic_hyphenated_words_of_a_tokenizer():
@@ -282,9 +278,10 @@ def test_kwic_composed_forms():
     decomposed = unicodedata.normalize("NFD", "El café está aquí.")
     assert [line.keyword for line in kwic(decomposed, "café")] == [decomposed[3:8]]
     assert len(kwic(decomposed, "café", ignore_case=False)) == 1
-    doc = spacy.blank("xx")("Die Ge­schichte ist lang.")
-    assert [line.keyword for line in kwic(doc, "Geschichte", ignore_case=False)] == ["Ge­schichte"]
-    lemmas = kwic(doc, "geschichte", by_lemma=True, lemmatize=lambda word, tokens: word)
+    hyphenated = "Die Ge­schichte ist lang."
+    found = kwic(hyphenated, "Geschichte", ignore_case=False)
+    assert [line.keyword for line in found] == ["Ge­schichte"]
+    lemmas = kwic(hyphenated, "geschichte", by_lemma=True, lemmatize=lambda word, tokens: word)
     assert len(lemmas) == 1
 
 
@@ -296,10 +293,6 @@ def test_kwic_phrase_stops_at_the_end_of_a_sentence():
     assert kwic("A line\n\nanother line", "line another") == []
     assert len(kwic("A line\nanother line", "line another")) == 1
     assert [line.keyword for line in kwic("The U.S. Army came.", "U.S. Army")] == ["U.S. Army"]
-    nlp = spacy.blank("xx")
-    nlp.add_pipe("sentencizer")
-    assert kwic(nlp("A dog. Cat here and dog cat."), "dog cat")[0].start == 20
-    assert kwic(spacy.blank("xx")("A dog. Cat here."), "dog cat") == []
 
 
 def test_format_kwic_iterables_and_composed_forms():
@@ -314,28 +307,25 @@ def test_format_kwic_iterables_and_composed_forms():
 def test_kwic_phrase_stops_at_a_sentence_start_on_a_mark():
     # The parser starts the sentence at the opening mark before the word
     words = ["Vino", "ayer", ".", "¿", "Qué", "tal", "?"]
-    doc = Doc(
-        spacy.blank("xx").vocab,
-        words=words,
+    document = parsed(
+        words,
         spaces=[True, False, True, False, True, False, False],
         sent_starts=[True, False, False, True, False, False, False],
     )
-    assert kwic(doc, "ayer qué") == []
-    assert len(kwic(doc, "qué tal")) == 1
-    # A paragraph ends a phrase in a Doc with boundaries too
-    nlp = spacy.blank("xx")
-    nlp.add_pipe("sentencizer")
-    assert kwic(nlp("Dijo uno\n\nEl otro vino."), "uno el") == []
-    assert len(kwic(nlp("Dijo uno\nEl otro vino."), "uno el")) == 1
+    assert kwic(document, "ayer qué") == []
+    assert len(kwic(document, "qué tal")) == 1
 
+    # A paragraph ends a phrase in a document with its sentences too
+    def one_sentence(gap):
+        """A sentence over two lines with the gap between them"""
+        return parsed(
+            ["Dijo", "uno", gap, "El", "otro", "vino", "."],
+            spaces=[True, False, False, True, True, False, False],
+            sent_starts=[True, False, False, False, False, False, False],
+        )
 
-def test_kwic_of_a_doc_with_partial_boundaries():
-    # The starts after the blank lines alone do not let a phrase cross a final mark
-    text = "The cat sleeps. The dog eats\n\nThe bird sings. It flies."
-    doc = spacy.blank("xx")(text)
-    doc[[token.idx for token in doc].index(text.index("The bird"))].is_sent_start = True
-    assert kwic(doc, "sleeps the") == kwic(text, "sleeps the") == []
-    assert len(kwic(doc, "sings it")) == len(kwic(text, "sings it")) == 0
+    assert kwic(one_sentence("\n\n"), "uno el") == []
+    assert len(kwic(one_sentence("\n"), "uno el")) == 1
 
 
 SENT_END = re.compile(r"(?<=[.!?])\s+(?=[A-Z])")
@@ -358,16 +348,12 @@ def test_kwic_sentenize():
     assert [line.keyword for line in kwic(text, "oh he", sentenize=sentences)] == ["oh! he"]
     assert kwic(text, "girls then", sentenize=sentences) == []
     assert len(kwic(text, "girls. Then", sentenize=sentences)) == 1
-    # The text of a Doc without boundaries is split the same way
-    blank = spacy.blank("xx")(text)
-    assert kwic(blank, "honest think", sentenize=sentences) == found
-    # The boundaries of a Doc come first
-    nlp = spacy.blank("xx")
-    nlp.add_pipe("sentencizer")
-    assert kwic(nlp(text), "oh he", sentenize=sentences) == []
-    # A final mark in the keyword lets a phrase cross whatever its case, in a Doc too
+    # The sentences of a document come first
+    document = to_document(text)
+    assert kwic(document, "oh he", sentenize=sentences) == []
+    # A final mark in the keyword lets a phrase cross whatever its case, in a document too
     assert len(kwic(text, "girls. then", sentenize=sentences)) == 1
-    assert len(kwic(nlp(text), "girls. then", sentenize=sentences)) == 1
+    assert len(kwic(document, "girls. then", sentenize=sentences)) == 1
     # The sentences may come in any order
     backwards = lambda text: reversed(list(sentences(text)))  # noqa: E731
     assert kwic(text, "honest think", sentenize=backwards) == found
