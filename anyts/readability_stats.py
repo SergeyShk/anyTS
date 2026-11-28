@@ -132,8 +132,9 @@ class ReadabilityStats(Stats):
         SourceError: If the source has no words or no sentences
         ParameterError: If the coefficient preset is not a string or is unknown,
             filter_nums is not a bool or differs from that of the ready basic statistics; when
-            a class is defined, if its scales or descriptions of a preset name an unknown
-            preset, a scale or a scale of grades is not one of scale_level with finite
+            a class is defined, if its default_preset or its scales or descriptions of a
+            preset name an unknown preset, its basic_stats_class is not a subclass of
+            BasicStats, a factor is not an integer above 0, a scale or a scale of grades is not one of scale_level with finite
             grades, its school stages are not ascending quadruples of two years and two
             strings, or the stage above them is not a pair of strings
     """
@@ -184,6 +185,12 @@ class ReadabilityStats(Stats):
                     f"Available presets: {tuple(cls.presets)}"
                 )
         name = cls.__name__
+        if "default_preset" in vars(cls) and cls.default_preset not in cls.presets:
+            raise ParameterError(
+                f"The default_preset of {name} is not one of its presets: {cls.default_preset!r}. "
+                f"Available presets: {tuple(cls.presets)}"
+            )
+        _check_class_attributes(cls, ("smog_complex_syl_factor", "lix_long_word_letter_factor"))
         for preset, scales in cls.preset_level_scales.items():
             _check_scales(scales, f"preset_level_scales of {name} for {preset}")
         for stat, grades in cls.grade_scales.items():
@@ -574,6 +581,24 @@ def _read_words(bs: BasicStats) -> int:
 def _word_letters(bs: BasicStats) -> int:
     """Letters of the counted words, so that the mean word length matches the number of words"""
     return sum(letters * count for letters, count in bs.c_letters.items())
+
+
+def _check_class_attributes(cls: type[Stats], factors: Iterable[str]) -> None:
+    """The factors of a class of readability, integers above 0, and its basic_stats_class, a
+    subclass of BasicStats or None, checked when the class is defined"""
+    for attribute in factors:
+        value = getattr(cls, attribute)
+        check_integer(value, f"{attribute} of {cls.__name__}")
+        if value < 1:
+            raise ParameterError(
+                f"The {attribute} of {cls.__name__} must be greater than 0, not {value}"
+            )
+    basic = getattr(cls, "basic_stats_class", None)
+    if basic is not None and not (isinstance(basic, type) and issubclass(basic, BasicStats)):
+        raise ParameterError(
+            f"The basic_stats_class of {cls.__name__} must be a subclass of BasicStats or None, "
+            f"not {basic!r}"
+        )
 
 
 def _check_grades(grades: Iterable[tuple[float, float]], what: str) -> list[tuple[float, float]]:

@@ -12,7 +12,12 @@ from .constants import (
     UNADAPTED_READABILITY_STATS_DESC,
 )
 from .exceptions import ParameterError
-from .readability_stats import _basic_parse, _read_basic_stats, _word_letters
+from .readability_stats import (
+    _basic_parse,
+    _check_class_attributes,
+    _read_basic_stats,
+    _word_letters,
+)
 from .stats import Stats
 from .utils import check_bool, check_integer, safe_divide
 
@@ -105,19 +110,9 @@ class UnadaptedReadabilityStats(Stats):
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
-        for attribute in ("complex_syl_factor", "long_word_letter_factor", "mini_word_letters"):
-            value = getattr(cls, attribute)
-            check_integer(value, f"{attribute} of {cls.__name__}")
-            if value < 1:
-                raise ParameterError(
-                    f"The {attribute} of {cls.__name__} must be greater than 0, not {value}"
-                )
-        basic = cls.basic_stats_class
-        if basic is not None and not (isinstance(basic, type) and issubclass(basic, BasicStats)):
-            raise ParameterError(
-                f"The basic_stats_class of {cls.__name__} must be a subclass of BasicStats "
-                f"or None, not {basic!r}"
-            )
+        _check_class_attributes(
+            cls, ("complex_syl_factor", "long_word_letter_factor", "mini_word_letters")
+        )
 
     def parse(self, source: str | Document) -> Document:
         """
