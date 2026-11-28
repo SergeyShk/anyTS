@@ -388,9 +388,13 @@ def get_tree(document: Document) -> Tree:
         The words of Universal Dependencies of the document with the columns
         lemma, upos, xpos, feats, head and deprel, linked by their heads within
         their sentences: a word without a head (0 or None) heads its sentence.
-        The tree of the document the command and the report count is built once
-        and shared by their classes, and it is not to be changed; a tree holds
-        cycles of references, which the garbage collector of Python frees
+        The tree of the document a command or a report counts, of a text
+        HighlightedText highlights and of a part by_parts counts is built once
+        and shared by the classes and the layers that read it, and it is not to
+        be changed; the tree of a text highlighted alone and of a part is broken
+        after them, its words without head, children and tree, so a hook keeps
+        no word of it. A tree holds cycles of references, which the garbage
+        collector of Python frees
 
     Arguments:
         document (Document): Document of anySeg
@@ -534,12 +538,14 @@ def _tree_once(document: Document) -> Iterator[Tree]:
 
 
 @contextmanager
-def _sharing_document(document: Document, *, release: bool) -> Iterator[None]:
+def _sharing_document(
+    document: Document, *, release: bool, shared: _Shared | None = None
+) -> Iterator[None]:
     """The tree of a document and its shared values (_shared_value) built once for the classes
-    that count it inside; with release, the tree broken after them as _tree_once breaks it, for
-    classes whose objects are dropped"""
+    that count it inside, or those of shared, kept for several uses; with release, the tree
+    broken after them as _tree_once breaks it, for classes whose objects are dropped"""
     previous: _Shared | None = getattr(_local, "shared", None)
-    shared = _local.shared = _Shared(document)
+    shared = _local.shared = _Shared(document) if shared is None else shared
     try:
         yield
     finally:
@@ -557,6 +563,12 @@ def _shared_value(document: Document, key: Hashable, make: Callable[[], _Value])
     if key not in shared.values:
         shared.values[key] = make()
     return shared.values[key]  # type: ignore[no-any-return]
+
+
+def _is_shared(document: Document) -> bool:
+    """Whether a document is the shared document of the thread"""
+    shared: _Shared | None = getattr(_local, "shared", None)
+    return shared is not None and shared.document is document
 
 
 def _kept(tree: Tree) -> bool:

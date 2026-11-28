@@ -350,7 +350,7 @@ The core has no layers of its own: a language library subclasses `HighlightedTex
 | `layer_annotations` | class attribute | The columns of the document a layer needs (`deprel`, `upos`, `lemma`, `feats`...), `dict[str, tuple[str]]`, checked when the class is defined; a layer without them is always available |
 | `layer_styles` | class attribute | The CSS declarations of every layer, `dict[str, str]`; the text of a layer with a background keeps a dark colour on it |
 | `css_prefix` | class attribute | The prefix of the CSS classes, `str` |
-| `find(layer, words, sents, document)` | method | The fragments of a layer: a list of `Highlight` from the words and the sentences of the text and its document |
+| `find(layer, words, sents, document)` | method | The fragments of a layer: a list of `Highlight` from the words and the sentences of the text and its document; the layers share the tree of the document (`get_tree`), whose words it keeps none of |
 | `parse(source)` | method | Document of the source, `to_document` by default; a library sets it to segment and annotate a string in its language |
 | `doc_words(document)` | method | The words of the document; by default `get_doc_words` |
 | `annotation_names` | class attribute | Names of the columns in the message of a layer a source does not allow, `dict[str, str]`; English by default |

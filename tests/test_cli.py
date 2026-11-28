@@ -712,6 +712,55 @@ def test_the_output_that_is_the_input(capsys, files):
     assert found[files[1]]["basic"]["n_words"] == 4
 
 
+def test_the_output_that_is_a_later_text_of_a_table(capsys, files):
+    """A table, written as every text is counted, refuses an output that is a text after the
+    first, which it would replace before reading it; the first and the other formats read the
+    texts before"""
+    first, second = files
+    code, _, err = run(capsys, "-s", "basic", "-o", second, first, second)
+    assert code == 2
+    assert f"the output {second} is also the text {second}" in err
+    assert Path(second).read_text(encoding="utf-8") == SECOND
+    assert run(capsys, "-s", "basic", "-o", first, first, second)[0] == 0
+    assert f"{second}: basic" in Path(first).read_text(encoding="utf-8")
+    new = str(Path(first).parent / "new.txt")
+    assert run(capsys, "-s", "basic", "-o", new, first, second)[0] == 0
+
+
+def test_parts_of_a_class_that_cannot_parse_them(capsys, monkeypatch, files):
+    """A class whose document of the parts fails is reported for its text, and the others
+    count their parts"""
+
+    def failing(cls, source, **params):
+        raise SourceError("No parts here")
+
+    monkeypatch.setattr(Vowels, "parts_document", classmethod(failing))
+    code, out, err = run(capsys, "-s", "basic,style", "-p", "sentences", "-f", "json", files[0])
+    assert code == 1
+    assert "No parts here" in err
+    assert list(json.loads(out)[files[0]]) == ["style"]
+
+
+def test_report_checks_its_output_before_the_text(capsys, monkeypatch, files):
+    """A wrong path of the output is reported before the text is parsed"""
+    parsed_texts = []
+    monkeypatch.setattr(Prototype, "parse", lambda self, text: parsed_texts.append(text))
+    output = str(Path(files[0]).parent / "missing" / "report.html")
+    assert Prototype().run(["report", "-o", output, files[0]]) == 1
+    assert parsed_texts == []
+    assert "no such file or directory" in capsys.readouterr().err
+
+
+def test_a_report_of_no_class_writes_nothing(capsys, tmp_path):
+    """A text that no class could count leaves no page, as stats leaves no table"""
+    wordless = tmp_path / "wordless.txt"
+    wordless.write_text("*** --- ***", encoding="utf-8")
+    output = tmp_path / "report.html"
+    assert Prototype().run(["report", "-s", "basic", "-o", str(output), str(wordless)]) == 1
+    assert not output.exists()
+    assert "basic" in capsys.readouterr().err
+
+
 def test_errors_of_files(capsys, tmp_path):
     """A missing file, a directory and a denied access have texts of their own"""
     missing = tmp_path / "missing.txt"

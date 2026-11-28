@@ -9,7 +9,13 @@ from types import MappingProxyType
 from typing import TYPE_CHECKING, Any, ClassVar, TypeVar, cast
 
 from .constants import MESSAGES
-from .exceptions import ParameterError, SourceError, SourceTypeError, UnknownStatError
+from .exceptions import (
+    AnyTSError,
+    ParameterError,
+    SourceError,
+    SourceTypeError,
+    UnknownStatError,
+)
 from .utils import _check_removed, _messages, check_bool, check_messages, check_number
 
 if TYPE_CHECKING:
@@ -218,39 +224,17 @@ class Stats:
 
     @classmethod
     def _count_parts(
-        cls,
-        source: str | Document,
-        parts: str,
-        params: Mapping[str, Any],
-        make: Callable[[Document], Stats] | None = None,
-        numbers: Container[int] | None = None,
+        cls, source: str | Document, parts: str, params: Mapping[str, Any]
     ) -> list[tuple[int, int, StatsRow | None]]:
         """Start, end and statistics of every part of a source parsed once, None for a part
         without words or one the class cannot count, such as a number alone on a line for a
         class without numbers; when it can count no part, the error of the class for the whole
-        document, so that a source without words raises as the class does. make makes the
-        statistics of a document, the class with the parameters by default; with numbers, only
-        the parts of those numbers are counted, the others are None"""
-        from .document import _document_parts, document_words
-
+        document, so that a source without words raises as the class does"""
         kind = cls._parts_kind(parts)
         document = cls.parts_document(source, **params)
-        if make is None:
-            make = partial(cast(Any, cls), **params)
-        counted: list[tuple[int, int, StatsRow | None]] = []
-        failure: SourceError | None = None
-        for number, (start, end, part) in enumerate(_document_parts(document, kind)):
-            row = None
-            if (numbers is None or number in numbers) and document_words(part):
-                try:
-                    row = _stats_row(make(part))
-                except SourceError as error:
-                    failure = failure or error
-            counted.append((start, end, row))
-        if numbers is None and all(row is None for _, _, row in counted):
-            # The class checks its parameters and raises its error for the whole document
-            _stats_row(make(document))
-            raise failure or SourceError(cls.messages["no_words"])
+        (counted,) = _count_parts_of(document, kind, [(cls, partial(cast(Any, cls), **params))])
+        if isinstance(counted, AnyTSError):
+            raise counted
         return counted
 
     def stat_names(self) -> tuple[str, ...]:
@@ -547,6 +531,89 @@ def stats_dataframe(
         if not isinstance(item, Stats):
             raise SourceTypeError(messages["stats_objects"].format(type=type(item).__name__))
     return _stats_table([_stats_row(item) for item in objects], index)
+
+
+def _count_parts_of(
+    document: Document,
+    kind: str,
+    counters: Sequence[tuple[type[Stats], Callable[[Document], Stats]]],
+    numbers: Container[int] | None = None,
+) -> list[list[tuple[int, int, StatsRow | None]] | AnyTSError]:
+    """The parts of a document counted by several classes with the makes of their statistics, as
+    Stats._count_parts counts them: every part is cut once and its classes share its tree and
+    values (_sharing_document); a class with an error of another kind than SourceError, or that
+    can count no part, gets its error in place of its parts"""
+    from .document import _document_parts, _sharing_document, document_words
+
+    counted: list[list[tuple[int, int, StatsRow | None]]] = [[] for _ in counters]
+    failures: list[SourceError | None] = [None] * len(counters)
+    errors: list[AnyTSError | None] = [None] * len(counters)
+    for number, (start, end, part) in enumerate(_document_parts(document, kind)):
+        rows: list[StatsRow | None] = [None] * len(counters)
+        if (numbers is None or number in numbers) and document_words(part):
+            # The statistics of a part are dropped after their rows, so its tree goes with them
+            with _sharing_document(part, release=True):
+                for index, (_, make) in enumerate(counters):
+                    if errors[index] is not None:
+                        continue
+                    try:
+                        rows[index] = _stats_row(make(part))
+                    except SourceError as error:
+                        failures[index] = failures[index] or error
+                    except AnyTSError as error:
+                        errors[index] = error
+        for index, row in enumerate(rows):
+            counted[index].append((start, end, row))
+    results: list[list[tuple[int, int, StatsRow | None]] | AnyTSError] = []
+    for (cls, make), rows_of, failure, refused in zip(
+        counters, counted, failures, errors, strict=True
+    ):
+        if refused is None and numbers is None and all(row is None for _, _, row in rows_of):
+            results.append(_whole_error(cls, make, document, failure))
+        else:
+            results.append(rows_of if refused is None else refused)
+    return results
+
+
+def _count_classes_parts(
+    classes: Mapping[str, type[Stats]],
+    source: str | Document,
+    kind: str,
+    make: Callable[[type[Stats]], Callable[[Document], Stats]],
+    numbers: Container[int] | None = None,
+) -> dict[str, list[tuple[int, int, StatsRow | None]] | AnyTSError]:
+    """The parts of a source counted by several classes by name, in their order: the classes
+    whose parts_document gives one document count its parts together (_count_parts_of); a
+    class gets its error in place of its parts"""
+    found: dict[str, list[tuple[int, int, StatsRow | None]] | AnyTSError] = {}
+    groups: dict[int, tuple[Document, list[str]]] = {}
+    for name, cls in classes.items():
+        try:
+            cls._parts_kind(kind)
+            document = cls.parts_document(source)
+        except AnyTSError as error:
+            found[name] = error
+            continue
+        groups.setdefault(id(document), (document, []))[1].append(name)
+    for document, names in groups.values():
+        counters = [(classes[name], make(classes[name])) for name in names]
+        found.update(zip(names, _count_parts_of(document, kind, counters, numbers), strict=True))
+    return {name: found[name] for name in classes}
+
+
+def _whole_error(
+    cls: type[Stats],
+    make: Callable[[Document], Stats],
+    document: Document,
+    failure: SourceError | None,
+) -> AnyTSError:
+    """The error of a class that counts no part: its error for the whole document, as the class
+    checks its parameters there, else that of a part or no_words"""
+    try:
+        _stats_row(make(document))
+    except AnyTSError as error:
+        return error
+    return failure or SourceError(cls.messages["no_words"])
 
 
 def _stats_row(stats: Stats) -> StatsRow:

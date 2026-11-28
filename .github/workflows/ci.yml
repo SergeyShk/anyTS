@@ -80,6 +80,9 @@ jobs:
     # follows a change of the core in them when it moves onto that core; they are skipped here
     name: libraries (${{ matrix.library }})
     runs-on: ubuntu-latest
+    # The libraries move onto a new minor of the core after its release: until then their
+    # failure shows on the job and leaves the run, and its badge, green
+    continue-on-error: true
     strategy:
       fail-fast: false
       matrix:

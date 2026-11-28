@@ -61,6 +61,7 @@ class Report:
             error in errors, instead of raising it
 
     Attributes:
+        classes (dict[str, type[Stats]]): Classes of the report by name, set before parse
         document (Document): Document of the source
         title (str): Title of the report
         stats (dict[str, Stats]): Statistics of every class by name
@@ -127,11 +128,13 @@ class Report:
         *,
         skip_errors: bool = False,
     ):
-        from .document import _sharing_document
+        from .document import _Shared, _sharing_document
 
         check_bool(skip_errors, "skip_errors", message=self.messages["bool_param"])
         classes = self.stats_classes if stats_classes is None else stats_classes
         _check_classes(classes, self.messages)
+        # The classes of the object, which parse may read to annotate only what they need
+        self.classes = classes
         self.document = self.parse(source)
         self.title = self.texts["title"] if title is None else title
         self.stats: dict[str, Stats] = {}
@@ -139,8 +142,9 @@ class Report:
         # The statistics read once, so that a statistic computed when it is read raises here,
         # for its class
         self._values: dict[str, dict[str, Any]] = {}
-        # The statistics of the report keep the tree, which is not broken after them
-        with _sharing_document(self.document, release=False):
+        # The statistics of the report keep the tree and the sections use it, so it is not broken
+        self._shared = _Shared(self.document)
+        with _sharing_document(self.document, release=False, shared=self._shared):
             for name, cls in classes.items():
                 try:
                     stats = self.compute(cls, self.document)
@@ -158,7 +162,8 @@ class Report:
 
         Description:
             to_document by default; a language library overrides it with the
-            parse of its classes
+            parse of its classes, and may read classes, the classes of the
+            report, to annotate only what they need
 
         Arguments:
             source (str|Document): Data source
@@ -204,7 +209,14 @@ class Report:
         Returns:
             str: HTML page
         """
-        body = "".join(getattr(self, f"section_{name}")() for name in self.sections)
+        from .document import _Shared, _sharing_document
+
+        try:
+            with _sharing_document(self.document, release=False, shared=self._shared):
+                body = "".join(getattr(self, f"section_{name}")() for name in self.sections)
+        finally:
+            # The page is made: the tree goes unless the statistics keep it
+            self._shared = _Shared(self.document)
         style = _STYLE
         if self.highlight_class is not None and "highlight" in self.sections:
             style += self.highlight_class.css()
@@ -260,7 +272,7 @@ class Report:
                 + "\n".join(rows)
                 + "\n</table>\n"
             )
-        return _section(texts["statistics"], "".join(tables)) if self.stats else ""
+        return _section(texts["statistics"], "".join(tables)) if self.stats or self.errors else ""
 
     def section_sentences(self) -> str:
         """
@@ -277,14 +289,15 @@ class Report:
         columns = [(name, stat) for name, stat in self.sentence_columns if name in self.stats]
         if not columns:
             return ""
-        tables = {columns[0][0]: self._sentences_table(type(self.stats[columns[0][0]]))}
+        first_name = columns[0][0]
+        tables = self._sentences_tables({first_name: type(self.stats[first_name])})
         heads = "".join(
             f"<th>{escape(self.stats[name].stats_desc.get(stat, stat))}</th>"
             for name, stat in columns
         )
         from .visualizers.sentences import _document_lengths
 
-        first = next(iter(tables.values()))
+        first = tables[first_name]
         lengths = _document_lengths(self.document)
         numbers = [number for number, length in enumerate(lengths) if length]
         places = {number: place for place, number in enumerate(numbers, start=1)}
@@ -303,11 +316,9 @@ class Report:
                 )
             )
             numbers = sorted(top.index[: self.max_sentences])
-        # The other classes count only the sentences shown
-        shown = set(numbers)
-        for name, _ in columns:
-            if name not in tables:
-                tables[name] = self._sentences_table(type(self.stats[name]), shown)
+        # The other classes count only the sentences shown, together
+        others = {name: type(self.stats[name]) for name, _ in columns if name not in tables}
+        tables.update(self._sentences_tables(others, set(numbers)))
         text = self.document.text
         bounds = first[["start", "end"]].to_numpy().tolist()
         rows = []
@@ -329,21 +340,28 @@ class Report:
             + "\n</table>\n",
         )
 
-    def _sentences_table(
-        self, stats_class: type[Stats], numbers: set[int] | None = None
-    ) -> DataFrame:
-        """Table of the statistics of every sentence of the document, or of those of numbers,
-        counted by compute"""
-        counted = stats_class._count_parts(
+    def _sentences_tables(
+        self, classes: Mapping[str, type[Stats]], numbers: set[int] | None = None
+    ) -> dict[str, DataFrame]:
+        """Tables of the statistics of every sentence of the document, or of those of numbers,
+        by the name of a class, counted by compute, the classes together"""
+        from .stats import _count_classes_parts
+
+        counted = _count_classes_parts(
+            classes,
             self.document,
             "sentences",
-            {},
-            make=partial(self.compute, stats_class),
-            numbers=numbers,
+            lambda cls: partial(self.compute, cls),
+            numbers,
         )
-        return _parts_dataframe(
-            [(number, *part) for number, part in enumerate(counted)], "sentence"
-        )
+        tables = {}
+        for name, found in counted.items():
+            if isinstance(found, AnyTSError):
+                raise found
+            tables[name] = _parts_dataframe(
+                [(number, *part) for number, part in enumerate(found)], "sentence"
+            )
+        return tables
 
     def section_highlight(self) -> str:
         """

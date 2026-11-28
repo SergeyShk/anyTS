@@ -626,6 +626,10 @@ CLI_TEXTS: Mapping[str, str] = MappingProxyType(
         "force_option": "Download a dataset even if it is already there",
         "downloaded": "{name}: ready",
         "unknown_dataset": "unknown dataset {name}; available: {names}",
+        "output_input": (
+            "the output {output} is also the text {source}, which a table would replace before "
+            "it is read: name another output"
+        ),
     }
 )
 # Headings and labels of the HTML report of a text by key; a language library passes its own
