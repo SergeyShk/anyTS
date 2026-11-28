@@ -8,13 +8,14 @@ from typing import TYPE_CHECKING, NamedTuple
 
 from ..document import to_document
 from ..exceptions import ParameterError, SourceTypeError
+from ..extractors import _Spans
 from ..utils import BLANK_LINE, _messages, check_bool, check_callable, check_integer, has_words
 
 if TYPE_CHECKING:
     from anyseg import Document, Word
 
-Tokenizer = Callable[[str], Iterable[tuple[int, int, str]]]
-Sentenizer = Callable[[str], Iterable[tuple[int, int, str]]]
+Tokenizer = _Spans
+Sentenizer = _Spans
 Lemmatizer = Callable[[str, Sequence["Word"]], Iterable[str] | str]
 
 # The end of a sentence in a keyword: a final mark, closing marks and whitespace, or a blank line
@@ -81,14 +82,16 @@ def kwic(
         by_lemma (bool): Compare lemmas instead of word forms
         ignore_case (bool): Fold the word forms before comparing them
         tokenize (callable): Tokens of a string as triples of the start, the end
-            and the text; the default tokens of to_document by default
+            and the text or spans with them; the default tokens of to_document by
+            default
         lemmatize (callable): Lemmas of a word, given its text and its words of
             Universal Dependencies (Word objects of anySeg); a string is one
             lemma; by default the word and, for a token of one word with a
             lemma, that lemma
         fold (callable): Folding of a word form or a lemma before the comparison
         sentenize (callable): Sentences of a string and of the keyword, as triples
-            of the start, the end and the text; those of SentsExtractor by default
+            of the start, the end and the text or spans with them; those of
+            SentsExtractor by default
         messages (dict[str, str]): Messages of the errors by key; MESSAGES by default
 
     Returns:
@@ -97,7 +100,7 @@ def kwic(
     Raises:
         SourceTypeError: If the source is neither a string nor a Document object,
             the keyword is not a string, a hook is not callable, or tokenize or
-            sentenize does not give triples of the text (to_document)
+            sentenize does not give triples or spans of the text (to_document)
         ParameterError: If the keyword has no words, the window is not an integer or
             is negative, or by_lemma or ignore_case is not a bool
 

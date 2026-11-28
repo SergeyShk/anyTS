@@ -113,13 +113,13 @@ The language enters through four parameters:
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
-| `tokenize` | `Callable` | `None` | The tokens of a string and of the keyword as triples of the start, the end and the text, the default tokens of `to_document` filling the gaps; words of `\w` and punctuation marks by default |
+| `tokenize` | `Callable` | `None` | The tokens of a string and of the keyword as triples of the start, the end and the text or objects with them, such as the spans of anySeg, the default tokens of `to_document` filling the gaps; words of `\w` and punctuation marks by default |
 | `lemmatize` | `Callable` | `None` | The lemmas of a word, given its text and its words of Universal Dependencies (`Word` objects of anySeg; none for the keyword), or one lemma as a string; a word matches when one of its lemmas is one of those of the keyword |
 | `fold` | `Callable` | `str.lower` | The folding of a word form (with `ignore_case`) or a lemma before the comparison, such as the letters a language takes for the same |
-| `sentenize` | `Callable` | `None` | The sentences, as triples of the start, the end and the text in any order, of a string and of the keyword; those of `SentsExtractor` by default |
+| `sentenize` | `Callable` | `None` | The sentences, as triples of the start, the end and the text or objects with them in any order, of a string and of the keyword; those of `SentsExtractor` by default |
 | `messages` | `dict[str, str]` | `None` | Messages of the errors by key, in place of those of the library |
 
-A `tokenize` that does not give the tokens in order as triples of integer bounds within the string and a string raises `SourceTypeError`, and so does a `sentenize` whose triples do not lie within it. By default the lemmas of a word are the word itself and, for a token of one word of Universal Dependencies with a lemma, that lemma: a word is found by its own form, and a word of a document with lemmas by its lemma too.
+A `tokenize` that does not give the tokens in order as triples or spans of integer bounds within the string and a string raises `SourceTypeError`, and so does a `sentenize` whose sentences do not lie within it. By default the lemmas of a word are the word itself and, for a token of one word of Universal Dependencies with a lemma, that lemma: a word is found by its own form, and a word of a document with lemmas by its lemma too.
 <!-- --8<-- [end:kwic-hooks] -->
 
 </details>

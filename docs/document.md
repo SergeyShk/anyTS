@@ -20,7 +20,7 @@ The default tokens are the words of `WordsExtractor` and every run of one other 
 | `sentenize` | `Callable` | `None` | Splitter giving the start, the end and the text of every sentence of a string |
 | `messages` | `dict[str, str]` | `MESSAGES` | Messages of the errors by key |
 
-A source that is neither a string nor a `Document` raises `SourceTypeError`, and so does a `tokenize` or `sentenize` that cannot be called, does not give triples of integer bounds within the text and a string (ascending for `tokenize`; the message `hook_bounds`), or gives a token over a blank line (`document_tokens`).
+A source that is neither a string nor a `Document` raises `SourceTypeError`, and so does a `tokenize` or `sentenize` that cannot be called, does not give triples or spans of integer bounds within the text and a string (ascending for `tokenize`; the message `hook_bounds`), or gives a token over a blank line (`document_tokens`).
 <!-- --8<-- [end:to_document] -->
 
 === "Code"
