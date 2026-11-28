@@ -7,7 +7,7 @@ from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from functools import cache
 from re import Pattern
-from typing import TYPE_CHECKING, Any, NamedTuple, cast
+from typing import TYPE_CHECKING, Any, NamedTuple
 
 from .constants import MESSAGES
 from .exceptions import ParameterError, SourceError, SourceTypeError
@@ -30,8 +30,6 @@ if TYPE_CHECKING:
 
 Spans = Callable[[str], Iterable[tuple[int, int, str]]]
 
-# Columns of the words a part of a document keeps
-_PART_COLUMNS = ("lemma", "upos", "xpos", "feats", "head", "deprel", "deps", "misc")
 # The separators a word of the default tokens may end with
 _WORD_SEPARATORS = "\u00ad\u200c\u200d" + _IN_WORD_MARKS
 
@@ -206,19 +204,9 @@ def _document_parts(document: Document, kind: str) -> Iterator[tuple[int, int, D
 
 
 class _PartReader:
-    """The tokens, the words and the columns of a document read once, to make documents of its
-    parts"""
+    """The tokens and the sentences of a document read once, to make documents of its parts"""
 
-    __slots__ = (
-        "columns",
-        "document",
-        "ends",
-        "first_tokens",
-        "first_words",
-        "forms",
-        "multiword",
-        "starts",
-    )
+    __slots__ = ("document", "ends", "first_tokens", "starts")
 
     def __init__(self, document: Document) -> None:
         self.document = document
@@ -227,17 +215,6 @@ class _PartReader:
         self.ends = list(tokens.ends)
         self.first_tokens = [bisect_left(self.starts, s) for s in document.sentences.starts]
         self.first_tokens.append(len(self.starts))
-        sizes = [1] * len(self.starts)
-        self.forms: dict[int, list[str]] = {}
-        for token in document.multiword_tokens:
-            self.forms[token.index] = [word.form for word in token.words]
-            sizes[token.index] = len(token.words)
-        # The indices of the multiword tokens in order, to find those of a part
-        self.multiword = sorted(self.forms)
-        self.first_words = [0]
-        for size in sizes:
-            self.first_words.append(self.first_words[-1] + size)
-        self.columns = {name: document.column(name) for name in _PART_COLUMNS}
 
     def sentences_in(self, start: int, end: int) -> list[int]:
         """Indices of the sentences whose tokens the span overlaps"""
@@ -280,32 +257,7 @@ class _PartReader:
 
     def part(self, first: int, last: int) -> Document:
         """Document of the sentences from first to last"""
-        from anyseg import Document
-
-        token_first, token_end = self.first_tokens[first], self.first_tokens[last + 1]
-        offset, end = self.bounds(first, last)
-        part = Document.from_tokens(
-            self.document.text[offset:end],
-            [position - offset for position in self.starts[token_first:token_end]],
-            [position - offset for position in self.ends[token_first:token_end]],
-            sentence_starts=[
-                self.first_tokens[index] - token_first for index in range(first, last + 1)
-            ],
-            words={
-                index - token_first: self.forms[index]
-                for index in self.multiword[
-                    bisect_left(self.multiword, token_first) : bisect_left(
-                        self.multiword, token_end
-                    )
-                ]
-            }
-            or None,
-        )
-        word_first, word_end = self.first_words[token_first], self.first_words[token_end]
-        values = {name: column[word_first:word_end] for name, column in self.columns.items()}
-        kept = {name: value for name, value in values.items() if any(v is not None for v in value)}
-        part.set_columns(**cast(dict[str, Any], kept))
-        return part
+        return self.document.slice(*self.bounds(first, last))
 
 
 class TreeWord:
