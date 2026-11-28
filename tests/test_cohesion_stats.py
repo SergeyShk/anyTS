@@ -12,9 +12,7 @@ import anyseg
 import numpy as np
 import pandas as pd
 import pytest
-import spacy
 from anyseg import Document
-from spacy.tokens import Doc
 
 from anyts.cohesion_stats import (
     CohesionStats,
@@ -39,6 +37,7 @@ from anyts.constants import COHESION_STATS_DESC, MESSAGES
 from anyts.document import to_document
 from anyts.exceptions import ParameterError, SourceError, SourceTypeError
 from anyts.extractors import SentsExtractor
+from tests.documents import parsed
 
 
 @pytest.mark.parametrize(
@@ -204,15 +203,8 @@ def test_sentences_checked(func):
         func(iter([["a"], ["b"]]))
     with pytest.raises(SourceTypeError, match=r"^A list of \w+ of a sentence is expected"):
         func(["the cat", "the dog"])
-    doc = spacy.blank("xx")("the cat and the cat")
-    tokens = [list(doc[:2]), list(doc[3:])]
-    with pytest.raises(
-        SourceTypeError, match=r"^The \w+ of a sentence must be strings, not Token$"
-    ):
-        func(tokens)
-    doc = spacy.blank("xx")("The cat. The dog.")
-    with pytest.raises(SourceTypeError, match=r"not a Doc"):
-        func(doc)
+    with pytest.raises(SourceTypeError, match=r"^The \w+ of a sentence must be strings, not int$"):
+        func([[1, 2], [2]])
     with pytest.raises(SourceTypeError, match=r"^A list of sentences is expected, not set$"):
         func({frozenset({"a"}), frozenset({"b"})})
 
@@ -228,8 +220,8 @@ def test_dominant_checked():
         dominant("Pres")
     with pytest.raises(SourceTypeError, match=r"^A list of values is expected, not set$"):
         dominant({"Pres", "Past"})
-    with pytest.raises(SourceTypeError, match=r"^The values must be strings, not Token$"):
-        dominant(list(spacy.blank("xx")("Pres Pres")))
+    with pytest.raises(SourceTypeError, match=r"^The values must be strings, not int$"):
+        dominant([1, 1])
 
 
 CONNECTORS = {
@@ -505,10 +497,9 @@ def test_find_errors(matcher):
             matcher.find(["and"], sent_index)
 
 
-@pytest.mark.parametrize("tag", [89, spacy.blank("en")("and")[0]], ids=["number", "token"])
-def test_find_parts_of_speech_of_another_type(matcher, tag):
+def test_find_parts_of_speech_of_another_type(matcher):
     with pytest.raises(SourceTypeError, match="must be a string or None, not"):
-        matcher.find(["and"], pos=[tag])
+        matcher.find(["and"], pos=[89])
 
 
 def test_own_classes_and_messages():
@@ -571,22 +562,20 @@ CAT_TEXT = [
     (".", "PUNCT", ".", "", False),
 ]
 CAT_STARTS = {0, 7, 12}
-VOCAB = spacy.blank("en").vocab
 TEXT_CONNECTORS = {"however": ("adversative", "secondary"), "and": ("additive", "primary")}
 
 
-def text_doc(starts=CAT_STARTS, lemmas=True, pos=True):
+def text_document(lemmas=True, pos=True):
     words, tags, lemma_list, morphs, spaces = (
         list(column) for column in zip(*CAT_TEXT, strict=True)
     )
-    return Doc(
-        VOCAB,
-        words=words,
+    return parsed(
+        words,
         spaces=spaces,
         pos=tags if pos else None,
         lemmas=lemma_list if lemmas else None,
         morphs=morphs,
-        sent_starts=[i in starts for i in range(len(words))] if starts is not None else None,
+        sent_starts=[i in CAT_STARTS for i in range(len(words))],
     )
 
 
@@ -597,7 +586,7 @@ class English(CohesionStats):
 
 
 def test_cohesion_stats_counts():
-    stats = CohesionStats(text_doc())
+    stats = CohesionStats(text_document())
     assert stats.words == (
         ("The", "cat", "sat", "on", "the", "mat"),
         ("It", "saw", "this", "bird"),
@@ -614,7 +603,7 @@ def test_cohesion_stats_counts():
 
 
 def test_cohesion_stats_metrics():
-    stats = CohesionStats(text_doc())
+    stats = CohesionStats(text_document())
     values = stats.get_stats()
     assert list(values) == list(COHESION_STATS_DESC)
     # The nouns and the arguments share bird in the last pair, cat in the first and the last
@@ -657,43 +646,45 @@ def test_forward_overlap():
         calc_forward_overlap("cat")
 
 
-def paragraph_doc(gap="\n\n"):
+def paragraph_document(gap="\n\n", starts=(0, 5, 9)):
     # The cat slept . <gap> The cat ate . The dog ran .
     words = ["The", "cat", "slept", ".", gap, "The", "cat", "ate", ".", "The", "dog", "ran", "."]
     pos = ["DET", "NOUN", "VERB", "PUNCT", "SPACE", *["DET", "NOUN", "VERB", "PUNCT"] * 2]
     lemmas = [word.lower() for word in words]
     spaces = [True, True, False, True, False, True, True, False, True, True, True, False, False]
-    starts = [i in (0, 5, 9) for i in range(len(words))]
-    return Doc(VOCAB, words=words, spaces=spaces, pos=pos, lemmas=lemmas, sent_starts=starts)
+    sent_starts = [i in starts for i in range(len(words))]
+    return parsed(words, spaces=spaces, pos=pos, lemmas=lemmas, sent_starts=sent_starts)
 
 
 def test_paragraphs():
-    stats = CohesionStats(paragraph_doc())
+    stats = CohesionStats(paragraph_document())
     assert stats.n_paragraphs == 2 and not stats.blank_lines
     # The cat of the first paragraph is repeated in the second, the verbs are not
     assert (stats.noun_overlap_para, stats.content_overlap_para) == (1.0, 0.5)
-    first = [word.paragraph_start for sent in stats.analyze(paragraph_doc()) for word in sent[:1]]
+    first = [
+        word.paragraph_start for sent in stats.analyze(paragraph_document()) for word in sent[:1]
+    ]
     assert first == [False, True, False]
     # A paragraph is a line, or a part between blank lines with blank_lines; a break inside a
     # sentence starts one too, as when a parser joins a heading to the next sentence
     for gap in ("\n", "\r\n", "\u2028"):
-        assert CohesionStats(paragraph_doc(gap)).n_paragraphs == 2, repr(gap)
-        assert CohesionStats(paragraph_doc(gap), blank_lines=True).n_paragraphs == 1, repr(gap)
+        document = paragraph_document(gap)
+        assert CohesionStats(document).n_paragraphs == 2, repr(gap)
+        assert CohesionStats(document, blank_lines=True).n_paragraphs == 1, repr(gap)
     for gap in ("\n\n", "\u2029"):
-        assert CohesionStats(paragraph_doc(gap), blank_lines=True).n_paragraphs == 2, repr(gap)
+        document = paragraph_document(gap)
+        assert CohesionStats(document, blank_lines=True).n_paragraphs == 2, repr(gap)
     with pytest.raises(ParameterError, match=r"^The blank_lines must be a bool, not str$"):
-        CohesionStats(paragraph_doc(), blank_lines="yes")
+        CohesionStats(paragraph_document(), blank_lines="yes")
     # Whitespace after the last word starts nothing
-    trailing = Doc(
-        VOCAB,
-        words=["Rain", ".", "\n\n"],
+    trailing = parsed(
+        ["Rain", ".", "\n\n"],
         spaces=[False, False, False],
         pos=["NOUN", "PUNCT", "SPACE"],
         lemmas=["rain", ".", "\n\n"],
     )
     assert CohesionStats(trailing).n_paragraphs == 1
-    inside = paragraph_doc("\n")
-    inside[5].is_sent_start = False
+    inside = paragraph_document("\n", starts=(0, 9))
     assert CohesionStats(inside).n_paragraphs == 2
     assert [word.paragraph_start for word in CohesionStats(inside).analyze(inside)[0]] == [
         False,
@@ -703,13 +694,8 @@ def test_paragraphs():
         False,
         False,
     ]
-    # A blank line inside a sentence of a Doc ends it, as the paragraphs of the document hold
-    # the sentences
-    blank = paragraph_doc()
-    blank[5].is_sent_start = False
-    assert CohesionStats(blank).n_sents == 3
     # The sentences of an extractor over the text keep the paragraphs
-    assert CohesionStats(paragraph_doc(), sents_extractor=SentsExtractor()).n_paragraphs == 2
+    assert CohesionStats(paragraph_document(), sents_extractor=SentsExtractor()).n_paragraphs == 2
 
 
 def test_paragraphs_without_content_words():
@@ -717,9 +703,8 @@ def test_paragraphs_without_content_words():
     # paragraphs after them, the last one the paragraph before it
     words = ["1", "\n", "The", "cat", "slept", ".", "\n", "The", "cat", "ate", ".", "\n", "2"]
     pos = ["NUM", "SPACE", *["DET", "NOUN", "VERB", "PUNCT", "SPACE"] * 2, "NUM"]
-    doc = Doc(
-        VOCAB,
-        words=words,
+    document = parsed(
+        words,
         spaces=[
             False,
             False,
@@ -739,12 +724,11 @@ def test_paragraphs_without_content_words():
         lemmas=[word.lower() for word in words],
         sent_starts=[i in (0, 7, 12) for i in range(len(words))],
     )
-    stats = CohesionStats(doc)
+    stats = CohesionStats(document)
     assert stats.n_paragraphs == 2
     assert (stats.noun_overlap_para, stats.content_overlap_para) == (1.0, 0.5)
-    only = Doc(
-        VOCAB,
-        words=["1", "\n", "2"],
+    only = parsed(
+        ["1", "\n", "2"],
         spaces=[False] * 3,
         pos=["NUM", "SPACE", "NUM"],
         lemmas=["1", "\n", "2"],
@@ -757,7 +741,7 @@ def test_pickle_and_copy():
     import copy
     import pickle
 
-    stats = CohesionStats(text_doc())
+    stats = CohesionStats(text_document())
     assert [name for name in vars(stats) if name.startswith("_")] == []
     for clone in (pickle.loads(pickle.dumps(stats)), copy.copy(stats), copy.deepcopy(stats)):
         assert repr(clone.get_stats()) == repr(stats.get_stats())
@@ -779,7 +763,7 @@ def test_paragraphs_of_a_library():
                 ],
             ]
 
-    stats = Marked(text_doc())
+    stats = Marked(text_document())
     # cat, cat and dog: the first paragraph shares its noun with the second, which does not
     assert stats.n_paragraphs == 3 and stats.noun_overlap_para == 0.5
 
@@ -802,7 +786,7 @@ def test_paragraphs_of_a_library():
                 [word("dog", paragraph_start=True), word("cat")],
             ]
 
-    stats = Opened(text_doc())
+    stats = Opened(text_document())
     # cat ran | cat fat | sat | dog cat: the nouns of the parts, the rest among the content words
     assert stats.n_paragraphs == 4
     sents = [list(sent) for sent in stats.analyze(None)]
@@ -820,7 +804,8 @@ def test_paragraphs_of_a_library():
 
 
 def test_connectors():
-    stats = English(text_doc())
+    document = text_document()
+    stats = English(document)
     assert stats.connector_spans == (
         Connector(2, 0, 1, "however", "adversative", "secondary"),
         Connector(2, 3, 4, "and", "additive", "primary"),
@@ -835,8 +820,8 @@ def test_connectors():
     assert stats.connectors_primary == stats.connectors_secondary == per_1000
     assert stats.connectors_causal == 0
     # A dictionary given replaces that of the class
-    assert CohesionStats(text_doc(), connectors={"and": ("additive", "primary")}).n_connectors == 1
-    assert English(text_doc(), connectors={}).n_connectors == 0
+    assert CohesionStats(document, connectors={"and": ("additive", "primary")}).n_connectors == 1
+    assert English(document, connectors={}).n_connectors == 0
 
 
 def test_connectors_read_once_for_a_class():
@@ -848,8 +833,8 @@ def test_connectors_read_once_for_a_class():
             calls.append(cls)
             return TEXT_CONNECTORS
 
-    Counted(text_doc())
-    Counted(text_doc())
+    Counted(text_document())
+    Counted(text_document())
     assert calls == [Counted]
     assert Counted.connector_matcher() is Counted.connector_matcher()
     assert calls == [Counted]
@@ -907,7 +892,7 @@ def test_connectors_by_place(words, pos, inter):
                 ]
             ]
 
-    stats = Places(text_doc())
+    stats = Places(text_document())
     assert stats.n_connectors == 1 and stats.n_inter_connectors == inter
     assert stats.connectors_inter == inter * 1000 / len(words)
     assert stats.connectors_intra == (1 - inter) * 1000 / len(words)
@@ -949,14 +934,13 @@ def test_lists_of_connectors_must_be_strings(name):
 
 
 def test_default_analysis_marks_the_words():
-    doc = Doc(
-        VOCAB,
-        words=["However", ",", "the", "cat", "slept"],
+    document = parsed(
+        ["However", ",", "the", "cat", "slept"],
         pos=["ADV", "PUNCT", "DET", "NOUN", "VERB"],
         lemmas=["however", ",", "the", "cat", "sleep"],
         sent_starts=[True, False, False, False, False],
     )
-    assert [word.break_before for word in CohesionStats(doc).analyze(doc)[0]] == [
+    assert [word.break_before for word in CohesionStats(document).analyze(document)[0]] == [
         False,
         True,
         False,
@@ -965,9 +949,8 @@ def test_default_analysis_marks_the_words():
 
 
 def test_word_info_keeps_its_own_mark_and_its_wrong_result():
-    doc = Doc(
-        VOCAB,
-        words=["However", "the", "cat", "slept"],
+    source = parsed(
+        ["However", "the", "cat", "slept"],
         pos=["ADV", "DET", "NOUN", "VERB"],
         lemmas=["however", "the", "cat", "sleep"],
         sent_starts=[True, False, False, False],
@@ -981,7 +964,7 @@ def test_word_info_keeps_its_own_mark_and_its_wrong_result():
         def word_info(self, word):
             return {"word": word.form}
 
-    marked = [word.break_before for word in Marking(doc).analyze(doc)[0]]
+    marked = [word.break_before for word in Marking(source).analyze(source)[0]]
     assert marked == [False, False, True, False]
     # An invisible separator glued to a word is no punctuation mark
     for text, marks in (("It came before\u200b the end", 0), ("It came before, the end", 1)):
@@ -991,7 +974,7 @@ def test_word_info_keeps_its_own_mark_and_its_wrong_result():
             == marks
         )
     with pytest.raises(SourceTypeError, match=r"must return sentences of CohesionWord"):
-        Dicts(doc)
+        Dicts(source)
 
 
 def test_marks_of_the_words_reach_the_matcher():
@@ -1016,7 +999,7 @@ def test_marks_of_the_words_reach_the_matcher():
                     ]
                 ]
 
-        return Marked(text_doc())
+        return Marked(text_document())
 
     # It came before, the end: the comma lets before count
     assert stats(False).n_connectors == 0 and stats(True).n_connectors == 1
@@ -1024,9 +1007,8 @@ def test_marks_of_the_words_reach_the_matcher():
 
 
 def test_blocked_words_reach_the_matcher():
-    doc = Doc(
-        VOCAB,
-        words=["I", "wonder", "if", "it", "rains", "and", "if", "so"],
+    document = parsed(
+        ["I", "wonder", "if", "it", "rains", "and", "if", "so"],
         pos=["PRON", "VERB", "SCONJ", "PRON", "VERB", "CCONJ", "SCONJ", "ADV"],
         lemmas=["I", "wonder", "if", "it", "rain", "and", "if", "so"],
         sent_starts=[True] + [False] * 7,
@@ -1043,9 +1025,9 @@ def test_blocked_words_reach_the_matcher():
             blocked = word.form == "if" and word.tree.words[word.index - 1].lemma == "wonder"
             return super().word_info(word)._replace(connector_blocked=blocked)
 
-    assert texts(Conditions(doc).connector_spans) == ["if", "and", "if"]
-    assert texts(Questions(doc).connector_spans) == ["and", "if"]
-    assert Questions(doc).connectors_conditional == 1000 / 8
+    assert texts(Conditions(document).connector_spans) == ["if", "and", "if"]
+    assert texts(Questions(document).connector_spans) == ["and", "if"]
+    assert Questions(document).connectors_conditional == 1000 / 8
     assert (
         CohesionWord("a", "a", None, False, False, False, False, False).connector_blocked is False
     )
@@ -1063,7 +1045,7 @@ def test_densities_by_the_classes_of_the_matcher():
         def load_connectors(cls):
             return {"however": ("contrast", "single")}
 
-    stats = Own(text_doc())
+    stats = Own(text_document())
     assert stats.connectors == stats.connectors_contrast == stats.connectors_single == 1000 / 17
     assert not hasattr(stats, "connectors_causal")
 
@@ -1072,7 +1054,7 @@ def test_temporal_features():
     class Mood(CohesionStats):
         temporal_features = ("tense", "mood")
 
-    assert Mood(text_doc()).temporal_cohesion == 1.0
+    assert Mood(text_document()).temporal_cohesion == 1.0
 
 
 @pytest.mark.parametrize(
@@ -1085,14 +1067,11 @@ def test_temporal_features_must_be_distinct_known_ones(features):
 
 
 def test_sentences_by_an_extractor():
-    # Without boundaries the Doc is split by the default extractor over its text
-    assert CohesionStats(text_doc(starts=None)).n_sents == 3
-
     class Halves(SentsExtractor):
         def sentenize(self, text):
             return [text[:23], text[24:]]
 
-    stats = CohesionStats(text_doc(), sents_extractor=Halves())
+    stats = CohesionStats(text_document(), sents_extractor=Halves())
     assert stats.words == (
         ("The", "cat", "sat", "on", "the", "mat"),
         ("It", "saw", "this", "bird", "However", "the", "bird", "and", "the", "cat", "slept"),
@@ -1104,7 +1083,7 @@ def test_sentences_by_an_extractor():
         def sentenize(self, text):
             return ["No such sentence", text[:23]]
 
-    assert CohesionStats(text_doc(), sents_extractor=Dropping()).words == (
+    assert CohesionStats(text_document(), sents_extractor=Dropping()).words == (
         ("The", "cat", "sat", "on", "the", "mat"),
     )
     # A paragraph starts at the first word kept after a line break: Ok is too short a sentence
@@ -1125,21 +1104,20 @@ def nouns(text, lemmas=True):
 
 
 def test_default_word_info():
-    doc = Doc(
-        VOCAB,
-        words=["My", "well", "-", "known", "Ann"],
+    source = parsed(
+        ["My", "well", "-", "known", "Ann"],
         spaces=[True, False, False, True, False],
         pos=["DET", "ADJ", "PUNCT", "ADJ", "PROPN"],
         lemmas=["my", "well", "-", "know", "Ann"],
         morphs=["Poss=Yes", "Degree=Pos", "", "", ""],
         sent_starts=[True, False, False, False, False],
     )
-    stats = CohesionStats(doc)
+    stats = CohesionStats(source)
     assert stats.n_words == 4 and stats.n_pronouns == 1
     # The parts of a word the tokenizer split at its hyphen are words of their own
     assert stats.words == (("My", "well", "known", "Ann"),)
     assert stats.lemmas == (("my", "well", "know", "ann"),)
-    word = stats.analyze(doc)[0][1]
+    word = stats.analyze(source)[0][1]
     assert word == CohesionWord("well", "well", "ADJ", False, False, False, False, True)
     # A word without a lemma is lemmatized by its form
     document = nouns("Cats sleep. Dogs bark.", lemmas=False)
@@ -1297,7 +1275,7 @@ def test_own_word_info_without_annotations():
             lemma = word.form.lower().rstrip("s")
             return CohesionWord(word.form, lemma, "NOUN", True, False, False, True, True)
 
-    stats = Lemmatized(text_doc(pos=False, lemmas=False))
+    stats = Lemmatized(text_document(pos=False, lemmas=False))
     assert stats.words
     assert stats.noun_overlap_adjacent > 0
 
@@ -1306,9 +1284,9 @@ def test_own_word_info_without_annotations():
             return super().word_info(word)._replace(connector_blocked=True)
 
     with pytest.raises(SourceError, match=f"^{re.escape(MESSAGES['no_pos'])}$"):
-        Blocked(text_doc(pos=False))
+        Blocked(text_document(pos=False))
     with pytest.raises(SourceError, match=f"^{re.escape(MESSAGES['no_lemmas'])}$"):
-        Blocked(text_doc(lemmas=False))
+        Blocked(text_document(lemmas=False))
 
 
 def test_own_analysis():
@@ -1332,23 +1310,17 @@ def test_own_analysis():
     ("source", "kwargs", "error", "message"),
     [
         (42, {}, SourceTypeError, MESSAGES["source_type"].format(type="int")),
-        (text_doc()[:2], {}, SourceTypeError, MESSAGES["source_span"]),
         (None, {"sents_extractor": "x"}, SourceTypeError, MESSAGES["sents_extractor_type"]),
-        (text_doc(pos=False), {}, SourceError, MESSAGES["no_pos"]),
+        (text_document(pos=False), {}, SourceError, MESSAGES["no_pos"]),
         (
-            Doc(
-                VOCAB,
-                words=["cats", "\n\n", "sleep"],
-                pos=["", "SPACE", ""],
-                lemmas=["cat", "", "sleep"],
-            ),
+            parsed(["cats", "\n\n", "sleep"], pos=["", "SPACE", ""], lemmas=["cat", "", "sleep"]),
             {},
             SourceError,
             MESSAGES["no_pos"],
         ),
-        (text_doc(lemmas=False), {}, SourceError, MESSAGES["no_lemmas"]),
+        (text_document(lemmas=False), {}, SourceError, MESSAGES["no_lemmas"]),
         (
-            Doc(VOCAB, words=[".", "!"], pos=["PUNCT", "PUNCT"], lemmas=[".", "!"]),
+            parsed([".", "!"], pos=["PUNCT", "PUNCT"], lemmas=[".", "!"]),
             {},
             SourceError,
             MESSAGES["no_words"],
@@ -1357,7 +1329,7 @@ def test_own_analysis():
 )
 def test_cohesion_stats_errors(source, kwargs, error, message):
     with pytest.raises(error, match=f"^{re.escape(message)}$"):
-        CohesionStats(text_doc() if source is None else source, **kwargs)
+        CohesionStats(text_document() if source is None else source, **kwargs)
 
 
 @pytest.mark.parametrize(
@@ -1382,4 +1354,4 @@ def test_sentences_of_analyze_as_iterators():
         def analyze(self, source):
             return ((word for word in sent) for sent in super().analyze(source))
 
-    assert Lazy(text_doc()).get_stats() == CohesionStats(text_doc()).get_stats()
+    assert Lazy(text_document()).get_stats() == CohesionStats(text_document()).get_stats()

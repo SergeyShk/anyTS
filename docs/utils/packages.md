@@ -9,7 +9,7 @@ A package that imports its names on first use, so a light name does not load the
 make_lazy(name, modules)
 ```
 
-Turns a package into a `LazyPackage`: every name of the mapping `modules` is imported from its module of the package when it is first read. Importing the package then loads only what it imports itself, so the highlighting does not load matplotlib and a module of statistics does not load spaCy with the components. A module of the package is also its attribute on first use, and a module named as one of its functions (*zipf*) leaves the function under that name. A package calls it at the end of its `__init__` with `__name__`; a `TYPE_CHECKING` block imports the same names for the type checkers.
+Turns a package into a `LazyPackage`: every name of the mapping `modules` is imported from its module of the package when it is first read. Importing the package then loads only what it imports itself, so the highlighting does not load matplotlib. A module of the package is also its attribute on first use, and a module named as one of its functions (*zipf*) leaves the function under that name. A package calls it at the end of its `__init__` with `__name__`; a `TYPE_CHECKING` block imports the same names for the type checkers.
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |

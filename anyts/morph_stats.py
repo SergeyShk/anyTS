@@ -12,7 +12,6 @@ from .utils import check_bool, has_words
 
 if TYPE_CHECKING:
     from anyseg import Document
-    from spacy.tokens import Doc
 
 
 class MorphWord(NamedTuple):
@@ -44,7 +43,7 @@ class MorphStats(Stats):
         to_dataframe and describe come from Stats
 
     Arguments:
-        source (str|Doc|Document): Data source (a string, a Doc or a Document object)
+        source (str|Document): Data source (a string or a Document object)
 
     Attributes:
         words (tuple[str]): Words
@@ -77,9 +76,9 @@ class MorphStats(Stats):
         markers_headers (tuple[str, str]): Headers of the columns for print_markers
 
     Raises:
-        SourceTypeError: If the source is neither a string, a Doc nor a Document
-            object, parse does not return a Document, or analyze does not give
-            MorphWord objects of a string, a string or None and a mapping of strings
+        SourceTypeError: If the source is neither a string nor a Document object,
+            parse does not return a Document, or analyze does not give MorphWord
+            objects of a string, a string or None and a mapping of strings
         SourceError: If the words of the source have no parts of speech or there
             are no words
         ParameterError: When a class is defined, if feature_names does not map
@@ -89,16 +88,14 @@ class MorphStats(Stats):
             mappings of strings
 
     Example:
-        >>> import spacy
-        >>> from spacy.tokens import Doc
+        >>> from anyts.document import to_document
         >>> from anyts.morph_stats import MorphStats
-        >>> doc = Doc(
-        ...     spacy.blank("en").vocab,
-        ...     words=["The", "cats", "sleep"],
-        ...     pos=["DET", "NOUN", "VERB"],
-        ...     morphs=["Definite=Def|PronType=Art", "Number=Plur", "Tense=Pres|VerbForm=Fin"],
+        >>> document = to_document("The cats sleep")
+        >>> document.set_columns(
+        ...     upos=["DET", "NOUN", "VERB"],
+        ...     feats=["Definite=Def|PronType=Art", "Number=Plur", "Tense=Pres|VerbForm=Fin"],
         ... )
-        >>> MorphStats(doc).get_stats("pos", "number", filter_none=True)
+        >>> MorphStats(document).get_stats("pos", "number", filter_none=True)
         {'pos': {'DET': 1, 'NOUN': 1, 'VERB': 1}, 'number': {'Plur': 1}}
     """
 
@@ -165,7 +162,7 @@ class MorphStats(Stats):
                 cls.messages["morph_values_desc"].format(cls=cls.__name__, value=repr(values))
             )
 
-    def __init__(self, source: str | Doc | Document):
+    def __init__(self, source: str | Document):
         messages = self.messages
         found = self.analyze(source)
         words = tuple(found) if isinstance(found, Iterable) else (found,)
@@ -200,7 +197,7 @@ class MorphStats(Stats):
         for stat, values in zip(self.feature_names, columns, strict=True):
             setattr(self, stat, values)
 
-    def analyze(self, source: str | Doc | Document) -> Iterable[MorphWord]:
+    def analyze(self, source: str | Document) -> Iterable[MorphWord]:
         """
         Getting the words of a source with their features
 
@@ -212,14 +209,14 @@ class MorphStats(Stats):
             overrides it
 
         Arguments:
-            source (str|Doc|Document): Data source
+            source (str|Document): Data source
 
         Returns:
             iterable[MorphWord]: Words with their features
 
         Raises:
-            SourceTypeError: If the source is neither a string, a Doc nor a Document
-                object, or parse does not return a Document
+            SourceTypeError: If the source is neither a string nor a Document object,
+                or parse does not return a Document
             SourceError: If the words of the source have no parts of speech
         """
         document = self._document(source)

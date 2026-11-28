@@ -5,13 +5,13 @@ BasicStats(source, sents_extractor=None, words_extractor=None, normalize=False, 
 ```
 
 <!-- --8<-- [start:BasicStats] -->
-The basic statistics of a text: the counts of its sentences, words, characters, syllables and punctuation marks and the distributions of its words. The data source is a text, a `Doc` object of [spaCy](https://github.com/explosion/spaCy) or a `Document` of [anySeg](https://github.com/SergeyShk/anySeg). Letters are counted by `str.isalpha`, so digits, hyphens and marks inside a word are not letters.
+The basic statistics of a text: the counts of its sentences, words, characters, syllables and punctuation marks and the distributions of its words. The data source is a text or a `Document` of [anySeg](https://github.com/SergeyShk/anySeg). Letters are counted by `str.isalpha`, so digits, hyphens and marks inside a word are not letters.
 
-The words and the sentences come from the [document](https://sergeyshk.github.io/anyTS/document/) of the source (`parse`): its tokens without punctuation marks and symbols such as `€` or `%` (`doc_words`) and its sentences; an extractor given is used on the text instead. A `Doc` keeps its sentence starts, and one with no or only partial sentence starts (a token whose `is_sent_start` is unset) gets those of `parse`. A blank line ends a sentence of every source, since it ends a paragraph of the document. A sentence without words, such as punctuation alone, is not counted.
+The words and the sentences come from the [document](https://sergeyshk.github.io/anyTS/document/) of the source (`parse`): its tokens without punctuation marks and symbols such as `€` or `%` (`doc_words`) and its sentences; an extractor given is used on the text instead. A blank line ends a sentence of every source, since it ends a paragraph of the document. A sentence without words, such as punctuation alone, is not counted.
 
 Raises:
 
-- `SourceTypeError` - a source that is neither a string, a `Doc` nor a `Document`, a `parse` that returns no `Document`, a `doc_words` that returns no sequence of strings, an extractor of another type;
+- `SourceTypeError` - a source that is neither a string nor a `Document`, a `parse` that returns no `Document`, a `doc_words` that returns no sequence of strings, an extractor of another type;
 - `SourceError` - a source without words;
 - `ParameterError` - a threshold that is not an integer of at least one, a `normalize` that is not a `bool`.
 <!-- --8<-- [end:BasicStats] -->
@@ -62,7 +62,7 @@ A subclass with the syllables of a language - here the groups of vowels, a rough
 <!-- --8<-- [start:BasicStats-parameters] -->
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
-| `source` | `str` / `Doc` / `Document` | - | Data source |
+| `source` | `str` / `Document` | - | Data source |
 | `sents_extractor` | `SentsExtractor` | `None` | Sentence extraction tool, used on the text in place of the sentences of the document |
 | `words_extractor` | `WordsExtractor` | `None` | Word extraction tool, used on the text in place of the words of the document |
 | `normalize` | `bool` | `False` | Compute normalized statistics |

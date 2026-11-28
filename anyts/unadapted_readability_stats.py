@@ -18,7 +18,6 @@ from .utils import check_bool, check_integer, safe_divide
 
 if TYPE_CHECKING:
     from anyseg import Document
-    from spacy.tokens import Doc
 
     from .extractors import SentsExtractor, WordsExtractor
 
@@ -45,8 +44,8 @@ class UnadaptedReadabilityStats(Stats):
         get_stats, to_dataframe, print_stats and describe come from Stats
 
     Arguments:
-        source (str|Doc|Document|BasicStats): Data source - a string, a Doc or a
-            Document object, or a ready object of basic_stats_class to reuse
+        source (str|Document|BasicStats): Data source - a string or a Document
+            object, or a ready object of basic_stats_class to reuse
         sents_extractor (SentsExtractor): Sentence extraction tool, not used for
             ready basic statistics
         words_extractor (WordsExtractor): Word extraction tool, not used for ready
@@ -71,7 +70,7 @@ class UnadaptedReadabilityStats(Stats):
 
     Class attributes:
         filter_nums (bool): Whether the numbers are left out by default, False
-        basic_stats_class (type[BasicStats]): Basic statistics of a string, a Doc or a Document;
+        basic_stats_class (type[BasicStats]): Basic statistics of a string or a Document;
             without it the source must be a BasicStats object
         complex_syl_factor (int): Minimum number of syllables of a hard word
             (SMOG_COMPLEX_SYL_FACTOR)
@@ -84,7 +83,7 @@ class UnadaptedReadabilityStats(Stats):
         stats_headers (tuple[str, str]): Headers of the columns for print_stats
 
     Raises:
-        SourceTypeError: If the source is neither a string, a Doc, a Document nor a
+        SourceTypeError: If the source is neither a string, a Document nor a
             BasicStats object, the basic statistics are of another class, an extractor
             is of another type, or a class without basic_stats_class is given another
             source
@@ -120,7 +119,7 @@ class UnadaptedReadabilityStats(Stats):
                 f"or None, not {basic!r}"
             )
 
-    def parse(self, source: str | Doc | Document) -> Document:
+    def parse(self, source: str | Document) -> Document:
         """
         Getting the document of a data source
 
@@ -129,7 +128,7 @@ class UnadaptedReadabilityStats(Stats):
             of Stats without it
 
         Arguments:
-            source (str|Doc|Document): Data source
+            source (str|Document): Data source
 
         Returns:
             Document: Document of anySeg
@@ -138,7 +137,7 @@ class UnadaptedReadabilityStats(Stats):
 
     def __init__(
         self,
-        source: str | Doc | Document | BasicStats,
+        source: str | Document | BasicStats,
         sents_extractor: SentsExtractor | None = None,
         words_extractor: WordsExtractor | None = None,
         filter_nums: bool | None = None,

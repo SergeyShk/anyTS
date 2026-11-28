@@ -12,7 +12,6 @@ from anyts import (
     basic_stats,
     cli,
     cohesion_stats,
-    components,
     constants,
     datasets,
     diversity_stats,
@@ -131,7 +130,6 @@ def test_public_api_has_sections():
         *public_names(cohesion_stats),
         *public_names(syntax_stats),
         *public_names(datasets),
-        *public_names(components),
         *public_names(basic_stats),
         *public_names(readability_stats),
         *public_names(stats),
@@ -145,7 +143,6 @@ def test_public_api_has_sections():
         *public_names(morph_stats),
         *public_names(unadapted_readability_stats),
         "BasicStats",
-        "StatsComponent",
         "Dataset",
         *(name for module in CORPUS_MODULES for name in public_names(module)),
         *(name for module in VISUALIZER_MODULES for name in public_names(module)),
@@ -175,7 +172,6 @@ MODULES = [
     constants,
     basic_stats,
     cohesion_stats,
-    components,
     datasets,
     diversity_stats,
     extractors,
@@ -318,7 +314,7 @@ def test_parameter_tables_match_the_code():
     # The tables of a callable: those of its section and of its sections -parameters and -hooks,
     # in order, a method by the section Class-method; a table outside the sections belongs to the
     # signature block above it, the table of a family of measures to each function it links
-    documented: dict[tuple[Path, str, bool], tuple[object, list[tuple[str, str]]]] = {}
+    documented: dict[tuple[Path, str], tuple[object, list[tuple[str, str]]]] = {}
     for page in PAGES:
         texts = sections(page)
         for section, signed, rows in parameter_tables(page):
@@ -336,16 +332,13 @@ def test_parameter_tables_match_the_code():
                     target = getattr(target, method, None)
                 where = f"{page.relative_to(DOCS)}: {section or base}"
                 assert callable(target), f"{where} names no callable"
-                key = (page, base, section is not None)
-                documented.setdefault(key, (target, []))[1].extend(rows)
+                documented.setdefault((page, base), (target, []))[1].extend(rows)
     assert documented
-    for (page, base, in_section), (target, rows) in documented.items():
-        # The sections of a component leave the pipeline and the name to the libraries
+    for (page, base), (target, rows) in documented.items():
         params = [
             param
             for param in inspect.signature(target).parameters.values()
             if param.name != "self"
-            and not (in_section and base.endswith("Component") and param.name in ("nlp", "name"))
         ]
         where = f"{page.relative_to(DOCS)}: {base}"
         assert [name for name, _ in rows] == [param.name for param in params], where

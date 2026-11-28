@@ -32,7 +32,6 @@ from .utils import _messages, check_bool, check_integer, check_number, safe_divi
 
 if TYPE_CHECKING:
     from anyseg import Document
-    from spacy.tokens import Doc
 
 
 class ReadabilityStats(Stats):
@@ -48,8 +47,8 @@ class ReadabilityStats(Stats):
         The other methods come from Stats
 
     Arguments:
-        source (str|Doc|Document|BasicStats): Data source - a string, a Doc or a
-            Document object, or a ready object of basic_stats_class to reuse
+        source (str|Document|BasicStats): Data source - a string or a Document
+            object, or a ready object of basic_stats_class to reuse
         sents_extractor (SentsExtractor): Sentence extraction tool, not used for
             ready basic statistics
         words_extractor (WordsExtractor): Word extraction tool, not used for ready
@@ -88,7 +87,7 @@ class ReadabilityStats(Stats):
 
     Class attributes:
         filter_nums (bool): Whether the numbers are left out by default, False
-        basic_stats_class (type[BasicStats]): Basic statistics of a string, a Doc or a Document;
+        basic_stats_class (type[BasicStats]): Basic statistics of a string or a Document;
             without it the source must be a BasicStats object
         presets (dict[str, dict[str, tuple[float, ...]]]): Coefficients of the formulas
             by preset
@@ -124,7 +123,7 @@ class ReadabilityStats(Stats):
             words per minute
 
     Raises:
-        SourceTypeError: If the source is neither a string, a Doc, a Document nor a
+        SourceTypeError: If the source is neither a string, a Document nor a
             BasicStats object, the basic statistics are of another class, an extractor
             is of another type, or a class without basic_stats_class is given another
             source
@@ -191,7 +190,7 @@ class ReadabilityStats(Stats):
             _check_grades(grades, f"preset_reading_ease_grades of {name} for {preset}")
         _check_levels(cls.grade_age_levels, cls.postgraduate_level, f"grade_age_levels of {name}")
 
-    def parse(self, source: str | Doc | Document) -> Document:
+    def parse(self, source: str | Document) -> Document:
         """
         Getting the document of a data source
 
@@ -200,7 +199,7 @@ class ReadabilityStats(Stats):
             of Stats without it
 
         Arguments:
-            source (str|Doc|Document): Data source
+            source (str|Document): Data source
 
         Returns:
             Document: Document of anySeg
@@ -209,7 +208,7 @@ class ReadabilityStats(Stats):
 
     def __init__(
         self,
-        source: str | Doc | Document | BasicStats,
+        source: str | Document | BasicStats,
         sents_extractor: SentsExtractor | None = None,
         words_extractor: WordsExtractor | None = None,
         preset: str = "original",
@@ -482,7 +481,7 @@ class ReadabilityStats(Stats):
 
 def _read_basic_stats(
     stats: Stats,
-    source: str | Doc | Document | BasicStats,
+    source: str | Document | BasicStats,
     basic_stats_class: type[BasicStats] | None,
     sents_extractor: SentsExtractor | None = None,
     words_extractor: WordsExtractor | None = None,
@@ -498,9 +497,9 @@ def _read_basic_stats(
 
     Arguments:
         stats (Stats): Object of the class whose messages and name the errors take
-        source (str|Doc|Document|BasicStats): Data source
-        basic_stats_class (type[BasicStats]|None): Basic statistics of a string, a Doc or
-            a Document
+        source (str|Document|BasicStats): Data source
+        basic_stats_class (type[BasicStats]|None): Basic statistics of a string or a
+            Document
         sents_extractor (SentsExtractor): Sentence extraction tool
         words_extractor (WordsExtractor): Word extraction tool
         filter_nums (bool): Leave out the numbers among the words; None - the attribute
@@ -545,7 +544,7 @@ def _read_basic_stats(
     return bs
 
 
-def _basic_parse(stats: Any, source: str | Doc | Document) -> Document:
+def _basic_parse(stats: Any, source: str | Document) -> Document:
     """Document of a source by parse of the basic_stats_class of a class of readability, which
     reads only the class, or by that of Stats"""
     basic: type[BasicStats] | None = stats.basic_stats_class

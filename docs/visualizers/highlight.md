@@ -5,12 +5,12 @@ HighlightedText(source, layers=None)
 ```
 
 <!-- --8<-- [start:HighlightedText] -->
-Highlighting of a text by layers, in the manner of the style checkers: every layer marks the fragments of a text that a statistic counts - long sentences, complex words, the passive. The data source is a text, a `Doc` object of [spaCy](https://github.com/explosion/spaCy) or a `Document` of [anySeg](https://github.com/SergeyShk/anySeg), read through its [document](https://sergeyshk.github.io/anyTS/document/). The result shows in Jupyter as HTML with styles and a legend; `to_html` returns the markup, and `highlights` keeps the fragments for a rendering of one's own. Fragments of different layers may overlap.
+Highlighting of a text by layers, in the manner of the style checkers: every layer marks the fragments of a text that a statistic counts - long sentences, complex words, the passive. The data source is a text or a `Document` of [anySeg](https://github.com/SergeyShk/anySeg), read through its [document](https://sergeyshk.github.io/anyTS/document/). The result shows in Jupyter as HTML with styles and a legend; `to_html` returns the markup, and `highlights` keeps the fragments for a rendering of one's own. Fragments of different layers may overlap.
 
 Raises:
 
-- `SourceTypeError` - a source that is neither a string, a `Doc` nor a `Document`, a `parse` that returns no `Document`;
-- `SourceError` - a source without words, a `Doc` with a token over a blank line;
+- `SourceTypeError` - a source that is neither a string nor a `Document`, a `parse` that returns no `Document`;
+- `SourceError` - a source without words;
 - `ParameterError` - layers that are not a name or a list of names, a layer that is unknown or one that needs an annotation the source lacks.
 <!-- --8<-- [end:HighlightedText] -->
 
@@ -51,7 +51,7 @@ A layer of the long sentences in a subclass.
 <!-- --8<-- [start:HighlightedText-parameters] -->
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
-| `source` | `str` / `Doc` / `Document` | - | Data source |
+| `source` | `str` / `Document` | - | Data source |
 | `layers` | `list[str]` / `str` | `None` | Layers of the highlighting; if not given, the default layers the source allows; `"all"` - every layer allowed |
 <!-- --8<-- [end:HighlightedText-parameters] -->
 

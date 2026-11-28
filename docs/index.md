@@ -1,6 +1,6 @@
 # Any Texts Statistics (anyTS)
 
-**anyTS** is the language-independent core of the text statistics libraries [ruTS](https://github.com/SergeyShk/ruTS) (Russian) and [esTS](https://github.com/SergeyShk/esTS) (Spanish). It holds the code that does not depend on a language, so that it is written, tested and documented once; a language library adds its tokenizer, lemmatizer, [spaCy](https://github.com/explosion/spaCy) model and rules and re-exports the core under its own names.
+**anyTS** is the language-independent core of the text statistics libraries [ruTS](https://github.com/SergeyShk/ruTS) (Russian) and [esTS](https://github.com/SergeyShk/esTS) (Spanish). It holds the code that does not depend on a language, so that it is written, tested and documented once; a language library adds its segmenter, morphology, parser and rules and re-exports the core under its own names.
 
 ## Features
 
@@ -10,7 +10,7 @@
 
     ---
 
-    Read a string, a spaCy `Doc` or a `Document` of [anySeg](https://github.com/SergeyShk/anySeg) as one document of tokens, words, sentences and paragraphs; a language library segments and annotates a string in its language; code written for 0.4 moves as [the migration page](migration.md) says
+    Read a string or a `Document` of [anySeg](https://github.com/SergeyShk/anySeg) as one document of tokens, words, sentences and paragraphs; a language library segments and annotates a string in its language
 
     [:octicons-arrow-right-24: Document model](document.md)
 
@@ -133,14 +133,6 @@
     Write the statistics of a text with their readings, the statistics of its sentences, the highlighted text and plots into one HTML file that needs nothing outside it
 
     [:octicons-arrow-right-24: HTML report](report.md)
-
--   :material-pipe:{ .lg .middle } __Components__
-
-    ---
-
-    Build components of spaCy pipelines that put the statistics into an extension of `Doc`
-
-    [:octicons-arrow-right-24: Components](components.md)
 
 -   :material-database:{ .lg .middle } __Datasets__
 

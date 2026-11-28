@@ -5,11 +5,11 @@ LexicalStats(source, freq_dict=None)
 ```
 
 <!-- --8<-- [start:LexicalStats] -->
-Lexical sophistication in the manner of TAALES (Kyle, Crossley and Berger, 2018) - how rare the words of a text are: statistics by a frequency dictionary and its unigram model, the shares of the frequency bands of a list of the most frequent lemmas, the lexical density and the shares of the proper nouns and of the abbreviations. The statistics by the dictionary are computed when first read, so the bands and the shares need no dictionary data. The data source is a text, a `Doc` object of [spaCy](https://github.com/explosion/spaCy) or a `Document` of [anySeg](https://github.com/SergeyShk/anySeg), read through its [document](https://sergeyshk.github.io/anyTS/document/): by default its words of Universal Dependencies without numbers, with their lemmas, parts of speech and features.
+Lexical sophistication in the manner of TAALES (Kyle, Crossley and Berger, 2018) - how rare the words of a text are: statistics by a frequency dictionary and its unigram model, the shares of the frequency bands of a list of the most frequent lemmas, the lexical density and the shares of the proper nouns and of the abbreviations. The statistics by the dictionary are computed when first read, so the bands and the shares need no dictionary data. The data source is a text or a `Document` of [anySeg](https://github.com/SergeyShk/anySeg), read through its [document](https://sergeyshk.github.io/anyTS/document/): by default its words of Universal Dependencies without numbers, with their lemmas, parts of speech and features.
 
 Raises:
 
-- `SourceTypeError` - a source that is neither a string, a `Doc` nor a `Document`, a `parse` that returns no `Document`, a dictionary of another class than that of the library or, without `freq_dict_class`, one without `lookup` and `ipm` or none at all; an `analyze` that does not give `LexicalWord` objects;
+- `SourceTypeError` - a source that is neither a string nor a `Document`, a `parse` that returns no `Document`, a dictionary of another class than that of the library or, without `freq_dict_class`, one without `lookup` and `ipm` or none at all; an `analyze` that does not give `LexicalWord` objects;
 - `SourceError` - words without parts of speech, a source without words.
 <!-- --8<-- [end:LexicalStats] -->
 
@@ -82,7 +82,7 @@ Raises:
 <!-- --8<-- [start:LexicalStats-parameters] -->
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
-| `source` | `str` / `Doc` / `Document` | - | Data source |
+| `source` | `str` / `Document` | - | Data source |
 | `freq_dict` | `FrequencyDictionary` | `None` | Frequency dictionary; `freq_dict_class()` by default |
 <!-- --8<-- [end:LexicalStats-parameters] -->
 
@@ -216,7 +216,7 @@ A language library subclasses `LexicalStats`:
 | `stats_desc`, `stats_headers` | class attributes | Statistics of `get_stats` with their descriptions (`anyts.constants.LEXICAL_STATS_DESC` by default), headers of the columns for `print_stats` |
 | `messages` | class attribute | Messages of the errors by key; `MESSAGES` by default |
 
-A library takes its own parameters, such as a pipeline or a word extractor, in its `__init__` and passes the source and the dictionary on. An `analyze` that does not give `LexicalWord` objects raises `SourceTypeError`.
+A library takes its own parameters, such as its model of a string or a word extractor, in its `__init__` and passes the source and the dictionary on. An `analyze` that does not give `LexicalWord` objects raises `SourceTypeError`.
 <!-- --8<-- [end:LexicalStats-hooks] -->
 
 </details>

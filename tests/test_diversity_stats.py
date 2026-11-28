@@ -11,7 +11,6 @@ import numpy as np
 import pandas as pd
 import pytest
 import scipy.optimize
-import spacy
 from scipy.special import comb
 
 from anyts import DiversityStats, diversity_stats
@@ -60,6 +59,7 @@ from anyts.diversity_stats import (
     calc_zipf_alpha,
     fit_zipf_mandelbrot,
 )
+from anyts.document import to_document
 from anyts.exceptions import ParameterError, SourceError, SourceTypeError, UnknownStatError
 
 # The words of a paragraph with every lexeme replaced by a token of its own:
@@ -124,7 +124,7 @@ def test_init_empty():
     ("words", "message"),
     [
         ("some text", r"^The words must be a list of strings, not str$"),
-        (spacy.blank("xx")("some text"), r"^The words must be a list of strings, not Doc$"),
+        (to_document("some text"), r"^The words must be a list of strings, not Document$"),
         (666, r"^The words must be a list of strings, not int$"),
         ({"some", "text"}, r"^The words must be a list of strings, not set$"),
         (Counter(["some", "text"]), r"^The words must be a list of strings, not Counter$"),
@@ -208,9 +208,9 @@ def test_windowed_custom_function(checks):
 
 
 def test_init_tokens():
-    doc = spacy.blank("xx")("the cat and the dog")
+    document = to_document("the cat and the dog")
     with pytest.raises(SourceTypeError, match=r"^The words must be a list of strings, not Token$"):
-        DiversityStats(list(doc))
+        DiversityStats(list(document.tokens))
 
 
 def test_init_params_checked_first():
@@ -919,7 +919,7 @@ def test_word_functions_count():
     [
         (lambda: "some text", r"^A list of words is expected, not a string$"),
         (lambda: (word for word in riddle), r"^A list of words is expected, not an iterator$"),
-        (lambda: list(spacy.blank("xx")("the cat")), r"^The words must be strings, not Token$"),
+        (lambda: list(to_document("the cat").tokens), r"^The words must be strings, not Token$"),
         (lambda: set(riddle), r"^A list of words is expected, not set$"),
     ],
     ids=["string", "iterator", "tokens", "set"],

@@ -48,11 +48,11 @@ class UnknownStatError(ParameterError, KeyError):
 
 class DatasetNotFoundError(AnyTSError, OSError):
     """
-    Model or dataset is not installed
+    Dataset is not installed
 
     Description:
-        The spaCy model is not installed or the dataset files are missing from
-        the data directory; the message shows the command that brings them
+        The dataset files are missing from the data directory; the message
+        shows the command that brings them
     """
 
 

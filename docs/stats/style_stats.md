@@ -5,13 +5,13 @@ StyleStats(source, words_extractor=None, stopwords=None, top_n=10, cliches=None,
 ```
 
 <!-- --8<-- [start:StyleStats] -->
-The style metrics of a text: the SEO metrics of Advego and Text.ru and the markers of the officialese style. The services publish no formulas, so the common definitions are taken. The data source is a text, a `Doc` object of [spaCy](https://github.com/explosion/spaCy) or a `Document` of [anySeg](https://github.com/SergeyShk/anySeg).
+The style metrics of a text: the SEO metrics of Advego and Text.ru and the markers of the officialese style. The services publish no formulas, so the common definitions are taken. The data source is a text or a `Document` of [anySeg](https://github.com/SergeyShk/anySeg).
 
 The SEO metrics are counted on the words of the [document](https://sergeyshk.github.io/anyTS/document/) of the source in lower case (`doc_words`), or on those of an extractor passed explicitly, used on the text. The markers are counted on the words of the document (`forms`), whatever the extractor.
 
 Raises:
 
-- `SourceTypeError` - a source that is neither a string, a `Doc` nor a `Document`, a `parse` that returns no `Document`, a `doc_words` that returns no sequence of strings, an extractor of another type, a list that is not a list of strings;
+- `SourceTypeError` - a source that is neither a string nor a `Document`, a `parse` that returns no `Document`, a `doc_words` that returns no sequence of strings, an extractor of another type, a list that is not a list of strings;
 - `SourceError` - a source without words;
 - `ParameterError` - a `top_n` that is not an integer of at least one.
 <!-- --8<-- [end:StyleStats] -->
@@ -55,7 +55,7 @@ Raises:
 <!-- --8<-- [start:StyleStats-parameters] -->
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
-| `source` | `str` / `Doc` / `Document` | - | Data source |
+| `source` | `str` / `Document` | - | Data source |
 | `words_extractor` | `WordsExtractor` | `None` | Word extraction tool, used on the text in place of the words of the document |
 | `stopwords` | `list[str]` | `None` | Words of water; without them `is_water_word` decides |
 | `top_n` | `int` | `10` | Number of the most frequent words of the academic nausea and the naturalness by Zipf's law (`NAUSEA_TOP_N`) |

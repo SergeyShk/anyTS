@@ -2,10 +2,8 @@ import re
 from math import isnan, log
 
 import pytest
-import spacy
 
 from anyts.basic_stats import BasicStats
-from anyts.components import BasicStatsComponent, UnadaptedReadabilityStatsComponent
 from anyts.constants import MESSAGES, UNADAPTED_READABILITY_STATS_DESC
 from anyts.exceptions import ParameterError, SourceError, SourceTypeError
 from anyts.extractors import SentsExtractor
@@ -203,52 +201,6 @@ def test_sources():
         Unadapted(TEXT, sents_extractor=SentsExtractor(min_len=1000))
     with pytest.raises(SourceError, match=r"^The data source has no words$"):
         Unadapted("?!")
-
-
-def test_component():
-    nlp = spacy.blank("en")
-    assert UnadaptedReadabilityStatsComponent.stats_class is UnadaptedReadabilityStats
-
-    class Own(UnadaptedReadabilityStatsComponent):
-        stats_class = Unadapted
-
-    doc = nlp(TEXT)
-    Own(nlp, "anyts_test_unadapted")(doc)
-    assert doc._.anyts_test_unadapted.fucks == Unadapted(TEXT).fucks
-
-
-def test_component_reuses_the_basic_statistics():
-    nlp = spacy.blank("en")
-
-    class Basic(BasicStatsComponent):
-        stats_class = Stats
-
-    class Own(UnadaptedReadabilityStatsComponent):
-        stats_class = Unadapted
-        basic_factory = "anyts_test_basic_unadapted"
-
-    doc = nlp(TEXT)
-    Basic(nlp, "anyts_test_basic_unadapted")(doc)
-    Own(nlp, "anyts_test_reused", basic="anyts_test_basic_unadapted")(doc)
-    assert doc._.anyts_test_reused.bs is doc._.anyts_test_basic_unadapted
-    # The core class reads the basic statistics of a library, not a document
-    UnadaptedReadabilityStatsComponent(nlp, "anyts_test_core", basic="anyts_test_basic_unadapted")(
-        doc
-    )
-    assert doc._.anyts_test_core.get_stats() == doc._.anyts_test_reused.get_stats()
-    with pytest.raises(SourceError, match="anyts_test_basic_unadapted"):
-        Own(nlp, "anyts_test_missing", basic="anyts_test_none")(nlp(TEXT))
-
-
-def test_component_errors():
-    nlp = spacy.blank("en")
-    message = MESSAGES["no_basic_stats_class"].format(cls="UnadaptedReadabilityStats")
-    with pytest.raises(SourceTypeError, match=f"^{re.escape(message)}$"):
-        UnadaptedReadabilityStatsComponent(nlp, "anyts_test_unadapted_core")
-    with pytest.raises(
-        ParameterError, match=r"^The name of an extension must be a string, not int$"
-    ):
-        UnadaptedReadabilityStatsComponent(nlp, "anyts_test_unadapted_core", basic=5)
 
 
 def test_numbers_left_out(stats):

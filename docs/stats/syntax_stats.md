@@ -5,32 +5,29 @@ SyntaxStats(source)
 ```
 
 <!-- --8<-- [start:SyntaxStats] -->
-The syntactic statistics of a text by its dependency tree ([Ivanov, Solnyshkina and Solovyev 2018](https://dialogue-conf.org/media/4302/ivanovvv.pdf)): the measures of the tree and of the syntactic constructions. The data source is a text, a `Doc` object of [spaCy](https://github.com/explosion/spaCy) or a `Document` of [anySeg](https://github.com/SergeyShk/anySeg) with a dependency parse and parts of speech; a language library parses a string in its `parse`. The tree is that of its [document](https://sergeyshk.github.io/anyTS/document/#get_tree) (`get_tree`), and its nodes are the words of Universal Dependencies of the document with a letter or a digit: punctuation marks and symbols are none, and the tokens of the document decide what a word is. The distances are counted in positions of words. The units of L2SCA, the prepositional chains and the similarity of sentences are computed on first use, so a subclass whose `stats_desc` does not name them does not pay for them.
+The syntactic statistics of a text by its dependency tree ([Ivanov, Solnyshkina and Solovyev 2018](https://dialogue-conf.org/media/4302/ivanovvv.pdf)): the measures of the tree and of the syntactic constructions. The data source is a text or a `Document` of [anySeg](https://github.com/SergeyShk/anySeg) with a dependency parse and parts of speech; a language library parses a string in its `parse`. The tree is that of its [document](https://sergeyshk.github.io/anyTS/document/#get_tree) (`get_tree`), and its nodes are the words of Universal Dependencies of the document with a letter or a digit: punctuation marks and symbols are none, and the tokens of the document decide what a word is. The distances are counted in positions of words. The units of L2SCA, the prepositional chains and the similarity of sentences are computed on first use, so a subclass whose `stats_desc` does not name them does not pay for them.
 
 Raises:
 
-- `SourceTypeError` - a source that is neither a string, a `Doc` nor a `Document`, a `parse` that returns no `Document`, a `find_split_predicates` that returns no pairs of `TreeWord` objects;
+- `SourceTypeError` - a source that is neither a string nor a `Document`, a `parse` that returns no `Document`, a `find_split_predicates` that returns no pairs of `TreeWord` objects;
 - `SourceError` - a source without a dependency parse, without parts of speech, without lemmas when the class requires them, or without words.
 <!-- --8<-- [end:SyntaxStats] -->
 
 === "Code"
 
     ``` python
-    import spacy
-    from spacy.tokens import Doc
-
+    from anyts.document import to_document
     from anyts.syntax_stats import SyntaxStats
 
-    # She said that the house was not built by him.
-    doc = Doc(
-        spacy.blank("en").vocab,
-        words="She said that the house was not built by him .".split(),
-        heads=[1, 1, 7, 4, 7, 7, 7, 1, 9, 7, 1],
-        deps="nsubj ROOT mark det nsubj:pass aux:pass advmod ccomp case obl:agent punct".split(),
-        pos="PRON VERB SCONJ DET NOUN AUX PART VERB ADP PRON PUNCT".split(),
-        morphs="_ VerbForm=Fin _ _ _ VerbForm=Fin Polarity=Neg VerbForm=Part|Voice=Pass _ _ _".split(),
+    document = to_document("She said that the house was not built by him.")
+    fin, part = "VerbForm=Fin", "VerbForm=Part|Voice=Pass"
+    document.set_columns(
+        upos="PRON VERB SCONJ DET NOUN AUX PART VERB ADP PRON PUNCT".split(),
+        feats=[None, fin, None, None, None, fin, "Polarity=Neg", part, None, None, None],
+        head=[2, 0, 8, 5, 8, 8, 8, 2, 10, 8, 2],
+        deprel="nsubj root mark det nsubj:pass aux:pass advmod ccomp case obl:agent punct".split(),
     )
-    stats = SyntaxStats(doc)
+    stats = SyntaxStats(document)
     stats.print_stats()
     ```
 
@@ -85,7 +82,7 @@ Raises:
 <!-- --8<-- [start:SyntaxStats-parameters] -->
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
-| `source` | `str` / `Doc` / `Document` | - | Data source with a dependency parse and parts of speech, or a text that `parse` annotates |
+| `source` | `str` / `Document` | - | Data source with a dependency parse and parts of speech, or a text that `parse` annotates |
 <!-- --8<-- [end:SyntaxStats-parameters] -->
 
 ## Attributes
@@ -638,7 +635,7 @@ $$
 
 The methods `get_stats`, `to_dataframe`, `print_stats` and `describe` are those of the [statistics interface](stats.md).
 
-The functions of the tree take the words of the tree of a document (`TreeWord` of [`get_tree`](../document.md#get_tree)): a word, or a sequence of them such as a sentence of the tree, whose words are those of `get_words`. A value that is no `TreeWord`, such as a spaCy `Token`, or a sequence with one raises `SourceTypeError`. They read the relations that Universal Dependencies and the ClearNLP labels of the English models share: the head of a word, `cc`, `conj`, `parataxis`, `punct` and `aux`, the subjects `nsubj` and `csubj`, the modifiers of a noun `amod`, `det`, `nmod`, `nummod` and `acl`, the clause relations `ccomp`, `advcl` and `xcomp`, and the root; the copula `cop` of `predicate_form` and `is_predicate` exists in Universal Dependencies alone. The passive and its agent (`is_passive`, `has_agent`) and the order of the subjects and the objects read the relations of both schemes (`PASSIVE_DEPS`, `AGENT_DEPS`, `NOMINAL_SUBJECT_DEPS`, `OBJECT_DEPS`); the prepositional complements of `is_prep_complement` read Universal Dependencies alone. Everything else is up to a language library.
+The functions of the tree take the words of the tree of a document (`TreeWord` of [`get_tree`](../document.md#get_tree)): a word, or a sequence of them such as a sentence of the tree, whose words are those of `get_words`. A value that is no `TreeWord`, or a sequence with one, raises `SourceTypeError`. They read the relations that Universal Dependencies and ClearNLP share: the head of a word, `cc`, `conj`, `parataxis`, `punct` and `aux`, the subjects `nsubj` and `csubj`, the modifiers of a noun `amod`, `det`, `nmod`, `nummod` and `acl`, the clause relations `ccomp`, `advcl` and `xcomp`, and the root; the copula `cop` of `predicate_form` and `is_predicate` exists in Universal Dependencies alone. The passive and its agent (`is_passive`, `has_agent`) and the order of the subjects and the objects read the relations of both schemes (`PASSIVE_DEPS`, `AGENT_DEPS`, `NOMINAL_SUBJECT_DEPS`, `OBJECT_DEPS`); the prepositional complements of `is_prep_complement` read Universal Dependencies alone. Everything else is up to a language library.
 
 ## Words of a sequence { #get_words }
 
@@ -717,7 +714,7 @@ The number of words in the subtree of a word: the word itself and all of its dir
 get_subtree(word)
 ```
 
-The words of the subtree of a word in the order of the text: the word itself and all of its direct and indirect dependents, punctuation marks included, as the `subtree` of a spaCy token; the argument is that of `get_children`.
+The words of the subtree of a word in the order of the text: the word itself and all of its direct and indirect dependents, punctuation marks included; the argument is that of `get_children`.
 <!-- --8<-- [end:get_subtree] -->
 
 ## Verb form of a predicate { #verb-forms }
@@ -740,31 +737,23 @@ A hook that is not callable raises `SourceTypeError`.
 === "Code"
 
     ``` python
-    import spacy
-    from spacy.tokens import Doc
-
     from anyts.document import get_tree, to_document
     from anyts.syntax_stats import predicate_form
 
-    vocab = spacy.blank("en").vocab
-    doc = Doc(
-        vocab,
-        words=["She", "had", "been", "chosen"],
-        heads=[3, 3, 3, 3],
-        deps=["nsubj:pass", "aux", "aux:pass", "ROOT"],
-        morphs=["Case=Nom", "VerbForm=Fin", "VerbForm=Part", "VerbForm=Part"],
+    document = to_document("She had been chosen")
+    document.set_columns(
+        feats=["Case=Nom", "VerbForm=Fin", "VerbForm=Part", "VerbForm=Part"],
+        head=[4, 4, 4, 0],
+        deprel=["nsubj:pass", "aux", "aux:pass", "root"],
     )
-    chosen = get_tree(to_document(doc)).words[3]
+    chosen = get_tree(document).words[3]
     predicate_form(chosen)
     # An auxiliary the model left without a form, read by the hook
-    doc = Doc(
-        vocab,
-        words=["to", "have", "gone"],
-        heads=[2, 2, 2],
-        deps=["mark", "aux", "ROOT"],
-        morphs=["", "", "VerbForm=Part"],
+    document = to_document("to have gone")
+    document.set_columns(
+        feats=[None, None, "VerbForm=Part"], head=[3, 3, 0], deprel=["mark", "aux", "root"]
     )
-    gone = get_tree(to_document(doc)).words[2]
+    gone = get_tree(document).words[2]
     predicate_form(gone), predicate_form(gone, lambda aux: "Inf" if aux.form.lower() == "have" else "")
     ```
 
@@ -809,19 +798,15 @@ A check that is not callable raises `SourceTypeError`.
 === "Code"
 
     ``` python
-    import spacy
-    from spacy.tokens import Doc
-
     from anyts.document import get_tree, to_document
     from anyts.syntax_stats import calc_modifier_chains
 
-    doc = Doc(
-        spacy.blank("en").vocab,
-        words=["the", "use", "of", "the", "water", "of", "the", "river"],
-        heads=[1, 1, 4, 4, 1, 7, 7, 4],
-        deps=["det", "ROOT", "case", "det", "nmod", "case", "det", "nmod"],
+    document = to_document("the use of the water of the river")
+    document.set_columns(
+        head=[2, 0, 5, 5, 2, 8, 8, 5],
+        deprel=["det", "root", "case", "det", "nmod", "case", "det", "nmod"],
     )
-    sentence = get_tree(to_document(doc)).sentences[0]
+    sentence = get_tree(document).sentences[0]
     calc_modifier_chains(sentence, lambda word: word.deprel == "nmod")
     ```
 

@@ -6,13 +6,13 @@
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/SergeyShk/anyTS/blob/master/LICENSE.txt)
 
-**anyTS** is the language-independent core of the text statistics libraries [ruTS](https://github.com/SergeyShk/ruTS) (Russian) and [esTS](https://github.com/SergeyShk/esTS) (Spanish). It holds the code that does not depend on a language, so that it is written, tested and documented once; a language library adds its tokenizer, lemmatizer, [spaCy](https://github.com/explosion/spaCy) model and rules and re-exports the core under its own names.
+**anyTS** is the language-independent core of the text statistics libraries [ruTS](https://github.com/SergeyShk/ruTS) (Russian) and [esTS](https://github.com/SergeyShk/esTS) (Spanish). It holds the code that does not depend on a language, so that it is written, tested and documented once; a language library adds its segmenter, morphology, parser and rules and re-exports the core under its own names.
 
 [Documentation](https://sergeyshk.github.io/anyTS/) · [PyPI](https://pypi.org/project/anyts/)
 
 ## Features
 
-* **[Document model](https://sergeyshk.github.io/anyTS/document/)** - a string, a spaCy `Doc` and a `Document` of [anySeg](https://github.com/SergeyShk/anySeg) give one document of tokens, words, sentences and paragraphs, which the statistics read; a language library segments and annotates a string in its language
+* **[Document model](https://sergeyshk.github.io/anyTS/document/)** - a string or a `Document` of [anySeg](https://github.com/SergeyShk/anySeg) gives one document of tokens, words, sentences and paragraphs, which the statistics read; a language library segments and annotates a string in its language
 * **[Extraction](https://sergeyshk.github.io/anyTS/extractors/sentences/)** - sentence, word and character N-gram extractors whose tokenizer, lemmatizer and number pattern are hooks a language library overrides
 * **[Statistics interface](https://sergeyshk.github.io/anyTS/stats/stats/)** - the base of every class of statistics: a dictionary of the statistics, nested or flat, a pandas frame, a printed table, the reading of a statistic by its scale, the statistics of every sentence, line or paragraph and one table of several texts
 * **[Basic statistics](https://sergeyshk.github.io/anyTS/stats/basic_stats/)** - sentences, words, syllables, letters, long and complex words, punctuation marks by type, with the syllables of a language library
@@ -29,7 +29,6 @@
 * **[Visualization](https://sergeyshk.github.io/anyTS/visualizers/zipf/)** - Zipf's law, vocabulary growth and frequency spectrum, sentence lengths, rhythm of the lines of a verse, literature fingerprinting, word tree, corpus and stylometric plots, the labels of the plots as a parameter; the highlighting of a text by layers
 * **[Command line](https://sergeyshk.github.io/anyTS/cli/)** - the frame of the command of a language library over its classes: the statistics of texts as a table, JSON or CSV, by text or by part, and the report of a text
 * **[HTML report](https://sergeyshk.github.io/anyTS/report/)** - the statistics of a text with their readings, the statistics of its sentences, the highlighted text and plots in one HTML file that needs nothing outside it
-* **[Components](https://sergeyshk.github.io/anyTS/components/)** - the base of the spaCy components that put the statistics into an extension of `Doc`
 * **[Datasets](https://sergeyshk.github.io/anyTS/datasets/)** - the base of a dataset: downloading an archive with a checksum, safe extraction and filters of the records
 * **[Exceptions](https://sergeyshk.github.io/anyTS/exceptions/)** - one hierarchy whose classes are also built-in exceptions
 
@@ -49,7 +48,7 @@ Or with [uv](https://docs.astral.sh/uv/):
 uv add anyts
 ```
 
-The dependencies are anySeg, numpy, pandas, scipy, spaCy, matplotlib and graphviz; no trained spaCy model is needed. Rendering the word tree and the network of collocations also needs the executables of [Graphviz](https://graphviz.org/download/).
+The dependencies are anySeg, numpy, pandas, scipy, matplotlib and graphviz. Rendering the word tree and the network of collocations also needs the executables of [Graphviz](https://graphviz.org/download/).
 
 ## Quick start
 

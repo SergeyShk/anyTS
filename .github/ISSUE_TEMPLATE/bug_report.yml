@@ -38,9 +38,3 @@ body:
       placeholder: "Python 3.12, macOS 15"
     validations:
       required: true
-  - type: input
-    id: spacy
-    attributes:
-      label: spaCy model
-      description: If the bug involves a Doc object
-      placeholder: "en_core_web_sm 3.8.0"

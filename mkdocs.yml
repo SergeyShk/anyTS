@@ -8,7 +8,6 @@ nav:
       - About: index.md
       - Installation: installation.md
       - Document model: document.md
-      - Migrating from 0.4: migration.md
       - Exceptions: exceptions.md
       - Authors: authors.md
     - Extraction:
@@ -44,14 +43,13 @@ nav:
       - Corpus plots: visualizers/corpus.md
       - Stylometric plots: visualizers/stylometry.md
       - Text highlighting: visualizers/highlight.md
-    - Components: components.md
     - Command line: cli.md
     - HTML report: report.md
     - Datasets: datasets.md
     - Utilities:
       - Words and tokens: utils/words.md
       - Collections and phrases: utils/collections.md
-      - spaCy objects: utils/spacy.md
+      - Words of the tree: utils/tree.md
       - Arithmetic: utils/arithmetic.md
       - Input checks: utils/checks.md
       - Labels and messages: utils/messages.md

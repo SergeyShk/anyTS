@@ -27,7 +27,6 @@ from .utils import (
 
 if TYPE_CHECKING:
     from anyseg import Document
-    from spacy.tokens import Doc
 
 
 def check_params(window_len: int, *, messages: Mapping[str, str] = MESSAGES) -> None:
@@ -62,7 +61,7 @@ class PhonStats(Stats, metaclass=ABCMeta):
         get_stats, to_dataframe, print_stats and describe come from Stats
 
     Arguments:
-        source (str|Doc|Document): Data source (a string, a Doc or a Document object)
+        source (str|Document): Data source (a string or a Document object)
         words_extractor (WordsExtractor): Word extraction tool, used on the text in place
             of the words of the document
         window_len (int): Window in words of the alliteration and the assonance
@@ -106,7 +105,7 @@ class PhonStats(Stats, metaclass=ABCMeta):
             print_stats
 
     Raises:
-        SourceTypeError: If the source is neither a string, a Doc nor a Document object,
+        SourceTypeError: If the source is neither a string nor a Document object,
             parse does not return a Document, the extractor is of another type, or
             doc_words, syllabify or transcribe does not return strings; when a class is
             defined, if its classes of sounds are not collections of strings
@@ -139,7 +138,7 @@ class PhonStats(Stats, metaclass=ABCMeta):
 
     def __init__(
         self,
-        source: str | Doc | Document,
+        source: str | Document,
         words_extractor: WordsExtractor | None = None,
         window_len: int = PHON_WINDOW_LEN,
     ):

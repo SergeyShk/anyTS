@@ -82,7 +82,7 @@ Messages that are not a mapping of strings, lack a key or have an unknown one ra
 source_type_error(messages, source)
 ```
 
-Gives the error of a data source of a wrong type, for a class to raise: the message `source_span` for a `Span` of spaCy, which `span.as_doc()` turns into a `Doc`, and `source_type` with the name of the type for any other source.
+Gives the error of a data source of a wrong type, for a class to raise: the message `source_type` with the name of the type of the source.
 
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
@@ -93,18 +93,14 @@ Gives the error of a data source of a wrong type, for a class to raise: the mess
 === "Code"
 
     ``` python
-    import spacy
-
     from anyts.constants import MESSAGES
     from anyts.utils import source_type_error
 
     source_type_error(MESSAGES, 5)
-    source_type_error(MESSAGES, spacy.blank("en")("The cat sleeps")[:2])
     ```
 
 === "Result"
 
     ```
     SourceTypeError('The data source cannot be of type int')
-    SourceTypeError('The data source cannot be a Span: pass span.as_doc()')
     ```

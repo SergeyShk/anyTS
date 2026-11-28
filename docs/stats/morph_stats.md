@@ -5,37 +5,34 @@ MorphStats(source)
 ```
 
 <!-- --8<-- [start:MorphStats] -->
-The morphological statistics of a text: the part of speech and the features of [Universal Dependencies](https://universaldependencies.org/u/feat/) of every word, counted by value or given word by word. The data source is a text, a `Doc` object of [spaCy](https://github.com/explosion/spaCy) or a `Document` of [anySeg](https://github.com/SergeyShk/anySeg); the words are the words of Universal Dependencies of its [document](https://sergeyshk.github.io/anyTS/document/) with a letter or a digit (Spanish `del` gives `de` and `el`), and their parts of speech and features are its columns `upos` and `feats`. A language library annotates a string in its `parse`, or reads the features in its own `analyze`.
+The morphological statistics of a text: the part of speech and the features of [Universal Dependencies](https://universaldependencies.org/u/feat/) of every word, counted by value or given word by word. The data source is a text or a `Document` of [anySeg](https://github.com/SergeyShk/anySeg); the words are the words of Universal Dependencies of its [document](https://sergeyshk.github.io/anyTS/document/) with a letter or a digit (Spanish `del` gives `de` and `el`), and their parts of speech and features are its columns `upos` and `feats`. A language library annotates a string in its `parse`, or reads the features in its own `analyze`.
 
 Raises:
 
-- `SourceTypeError` - a source that is neither a string, a `Doc` nor a `Document`, a `parse` that returns no `Document`, an `analyze` that does not give `MorphWord` objects;
+- `SourceTypeError` - a source that is neither a string nor a `Document`, a `parse` that returns no `Document`, an `analyze` that does not give `MorphWord` objects;
 - `SourceError` - words without parts of speech, a source without words.
 <!-- --8<-- [end:MorphStats] -->
 
 === "Code"
 
     ``` python
-    import spacy
-    from spacy.tokens import Doc
-
+    from anyts.document import to_document
     from anyts.morph_stats import MorphStats
 
-    doc = Doc(
-        spacy.blank("en").vocab,
-        words=["The", "cats", "slept", "and", "they", "dream", "."],
-        pos=["DET", "NOUN", "VERB", "CCONJ", "PRON", "VERB", "PUNCT"],
-        morphs=[
+    document = to_document("The cats slept and they dream.")
+    document.set_columns(
+        upos=["DET", "NOUN", "VERB", "CCONJ", "PRON", "VERB", "PUNCT"],
+        feats=[
             "Definite=Def|PronType=Art",
             "Number=Plur",
             "Mood=Ind|Tense=Past|VerbForm=Fin",
-            "",
+            None,
             "Case=Nom|Number=Plur|Person=3|PronType=Prs",
             "Mood=Ind|Tense=Pres|VerbForm=Fin",
             "PunctType=Peri",
         ],
     )
-    stats = MorphStats(doc)
+    stats = MorphStats(document)
     stats.get_stats("pos", "number", "tense")
     stats.tags[:3]
     ```
@@ -52,7 +49,7 @@ Raises:
 <!-- --8<-- [start:MorphStats-parameters] -->
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
-| `source` | `str` / `Doc` / `Document` | - | Data source |
+| `source` | `str` / `Document` | - | Data source |
 <!-- --8<-- [end:MorphStats-parameters] -->
 
 ## Attributes

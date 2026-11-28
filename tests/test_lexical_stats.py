@@ -2,16 +2,15 @@ from math import isnan, log2, log10
 from typing import ClassVar, NamedTuple
 
 import pytest
-import spacy
 from anyseg import Document
-from spacy.tokens import Doc
 
 from anyts.constants import LEXICAL_STATS_DESC, MESSAGES
-from anyts.document import document_words, to_document
+from anyts.document import document_words
 from anyts.exceptions import ParameterError, SourceError, SourceTypeError
 from anyts.extractors import WordsExtractor
 from anyts.lexical_stats import LexicalStats, LexicalWord, calc_surprisal
-from anyts.utils import is_doc, is_number, source_type_error
+from anyts.utils import is_number, source_type_error
+from tests.documents import parsed
 
 
 class Entry(NamedTuple):
@@ -50,8 +49,8 @@ class English(LexicalStats):
     freq_dict_class = Dictionary
 
     def analyze(self, source):
-        if is_doc(source):
-            words = list(document_words(to_document(source)))
+        if isinstance(source, Document):
+            words = list(document_words(source))
         elif isinstance(source, str):
             words = WordsExtractor().extract(source)
         else:
@@ -143,9 +142,9 @@ def test_hooks_of_the_keys_and_the_list():
         keyed.band_coverage([20001])
 
 
-def test_source_of_a_doc():
-    doc = spacy.blank("en")("The cats sat")
-    assert English(doc).lemmas == ("the", "cat", "sit")
+def test_source_of_a_document():
+    document = parsed(["The", "cats", "sat"])
+    assert English(document).lemmas == ("the", "cat", "sit")
 
 
 @pytest.mark.parametrize(
@@ -172,13 +171,12 @@ def test_without_a_class_of_the_dictionary():
 
 def test_default_analyze():
     """The words of the document: no numbers, the lemmas of its column, content words by UPOS"""
-    doc = Doc(
-        spacy.blank("en").vocab,
-        words=["The", "cats", "sat", "in", "2020", "."],
+    document = parsed(
+        ["The", "cats", "sat", "in", "2020", "."],
         lemmas=["the", "cat", "", "in", "2020", "."],
         pos=["DET", "NOUN", "VERB", "ADP", "NUM", "PUNCT"],
     )
-    stats = LexicalStats(doc, Dictionary())
+    stats = LexicalStats(document, Dictionary())
     assert stats.words == ("The", "cats", "sat", "in")
     assert stats.lemmas == ("the", "cat", "sat", "in")
     assert stats.n_content_words == 2

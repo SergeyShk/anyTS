@@ -32,7 +32,6 @@ from ..utils import (
 
 if TYPE_CHECKING:
     from anyseg import Document
-    from spacy.tokens import Doc
 
     from ..cohesion_stats import Connector, ConnectorMatcher
     from ..document import TreeWord
@@ -171,7 +170,7 @@ class HighlightedText:
         as HTML with a legend (to_html)
 
     Arguments:
-        source (str|Doc|Document): Data source (a string, a Doc or a Document object)
+        source (str|Document): Data source (a string or a Document object)
         layers (list[str]|str): Layers of the highlighting; the layers of
             default_layers the source allows if not set; "all" - every layer the
             source allows
@@ -187,11 +186,10 @@ class HighlightedText:
         css: Getting the styles of the layers
 
     Raises:
-        SourceTypeError: If the source is neither a string, a Doc nor a Document,
-            parse does not return a Document, or find does not return fragments of
+        SourceTypeError: If the source is neither a string nor a Document, parse
+            does not return a Document, or find does not return fragments of
             Highlight
-        SourceError: If the source has no words, or a token of a Doc runs over a blank
-            line (to_document)
+        SourceError: If the source has no words
         ParameterError: If a layer is unknown or not allowed by the source, the
             layers are not a list of names, or find gives a fragment of another
             layer, an empty one or one outside the text; when a class is defined,
@@ -225,7 +223,7 @@ class HighlightedText:
                     )
                 )
 
-    def __init__(self, source: str | Doc | Document, layers: Sequence[str] | str | None = None):
+    def __init__(self, source: str | Document, layers: Sequence[str] | str | None = None):
         document = _parsed(self, source)
         self.text = document.text
         words = self.doc_words(document)
@@ -264,7 +262,7 @@ class HighlightedText:
                 highlights.append(h)
         self.highlights = tuple(sorted(highlights, key=lambda h: (h.start, -h.end)))
 
-    def parse(self, source: str | Doc | Document) -> Document:
+    def parse(self, source: str | Document) -> Document:
         """
         Getting the document of a data source
 
@@ -273,15 +271,13 @@ class HighlightedText:
             overrides it to segment and annotate a string in its language
 
         Arguments:
-            source (str|Doc|Document): Data source
+            source (str|Document): Data source
 
         Returns:
             Document: Document of anySeg
 
         Raises:
-            SourceTypeError: If the source is neither a string, a Doc nor a Document
-                object
-            SourceError: If a token of a Doc runs over a blank line
+            SourceTypeError: If the source is neither a string nor a Document object
         """
         return to_document(source, messages=self.messages)
 
@@ -579,7 +575,7 @@ def tokens_span(words: Iterable[TreeWord]) -> tuple[int, int]:
         tuple[int, int]: Position of the first character and position after the last one
 
     Raises:
-        SourceTypeError: If a word is not a TreeWord, such as a spaCy Token
+        SourceTypeError: If a word is not a TreeWord
         SourceError: If there is no word among the words
     """
     found = _get_words(words)
@@ -884,8 +880,7 @@ def find_split_predicate_highlights(
         list[Highlight]: Fragments of the layer split_predicates
 
     Raises:
-        SourceTypeError: If note is not callable or a word of a pair is not a TreeWord, such
-            as a spaCy Token
+        SourceTypeError: If note is not callable or a word of a pair is not a TreeWord
     """
     _check_hooks((note, "note"))
     note = note or (

@@ -5,11 +5,11 @@ CohesionStats(source, sents_extractor=None, connectors=None, blank_lines=False)
 ```
 
 <!-- --8<-- [start:CohesionStats] -->
-The cohesion statistics of a text in the manner of Coh-Metrix: the overlap of the sentences, the givenness, the temporal cohesion and the connectors of a dictionary. The sentences are compared by lemmas. The data source is a text, a `Doc` object of [spaCy](https://github.com/explosion/spaCy) or a `Document` of [anySeg](https://github.com/SergeyShk/anySeg) with parts of speech and lemmas; a language library annotates a string in its `parse`. The words are those of Universal Dependencies of its [document](https://sergeyshk.github.io/anyTS/document/#get_tree) (`get_tree`) with a letter or a digit, split into sentences by the document, or by the sentence extractor over its text when one is given. The words of a connector of several words (*por lo tanto*, *es decir*) count as the connector alone: they are no nouns, pronouns or content words, its anaphors included (*eso* of *por eso*), and give no tense, mood or aspect.
+The cohesion statistics of a text in the manner of Coh-Metrix: the overlap of the sentences, the givenness, the temporal cohesion and the connectors of a dictionary. The sentences are compared by lemmas. The data source is a text or a `Document` of [anySeg](https://github.com/SergeyShk/anySeg) with parts of speech and lemmas; a language library annotates a string in its `parse`. The words are those of Universal Dependencies of its [document](https://sergeyshk.github.io/anyTS/document/#get_tree) (`get_tree`) with a letter or a digit, split into sentences by the document, or by the sentence extractor over its text when one is given. The words of a connector of several words (*por lo tanto*, *es decir*) count as the connector alone: they are no nouns, pronouns or content words, its anaphors included (*eso* of *por eso*), and give no tense, mood or aspect.
 
 Raises:
 
-- `SourceTypeError` - an extractor of another type, a source that is neither a string, a `Doc` nor a `Document`, a `parse` that returns no `Document`, connectors that are not a dictionary of phrases and pairs of strings;
+- `SourceTypeError` - an extractor of another type, a source that is neither a string nor a `Document`, a `parse` that returns no `Document`, connectors that are not a dictionary of phrases and pairs of strings;
 - `SourceError` - a source without words, or without parts of speech or lemmas while `requires_pos` or `requires_lemmas` is set;
 - `ParameterError` - an unknown class or kind of a connector, a `blank_lines` that is not a `bool`.
 <!-- --8<-- [end:CohesionStats] -->
@@ -17,10 +17,8 @@ Raises:
 === "Code"
 
     ``` python
-    import spacy
-    from spacy.tokens import Doc
-
     from anyts.cohesion_stats import CohesionStats
+    from anyts.document import to_document
 
 
     class English(CohesionStats):
@@ -29,17 +27,14 @@ Raises:
             return {"however": ("adversative", "secondary")}
 
 
-    # The cat slept. However, the cat woke.
-    doc = Doc(
-        spacy.blank("en").vocab,
-        words=["The", "cat", "slept", ".", "However", ",", "the", "cat", "woke", "."],
-        spaces=[True, True, False, True, False, True, True, True, False, False],
-        pos=["DET", "NOUN", "VERB", "PUNCT", "ADV", "PUNCT", "DET", "NOUN", "VERB", "PUNCT"],
-        lemmas=["the", "cat", "sleep", ".", "however", ",", "the", "cat", "wake", "."],
-        morphs=["", "", "Aspect=Perf|Tense=Past", "", "", "", "", "", "Aspect=Perf|Tense=Past", ""],
-        sent_starts=[True, False, False, False, True, False, False, False, False, False],
+    document = to_document("The cat slept. However, the cat woke.")
+    past = "Aspect=Perf|Tense=Past"
+    document.set_columns(
+        upos=["DET", "NOUN", "VERB", "PUNCT", "ADV", "PUNCT", "DET", "NOUN", "VERB", "PUNCT"],
+        lemma=["the", "cat", "sleep", ".", "however", ",", "the", "cat", "wake", "."],
+        feats=[None, None, past, None, None, None, None, None, past, None],
     )
-    stats = English(doc)
+    stats = English(document)
     stats.print_stats()
     ```
 
@@ -88,7 +83,7 @@ Raises:
 <!-- --8<-- [start:CohesionStats-parameters] -->
 | Parameter | Type | Default | Description |
 | :-------- | :--- | :------ | :---------- |
-| `source` | `str` / `Doc` / `Document` | - | Data source with the parts of speech and the lemmas, a text that `parse` annotates, or what `analyze` reads |
+| `source` | `str` / `Document` | - | Data source with the parts of speech and the lemmas, a text that `parse` annotates, or what `analyze` reads |
 | `sents_extractor` | `SentsExtractor` | `None` | Sentence extraction tool; given here, it splits the text in place of the sentences of the document, and the words outside its sentences are left out. Its sentences are found in the text in order, so one that is not a piece of the text is left out with its words |
 | `connectors` | `dict[str, tuple[str, str]]` | `None` | Class and kind by connector; those of `load_connectors` by default |
 | `blank_lines` | `bool` | `False` | Start the paragraphs after the blank lines alone, for a text whose lines are wrapped inside its paragraphs; after every line break by default |
@@ -254,7 +249,7 @@ $$
 | `sets` | `list[set[str]]` | - | Elements of every segment |
 | `span` | `int` | `1` | Number $k$ of the next segments a segment is compared with |
 
-Segments that are a string, a `Doc`, an iterator or a segment that is not a list of strings raise `SourceTypeError`, a span that is not an integer above 0 `ParameterError`.
+Segments that are a string, an iterator or a segment that is not a list of strings raise `SourceTypeError`, a span that is not an integer above 0 `ParameterError`.
 <!-- --8<-- [end:calc_forward_overlap] -->
 
 === "Code"
@@ -366,7 +361,7 @@ $$
 </div>
 
 <!-- --8<-- [start:cohesion-checks] -->
-A list of sentences that is a string, a `Doc`, an iterator, a set or a table raises `SourceTypeError`, and so does a sentence that is not a list of strings (`check_words`), such as a list of spaCy tokens. The overlaps (`calc_overlap`, `calc_proportional_overlap`, `calc_overlaps`) take a sentence as a set too; `count_given` and `calc_repetition` count the words in order and refuse a set.
+A list of sentences that is a string, an iterator, a set or a table raises `SourceTypeError`, and so does a sentence that is not a list of strings (`check_words`). The overlaps (`calc_overlap`, `calc_proportional_overlap`, `calc_overlaps`) take a sentence as a set too; `count_given` and `calc_repetition` count the words in order and refuse a set.
 <!-- --8<-- [end:cohesion-checks] -->
 
 === "Code"
@@ -447,7 +442,7 @@ Raises:
 | `breaks` | `set[int]` | `None` | Positions of the words a punctuation mark stands before |
 | `blocked` | `set[int]` | `None` | Positions of the words no connector starts at |
 
-Words that are not a list of strings and parts of speech that are not a list of strings and `None` (the tags `token.pos_` of spaCy, not the numbers `token.pos`) and positions that are not a collection raise `SourceTypeError`, a number of the sentence or a position that is not an integer, a position of a mark that is not that of a word after the first, a blocked position that is not that of a word and parts of speech not as many as the words `ParameterError`.
+Words that are not a list of strings and parts of speech that are not a list of strings and `None` and positions that are not a collection raise `SourceTypeError`, a number of the sentence or a position that is not an integer, a position of a mark that is not that of a word after the first, a blocked position that is not that of a word and parts of speech not as many as the words `ParameterError`.
 <!-- --8<-- [end:ConnectorMatcher-find] -->
 
 === "Code"

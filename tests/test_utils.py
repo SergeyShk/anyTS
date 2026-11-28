@@ -8,8 +8,6 @@ from collections import Counter
 import numpy as np
 import pandas as pd
 import pytest
-import spacy
-from spacy.tokens import Doc
 
 from anyts.constants import MESSAGES
 from anyts.document import get_tree, to_document
@@ -30,23 +28,15 @@ from anyts.utils import (
     has_feature,
     has_words,
     in_order,
-    is_doc,
     is_finite_verb,
     is_infinitive,
-    is_language,
     is_number,
     is_punctuation,
-    is_span,
-    is_token,
     safe_divide,
     safe_mean,
     shannon_entropy,
 )
-
-
-@pytest.fixture(scope="module")
-def nlp():
-    return spacy.blank("xx")
+from tests.documents import parsed
 
 
 @pytest.mark.parametrize(
@@ -149,37 +139,6 @@ def test_has_words(text, expected):
     assert has_words(text) is expected
 
 
-@pytest.mark.parametrize("text", ["The cat sleeps", "?!", ""])
-def test_has_words_of_a_doc(nlp, text):
-    assert has_words(nlp(text)) is has_words(text)
-
-
-def test_is_language(nlp):
-    assert is_language(nlp) and not is_language("en_core_web_sm") and not is_language(None)
-    assert not is_language(nlp("The cat"))
-
-
-def test_is_doc_and_is_span(nlp):
-    doc = nlp("The cat sleeps")
-    assert (is_doc(doc), is_doc(doc[:2]), is_doc(doc[0]), is_doc(doc.text)) == (
-        True,
-        False,
-        False,
-        False,
-    )
-    assert (is_span(doc[:2]), is_span(doc), is_span(doc[0]), is_span(None)) == (
-        True,
-        False,
-        False,
-        False,
-    )
-
-
-def test_has_words_of_a_span(nlp):
-    doc = nlp("The cat sleeps. ?!")
-    assert [has_words(span) for span in (doc[0:3], doc[4:])] == [True, False]
-
-
 @pytest.mark.parametrize("value", [["the", "cat"], ("the",), []])
 def test_check_sequence(value):
     assert check_sequence(value) is None
@@ -193,14 +152,9 @@ def test_check_sequence_not_iterable(value, name):
         check_words(value)
 
 
-def test_check_sequence_errors(nlp):
+def test_check_sequence_errors():
     with pytest.raises(SourceTypeError, match=r"^A list of texts is expected, not a string$"):
         check_sequence("the cat", "texts")
-    doc = nlp("The cat")
-    with pytest.raises(SourceTypeError, match="not a Doc: extract the words"):
-        check_sequence(doc)
-    with pytest.raises(SourceTypeError, match="not a Span"):
-        check_sequence(doc[:1])
     for value in (b"the cat", bytearray(b"the")):
         with pytest.raises(SourceTypeError, match=r"^A list of words is expected, not a string$"):
             check_sequence(value)
@@ -301,9 +255,7 @@ def test_check_callable():
         check_callable(42, "normalization")
 
 
-def test_check_words_errors(nlp):
-    with pytest.raises(SourceTypeError, match=r"^The words must be strings, not Token$"):
-        check_words(list(nlp("the cat")))
+def test_check_words_errors():
     with pytest.raises(SourceTypeError, match=r"^The texts must be strings, not int$"):
         check_words(["the", 1], "texts")
     with pytest.raises(SourceTypeError, match=r"not a string$"):
@@ -395,12 +347,11 @@ def test_numbers_of_two_patterns_are_cached_apart():
 
 
 def test_has_feature():
-    doc = Doc(
-        spacy.blank("xx").vocab,
-        words=["Children", "play", "who"],
+    document = parsed(
+        ["Children", "play", "who"],
         morphs=["Number=Plur", "Mood=Ind|VerbForm=Fin", "PronType=Int,Rel"],
     )
-    children, play, who = get_tree(to_document(doc)).words
+    children, play, who = get_tree(document).words
     assert has_feature(play, "VerbForm", "Fin")
     assert not has_feature(play, "VerbForm", "Inf")
     assert not has_feature(children, "Mood", "Ind")
@@ -411,13 +362,12 @@ def test_has_feature():
 
 
 def test_verb_forms():
-    doc = Doc(
-        spacy.blank("xx").vocab,
-        words=["They", "will", "go", "to", "swim"],
+    document = parsed(
+        ["They", "will", "go", "to", "swim"],
         morphs=["Case=Nom", "VerbForm=Fin", "VerbForm=Fin", "", "VerbForm=Inf"],
         pos=["PRON", "AUX", "VERB", "PART", "VERB"],
     )
-    words = get_tree(to_document(doc)).words
+    words = get_tree(document).words
     assert [is_finite_verb(word) for word in words] == [False, False, True, False, False]
     assert [is_infinitive(word) for word in words] == [False, False, False, False, True]
 
@@ -531,11 +481,6 @@ def test_find_paragraph_starts():
         find_paragraph_starts("Notes", ["Notes"], 1)
 
 
-def test_is_token(nlp):
-    doc = nlp("The cat")
-    assert is_token(doc[0]) and not is_token(doc[:1]) and not is_token("The")
-
-
 @pytest.mark.parametrize("value", ["yes", 1, None])
 def test_check_bool(value):
     check_bool(True, "switch")
@@ -555,8 +500,8 @@ def test_check_tree_word():
     check_tree_word(get_tree(to_document("The cat")).words[0])
     with pytest.raises(SourceTypeError, match=r"^A TreeWord is expected, not str$"):
         check_tree_word("cat")
-    with pytest.raises(SourceTypeError, match=r"^Own: Token$"):
-        check_tree_word(spacy.blank("xx")("cat")[0], message="Own: {type}")
+    with pytest.raises(SourceTypeError, match=r"^Own: int$"):
+        check_tree_word(5, message="Own: {type}")
 
 
 def test_unchecked():
@@ -566,7 +511,7 @@ def test_unchecked():
     word = get_tree(to_document("The cat")).words[0]
     assert unchecked(base_dep)(word) == base_dep(word)
     assert unchecked(get_words)([word]) == get_words([word])
-    # A spaCy token passes the unchecked function to the attribute it lacks
+    # A value that is no TreeWord passes the unchecked function to the attribute it lacks
     with pytest.raises(AttributeError):
-        unchecked(base_dep)(spacy.blank("xx")("cat")[0])
+        unchecked(base_dep)("cat")
     assert unchecked(len) is len

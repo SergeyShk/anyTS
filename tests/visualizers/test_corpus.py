@@ -4,12 +4,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pytest
-import spacy
 from matplotlib.axes import Axes
 
 from anyts.corpus import Collocation, Keyword, collocations, keyness
 from anyts.exceptions import ParameterError, SourceError, SourceTypeError
 from anyts.visualizers import collocation_network, dispersion_plot, keyness_plot
+from tests.documents import parsed
 
 words = [
     "kitty", "is", "in", "window",
@@ -38,7 +38,7 @@ def test_dispersion_plot():
     with pytest.raises(SourceTypeError):
         dispersion_plot("kitty is in window", ["kitty"])
     with pytest.raises(SourceTypeError):
-        dispersion_plot(spacy.blank("xx")("kitty is in"), ["kitty"])
+        dispersion_plot(parsed(["kitty", "is", "in"]), ["kitty"])
     with pytest.raises(SourceTypeError):
         dispersion_plot(words, "kitty")
     plt.close("all")

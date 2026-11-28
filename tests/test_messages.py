@@ -1,5 +1,4 @@
 import io
-import pickle
 import re
 import tempfile
 import zipfile
@@ -9,23 +8,11 @@ from unittest import mock
 
 import pandas as pd
 import pytest
-import spacy
-from spacy.tokens import Doc
 
 import anyts
 from anyts import CharNgramsExtractor, SentsExtractor, WordsExtractor, datasets
 from anyts.basic_stats import BasicStats
 from anyts.cohesion_stats import CohesionStats, ConnectorMatcher
-from anyts.components import (
-    CohesionStatsComponent,
-    DiversityStatsComponent,
-    LexicalStatsComponent,
-    PhonStatsComponent,
-    ReadabilityStatsComponent,
-    StatsComponent,
-    StyleStatsComponent,
-    UnadaptedReadabilityStatsComponent,
-)
 from anyts.constants import MESSAGES
 from anyts.corpus import (
     FrequencyReference,
@@ -78,6 +65,7 @@ from anyts.unadapted_readability_stats import UnadaptedReadabilityStats
 from anyts.utils import check_counts, check_messages
 from anyts.visualizers.highlight import Highlight, HighlightedText
 from anyts.visualizers.highlight import check_params as check_highlight_params
+from tests.documents import parsed
 
 # Messages of a language library: every message differs from the default and keeps its fields
 OWN = {key: f"Own: {message}" for key, message in MESSAGES.items()}
@@ -192,14 +180,9 @@ class Lemmas(Syntax):
     requires_lemmas = True
 
 
-VOCAB = spacy.blank("xx").vocab
-PARSED = Doc(VOCAB, words=["Yes"], heads=[0], deps=["ROOT"])
-TAGGED_PARSE = Doc(VOCAB, words=["Yes"], heads=[0], deps=["ROOT"], pos=["INTJ"])
-TAGGED = Doc(VOCAB, words=["Yes"], pos=["INTJ"])
-# A token merged over a blank line, which no document can hold
-MERGED = Doc(VOCAB, words=["Yes", "\n\n", "no"], spaces=[False, False, False])
-with MERGED.retokenize() as retokenizer:
-    retokenizer.merge(MERGED[0:3])
+PARSED = parsed(["Yes"], [0], ["ROOT"])
+TAGGED_PARSE = parsed(["Yes"], [0], ["ROOT"], pos=["INTJ"])
+TAGGED = parsed(["Yes"], pos=["INTJ"])
 
 
 class Layers(HighlightedText):
@@ -219,72 +202,6 @@ class OtherLayer(Layers):
 
     def __init__(self, source):
         super().__init__(source, ["bare"])
-
-
-class OwnReadability(ReadabilityStatsComponent):
-    stats_class = Readability
-    messages = OWN
-
-
-class OwnUnadapted(UnadaptedReadabilityStatsComponent):
-    messages = OWN
-
-
-class OwnDiversity(DiversityStatsComponent):
-    messages = OWN
-
-
-class OwnStyle(StyleStatsComponent):
-    messages = OWN
-
-
-class OwnPhon(PhonStatsComponent):
-    messages = OWN
-
-
-class OwnCohesion(CohesionStatsComponent):
-    messages = OWN
-
-
-class BareComponent(StatsComponent):
-    messages = OWN
-
-
-class OwnLexical(LexicalStatsComponent):
-    stats_class = Lexical
-    messages = OWN
-
-
-class Component(StatsComponent):
-    messages = OWN
-
-    def compute(self, doc):
-        return self.from_extension(doc, "own_missing", DiversityStats, self.factory)
-
-
-def component_error(factory):
-    nlp = spacy.blank("en")
-    component = Component(nlp, "own_component")
-    component.factory = factory
-    return component(nlp(TEXT))
-
-
-def foreign_extension():
-    Doc.set_extension("own_foreign", getter=lambda doc: 0)
-    try:
-        Component(spacy.blank("en"), "own_foreign")
-    finally:
-        Doc.remove_extension("own_foreign")
-
-
-def foreign_extension_on_unpickling():
-    data = pickle.dumps(Component(spacy.blank("en"), "own_unpickled"))
-    Doc.remove_extension("own_unpickled")
-    Doc.set_extension("own_unpickled", getter=lambda doc: 0)
-    try:
-        pickle.loads(data)(spacy.blank("en")(TEXT))
-    finally:
-        Doc.remove_extension("own_unpickled")
 
 
 def hooked(cls, **hooks):
@@ -370,8 +287,6 @@ def cannot_extract() -> None:
 
 CASES = [
     ("source_type", SourceTypeError, lambda: Stats(5)),
-    ("document_tokens", SourceError, lambda: Stats(MERGED)),
-    ("source_span", SourceTypeError, lambda: Stats(spacy.blank("en")(TEXT)[:2])),
     ("no_words", SourceError, lambda: Stats("?!")),
     ("no_words", SourceError, lambda: Diversity([])),
     (
@@ -413,10 +328,6 @@ CASES = [
     ("mtld_min_len", ParameterError, lambda: Diversity(WORDS, mtld_min_len=-1)),
     ("hdd_sample_size", ParameterError, lambda: Diversity(WORDS, hdd_sample_size=0)),
     ("log_base", ParameterError, lambda: Diversity(WORDS, log_base=1.0)),
-    ("missing_extension", SourceError, lambda: component_error("own_factory")),
-    ("missing_extension_any", SourceError, lambda: component_error("")),
-    ("foreign_extension", ParameterError, foreign_extension),
-    ("foreign_extension", ParameterError, foreign_extension_on_unpickling),
     ("sent_len_bounds", ParameterError, lambda: Sents(min_len=-1)),
     ("sent_len_order", ParameterError, lambda: Sents(min_len=5, max_len=2)),
     ("word_len_bounds", ParameterError, lambda: Words(max_len=-1)),
@@ -473,26 +384,20 @@ CASES = [
     ("top_n", ParameterError, lambda: Style(TEXT, top_n=0)),
     ("freq_dict_type", SourceTypeError, lambda: Checked(TEXT, freq_dict={})),
     ("no_freq_dict_class", SourceTypeError, lambda: Lexical(TEXT)),
-    ("no_freq_dict_class", ParameterError, lambda: OwnLexical(spacy.blank("en"), "own_lexical")),
     ("bands_type", ParameterError, lambda: Lexical(TEXT, Frequencies()).band_coverage(5)),
     ("band_bound", ParameterError, lambda: Lexical(TEXT, Frequencies()).band_coverage([0])),
     ("phon_window_len", ParameterError, lambda: Phon(TEXT, window_len=1)),
     ("source_type", SourceTypeError, lambda: Phon(5)),
-    ("source_span", SourceTypeError, lambda: Phon(PARSED[:1])),
     ("source_type", SourceTypeError, lambda: Style(5)),
-    ("source_span", SourceTypeError, lambda: Style(PARSED[:1])),
     ("source_type", SourceTypeError, lambda: Syntax(5)),
-    ("source_span", SourceTypeError, lambda: Syntax(PARSED[:1])),
-    ("no_parse", SourceError, lambda: Syntax(Doc(VOCAB, words=["Yes"]))),
+    ("no_parse", SourceError, lambda: Syntax(parsed(["Yes"]))),
     ("no_pos", SourceError, lambda: Syntax(PARSED)),
     ("no_lemmas", SourceError, lambda: Lemmas(TAGGED_PARSE)),
     ("source_type", SourceTypeError, lambda: Cohesion(5)),
-    ("source_span", SourceTypeError, lambda: Cohesion(PARSED[:1])),
     ("source_type", SourceTypeError, lambda: Morph(5)),
-    ("source_span", SourceTypeError, lambda: Morph(PARSED[:1])),
     ("no_pos", SourceError, lambda: Morph(PARSED)),
     ("unknown_stat", UnknownStatError, lambda: Morph(TAGGED).get_stats("cases")),
-    ("no_words", SourceError, lambda: Morph(Doc(VOCAB, words=["."], pos=["PUNCT"]))),
+    ("no_words", SourceError, lambda: Morph(parsed(["."], pos=["PUNCT"]))),
     (
         "hook_morph_words",
         SourceTypeError,
@@ -516,7 +421,6 @@ CASES = [
         ParameterError,
         lambda: type("Bad", (Morph,), {"values_desc": [5]}),
     ),
-    ("no_stats_class", ParameterError, lambda: BareComponent(spacy.blank("en"), "own_bare")),
     (
         "hook_document",
         SourceTypeError,
@@ -608,7 +512,6 @@ CASES = [
         lambda: hooked(Layers, find=lambda self, *args: [5])(TEXT, ["all"]),
     ),
     ("source_type", SourceTypeError, lambda: Layers(5)),
-    ("source_span", SourceTypeError, lambda: Layers(PARSED[:1])),
     ("no_words", SourceError, lambda: Layers("?!")),
     ("layers_type", ParameterError, lambda: Layers(TEXT, 5)),
     ("unknown_layer", ParameterError, lambda: Layers(TEXT, ["rhymes"])),
@@ -643,59 +546,6 @@ CASES = [
         ParameterError,
         lambda: hooked(Layers, iter_words=lambda self, t: ()),
     ),
-    (
-        "removed_component_attribute",
-        ParameterError,
-        lambda: type("Old", (BareComponent,), {"join_hyphens": True}),
-    ),
-    (
-        "stats_param",
-        ParameterError,
-        lambda: type("Typo", (BareComponent,), {"stats_class": dict, "stats_params": ("x",)})(
-            spacy.blank("en"), "own_typo"
-        ),
-    ),
-    (
-        "no_basic_stats_class",
-        SourceTypeError,
-        lambda: type("NoBasic", (OwnReadability,), {"stats_class": Bare})(spacy.blank("en"), "r"),
-    ),
-    (
-        "extension_name",
-        ParameterError,
-        lambda: OwnReadability(spacy.blank("en"), "own_r", basic=5),
-    ),
-    (
-        "empty_extension",
-        ParameterError,
-        lambda: OwnReadability(spacy.blank("en"), "own_r", basic=""),
-    ),
-    (
-        "empty_extension",
-        ParameterError,
-        lambda: OwnUnadapted(spacy.blank("en"), "own_u", basic=""),
-    ),
-    ("no_basic_stats_class", SourceTypeError, lambda: OwnUnadapted(spacy.blank("en"), "own_u")),
-    (
-        "extension_name",
-        ParameterError,
-        lambda: OwnUnadapted(spacy.blank("en"), "own_u", basic=5),
-    ),
-    ("preset_type", ParameterError, lambda: OwnReadability(spacy.blank("en"), "own_r", preset=5)),
-    (
-        "unknown_preset",
-        ParameterError,
-        lambda: OwnReadability(spacy.blank("en"), "own_r", preset="x"),
-    ),
-    ("window_len", ParameterError, lambda: OwnDiversity(spacy.blank("en"), "own_d", window_len=0)),
-    ("top_n", ParameterError, lambda: OwnStyle(spacy.blank("en"), "own_s", top_n=0)),
-    ("words_param", ParameterError, lambda: OwnStyle(spacy.blank("en"), "own_s", cliches="a")),
-    ("integer_param", ParameterError, lambda: OwnStyle(spacy.blank("en"), "own_s", top_n="5")),
-    (
-        "number_param",
-        ParameterError,
-        lambda: OwnDiversity(spacy.blank("en"), "own_d", log_base="e"),
-    ),
     ("bool_param", ParameterError, lambda: Cohesion(PARSED, blank_lines=1)),
     ("bool_param", ParameterError, lambda: Words(filter_punct=1)),
     ("integer_param", ParameterError, lambda: Words(min_len=1.5)),
@@ -720,19 +570,13 @@ CASES = [
         SourceTypeError,
         lambda: to_document("a\n\nb", tokenize=lambda text: [(0, 4, "a\n\nb")], messages=OWN),
     ),
-    (
-        "bool_param",
-        ParameterError,
-        lambda: OwnCohesion(spacy.blank("en"), "own_c", blank_lines=1),
-    ),
-    ("phon_window_len", ParameterError, lambda: OwnPhon(spacy.blank("en"), "own_p", window_len=1)),
     ("sents_extractor_type", SourceTypeError, lambda: Cohesion(PARSED, sents_extractor="x")),
     ("no_pos", SourceError, lambda: Cohesion(PARSED)),
-    ("no_lemmas", SourceError, lambda: Cohesion(Doc(VOCAB, words=["Yes"], pos=["INTJ"]))),
+    ("no_lemmas", SourceError, lambda: Cohesion(parsed(["Yes"], pos=["INTJ"]))),
     (
         "no_words",
         SourceError,
-        lambda: Cohesion(Doc(VOCAB, words=["."], pos=["PUNCT"], lemmas=["."])),
+        lambda: Cohesion(parsed(["."], pos=["PUNCT"], lemmas=["."])),
     ),
     (
         "temporal_features",
@@ -742,7 +586,7 @@ CASES = [
     (
         "no_words",
         SourceError,
-        lambda: Syntax(Doc(VOCAB, words=["."], heads=[0], deps=["ROOT"], pos=["PUNCT"])),
+        lambda: Syntax(parsed(["."], [0], ["ROOT"], pos=["PUNCT"])),
     ),
     (
         "phon_classes",
@@ -766,7 +610,6 @@ CASES = [
     ("counts_words", SourceTypeError, lambda: check_counts({1: 2}, messages=OWN)),
     ("frequency_type", SourceTypeError, lambda: check_counts({"a": "2"}, messages=OWN)),
     ("frequency_value", SourceError, lambda: check_counts({"a": -1}, messages=OWN)),
-    ("words_doc", SourceTypeError, lambda: collocations(spacy.blank("en")(TEXT), messages=OWN)),
     (
         "association_measure",
         ParameterError,
@@ -806,11 +649,6 @@ CASES = [
     ("target_counts", SourceTypeError, lambda: keyness({"a": 1.5}, WORDS, messages=OWN)),
     ("corpus_type", SourceTypeError, lambda: frequency_table([1], messages=OWN)),
     ("text_words", SourceTypeError, lambda: frequency_table({"a": "x"}, messages=OWN)),
-    (
-        "text_doc",
-        SourceTypeError,
-        lambda: frequency_table({"a": spacy.blank("en")(TEXT)}, messages=OWN),
-    ),
     ("corpus_texts", SourceError, lambda: frequency_table({}, messages=OWN)),
     ("corpus_empty_text", SourceError, lambda: frequency_table({"a": []}, messages=OWN)),
     ("culling_share", ParameterError, lambda: frequency_table(UNITS, culling=2, messages=OWN)),
@@ -1015,7 +853,6 @@ def test_check_messages(messages, match):
         BasicStats,
         ReadabilityStats,
         DiversityStats,
-        StatsComponent,
         SentsExtractor,
         WordsExtractor,
         CharNgramsExtractor,

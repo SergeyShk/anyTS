@@ -2,7 +2,6 @@ from collections import deque
 from math import isnan, log2, sqrt
 
 import pytest
-import spacy
 from nltk.collocations import BigramAssocMeasures, BigramCollocationFinder
 
 from anyts.constants import COLLOCATION_MEASURES
@@ -171,14 +170,6 @@ def test_pair_of_a_word_with_itself():
         scores.append(next(c.score for c in found if c.left == c.right == "a"))
     assert scores[0] == pytest.approx(0.40271027101377704)
     assert all(isnan(score) for score in scores[1:])
-
-
-@pytest.mark.parametrize("span", [False, True])
-def test_refuses_a_doc(span):
-    doc = spacy.blank("xx")("The cat sleeps and the cat eats.")
-    source = doc[0:3] if span else doc
-    with pytest.raises(SourceTypeError, match="WordsExtractor"):
-        collocations(source)
 
 
 def test_collocations_of_a_deque():

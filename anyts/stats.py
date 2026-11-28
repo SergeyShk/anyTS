@@ -15,7 +15,6 @@ from .utils import _check_removed, _messages, check_bool, check_messages, check_
 if TYPE_CHECKING:
     from anyseg import Document
     from pandas import DataFrame
-    from spacy.tokens import Doc
 
 # Attributes of the classes of statistics of 0.4 the core no longer reads, with the hooks that
 # replace them
@@ -98,32 +97,30 @@ class Stats:
         _check_removed(cls, _REMOVED_ATTRIBUTES, cls.messages)
         _check_scales(cls.level_scales, f"level_scales of {cls.__name__}")
 
-    def parse(self, source: str | Doc | Document) -> Document:
+    def parse(self, source: str | Document) -> Document:
         """
         Getting the document of a data source
 
         Description:
-            to_document by default: a Document as it is, a Doc with its tokens,
-            columns and sentences, a string split into words of \\w, punctuation
-            marks and the sentences of SentsExtractor. A language library
-            overrides it to segment and annotate a string in its language
+            to_document by default: a Document as it is, a string split into
+            words of \\w, punctuation marks and the sentences of SentsExtractor. A
+            language library overrides it to segment and annotate a string in its
+            language
 
         Arguments:
-            source (str|Doc|Document): Data source
+            source (str|Document): Data source
 
         Returns:
             Document: Document of anySeg
 
         Raises:
-            SourceTypeError: If the source is neither a string, a Doc nor a Document
-                object
-            SourceError: If a token of a Doc runs over a blank line
+            SourceTypeError: If the source is neither a string nor a Document object
         """
         from .document import to_document
 
         return to_document(source, messages=self.messages)
 
-    def _document(self, source: str | Doc | Document) -> Document:
+    def _document(self, source: str | Document) -> Document:
         """Document of parse, checked to be a Document"""
         from .document import _parsed
 
@@ -131,7 +128,7 @@ class Stats:
 
     @classmethod
     def by_parts(
-        cls, source: str | Doc | Document, parts: str | None = None, **params: Any
+        cls, source: str | Document, parts: str | None = None, **params: Any
     ) -> DataFrame:
         """
         Getting the statistics of every sentence, line or paragraph of a data source
@@ -152,7 +149,7 @@ class Stats:
             undefined in a part of one sentence
 
         Arguments:
-            source (str|Doc|Document): Data source
+            source (str|Document): Data source
             parts (str): Parts, one of part_kinds of the class; the first of them by
                 default
             **params: Parameters of the class
@@ -187,7 +184,7 @@ class Stats:
         )
 
     @classmethod
-    def parts_document(cls, source: str | Doc | Document, **params: Any) -> Document:
+    def parts_document(cls, source: str | Document, **params: Any) -> Document:
         """
         Getting the document whose parts by_parts counts
 
@@ -198,7 +195,7 @@ class Stats:
             it, so that the parts have the annotation of an object of the class
 
         Arguments:
-            source (str|Doc|Document): Data source
+            source (str|Document): Data source
             **params: Parameters of the class
 
         Returns:
@@ -222,7 +219,7 @@ class Stats:
     @classmethod
     def _count_parts(
         cls,
-        source: str | Doc | Document,
+        source: str | Document,
         parts: str,
         params: Mapping[str, Any],
         make: Callable[[Document], Stats] | None = None,

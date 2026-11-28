@@ -10,7 +10,7 @@ The main [lexical diversity](https://en.wikipedia.org/wiki/Lexical_diversity) me
 
 Raises:
 
-- `SourceTypeError` - words that are not a sequence or an iterator of strings, and a string, a `Doc`, a set or a table;
+- `SourceTypeError` - words that are not a sequence or an iterator of strings, and a string, a set or a table;
 - `SourceError` - no words;
 - `ParameterError` - a parameter that `check_params` rejects.
 
@@ -1135,7 +1135,7 @@ A `func` that cannot be called raises `SourceTypeError`; a `window_len` or a `st
 </div>
 
 <!-- --8<-- [start:diversity-checks] -->
-Every function checks its words with `check_words`: a `text` that is a string, a `Doc`, an iterator, a set or a table, or whose words are not strings, raises `SourceTypeError`; `fit_zipf_mandelbrot` takes a counter too.
+Every function checks its words with `check_words`: a `text` that is a string, an iterator, a set or a table, or whose words are not strings, raises `SourceTypeError`; `fit_zipf_mandelbrot` takes a counter too.
 <!-- --8<-- [end:diversity-checks] -->
 
 ## Methods
@@ -1174,7 +1174,7 @@ The frame of the metrics (`to_dataframe`) and their reading (`describe`) are tho
 <summary>Language hooks of a subclass</summary>
 
 <!-- --8<-- [start:DiversityStats-hooks] -->
-A language library subclasses `DiversityStats`. The class takes the words as given: the library extracts them from its sources (a string, a [spaCy](https://github.com/explosion/spaCy) `Doc`) and lower-cases them, since every metric counts lexemes.
+A language library subclasses `DiversityStats`. The class takes the words as given: the library extracts them from its sources (a string, a `Document`) and lower-cases them, since every metric counts lexemes.
 
 | Hook | Kind | Description |
 | :--- | :--- | :---------- |

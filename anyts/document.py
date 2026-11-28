@@ -2,11 +2,10 @@ from __future__ import annotations
 
 import re
 import threading
-import weakref
 from bisect import bisect_left, bisect_right
 from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
-from functools import cache, partial
+from functools import cache
 from re import Pattern
 from typing import TYPE_CHECKING, Any, NamedTuple, cast
 
@@ -22,14 +21,12 @@ from .utils import (
     check_callable,
     check_integer,
     has_words,
-    is_doc,
     is_document,
     source_type_error,
 )
 
 if TYPE_CHECKING:
     from anyseg import Document
-    from spacy.tokens import Doc
 
 Spans = Callable[[str], Iterable[tuple[int, int, str]]]
 
@@ -37,33 +34,6 @@ Spans = Callable[[str], Iterable[tuple[int, int, str]]]
 _PART_COLUMNS = ("lemma", "upos", "xpos", "feats", "head", "deprel", "deps", "misc")
 # The separators a word of the default tokens may end with
 _WORD_SEPARATORS = "\u00ad\u200c\u200d" + _IN_WORD_MARKS
-
-
-class _Converted:
-    """The last Doc a thread converted, the stamp of its annotations, the sentenize of the
-    conversion (None for a Doc with its sentences), its document and the tree of the document,
-    once one is asked"""
-
-    __slots__ = ("doc", "document", "sentenize", "stamp", "tree")
-
-    def __init__(
-        self,
-        doc: weakref.ref[Doc],
-        stamp: tuple[bytes, str, tuple[int, ...] | None],
-        sentenize: Spans | None,
-        document: Document,
-    ):
-        self.doc = doc
-        self.stamp = stamp
-        self.sentenize = sentenize
-        self.document = document
-        self.tree: Tree | None = None
-
-
-class _Slot(list[_Converted]):
-    """Slot of the last conversion of a thread, which the weak reference of its Doc finds"""
-
-    __slots__ = ("__weakref__",)
 
 
 class _Shared:
@@ -76,12 +46,12 @@ class _Shared:
         self.tree: Tree | None = None
 
 
-# The slot of the last conversion of every thread
+# The shared document of every thread
 _local = threading.local()
 
 
 def to_document(
-    source: str | Doc | Document,
+    source: str | Document,
     tokenize: Spans | None = None,
     sentenize: Spans | None = None,
     *,
@@ -91,31 +61,19 @@ def to_document(
     Getting the document of a data source in the model of anySeg
 
     Description:
-        A Document of anySeg is returned as it is. A Doc of spaCy keeps its
-        tokens, their columns (lemma, part of speech, features, head and
-        relation) and its sentences (anyseg.spacy.from_doc), those of a hook
-        (user_hooks["sents"]) of a Doc without a parse too; a multiword token
-        of anySeg whose words have no columns of their own is one word with the
-        columns and the head of the token, as the pipeline annotated it. A Doc
-        with no or only partial sentence starts (a token whose is_sent_start is
-        unset), as before the parser, senter or sentencizer, and without a parse
-        or a hook gets those of sentenize on its text. A string is split into
+        A Document of anySeg is returned as it is. A string is split into
         tokens by tokenize and into sentences by sentenize, and the default
         tokens fill the gaps between those of tokenize. A blank line
-        (BLANK_LINE) ends a paragraph of the document and so a sentence, of a
-        Doc too: every part between blank lines goes to sentenize apart, and a
-        sentence starts at its first token. Whitespace and invisible separators
-        (the soft hyphen, zero-width characters, the byte order mark) at the
-        edges of a token are left out, and a token of nothing else is dropped.
+        (BLANK_LINE) ends a paragraph of the document and so a sentence: every
+        part between blank lines goes to sentenize apart, and a sentence starts
+        at its first token. Whitespace and invisible separators (the soft
+        hyphen, zero-width characters, the byte order mark) at the edges of a
+        token are left out, and a token of nothing else is dropped.
         The default tokens are the words of WordsExtractor and every run of one
-        other character; the default sentences are those of SentsExtractor.
-        The document of the Doc a thread converted last is kept while the Doc
-        lives with the same tokens and annotations, and the same sentenize for
-        a Doc without its sentences, so the classes of statistics of one Doc
-        convert it once: the same Document comes back, and it is not to be changed
+        other character; the default sentences are those of SentsExtractor
 
     Arguments:
-        source (str|Doc|Document): Data source
+        source (str|Document): Data source
         tokenize (Callable[[str], Iterable[tuple[int, int, str]]]): Tokens of a
             string with their positions
         sentenize (Callable[[str], Iterable[tuple[int, int, str]]]): Sentences of a
@@ -126,12 +84,10 @@ def to_document(
         Document: Document
 
     Raises:
-        SourceTypeError: If the source is neither a string, a Doc nor a Document
-            object, tokenize or sentenize is not callable, either does not give
-            triples of integer bounds inside the text and a string, those of
-            tokenize ascending, or a token of tokenize runs over a blank line
-        SourceError: If a token of the Doc runs over a blank line or its words in
-            token._.anyseg_words cannot be in a document
+        SourceTypeError: If the source is neither a string nor a Document object,
+            tokenize or sentenize is not callable, either does not give triples of
+            integer bounds inside the text and a string, those of tokenize
+            ascending, or a token of tokenize runs over a blank line
 
     Example:
         >>> from anyts.document import to_document
@@ -147,8 +103,6 @@ def to_document(
             check_callable(hook, what, message=messages["callable_param"])
     if is_document(source):
         return source
-    if is_doc(source):
-        return _cached_document(source, sentenize, messages)
     if isinstance(source, str):
         return _text_document(source, tokenize, sentenize, messages)
     raise source_type_error(messages, source)
@@ -445,11 +399,7 @@ class Tree(NamedTuple):
             The word whose token covers the position, or with end the first one
             whose token overlaps the span from the position to end; the first
             word of a multiword token, or None where no word stands, as at
-            whitespace. The word of a token of spaCy is
-            word_at(token.idx, token.idx + len(token)), since its position among
-            the words differs from token.i where a Doc has tokens of whitespace,
-            and the token of the document leaves out the separators at the edges
-            of the token, such as a byte order mark
+            whitespace
 
         Arguments:
             position (int): Position of a character of the text
@@ -493,10 +443,9 @@ def get_tree(document: Document) -> Tree:
         The words of Universal Dependencies of the document with the columns
         lemma, upos, xpos, feats, head and deprel, linked by their heads within
         their sentences: a word without a head (0 or None) heads its sentence.
-        The tree of the document of the Doc a thread converted last
-        (to_document), and of the document the command and the report count, is
-        built once and shared by the classes, and it is not to be changed; a tree
-        holds cycles of references, which the garbage collector of Python frees
+        The tree of the document the command and the report count is built once
+        and shared by their classes, and it is not to be changed; a tree holds
+        cycles of references, which the garbage collector of Python frees
 
     Arguments:
         document (Document): Document of anySeg
@@ -508,35 +457,21 @@ def get_tree(document: Document) -> Tree:
         SourceTypeError: If the document is not a Document object
 
     Example:
-        >>> import spacy
-        >>> from spacy.tokens import Doc
         >>> from anyts.document import get_tree, to_document
-        >>> doc = Doc(
-        ...     spacy.blank("en").vocab,
-        ...     words=["Cats", "sleep"],
-        ...     heads=[1, 1],
-        ...     deps=["nsubj", "ROOT"],
-        ...     pos=["NOUN", "VERB"],
-        ... )
-        >>> cats, sleep = get_tree(to_document(doc)).words
+        >>> document = to_document("Cats sleep")
+        >>> document.set_columns(upos=["NOUN", "VERB"], head=[2, 0], deprel=["nsubj", "root"])
+        >>> cats, sleep = get_tree(document).words
         >>> cats.head is sleep, sleep.head, sleep.children
         (True, None, (TreeWord(0, 'Cats', NOUN, nsubj),))
     """
     if not is_document(document):
         raise SourceTypeError(MESSAGES["source_type"].format(type=type(document).__name__))
     shared: _Shared | None = getattr(_local, "shared", None)
-    if shared is not None and shared.document is document and shared.tree is not None:
-        return shared.tree
-    converted = next((item for item in _slot() if item.document is document), None)
-    if converted is not None and converted.tree is not None:
-        tree = converted.tree
-    else:
-        tree = _built_tree(document)
-        if converted is not None:
-            converted.tree = tree
-    if shared is not None and shared.document is document:
-        shared.tree = tree
-    return tree
+    if shared is None or shared.document is not document:
+        return _built_tree(document)
+    if shared.tree is None:
+        shared.tree = _built_tree(document)
+    return shared.tree
 
 
 def _built_tree(document: Document) -> Tree:
@@ -643,8 +578,8 @@ def _feature_dict(feats: str | None) -> dict[str, str]:
 
 @contextmanager
 def _tree_once(document: Document) -> Iterator[Tree]:
-    """Tree of a document (get_tree) for one use: a tree no slot keeps is broken after it, so that
-    it goes at once rather than with the garbage collector"""
+    """Tree of a document (get_tree) for one use: a tree the shared document does not keep is
+    broken after it, so that it goes at once rather than with the garbage collector"""
     tree = get_tree(document)
     try:
         yield tree
@@ -663,20 +598,14 @@ def _sharing_tree(document: Document, *, release: bool) -> Iterator[None]:
         yield
     finally:
         _local.shared = previous
-        if (
-            release
-            and shared.tree is not None
-            and not any(converted.tree is shared.tree for converted in _slot())
-        ):
+        if release and shared.tree is not None:
             _break(shared.tree)
 
 
 def _kept(tree: Tree) -> bool:
-    """Whether a slot or the shared document keeps a tree"""
+    """Whether the shared document keeps a tree"""
     shared: _Shared | None = getattr(_local, "shared", None)
-    return (shared is not None and shared.tree is tree) or any(
-        converted.tree is tree for converted in _slot()
-    )
+    return shared is not None and shared.tree is tree
 
 
 def _break(tree: Tree) -> None:
@@ -688,7 +617,7 @@ def _break(tree: Tree) -> None:
         del word.tree
 
 
-def _parsed(owner: Any, source: str | Doc | Document) -> Document:
+def _parsed(owner: Any, source: str | Document) -> Document:
     """Document of the parse hook of an object, checked to be a Document"""
     document = owner.parse(source)
     if not is_document(document):
@@ -700,82 +629,13 @@ def _parsed(owner: Any, source: str | Doc | Document) -> Document:
     return document
 
 
-def _source_text(source: str | Doc | Document, messages: Mapping[str, str]) -> str:
-    """Text of a string, a Doc or a Document object"""
+def _source_text(source: str | Document, messages: Mapping[str, str]) -> str:
+    """Text of a string or a Document object"""
     if isinstance(source, str):
         return source
-    if is_doc(source) or is_document(source):
+    if is_document(source):
         return source.text
     raise source_type_error(messages, source)
-
-
-def _cached_document(doc: Doc, sentenize: Spans | None, messages: Mapping[str, str]) -> Document:
-    """Document of a Doc, the one of the last conversion while the Doc and its annotations are
-    the same"""
-    stamp = _doc_stamp(doc)
-    if _has_sentences(doc):
-        sentenize = None
-    slot = _slot()
-    for converted in slot:
-        if (
-            converted.doc() is doc
-            and converted.stamp == stamp
-            and converted.sentenize == sentenize
-        ):
-            return converted.document
-    document = _doc_document(doc, sentenize, messages)
-    # The slot is found by a weak reference too, so that a thread that ends frees it at once
-    forget = partial(_forget, weakref.ref(slot))
-    slot[:] = [_Converted(weakref.ref(doc, forget), stamp, sentenize, document)]
-    return document
-
-
-def _slot() -> _Slot:
-    """The slot of the last conversion of the calling thread"""
-    slot: _Slot | None = getattr(_local, "converted", None)
-    if slot is None:
-        slot = _local.converted = _Slot()
-    return slot
-
-
-def _forget(slot_ref: weakref.ref[_Slot], ref: weakref.ref[Doc]) -> None:
-    """Dropping the document and the tree of a Doc that is gone from its slot, unless the slot is
-    gone too: its thread may end while the callbacks of the Doc run"""
-    if (slot := slot_ref()) is not None:
-        slot[:] = [converted for converted in slot if converted.doc is not ref]
-
-
-def _doc_stamp(doc: Doc) -> tuple[bytes, str, tuple[int, ...] | None]:
-    """The tokens of a Doc and the annotations its document reads: the columns, the sentence
-    starts, the words of the multiword tokens of anySeg and the starts of the sentences of a
-    hook"""
-    from anyseg.spacy import given_words
-    from spacy.attrs import DEP, HEAD, LEMMA, MORPH, ORTH, POS, SENT_START, SPACY, TAG
-
-    columns = doc.to_array([ORTH, SPACY, LEMMA, POS, TAG, MORPH, HEAD, DEP, SENT_START])
-    hooked = tuple(span.start_char for span in doc.sents) if "sents" in doc.user_hooks else None
-    return columns.tobytes(), repr(list(given_words(doc).items())), hooked
-
-
-def _doc_document(doc: Doc, sentenize: Spans | None, messages: Mapping[str, str]) -> Document:
-    """Document of a Doc: a multiword token whose words have no columns of their own is one word,
-    as the pipeline annotated it, and a Doc without its sentences takes those of sentenize"""
-    from anyseg.spacy import from_doc
-
-    try:
-        document = from_doc(doc, split_unannotated=False)
-    except (TypeError, ValueError) as error:
-        raise SourceError(messages["document_tokens"].format(error=error)) from error
-    if _has_sentences(doc) or "sents" in doc.user_hooks:
-        return document
-    starts = _sent_starts(document.text, document.tokens.starts, sentenize, messages)
-    return document.with_sentences(starts)
-
-
-def _has_sentences(doc: Doc) -> bool:
-    """Whether a Doc has its sentences: is_sent_start set at every token, a hook of the sentences
-    or a parse"""
-    return doc.has_annotation("SENT_START", require_complete=True) or doc.has_annotation("DEP")
 
 
 def _text_document(
