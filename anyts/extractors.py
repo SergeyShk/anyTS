@@ -186,7 +186,7 @@ def _check_tokens(
         iterator[str]: The same tokens
 
     Raises:
-        SourceTypeError: If a token is not a string, such as a spaCy token
+        SourceTypeError: If a token is not a string
     """
     for token in tokens:
         if not isinstance(token, str):

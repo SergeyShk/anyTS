@@ -40,7 +40,6 @@ from .utils import (
 
 if TYPE_CHECKING:
     from anyseg import Document
-    from spacy.tokens import Doc
 
 _NO_POSITIONS: frozenset[int] = frozenset()
 _PARAGRAPH_START = attrgetter("paragraph_start")
@@ -575,7 +574,7 @@ class CohesionStats(Stats):
         https://doi.org/10.3758/s13428-015-0651-7 (Crossley et al. 2016, TAACO)
 
     Arguments:
-        source (str|Doc|Document): Data source (a string, a Doc or a Document object)
+        source (str|Document): Data source (a string or a Document object)
         sents_extractor (SentsExtractor): Sentence extraction tool; given, it splits the
             text in place of the sentences of the document, found in the text in order
         connectors (dict[str, tuple[str, str]]): Class and kind by connector;
@@ -657,7 +656,7 @@ class CohesionStats(Stats):
 
     Raises:
         SourceTypeError: If the extractor is of another type, the source is neither a
-            string, a Doc nor a Document object, parse does not return a Document,
+            string nor a Document object, parse does not return a Document,
             analyze does not give sentences of CohesionWord objects, or the connectors
             are not a dictionary of phrases and pairs of strings
         SourceError: If the words of the source have no parts of speech when
@@ -710,7 +709,7 @@ class CohesionStats(Stats):
 
     def __init__(
         self,
-        source: str | Doc | Document,
+        source: str | Document,
         sents_extractor: SentsExtractor | None = None,
         connectors: Mapping[str, tuple[str, str]] | None = None,
         blank_lines: bool = False,
@@ -820,7 +819,7 @@ class CohesionStats(Stats):
         for name in matcher.kinds:
             setattr(self, f"connectors_{name}", kinds[name] * per_1000)
 
-    def analyze(self, source: str | Doc | Document) -> Iterable[Sequence[CohesionWord]]:
+    def analyze(self, source: str | Document) -> Iterable[Sequence[CohesionWord]]:
         """
         Getting the words of the sentences of a source with their features
 
@@ -839,14 +838,14 @@ class CohesionStats(Stats):
             that reads the features another way overrides it
 
         Arguments:
-            source (str|Doc|Document): Data source
+            source (str|Document): Data source
 
         Returns:
             iterable[list[CohesionWord]]: Words of every sentence
 
         Raises:
-            SourceTypeError: If the source is neither a string, a Doc nor a Document
-                object, or parse does not return a Document
+            SourceTypeError: If the source is neither a string nor a Document object,
+                or parse does not return a Document
             SourceError: If the words of the source have no parts of speech when
                 requires_pos or no lemmas when requires_lemmas
         """
@@ -1163,7 +1162,7 @@ def calc_overlap(sets: Sequence[Collection[str]], adjacent: bool = True) -> floa
             than two sentences
 
     Raises:
-        SourceTypeError: If the sentences are a string, a Doc or an iterator, or a sentence
+        SourceTypeError: If the sentences are a string or an iterator, or a sentence
             is not a list of strings (check_words)
     """
     _check_sents(sets, "elements of a sentence", ordered=False)
@@ -1229,7 +1228,7 @@ def calc_proportional_overlap(sets: Sequence[Collection[str]], adjacent: bool = 
         float: Mean share of shared elements, nan for a text shorter than two sentences
 
     Raises:
-        SourceTypeError: If the sentences are a string, a Doc or an iterator, or a sentence
+        SourceTypeError: If the sentences are a string or an iterator, or a sentence
             is not a list of strings (check_words)
     """
     _check_sents(sets, "elements of a sentence", ordered=False)
@@ -1313,7 +1312,7 @@ def calc_forward_overlap(sets: Sequence[Collection[str]], span: int = 1) -> floa
             segments without elements
 
     Raises:
-        SourceTypeError: If the segments are a string, a Doc or an iterator, or a segment
+        SourceTypeError: If the segments are a string or an iterator, or a segment
             is not a list of strings (check_words)
         ParameterError: If the span is not an integer greater than 0
 
@@ -1346,7 +1345,7 @@ def calc_overlaps(sets: Sequence[Collection[str]], proportional: bool = True) ->
             coefficients, nan for a text shorter than two sentences
 
     Raises:
-        SourceTypeError: If the sentences are a string, a Doc or an iterator, or a sentence
+        SourceTypeError: If the sentences are a string or an iterator, or a sentence
             is not a list of strings (check_words)
     """
     _check_sents(sets, "elements of a sentence", ordered=False)
@@ -1381,7 +1380,7 @@ def count_given(sents: Sequence[Sequence[str]]) -> int:
         int: Number of given elements
 
     Raises:
-        SourceTypeError: If the sentences are a string, a Doc or an iterator, or a sentence
+        SourceTypeError: If the sentences are a string or an iterator, or a sentence
             is not a list of strings (check_words)
     """
     _check_sents(sents, "lemmas of a sentence")
@@ -1434,7 +1433,7 @@ def calc_repetition(sents: Sequence[Sequence[str]]) -> float:
         float: Share of the cohesive pairs, nan without a single pair with the feature
 
     Raises:
-        SourceTypeError: If the sentences are a string, a Doc or an iterator, or a sentence
+        SourceTypeError: If the sentences are a string or an iterator, or a sentence
             is not a list of strings (check_words)
     """
     _check_sents(sents, "values of a sentence")

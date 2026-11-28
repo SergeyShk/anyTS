@@ -35,7 +35,6 @@ from .utils import (
 
 if TYPE_CHECKING:
     from anyseg import Document
-    from spacy.tokens import Doc
 
 _NORMALIZED_STATS = (
     "p_unique_words",
@@ -152,7 +151,7 @@ class BasicStats(Stats, metaclass=ABCMeta):
         The other methods come from Stats
 
     Arguments:
-        source (str|Doc|Document): Data source (a string, a Doc or a Document object)
+        source (str|Document): Data source (a string or a Document object)
         sents_extractor (SentsExtractor): Sentence extraction tool
         words_extractor (WordsExtractor): Word extraction tool
         normalize (bool): Compute the normalized statistics
@@ -207,7 +206,7 @@ class BasicStats(Stats, metaclass=ABCMeta):
         number_pattern (Pattern): Number of the language for filter_nums (NUMBER_PATTERN)
 
     Raises:
-        SourceTypeError: If the source is neither a string, a Doc nor a Document object,
+        SourceTypeError: If the source is neither a string nor a Document object,
             parse does not return a Document, doc_words does not return a sequence of
             strings, or an extractor is of another type
         SourceError: If the source has no words
@@ -220,7 +219,7 @@ class BasicStats(Stats, metaclass=ABCMeta):
 
     def __init__(
         self,
-        source: str | Doc | Document,
+        source: str | Document,
         sents_extractor: SentsExtractor | None = None,
         words_extractor: WordsExtractor | None = None,
         normalize: bool = False,

@@ -224,8 +224,8 @@ class DiversityStats(Stats):
         stats_headers (tuple[str, str]): Headers of the columns for print_stats
 
     Raises:
-        SourceTypeError: If the words are a string, a Doc, a set, an object without a length
-            other than an iterator, or not strings
+        SourceTypeError: If the words are a string, a set, an object without a length other
+            than an iterator, or not strings
         SourceError: If there are no words
         ParameterError: If the parameters of the metrics are set incorrectly
     """

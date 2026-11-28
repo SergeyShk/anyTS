@@ -22,8 +22,6 @@ from .exceptions import ParameterError, SourceError, SourceTypeError
 
 if TYPE_CHECKING:
     from anyseg import Document
-    from spacy.language import Language
-    from spacy.tokens import Doc, Span, Token
 
     from .document import TreeWord
 
@@ -170,7 +168,7 @@ def count_letters(word: str) -> int:
     return sum(map(str.isalpha, word))
 
 
-def has_words(source: str | Doc | Span) -> bool:
+def has_words(text: str) -> bool:
     """
     Checking whether a text holds a word
 
@@ -180,7 +178,7 @@ def has_words(source: str | Doc | Span) -> bool:
         zero-width space, a bullet of private use) holds none
 
     Arguments:
-        source (str|Doc|Span): Text, Doc or Span object
+        text (str): Text
 
     Returns:
         bool: Result of the check
@@ -190,7 +188,6 @@ def has_words(source: str | Doc | Span) -> bool:
         >>> has_words("The cat sleeps"), has_words("?!"), has_words("\\uf0b7"), has_words("")
         (True, False, False, False)
     """
-    text = source if isinstance(source, str) else source.text
     return any(map(str.isalnum, text))
 
 
@@ -431,110 +428,13 @@ def count_words_by_spans(starts: Sequence[int], spans: Sequence[tuple[int, int]]
     return [length for length in lengths if length]
 
 
-def is_doc(value: object) -> TypeGuard[Doc]:
-    """
-    Checking whether a value is a Doc object of spaCy
-
-    Description:
-        The check does not import spaCy: a Doc exists only once spaCy is
-        loaded, so before that every value gives False
-
-    Arguments:
-        value (object): Value to check
-
-    Returns:
-        bool: Result of the check
-
-    Example:
-        >>> import spacy
-        >>> from anyts.utils import is_doc
-        >>> doc = spacy.blank("en")("The cat sleeps")
-        >>> is_doc(doc), is_doc(doc[:2]), is_doc("The cat sleeps")
-        (True, False, False)
-    """
-    tokens = sys.modules.get("spacy.tokens")
-    return tokens is not None and isinstance(value, tokens.Doc)
-
-
-def is_span(value: object) -> TypeGuard[Span]:
-    """
-    Checking whether a value is a Span object of spaCy
-
-    Description:
-        The check does not import spaCy, as is_doc
-
-    Arguments:
-        value (object): Value to check
-
-    Returns:
-        bool: Result of the check
-
-    Example:
-        >>> import spacy
-        >>> from anyts.utils import is_span
-        >>> doc = spacy.blank("en")("The cat sleeps")
-        >>> is_span(doc[:2]), is_span(doc)
-        (True, False)
-    """
-    tokens = sys.modules.get("spacy.tokens")
-    return tokens is not None and isinstance(value, tokens.Span)
-
-
-def is_token(value: object) -> TypeGuard[Token]:
-    """
-    Checking whether a value is a Token object of spaCy
-
-    Description:
-        The check does not import spaCy, as is_doc
-
-    Arguments:
-        value (object): Value to check
-
-    Returns:
-        bool: Result of the check
-
-    Example:
-        >>> import spacy
-        >>> from anyts.utils import is_token
-        >>> doc = spacy.blank("en")("The cat sleeps")
-        >>> is_token(doc[0]), is_token(doc[:1])
-        (True, False)
-    """
-    tokens = sys.modules.get("spacy.tokens")
-    return tokens is not None and isinstance(value, tokens.Token)
-
-
-def is_language(value: object) -> TypeGuard[Language]:
-    """
-    Checking whether a value is a Language pipeline of spaCy
-
-    Description:
-        The check does not import spaCy, as is_doc: a pipeline exists only once
-        spaCy is loaded, so before that every value gives False
-
-    Arguments:
-        value (object): Value to check
-
-    Returns:
-        bool: Result of the check
-
-    Example:
-        >>> import spacy
-        >>> from anyts.utils import is_language
-        >>> is_language(spacy.blank("en")), is_language("en_core_web_sm")
-        (True, False)
-    """
-    language = getattr(sys.modules.get("spacy.language"), "Language", None)
-    return language is not None and isinstance(value, language)
-
-
 def is_document(value: object) -> TypeGuard[Document]:
     """
     Checking whether a value is a Document object of anySeg
 
     Description:
-        The check does not import anySeg, as is_doc: a Document exists only
-        once anySeg is loaded, so before that every value gives False
+        The check does not import anySeg: a Document exists only once anySeg
+        is loaded, so before that every value gives False
 
     Arguments:
         value (object): Value to check
@@ -619,7 +519,7 @@ def has_feature(word: TreeWord, field: str, value: str) -> bool:
         bool: Result of the check
 
     Raises:
-        SourceTypeError: If the word is not a TreeWord, such as a spaCy Token
+        SourceTypeError: If the word is not a TreeWord
     """
     values = word.feats.get(field)
     return values is not None and value in values.split(",")
@@ -640,7 +540,7 @@ def is_finite_verb(word: TreeWord) -> bool:
         bool: Result of the check
 
     Raises:
-        SourceTypeError: If the word is not a TreeWord, such as a spaCy Token
+        SourceTypeError: If the word is not a TreeWord
     """
     return word.upos == "VERB" and _has_feature(word, "VerbForm", "Fin")
 
@@ -660,7 +560,7 @@ def is_infinitive(word: TreeWord) -> bool:
         bool: Result of the check
 
     Raises:
-        SourceTypeError: If the word is not a TreeWord, such as a spaCy Token
+        SourceTypeError: If the word is not a TreeWord
     """
     return _has_feature(word, "VerbForm", "Inf")
 
@@ -750,9 +650,9 @@ def check_sequence(
             and {param}, what, in place of the English one
 
     Raises:
-        SourceTypeError: If a string (of characters or bytes), a Doc, a Span, an
-            iterator, an object without iteration or without a length, a table
-            (a two-dimensional array or a DataFrame) or, with ordered, a set or a
+        SourceTypeError: If a string (of characters or bytes), an iterator, an
+            object without iteration or without a length, a table (a
+            two-dimensional array or a DataFrame) or, with ordered, a set or a
             mapping is passed
 
     Example:
@@ -775,11 +675,6 @@ def _sequence_problem(value: object, what: str, ordered: bool) -> str | None:
     """Why a value is no sequence of check_sequence, None for a sequence"""
     if isinstance(value, str | bytes | bytearray):
         return f"A list of {what} is expected, not a string"
-    if is_doc(value) or is_span(value):
-        return (
-            f"A list of {what} is expected, not a {type(value).__name__}: "
-            "extract the words with WordsExtractor"
-        )
     if isinstance(value, Iterator):
         return f"A list of {what} is expected, not an iterator"
     sized: object = value
@@ -821,16 +716,15 @@ def check_words(
 
     Raises:
         SourceTypeError: If the value fails check_sequence or holds an item
-            that is not a string, such as a spaCy token
+            that is not a string
 
     Example:
-        >>> import spacy
         >>> from anyts.utils import check_words
         >>> check_words(["the", "cat"])
-        >>> check_words(list(spacy.blank("xx")("the cat")))
+        >>> check_words(["the", 3])
         Traceback (most recent call last):
         ...
-        anyts.exceptions.SourceTypeError: The words must be strings, not Token
+        anyts.exceptions.SourceTypeError: The words must be strings, not int
     """
     check_sequence(value, what, ordered, message=message)
     if not all(map(isinstance, value, repeat(str))):
@@ -979,7 +873,7 @@ def check_tree_word(value: object, *, message: str | None = None) -> None:
             in place of the English one
 
     Raises:
-        SourceTypeError: If the value is not a TreeWord, such as a spaCy Token
+        SourceTypeError: If the value is not a TreeWord
 
     Example:
         >>> from anyts.utils import check_tree_word
@@ -1244,8 +1138,7 @@ def source_type_error(messages: Mapping[str, str], source: object) -> SourceType
     Getting the error of a data source of a wrong type
 
     Description:
-        The message source_span for a Span, which as_doc turns into a Doc, and
-        source_type with the name of the type for any other source
+        The message source_type with the name of the type of the source
 
     Arguments:
         messages (dict[str, str]): Messages by key (MESSAGES)
@@ -1260,8 +1153,6 @@ def source_type_error(messages: Mapping[str, str], source: object) -> SourceType
         >>> source_type_error(MESSAGES, 5)
         SourceTypeError('The data source cannot be of type int')
     """
-    if is_span(source):
-        return SourceTypeError(messages["source_span"])
     return SourceTypeError(messages["source_type"].format(type=type(source).__name__))
 
 
@@ -1355,7 +1246,7 @@ def make_lazy(name: str, modules: Mapping[str, str]) -> None:
     Description:
         The package turns into a LazyPackage: every name of modules is imported
         from its module of the package when it is first read, so a light name
-        does not load the dependencies of a heavy one (spaCy, matplotlib). A
+        does not load the dependencies of a heavy one (matplotlib). A
         package calls it at the end of its __init__ with its __name__; the names
         it imports itself stay as they are
 
@@ -1414,11 +1305,7 @@ def _check_word_list(
     text: bool = False,
 ) -> None:
     """check_words (check_sequence without items) with the messages of a library, of the
-    parameter or, with text, of one of its texts; a Doc or a Span gets the hint of
-    WordsExtractor"""
-    if is_doc(value) or is_span(value):
-        key = "text_doc" if text else "words_doc"
-        raise SourceTypeError(messages[key].format(param=what, type=type(value).__name__))
+    parameter or, with text, of one of its texts"""
     message = messages["text_words" if text else "words_param"]
     if items:
         check_words(value, what, ordered, message=message)  # type: ignore[arg-type]
@@ -1428,6 +1315,6 @@ def _check_word_list(
 
 def _holds_texts(words: Iterable[object]) -> bool:
     """Whether a corpus is a list of texts by its first item, a sequence of its own rather than
-    a word or a spaCy token; the checks of the words refuse a list of both"""
+    a word; the checks of the words refuse a list of both"""
     first = next(iter(words), None)
     return not isinstance(first, str) and isinstance(first, Iterable)

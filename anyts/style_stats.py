@@ -24,7 +24,6 @@ from .utils import (
 
 if TYPE_CHECKING:
     from anyseg import Document
-    from spacy.tokens import Doc
 
 Expander = Callable[[Sequence[str], Collection[str]], Mapping[str, str]]
 
@@ -85,7 +84,7 @@ class StyleStats(Stats):
         get_stats, to_dataframe, print_stats and describe come from Stats
 
     Arguments:
-        source (str|Doc|Document): Data source (a string, a Doc or a Document object)
+        source (str|Document): Data source (a string or a Document object)
         words_extractor (WordsExtractor): Word extraction tool
         stopwords (list[str]): Words of water; without them is_water_word decides
         top_n (int): Number of the most frequent words of the academic nausea and the
@@ -133,7 +132,7 @@ class StyleStats(Stats):
             print_stats
 
     Raises:
-        SourceTypeError: If the source is neither a string, a Doc nor a Document object,
+        SourceTypeError: If the source is neither a string nor a Document object,
             parse does not return a Document, doc_words does not return a sequence of
             strings, the extractor is of another type or a list is not a list of strings;
             when a class is defined, if a list of its phrases is not a list of strings
@@ -154,7 +153,7 @@ class StyleStats(Stats):
 
     def __init__(
         self,
-        source: str | Doc | Document,
+        source: str | Document,
         words_extractor: WordsExtractor | None = None,
         stopwords: Collection[str] | None = None,
         top_n: int = NAUSEA_TOP_N,

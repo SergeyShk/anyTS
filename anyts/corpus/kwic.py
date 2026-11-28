@@ -12,7 +12,6 @@ from ..utils import BLANK_LINE, _messages, check_bool, check_callable, check_int
 
 if TYPE_CHECKING:
     from anyseg import Document, Word
-    from spacy.tokens import Doc
 
 Tokenizer = Callable[[str], Iterable[tuple[int, int, str]]]
 Sentenizer = Callable[[str], Iterable[tuple[int, int, str]]]
@@ -42,7 +41,7 @@ class Concordance(NamedTuple):
 
 
 def kwic(
-    source: str | Doc | Document,
+    source: str | Document,
     keyword: str,
     window: int = 5,
     by_lemma: bool = False,
@@ -62,7 +61,7 @@ def kwic(
         document of the text (to_document with tokenize and sentenize) by the
         word form or by the lemma, when a word shares a lemma with its word of
         the keyword; the keyword is split as a string, so a tokenize that
-        splits a string as the pipeline does finds the same in a Doc. The words
+        splits a string as the document is split finds the same in it. The words
         are the tokens with a letter or a digit (document_words). Lemmas, and word
         forms with ignore_case, are folded by fold; forms are compared in NFC,
         without soft hyphens, and forms and lemmas without the final period of
@@ -76,7 +75,7 @@ def kwic(
         not overlap
 
     Arguments:
-        source (str|Doc|Document): Text, Doc or Document object
+        source (str|Document): Text or Document object
         keyword (str): Word or phrase
         window (int): Number of words of context on each side
         by_lemma (bool): Compare lemmas instead of word forms
@@ -88,19 +87,17 @@ def kwic(
             lemma; by default the word and, for a token of one word with a
             lemma, that lemma
         fold (callable): Folding of a word form or a lemma before the comparison
-        sentenize (callable): Sentences of a string, of the keyword and of the
-            text of a Doc without sentences, as triples of the start, the end and
-            the text; those of SentsExtractor by default
+        sentenize (callable): Sentences of a string and of the keyword, as triples
+            of the start, the end and the text; those of SentsExtractor by default
         messages (dict[str, str]): Messages of the errors by key; MESSAGES by default
 
     Returns:
         list[Concordance]: Occurrences in the order of the text
 
     Raises:
-        SourceTypeError: If the source is neither a string, a Doc nor a Document
-            object, the keyword is not a string, a hook is not callable, or
-            tokenize or sentenize does not give triples of the text (to_document)
-        SourceError: If a token of a Doc cannot be in a document (to_document)
+        SourceTypeError: If the source is neither a string nor a Document object,
+            the keyword is not a string, a hook is not callable, or tokenize or
+            sentenize does not give triples of the text (to_document)
         ParameterError: If the keyword has no words, the window is not an integer or
             is negative, or by_lemma or ignore_case is not a bool
 

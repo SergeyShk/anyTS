@@ -13,7 +13,6 @@ from .utils import check_words, has_words, is_number, safe_divide, safe_mean
 
 if TYPE_CHECKING:
     from anyseg import Document
-    from spacy.tokens import Doc
 
 
 class FrequencyEntry(Protocol):
@@ -76,7 +75,7 @@ class LexicalStats(Stats):
         get_stats, to_dataframe, print_stats and describe come from Stats
 
     Arguments:
-        source (str|Doc|Document): Data source (a string, a Doc or a Document object)
+        source (str|Document): Data source (a string or a Document object)
         freq_dict (FrequencyDictionary): Frequency dictionary; freq_dict_class() by
             default
 
@@ -125,7 +124,7 @@ class LexicalStats(Stats):
     Raises:
         SourceTypeError: If the dictionary is not of freq_dict_class (without it, has no
             lookup and ipm), the class has none and no dictionary is given, the source
-            is neither a string, a Doc nor a Document object, parse does not return a
+            is neither a string nor a Document object, parse does not return a
             Document, or analyze does not give LexicalWord objects
         SourceError: If the words of the source have no parts of speech or there are
             no words
@@ -134,7 +133,7 @@ class LexicalStats(Stats):
     freq_dict_class: ClassVar[type[Any] | None] = None
     stats_desc: ClassVar[Mapping[str, str]] = LEXICAL_STATS_DESC
 
-    def __init__(self, source: str | Doc | Document, freq_dict: FrequencyDictionary | None = None):
+    def __init__(self, source: str | Document, freq_dict: FrequencyDictionary | None = None):
         messages = self.messages
         expected = self.freq_dict_class
         if freq_dict is not None and not (
@@ -181,7 +180,7 @@ class LexicalStats(Stats):
         self.p_top10000 = bands.get(10000, nan)
         self.p_beyond_top10000 = 1 - self.p_top10000
 
-    def analyze(self, source: str | Doc | Document) -> Iterable[LexicalWord]:
+    def analyze(self, source: str | Document) -> Iterable[LexicalWord]:
         """
         Getting the words of a source with their lemmas and their kind
 
@@ -194,15 +193,15 @@ class LexicalStats(Stats):
             library with its own lemmas or content words overrides it
 
         Arguments:
-            source (str|Doc|Document): Data source
+            source (str|Document): Data source
 
         Returns:
             iterable[LexicalWord]: Word, lemma and whether it is a content word, a proper
                 noun and an abbreviation
 
         Raises:
-            SourceTypeError: If the source is neither a string, a Doc nor a Document
-                object, or parse does not return a Document
+            SourceTypeError: If the source is neither a string nor a Document object,
+                or parse does not return a Document
             SourceError: If the words of the source have no parts of speech
         """
         document = self._document(source)

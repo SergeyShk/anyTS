@@ -223,8 +223,8 @@ DELTA_VARIANTS = {
     "cosine": "Cosine Delta - cosine distance of the z-scores",
 }
 
-# Error messages of the statistics classes and the components by key; those with fields in
-# braces are format strings, and a language library passes its own over these
+# Error messages of the classes of statistics by key; those with fields in braces are format
+# strings, and a language library passes its own over these
 MESSAGES: Mapping[str, str] = MappingProxyType(
     {
         "source_type": "The data source cannot be of type {type}",
@@ -232,7 +232,6 @@ MESSAGES: Mapping[str, str] = MappingProxyType(
         "integer_param": "The {param} must be an integer, not {type}",
         "number_param": "The {param} must be a number, not {type}",
         "words_param": "The {param} must be a list of strings, not {type}",
-        "source_span": "The data source cannot be a Span: pass span.as_doc()",
         "no_words": "The data source has no words",
         "document_tokens": "The tokens of the data source cannot make a document: {error}",
         "hook_bounds": (
@@ -274,27 +273,9 @@ MESSAGES: Mapping[str, str] = MappingProxyType(
         "mtld_min_len": "The minimum factor length of MTLD cannot be negative",
         "hdd_sample_size": "The HD-D sample size must be greater than 0",
         "log_base": "The logarithm base must be greater than 1",
-        "missing_extension": (
-            "The extension {name} holds no {stats}: add the component {factory} "
-            "with the name {name} before {component}"
-        ),
-        "missing_extension_any": (
-            "The extension {name} holds no {stats}: add the component with the name {name} "
-            "before {component}"
-        ),
-        "extension_name": "The name of an extension must be a string, not {type}",
-        "empty_extension": "The name of an extension cannot be empty",
-        "no_stats_class": "{cls} has no concrete class of statistics in stats_class",
-        "stats_param": "{cls} has no attribute {param} of stats_params",
         "removed_attribute": "{cls} defines {name}, which is no longer read: override {replacement}",
         "removed_attribute_either": (
             "{cls} defines {name}, which is no longer read: override {first} or {second}"
-        ),
-        "removed_component_attribute": (
-            "{cls} defines {name}, which is no longer read: override {replacement} of stats_class"
-        ),
-        "foreign_extension": (
-            "The extension {name} of Doc belongs to another package: give the component another name"
         ),
         "layers_type": "The layers must be a list of names or a string",
         "unknown_layer": "Unknown layer of the highlighting: {layer}",
@@ -416,9 +397,7 @@ MESSAGES: Mapping[str, str] = MappingProxyType(
             "values, all of them strings, not {value}"
         ),
         "texts_type": "A list of texts is expected, not {type}",
-        "words_doc": "The {param} must be a list of strings, not {type}: extract the words with WordsExtractor",
         "text_words": "A text of the {param} must be a list of strings, not {type}",
-        "text_doc": "A text of the {param} must be a list of strings, not {type}: extract the words with WordsExtractor",
         "words_texts": "Most words of the {param} hold a space: split its texts into words",
         "callable_param": "The {param} must be callable, not {type}",
         "negative_param": "The {param} cannot be negative",

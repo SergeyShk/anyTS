@@ -18,7 +18,6 @@ if TYPE_CHECKING:
     from anyseg import Document
     from matplotlib.figure import Figure
     from pandas import DataFrame
-    from spacy.tokens import Doc
 
     from .visualizers.highlight import HighlightedText
 
@@ -54,7 +53,7 @@ class Report:
         goes through escape, and the page is the same for the same text
 
     Arguments:
-        source (str|Doc|Document): Data source
+        source (str|Document): Data source
         title (str): Title of the report; that of texts by default
         stats_classes (dict[str, type[Stats]]): Classes of statistics by name; those
             of the class by default
@@ -122,7 +121,7 @@ class Report:
 
     def __init__(
         self,
-        source: str | Doc | Document,
+        source: str | Document,
         title: str | None = None,
         stats_classes: Mapping[str, type[Stats]] | None = None,
         *,
@@ -153,7 +152,7 @@ class Report:
                 else:
                     self.stats[name] = stats
 
-    def parse(self, source: str | Doc | Document) -> Document:
+    def parse(self, source: str | Document) -> Document:
         """
         Getting the document of a data source, once for all the sections
 
@@ -162,7 +161,7 @@ class Report:
             parse of its classes
 
         Arguments:
-            source (str|Doc|Document): Data source
+            source (str|Document): Data source
 
         Returns:
             Document: Document of anySeg

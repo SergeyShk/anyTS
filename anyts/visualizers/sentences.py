@@ -9,19 +9,18 @@ import numpy as np
 from matplotlib.axes import Axes
 
 from ..constants import VISUALIZER_LABELS
-from ..document import _has_sentences, to_document
+from ..document import to_document
 from ..exceptions import ParameterError, SourceError, SourceTypeError
 from ..extractors import SentsExtractor, WordsExtractor
-from ..utils import check_integer, check_sequence, has_words, is_doc, is_document, merge_labels
+from ..utils import check_integer, check_sequence, has_words, is_document, merge_labels
 from ._axes import check_axes
 
 if TYPE_CHECKING:
     from anyseg import Document
-    from spacy.tokens import Doc
 
 
 def sentence_lengths_plot(
-    source: str | Doc | Document | Iterable[int],
+    source: str | Document | Iterable[int],
     window: int = 10,
     inset: bool = True,
     ax: Axes | None = None,
@@ -38,16 +37,14 @@ def sentence_lengths_plot(
         histogram of the lengths; the lengths come from sentence_lengths
 
     Arguments:
-        source (str|Doc|Document|Iterable[int]): Text, Doc or Document object or
-            lengths of the sentences (a list, a numpy array, a Series)
+        source (str|Document|Iterable[int]): Text or Document object or lengths
+            of the sentences (a list, a numpy array, a Series)
         window (int): Window of the moving average in sentences
         inset (bool): Show the inset with the histogram
         ax (Axes): Axes for the plot; if not given, a new figure is created
         labels (dict[str, str]): Labels over VISUALIZER_LABELS["sentence_lengths_plot"]
-        sents_extractor (SentsExtractor): Extractor of the sentences of a string or of a Doc
-            without sentences
-        words_extractor (WordsExtractor): Extractor of the words of a sentence of a string or
-            of a Doc without sentences
+        sents_extractor (SentsExtractor): Extractor of the sentences of a string
+        words_extractor (WordsExtractor): Extractor of the words of a sentence of a string
 
     Returns:
         Axes: Axes with the plot
@@ -95,7 +92,7 @@ def sentence_lengths_plot(
 
 
 def sentence_lengths(
-    source: str | Doc | Document | Iterable[int],
+    source: str | Document | Iterable[int],
     sents_extractor: SentsExtractor | None = None,
     words_extractor: WordsExtractor | None = None,
 ) -> list[int]:
@@ -103,23 +100,19 @@ def sentence_lengths(
     Extracting the lengths of the sentences in words
 
     Description:
-        The sentences of the document of a text, a Doc or a Document
-        (to_document) with their words (document_words); with an extractor
-        given, a string or a Doc without sentences of its own (no start at
-        some token, no hook and no parse) is split into sentences by
-        sents_extractor and every sentence into words by words_extractor
-        instead, the other one by default, while a Doc with sentences and a
-        Document keep theirs.
+        The sentences of the document of a text or a Document (to_document)
+        with their words (document_words); with an extractor given, a string is
+        split into sentences by sents_extractor and every sentence into words by
+        words_extractor instead, the other one by default, while a Document
+        keeps its sentences.
         Ready lengths (non-negative integers in a sequence or an iterator) are
         used as they are. Sentences without words are skipped
 
     Arguments:
-        source (str|Doc|Document|Iterable[int]): Text, Doc or Document object or
-            ready lengths
-        sents_extractor (SentsExtractor): Extractor of the sentences of a string or of a Doc
-            without sentences
-        words_extractor (WordsExtractor): Extractor of the words of a sentence of a string or
-            of a Doc without sentences
+        source (str|Document|Iterable[int]): Text or Document object or ready
+            lengths
+        sents_extractor (SentsExtractor): Extractor of the sentences of a string
+        words_extractor (WordsExtractor): Extractor of the words of a sentence of a string
 
     Returns:
         list[int]: Lengths of the sentences in order
@@ -128,8 +121,7 @@ def sentence_lengths(
         SourceTypeError: If the data source or an extractor is set incorrectly (a
             table, a set, a mapping, bytes or an object without a length other than
             an iterator for the lengths, a length that is not an integer)
-        SourceError: If a length is negative, or a token of a Doc cannot be in a
-            document (to_document)
+        SourceError: If a length is negative
 
     Example:
         >>> from anyts.visualizers import sentence_lengths
@@ -140,13 +132,11 @@ def sentence_lengths(
         raise SourceTypeError("The sentence extractor must be a SentsExtractor")
     if words_extractor is not None and not isinstance(words_extractor, WordsExtractor):
         raise SourceTypeError("The word extractor must be a WordsExtractor")
-    if isinstance(source, str) or is_doc(source) or is_document(source):
-        extracted = sents_extractor is not None or words_extractor is not None
-        if extracted and (
-            isinstance(source, str) or (is_doc(source) and not _has_sentences(source))
+    if isinstance(source, str) or is_document(source):
+        if isinstance(source, str) and (
+            sents_extractor is not None or words_extractor is not None
         ):
-            text = source if isinstance(source, str) else source.text
-            sents = (sents_extractor or SentsExtractor()).extract(text)
+            sents = (sents_extractor or SentsExtractor()).extract(source)
             words = words_extractor or WordsExtractor()
             lengths = [len(words.extract(sent)) for sent in sents]
         else:

@@ -46,7 +46,6 @@ from .utils import (
 
 if TYPE_CHECKING:
     from anyseg import Document
-    from spacy.tokens import Doc
 
 _Function = TypeVar("_Function", bound=Callable[..., Any])
 
@@ -95,8 +94,8 @@ class SyntaxStats(Stats):
         https://dialogue-conf.org/media/4302/ivanovvv.pdf
 
     Arguments:
-        source (str|Doc|Document): Data source with a dependency parse and parts of
-            speech (a Doc, a Document, or what parse makes one of)
+        source (str|Document): Data source with a dependency parse and parts of
+            speech (a Document, or what parse makes one of)
 
     Attributes:
         sents (tuple[tuple[TreeWord]]): Words of every sentence with words
@@ -201,13 +200,12 @@ class SyntaxStats(Stats):
             print_stats
 
     Raises:
-        SourceTypeError: If the source is neither a string, a Doc nor a Document
-            object, parse does not return a Document or find_split_predicates does not
+        SourceTypeError: If the source is neither a string nor a Document object,
+            parse does not return a Document or find_split_predicates does not
             return pairs of TreeWord objects; when a class is defined, if its
             negation_words or subordinating_marks are not a collection of strings
         SourceError: If the source has no dependency parse, no parts of speech, no
-            lemmas when requires_lemmas, or no words, or a token of a Doc runs over a
-            blank line
+            lemmas when requires_lemmas, or no words
     """
 
     requires_lemmas: ClassVar[bool] = False
@@ -221,7 +219,7 @@ class SyntaxStats(Stats):
         check_words(cls.negation_words, "negation_words", ordered=False)
         check_words(cls.subordinating_marks, "subordinating_marks", ordered=False)
 
-    def __init__(self, source: str | Doc | Document):
+    def __init__(self, source: str | Document):
         messages = self.messages
         document = self._document(source)
         if not any(document.column("deprel")):
@@ -1032,7 +1030,7 @@ def get_words(words: Iterable[TreeWord]) -> list[TreeWord]:
         list[TreeWord]: List of words
 
     Raises:
-        SourceTypeError: If a word is not a TreeWord, such as a spaCy Token
+        SourceTypeError: If a word is not a TreeWord
     """
     return [word for word in words if _is_word(word)]
 
@@ -1052,7 +1050,7 @@ def is_root(word: TreeWord) -> bool:
         bool: Result of the check
 
     Raises:
-        SourceTypeError: If the word is not a TreeWord, such as a spaCy Token
+        SourceTypeError: If the word is not a TreeWord
     """
     return word.head is None
 
@@ -1077,7 +1075,7 @@ def base_dep(word: TreeWord) -> str:
         str: Base relation
 
     Raises:
-        SourceTypeError: If the word is not a TreeWord, such as a spaCy Token
+        SourceTypeError: If the word is not a TreeWord
     """
     return _base_relation(word.deprel or "")
 
@@ -1103,7 +1101,7 @@ def get_children(word: TreeWord) -> list[TreeWord]:
         list[TreeWord]: List of the dependents without punctuation marks and symbols
 
     Raises:
-        SourceTypeError: If the word is not a TreeWord, such as a spaCy Token
+        SourceTypeError: If the word is not a TreeWord
     """
     return [child for child in word.children if _is_word(child)]
 
@@ -1123,7 +1121,7 @@ def count_children(word: TreeWord) -> int:
         int: Number of dependent words (get_children)
 
     Raises:
-        SourceTypeError: If the word is not a TreeWord, such as a spaCy Token
+        SourceTypeError: If the word is not a TreeWord
     """
     return len(_get_children(word))
 
@@ -1147,7 +1145,7 @@ def subtree_len(word: TreeWord) -> int:
         int: Number of words in the subtree
 
     Raises:
-        SourceTypeError: If the word is not a TreeWord, such as a spaCy Token
+        SourceTypeError: If the word is not a TreeWord
     """
     return sum(map(_is_word, _subtree(word)))
 
@@ -1162,7 +1160,7 @@ def get_subtree(word: TreeWord) -> list[TreeWord]:
 
     Description:
         The word and all of its direct and indirect dependents in the order of
-        the text, punctuation marks included, as the subtree of a token of spaCy
+        the text, punctuation marks included
 
     Arguments:
         word (TreeWord): Word of the tree
@@ -1171,7 +1169,7 @@ def get_subtree(word: TreeWord) -> list[TreeWord]:
         list[TreeWord]: Words of the subtree
 
     Raises:
-        SourceTypeError: If the word is not a TreeWord, such as a spaCy Token
+        SourceTypeError: If the word is not a TreeWord
     """
     return sorted(_subtree(word), key=lambda found: found.index)
 
@@ -1214,7 +1212,7 @@ def calc_dependency_distances(words: Iterable[TreeWord]) -> list[int]:
         list[int]: Distances in the order of the words
 
     Raises:
-        SourceTypeError: If a word is not a TreeWord, such as a spaCy Token
+        SourceTypeError: If a word is not a TreeWord
     """
     words = _get_words(words)
     positions = {word.index: position for position, word in enumerate(words)}
@@ -1245,7 +1243,7 @@ def calc_tree_depth(words: Iterable[TreeWord]) -> int:
         int: Depth of the tree
 
     Raises:
-        SourceTypeError: If a word is not a TreeWord, such as a spaCy Token
+        SourceTypeError: If a word is not a TreeWord
     """
     parents = _word_parents(_get_words(words))
     depths: dict[int, int] = {}
@@ -1314,18 +1312,15 @@ def predicate_form(word: TreeWord, auxiliary_form: Callable[[TreeWord], str] | N
         SourceTypeError: If the word is not a TreeWord or auxiliary_form is not callable
 
     Example:
-        >>> import spacy
-        >>> from spacy.tokens import Doc
         >>> from anyts.document import get_tree, to_document
         >>> from anyts.syntax_stats import predicate_form
-        >>> doc = Doc(
-        ...     spacy.blank("en").vocab,
-        ...     words=["She", "had", "arrived"],
-        ...     heads=[2, 2, 2],
-        ...     deps=["nsubj", "aux", "ROOT"],
-        ...     morphs=["Case=Nom", "VerbForm=Fin", "VerbForm=Part"],
+        >>> document = to_document("She had arrived")
+        >>> document.set_columns(
+        ...     feats=["Case=Nom", "VerbForm=Fin", "VerbForm=Part"],
+        ...     head=[3, 3, 0],
+        ...     deprel=["nsubj", "aux", "root"],
         ... )
-        >>> she, _, arrived = get_tree(to_document(doc)).words
+        >>> she, _, arrived = get_tree(document).words
         >>> predicate_form(arrived), predicate_form(she)
         ('Fin', '')
     """
@@ -1371,7 +1366,7 @@ def calc_valency(word: TreeWord) -> int:
         int: Number of dependent words
 
     Raises:
-        SourceTypeError: If the word is not a TreeWord, such as a spaCy Token
+        SourceTypeError: If the word is not a TreeWord
     """
     return sum(1 for child in _get_children(word) if _base_dep(child) not in VALENCY_IGNORED_DEPS)
 
@@ -1398,7 +1393,7 @@ def calc_coordination_chains(words: Iterable[TreeWord]) -> list[int]:
         list[int]: Lengths of the chains in the order of their first words
 
     Raises:
-        SourceTypeError: If a word is not a TreeWord, such as a spaCy Token
+        SourceTypeError: If a word is not a TreeWord
     """
     words = _get_words(words)
     ids = {word.index for word in words}
@@ -2023,17 +2018,13 @@ def is_subordinating_mark(word: TreeWord, subordinating_marks: Collection[str] =
             collection of strings
 
     Example:
-        >>> import spacy
-        >>> from spacy.tokens import Doc
         >>> from anyts.document import get_tree, to_document
         >>> from anyts.syntax_stats import is_subordinating_mark
-        >>> doc = Doc(
-        ...     spacy.blank("en").vocab,
-        ...     words=["left", "so", "that", "we", "slept"],
-        ...     heads=[0, 4, 1, 4, 0],
-        ...     deps=["ROOT", "mark", "fixed", "nsubj", "parataxis"],
+        >>> document = to_document("left so that we slept")
+        >>> document.set_columns(
+        ...     head=[0, 5, 2, 5, 1], deprel=["root", "mark", "fixed", "nsubj", "parataxis"]
         ... )
-        >>> so = get_tree(to_document(doc)).words[1]
+        >>> so = get_tree(document).words[1]
         >>> is_subordinating_mark(so, {"so that"}), is_subordinating_mark(so, {"so"})
         (True, False)
     """
@@ -2141,7 +2132,7 @@ def count_noun_modifiers(word: TreeWord) -> int:
         int: Number of modifiers
 
     Raises:
-        SourceTypeError: If the word is not a TreeWord, such as a spaCy Token
+        SourceTypeError: If the word is not a TreeWord
     """
     return sum(1 for child in _get_children(word) if _base_dep(child) in NOUN_MODIFIER_DEPS)
 
@@ -2174,18 +2165,15 @@ def is_prep_complement(word: TreeWord) -> bool:
         SourceTypeError: If the word is not a TreeWord
 
     Example:
-        >>> import spacy
-        >>> from spacy.tokens import Doc
         >>> from anyts.document import get_tree, to_document
         >>> from anyts.syntax_stats import is_prep_complement
-        >>> doc = Doc(
-        ...     spacy.blank("en").vocab,
-        ...     words=["the", "house", "of", "the", "father"],
-        ...     heads=[1, 1, 4, 4, 1],
-        ...     deps=["det", "ROOT", "case", "det", "nmod"],
-        ...     pos=["DET", "NOUN", "ADP", "DET", "NOUN"],
+        >>> document = to_document("the house of the father")
+        >>> document.set_columns(
+        ...     upos=["DET", "NOUN", "ADP", "DET", "NOUN"],
+        ...     head=[2, 0, 5, 5, 2],
+        ...     deprel=["det", "root", "case", "det", "nmod"],
         ... )
-        >>> words = get_tree(to_document(doc)).words
+        >>> words = get_tree(document).words
         >>> is_prep_complement(words[4]), is_prep_complement(words[1])
         (True, False)
     """
@@ -2231,18 +2219,13 @@ def dependency_triples(words: Sequence[TreeWord]) -> list[tuple[str, str, str]]:
         SourceTypeError: If the words are not a list of TreeWord objects
 
     Example:
-        >>> import spacy
-        >>> from spacy.tokens import Doc
         >>> from anyts.document import get_tree, to_document
         >>> from anyts.syntax_stats import dependency_triples
-        >>> doc = Doc(
-        ...     spacy.blank("en").vocab,
-        ...     words=["a", "red", "house"],
-        ...     heads=[2, 2, 2],
-        ...     deps=["det", "amod", "ROOT"],
-        ...     pos=["DET", "ADJ", "NOUN"],
+        >>> document = to_document("a red house")
+        >>> document.set_columns(
+        ...     upos=["DET", "ADJ", "NOUN"], head=[3, 3, 0], deprel=["det", "amod", "root"]
         ... )
-        >>> dependency_triples(get_tree(to_document(doc)).sentences[0])
+        >>> dependency_triples(get_tree(document).sentences[0])
         [('NOUN', 'det', 'DET'), ('NOUN', 'amod', 'ADJ'), ('', 'root', 'NOUN')]
     """
     if not (isinstance(words, Sequence) and all(isinstance(word, TreeWord) for word in words)):
@@ -2353,7 +2336,7 @@ def calc_modifier_chains(
         list[int]: Lengths of the chains in the order of the words
 
     Raises:
-        SourceTypeError: If a word is not a TreeWord, such as a spaCy Token, or is_modifier
+        SourceTypeError: If a word is not a TreeWord, or is_modifier
             is not callable
     """
     if not callable(is_modifier):
