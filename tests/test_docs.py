@@ -314,7 +314,7 @@ def test_parameter_tables_match_the_code():
     # The tables of a callable: those of its section and of its sections -parameters and -hooks,
     # in order, a method by the section Class-method; a table outside the sections belongs to the
     # signature block above it, the table of a family of measures to each function it links
-    documented: dict[tuple[Path, str, bool], tuple[object, list[tuple[str, str]]]] = {}
+    documented: dict[tuple[Path, str], tuple[object, list[tuple[str, str]]]] = {}
     for page in PAGES:
         texts = sections(page)
         for section, signed, rows in parameter_tables(page):
